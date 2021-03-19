@@ -87,6 +87,12 @@ save_automaton_to_file(learned_dfa, path='Learned_Automaton', file_type='dot')
 visualize_automaton(learned_dfa)
 ```
 
+To make experiments reproducible, simply define a random seed at the beginning of your program.
+```python
+from random import seed
+seed(2) # all experiments will be reproducible
+```
+
 For more examples and instructions check out the [Wiki](https://github.com/emuskardin/AALpy/wiki
 ) and [Examples.py](https://github.com/emuskardin/AALpy/blob/master/Examples.py).
 
@@ -94,7 +100,7 @@ For more examples and instructions check out the [Wiki](https://github.com/emusk
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 In case of any questions or possible bugs, please open issues.
 
-# Contributors
+## Contributors
 - Edi Muskardin
 - Martin Tappler
 

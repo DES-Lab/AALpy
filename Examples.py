@@ -258,12 +258,13 @@ def weird_coffee_machine_mdp_example():
                                                reset_after_cex=True)
 
     learned_mdp = run_stochastic_Lstar(input_alphabet, sul, eq_oracle, n_c=20, n_resample=100, min_rounds=10,
-                                       max_rounds=500)
+                                       max_rounds=500, strategy='no_cq')
 
     return learned_mdp
 
 
-def benchmark_mdp_example(example='first_grid', n_c=20, n_resample=1000, min_rounds=10, max_rounds=500):
+def benchmark_mdp_example(example='first_grid', n_c=20, n_resample=1000, min_rounds=10, max_rounds=500,
+                          strategy='normal'):
     """
     Learning the MDP various benchmarking examples found in Chapter 7 of Martin's Tappler PhD thesis.
     :param example: One of ['first_grid', 'second_grid', 'shared_coin', 'slot_machine']
@@ -271,6 +272,7 @@ def benchmark_mdp_example(example='first_grid', n_c=20, n_resample=1000, min_rou
     :param n_resample: resampling size
     :param min_rounds: minimum number of learning rounds
     :param max_rounds: maximum number of learning rounds
+    :param strategy: normal or no_cq
     :return: learned MDP
     """
     mdp = load_automaton_from_file(f'./DotModels/MDPs/{example}.dot', automaton_type='mdp')
@@ -284,12 +286,14 @@ def benchmark_mdp_example(example='first_grid', n_c=20, n_resample=1000, min_rou
                                                reset_after_cex=True)
 
     learned_mdp = run_stochastic_Lstar(input_alphabet=input_alphabet, sul=sul, eq_oracle=eq_oracle,
-                                       n_c=n_c, n_resample=n_resample, min_rounds=min_rounds, max_rounds=max_rounds)
+                                       n_c=n_c, n_resample=n_resample, min_rounds=min_rounds, max_rounds=max_rounds,
+                                       strategy=strategy)
 
     return learned_mdp
 
 
-def benchmark_mdp_2_smm_example(example='first_grid', n_c=20, n_resample=1000, min_rounds=10, max_rounds=500):
+def benchmark_mdp_2_smm_example(example='first_grid', n_c=20, n_resample=1000, min_rounds=10, max_rounds=500,
+                                strategy='normal'):
     """
     Learning the stochastic Mealy Machine(SMM) various benchmarking examples
     found in Chapter 7 of Martin's Tappler PhD thesis.
@@ -298,6 +302,7 @@ def benchmark_mdp_2_smm_example(example='first_grid', n_c=20, n_resample=1000, m
     :param example: One of ['first_grid', 'second_grid', 'shared_coin', 'slot_machine']
     :param min_rounds: minimum number of learning rounds
     :param max_rounds: maximum number of learning rounds
+    :param strategy: normal or no_cq
     :return: learned SMM
     """
     mdp = load_automaton_from_file(f'./DotModels/MDPs/{example}.dot', automaton_type='mdp')
@@ -311,7 +316,7 @@ def benchmark_mdp_2_smm_example(example='first_grid', n_c=20, n_resample=1000, m
 
     learned_mdp = run_stochastic_Lstar(input_alphabet=input_alphabet, eq_oracle=eq_oracle, sul=sul, n_c=n_c,
                                        n_resample=n_resample, min_rounds=min_rounds, max_rounds=max_rounds,
-                                       automaton_type='smm')
+                                       automaton_type='smm', strategy=strategy)
 
     return learned_mdp
 
@@ -334,6 +339,7 @@ def custom_smm_example(smm, n_c=20, n_resample=100, min_rounds=10, max_rounds=50
                                                reset_after_cex=True)
 
     learned_model = run_stochastic_Lstar(input_al, sul, eq_oracle, n_c=n_c, n_resample=n_resample,
-                                         automaton_type='smm', min_rounds=min_rounds, max_rounds=max_rounds, print_level=3)
+                                         automaton_type='smm', min_rounds=min_rounds, max_rounds=max_rounds,
+                                         print_level=3)
 
     return learned_model

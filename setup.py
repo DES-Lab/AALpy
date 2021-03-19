@@ -11,7 +11,7 @@ setup(
     packages=['aalpy', 'aalpy.base', 'aalpy.SULs', 'aalpy.utils', 'aalpy.oracles', 'aalpy.automata',
               'aalpy.learning_algs', 'aalpy.learning_algs.stochastic', 'aalpy.learning_algs.deterministic',
               'aalpy.learning_algs.non_deterministic'],
-    url='https://github.com/EdiMuskardin/AALpy',
+    url='https://github.com/emuskardin/AALpy',
     license='MIT',
     license_files=('LICENSE.txt',),
     long_description = long_description,
@@ -30,4 +30,7 @@ setup(
 
 # python setup.py sdist
 # pip wheel . -w dist
+# # twine upload dist/*
+
+# for test pypi
 # twine upload --repository testpypi dist/*
