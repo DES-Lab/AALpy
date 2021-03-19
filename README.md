@@ -41,14 +41,14 @@ pip install pydot
 
 If you are interested in automata learning or want to understand the automata learning process in more detail,
 please check out our Wiki. On Wiki, you will find more detailed examples on how to use ALLpy.
-- https://github.com/EdiMuskardin/AALpy/wiki
+- https://github.com/emuskardin/AALpy/wiki
 
 For the official documentation of all classes and methods check out:
-- https://edimuskardin.github.io/AALpy/
+- https://emuskardin.github.io/AALpy/
 
 Furthermore, there you will find everything from an introduction to automata learning to the discussion of some advanced topics.
 
-In [Examples.py](https://github.com/EdiMuskardin/AALpy/blob/master/Examples.py), many examples demonstrating all ALLpy functionality are presented. 
+In [Examples.py](https://github.com/emuskardin/AALpy/blob/master/Examples.py), many examples demonstrating all ALLpy functionality are presented. 
 
 
 ## Usage
@@ -87,8 +87,8 @@ save_automaton_to_file(learned_dfa, path='Learned_Automaton', file_type='dot')
 visualize_automaton(learned_dfa)
 ```
 
-For more examples and instructions check out the [Wiki](https://github.com/EdiMuskardin/AALpy/wiki
-) and [Examples.py](https://github.com/EdiMuskardin/AALpy/blob/master/Examples.py).
+For more examples and instructions check out the [Wiki](https://github.com/emuskardin/AALpy/wiki
+) and [Examples.py](https://github.com/emuskardin/AALpy/blob/master/Examples.py).
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
