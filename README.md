@@ -1,8 +1,8 @@
 # AALpy - An Active Automata Learning Library
 <!-- ![Alt text](saly.png?raw=true "AALpy") -->
 
-AALpy is an active automata learning library written in pure Python. 
-It is **light-weight**. By implementing a single method and a few lines of 
+AALpy is light-weight a active automata learning library written in pure Python. 
+By implementing a single method and a few lines of 
 configuration, you can start learning automata. 
 
 Whether you work with regular languages, or you want to learn models of 
@@ -36,6 +36,20 @@ For manual installation clone the master and install the following dependency.
 ```bash
 pip install pydot
 ```
+
+## Documentation and Wiki
+
+If you are interested in automata learning or want to understand the automata learning process in more detail,
+please check out our Wiki. On Wiki, you will find more detailed examples on how to use ALLpy.
+- https://github.com/EdiMuskardin/AALpy/wiki
+
+For the official documentation of all classes and methods check out:
+- https://edimuskardin.github.io/AALpy/
+
+Furthermore, there you will find everything from an introduction to automata learning to the discussion of some advanced topics.
+
+In [Examples.py](https://github.com/EdiMuskardin/AALpy/blob/master/Examples.py), many examples demonstrating all ALLpy functionality are presented. 
+
 
 ## Usage
 
@@ -84,12 +98,14 @@ automaton.get_input_alphabet()
 ```
 
 To see how class methods and their arguments can be used as the elements of the input alphabet, check out
-[aalpy/SULs/PyMethodSUL]() and learnPythonClass in [Examples.py]().
+[aalpy/SULs/PyMethodSUL](https://github.com/EdiMuskardin/AALpy/blob/master/aalpy/SULs/PyMethodSUL.py)
+ and learnPythonClass in [Examples.py](https://github.com/EdiMuskardin/AALpy/blob/master/Examples.py).
 
 ### SUL Interface
 
 The system under learning (SUL) is a basic abstract class that all systems that you want to learn have to implement.
-When inferring loaded or randomly generated automata, one only has to pass it to the appropriate SUL found in [aalpy/SULs/AutomataSUL.py]().
+When inferring loaded or randomly generated automata, one only has to pass it to the appropriate SUL found in 
+[aalpy/SULs/AutomataSUL.py](https://github.com/EdiMuskardin/AALpy/blob/master/aalpy/SULs/AutomataSUL.py).
 However, if you want to learn any other system, you have to implement a system reset and step method.
 
 Reset is divided in
@@ -101,7 +117,7 @@ Based on the received element certain action is performed.
 Membership query is a sequence of steps.
 
 For further examples on how to implement SUL refer to:
-[aalpy/SULs/]()
+[aalpy/SULs/](https://github.com/EdiMuskardin/AALpy/blob/master/aalpy/SULs/)
 
 ### Loading and saving automatas to file
 ```python
