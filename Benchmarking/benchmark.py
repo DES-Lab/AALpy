@@ -1,10 +1,9 @@
 import os
-import time
 from statistics import mean
 
 from aalpy.SULs import DfaSUL
 from aalpy.learning_algs import run_Lstar
-from aalpy.oracles import RandomWalkEqOracle, StatePrefixEqOracle
+from aalpy.oracles import StatePrefixEqOracle
 from aalpy.utils import load_automaton_from_file
 
 dfa_1000_states_20_inputs = '../DotModels/DFA_1000_states_20_inp'

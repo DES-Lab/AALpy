@@ -1,7 +1,7 @@
 # AALpy - An Active Automata Learning Library
 <!-- ![Alt text](saly.png?raw=true "AALpy") -->
 
-AALpy is light-weight a active automata learning library written in pure Python. 
+AALpy is a light-weight active automata learning library written in pure Python. 
 By implementing a single method and a few lines of 
 configuration, you can start learning automata. 
 
@@ -87,58 +87,8 @@ save_automaton_to_file(learned_dfa, path='Learned_Automaton', file_type='dot')
 visualize_automaton(learned_dfa)
 ```
 
-### Input alphabet
-Input alphabet is a list of any hashable object, most often strings or integers.
-In the step method of the SUL interface receives an element from input alphabet and
-performs a system action based on it.
-
-From standard automatons (loaded from file/randomly generated), input alphabet can be obtained with:
-```python
-automaton.get_input_alphabet()
-```
-
-To see how class methods and their arguments can be used as the elements of the input alphabet, check out
-[aalpy/SULs/PyMethodSUL](https://github.com/EdiMuskardin/AALpy/blob/master/aalpy/SULs/PyMethodSUL.py)
- and learnPythonClass in [Examples.py](https://github.com/EdiMuskardin/AALpy/blob/master/Examples.py).
-
-### SUL Interface
-
-The system under learning (SUL) is a basic abstract class that all systems that you want to learn have to implement.
-When inferring loaded or randomly generated automata, one only has to pass it to the appropriate SUL found in 
-[aalpy/SULs/AutomataSUL.py](https://github.com/EdiMuskardin/AALpy/blob/master/aalpy/SULs/AutomataSUL.py).
-However, if you want to learn any other system, you have to implement a system reset and step method.
-
-Reset is divided in
-- pre() : initialization/startup of the system
-- post() : gracefull shutdown of the system/memory cleanup
-
-The step method received an element of the input alphabet.
-Based on the received element certain action is performed.
-Membership query is a sequence of steps.
-
-For further examples on how to implement SUL refer to:
-[aalpy/SULs/](https://github.com/EdiMuskardin/AALpy/blob/master/aalpy/SULs/)
-
-### Loading and saving automatas to file
-```python
-from aalpy.utils import save_automaton_to_file, load_automaton_from_file, visualize_automaton
-
-# loading automaton from file
-dfa = load_automaton_from_file(path='path_to_the_file', automaton_type='dfa')
-# if compute prefixes is set to true, prefix/shortest path till each state will be computed
-mealy = load_automaton_from_file(path='path_to_mealy', automaton_type='mealy', compute_prefixes=True)
-mdp = load_automaton_from_file(path='path_to_the_file', automaton_type='mdp')
-
-# write dot representation of the automaton to file
-save_automaton_to_file(mdp, path='new_mdp.dot')
-
-# visualize automaton
-# supported formats are 'png', 'svg', 'pdf'
-visualize_automaton(dfa, file_type='pdf')
-
-# print dot representation of the automaton to standard output
-print(dfa)
-```
+For more examples and instructions check out the [Wiki](https://github.com/EdiMuskardin/AALpy/wiki
+) and [Examples.py](https://github.com/EdiMuskardin/AALpy/blob/master/Examples.py).
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
