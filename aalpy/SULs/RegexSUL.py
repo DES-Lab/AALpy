@@ -34,11 +34,4 @@ class RegexSUL(SUL):
         """
         if letter is not None:
             self.string += str(letter)
-            if re.match(self.regex, self.string):
-                return True
-            return False
-
-        elif re.match(self.regex, ""):
-            return True
-        else:
-            return False
+        return True if re.match(self.regex, self.string) else False
