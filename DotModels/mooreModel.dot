@@ -1,0 +1,35 @@
+digraph g {
+        __start0 [label="" shape="none"];
+        __start0 -> A;
+
+    	A [shape="record", style="rounded", label="{ A | 0 }"];
+    	B [shape="record", style="rounded", label="{ B | 0 }"];
+    	C [shape="record", style="rounded", label="{ C | 0 }"];
+    	D [shape="record", style="rounded", label="{ D | 0 }"];
+    	E [shape="record", style="rounded", label="{ E | 0 }"];
+    	F [shape="record", style="rounded", label="{ F | 0 }"];
+    	G [shape="record", style="rounded", label="{ G | 0 }"];
+    	H [shape="record", style="rounded", label="{ H | 0 }"];
+    	I [shape="record", style="rounded", label="{ I | 1 }"];
+
+
+    	A -> D [label="0"];
+    	A -> B [label="1"];
+    	B -> E [label="0"];
+    	B -> C [label="1"];
+    	C -> F [label="0"];
+    	C -> C [label="1"];
+    	D -> G [label="0"];
+    	D -> E [label="1"];
+    	E -> H [label="0"];
+    	E -> F [label="1"];
+    	F -> I [label="0"];
+    	F -> F [label="1"];
+    	G -> G [label="0"];
+    	G -> H [label="1"];
+    	H -> H [label="0"];
+    	H -> I [label="1"];
+    	I -> I [label="0"];
+    	I -> I [label="1"];
+
+    }

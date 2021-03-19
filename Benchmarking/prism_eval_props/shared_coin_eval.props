@@ -1,0 +1,16 @@
+Pmax=?[F ("finished" & "c1_heads" & "c2_tails")]
+
+Pmax=?[F ("finished" & "c1_tails" & "c2_tails")]
+
+Pmax=?[!"five" U "finished"]
+
+Pmax=?[!"four" U "finished"]
+
+Pmax=?[F<40 ("finished" & "c1_heads" & "c2_tails")]
+
+Pmax=?[F<40 ("finished" & "c1_tails" & "c2_tails")]
+
+Pmax=?[!"five" U<40 "finished"]
+
+Pmax=?[!"four" U<40 "finished"]
+

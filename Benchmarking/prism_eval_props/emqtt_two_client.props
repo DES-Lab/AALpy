@@ -1,0 +1,10 @@
+Pmax=? [ F<5 ("c2_Pub_c2_my_topic_bye") ]
+
+Pmax=? [ F<5 ("c1_crash") ]
+
+Pmax=? [ F<11 ("c1_crash") ]
+
+Pmax=? [ F<17 ("c1_crash") ]
+
+Pmax=? [(!("c2_crash")) U<12 ("c2_Pub_c2_my_topic_messageQos1") ]
+

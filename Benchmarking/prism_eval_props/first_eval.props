@@ -1,0 +1,6 @@
+Pmax=?[F<12("goal")]
+
+Pmax=? [ !("grass") U<=14 ("goal") ]
+
+Pmax=? [ !("sand") U<=16 ("goal") ]
+
