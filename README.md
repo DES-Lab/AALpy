@@ -94,5 +94,9 @@ For more examples and instructions check out the [Wiki](https://github.com/emusk
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 In case of any questions or possible bugs, please open issues.
 
+# Contributors
+- Edi Muskardin
+- Martin Tappler
+
 ## License
 [![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://github.com/tterb/atomic-design-ui/blob/master/LICENSEs)
