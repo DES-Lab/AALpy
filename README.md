@@ -73,7 +73,7 @@ random_dfa = generate_random_dfa(alphabet=[1,2,3,4,5],num_states=2000, num_accep
 # get input alphabet of the automaton
 alphabet = random_dfa.get_input_alphabet()
 # create a SUL instance for the automaton/system under learning
-sul = DfaSUL(automaton)
+sul = DfaSUL(random_dfa)
 
 # define the equivalence oracle
 eq_oracle = RandomWalkEqOracle(alphabet, sul, num_steps=5000, reset_prob=0.09)
