@@ -94,7 +94,7 @@ For more examples and instructions check out the [Wiki](https://github.com/emusk
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 In case of any questions or possible bugs, please open issues.
 
-# Contributors
+## Contributors
 - Edi Muskardin
 - Martin Tappler
 
