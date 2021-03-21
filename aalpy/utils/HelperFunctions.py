@@ -181,17 +181,20 @@ def print_observation_table(s_set, extended_s, e_set, table, det_table=True):
         extended_rows.append(row)
 
     table = [headers] + s_rows
-    length_list = [len(str(element)) for row in table + extended_rows for element in row]
-    column_width = max(length_list)
+    columns = defaultdict(int)
+    for i in table + extended_rows:
+        for index, el in enumerate(i):
+            columns[index] = max(columns[index], len(el))
+
     row_len = 0
     for row in table:
-        row = "|".join(element.ljust(column_width + 1) for element in row)
+        row = "|".join(element.ljust(columns[ind] + 1) for ind,element in enumerate(row))
         print("-" * len(row))
         row_len = len(row)
         print(row)
     print('=' * row_len)
     for row in extended_rows:
-        row = "|".join(element.ljust(column_width + 1) for element in row)
+        row = "|".join(element.ljust(columns[ind] + 1) for ind,element in enumerate(row))
         print("-" * len(row))
         print(row)
     print('-' * row_len)

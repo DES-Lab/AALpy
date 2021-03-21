@@ -243,7 +243,7 @@ def mqtt_example():
     eq_oracle = RandomWalkEqOracle(input_al, sul, num_steps=2000, reset_after_cex=True, reset_prob=0.15)
 
     mealy = run_Lstar(input_al, sul, eq_oracle=eq_oracle, automaton_type='mealy', cache_and_non_det_check=True,
-                      print_level=2)
+                      print_level=3)
 
     visualize_automaton(mealy)
 
