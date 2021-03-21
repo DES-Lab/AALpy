@@ -210,6 +210,44 @@ def learn_python_class():
     visualize_automaton(mealy)
 
 
+def mqtt_example():
+    from aalpy.base import SUL
+
+    class MQTT_SUL(SUL):
+        def __init__(self):
+            super().__init__()
+            self.mqtt = MockMqttExample()
+
+            self.abstract_to_concrete_mapping = {
+                'connect': self.mqtt.connect,
+                'disconnect': self.mqtt.disconnect,
+                'publish': self.mqtt.publish,
+                'subscribe': self.mqtt.subscribe,
+                'unsubscribe': self.mqtt.unsubscribe
+            }
+
+        def pre(self):
+            self.mqtt.state = 'CONCLOSED'
+
+        def post(self):
+            self.mqtt.topics.clear()
+
+        def step(self, letter):
+            if letter in {"publish", "subscribe", "unsubscribe"}:
+                return self.abstract_to_concrete_mapping[letter](topic='testTopic')
+            return self.abstract_to_concrete_mapping[letter]()
+
+    sul = MQTT_SUL()
+    input_al = list(sul.abstract_to_concrete_mapping.keys())
+
+    eq_oracle = RandomWalkEqOracle(input_al, sul, num_steps=2000, reset_after_cex=True, reset_prob=0.15)
+
+    mealy = run_Lstar(input_al, sul, eq_oracle=eq_oracle, automaton_type='mealy', cache_and_non_det_check=True,
+                      print_level=2)
+
+    visualize_automaton(mealy)
+
+
 def onfsm_mealy_paper_example():
     """
     Learning a ONFSM presented in 'Learning Finite State Models of Observable Nondeterministic Systems in a Testing
