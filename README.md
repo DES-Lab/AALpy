@@ -45,6 +45,12 @@ please check out our Wiki. On Wiki, you will find more detailed examples on how 
 For the official documentation of all classes and methods check out:
 - https://emuskardin.github.io/AALpy/
 
+Interactive examples can be found in the [notebooks]() folder.
+Click on the following badge if you want to play around with AALpy in the browser. 
+(Navigate to the _notebooks_ folder and select one notebook)
+
+[![Binder](https://notebooks.gesis.org/binder/badge_logo.svg)](https://notebooks.gesis.org/binder/v2/gh/emuskardin/AALpy/master)
+
 Furthermore, there you will find everything from an introduction to automata learning to the discussion of some advanced topics.
 
 In [Examples.py](https://github.com/emuskardin/AALpy/blob/master/Examples.py), many examples demonstrating all AALpy functionality are presented. 
