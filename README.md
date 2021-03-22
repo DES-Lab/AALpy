@@ -39,19 +39,18 @@ pip install pydot
 ## Documentation and Wiki
 
 If you are interested in automata learning or want to understand the automata learning process in more detail,
-please check out our Wiki. On Wiki, you will find more detailed examples on how to use AALpy.
+please check out our **Wiki**. On Wiki, you will find more detailed examples on how to use AALpy.
 - https://github.com/emuskardin/AALpy/wiki
 
-For the official documentation of all classes and methods check out:
+For the **official documentation** of all classes and methods check out:
 - https://emuskardin.github.io/AALpy/
 
-Interactive examples can be found in the [notebooks](https://github.com/emuskardin/AALpy/tree/master/notebooks) folder.
-Click on the following badge if you want to play around with AALpy in the browser. 
-(Navigate to the _notebooks_ folder and select one notebook)
+**Interactive examples** can be found in the [notebooks](https://github.com/emuskardin/AALpy/tree/master/notebooks) folder.
+If you want to interact/change those examples in the browser, click on the following badge. 
 
 [![Binder](https://notebooks.gesis.org/binder/badge_logo.svg)](https://notebooks.gesis.org/binder/v2/gh/emuskardin/AALpy/master)
+(Navigate to the _notebooks_ folder and select one notebook)
 
-Furthermore, there you will find everything from an introduction to automata learning to the discussion of some advanced topics.
 
 In [Examples.py](https://github.com/emuskardin/AALpy/blob/master/Examples.py), many examples demonstrating all AALpy functionality are presented. 
 
@@ -103,7 +102,7 @@ seed(2) # all experiments will be reproducible
 An example demonstrating step-by-step instructions for learning regular expressions can be found at [How to learn Regex with AALpy](https://github.com/emuskardin/AALpy/wiki/SUL-Interface%2C-or-How-to-Learn-Your-Systems/_edit#example---regexsul).
 
 For more examples and instructions check out the [Wiki](https://github.com/emuskardin/AALpy/wiki
-) and [Examples.py](https://github.com/emuskardin/AALpy/blob/master/Examples.py).
+) , [notebooks](https://github.com/emuskardin/AALpy/tree/master/notebooks), and [Examples.py](https://github.com/emuskardin/AALpy/blob/master/Examples.py).
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
