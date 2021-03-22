@@ -54,10 +54,9 @@ In [Examples.py](https://github.com/emuskardin/AALpy/blob/master/Examples.py), m
 ## Usage
 
 All automata learning procedures follow this high-level approach:
-- Define input alphabet
-- Define system under learning (SUL)
-- Define equivalence oracle
-- Run learning algorithm with input alphabet
+- [Define the input alphabet and system under learning (SUL)](https://github.com/emuskardin/AALpy/wiki/SUL-Interface,-or-How-to-Learn-Your-Systems)
+- [Choose the equivalence oracle](https://github.com/emuskardin/AALpy/wiki/Equivalence-Oracles)
+- [Run the learning algorithm](https://github.com/emuskardin/AALpy/wiki/Setting-Up-Learning)
 
 The following snippet demonstrates a short example in which automaton is either loaded or randomly generated and then learned.
 ```python
@@ -68,10 +67,13 @@ from aalpy.learning_algs import run_Lstar
 
 # load an automaton
 automaton = load_automaton_from_file('path_to_the_file.dot')
+
 # or randomly generate one
 random_dfa = generate_random_dfa(alphabet=[1,2,3,4,5],num_states=2000, num_accepting_states=200)
+
 # get input alphabet of the automaton
 alphabet = random_dfa.get_input_alphabet()
+
 # create a SUL instance for the automaton/system under learning
 sul = DfaSUL(random_dfa)
 
@@ -92,6 +94,8 @@ To make experiments reproducible, simply define a random seed at the beginning o
 from random import seed
 seed(2) # all experiments will be reproducible
 ```
+
+Example demonstating step by step instuction for learning regular experssions can be found at [How to learn Regex with AALpy](https://github.com/emuskardin/AALpy/wiki/SUL-Interface%2C-or-How-to-Learn-Your-Systems/_edit#example---regexsul).
 
 For more examples and instructions check out the [Wiki](https://github.com/emuskardin/AALpy/wiki
 ) and [Examples.py](https://github.com/emuskardin/AALpy/blob/master/Examples.py).
