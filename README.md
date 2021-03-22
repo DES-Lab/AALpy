@@ -45,7 +45,7 @@ please check out our Wiki. On Wiki, you will find more detailed examples on how 
 For the official documentation of all classes and methods check out:
 - https://emuskardin.github.io/AALpy/
 
-Interactive examples can be found in the [notebooks]() folder.
+Interactive examples can be found in the [notebooks](https://github.com/emuskardin/AALpy/tree/master/notebooks) folder.
 Click on the following badge if you want to play around with AALpy in the browser. 
 (Navigate to the _notebooks_ folder and select one notebook)
 
