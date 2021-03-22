@@ -181,8 +181,8 @@ def regex_example(regex, alphabet):
     """
     regex_sul = RegexSUL(regex)
 
-    eq_oracle = StatePrefixEqOracle(alphabet, regex_sul, walks_per_state=10000,
-                                    walk_len=20)
+    eq_oracle = StatePrefixEqOracle(alphabet, regex_sul, walks_per_state=20,
+                                    walk_len=10)
 
     learned_regex = run_Lstar(alphabet, regex_sul, eq_oracle, automaton_type='dfa')
 

@@ -6,7 +6,7 @@ By implementing a single method and a few lines of
 configuration, you can start learning automata. 
 
 Whether you work with regular languages, or you want to learn models of 
-reactive systems, AALpy supports a wide range of modelling formalisms including 
+reactive systems, AALpy supports a wide range of modeling formalisms including 
 deterministic, non-deterministic, and stochastic automata. 
 You can use it to learn **deterministic finite automata**, **Moore machines**, 
 and **Mealy machines** of deterministic systems. 
@@ -15,8 +15,7 @@ stochastic behavior, you can use AALpy to learn **observable
 nondeterministic finite-state machines**, **Markov decision processes**, 
 or **stochastic transducers**.
 
-AALpy enables efficient learning by providing a **large array of equivalence 
-oracles**, implementing various **conformance testing** strategies. Learning 
+AALpy enables efficient learning by providing a **large array of equivalence oracles**, implementing various **conformance testing** strategies. Learning 
 is mostly based on Angluin's L* algorithm, for which AALpy supports a 
 selection of optimizations, including **efficient counterexample processing**.
 Finally, support for learning **abstracted nondeterministic Mealy machines** 
@@ -40,7 +39,7 @@ pip install pydot
 ## Documentation and Wiki
 
 If you are interested in automata learning or want to understand the automata learning process in more detail,
-please check out our Wiki. On Wiki, you will find more detailed examples on how to use ALLpy.
+please check out our Wiki. On Wiki, you will find more detailed examples on how to use AALpy.
 - https://github.com/emuskardin/AALpy/wiki
 
 For the official documentation of all classes and methods check out:
@@ -48,7 +47,7 @@ For the official documentation of all classes and methods check out:
 
 Furthermore, there you will find everything from an introduction to automata learning to the discussion of some advanced topics.
 
-In [Examples.py](https://github.com/emuskardin/AALpy/blob/master/Examples.py), many examples demonstrating all ALLpy functionality are presented. 
+In [Examples.py](https://github.com/emuskardin/AALpy/blob/master/Examples.py), many examples demonstrating all AALpy functionality are presented. 
 
 
 ## Usage
@@ -58,7 +57,7 @@ All automata learning procedures follow this high-level approach:
 - [Choose the equivalence oracle](https://github.com/emuskardin/AALpy/wiki/Equivalence-Oracles)
 - [Run the learning algorithm](https://github.com/emuskardin/AALpy/wiki/Setting-Up-Learning)
 
-The following snippet demonstrates a short example in which automaton is either loaded or randomly generated and then learned.
+The following snippet demonstrates a short example in which an automaton is either loaded or randomly generated and then learned.
 ```python
 from aalpy.utils import load_automaton_from_file, save_automaton_to_file, visualize_automaton, generate_random_dfa
 from aalpy.SULs import DfaSUL
@@ -95,7 +94,7 @@ from random import seed
 seed(2) # all experiments will be reproducible
 ```
 
-Example demonstating step by step instuction for learning regular experssions can be found at [How to learn Regex with AALpy](https://github.com/emuskardin/AALpy/wiki/SUL-Interface%2C-or-How-to-Learn-Your-Systems/_edit#example---regexsul).
+An example demonstrating step-by-step instructions for learning regular expressions can be found at [How to learn Regex with AALpy](https://github.com/emuskardin/AALpy/wiki/SUL-Interface%2C-or-How-to-Learn-Your-Systems/_edit#example---regexsul).
 
 For more examples and instructions check out the [Wiki](https://github.com/emuskardin/AALpy/wiki
 ) and [Examples.py](https://github.com/emuskardin/AALpy/blob/master/Examples.py).

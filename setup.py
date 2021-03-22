@@ -7,7 +7,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='aalpy',
-    version='0.1',
+    version='0.1.1',
     packages=['aalpy', 'aalpy.base', 'aalpy.SULs', 'aalpy.utils', 'aalpy.oracles', 'aalpy.automata',
               'aalpy.learning_algs', 'aalpy.learning_algs.stochastic', 'aalpy.learning_algs.deterministic',
               'aalpy.learning_algs.non_deterministic'],
@@ -30,7 +30,7 @@ setup(
 
 # python setup.py sdist
 # pip wheel . -w dist
-# # twine upload dist/*
+# twine upload dist/*
 
 # for test pypi
 # twine upload --repository testpypi dist/*
