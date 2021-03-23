@@ -95,15 +95,15 @@ def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type,
             observation_table.update_obs_table(s_set=rows_to_query)
             rows_to_close = observation_table.get_rows_to_close(closing_strategy)
 
-        if print_level == 3:
-            print_observation_table(observation_table.S, observation_table.s_dot_a(),
-                                    observation_table.E, observation_table.T)
-
         # Generate hypothesis
         hypothesis = observation_table.gen_hypothesis(check_for_duplicate_rows=cex_processing is None)
 
         if print_level > 1:
             print(f'Hypothesis {learning_rounds} has {len(hypothesis.states)} states.')
+
+        if print_level == 3:
+            print_observation_table(observation_table.S, observation_table.s_dot_a(),
+                                    observation_table.E, observation_table.T)
 
         # Find counterexample
         eq_query_start = time.time()
@@ -113,6 +113,9 @@ def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type,
         # If no counterexample is found, return the hypothesis
         if cex is None:
             break
+
+        if print_level == 3:
+            print('Counterexample', cex)
 
         # Process counterexample and ask membership queries
         if not cex_processing:

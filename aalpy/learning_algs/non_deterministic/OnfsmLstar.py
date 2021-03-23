@@ -71,12 +71,12 @@ def run_Lstar_ONFSM(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=100,
         # Generate hypothesis
         hypothesis = observation_table.gen_hypothesis()
 
+        if print_level > 1:
+            print(f'Hypothesis {learning_rounds} has {len(hypothesis.states)} states.')
+
         if print_level == 3:
             print_observation_table(observation_table.S, observation_table.S_dot_A, observation_table.E,
                                     observation_table.T, False)
-
-        if print_level > 1:
-            print(f'Hypothesis {learning_rounds} has {len(hypothesis.states)} states.')
 
         # Find counterexample
         eq_query_start = time.time()
@@ -86,6 +86,10 @@ def run_Lstar_ONFSM(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=100,
         # If no counterexample is found, return the hypothesis
         if cex is None:
             break
+
+        if print_level == 3:
+            print('Counterexample', cex)
+
         # Process counterexample -> Extract suffix to be added to E set
         cex_suffixes = observation_table.cex_processing(cex)
         # Add all suffixes to the E set and ask membership/input queries.

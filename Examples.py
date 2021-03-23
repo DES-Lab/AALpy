@@ -260,7 +260,7 @@ def onfsm_mealy_paper_example():
     sul = OnfsmSUL(onfsm)
     eq_oracle = UnseenOutputRandomWalkEqOracle(alph, sul, num_steps=5000, reset_prob=0.09, reset_after_cex=True)
 
-    learned_onfsm = run_Lstar_ONFSM(alph, sul, eq_oracle, n_sampling=400, print_level=2)
+    learned_onfsm = run_Lstar_ONFSM(alph, sul, eq_oracle, n_sampling=400, print_level=3)
 
     return learned_onfsm
 
@@ -277,7 +277,7 @@ def faulty_coffee_machine_mdp_example():
                                                reset_after_cex=True)
 
     learned_mdp = run_stochastic_Lstar(input_alphabet, sul, eq_oracle, n_c=20, n_resample=100, min_rounds=10,
-                                       max_rounds=50)
+                                       max_rounds=50, print_level=3)
 
     return learned_mdp
 

@@ -96,12 +96,12 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_
             else:
                 hypothesis.states.remove(next(state for state in hypothesis.states if state.state_id == 'chaos'))
 
+        if print_level > 1:
+            print(f'Hypothesis: {learning_rounds}: {len(hypothesis.states)} states.')
+
         if print_level == 3:
             print_observation_table(observation_table.S,observation_table.get_extended_s(), observation_table.E,
                                 observation_table.T, False)
-
-        if print_level > 1:
-            print(f'Hypothesis: {learning_rounds}: {len(hypothesis.states)} states.')
 
         # If there is a prefix leading to chaos state, use that as a counterexample, otherwise preform equivalence query
         eq_query_start = time.time()
@@ -109,6 +109,8 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_
         eq_query_time += time.time() - eq_query_start
 
         if cex:
+            if print_level == 3:
+                print('Counterexample', cex)
             # get all prefixes and add them to the S set
             for p in get_cex_prefixes(cex, automaton_type):
                 if p not in observation_table.S:
