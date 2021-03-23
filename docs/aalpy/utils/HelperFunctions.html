@@ -28,6 +28,9 @@
                     <h2>API Documentation</h2>
                         <ul class="memberlist">
             <li>
+                    <a class="function" href="#extend_set">extend_set</a>
+            </li>
+            <li>
                     <a class="function" href="#profile_function">profile_function</a>
             </li>
             <li>
@@ -66,7 +69,7 @@
 <span class="kn">from</span> <span class="nn">aalpy.automata</span> <span class="kn">import</span> <span class="n">Mdp</span><span class="p">,</span> <span class="n">StochasticMealyMachine</span><span class="p">,</span> <span class="n">MdpState</span>
 
 
-<span class="k">def</span> <span class="nf">_extend_set</span><span class="p">(</span><span class="n">list_to_extend</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">new_elements</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+<span class="k">def</span> <span class="nf">extend_set</span><span class="p">(</span><span class="n">list_to_extend</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">new_elements</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Helper function to extend a list while maintaining set property.</span>
 <span class="sd">    They are stored as lists, so with this function set property is maintained.</span>
@@ -265,6 +268,47 @@
         </details>
 
             </section>
+                <section id="extend_set">
+                            <div class="attr function"><a class="headerlink" href="#extend_set">#&nbsp;&nbsp</a>
+
+        
+            <span class="def">def</span>
+            <span class="name">extend_set</span><span class="signature">(list_to_extend: list, new_elements: list) -&gt; list</span>:
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">extend_set</span><span class="p">(</span><span class="n">list_to_extend</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">new_elements</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Helper function to extend a list while maintaining set property.</span>
+<span class="sd">    They are stored as lists, so with this function set property is maintained.</span>
+<span class="sd">    :return</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">        list of elements that were added to the set</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">set_repr</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">list_to_extend</span><span class="p">)</span>
+    <span class="n">added_elements</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">new_elements</span> <span class="k">if</span> <span class="n">s</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">set_repr</span><span class="p">]</span>
+    <span class="n">list_to_extend</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">added_elements</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">added_elements</span>
+</pre></div>
+
+        </details>
+
+            <div class="docstring"><p>Helper function to extend a list while maintaining set property.
+They are stored as lists, so with this function set property is maintained.
+:return</p>
+
+<p>Returns:</p>
+
+<pre><code>list of elements that were added to the set
+</code></pre>
+</div>
+
+
+                </section>
                 <section id="profile_function">
                             <div class="attr function"><a class="headerlink" href="#profile_function">#&nbsp;&nbsp</a>
 

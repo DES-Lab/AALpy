@@ -53,7 +53,7 @@
 <span class="kn">from</span> <span class="nn">aalpy.base</span> <span class="kn">import</span> <span class="n">Oracle</span><span class="p">,</span> <span class="n">SUL</span>
 <span class="kn">from</span> <span class="nn">.CounterExampleProcessing</span> <span class="kn">import</span> <span class="n">longest_prefix_cex_processing</span><span class="p">,</span> <span class="n">rs_cex_processing</span><span class="p">,</span> <span class="n">_all_prefixes</span>
 <span class="kn">from</span> <span class="nn">.ObservationTable</span> <span class="kn">import</span> <span class="n">ObservationTable</span>
-<span class="kn">from</span> <span class="nn">aalpy.utils.HelperFunctions</span> <span class="kn">import</span> <span class="n">_extend_set</span><span class="p">,</span> <span class="n">print_learning_info</span><span class="p">,</span> <span class="n">print_observation_table</span>
+<span class="kn">from</span> <span class="nn">aalpy.utils.HelperFunctions</span> <span class="kn">import</span> <span class="n">extend_set</span><span class="p">,</span> <span class="n">print_learning_info</span><span class="p">,</span> <span class="n">print_observation_table</span>
 <span class="kn">from</span> <span class="nn">...base.SUL</span> <span class="kn">import</span> <span class="n">CacheSUL</span>
 
 <span class="n">counterexample_processing_strategy</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;rs&#39;</span><span class="p">,</span> <span class="s1">&#39;longest_prefix&#39;</span><span class="p">]</span>
@@ -61,7 +61,7 @@
 <span class="n">print_options</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
 
 
-<span class="k">def</span> <span class="nf">run_Lstar</span><span class="p">(</span><span class="n">alphabet</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">eq_oracle</span><span class="p">:</span> <span class="n">Oracle</span><span class="p">,</span> <span class="n">automaton_type</span><span class="o">=</span><span class="s1">&#39;mealy&#39;</span><span class="p">,</span>
+<span class="k">def</span> <span class="nf">run_Lstar</span><span class="p">(</span><span class="n">alphabet</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">eq_oracle</span><span class="p">:</span> <span class="n">Oracle</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">,</span>
               <span class="n">closing_strategy</span><span class="o">=</span><span class="s1">&#39;longest_first&#39;</span><span class="p">,</span> <span class="n">cex_processing</span><span class="o">=</span><span class="s1">&#39;rs&#39;</span><span class="p">,</span> <span class="n">suffix_closedness</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">closedness_type</span><span class="o">=</span><span class="s1">&#39;suffix&#39;</span><span class="p">,</span>
               <span class="n">max_learning_rounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cache_and_non_det_check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">return_data</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">print_level</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Executes L* algorithm with Riverst-Schapire counter example processing.</span>
@@ -74,7 +74,7 @@
 
 <span class="sd">        eq_oracle: equivalence oracle</span>
 
-<span class="sd">        automaton_type: type of automata to be learned. Either &#39;dfa&#39;, &#39;mealy&#39; or &#39;moore&#39;. (Default value = &#39;mealy&#39;)</span>
+<span class="sd">        automaton_type: type of automata to be learned. Either &#39;dfa&#39;, &#39;mealy&#39; or &#39;moore&#39;.</span>
 
 <span class="sd">        closing_strategy: closing strategy used in the close method. Either &#39;longest_first&#39;, &#39;shortest_first&#39; or &#39;single&#39;</span>
 <span class="sd">            (Default value = &#39;longest_first&#39;)</span>
@@ -131,7 +131,7 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="n">cex_processing</span><span class="p">:</span>
             <span class="n">inconsistent_rows</span> <span class="o">=</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">get_causes_of_inconsistency</span><span class="p">()</span>
             <span class="k">while</span> <span class="n">inconsistent_rows</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">_extend_set</span><span class="p">(</span><span class="n">observation_table</span><span class="o">.</span><span class="n">E</span><span class="p">,</span> <span class="n">inconsistent_rows</span><span class="p">)</span>
+                <span class="n">extend_set</span><span class="p">(</span><span class="n">observation_table</span><span class="o">.</span><span class="n">E</span><span class="p">,</span> <span class="n">inconsistent_rows</span><span class="p">)</span>
                 <span class="n">observation_table</span><span class="o">.</span><span class="n">update_obs_table</span><span class="p">(</span><span class="n">e_set</span><span class="o">=</span><span class="n">inconsistent_rows</span><span class="p">)</span>
                 <span class="n">inconsistent_rows</span> <span class="o">=</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">get_causes_of_inconsistency</span><span class="p">()</span>
 
@@ -167,7 +167,7 @@
         <span class="c1"># Process counterexample and ask membership queries</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">cex_processing</span><span class="p">:</span>
             <span class="n">s_to_update</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="n">added_rows</span> <span class="o">=</span> <span class="n">_extend_set</span><span class="p">(</span><span class="n">observation_table</span><span class="o">.</span><span class="n">S</span><span class="p">,</span> <span class="n">_all_prefixes</span><span class="p">(</span><span class="n">cex</span><span class="p">))</span>
+            <span class="n">added_rows</span> <span class="o">=</span> <span class="n">extend_set</span><span class="p">(</span><span class="n">observation_table</span><span class="o">.</span><span class="n">S</span><span class="p">,</span> <span class="n">_all_prefixes</span><span class="p">(</span><span class="n">cex</span><span class="p">))</span>
             <span class="n">s_to_update</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">added_rows</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">added_rows</span><span class="p">:</span>
                 <span class="n">s_to_update</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">p</span> <span class="o">+</span> <span class="p">(</span><span class="n">a</span><span class="p">,)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">alphabet</span><span class="p">])</span>
@@ -180,7 +180,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">cex_suffixes</span> <span class="o">=</span> <span class="n">rs_cex_processing</span><span class="p">(</span><span class="n">sul</span><span class="p">,</span> <span class="n">cex</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">,</span> <span class="n">suffix_closedness</span><span class="p">,</span> <span class="n">closedness_type</span><span class="p">)</span>
 
-        <span class="n">added_suffixes</span> <span class="o">=</span> <span class="n">_extend_set</span><span class="p">(</span><span class="n">observation_table</span><span class="o">.</span><span class="n">E</span><span class="p">,</span> <span class="n">cex_suffixes</span><span class="p">)</span>
+        <span class="n">added_suffixes</span> <span class="o">=</span> <span class="n">extend_set</span><span class="p">(</span><span class="n">observation_table</span><span class="o">.</span><span class="n">E</span><span class="p">,</span> <span class="n">cex_suffixes</span><span class="p">)</span>
         <span class="n">observation_table</span><span class="o">.</span><span class="n">update_obs_table</span><span class="p">(</span><span class="n">e_set</span><span class="o">=</span><span class="n">added_suffixes</span><span class="p">)</span>
 
     <span class="n">total_time</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
@@ -222,7 +222,7 @@
     alphabet: list,
     sul: <a href="../../base/SUL.html#SUL">aalpy.base.SUL.SUL</a>,
     eq_oracle: <a href="../../base/Oracle.html#Oracle">aalpy.base.Oracle.Oracle</a>,
-    automaton_type=&#39;mealy&#39;,
+    automaton_type,
     closing_strategy=&#39;longest_first&#39;,
     cex_processing=&#39;rs&#39;,
     suffix_closedness=True,
@@ -236,7 +236,7 @@
 
                 <details>
             <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">run_Lstar</span><span class="p">(</span><span class="n">alphabet</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">eq_oracle</span><span class="p">:</span> <span class="n">Oracle</span><span class="p">,</span> <span class="n">automaton_type</span><span class="o">=</span><span class="s1">&#39;mealy&#39;</span><span class="p">,</span>
+            <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">run_Lstar</span><span class="p">(</span><span class="n">alphabet</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">eq_oracle</span><span class="p">:</span> <span class="n">Oracle</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">,</span>
               <span class="n">closing_strategy</span><span class="o">=</span><span class="s1">&#39;longest_first&#39;</span><span class="p">,</span> <span class="n">cex_processing</span><span class="o">=</span><span class="s1">&#39;rs&#39;</span><span class="p">,</span> <span class="n">suffix_closedness</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">closedness_type</span><span class="o">=</span><span class="s1">&#39;suffix&#39;</span><span class="p">,</span>
               <span class="n">max_learning_rounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cache_and_non_det_check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">return_data</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">print_level</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Executes L* algorithm with Riverst-Schapire counter example processing.</span>
@@ -249,7 +249,7 @@
 
 <span class="sd">        eq_oracle: equivalence oracle</span>
 
-<span class="sd">        automaton_type: type of automata to be learned. Either &#39;dfa&#39;, &#39;mealy&#39; or &#39;moore&#39;. (Default value = &#39;mealy&#39;)</span>
+<span class="sd">        automaton_type: type of automata to be learned. Either &#39;dfa&#39;, &#39;mealy&#39; or &#39;moore&#39;.</span>
 
 <span class="sd">        closing_strategy: closing strategy used in the close method. Either &#39;longest_first&#39;, &#39;shortest_first&#39; or &#39;single&#39;</span>
 <span class="sd">            (Default value = &#39;longest_first&#39;)</span>
@@ -306,7 +306,7 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="n">cex_processing</span><span class="p">:</span>
             <span class="n">inconsistent_rows</span> <span class="o">=</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">get_causes_of_inconsistency</span><span class="p">()</span>
             <span class="k">while</span> <span class="n">inconsistent_rows</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">_extend_set</span><span class="p">(</span><span class="n">observation_table</span><span class="o">.</span><span class="n">E</span><span class="p">,</span> <span class="n">inconsistent_rows</span><span class="p">)</span>
+                <span class="n">extend_set</span><span class="p">(</span><span class="n">observation_table</span><span class="o">.</span><span class="n">E</span><span class="p">,</span> <span class="n">inconsistent_rows</span><span class="p">)</span>
                 <span class="n">observation_table</span><span class="o">.</span><span class="n">update_obs_table</span><span class="p">(</span><span class="n">e_set</span><span class="o">=</span><span class="n">inconsistent_rows</span><span class="p">)</span>
                 <span class="n">inconsistent_rows</span> <span class="o">=</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">get_causes_of_inconsistency</span><span class="p">()</span>
 
@@ -342,7 +342,7 @@
         <span class="c1"># Process counterexample and ask membership queries</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">cex_processing</span><span class="p">:</span>
             <span class="n">s_to_update</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="n">added_rows</span> <span class="o">=</span> <span class="n">_extend_set</span><span class="p">(</span><span class="n">observation_table</span><span class="o">.</span><span class="n">S</span><span class="p">,</span> <span class="n">_all_prefixes</span><span class="p">(</span><span class="n">cex</span><span class="p">))</span>
+            <span class="n">added_rows</span> <span class="o">=</span> <span class="n">extend_set</span><span class="p">(</span><span class="n">observation_table</span><span class="o">.</span><span class="n">S</span><span class="p">,</span> <span class="n">_all_prefixes</span><span class="p">(</span><span class="n">cex</span><span class="p">))</span>
             <span class="n">s_to_update</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">added_rows</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">added_rows</span><span class="p">:</span>
                 <span class="n">s_to_update</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">p</span> <span class="o">+</span> <span class="p">(</span><span class="n">a</span><span class="p">,)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">alphabet</span><span class="p">])</span>
@@ -355,7 +355,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">cex_suffixes</span> <span class="o">=</span> <span class="n">rs_cex_processing</span><span class="p">(</span><span class="n">sul</span><span class="p">,</span> <span class="n">cex</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">,</span> <span class="n">suffix_closedness</span><span class="p">,</span> <span class="n">closedness_type</span><span class="p">)</span>
 
-        <span class="n">added_suffixes</span> <span class="o">=</span> <span class="n">_extend_set</span><span class="p">(</span><span class="n">observation_table</span><span class="o">.</span><span class="n">E</span><span class="p">,</span> <span class="n">cex_suffixes</span><span class="p">)</span>
+        <span class="n">added_suffixes</span> <span class="o">=</span> <span class="n">extend_set</span><span class="p">(</span><span class="n">observation_table</span><span class="o">.</span><span class="n">E</span><span class="p">,</span> <span class="n">cex_suffixes</span><span class="p">)</span>
         <span class="n">observation_table</span><span class="o">.</span><span class="n">update_obs_table</span><span class="p">(</span><span class="n">e_set</span><span class="o">=</span><span class="n">added_suffixes</span><span class="p">)</span>
 
     <span class="n">total_time</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
@@ -397,7 +397,7 @@ sul: system under learning
 
 eq_oracle: equivalence oracle
 
-automaton_type: type of automata to be learned. Either 'dfa', 'mealy' or 'moore'. (Default value = 'mealy')
+automaton_type: type of automata to be learned. Either 'dfa', 'mealy' or 'moore'.
 
 closing_strategy: closing strategy used in the close method. Either 'longest_first', 'shortest_first' or 'single'
     (Default value = 'longest_first')

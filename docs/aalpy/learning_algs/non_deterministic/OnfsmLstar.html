@@ -53,7 +53,7 @@
 <span class="kn">from</span> <span class="nn">aalpy.base</span> <span class="kn">import</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">Oracle</span>
 <span class="kn">from</span> <span class="nn">aalpy.learning_algs.non_deterministic.OnfsmObservationTable</span> <span class="kn">import</span> <span class="n">NonDetObservationTable</span>
 <span class="kn">from</span> <span class="nn">aalpy.learning_algs.non_deterministic.TraceTree</span> <span class="kn">import</span> <span class="n">SULWrapper</span>
-<span class="kn">from</span> <span class="nn">aalpy.utils.HelperFunctions</span> <span class="kn">import</span> <span class="n">_extend_set</span><span class="p">,</span> <span class="n">print_learning_info</span><span class="p">,</span> <span class="n">print_observation_table</span>
+<span class="kn">from</span> <span class="nn">aalpy.utils.HelperFunctions</span> <span class="kn">import</span> <span class="n">extend_set</span><span class="p">,</span> <span class="n">print_learning_info</span><span class="p">,</span> <span class="n">print_observation_table</span>
 
 <span class="n">print_options</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
 
@@ -139,7 +139,7 @@
         <span class="c1"># Process counterexample -&gt; Extract suffix to be added to E set</span>
         <span class="n">cex_suffixes</span> <span class="o">=</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">cex_processing</span><span class="p">(</span><span class="n">cex</span><span class="p">)</span>
         <span class="c1"># Add all suffixes to the E set and ask membership/input queries.</span>
-        <span class="n">added_suffixes</span> <span class="o">=</span> <span class="n">_extend_set</span><span class="p">(</span><span class="n">observation_table</span><span class="o">.</span><span class="n">E</span><span class="p">,</span> <span class="n">cex_suffixes</span><span class="p">)</span>
+        <span class="n">added_suffixes</span> <span class="o">=</span> <span class="n">extend_set</span><span class="p">(</span><span class="n">observation_table</span><span class="o">.</span><span class="n">E</span><span class="p">,</span> <span class="n">cex_suffixes</span><span class="p">)</span>
         <span class="n">observation_table</span><span class="o">.</span><span class="n">update_obs_table</span><span class="p">(</span><span class="n">e_set</span><span class="o">=</span><span class="n">added_suffixes</span><span class="p">)</span>
 
     <span class="n">total_time</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
@@ -269,7 +269,7 @@
         <span class="c1"># Process counterexample -&gt; Extract suffix to be added to E set</span>
         <span class="n">cex_suffixes</span> <span class="o">=</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">cex_processing</span><span class="p">(</span><span class="n">cex</span><span class="p">)</span>
         <span class="c1"># Add all suffixes to the E set and ask membership/input queries.</span>
-        <span class="n">added_suffixes</span> <span class="o">=</span> <span class="n">_extend_set</span><span class="p">(</span><span class="n">observation_table</span><span class="o">.</span><span class="n">E</span><span class="p">,</span> <span class="n">cex_suffixes</span><span class="p">)</span>
+        <span class="n">added_suffixes</span> <span class="o">=</span> <span class="n">extend_set</span><span class="p">(</span><span class="n">observation_table</span><span class="o">.</span><span class="n">E</span><span class="p">,</span> <span class="n">cex_suffixes</span><span class="p">)</span>
         <span class="n">observation_table</span><span class="o">.</span><span class="n">update_obs_table</span><span class="p">(</span><span class="n">e_set</span><span class="o">=</span><span class="n">added_suffixes</span><span class="p">)</span>
 
     <span class="n">total_time</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
