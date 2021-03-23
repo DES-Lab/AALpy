@@ -74,7 +74,7 @@
 
 <span class="sd">        eq_oracle: equivalence oracle</span>
 
-<span class="sd">        automaton_type: type of automata to be learned. Either &#39;dfa&#39;, &#39;mealy&#39; or &#39;moore&#39;.</span>
+<span class="sd">        automaton_type: type of automaton to be learned. Either &#39;dfa&#39;, &#39;mealy&#39; or &#39;moore&#39;.</span>
 
 <span class="sd">        closing_strategy: closing strategy used in the close method. Either &#39;longest_first&#39;, &#39;shortest_first&#39; or &#39;single&#39;</span>
 <span class="sd">            (Default value = &#39;longest_first&#39;)</span>
@@ -101,7 +101,7 @@
 
 <span class="sd">    Returns:</span>
 
-<span class="sd">        automata of type automata_type (dict containing all information about learning if &#39;return_data&#39; is True)</span>
+<span class="sd">        automaton of type automaton_type (dict containing all information about learning if &#39;return_data&#39; is True)</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">assert</span> <span class="n">cex_processing</span> <span class="ow">in</span> <span class="n">counterexample_processing_strategy</span>
@@ -145,15 +145,15 @@
             <span class="n">observation_table</span><span class="o">.</span><span class="n">update_obs_table</span><span class="p">(</span><span class="n">s_set</span><span class="o">=</span><span class="n">rows_to_query</span><span class="p">)</span>
             <span class="n">rows_to_close</span> <span class="o">=</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">get_rows_to_close</span><span class="p">(</span><span class="n">closing_strategy</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">print_level</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
-            <span class="n">print_observation_table</span><span class="p">(</span><span class="n">observation_table</span><span class="o">.</span><span class="n">S</span><span class="p">,</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">s_dot_a</span><span class="p">(),</span>
-                                    <span class="n">observation_table</span><span class="o">.</span><span class="n">E</span><span class="p">,</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
-
         <span class="c1"># Generate hypothesis</span>
         <span class="n">hypothesis</span> <span class="o">=</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">gen_hypothesis</span><span class="p">(</span><span class="n">check_for_duplicate_rows</span><span class="o">=</span><span class="n">cex_processing</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">print_level</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Hypothesis </span><span class="si">{</span><span class="n">learning_rounds</span><span class="si">}</span><span class="s1"> has </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">)</span><span class="si">}</span><span class="s1"> states.&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">print_level</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">print_observation_table</span><span class="p">(</span><span class="n">observation_table</span><span class="o">.</span><span class="n">S</span><span class="p">,</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">s_dot_a</span><span class="p">(),</span>
+                                    <span class="n">observation_table</span><span class="o">.</span><span class="n">E</span><span class="p">,</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
 
         <span class="c1"># Find counterexample</span>
         <span class="n">eq_query_start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
@@ -163,6 +163,9 @@
         <span class="c1"># If no counterexample is found, return the hypothesis</span>
         <span class="k">if</span> <span class="n">cex</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">break</span>
+
+        <span class="k">if</span> <span class="n">print_level</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Counterexample&#39;</span><span class="p">,</span> <span class="n">cex</span><span class="p">)</span>
 
         <span class="c1"># Process counterexample and ask membership queries</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">cex_processing</span><span class="p">:</span>
@@ -249,7 +252,7 @@
 
 <span class="sd">        eq_oracle: equivalence oracle</span>
 
-<span class="sd">        automaton_type: type of automata to be learned. Either &#39;dfa&#39;, &#39;mealy&#39; or &#39;moore&#39;.</span>
+<span class="sd">        automaton_type: type of automaton to be learned. Either &#39;dfa&#39;, &#39;mealy&#39; or &#39;moore&#39;.</span>
 
 <span class="sd">        closing_strategy: closing strategy used in the close method. Either &#39;longest_first&#39;, &#39;shortest_first&#39; or &#39;single&#39;</span>
 <span class="sd">            (Default value = &#39;longest_first&#39;)</span>
@@ -276,7 +279,7 @@
 
 <span class="sd">    Returns:</span>
 
-<span class="sd">        automata of type automata_type (dict containing all information about learning if &#39;return_data&#39; is True)</span>
+<span class="sd">        automaton of type automaton_type (dict containing all information about learning if &#39;return_data&#39; is True)</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">assert</span> <span class="n">cex_processing</span> <span class="ow">in</span> <span class="n">counterexample_processing_strategy</span>
@@ -320,15 +323,15 @@
             <span class="n">observation_table</span><span class="o">.</span><span class="n">update_obs_table</span><span class="p">(</span><span class="n">s_set</span><span class="o">=</span><span class="n">rows_to_query</span><span class="p">)</span>
             <span class="n">rows_to_close</span> <span class="o">=</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">get_rows_to_close</span><span class="p">(</span><span class="n">closing_strategy</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">print_level</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
-            <span class="n">print_observation_table</span><span class="p">(</span><span class="n">observation_table</span><span class="o">.</span><span class="n">S</span><span class="p">,</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">s_dot_a</span><span class="p">(),</span>
-                                    <span class="n">observation_table</span><span class="o">.</span><span class="n">E</span><span class="p">,</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
-
         <span class="c1"># Generate hypothesis</span>
         <span class="n">hypothesis</span> <span class="o">=</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">gen_hypothesis</span><span class="p">(</span><span class="n">check_for_duplicate_rows</span><span class="o">=</span><span class="n">cex_processing</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">print_level</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Hypothesis </span><span class="si">{</span><span class="n">learning_rounds</span><span class="si">}</span><span class="s1"> has </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">)</span><span class="si">}</span><span class="s1"> states.&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">print_level</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">print_observation_table</span><span class="p">(</span><span class="n">observation_table</span><span class="o">.</span><span class="n">S</span><span class="p">,</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">s_dot_a</span><span class="p">(),</span>
+                                    <span class="n">observation_table</span><span class="o">.</span><span class="n">E</span><span class="p">,</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
 
         <span class="c1"># Find counterexample</span>
         <span class="n">eq_query_start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
@@ -338,6 +341,9 @@
         <span class="c1"># If no counterexample is found, return the hypothesis</span>
         <span class="k">if</span> <span class="n">cex</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">break</span>
+
+        <span class="k">if</span> <span class="n">print_level</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Counterexample&#39;</span><span class="p">,</span> <span class="n">cex</span><span class="p">)</span>
 
         <span class="c1"># Process counterexample and ask membership queries</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">cex_processing</span><span class="p">:</span>
@@ -397,7 +403,7 @@ sul: system under learning
 
 eq_oracle: equivalence oracle
 
-automaton_type: type of automata to be learned. Either 'dfa', 'mealy' or 'moore'.
+automaton_type: type of automaton to be learned. Either 'dfa', 'mealy' or 'moore'.
 
 closing_strategy: closing strategy used in the close method. Either 'longest_first', 'shortest_first' or 'single'
     (Default value = 'longest_first')
@@ -425,7 +431,7 @@ print_level: 0 - None, 1 - just results, 2 - current round and hypothesis size, 
 
 <p>Returns:</p>
 
-<pre><code>automata of type automata_type (dict containing all information about learning if 'return_data' is True)
+<pre><code>automaton of type automaton_type (dict containing all information about learning if 'return_data' is True)
 </code></pre>
 </div>
 

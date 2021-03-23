@@ -149,12 +149,12 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="n">state</span> <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span> <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">state_id</span> <span class="o">==</span> <span class="s1">&#39;chaos&#39;</span><span class="p">))</span>
 
+        <span class="k">if</span> <span class="n">print_level</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Hypothesis: </span><span class="si">{</span><span class="n">learning_rounds</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">)</span><span class="si">}</span><span class="s1"> states.&#39;</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="n">print_level</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
             <span class="n">print_observation_table</span><span class="p">(</span><span class="n">observation_table</span><span class="o">.</span><span class="n">S</span><span class="p">,</span><span class="n">observation_table</span><span class="o">.</span><span class="n">get_extended_s</span><span class="p">(),</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">E</span><span class="p">,</span>
                                 <span class="n">observation_table</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">print_level</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Hypothesis: </span><span class="si">{</span><span class="n">learning_rounds</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">)</span><span class="si">}</span><span class="s1"> states.&#39;</span><span class="p">)</span>
 
         <span class="c1"># If there is a prefix leading to chaos state, use that as a counterexample, otherwise preform equivalence query</span>
         <span class="n">eq_query_start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
@@ -162,6 +162,8 @@
         <span class="n">eq_query_time</span> <span class="o">+=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">eq_query_start</span>
 
         <span class="k">if</span> <span class="n">cex</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">print_level</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Counterexample&#39;</span><span class="p">,</span> <span class="n">cex</span><span class="p">)</span>
             <span class="c1"># get all prefixes and add them to the S set</span>
             <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">get_cex_prefixes</span><span class="p">(</span><span class="n">cex</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">):</span>
                 <span class="k">if</span> <span class="n">p</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">S</span><span class="p">:</span>
@@ -335,12 +337,12 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="n">state</span> <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span> <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">state_id</span> <span class="o">==</span> <span class="s1">&#39;chaos&#39;</span><span class="p">))</span>
 
+        <span class="k">if</span> <span class="n">print_level</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Hypothesis: </span><span class="si">{</span><span class="n">learning_rounds</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">)</span><span class="si">}</span><span class="s1"> states.&#39;</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="n">print_level</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
             <span class="n">print_observation_table</span><span class="p">(</span><span class="n">observation_table</span><span class="o">.</span><span class="n">S</span><span class="p">,</span><span class="n">observation_table</span><span class="o">.</span><span class="n">get_extended_s</span><span class="p">(),</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">E</span><span class="p">,</span>
                                 <span class="n">observation_table</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">print_level</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Hypothesis: </span><span class="si">{</span><span class="n">learning_rounds</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">)</span><span class="si">}</span><span class="s1"> states.&#39;</span><span class="p">)</span>
 
         <span class="c1"># If there is a prefix leading to chaos state, use that as a counterexample, otherwise preform equivalence query</span>
         <span class="n">eq_query_start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
@@ -348,6 +350,8 @@
         <span class="n">eq_query_time</span> <span class="o">+=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">eq_query_start</span>
 
         <span class="k">if</span> <span class="n">cex</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">print_level</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Counterexample&#39;</span><span class="p">,</span> <span class="n">cex</span><span class="p">)</span>
             <span class="c1"># get all prefixes and add them to the S set</span>
             <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">get_cex_prefixes</span><span class="p">(</span><span class="n">cex</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">):</span>
                 <span class="k">if</span> <span class="n">p</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">S</span><span class="p">:</span>

@@ -121,12 +121,12 @@
         <span class="c1"># Generate hypothesis</span>
         <span class="n">hypothesis</span> <span class="o">=</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">gen_hypothesis</span><span class="p">()</span>
 
+        <span class="k">if</span> <span class="n">print_level</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Hypothesis </span><span class="si">{</span><span class="n">learning_rounds</span><span class="si">}</span><span class="s1"> has </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">)</span><span class="si">}</span><span class="s1"> states.&#39;</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="n">print_level</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
             <span class="n">print_observation_table</span><span class="p">(</span><span class="n">observation_table</span><span class="o">.</span><span class="n">S</span><span class="p">,</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">S_dot_A</span><span class="p">,</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">E</span><span class="p">,</span>
                                     <span class="n">observation_table</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">print_level</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Hypothesis </span><span class="si">{</span><span class="n">learning_rounds</span><span class="si">}</span><span class="s1"> has </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">)</span><span class="si">}</span><span class="s1"> states.&#39;</span><span class="p">)</span>
 
         <span class="c1"># Find counterexample</span>
         <span class="n">eq_query_start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
@@ -136,6 +136,10 @@
         <span class="c1"># If no counterexample is found, return the hypothesis</span>
         <span class="k">if</span> <span class="n">cex</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">break</span>
+
+        <span class="k">if</span> <span class="n">print_level</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Counterexample&#39;</span><span class="p">,</span> <span class="n">cex</span><span class="p">)</span>
+
         <span class="c1"># Process counterexample -&gt; Extract suffix to be added to E set</span>
         <span class="n">cex_suffixes</span> <span class="o">=</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">cex_processing</span><span class="p">(</span><span class="n">cex</span><span class="p">)</span>
         <span class="c1"># Add all suffixes to the E set and ask membership/input queries.</span>
@@ -251,12 +255,12 @@
         <span class="c1"># Generate hypothesis</span>
         <span class="n">hypothesis</span> <span class="o">=</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">gen_hypothesis</span><span class="p">()</span>
 
+        <span class="k">if</span> <span class="n">print_level</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Hypothesis </span><span class="si">{</span><span class="n">learning_rounds</span><span class="si">}</span><span class="s1"> has </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">)</span><span class="si">}</span><span class="s1"> states.&#39;</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="n">print_level</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
             <span class="n">print_observation_table</span><span class="p">(</span><span class="n">observation_table</span><span class="o">.</span><span class="n">S</span><span class="p">,</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">S_dot_A</span><span class="p">,</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">E</span><span class="p">,</span>
                                     <span class="n">observation_table</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">print_level</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Hypothesis </span><span class="si">{</span><span class="n">learning_rounds</span><span class="si">}</span><span class="s1"> has </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">)</span><span class="si">}</span><span class="s1"> states.&#39;</span><span class="p">)</span>
 
         <span class="c1"># Find counterexample</span>
         <span class="n">eq_query_start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
@@ -266,6 +270,10 @@
         <span class="c1"># If no counterexample is found, return the hypothesis</span>
         <span class="k">if</span> <span class="n">cex</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">break</span>
+
+        <span class="k">if</span> <span class="n">print_level</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Counterexample&#39;</span><span class="p">,</span> <span class="n">cex</span><span class="p">)</span>
+
         <span class="c1"># Process counterexample -&gt; Extract suffix to be added to E set</span>
         <span class="n">cex_suffixes</span> <span class="o">=</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">cex_processing</span><span class="p">(</span><span class="n">cex</span><span class="p">)</span>
         <span class="c1"># Add all suffixes to the E set and ask membership/input queries.</span>
