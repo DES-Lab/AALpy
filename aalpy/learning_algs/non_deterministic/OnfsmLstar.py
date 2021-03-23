@@ -3,7 +3,7 @@ import time
 from aalpy.base import SUL, Oracle
 from aalpy.learning_algs.non_deterministic.OnfsmObservationTable import NonDetObservationTable
 from aalpy.learning_algs.non_deterministic.TraceTree import SULWrapper
-from aalpy.utils.HelperFunctions import _extend_set, print_learning_info, print_observation_table
+from aalpy.utils.HelperFunctions import extend_set, print_learning_info, print_observation_table
 
 print_options = [0, 1, 2, 3]
 
@@ -89,7 +89,7 @@ def run_Lstar_ONFSM(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=100,
         # Process counterexample -> Extract suffix to be added to E set
         cex_suffixes = observation_table.cex_processing(cex)
         # Add all suffixes to the E set and ask membership/input queries.
-        added_suffixes = _extend_set(observation_table.E, cex_suffixes)
+        added_suffixes = extend_set(observation_table.E, cex_suffixes)
         observation_table.update_obs_table(e_set=added_suffixes)
 
     total_time = round(time.time() - start_time, 2)

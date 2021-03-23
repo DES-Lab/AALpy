@@ -1,5 +1,4 @@
 # AALpy - An Active Automata Learning Library
-<!-- ![Alt text](saly.png?raw=true "AALpy") -->
 
 AALpy is a light-weight active automata learning library written in pure Python. 
 By implementing a single method and a few lines of 

@@ -4,7 +4,7 @@ from collections import defaultdict
 from aalpy.automata import Mdp, StochasticMealyMachine, MdpState
 
 
-def _extend_set(list_to_extend: list, new_elements: list) -> list:
+def extend_set(list_to_extend: list, new_elements: list) -> list:
     """
     Helper function to extend a list while maintaining set property.
     They are stored as lists, so with this function set property is maintained.

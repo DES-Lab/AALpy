@@ -3,7 +3,7 @@ import time
 from aalpy.base import Oracle, SUL
 from .CounterExampleProcessing import longest_prefix_cex_processing, rs_cex_processing, _all_prefixes
 from .ObservationTable import ObservationTable
-from aalpy.utils.HelperFunctions import _extend_set, print_learning_info, print_observation_table
+from aalpy.utils.HelperFunctions import extend_set, print_learning_info, print_observation_table
 from ...base.SUL import CacheSUL
 
 counterexample_processing_strategy = [None, 'rs', 'longest_prefix']
@@ -11,7 +11,7 @@ closedness_options = ['prefix', 'suffix']
 print_options = [0, 1, 2, 3]
 
 
-def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='mealy',
+def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type,
               closing_strategy='longest_first', cex_processing='rs', suffix_closedness=True, closedness_type='suffix',
               max_learning_rounds=None, cache_and_non_det_check=True, return_data=False, print_level=2):
     """Executes L* algorithm with Riverst-Schapire counter example processing.
@@ -24,7 +24,7 @@ def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='mealy
 
         eq_oracle: equivalence oracle
 
-        automaton_type: type of automata to be learned. Either 'dfa', 'mealy' or 'moore'. (Default value = 'mealy')
+        automaton_type: type of automata to be learned. Either 'dfa', 'mealy' or 'moore'.
 
         closing_strategy: closing strategy used in the close method. Either 'longest_first', 'shortest_first' or 'single'
             (Default value = 'longest_first')
@@ -81,7 +81,7 @@ def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='mealy
         if not cex_processing:
             inconsistent_rows = observation_table.get_causes_of_inconsistency()
             while inconsistent_rows is not None:
-                _extend_set(observation_table.E, inconsistent_rows)
+                extend_set(observation_table.E, inconsistent_rows)
                 observation_table.update_obs_table(e_set=inconsistent_rows)
                 inconsistent_rows = observation_table.get_causes_of_inconsistency()
 
@@ -117,7 +117,7 @@ def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='mealy
         # Process counterexample and ask membership queries
         if not cex_processing:
             s_to_update = []
-            added_rows = _extend_set(observation_table.S, _all_prefixes(cex))
+            added_rows = extend_set(observation_table.S, _all_prefixes(cex))
             s_to_update.extend(added_rows)
             for p in added_rows:
                 s_to_update.extend([p + (a,) for a in alphabet])
@@ -130,7 +130,7 @@ def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='mealy
         else:
             cex_suffixes = rs_cex_processing(sul, cex, hypothesis, suffix_closedness, closedness_type)
 
-        added_suffixes = _extend_set(observation_table.E, cex_suffixes)
+        added_suffixes = extend_set(observation_table.E, cex_suffixes)
         observation_table.update_obs_table(e_set=added_suffixes)
 
     total_time = round(time.time() - start_time, 2)
