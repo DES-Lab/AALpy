@@ -24,7 +24,7 @@ def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type,
 
         eq_oracle: equivalence oracle
 
-        automaton_type: type of automata to be learned. Either 'dfa', 'mealy' or 'moore'.
+        automaton_type: type of automaton to be learned. Either 'dfa', 'mealy' or 'moore'.
 
         closing_strategy: closing strategy used in the close method. Either 'longest_first', 'shortest_first' or 'single'
             (Default value = 'longest_first')
@@ -51,7 +51,7 @@ def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type,
 
     Returns:
 
-        automata of type automata_type (dict containing all information about learning if 'return_data' is True)
+        automaton of type automaton_type (dict containing all information about learning if 'return_data' is True)
 
     """
     assert cex_processing in counterexample_processing_strategy

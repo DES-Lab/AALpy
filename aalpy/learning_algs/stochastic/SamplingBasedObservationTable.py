@@ -216,7 +216,7 @@ class SamplingBasedObservationTable:
         """
         for ind, s1 in enumerate(self.compatibility_classes_representatives):
             for s2 in self.compatibility_class_rows[s1]:
-                #if self.are_rows_compatible(s1, s2, ignore):
+                # if self.are_rows_compatible(s1, s2, ignore):
                 i_o_pairs = [(i, tuple([o])) for i in self.input_alphabet for o in self.T[s1][i].keys()]
                 for i, o in i_o_pairs:
                     s1_keys = self.T[s1 + i + o].keys()
