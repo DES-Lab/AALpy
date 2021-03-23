@@ -68,7 +68,7 @@ The following snippet demonstrates a short example in which an automaton is eith
 ```python
 from aalpy.utils import load_automaton_from_file, save_automaton_to_file, visualize_automaton, generate_random_dfa
 from aalpy.SULs import DfaSUL
-from aalpy.oracles import RandomWalkEqOracle, StatePrefixEqOracle
+from aalpy.oracles import RandomWalkEqOracle
 from aalpy.learning_algs import run_Lstar
 
 # load an automaton
@@ -85,14 +85,16 @@ sul = DfaSUL(random_dfa)
 
 # define the equivalence oracle
 eq_oracle = RandomWalkEqOracle(alphabet, sul, num_steps=5000, reset_prob=0.09)
-eq_oracle_2 = StatePrefixEqOracle(alphabet, sul, walks_per_state=20, walk_len=10)
 
 # start learning
 learned_dfa = run_Lstar(alphabet, sul, eq_oracle, automaton_type='dfa')
 
 # save automaton to file and visualize it
 save_automaton_to_file(learned_dfa, path='Learned_Automaton', file_type='dot')
+# visualize automaton
 visualize_automaton(learned_dfa)
+# or just print its DOT representation
+print(automaton)
 ```
 
 In order to make experiments reproducible, simply define a random seed at the beginning of your program.
