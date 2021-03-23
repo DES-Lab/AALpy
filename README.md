@@ -5,23 +5,23 @@ AALpy is a light-weight active automata learning library written in pure Python.
 By implementing a single method and a few lines of 
 configuration, you can start learning automata. 
 
-Whether you work with regular languages, or you want to learn models of 
+Whether you work with regular languages, or you would like to learn models of 
 reactive systems, AALpy supports a wide range of modeling formalisms including 
 deterministic, non-deterministic, and stochastic automata. 
 You can use it to learn **deterministic finite automata**, **Moore machines**, 
 and **Mealy machines** of deterministic systems. 
-If the system that you want to learn shows non-deterministic or
-stochastic behavior, you can use AALpy to learn **observable
+If the system that you would like to learn shows non-deterministic or
+stochastic behavior, AALpy allows you to learn **observable
 nondeterministic finite-state machines**, **Markov decision processes**, 
 or **stochastic transducers**.
 
 AALpy enables efficient learning by providing a **large array of equivalence oracles**, implementing various **conformance testing** strategies. Learning 
-is mostly based on Angluin's L* algorithm, for which AALpy supports a 
+is mostly based on Angluin's [L*](https://people.eecs.berkeley.edu/~dawnsong/teaching/s10/papers/angluin87.pdf) algorithm, for which AALpy supports a 
 selection of optimizations, including **efficient counterexample processing**.
 Finally, support for learning **abstracted nondeterministic Mealy machines** 
 enables efficient learning of system models with large input space. 
 
-If AALpy misses a feature that you need, you can easily extend it. 
+If you miss a specific feature in AALpy, you can easily extend it. 
 
 ## Installation
 
@@ -29,16 +29,19 @@ Use the package manager [pip](https://pip.pypa.io/en/stable/) to install AALpy.
 ```bash
 pip install aalpy
 ```
+Minimum required version of Python is 3.6.  
 Ensure that you have [Graphviz](https://graphviz.org/) installed and added to your path if you want to visualize models.
 
 For manual installation clone the master and install the following dependency.
 ```bash
 pip install pydot
+# and to install the library
+python setup.py install
 ```
 
 ## Documentation and Wiki
 
-If you are interested in automata learning or want to understand the automata learning process in more detail,
+If you are interested in automata learning or would like to understand the automata learning process in more detail,
 please check out our **Wiki**. On Wiki, you will find more detailed examples on how to use AALpy.
 - https://github.com/emuskardin/AALpy/wiki
 
@@ -46,7 +49,7 @@ For the **official documentation** of all classes and methods check out:
 - https://emuskardin.github.io/AALpy/
 
 **Interactive examples** can be found in the [notebooks](https://github.com/emuskardin/AALpy/tree/master/notebooks) folder.
-If you want to interact/change those examples in the browser, click on the following badge. 
+If you would like to interact/change those examples in the browser, click on the following badge. 
 
 [![Binder](https://notebooks.gesis.org/binder/badge_logo.svg)](https://notebooks.gesis.org/binder/v2/gh/emuskardin/AALpy/master)
 (Navigate to the _notebooks_ folder and select one notebook)
@@ -62,7 +65,7 @@ All automata learning procedures follow this high-level approach:
 - [Choose the equivalence oracle](https://github.com/emuskardin/AALpy/wiki/Equivalence-Oracles)
 - [Run the learning algorithm](https://github.com/emuskardin/AALpy/wiki/Setting-Up-Learning)
 
-The following snippet demonstrates a short example in which an automaton is either loaded or randomly generated and then learned.
+The following snippet demonstrates a short example in which an automaton is either [loaded](https://github.com/emuskardin/AALpy/wiki/Loading,Saving,-Syntax-and-Visualization-of-Automata) or [randomly generated](https://github.com/emuskardin/AALpy/wiki/Generation-of-Random-Automata) and then [learned](https://github.com/emuskardin/AALpy/wiki/Setting-Up-Learning).
 ```python
 from aalpy.utils import load_automaton_from_file, save_automaton_to_file, visualize_automaton, generate_random_dfa
 from aalpy.SULs import DfaSUL
@@ -93,7 +96,7 @@ save_automaton_to_file(learned_dfa, path='Learned_Automaton', file_type='dot')
 visualize_automaton(learned_dfa)
 ```
 
-To make experiments reproducible, simply define a random seed at the beginning of your program.
+In order to make experiments reproducible, simply define a random seed at the beginning of your program.
 ```python
 from random import seed
 seed(2) # all experiments will be reproducible
