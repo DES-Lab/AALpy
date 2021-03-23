@@ -25,7 +25,7 @@ counter_example_processing = ['rs', 'longest_prefix', None]
 e_closedness = ['prefix', 'suffix']
 
 for b in benchmarks:
-    automaton = load_automaton_from_file(f'{exp}/{b}')
+    automaton = load_automaton_from_file(f'{exp}/{b}', automaton_type='dfa')
     input_al = automaton.get_input_alphabet()
 
     sul_dfa = sul(automaton)

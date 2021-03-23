@@ -103,7 +103,7 @@ def save_automaton_to_file(automaton, path="LearnedModel", file_type='dot',
             print(f'Could not write to file {path}.{file_type} (Permission denied). Close the file if open and retry.')
 
 
-def load_automaton_from_file(path, automaton_type=None, compute_prefixes=False):
+def load_automaton_from_file(path, automaton_type, compute_prefixes=False):
     """
     Loads the automaton from the file.
     Standard of the automatas strictly follows syntax found at: https://automata.cs.ru.nl/Syntax/Overview.
@@ -112,7 +112,7 @@ def load_automaton_from_file(path, automaton_type=None, compute_prefixes=False):
 
         path: path to the file
 
-        automaton_type: type of the automaton, if not specified it will be automatically determined according (Default value = None)
+        automaton_type: type of the automaton, if not specified it will be automatically determined according
 
         compute_prefixes: it True, shortest path to reach every state will be computed and saved in the prefix of
             the state. Useful when loading the model to use them as a equivalence oracle. (Default value = False)
@@ -122,13 +122,7 @@ def load_automaton_from_file(path, automaton_type=None, compute_prefixes=False):
 
     """
     graph = graph_from_dot_file(path)[0]
-    if not automaton_type:
-        if 'doublecircle' in graph.to_string():
-            automaton_type = 'dfa'
-        elif 'record' in graph.to_string() and 'rounded' in graph.to_string():
-            automaton_type = 'moore'
-        else:
-            automaton_type = 'mealy'
+
     assert automaton_type in automaton_types
 
     node = MealyState if automaton_type == 'mealy' else DfaState if automaton_type == 'dfa' else MooreState
