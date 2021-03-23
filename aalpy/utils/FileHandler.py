@@ -56,7 +56,7 @@ def save_automaton_to_file(automaton, path="LearnedModel", file_type='dot',
     is_onsfm = isinstance(automaton, Onfsm)
     is_smm = isinstance(automaton, StochasticMealyMachine)
 
-    graph = Dot('path', graph_type='digraph')
+    graph = Dot(path, graph_type='digraph')
     for state in automaton.states:
         if is_dfa and state.is_accepting:
             graph.add_node(Node(state.state_id, label=state.state_id, shape='doublecircle'))
