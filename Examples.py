@@ -218,14 +218,6 @@ def mqtt_example():
             super().__init__()
             self.mqtt = MockMqttExample()
 
-            self.abstract_to_concrete_mapping = {
-                'connect': self.mqtt.connect,
-                'disconnect': self.mqtt.disconnect,
-                'publish': self.mqtt.publish,
-                'subscribe': self.mqtt.subscribe,
-                'unsubscribe': self.mqtt.unsubscribe
-            }
-
         def pre(self):
             self.mqtt.state = 'CONCLOSED'
 
@@ -233,12 +225,19 @@ def mqtt_example():
             self.mqtt.topics.clear()
 
         def step(self, letter):
-            if letter in {"publish", "subscribe", "unsubscribe"}:
-                return self.abstract_to_concrete_mapping[letter](topic='testTopic')
-            return self.abstract_to_concrete_mapping[letter]()
+            if letter == 'connect':
+                return self.mqtt.connect()
+            elif letter == 'disconnect':
+                return self.mqtt.disconnect()
+            elif letter == 'publish':
+                return self.mqtt.publish(topic='test')
+            elif letter == 'subscribe':
+                return self.mqtt.subscribe(topic='test')
+            else:
+                return self.mqtt.unsubscribe(topic='test')
 
     sul = MQTT_SUL()
-    input_al = list(sul.abstract_to_concrete_mapping.keys())
+    input_al = ['connect', 'disconnect', 'publish','subscribe', 'unsubscribe']
 
     eq_oracle = RandomWalkEqOracle(input_al, sul, num_steps=2000, reset_after_cex=True, reset_prob=0.15)
 
