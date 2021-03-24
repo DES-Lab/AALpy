@@ -2,7 +2,13 @@
 
 Whether you work with regular languages, or you would like to learn models of 
 reactive systems, AALpy supports a wide range of modeling formalisms including 
-deterministic, non-deterministic, and stochastic automata. 
+**deterministic**, **non-deterministic**, and **stochastic automata**. 
+
+AALpy enables efficient learning by providing a **large array of equivalence oracles**, implementing various **conformance testing** strategies. Learning 
+is mostly based on Angluin's [L*](https://people.eecs.berkeley.edu/~dawnsong/teaching/s10/papers/angluin87.pdf) algorithm, for which AALpy supports a 
+selection of optimizations, including **efficient counterexample processing**.
+Finally, support for learning **abstracted nondeterministic Mealy machines** 
+enables efficient learning of system models with large input space. 
 
 ## Installation
 
