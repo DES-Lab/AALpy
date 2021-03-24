@@ -1,1 +1,8 @@
+title : AALpy - An Active Automata Learning Library
+author: Edi Muskardin
+rss-description: Dive into Automata Learning with AALpy
 theme: jekyll-theme-cayman
+
+navbar-links:
+  Documentation: "docs/index"
+  Wiki: "https://github.com/emuskardin/AALpy/wiki"
