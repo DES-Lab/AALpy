@@ -156,8 +156,7 @@ seed(2) # all experiments will be reproducible
 ```
 
 An example demonstrating step-by-step instructions for learning regular expressions can be found at [How to learn Regex with AALpy](https://github.com/emuskardin/AALpy/wiki/SUL-Interface%2C-or-How-to-Learn-Your-Systems/_edit#example---regexsul).
-
-For suggestion on how to learn Bluetooth or some other IoT protocol like MQTT with AALpy, click [here.](https://github.com/emuskardin/AALpy/wiki/SUL-Interface,-or-How-to-Learn-Your-Systems#example---mqtt). 
+Examples demonstrating how to learn Bluetooth or other IoT protocols like MQTT can be found at [How to learn MQTT with AALpy](https://github.com/emuskardin/AALpy/wiki/SUL-Interface,-or-How-to-Learn-Your-Systems#example---mqtt). 
 
 For more examples and instructions check out the [Wiki](https://github.com/emuskardin/AALpy/wiki
 ) , [notebooks](https://github.com/emuskardin/AALpy/tree/master/notebooks), and [Examples.py](https://github.com/emuskardin/AALpy/blob/master/Examples.py).
