@@ -75,6 +75,18 @@
                 </ul>
 
             </li>
+            <li>
+                    <a class="class" href="#DateValidator">DateValidator</a>
+                            <ul class="memberlist">
+                        <li>
+                                <a class="function" href="#DateValidator.__init__">DateValidator</a>
+                        </li>
+                        <li>
+                                <a class="function" href="#DateValidator.is_date_accepted">is_date_accepted</a>
+                        </li>
+                </ul>
+
+            </li>
     </ul>
 
 
@@ -98,7 +110,6 @@
 
 
 <span class="k">def</span> <span class="nf">get_Angluin_dfa</span><span class="p">():</span>
-
     <span class="n">q0</span> <span class="o">=</span> <span class="n">DfaState</span><span class="p">(</span><span class="s1">&#39;q0&#39;</span><span class="p">)</span>
     <span class="n">q0</span><span class="o">.</span><span class="n">is_accepting</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">q1</span> <span class="o">=</span> <span class="n">DfaState</span><span class="p">(</span><span class="s1">&#39;q1&#39;</span><span class="p">)</span>
@@ -145,7 +156,6 @@
 
 
 <span class="k">def</span> <span class="nf">get_faulty_coffee_machine_MDP</span><span class="p">():</span>
-
     <span class="n">q0</span> <span class="o">=</span> <span class="n">MdpState</span><span class="p">(</span><span class="s2">&quot;q0&quot;</span><span class="p">,</span> <span class="s2">&quot;init&quot;</span><span class="p">)</span>
     <span class="n">q1</span> <span class="o">=</span> <span class="n">MdpState</span><span class="p">(</span><span class="s2">&quot;q1&quot;</span><span class="p">,</span> <span class="s2">&quot;beep&quot;</span><span class="p">)</span>
     <span class="n">q2</span> <span class="o">=</span> <span class="n">MdpState</span><span class="p">(</span><span class="s2">&quot;q2&quot;</span><span class="p">,</span> <span class="s2">&quot;coffee&quot;</span><span class="p">)</span>
@@ -162,8 +172,8 @@
 
     <span class="k">return</span> <span class="n">mdp</span>
 
-<span class="k">def</span> <span class="nf">get_weird_coffee_machine_MDP</span><span class="p">():</span>
 
+<span class="k">def</span> <span class="nf">get_weird_coffee_machine_MDP</span><span class="p">():</span>
     <span class="n">q0</span> <span class="o">=</span> <span class="n">MdpState</span><span class="p">(</span><span class="s2">&quot;q0&quot;</span><span class="p">,</span> <span class="s2">&quot;init&quot;</span><span class="p">)</span>
     <span class="n">q1</span> <span class="o">=</span> <span class="n">MdpState</span><span class="p">(</span><span class="s2">&quot;q1&quot;</span><span class="p">,</span> <span class="s2">&quot;beep&quot;</span><span class="p">)</span>
     <span class="n">q2</span> <span class="o">=</span> <span class="n">MdpState</span><span class="p">(</span><span class="s2">&quot;q2&quot;</span><span class="p">,</span> <span class="s2">&quot;coffee&quot;</span><span class="p">)</span>
@@ -208,8 +218,8 @@
 
     <span class="k">return</span> <span class="n">mdp</span>
 
-<span class="k">def</span> <span class="nf">get_faulty_coffee_machine_SMM</span><span class="p">():</span>
 
+<span class="k">def</span> <span class="nf">get_faulty_coffee_machine_SMM</span><span class="p">():</span>
     <span class="n">s0</span> <span class="o">=</span> <span class="n">StochasticMealyState</span><span class="p">(</span><span class="s1">&#39;s0&#39;</span><span class="p">)</span>
     <span class="n">s1</span> <span class="o">=</span> <span class="n">StochasticMealyState</span><span class="p">(</span><span class="s1">&#39;s1&#39;</span><span class="p">)</span>
     <span class="n">s2</span> <span class="o">=</span> <span class="n">StochasticMealyState</span><span class="p">(</span><span class="s1">&#39;s2&#39;</span><span class="p">)</span>
@@ -228,7 +238,6 @@
 
 
 <span class="k">def</span> <span class="nf">get_minimal_faulty_coffee_machine_SMM</span><span class="p">():</span>
-
     <span class="n">s0</span> <span class="o">=</span> <span class="n">StochasticMealyState</span><span class="p">(</span><span class="s1">&#39;s0&#39;</span><span class="p">)</span>
     <span class="n">s1</span> <span class="o">=</span> <span class="n">StochasticMealyState</span><span class="p">(</span><span class="s1">&#39;s1&#39;</span><span class="p">)</span>
 
@@ -244,7 +253,6 @@
 
 
 <span class="k">def</span> <span class="nf">get_faulty_mqtt_SMM</span><span class="p">():</span>
-
     <span class="n">s0</span> <span class="o">=</span> <span class="n">StochasticMealyState</span><span class="p">(</span><span class="s1">&#39;s0&#39;</span><span class="p">)</span>
     <span class="n">s1</span> <span class="o">=</span> <span class="n">StochasticMealyState</span><span class="p">(</span><span class="s1">&#39;s1&#39;</span><span class="p">)</span>
     <span class="n">s2</span> <span class="o">=</span> <span class="n">StochasticMealyState</span><span class="p">(</span><span class="s1">&#39;s2&#39;</span><span class="p">)</span>
@@ -275,7 +283,6 @@
 
 
 <span class="k">def</span> <span class="nf">get_small_gridworld</span><span class="p">():</span>
-
     <span class="n">s0</span> <span class="o">=</span> <span class="n">StochasticMealyState</span><span class="p">(</span><span class="s1">&#39;s0&#39;</span><span class="p">)</span>
     <span class="n">s1</span> <span class="o">=</span> <span class="n">StochasticMealyState</span><span class="p">(</span><span class="s1">&#39;s1&#39;</span><span class="p">)</span>
     <span class="n">s2</span> <span class="o">=</span> <span class="n">StochasticMealyState</span><span class="p">(</span><span class="s1">&#39;s2&#39;</span><span class="p">)</span>
@@ -373,6 +380,37 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="s1">&#39;PUBACK_PUBACK&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span>
+
+
+<span class="k">class</span> <span class="nc">DateValidator</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Class mimicking Date Validator API.</span>
+<span class="sd">    It does not account for the leap years.</span>
+<span class="sd">The format of the dates is %d/%m/%Y&#39;    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">is_date_accepted</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">date_string</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="n">date_string</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">day</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">month</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+            <span class="n">year</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">year</span> <span class="o">&lt;=</span> <span class="mi">9999</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="n">month</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;=</span> <span class="n">day</span> <span class="o">&lt;=</span> <span class="mi">28</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="n">month</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">12</span><span class="p">]</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;=</span> <span class="n">day</span> <span class="o">&lt;=</span> <span class="mi">31</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">elif</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;=</span> <span class="n">day</span> <span class="o">&lt;=</span> <span class="mi">31</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">return</span> <span class="kc">True</span>
 </pre></div>
 
         </details>
@@ -389,7 +427,6 @@
                 <details>
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">get_Angluin_dfa</span><span class="p">():</span>
-
     <span class="n">q0</span> <span class="o">=</span> <span class="n">DfaState</span><span class="p">(</span><span class="s1">&#39;q0&#39;</span><span class="p">)</span>
     <span class="n">q0</span><span class="o">.</span><span class="n">is_accepting</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">q1</span> <span class="o">=</span> <span class="n">DfaState</span><span class="p">(</span><span class="s1">&#39;q1&#39;</span><span class="p">)</span>
@@ -469,7 +506,6 @@ Context'.</p>
                 <details>
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">get_faulty_coffee_machine_MDP</span><span class="p">():</span>
-
     <span class="n">q0</span> <span class="o">=</span> <span class="n">MdpState</span><span class="p">(</span><span class="s2">&quot;q0&quot;</span><span class="p">,</span> <span class="s2">&quot;init&quot;</span><span class="p">)</span>
     <span class="n">q1</span> <span class="o">=</span> <span class="n">MdpState</span><span class="p">(</span><span class="s2">&quot;q1&quot;</span><span class="p">,</span> <span class="s2">&quot;beep&quot;</span><span class="p">)</span>
     <span class="n">q2</span> <span class="o">=</span> <span class="n">MdpState</span><span class="p">(</span><span class="s2">&quot;q2&quot;</span><span class="p">,</span> <span class="s2">&quot;coffee&quot;</span><span class="p">)</span>
@@ -503,7 +539,6 @@ Context'.</p>
                 <details>
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">get_weird_coffee_machine_MDP</span><span class="p">():</span>
-
     <span class="n">q0</span> <span class="o">=</span> <span class="n">MdpState</span><span class="p">(</span><span class="s2">&quot;q0&quot;</span><span class="p">,</span> <span class="s2">&quot;init&quot;</span><span class="p">)</span>
     <span class="n">q1</span> <span class="o">=</span> <span class="n">MdpState</span><span class="p">(</span><span class="s2">&quot;q1&quot;</span><span class="p">,</span> <span class="s2">&quot;beep&quot;</span><span class="p">)</span>
     <span class="n">q2</span> <span class="o">=</span> <span class="n">MdpState</span><span class="p">(</span><span class="s2">&quot;q2&quot;</span><span class="p">,</span> <span class="s2">&quot;coffee&quot;</span><span class="p">)</span>
@@ -565,7 +600,6 @@ Context'.</p>
                 <details>
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">get_faulty_coffee_machine_SMM</span><span class="p">():</span>
-
     <span class="n">s0</span> <span class="o">=</span> <span class="n">StochasticMealyState</span><span class="p">(</span><span class="s1">&#39;s0&#39;</span><span class="p">)</span>
     <span class="n">s1</span> <span class="o">=</span> <span class="n">StochasticMealyState</span><span class="p">(</span><span class="s1">&#39;s1&#39;</span><span class="p">)</span>
     <span class="n">s2</span> <span class="o">=</span> <span class="n">StochasticMealyState</span><span class="p">(</span><span class="s1">&#39;s2&#39;</span><span class="p">)</span>
@@ -599,7 +633,6 @@ Context'.</p>
                 <details>
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">get_minimal_faulty_coffee_machine_SMM</span><span class="p">():</span>
-
     <span class="n">s0</span> <span class="o">=</span> <span class="n">StochasticMealyState</span><span class="p">(</span><span class="s1">&#39;s0&#39;</span><span class="p">)</span>
     <span class="n">s1</span> <span class="o">=</span> <span class="n">StochasticMealyState</span><span class="p">(</span><span class="s1">&#39;s1&#39;</span><span class="p">)</span>
 
@@ -630,7 +663,6 @@ Context'.</p>
                 <details>
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">get_faulty_mqtt_SMM</span><span class="p">():</span>
-
     <span class="n">s0</span> <span class="o">=</span> <span class="n">StochasticMealyState</span><span class="p">(</span><span class="s1">&#39;s0&#39;</span><span class="p">)</span>
     <span class="n">s1</span> <span class="o">=</span> <span class="n">StochasticMealyState</span><span class="p">(</span><span class="s1">&#39;s1&#39;</span><span class="p">)</span>
     <span class="n">s2</span> <span class="o">=</span> <span class="n">StochasticMealyState</span><span class="p">(</span><span class="s1">&#39;s2&#39;</span><span class="p">)</span>
@@ -676,7 +708,6 @@ Context'.</p>
                 <details>
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">get_small_gridworld</span><span class="p">():</span>
-
     <span class="n">s0</span> <span class="o">=</span> <span class="n">StochasticMealyState</span><span class="p">(</span><span class="s1">&#39;s0&#39;</span><span class="p">)</span>
     <span class="n">s1</span> <span class="o">=</span> <span class="n">StochasticMealyState</span><span class="p">(</span><span class="s1">&#39;s1&#39;</span><span class="p">)</span>
     <span class="n">s2</span> <span class="o">=</span> <span class="n">StochasticMealyState</span><span class="p">(</span><span class="s1">&#39;s2&#39;</span><span class="p">)</span>
@@ -932,6 +963,108 @@ Context'.</p>
             <span class="k">else</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="s1">&#39;PUBACK_PUBACK&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span>
+</pre></div>
+
+        </details>
+
+    
+
+                            </div>
+                </section>
+                <section id="DateValidator">
+                                <div class="attr class">
+        <a class="headerlink" href="#DateValidator">#&nbsp;&nbsp</a>
+
+        
+        <span class="def">class</span>
+        <span class="name">DateValidator</span>:
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">DateValidator</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Class mimicking Date Validator API.</span>
+<span class="sd">    It does not account for the leap years.</span>
+<span class="sd">The format of the dates is %d/%m/%Y&#39;    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">is_date_accepted</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">date_string</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="n">date_string</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">day</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">month</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+            <span class="n">year</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">year</span> <span class="o">&lt;=</span> <span class="mi">9999</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="n">month</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;=</span> <span class="n">day</span> <span class="o">&lt;=</span> <span class="mi">28</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="n">month</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">12</span><span class="p">]</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;=</span> <span class="n">day</span> <span class="o">&lt;=</span> <span class="mi">31</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">elif</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;=</span> <span class="n">day</span> <span class="o">&lt;=</span> <span class="mi">31</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">return</span> <span class="kc">True</span>
+</pre></div>
+
+        </details>
+
+            <div class="docstring"><p>Class mimicking Date Validator API.
+    It does not account for the leap years.
+The format of the dates is %d/%m/%Y'</p>
+</div>
+
+
+                            <div id="DateValidator.__init__" class="classattr">
+                                        <div class="attr function"><a class="headerlink" href="#DateValidator.__init__">#&nbsp;&nbsp</a>
+
+        
+            <span class="name">DateValidator</span><span class="signature">()</span>    </div>
+
+        
+    
+
+                            </div>
+                            <div id="DateValidator.is_date_accepted" class="classattr">
+                                        <div class="attr function"><a class="headerlink" href="#DateValidator.is_date_accepted">#&nbsp;&nbsp</a>
+
+        
+            <span class="def">def</span>
+            <span class="name">is_date_accepted</span><span class="signature">(self, date_string: str)</span>:
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">is_date_accepted</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">date_string</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="n">date_string</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">day</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">month</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+            <span class="n">year</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">year</span> <span class="o">&lt;=</span> <span class="mi">9999</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="n">month</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;=</span> <span class="n">day</span> <span class="o">&lt;=</span> <span class="mi">28</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="n">month</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">12</span><span class="p">]</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;=</span> <span class="n">day</span> <span class="o">&lt;=</span> <span class="mi">31</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">elif</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;=</span> <span class="n">day</span> <span class="o">&lt;=</span> <span class="mi">31</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">return</span> <span class="kc">True</span>
 </pre></div>
 
         </details>
