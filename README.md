@@ -4,8 +4,8 @@ AALpy is a light-weight active automata learning library written in pure Python.
 By implementing a single method and a few lines of 
 configuration, you can start learning automata. 
 
-Whether you work with regular languages, or you would like to learn models of 
-reactive systems, AALpy supports a wide range of modeling formalisms including 
+Whether you work with regular languages or you would like to learn models of 
+reactive systems, AALpy supports a wide range of modeling formalisms, including 
 deterministic, non-deterministic, and stochastic automata. 
 You can use it to learn **deterministic finite automata**, **Moore machines**, 
 and **Mealy machines** of deterministic systems. 
@@ -17,7 +17,7 @@ or **stochastic transducers**.
 AALpy enables efficient learning by providing a **large array of equivalence oracles**, implementing various **conformance testing** strategies. Learning 
 is mostly based on Angluin's [L*](https://people.eecs.berkeley.edu/~dawnsong/teaching/s10/papers/angluin87.pdf) algorithm, for which AALpy supports a 
 selection of optimizations, including **efficient counterexample processing**.
-Finally, support for learning **abstracted nondeterministic Mealy machines** 
+Finally, support for learning **abstracted non-deterministic Mealy machines** 
 enables efficient learning of system models with large input space. 
 
 If you miss a specific feature in AALpy, you can easily extend it. 
@@ -28,10 +28,10 @@ Use the package manager [pip](https://pip.pypa.io/en/stable/) to install AALpy.
 ```bash
 pip install aalpy
 ```
-Minimum required version of Python is 3.6.  
+The minimum required version of Python is 3.6.  
 Ensure that you have [Graphviz](https://graphviz.org/) installed and added to your path if you want to visualize models.
 
-For manual installation clone the master and install the following dependency.
+For manual installation, clone the master and install the following dependency.
 ```bash
 pip install pydot
 # and to install the library
@@ -44,7 +44,7 @@ If you are interested in automata learning or would like to understand the autom
 please check out our **Wiki**. On Wiki, you will find more detailed examples on how to use AALpy.
 - [https://github.com/emuskardin/AALpy/wiki](https://github.com/emuskardin/AALpy/wiki)
 
-For the **official documentation** of all classes and methods check out:
+For the **official documentation** of all classes and methods, check out:
 - [https://emuskardin.github.io/AALpy/docs_index.html](https://emuskardin.github.io/AALpy/docs_index.html)
 
 **Interactive examples** can be found in the [notebooks](https://github.com/emuskardin/AALpy/tree/master/notebooks) folder.
@@ -94,8 +94,8 @@ visualize_automaton(learned_dfa)
 print(automaton)
 ```
 
-In order to make experiments reproducible, simply define a random seed at the beginning of your program.
-```python
+To make experiments reproducible, define a random seed at the beginning of your program.
+```Python
 from random import seed
 seed(2) # all experiments will be reproducible
 ```
@@ -106,7 +106,7 @@ For more examples and instructions check out the [Wiki](https://github.com/emusk
 ) , [notebooks](https://github.com/emuskardin/AALpy/tree/master/notebooks), and [Examples.py](https://github.com/emuskardin/AALpy/blob/master/Examples.py).
 
 ## Contributing
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+Pull requests are welcome. For significant changes, please open an issue first to discuss what you would like to change.
 In case of any questions or possible bugs, please open issues.
 
 ## Contributors

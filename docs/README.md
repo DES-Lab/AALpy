@@ -1,12 +1,13 @@
 # Dive into Automata Learning with AALpy
 
-Whether you work with regular languages, or you would like to learn models of 
-reactive systems, AALpy supports a wide range of modeling formalisms including 
+Whether you work with regular languages or you would like to learn models of 
+reactive systems, AALpy supports a wide range of modeling formalisms, including 
 **deterministic**, **non-deterministic**, and **stochastic automata**. 
 
-AALpy enables efficient learning by providing a **large array of equivalence oracles**, implementing various **conformance testing** strategies. Learning 
-is mostly based on Angluin's [L*](https://people.eecs.berkeley.edu/~dawnsong/teaching/s10/papers/angluin87.pdf) algorithm, for which AALpy supports a 
-selection of optimizations, including **efficient counterexample processing**.
+AALpy enables efficient learning by providing a **large array of equivalence oracles**, implementing various **conformance testing** strategies. 
+
+Learning is mostly based on Angluin's [L* algorithm](https://people.eecs.berkeley.edu/~dawnsong/teaching/s10/papers/angluin87.pdf), for which AALpy supports a 
+selection of optimizations, including **efficient counterexample processing** and **query caching**.
 Finally, support for learning **abstracted nondeterministic Mealy machines** 
 enables efficient learning of system models with large input space. 
 
@@ -23,7 +24,7 @@ Ensure that you have [Graphviz](https://graphviz.org/) installed and added to yo
 Please check out our **Wiki**. On Wiki, you will find more detailed examples on how to use AALpy.
 - [https://github.com/emuskardin/AALpy/wiki](https://github.com/emuskardin/AALpy/wiki)
 
-For the **official documentation** of all classes and methods check out:
+For the **official documentation** of all classes and methods, check out:
 - [https://emuskardin.github.io/AALpy/docs_index.html](https://emuskardin.github.io/AALpy/docs_index.html)
 
 **Interactive examples** can be found in the [notebooks](https://github.com/emuskardin/AALpy/tree/master/notebooks) folder.
@@ -71,7 +72,7 @@ visualize_automaton(learned_dfa)
 print(learned_dfa)
 ```
 
-In order to make experiments reproducible, simply define a random seed at the beginning of your program.
+To make experiments reproducible, define a random seed at the beginning of your program.
 ```python
 from random import seed
 seed(2) # all experiments will be reproducible
