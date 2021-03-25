@@ -61,7 +61,7 @@ All automata learning procedures follow this high-level approach:
 - [Choose the equivalence oracle](https://github.com/emuskardin/AALpy/wiki/Equivalence-Oracles)
 - [Run the learning algorithm](https://github.com/emuskardin/AALpy/wiki/Setting-Up-Learning)
 
-If you would like to learn the behaviour of a black-box Date Validator, your AALpy configuration would look something like this:
+If you would like to learn a black-box Date Validator's behavior, your AALpy configuration would look something like this:
 ```python
 from aalpy.base import SUL
 from aalpy.utils import visualize_automaton, DateValidator
@@ -70,13 +70,14 @@ from aalpy.learning_algs import run_Lstar
 
 class DateSUL(SUL):
     """
-    An example implementation of a system under learning that can be used to learn the language of the date verifier.
+    An example implementation of a system under learning that 
+    can be used to learn the behavior of the date validator.
     """
 
     def __init__(self):
         super().__init__()
-        # DateVerifier is a black-box class used for date string verification
-        # Dates are in the format %d/%m/%Y'
+        # DateValidator is a black-box class used for date string verification
+        # The ormat of the dates is %d/%m/%Y'
         # Its method is_date_accepted returns True if date is accepted, False otherwise
         self.dv = DateValidator()
         self.string = ""
@@ -155,6 +156,8 @@ seed(2) # all experiments will be reproducible
 ```
 
 An example demonstrating step-by-step instructions for learning regular expressions can be found at [How to learn Regex with AALpy](https://github.com/emuskardin/AALpy/wiki/SUL-Interface%2C-or-How-to-Learn-Your-Systems/_edit#example---regexsul).
+
+For suggestion on how to learn Bluetooth or some other IoT protocol like MQTT with AALpy, click [here.](https://github.com/emuskardin/AALpy/wiki/SUL-Interface,-or-How-to-Learn-Your-Systems#example---mqtt). 
 
 For more examples and instructions check out the [Wiki](https://github.com/emuskardin/AALpy/wiki
 ) , [notebooks](https://github.com/emuskardin/AALpy/tree/master/notebooks), and [Examples.py](https://github.com/emuskardin/AALpy/blob/master/Examples.py).

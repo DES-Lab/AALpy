@@ -41,6 +41,7 @@ All automata learning procedures follow this high-level approach:
 - [Choose the equivalence oracle](https://github.com/emuskardin/AALpy/wiki/Equivalence-Oracles)
 - [Run the learning algorithm](https://github.com/emuskardin/AALpy/wiki/Setting-Up-Learning)
 
+If you would like to learn a black-box Date Validator's behavior, your AALpy configuration would look something like this:
 ```python
 from aalpy.base import SUL
 from aalpy.utils import visualize_automaton, DateValidator
@@ -49,13 +50,14 @@ from aalpy.learning_algs import run_Lstar
 
 class DateSUL(SUL):
     """
-    An example implementation of a system under learning that can be used to learn the language of the date verifier.
+    An example implementation of a system under learning that 
+    can be used to learn the behavior of the date validator.
     """
 
     def __init__(self):
         super().__init__()
-        # DateVerifier is a black-box class used for date string verification
-        # Dates are in the format %d/%m/%Y'
+        # DateValidator is a black-box class used for date string verification
+        # The format of the dates is %d/%m/%Y'
         # Its method is_date_accepted returns True if date is accepted, False otherwise
         self.dv = DateValidator()
         self.string = ""
@@ -103,3 +105,5 @@ seed(2) # all experiments will be reproducible
 Automatons can be [loaded, saved or visualized](https://github.com/emuskardin/AALpy/wiki/Loading,Saving,-Syntax-and-Visualization-of-Automata) or [randomly generated](https://github.com/emuskardin/AALpy/wiki/Generation-of-Random-Automata).
 
 An example demonstrating step-by-step instructions for learning regular expressions can be found at [How to learn Regex with AALpy](https://github.com/emuskardin/AALpy/wiki/SUL-Interface%2C-or-How-to-Learn-Your-Systems/_edit#example---regexsul).
+
+If you would like to learn Bluetooth or some other IoT protocol like MQTT, this is [one way you can do it with AALpy](https://github.com/emuskardin/AALpy/wiki/SUL-Interface,-or-How-to-Learn-Your-Systems#example---mqtt). 
