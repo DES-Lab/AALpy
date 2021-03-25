@@ -41,35 +41,57 @@ All automata learning procedures follow this high-level approach:
 - [Choose the equivalence oracle](https://github.com/emuskardin/AALpy/wiki/Equivalence-Oracles)
 - [Run the learning algorithm](https://github.com/emuskardin/AALpy/wiki/Setting-Up-Learning)
 
-The following snippet demonstrates a short example in which an automaton is either [loaded](https://github.com/emuskardin/AALpy/wiki/Loading,Saving,-Syntax-and-Visualization-of-Automata) or [randomly generated](https://github.com/emuskardin/AALpy/wiki/Generation-of-Random-Automata) and then [learned](https://github.com/emuskardin/AALpy/wiki/Setting-Up-Learning).
 ```python
-from aalpy.utils import save_automaton_to_file, visualize_automaton, generate_random_dfa
-from aalpy.SULs import DfaSUL
-from aalpy.oracles import RandomWalkEqOracle
+from aalpy.base import SUL
+from aalpy.utils import visualize_automaton, DateValidator
+from aalpy.oracles import StatePrefixEqOracle
 from aalpy.learning_algs import run_Lstar
 
-# or randomly generate one
-alphabet=[1,2,3,4,5]
-random_dfa = generate_random_dfa(alphabet=alphabet, num_states=2000, num_accepting_states=200)
+class DateSUL(SUL):
+    """
+    An example implementation of a system under learning that can be used to learn the language of the date verifier.
+    """
 
-# get input alphabet of the automaton
-alphabet = random_dfa.get_input_alphabet()
+    def __init__(self):
+        super().__init__()
+        # DateVerifier is a black-box class used for date string verification
+        # Dates are in the format %d/%m/%Y'
+        # Its method is_date_accepted returns True if date is accepted, False otherwise
+        self.dv = DateValidator()
+        self.string = ""
 
-# create a SUL instance for the automaton/system under learning
-sul = DfaSUL(random_dfa)
+    def pre(self):
+        # reset the string used for testing
+        self.string = ""
+        pass
 
-# define the equivalence oracle
-eq_oracle = RandomWalkEqOracle(alphabet, sul, num_steps=5000, reset_prob=0.09)
+    def post(self):
+        pass
 
-# start learning
-learned_dfa = run_Lstar(alphabet, sul, eq_oracle, automaton_type='dfa')
+    def step(self, letter):
+        # add the input to the current string
+        if letter is not None:
+            self.string += str(letter)
 
-# save automaton to file and visualize it
-save_automaton_to_file(learned_dfa, path='Learned_Automaton', file_type='dot')
-# visualize automaton
-visualize_automaton(learned_dfa)
-# or just print its DOT representation
-print(learned_dfa)
+        # test if the current sting is accepted
+        return self.dv.is_date_accepted(self.string)
+
+
+# instantiate the SUL
+sul = DateSUL()
+
+# define the input alphabet
+alphabet = list(range(0, 9)) + ['/']
+
+# define a equivalence oracle
+
+eq_oracle = StatePrefixEqOracle(alphabet, sul, walks_per_state=500, walk_len=15)
+
+# run the learning algorithm
+
+learned_model = run_Lstar(alphabet, sul, eq_oracle, automaton_type='dfa')
+# visualize the automaton
+visualize_automaton(learned_model)
 ```
 
 To make experiments reproducible, define a random seed at the beginning of your program.
@@ -77,5 +99,7 @@ To make experiments reproducible, define a random seed at the beginning of your 
 from random import seed
 seed(2) # all experiments will be reproducible
 ```
+
+Automatons can be [loaded, saved or visualized](https://github.com/emuskardin/AALpy/wiki/Loading,Saving,-Syntax-and-Visualization-of-Automata) or [randomly generated](https://github.com/emuskardin/AALpy/wiki/Generation-of-Random-Automata).
 
 An example demonstrating step-by-step instructions for learning regular expressions can be found at [How to learn Regex with AALpy](https://github.com/emuskardin/AALpy/wiki/SUL-Interface%2C-or-How-to-Learn-Your-Systems/_edit#example---regexsul).

@@ -3,7 +3,6 @@ from aalpy.automata import StochasticMealyMachine, StochasticMealyState, Mdp, Md
 
 
 def get_Angluin_dfa():
-
     q0 = DfaState('q0')
     q0.is_accepting = True
     q1 = DfaState('q1')
@@ -50,7 +49,6 @@ def get_benchmark_ONFSM():
 
 
 def get_faulty_coffee_machine_MDP():
-
     q0 = MdpState("q0", "init")
     q1 = MdpState("q1", "beep")
     q2 = MdpState("q2", "coffee")
@@ -67,8 +65,8 @@ def get_faulty_coffee_machine_MDP():
 
     return mdp
 
-def get_weird_coffee_machine_MDP():
 
+def get_weird_coffee_machine_MDP():
     q0 = MdpState("q0", "init")
     q1 = MdpState("q1", "beep")
     q2 = MdpState("q2", "coffee")
@@ -113,8 +111,8 @@ def get_weird_coffee_machine_MDP():
 
     return mdp
 
-def get_faulty_coffee_machine_SMM():
 
+def get_faulty_coffee_machine_SMM():
     s0 = StochasticMealyState('s0')
     s1 = StochasticMealyState('s1')
     s2 = StochasticMealyState('s2')
@@ -133,7 +131,6 @@ def get_faulty_coffee_machine_SMM():
 
 
 def get_minimal_faulty_coffee_machine_SMM():
-
     s0 = StochasticMealyState('s0')
     s1 = StochasticMealyState('s1')
 
@@ -149,7 +146,6 @@ def get_minimal_faulty_coffee_machine_SMM():
 
 
 def get_faulty_mqtt_SMM():
-
     s0 = StochasticMealyState('s0')
     s1 = StochasticMealyState('s1')
     s2 = StochasticMealyState('s2')
@@ -180,7 +176,6 @@ def get_faulty_mqtt_SMM():
 
 
 def get_small_gridworld():
-
     s0 = StochasticMealyState('s0')
     s1 = StochasticMealyState('s1')
     s2 = StochasticMealyState('s2')
@@ -278,3 +273,31 @@ class MockMqttExample:
             else:
                 self.state = 'PUBACK_PUBACK'
         return self.state
+
+
+class DateValidator:
+
+    def is_date_accepted(self, date_string: str):
+        values = date_string.split('/')
+        if len(values) != 3:
+            return False
+        try:
+            day = int(values[0])
+            month = int(values[2])
+            year = int(values[2])
+        except:
+            return False
+
+        if not (0 <= year <= 9999):
+            return False
+
+        if month == 2 and not (1 <= day <= 28):
+            return False
+
+        if month in [1, 3, 5, 7, 8, 10, 12] and not (1 <= day <= 31):
+            return False
+
+        elif not (1 <= day <= 31):
+            return False
+
+        return True

@@ -61,6 +61,60 @@ All automata learning procedures follow this high-level approach:
 - [Choose the equivalence oracle](https://github.com/emuskardin/AALpy/wiki/Equivalence-Oracles)
 - [Run the learning algorithm](https://github.com/emuskardin/AALpy/wiki/Setting-Up-Learning)
 
+If you would like to learn the behaviour of a black-box Date Validator, your AALpy configuration would look something like this:
+```python
+from aalpy.base import SUL
+from aalpy.utils import visualize_automaton, DateValidator
+from aalpy.oracles import StatePrefixEqOracle
+from aalpy.learning_algs import run_Lstar
+
+class DateSUL(SUL):
+    """
+    An example implementation of a system under learning that can be used to learn the language of the date verifier.
+    """
+
+    def __init__(self):
+        super().__init__()
+        # DateVerifier is a black-box class used for date string verification
+        # Dates are in the format %d/%m/%Y'
+        # Its method is_date_accepted returns True if date is accepted, False otherwise
+        self.dv = DateValidator()
+        self.string = ""
+
+    def pre(self):
+        # reset the string used for testing
+        self.string = ""
+        pass
+
+    def post(self):
+        pass
+
+    def step(self, letter):
+        # add the input to the current string
+        if letter is not None:
+            self.string += str(letter)
+
+        # test if the current sting is accepted
+        return self.dv.is_date_accepted(self.string)
+
+
+# instantiate the SUL
+sul = DateSUL()
+
+# define the input alphabet
+alphabet = list(range(0, 9)) + ['/']
+
+# define a equivalence oracle
+
+eq_oracle = StatePrefixEqOracle(alphabet, sul, walks_per_state=500, walk_len=15)
+
+# run the learning algorithm
+
+learned_model = run_Lstar(alphabet, sul, eq_oracle, automaton_type='dfa')
+# visualize the automaton
+visualize_automaton(learned_model)
+```
+
 The following snippet demonstrates a short example in which an automaton is either [loaded](https://github.com/emuskardin/AALpy/wiki/Loading,Saving,-Syntax-and-Visualization-of-Automata) or [randomly generated](https://github.com/emuskardin/AALpy/wiki/Generation-of-Random-Automata) and then [learned](https://github.com/emuskardin/AALpy/wiki/Setting-Up-Learning).
 ```python
 from aalpy.utils import load_automaton_from_file, save_automaton_to_file, visualize_automaton, generate_random_dfa
