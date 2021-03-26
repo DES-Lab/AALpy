@@ -1,5 +1,5 @@
 from aalpy.base import SUL
-from aalpy.utils.HelperFunctions import _all_suffixes, _all_prefixes
+from aalpy.utils.HelperFunctions import all_suffixes, all_prefixes
 
 
 def longest_prefix_cex_processing(s_union_s_dot_a: list, cex: tuple, closedness='suffix'):
@@ -32,7 +32,7 @@ def longest_prefix_cex_processing(s_union_s_dot_a: list, cex: tuple, closedness=
             break
 
     trimmed_suffix = trimmed_suffix if trimmed_suffix else cex
-    suffixes = _all_suffixes(trimmed_suffix) if closedness == 'suffix' else _all_prefixes(trimmed_suffix)
+    suffixes = all_suffixes(trimmed_suffix) if closedness == 'suffix' else all_prefixes(trimmed_suffix)
     suffixes.reverse()
     return suffixes
 
@@ -88,7 +88,7 @@ def rs_cex_processing(sul: SUL, cex: tuple, hypothesis, suffix_closedness=True, 
                 break
 
     if suffix_closedness:
-        suffixes = _all_suffixes(suffix) if closedness == 'suffix' else _all_prefixes(suffix)
+        suffixes = all_suffixes(suffix) if closedness == 'suffix' else all_prefixes(suffix)
         suffixes.reverse()
         suffix_to_query = suffixes
     else:

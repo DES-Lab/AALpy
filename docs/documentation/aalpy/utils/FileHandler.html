@@ -171,7 +171,8 @@
 
 <span class="sd">        path: path to the file</span>
 
-<span class="sd">        automaton_type: type of the automaton, if not specified it will be automatically determined according</span>
+<span class="sd">        automaton_type: type of the automaton, if not specified it will be automatically determined according,</span>
+<span class="sd">            one of [&#39;dfa&#39;, &#39;mealy&#39;, &#39;moore&#39;, &#39;mdp&#39;, &#39;smm&#39;, &#39;onfsm&#39;]</span>
 
 <span class="sd">        compute_prefixes: it True, shortest path to reach every state will be computed and saved in the prefix of</span>
 <span class="sd">            the state. Useful when loading the model to use them as a equivalence oracle. (Default value = False)</span>
@@ -537,7 +538,8 @@ display_same_state_trans: True, should not be set to false except from the visua
 
 <span class="sd">        path: path to the file</span>
 
-<span class="sd">        automaton_type: type of the automaton, if not specified it will be automatically determined according</span>
+<span class="sd">        automaton_type: type of the automaton, if not specified it will be automatically determined according,</span>
+<span class="sd">            one of [&#39;dfa&#39;, &#39;mealy&#39;, &#39;moore&#39;, &#39;mdp&#39;, &#39;smm&#39;, &#39;onfsm&#39;]</span>
 
 <span class="sd">        compute_prefixes: it True, shortest path to reach every state will be computed and saved in the prefix of</span>
 <span class="sd">            the state. Useful when loading the model to use them as a equivalence oracle. (Default value = False)</span>
@@ -646,7 +648,8 @@ Standard of the automatas strictly follows syntax found at: https://automata.cs.
 
 <pre><code>path: path to the file
 
-automaton_type: type of the automaton, if not specified it will be automatically determined according
+automaton_type: type of the automaton, if not specified it will be automatically determined according,
+    one of ['dfa', 'mealy', 'moore', 'mdp', 'smm', 'onfsm']
 
 compute_prefixes: it True, shortest path to reach every state will be computed and saved in the prefix of
     the state. Useful when loading the model to use them as a equivalence oracle. (Default value = False)

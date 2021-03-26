@@ -112,7 +112,8 @@ def load_automaton_from_file(path, automaton_type, compute_prefixes=False):
 
         path: path to the file
 
-        automaton_type: type of the automaton, if not specified it will be automatically determined according
+        automaton_type: type of the automaton, if not specified it will be automatically determined according,
+            one of ['dfa', 'mealy', 'moore', 'mdp', 'smm', 'onfsm']
 
         compute_prefixes: it True, shortest path to reach every state will be computed and saved in the prefix of
             the state. Useful when loading the model to use them as a equivalence oracle. (Default value = False)

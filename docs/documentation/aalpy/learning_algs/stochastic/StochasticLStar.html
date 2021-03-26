@@ -75,7 +75,7 @@
     <span class="k">return</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">cex</span><span class="p">[:</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">cex</span><span class="p">),</span> <span class="mi">2</span><span class="p">)]</span>
 
 
-<span class="n">strategies</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;normal&#39;</span><span class="p">,</span><span class="s1">&#39;no_cq&#39;</span><span class="p">]</span>
+<span class="n">strategies</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;normal&#39;</span><span class="p">,</span> <span class="s1">&#39;no_cq&#39;</span><span class="p">]</span>
 <span class="n">print_options</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
 
 
@@ -153,8 +153,8 @@
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Hypothesis: </span><span class="si">{</span><span class="n">learning_rounds</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">)</span><span class="si">}</span><span class="s1"> states.&#39;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">print_level</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
-            <span class="n">print_observation_table</span><span class="p">(</span><span class="n">observation_table</span><span class="o">.</span><span class="n">S</span><span class="p">,</span><span class="n">observation_table</span><span class="o">.</span><span class="n">get_extended_s</span><span class="p">(),</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">E</span><span class="p">,</span>
-                                <span class="n">observation_table</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+            <span class="n">print_observation_table</span><span class="p">(</span><span class="n">observation_table</span><span class="o">.</span><span class="n">S</span><span class="p">,</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">get_extended_s</span><span class="p">(),</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">E</span><span class="p">,</span>
+                                    <span class="n">observation_table</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
 
         <span class="c1"># If there is a prefix leading to chaos state, use that as a counterexample, otherwise preform equivalence query</span>
         <span class="n">eq_query_start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
@@ -341,8 +341,8 @@
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Hypothesis: </span><span class="si">{</span><span class="n">learning_rounds</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">)</span><span class="si">}</span><span class="s1"> states.&#39;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">print_level</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
-            <span class="n">print_observation_table</span><span class="p">(</span><span class="n">observation_table</span><span class="o">.</span><span class="n">S</span><span class="p">,</span><span class="n">observation_table</span><span class="o">.</span><span class="n">get_extended_s</span><span class="p">(),</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">E</span><span class="p">,</span>
-                                <span class="n">observation_table</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+            <span class="n">print_observation_table</span><span class="p">(</span><span class="n">observation_table</span><span class="o">.</span><span class="n">S</span><span class="p">,</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">get_extended_s</span><span class="p">(),</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">E</span><span class="p">,</span>
+                                    <span class="n">observation_table</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
 
         <span class="c1"># If there is a prefix leading to chaos state, use that as a counterexample, otherwise preform equivalence query</span>
         <span class="n">eq_query_start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>

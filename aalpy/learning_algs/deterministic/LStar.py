@@ -1,9 +1,9 @@
 import time
 
 from aalpy.base import Oracle, SUL
-from .CounterExampleProcessing import longest_prefix_cex_processing, rs_cex_processing, _all_prefixes
+from aalpy.utils.HelperFunctions import extend_set, print_learning_info, print_observation_table, all_prefixes
+from .CounterExampleProcessing import longest_prefix_cex_processing, rs_cex_processing
 from .ObservationTable import ObservationTable
-from aalpy.utils.HelperFunctions import extend_set, print_learning_info, print_observation_table
 from ...base.SUL import CacheSUL
 
 counterexample_processing_strategy = [None, 'rs', 'longest_prefix']
@@ -26,8 +26,8 @@ def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type,
 
         automaton_type: type of automaton to be learned. Either 'dfa', 'mealy' or 'moore'.
 
-        closing_strategy: closing strategy used in the close method. Either 'longest_first', 'shortest_first' or 'single'
-            (Default value = 'longest_first')
+        closing_strategy: closing strategy used in the close method. Either 'longest_first', 'shortest_first' or
+            'single' (Default value = 'longest_first')
 
         cex_processing: Counterexample processing strategy. Either None, 'rs' (Riverst-Schapire) or 'longest_prefix'.
             (Default value = 'rs')
@@ -120,7 +120,7 @@ def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type,
         # Process counterexample and ask membership queries
         if not cex_processing:
             s_to_update = []
-            added_rows = extend_set(observation_table.S, _all_prefixes(cex))
+            added_rows = extend_set(observation_table.S, all_prefixes(cex))
             s_to_update.extend(added_rows)
             for p in added_rows:
                 s_to_update.extend([p + (a,) for a in alphabet])

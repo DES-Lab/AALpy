@@ -2,7 +2,7 @@ from collections import defaultdict
 
 from aalpy.automata import Onfsm, OnfsmState
 from aalpy.base import Automaton, SUL
-from aalpy.utils.HelperFunctions import _all_suffixes
+from aalpy.utils.HelperFunctions import all_suffixes
 
 
 class NonDetObservationTable:
@@ -202,8 +202,8 @@ class NonDetObservationTable:
                 break
 
         if trimmed_suffix:
-            suffixes = _all_suffixes(trimmed_suffix)
+            suffixes = all_suffixes(trimmed_suffix)
         else:
-            suffixes = _all_suffixes(cex)
+            suffixes = all_suffixes(cex)
         suffixes.reverse()
         return suffixes

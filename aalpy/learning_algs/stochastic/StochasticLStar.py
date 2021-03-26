@@ -22,7 +22,7 @@ def get_cex_prefixes(cex, automaton_type):
     return [tuple(cex[:i]) for i in range(0, len(cex), 2)]
 
 
-strategies = ['normal','no_cq']
+strategies = ['normal', 'no_cq']
 print_options = [0, 1, 2, 3]
 
 
@@ -100,8 +100,8 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_
             print(f'Hypothesis: {learning_rounds}: {len(hypothesis.states)} states.')
 
         if print_level == 3:
-            print_observation_table(observation_table.S,observation_table.get_extended_s(), observation_table.E,
-                                observation_table.T, False)
+            print_observation_table(observation_table.S, observation_table.get_extended_s(), observation_table.E,
+                                    observation_table.T, False)
 
         # If there is a prefix leading to chaos state, use that as a counterexample, otherwise preform equivalence query
         eq_query_start = time.time()
