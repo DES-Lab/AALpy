@@ -99,8 +99,17 @@ def save_automaton_to_file(automaton, path="LearnedModel", file_type='dot',
         try:
             graph.write(path=f'{path}.{file_type}', format=file_type)
             print(f'Visualized model saved to {path}.{file_type}.')
+
+            try:
+                import webbrowser
+                abs_path = os.path.abspath(f'{path}.{file_type}')
+                path = f'file:///{abs_path}'
+                webbrowser.open(path)
+            except OSError:
+                pass
         except OSError:
-            print(f'Could not write to file {path}.{file_type} (Permission denied). Close the file if open and retry.')
+            print(f'Could not write to file {path}.{file_type} (Permission denied).'
+                  f'If the file is open, close it and retry.')
 
 
 def load_automaton_from_file(path, automaton_type, compute_prefixes=False):
