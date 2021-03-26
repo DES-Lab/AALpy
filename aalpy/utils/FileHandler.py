@@ -10,9 +10,10 @@ file_types = ['dot', 'png', 'svg', 'pdf', 'string']
 automaton_types = ['dfa', 'mealy', 'moore', 'mdp', 'smm', 'onfsm']
 
 
-def visualize_automaton(automaton, path="Model_Visualization", file_type='pdf', display_same_state_trans=True):
+def visualize_automaton(automaton, path="LearnedModel", file_type='pdf', display_same_state_trans=True):
     """
     Create a graphical representation of the automaton.
+    If possible, it will be opened by systems default program.
 
     Args:
 

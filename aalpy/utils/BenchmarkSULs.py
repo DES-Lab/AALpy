@@ -280,6 +280,7 @@ class DateValidator:
     Class mimicking Date Validator API.
     It does not account for the leap years.
 The format of the dates is %d/%m/%Y'    """
+
     def is_date_accepted(self, date_string: str):
         values = date_string.split('/')
         if len(values) != 3:
