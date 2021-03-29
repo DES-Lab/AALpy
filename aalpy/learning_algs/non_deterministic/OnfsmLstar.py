@@ -8,7 +8,7 @@ from aalpy.utils.HelperFunctions import extend_set, print_learning_info, print_o
 print_options = [0, 1, 2, 3]
 
 
-def run_Lstar_ONFSM(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=100,
+def run_Lstar_ONFSM(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=50,
                     max_learning_rounds=None, return_data=False, print_level=2):
     """
     Based on ''Learning Finite State Models of Observable Nondeterministic Systems in a Testing Context '' from Fakih
@@ -22,8 +22,8 @@ def run_Lstar_ONFSM(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=100,
 
         eq_oracle: equivalence oracle
 
-        n_sampling: number of times that membership/input queries will be asked for each cell in the observation
-            (Default value = 100)
+        n_sampling: number of times that each cell has to be updated. If this number is to low, all-weather condition
+            will not hold and learning will not converge to the correct model. (Default value = 50)
 
         max_learning_rounds: if max_learning_rounds is reached, learning will stop (Default value = None)
 

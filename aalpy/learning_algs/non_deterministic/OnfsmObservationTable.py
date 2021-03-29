@@ -94,12 +94,15 @@ class NonDetObservationTable:
         for s in update_S:
             for e in update_E:
                 if e not in self.T[s].keys():
-                    for _ in range(self.n_samples):
+                    num_s_e_sampled = 0
+                    while num_s_e_sampled < self.n_samples:
                         output = tuple(self.sul.query(s[0] + e))
                         # Here I basically say... add just the last element of the output if it e is element of alphabet
                         # else add last len(e) outputs
                         o = output[-1] if len(e) == 1 else tuple(output[-len(e):])
                         self.add_to_T((s[0], output[:len(s[1])]), e, o)
+                        if output[:len(s[1])] == s[1]:
+                            num_s_e_sampled += 1
 
     def gen_hypothesis(self) -> Automaton:
         """
@@ -207,3 +210,33 @@ class NonDetObservationTable:
             suffixes = all_suffixes(cex)
         suffixes.reverse()
         return suffixes
+
+    def trim(self):
+        """
+        Not yet implemented. Should remove the need for all-weather assumption.
+        """
+        s_to_remove = []
+        for i, s in enumerate(self.S):
+            repr = self.row_to_hashable(s)
+            has_long_trace = False
+            for s1 in self.S[i + 1:]:
+                if repr == self.row_to_hashable(s1):
+                    s_to_remove.append(s1)
+                for row in self.S_dot_A:
+                    if repr == self.row_to_hashable(row):
+                        has_long_trace = True
+                        break
+            if not has_long_trace:
+                s_to_remove.append(s)
+
+        for to_remove in s_to_remove:
+            self.S.remove(to_remove)
+            self.T.pop(to_remove)
+            extensions = []
+            for a in self.A:
+                if a in self.T[to_remove]:
+                    for t in self.T[to_remove][a]:
+                        self.T.pop((to_remove[0] + a, to_remove[1] + tuple([t])))
+                        extensions.append((to_remove[0] + a, to_remove[1] + tuple([t])))
+            for e in extensions:
+                self.S_dot_A.remove(e)
