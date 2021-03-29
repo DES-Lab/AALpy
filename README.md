@@ -161,6 +161,17 @@ Examples demonstrating how to learn Bluetooth or other IoT protocols like MQTT c
 For more examples and instructions check out the [Wiki](https://github.com/emuskardin/AALpy/wiki
 ) , [notebooks](https://github.com/emuskardin/AALpy/tree/master/notebooks), and [Examples.py](https://github.com/emuskardin/AALpy/blob/master/Examples.py).
 
+## Cite AALpy
+If you use AALpy in your research, please cite:
+```
+To be announced, please contact edi.muskardin@silicon-austria.com in the meantime. 
+```
+
+## Research Contact
+If you have research suggestions or specific help with respect to your research, wheter it is automata learning itself or application
+of automata learning, feel free to contact [edi.muskardin@silicon-austria.com](mailto:edi.muskardin@silicon-austria.com).
+We are happy to help you and consult you in applyingg automata learning in various domain.
+
 ## Contributing
 Pull requests are welcome. For significant changes, please open an issue first to discuss what you would like to change.
 In case of any questions or possible bugs, please open issues.
