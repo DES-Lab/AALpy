@@ -128,6 +128,7 @@ automaton = load_automaton_from_file('path_to_the_file.dot', automaton_type='dfa
 
 # or randomly generate one
 random_dfa = generate_random_dfa(alphabet=[1,2,3,4,5],num_states=20, num_accepting_states=8)
+big_random_dfa = generate_random_dfa(alphabet=[1,2,3,4,5],num_states=2000, num_accepting_states=500)
 
 # get input alphabet of the automaton
 alphabet = random_dfa.get_input_alphabet()
@@ -156,11 +157,11 @@ from random import seed
 seed(2) # all experiments will be reproducible
 ```
 
-An example demonstrating step-by-step instructions for learning regular expressions can be found at [How to learn Regex with AALpy](https://github.com/DES-Lab/AALpy/wiki/SUL-Interface%2C-or-How-to-Learn-Your-Systems/_edit#example---regexsul).
-Examples demonstrating how to learn Bluetooth or other IoT protocols like MQTT can be found at [How to learn MQTT with AALpy](https://github.com/DES-Lab/AALpy/wiki/SUL-Interface,-or-How-to-Learn-Your-Systems#example---mqtt). 
-
-For more examples and instructions check out the [Wiki](https://github.com/DES-Lab/AALpy/wiki
-) , [notebooks](https://github.com/DES-Lab/AALpy/tree/master/notebooks), and [Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py).
+For more detailed examples, check out:
+- [How to learn Regex with AALpy](https://github.com/DES-Lab/AALpy/wiki/SUL-Interface%2C-or-How-to-Learn-Your-Systems/_edit#example---regexsul)
+- [How to learn MQTT with AALpy](https://github.com/DES-Lab/AALpy/wiki/SUL-Interface,-or-How-to-Learn-Your-Systems#example---mqtt)
+- [Interactive Examples](https://github.com/DES-Lab/AALpy/tree/master/notebooks)
+- [Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py)
 
 ## Cite AALpy
 If you use AALpy in your research, please cite:
@@ -169,9 +170,9 @@ To be announced, please contact edi.muskardin@silicon-austria.com in the meantim
 ```
 
 ## Research Contact
-If you have research suggestions or specific help with respect to your research, whether it is automata learning itself or application
+If you have research suggestions or specific help concerning your research, whether it is automata learning itself or application
 of automata learning, feel free to contact [edi.muskardin@silicon-austria.com](mailto:edi.muskardin@silicon-austria.com).
-We are happy to help you and consult you in applying automata learning in various domain.
+We are happy to help you and consult you in applying automata learning in various domains.
 
 ## Contributing
 Pull requests are welcome. For significant changes, please open an issue first to discuss what you would like to change.
@@ -180,6 +181,7 @@ In case of any questions or possible bugs, please open issues.
 ## Contributors
 - Edi Muskardin
 - Martin Tappler
+- Andrea Pferscher
 
 ## License
 [![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://github.com/tterb/atomic-design-ui/blob/master/LICENSEs)

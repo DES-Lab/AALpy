@@ -104,5 +104,8 @@ seed(2) # all experiments will be reproducible
 
 Automatons can be [loaded, saved or visualized](https://github.com/DES-Lab/AALpy/wiki/Loading,Saving,-Syntax-and-Visualization-of-Automata) or [randomly generated](https://github.com/DES-Lab/AALpy/wiki/Generation-of-Random-Automata).
 
-An example demonstrating step-by-step instructions for learning regular expressions can be found at [How to learn Regex with AALpy](https://github.com/DES-Lab/AALpy/wiki/SUL-Interface%2C-or-How-to-Learn-Your-Systems/_edit#example---regexsul).
-Examples demonstrating how to learn Bluetooth or other IoT protocols like MQTT can be found at [How to learn MQTT with AALpy](https://github.com/DES-Lab/AALpy/wiki/SUL-Interface,-or-How-to-Learn-Your-Systems#example---mqtt). 
+For more detailed examples, check out:
+- [How to learn Regex with AALpy](https://github.com/DES-Lab/AALpy/wiki/SUL-Interface%2C-or-How-to-Learn-Your-Systems/_edit#example---regexsul)
+- [How to learn MQTT with AALpy](https://github.com/DES-Lab/AALpy/wiki/SUL-Interface,-or-How-to-Learn-Your-Systems#example---mqtt)
+- [Interactive Examples](https://github.com/DES-Lab/AALpy/tree/master/notebooks)
+- [Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py)
