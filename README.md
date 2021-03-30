@@ -42,24 +42,24 @@ python setup.py install
 
 If you are interested in automata learning or would like to understand the automata learning process in more detail,
 please check out our **Wiki**. On Wiki, you will find more detailed examples on how to use AALpy.
-- <https://github.com/emuskardin/AALpy/wiki>
+- <https://github.com/DES-Lab/AALpy/wiki>
 
 For the **official documentation** of all classes and methods, check out:
 - <https://emuskardin.github.io/AALpy/documentation/index.html>
 
-**Interactive examples** can be found in the [notebooks](https://github.com/emuskardin/AALpy/tree/master/notebooks) folder.
+**Interactive examples** can be found in the [notebooks](https://github.com/DES-Lab/AALpy/tree/master/notebooks) folder.
 If you would like to interact/change those examples in the browser, click on the following badge. (Navigate to the _notebooks_ folder and select one notebook)
 
 [![Binder](https://notebooks.gesis.org/binder/badge_logo.svg)](https://notebooks.gesis.org/binder/v2/gh/emuskardin/AALpy/master)
 
-[Examples.py](https://github.com/emuskardin/AALpy/blob/master/Examples.py) contains many examples demonstrating all AALpy functionality are presented. 
+[Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py) contains many examples demonstrating all AALpy functionality are presented. 
 
 ## Usage
 
 All automata learning procedures follow this high-level approach:
-- [Define the input alphabet and system under learning (SUL)](https://github.com/emuskardin/AALpy/wiki/SUL-Interface,-or-How-to-Learn-Your-Systems)
-- [Choose the equivalence oracle](https://github.com/emuskardin/AALpy/wiki/Equivalence-Oracles)
-- [Run the learning algorithm](https://github.com/emuskardin/AALpy/wiki/Setting-Up-Learning)
+- [Define the input alphabet and system under learning (SUL)](https://github.com/DES-Lab/AALpy/wiki/SUL-Interface,-or-How-to-Learn-Your-Systems)
+- [Choose the equivalence oracle](https://github.com/DES-Lab/AALpy/wiki/Equivalence-Oracles)
+- [Run the learning algorithm](https://github.com/DES-Lab/AALpy/wiki/Setting-Up-Learning)
 
 If you would like to learn a black-box Date Validator's behavior, your AALpy configuration would look something like this:
 ```python
@@ -116,7 +116,7 @@ learned_model = run_Lstar(alphabet, sul, eq_oracle, automaton_type='dfa')
 visualize_automaton(learned_model)
 ```
 
-The following snippet demonstrates a short example in which an automaton is either [loaded](https://github.com/emuskardin/AALpy/wiki/Loading,Saving,-Syntax-and-Visualization-of-Automata) or [randomly generated](https://github.com/emuskardin/AALpy/wiki/Generation-of-Random-Automata) and then [learned](https://github.com/emuskardin/AALpy/wiki/Setting-Up-Learning).
+The following snippet demonstrates a short example in which an automaton is either [loaded](https://github.com/DES-Lab/AALpy/wiki/Loading,Saving,-Syntax-and-Visualization-of-Automata) or [randomly generated](https://github.com/DES-Lab/AALpy/wiki/Generation-of-Random-Automata) and then [learned](https://github.com/DES-Lab/AALpy/wiki/Setting-Up-Learning).
 ```python
 from aalpy.utils import load_automaton_from_file, save_automaton_to_file, visualize_automaton, generate_random_dfa
 from aalpy.SULs import DfaSUL
@@ -156,11 +156,11 @@ from random import seed
 seed(2) # all experiments will be reproducible
 ```
 
-An example demonstrating step-by-step instructions for learning regular expressions can be found at [How to learn Regex with AALpy](https://github.com/emuskardin/AALpy/wiki/SUL-Interface%2C-or-How-to-Learn-Your-Systems/_edit#example---regexsul).
-Examples demonstrating how to learn Bluetooth or other IoT protocols like MQTT can be found at [How to learn MQTT with AALpy](https://github.com/emuskardin/AALpy/wiki/SUL-Interface,-or-How-to-Learn-Your-Systems#example---mqtt). 
+An example demonstrating step-by-step instructions for learning regular expressions can be found at [How to learn Regex with AALpy](https://github.com/DES-Lab/AALpy/wiki/SUL-Interface%2C-or-How-to-Learn-Your-Systems/_edit#example---regexsul).
+Examples demonstrating how to learn Bluetooth or other IoT protocols like MQTT can be found at [How to learn MQTT with AALpy](https://github.com/DES-Lab/AALpy/wiki/SUL-Interface,-or-How-to-Learn-Your-Systems#example---mqtt). 
 
-For more examples and instructions check out the [Wiki](https://github.com/emuskardin/AALpy/wiki
-) , [notebooks](https://github.com/emuskardin/AALpy/tree/master/notebooks), and [Examples.py](https://github.com/emuskardin/AALpy/blob/master/Examples.py).
+For more examples and instructions check out the [Wiki](https://github.com/DES-Lab/AALpy/wiki
+) , [notebooks](https://github.com/DES-Lab/AALpy/tree/master/notebooks), and [Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py).
 
 ## Cite AALpy
 If you use AALpy in your research, please cite:
