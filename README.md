@@ -127,7 +127,7 @@ from aalpy.learning_algs import run_Lstar
 automaton = load_automaton_from_file('path_to_the_file.dot', automaton_type='dfa')
 
 # or randomly generate one
-random_dfa = generate_random_dfa(alphabet=[1,2,3,4,5],num_states=2000, num_accepting_states=200)
+random_dfa = generate_random_dfa(alphabet=[1,2,3,4,5],num_states=20, num_accepting_states=8)
 
 # get input alphabet of the automaton
 alphabet = random_dfa.get_input_alphabet()
@@ -143,6 +143,7 @@ learned_dfa = run_Lstar(alphabet, sul, eq_oracle, automaton_type='dfa')
 
 # save automaton to file and visualize it
 save_automaton_to_file(learned_dfa, path='Learned_Automaton', file_type='dot')
+
 # visualize automaton
 visualize_automaton(learned_dfa)
 # or just print its DOT representation
@@ -168,9 +169,9 @@ To be announced, please contact edi.muskardin@silicon-austria.com in the meantim
 ```
 
 ## Research Contact
-If you have research suggestions or specific help with respect to your research, wheter it is automata learning itself or application
+If you have research suggestions or specific help with respect to your research, whether it is automata learning itself or application
 of automata learning, feel free to contact [edi.muskardin@silicon-austria.com](mailto:edi.muskardin@silicon-austria.com).
-We are happy to help you and consult you in applyingg automata learning in various domain.
+We are happy to help you and consult you in applying automata learning in various domain.
 
 ## Contributing
 Pull requests are welcome. For significant changes, please open an issue first to discuss what you would like to change.
