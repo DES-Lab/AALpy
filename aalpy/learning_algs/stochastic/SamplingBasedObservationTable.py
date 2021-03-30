@@ -214,10 +214,10 @@ class SamplingBasedObservationTable:
         Returns:
 
         """
-        for compatibility_class in self.compatibility_class_rows.values():
-            for ind, s1 in enumerate(compatibility_class):
-                for s2 in compatibility_class[ind + 1:]:
-                    # if self.are_rows_compatible(s1, s2, ignore):
+        #for compatibility_class in self.compatibility_class_rows.values():
+        for ind, s1 in enumerate(self.S):
+            for s2 in self.S[ind + 1:]:
+                if self.are_rows_compatible(s1, s2, ignore):
                     i_o_pairs = [(i, tuple([o])) for i in self.input_alphabet for o in self.T[s1][i].keys()]
                     for i, o in i_o_pairs:
                         s1_keys = self.T[s1 + i + o].keys()
