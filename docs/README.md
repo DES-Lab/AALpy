@@ -30,7 +30,7 @@ For the **official documentation** of all classes and methods, check out:
 **Interactive examples** can be found in the [notebooks](https://github.com/DES-Lab/AALpy/tree/master/notebooks) folder.
 If you would like to interact/change those examples in the browser, click on the following badge. (Navigate to the _notebooks_ folder and select one notebook)
 
-[![Binder](https://notebooks.gesis.org/binder/badge_logo.svg)](https://notebooks.gesis.org/binder/v2/gh/emuskardin/AALpy/master)
+[![Binder](https://notebooks.gesis.org/binder/badge_logo.svg)](https://notebooks.gesis.org/binder/v2/gh/DES-Lab/AALpy/master)
 
 [Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py) contains many examples demonstrating all AALpy functionality are presented. 
 
