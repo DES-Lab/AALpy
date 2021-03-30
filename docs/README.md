@@ -109,3 +109,7 @@ For more detailed examples, check out:
 - [How to learn MQTT with AALpy](https://github.com/DES-Lab/AALpy/wiki/SUL-Interface,-or-How-to-Learn-Your-Systems#example---mqtt)
 - [Interactive Examples](https://github.com/DES-Lab/AALpy/tree/master/notebooks)
 - [Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py)
+
+## Research Contact
+If you have research suggestions or need specific help concerning your research, feel free to contact [edi.muskardin@silicon-austria.com](mailto:edi.muskardin@silicon-austria.com).
+We are happy to help you and consult you in applying automata learning in various domains.
