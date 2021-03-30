@@ -15,7 +15,7 @@ nondeterministic finite-state machines**, **Markov decision processes**,
 or **stochastic transducers**.
 
 AALpy enables efficient learning by providing a **large array of equivalence oracles**, implementing various **conformance testing** strategies. Learning 
-is mostly based on Angluin's [L*](https://people.eecs.berkeley.edu/~dawnsong/teaching/s10/papers/angluin87.pdf) algorithm, for which AALpy supports a 
+is mostly based on Angluin's [L* algorithm](https://people.eecs.berkeley.edu/~dawnsong/teaching/s10/papers/angluin87.pdf), for which AALpy supports a 
 selection of optimizations, including **efficient counterexample processing**.
 Finally, support for learning **abstracted non-deterministic Mealy machines** 
 enables efficient learning of system models with large input space. 
@@ -183,4 +183,4 @@ In case of any questions or possible bugs, please open issues.
 - Andrea Pferscher
 
 ## License
-[![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://github.com/tterb/atomic-design-ui/blob/master/LICENSEs)
+[![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://choosealicense.com/licenses/mit/)
