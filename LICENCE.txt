@@ -1,6 +1,7 @@
 MIT License
 
-Copyright (c) [2021] [Edi Muskardin]
+Copyright (c) 2021 Silicon Austria Labs, https://silicon-austria-labs.com/,
+                   Edi Muskardin <edi.muskardin@silicon-austria.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

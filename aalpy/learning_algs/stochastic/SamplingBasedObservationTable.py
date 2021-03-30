@@ -214,21 +214,22 @@ class SamplingBasedObservationTable:
         Returns:
 
         """
-        for ind, s1 in enumerate(self.compatibility_classes_representatives):
-            for s2 in self.compatibility_class_rows[s1]:
-                # if self.are_rows_compatible(s1, s2, ignore):
-                i_o_pairs = [(i, tuple([o])) for i in self.input_alphabet for o in self.T[s1][i].keys()]
-                for i, o in i_o_pairs:
-                    s1_keys = self.T[s1 + i + o].keys()
-                    s2_keys = self.T[s2 + i + o].keys()
-                    if not s1_keys or not s2_keys:
-                        continue
-
-                    for e in self.E:
-                        if e == ignore:
+        for compatibility_class in self.compatibility_class_rows.values():
+            for ind, s1 in enumerate(compatibility_class):
+                for s2 in compatibility_class[ind + 1:]:
+                    # if self.are_rows_compatible(s1, s2, ignore):
+                    i_o_pairs = [(i, tuple([o])) for i in self.input_alphabet for o in self.T[s1][i].keys()]
+                    for i, o in i_o_pairs:
+                        s1_keys = self.T[s1 + i + o].keys()
+                        s2_keys = self.T[s2 + i + o].keys()
+                        if not s1_keys or not s2_keys:
                             continue
-                        if self.cell_diff(s1 + i + o, s2 + i + o, e):
-                            return i + o + e
+
+                        for e in self.E:
+                            if e == ignore:
+                                continue
+                            if self.cell_diff(s1 + i + o, s2 + i + o, e):
+                                return i + o + e
         return None
 
     def get_representative(self, target):
