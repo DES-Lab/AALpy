@@ -170,8 +170,7 @@ To be announced, please contact edi.muskardin@silicon-austria.com in the meantim
 ```
 
 ## Research Contact
-If you have research suggestions or specific help concerning your research, whether it is automata learning itself or application
-of automata learning, feel free to contact [edi.muskardin@silicon-austria.com](mailto:edi.muskardin@silicon-austria.com).
+If you have research suggestions or need specific help concerning your research, feel free to contact [edi.muskardin@silicon-austria.com](mailto:edi.muskardin@silicon-austria.com).
 We are happy to help you and consult you in applying automata learning in various domains.
 
 ## Contributing
@@ -179,7 +178,7 @@ Pull requests are welcome. For significant changes, please open an issue first t
 In case of any questions or possible bugs, please open issues.
 
 ## Contributors
-- Edi Muskardin
+- Edi Muškardin
 - Martin Tappler
 - Andrea Pferscher
 
