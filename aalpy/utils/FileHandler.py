@@ -13,6 +13,7 @@ automaton_types = ['dfa', 'mealy', 'moore', 'mdp', 'smm', 'onfsm']
 def visualize_automaton(automaton, path="LearnedModel", file_type='pdf', display_same_state_trans=True):
     """
     Create a graphical representation of the automaton.
+    Function is round in the separate thread in the background.
     If possible, it will be opened by systems default program.
 
     Args:
@@ -26,7 +27,15 @@ def visualize_automaton(automaton, path="LearnedModel", file_type='pdf', display
         display_same_state_trans: if True, same state transitions will be displayed (Default value = True)
 
     """
-    save_automaton_to_file(automaton, path=path, file_type=file_type, display_same_state_trans=display_same_state_trans)
+    print('Visualization started in the background thread.')
+    if len(automaton.states) >= 25:
+        print(f'Visualizing {len(automaton.states)} state automaton could take some time.')
+
+    import threading
+    visualization_thread = threading.Thread(target=save_automaton_to_file, name="Visualization",
+                                            args={automaton: automaton, path: path, file_type: file_type,
+                                                  display_same_state_trans: display_same_state_trans})
+    visualization_thread.start()
 
 
 def save_automaton_to_file(automaton, path="LearnedModel", file_type='dot',
