@@ -253,14 +253,17 @@ def onfsm_mealy_paper_example():
     Context'.
     :return: learned ONFSM
     """
+    from random import seed
+    seed(3)
     onfsm = get_benchmark_ONFSM()
 
     alph = onfsm.get_input_alphabet()
 
     sul = OnfsmSUL(onfsm)
     eq_oracle = UnseenOutputRandomWalkEqOracle(alph, sul, num_steps=5000, reset_prob=0.09, reset_after_cex=True)
+    eq_oracle = UnseenOutputRandomWordEqOracle(alph, sul, num_walks=500, min_walk_len=4, max_walk_len=10)
 
-    learned_onfsm = run_Lstar_ONFSM(alph, sul, eq_oracle, n_sampling=500, print_level=2)
+    learned_onfsm = run_Lstar_ONFSM(alph, sul, eq_oracle, n_sampling=15, print_level=3)
 
     return learned_onfsm
 
