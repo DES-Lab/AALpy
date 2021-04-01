@@ -107,8 +107,8 @@ def random_onfsm_example(num_states, input_size, output_size, n_sampling):
     alphabet = onfsm.get_input_alphabet()
 
     sul = OnfsmSUL(onfsm)
-    eq_oracle = UnseenOutputRandomWalkEqOracle(alphabet, sul, num_steps=5000, reset_prob=0.09, reset_after_cex=True)
     eq_oracle = UnseenOutputRandomWordEqOracle(alphabet, sul, num_walks=500, min_walk_len=10, max_walk_len=50)
+    eq_oracle = UnseenOutputRandomWalkEqOracle(alphabet, sul, num_steps=5000, reset_prob=0.15, reset_after_cex=True)
 
     learned_model = run_Lstar_ONFSM(alphabet, sul, eq_oracle=eq_oracle, n_sampling=n_sampling)
     return learned_model
@@ -260,7 +260,7 @@ def onfsm_mealy_paper_example():
     sul = OnfsmSUL(onfsm)
     eq_oracle = UnseenOutputRandomWalkEqOracle(alph, sul, num_steps=5000, reset_prob=0.09, reset_after_cex=True)
 
-    learned_onfsm = run_Lstar_ONFSM(alph, sul, eq_oracle, n_sampling=15, print_level=3)
+    learned_onfsm = run_Lstar_ONFSM(alph, sul, eq_oracle, n_sampling=500, print_level=2)
 
     return learned_onfsm
 
