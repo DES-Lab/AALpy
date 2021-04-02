@@ -99,7 +99,7 @@ def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type,
         hypothesis = observation_table.gen_hypothesis(check_for_duplicate_rows=cex_processing is None)
 
         if print_level > 1:
-            print(f'Hypothesis {learning_rounds} has {len(hypothesis.states)} states.')
+            print(f'Hypothesis {learning_rounds}: {len(hypothesis.states)} states.')
 
         if print_level == 3:
             print_observation_table(observation_table.S, observation_table.s_dot_a(),

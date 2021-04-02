@@ -80,7 +80,7 @@ def run_Lstar_ONFSM(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=50,
         hypothesis = observation_table.gen_hypothesis()
 
         if print_level > 1:
-            print(f'Hypothesis {learning_rounds} has {len(hypothesis.states)} states.')
+            print(f'Hypothesis {learning_rounds}: {len(hypothesis.states)} states.')
 
         if print_level == 3:
             print_observation_table(observation_table.S, observation_table.S_dot_A, observation_table.E,
