@@ -42,8 +42,8 @@ def run_Lstar_ONFSM(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=50,
 
     """
     # Print warning
-    print('Running algorithm with all-weather assumption.\n'
-          'Check run_Lstar_ONFSM for more details of possible non-convergence if the.')
+    print('Starting learning with an all-weather assumption.\n'
+          'See run_Lstar_ONFSM documentation for more details about possible non-convergence.')
 
     start_time = time.time()
     eq_query_time = 0
