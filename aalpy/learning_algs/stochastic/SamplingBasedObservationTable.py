@@ -1,28 +1,16 @@
 from collections import defaultdict
-from math import sqrt, log
 
 from aalpy.automata import Mdp, MdpState, StochasticMealyState, StochasticMealyMachine
+from .DifferenceChecker import DifferenceChecker
 from .StochasticTeacher import StochasticTeacher, Node
-
-
-def is_suffix_of(suffix, trace) -> bool:
-    """
-
-    Args:
-      suffix: 
-      trace: 
-
-    Returns:
-
-    """
-    if len(trace) < len(suffix):
-        return False
-    else:
-        return trace[-len(suffix):] == suffix
+from ...utils.HelperFunctions import is_suffix_of
 
 
 class SamplingBasedObservationTable:
-    def __init__(self, input_alphabet: list, automaton_type, teacher: StochasticTeacher, alpha=0.05, strategy='normal'):
+    def __init__(self, input_alphabet: list, automaton_type, teacher: StochasticTeacher,
+                 compatibility_checker: DifferenceChecker,
+                 alpha=0.05, strategy='normal',
+                 cex_processing=None):
         """Constructor of the observation table. Initial queries are asked in the constructor.
 
         Args:
@@ -32,6 +20,7 @@ class SamplingBasedObservationTable:
           alpha: constant used in Hoeffding bound
 
         """
+        self.compatibility_checker = compatibility_checker
         assert input_alphabet is not None and teacher is not None
         self.automaton_type = automaton_type
 
@@ -45,6 +34,7 @@ class SamplingBasedObservationTable:
         self.empty_word = tuple()
         self.alpha = alpha
         self.strategy = strategy
+        self.cex_processing = cex_processing
 
         # initial output
         if automaton_type == 'mdp':
@@ -68,6 +58,7 @@ class SamplingBasedObservationTable:
 
         Returns:
 
+            False if no cells are to be refined, True if refining happened
         """
         if self.automaton_type == 'mdp':
             pta_root = Node(self.initial_output[0])
@@ -82,7 +73,7 @@ class SamplingBasedObservationTable:
                         to_refine.append(s + e)
 
             if not to_refine:
-                return
+                return False
 
             to_refine.sort(key=len, reverse=True)
 
@@ -109,6 +100,7 @@ class SamplingBasedObservationTable:
 
         for i in range(n_resample):
             self.teacher.refine_query(pta_root)
+        return True
 
     def update_obs_table_with_freq_obs(self, element_of_s=None):
         """Updates cells in the observation table with frequency data. If the row in S has no extension yet, it is
@@ -214,7 +206,9 @@ class SamplingBasedObservationTable:
         Returns:
 
         """
-        #for compatibility_class in self.compatibility_class_rows.values():
+        if self.cex_processing is not None:
+            return None
+
         for ind, s1 in enumerate(self.S):
             for s2 in self.S[ind + 1:]:
                 if self.are_rows_compatible(s1, s2, ignore):
@@ -371,6 +365,7 @@ class SamplingBasedObservationTable:
 
     def cell_diff(self, s1, s2, e):
         """
+        Checks if 2 cells are considered different.
 
         Args:
           s1: prefix of row s1
@@ -383,39 +378,10 @@ class SamplingBasedObservationTable:
         """
         if self.strategy == 'normal':
             if self.teacher.complete_query(s1, e) and self.teacher.complete_query(s2, e):
-                c1 = self.T[s1][e]
-                c2 = self.T[s2][e]
-
-                if set(c1.keys()) != set(c2.keys()):
-                    return True
-
-                n1 = sum(c1.values())
-                n2 = sum(c2.values())
-
-                if n1 > 0 and n2 > 0:
-                    for o in c1.keys():
-                        if abs(c1[o] / n1 - c2[o] / n2) > \
-                                ((sqrt(1 / n1) + sqrt(1 / n2)) * sqrt(0.5 * log(2 / self.alpha))):
-                            return True
+                return self.compatibility_checker.check_difference(self.T[s1][e], self.T[s2][e])
         else:
             if e in self.T[s1] and e in self.T[s2]:
-                c1 = self.T[s1][e]
-                c2 = self.T[s2][e]
-
-                n1 = sum(c1.values())
-                n2 = sum(c2.values())
-
-                if n1 > 0 and n2 > 0:
-                    for o in set(c1.keys()).union(c2.keys()):
-                        c1o = c1[o] if o in c1.keys() else 0
-                        c2o = c2[o] if o in c2.keys() else 0
-                        alpha1 = 0.05 
-                        alpha2 = 0.05 
-                        epsilon1 = sqrt((1. / (2 * n1)) * log(2. / alpha1))
-                        epsilon2 = sqrt((1. / (2 * n2)) * log(2. / alpha2))
-
-                        if abs(c1o / n1 - c2o / n2) > epsilon1 + epsilon2:
-                            return True
+                return self.compatibility_checker.check_difference(self.T[s1][e], self.T[s2][e])
         return False
 
     def are_rows_compatible(self, s1, s2, e_ignore=None):
@@ -450,7 +416,14 @@ class SamplingBasedObservationTable:
             rank = sum([sum(self.T[s][i].values()) for i in self.input_alphabet])
             class_rank_pair.append((s, rank))
 
-        class_rank_pair.sort(key=lambda x: x[1], reverse=True)
+        # sort according to frequency
+        # class_rank_pair.sort(key=lambda x: x[1], reverse=True)
+
+        # sort according to prefix length, and elements of same length sort by value
+        class_rank_pair = [(s, -rank) for (s,rank) in class_rank_pair]
+        class_rank_pair.sort(key=lambda x: (len(x[0]), x[1]))
+        class_rank_pair = [(s, -rank) for (s,rank) in class_rank_pair]
+
         compatibility_classes = [c[0] for c in class_rank_pair]
 
         tmp_classes = list(compatibility_classes)
@@ -489,17 +462,24 @@ class SamplingBasedObservationTable:
 
         """
         for state in hypothesis.states:
+            if self.automaton_type == "mdp" and state.output == "chaos" \
+                    or self.automaton_type == "smm" and state.state_id == "chaos":
+                # we are not interested in chaos state, but in prefix to chaos
+                continue
             for i in self.input_alphabet:
                 output_states = state.transitions[i[0]]
                 if self.automaton_type == 'mdp':
                     for (s, _) in output_states:
                         if s.output == 'chaos':
-                            return state.prefix
+                            return True
+                            #return state.prefix + i
                 else:
                     for (_, o, _) in output_states:
                         if o == 'chaos':
-                            return state.prefix
-        return None
+                            return True
+                            #return state.prefix
+        return False
+        #return None
 
     def add_to_PTA(self, pta_root, trace, uncertainty_value=None):
         """Adds a trace to the PTA. PTA is later used for online sampling. The uncertainty value is added to inputs as
@@ -527,7 +507,7 @@ class SamplingBasedObservationTable:
                 curr_node = child
             else:
                 new_node = Node(output)
-                curr_node.children[inp].append(new_node)
+                curr_node.children[inp][output] = new_node
                 curr_node = new_node
 
     def generate_hypothesis(self):
@@ -547,6 +527,7 @@ class SamplingBasedObservationTable:
             else:
                 r_state_map[r] = StochasticMealyState(state_id=f's{state_counter}')
             r_state_map[r].prefix = r
+
             state_counter += 1
         if self.automaton_type == 'mdp':
             r_state_map['chaos'] = MdpState(state_id=f's{state_counter}', output='chaos')
@@ -564,8 +545,8 @@ class SamplingBasedObservationTable:
                 total_sum = sum(freq_dict.values())
 
                 origin_state = s
-                if self.strategy == 'normal' and not self.teacher.complete_query(s, i) or self.strategy != 'normal' and\
-                        i not in self.T[s]:  # if not self.teacher.complete_query(s, i):
+                if self.strategy == 'normal' and not self.teacher.complete_query(s, i) \
+                        or self.strategy != 'normal' and i not in self.T[s]:
                     if self.automaton_type == 'mdp':
                         r_state_map[origin_state].transitions[i[0]].append((r_state_map['chaos'], 1.))
                     else:
@@ -590,3 +571,4 @@ class SamplingBasedObservationTable:
             return Mdp(r_state_map[self.get_representative(self.initial_output)], list(r_state_map.values()))
         else:
             return StochasticMealyMachine(r_state_map[tuple()], list(r_state_map.values()))
+

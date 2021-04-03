@@ -199,3 +199,35 @@ def print_observation_table(s_set, extended_s, e_set, table, det_table=True):
         print("-" * len(row))
         print(row)
     print('-' * row_len)
+
+
+def is_suffix_of(suffix, trace) -> bool:
+    """
+
+    Args:
+      suffix:
+      trace:
+
+    Returns:
+
+    """
+    if len(trace) < len(suffix):
+        return False
+    else:
+        return trace[-len(suffix):] == suffix
+
+
+def get_cex_prefixes(cex, automaton_type):
+    """
+
+    Args:
+        cex: counterexample
+        automaton_type: `mdp` or `smm`
+
+    Returns:
+
+        all prefixes of the counterexample based on the `automaton_type`
+    """
+    if automaton_type == 'mdp':
+        return [tuple(cex[:i + 1]) for i in range(0, len(cex), 2)]
+    return [tuple(cex[:i]) for i in range(0, len(cex) + 1, 2)]

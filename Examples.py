@@ -276,11 +276,11 @@ def faulty_coffee_machine_mdp_example():
     mdp = get_faulty_coffee_machine_MDP()
     input_alphabet = mdp.get_input_alphabet()
     sul = MdpSUL(mdp)
-    eq_oracle = UnseenOutputRandomWalkEqOracle(input_alphabet, sul=sul, num_steps=1000, reset_prob=0.11,
-                                               reset_after_cex=True)
+    eq_oracle = UnseenOutputRandomWalkEqOracle(input_alphabet, sul=sul, num_steps=500, reset_prob=0.11,
+                                               reset_after_cex=False)
 
     learned_mdp = run_stochastic_Lstar(input_alphabet, sul, eq_oracle, n_c=20, n_resample=100, min_rounds=10,
-                                       max_rounds=50, print_level=3)
+                                       max_rounds=50, print_level=3, cex_processing=None)
 
     return learned_mdp
 
@@ -297,14 +297,14 @@ def weird_coffee_machine_mdp_example():
     eq_oracle = UnseenOutputRandomWalkEqOracle(input_alphabet, sul=sul, num_steps=4000, reset_prob=0.11,
                                                reset_after_cex=True)
 
-    learned_mdp = run_stochastic_Lstar(input_alphabet, sul, eq_oracle, n_c=20, n_resample=100, min_rounds=10,
-                                       max_rounds=500, strategy='no_cq')
+    learned_mdp = run_stochastic_Lstar(input_alphabet, sul, eq_oracle, n_c=20, n_resample=1000, min_rounds=10,
+                                       max_rounds=500, strategy='normal', cex_processing='rs')
 
     return learned_mdp
 
 
-def benchmark_mdp_example(example='first_grid', n_c=20, n_resample=1000, min_rounds=10, max_rounds=500,
-                          strategy='normal'):
+def benchmark_mdp_example(example='first_grid', n_c=20, n_resample=500, min_rounds=10, max_rounds=500,
+                          strategy='normal',cex_processing=None, reset_prob = 0.125, samples_cex_strategy=None):
     """
     Learning the MDP various benchmarking examples found in Chapter 7 of Martin's Tappler PhD thesis.
     :param example: One of ['first_grid', 'second_grid', 'shared_coin', 'slot_machine']
@@ -313,6 +313,9 @@ def benchmark_mdp_example(example='first_grid', n_c=20, n_resample=1000, min_rou
     :param min_rounds: minimum number of learning rounds
     :param max_rounds: maximum number of learning rounds
     :param strategy: normal or no_cq
+    :param cex_processing: counterexample processing stategy
+    :param reset_prob: reset probability for random walk eq oracle
+    :param samples_cex_strategy: strategy to sample cex in the trace tree
     :return: learned MDP
     """
     mdp = load_automaton_from_file(f'./DotModels/MDPs/{example}.dot', automaton_type='mdp')
@@ -320,20 +323,21 @@ def benchmark_mdp_example(example='first_grid', n_c=20, n_resample=1000, min_rou
     input_alphabet = mdp.get_input_alphabet()
     output_alphabet = list({state.output for state in mdp.states})
     sul = MdpSUL(mdp)
-    eq_oracle = UnseenOutputRandomWalkEqOracle(input_alphabet, sul=sul, num_steps=5000, reset_prob=0.09,
-                                               reset_after_cex=True)
-    eq_oracle = UnseenOutputRandomWordEqOracle(input_alphabet, sul, num_walks=500, min_walk_len=10, max_walk_len=100,
+    eq_oracle = UnseenOutputRandomWalkEqOracle(input_alphabet, sul=sul, num_steps=n_resample / reset_prob,
+                                               reset_prob=reset_prob, reset_after_cex=True)
+    eq_oracle = UnseenOutputRandomWordEqOracle(input_alphabet, sul, num_walks=500, min_walk_len=5, max_walk_len=12,
                                                reset_after_cex=True)
 
     learned_mdp = run_stochastic_Lstar(input_alphabet=input_alphabet, sul=sul, eq_oracle=eq_oracle,
                                        n_c=n_c, n_resample=n_resample, min_rounds=min_rounds, max_rounds=max_rounds,
-                                       strategy=strategy)
+                                       strategy=strategy, cex_processing=cex_processing,
+                                       samples_cex_strategy=samples_cex_strategy)
 
     return learned_mdp
 
 
 def benchmark_mdp_2_smm_example(example='first_grid', n_c=20, n_resample=1000, min_rounds=10, max_rounds=500,
-                                strategy='normal'):
+                                strategy='normal', cex_processing=None, reset_prob = 0.125, samples_cex_strategy=None):
     """
     Learning the stochastic Mealy Machine(SMM) various benchmarking examples
     found in Chapter 7 of Martin's Tappler PhD thesis.
@@ -343,6 +347,9 @@ def benchmark_mdp_2_smm_example(example='first_grid', n_c=20, n_resample=1000, m
     :param min_rounds: minimum number of learning rounds
     :param max_rounds: maximum number of learning rounds
     :param strategy: normal or no_cq
+    :param cex_processing: counterexample processing stategy
+    :param reset_prob: reset probability for random walk eq oracle
+    :param samples_cex_strategy: strategy to sample cex in the trace tree
     :return: learned SMM
     """
     mdp = load_automaton_from_file(f'./DotModels/MDPs/{example}.dot', automaton_type='mdp')
@@ -351,12 +358,13 @@ def benchmark_mdp_2_smm_example(example='first_grid', n_c=20, n_resample=1000, m
     sul = StochasticMealySUL(mdp)
     eq_oracle = UnseenOutputRandomWalkEqOracle(input_alphabet, sul=sul, num_steps=5000, reset_prob=0.09,
                                                reset_after_cex=True)
-    eq_oracle = UnseenOutputRandomWordEqOracle(input_alphabet, sul, num_walks=150, min_walk_len=10, max_walk_len=300,
+    eq_oracle = UnseenOutputRandomWordEqOracle(input_alphabet, sul, num_walks=150, min_walk_len=5, max_walk_len=12,
                                                reset_after_cex=True)
 
     learned_mdp = run_stochastic_Lstar(input_alphabet=input_alphabet, eq_oracle=eq_oracle, sul=sul, n_c=n_c,
                                        n_resample=n_resample, min_rounds=min_rounds, max_rounds=max_rounds,
-                                       automaton_type='smm', strategy=strategy)
+                                       automaton_type='smm', strategy=strategy, cex_processing=cex_processing,
+                                       samples_cex_strategy=samples_cex_strategy)
 
     return learned_mdp
 

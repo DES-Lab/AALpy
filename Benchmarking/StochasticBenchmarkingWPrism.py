@@ -52,8 +52,7 @@ def eval_properties(shell_name, prism_executable, prism_file_name, properties_fi
 
 
 path_to_dir = '../DotModels/MDPs/'
-files = ['first_grid.dot', 'second_grid.dot',
-         'shared_coin.dot',
+files = ['shared_coin.dot','first_grid.dot', 'second_grid.dot',
          'slot_machine.dot']
 
 # TODO Change the path to your PRIMS executable
@@ -66,11 +65,12 @@ n_resample = 1000
 min_rounds = 10
 max_rounds = 8000
 do_check_properties = True
+strategy = "chi-square"
 
 seed = 12313412
-for seed in range(1, 20):
+for seed in range(1, 4):
     random.seed(seed)
-    benchmark_dir = f"benchmark_data_{seed}"
+    benchmark_dir = f"benchmark_complete_impl_chi2/benchmark_data_{seed}"
     import os
 
     if not os.path.exists(benchmark_dir):
@@ -108,11 +108,11 @@ for seed in range(1, 20):
         mdp_sul = MdpSUL(original_mdp)
 
         eq_oracle = UnseenOutputRandomWalkEqOracle(input_alphabet, mdp_sul, num_steps=n_resample * (1 / 0.25),
-                                                   reset_after_cex=True, reset_prob=0.25, nr_traces=n_resample)
+                                                   reset_after_cex=True, reset_prob=0.25)
 
         learned_mdp, data_mdp = run_stochastic_Lstar(input_alphabet, mdp_sul, eq_oracle, automaton_type='mdp',
-                                                     n_c=n_c, n_resample=n_resample, min_rounds=min_rounds,
-                                                     max_rounds=max_rounds, return_data=True)
+                                                     n_c=n_c, n_resample=n_resample, min_rounds=min_rounds, strategy=strategy,
+                                                     max_rounds=max_rounds, return_data=True, samples_cex_strategy="bfs")
 
         mdp_2_prism_format(learned_mdp, f'learned_mdp_{exp_name}',
                            output_path=f'{benchmark_dir}/learned_mdp_{exp_name}.prism')
@@ -121,8 +121,8 @@ for seed in range(1, 20):
         mdp_sul.num_queries = 0
 
         learned_smm, data_smm = run_stochastic_Lstar(input_alphabet, mdp_sul, eq_oracle, automaton_type='smm',
-                                                     n_c=n_c, n_resample=n_resample, min_rounds=min_rounds,
-                                                     max_rounds=max_rounds, return_data=True)
+                                                     n_c=n_c, n_resample=n_resample, min_rounds=min_rounds, strategy=strategy,
+                                                     max_rounds=max_rounds, return_data=True, samples_cex_strategy="bfs")
 
         mdp_from_smm = smm_to_mdp_conversion(learned_smm)
         mdp_2_prism_format(mdp_from_smm, f'learned_smm_{exp_name}',

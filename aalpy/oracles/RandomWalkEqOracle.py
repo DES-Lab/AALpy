@@ -91,11 +91,6 @@ class UnseenOutputRandomWalkEqOracle(Oracle):
         self.reset_after_cex = reset_after_cex
         self.reset_prob = reset_prob
         self.random_steps_done = 0
-        self.executed_traces = []
-
-    def clear_traces(self):
-        """ """
-        self.executed_traces.clear()
 
     def find_cex(self, hypothesis):
 
@@ -114,7 +109,6 @@ class UnseenOutputRandomWalkEqOracle(Oracle):
                 self.sul.pre()
                 self.num_queries += 1
                 hypothesis.reset_to_initial()
-                self.executed_traces.append((list(inputs), list(outputs)))
                 inputs.clear()
                 outputs = []
 
@@ -131,14 +125,13 @@ class UnseenOutputRandomWalkEqOracle(Oracle):
                     self.random_steps_done = 0
 
                 if isinstance(hypothesis, Onfsm):
-                    self.executed_traces.append((inputs, outputs))
                     return inputs, outputs
                 elif isinstance(hypothesis, Mdp):
                     # hypothesis is MDP
                     cex = [hypothesis.initial_state.output]
                     for i, o in zip(inputs, outputs):
                         cex.extend([i, o])
-                    cex.append(inputs[-1])
+
                     return cex
                 else:
                     # stochastic MM

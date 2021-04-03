@@ -2,16 +2,39 @@ from collections import defaultdict
 from random import choice, random
 
 from aalpy.base import SUL
+from aalpy.learning_algs.stochastic.DifferenceChecker import DifferenceChecker
+
+
+class StochasticSUL(SUL):
+    def __init__(self, sul, teacher):
+        super().__init__()
+        self.sul = sul
+        self.teacher = teacher
+
+    def pre(self):
+        self.num_queries += 1
+        self.teacher.back_to_root()
+        self.sul.pre()
+
+    def post(self):
+        self.sul.post()
+
+    def step(self, letter):
+        self.num_steps += 1
+        out = self.sul.step(letter)
+        self.teacher.add(letter, out)
+        return out
 
 
 class Node:
     """
     Node of the cache/multiset of all traces.
     """
+
     def __init__(self, output):
         self.output = output
         self.frequency = 0
-        self.children = defaultdict(list)
+        self.children = defaultdict(dict)
         self.input_frequencies = defaultdict(int)
 
     def get_child(self, inp, out):
@@ -27,7 +50,9 @@ class Node:
             Child with output that equals to `out` reached when performing `inp`. If such child does not exist,
             return None.
         """
-        return next((child for child in self.children[inp] if child.output == out), None)
+        if inp not in self.children.keys() or out not in self.children[inp].keys():
+            return None
+        return self.children[inp][out]
 
     def get_frequency_sum(self, input_letter):
         """
@@ -50,7 +75,7 @@ class Node:
         """
         if input_letter not in self.children.keys():
             return dict()
-        return {child.output: child.frequency for child in self.children[input_letter]}
+        return {child.output: child.frequency for child in self.children[input_letter].values()}
 
 
 class StochasticTeacher:
@@ -59,46 +84,51 @@ class StochasticTeacher:
     Whenever new traces are sampled in the course of learning, they are added to S.
     """
 
-    def __init__(self, sul: SUL, n_c, eq_oracle, automaton_type):
-        self.sul = sul
+    def __init__(self, sul: SUL, n_c, eq_oracle, automaton_type, compatibility_checker: DifferenceChecker,
+                 samples_cex_strategy="none"):
         self.automaton_type = automaton_type
         if automaton_type == 'mdp':
-            self.initial_value = self.sul.query(tuple())
+            self.initial_value = sul.query(tuple())
             self.root_node = Node(self.initial_value[-1])
         else:
             self.root_node = Node(None)
+
+        self.sul = StochasticSUL(sul=sul, teacher=self)
+
         self.eq_oracle = eq_oracle
         self.n_c = n_c
+
+        self.curr_node = None
         # cache
         self.complete_query_cache = set()
+        self.compatibility_checker = compatibility_checker
+        self.samples_cex_strategy = samples_cex_strategy
 
-    def add(self, input_seq: tuple, output_seq):
+        # eq query cache
+        self.last_hyp_size = 0
+        self.last_cex = None
+
+    def back_to_root(self):
+        self.curr_node = self.root_node
+
+    def add(self, inp, out):
         """
-        Adds a trace and all of its prefixes to the multiset/tree of traces.
+        Adds a input/output to the tree.
 
         Args:
 
-            input_seq: inputs
-            output_seq: outputs
+            inp: input
+            out: output
 
 
         """
-        output_seq = list(output_seq)
-        if self.automaton_type == 'mdp':
-            assert output_seq.pop(0) == self.root_node.output
-            assert len(input_seq) == len(output_seq)
+        self.curr_node.input_frequencies[inp] += 1
+        if inp not in self.curr_node.children.keys() or out not in self.curr_node.children[inp].keys():
+            node = Node(out)
+            self.curr_node.children[inp][out] = node
 
-        curr_node = self.root_node
-        for i, o in zip(input_seq, output_seq):
-            curr_node.input_frequencies[i] += 1
-            if i not in curr_node.children.keys() or o not in {child.output for child in curr_node.children[i]}:
-                node = Node(o)
-                curr_node.children[i].append(node)
-            else:
-                node = curr_node.get_child(i, o)
-                assert node is not None
-            curr_node = node
-            curr_node.frequency += 1
+        self.curr_node = self.curr_node.children[inp][out]
+        self.curr_node.frequency += 1
 
     def frequency_query(self, s: tuple, e: tuple):
         """Output frequencies observed after trace s + e.
@@ -115,14 +145,11 @@ class StochasticTeacher:
 
         """
         if self.automaton_type == 'mdp':
-            input_seq = list(s[1::2] + e[0::2])
-            output_seq = list(s[0::2] + e[1::2])
-        else:
-            input_seq = list(s[0::2] + e[0::2])
-            output_seq = list(s[1::2] + e[1::2])
+            s = s[1:]
 
-        if self.automaton_type == 'mdp':
-            assert output_seq.pop(0) == self.root_node.output
+        input_seq = list(s[0::2] + e[0::2])
+        output_seq = list(s[1::2] + e[1::2])
+
         last_input = input_seq.pop()
 
         curr_node = self.root_node
@@ -157,15 +184,11 @@ class StochasticTeacher:
             return True
 
         if self.automaton_type == 'mdp':
-            input_seq = list(s[1::2] + e[0::2])
-            output_seq = list(s[0::2] + e[1::2])
-        else:
-            input_seq = list(s[0::2] + e[0::2])
-            output_seq = list(s[1::2] + e[1::2])
+            s = s[1:]
 
-        # pop first output
-        if self.automaton_type == 'mdp':
-            assert output_seq.pop(0) == self.root_node.output
+        input_seq = list(s[0::2] + e[0::2])
+        output_seq = list(s[1::2] + e[1::2])
+
         # get last input
         last_input = input_seq.pop()
 
@@ -174,6 +197,8 @@ class StochasticTeacher:
             new_node = curr_node.get_child(i, o)
             if not new_node:
                 curr_node_complete = curr_node.get_frequency_sum(i) >= self.n_c
+                # if curr_node_complete:
+                #     self.complete_query_cache.add(s + e)
                 return curr_node_complete
             else:
                 curr_node = new_node
@@ -197,7 +222,6 @@ class StochasticTeacher:
             number of steps taken
 
         """
-        self.sul.num_queries += 1
         self.sul.pre()
         curr_node = pta_root
         if self.automaton_type == 'mdp':
@@ -215,6 +239,7 @@ class StochasticTeacher:
                 else:
                     # use float random rather than integers to be able to work with non-integer frequency information
                     selection_value = random() * frequency_sum
+                    inp = None
                     for i in curr_node.input_frequencies.keys():
                         inp = i
                         selection_value -= curr_node.input_frequencies[i]
@@ -227,15 +252,89 @@ class StochasticTeacher:
                 if new_node:
                     curr_node = new_node
                 else:
-                    self.add(tuple(executed_inputs), out)
                     self.sul.post()
-                    self.sul.num_steps += len(executed_inputs)
                     return
             else:
-                self.add(tuple(executed_inputs), out)
                 self.sul.post()
-                self.sul.num_steps += len(executed_inputs)
                 return
+
+    def single_dfs_for_cex(self, stop_prob, hypothesis):
+        curr_node = self.root_node
+        curr_state = hypothesis.initial_state
+        if self.automaton_type == "mdp":
+            trace = tuple(self.initial_value)
+        else:
+            trace = ()
+
+        self.root_node, hypothesis.initial_state, tuple(self.initial_value)
+        while True:
+            rep_trace = curr_state.prefix
+            if trace != rep_trace:
+                for i in curr_node.children.keys():
+                    freq_in_tree = self.frequency_query(trace, (i,))
+                    freq_in_hyp = self.frequency_query(rep_trace, (i,))
+                    if self.compatibility_checker.check_difference(freq_in_tree, freq_in_hyp):
+                        return trace + (i,)
+            # choose next node randomly and return None if there is no next node
+            if not curr_node.children:
+                return None
+            i = choice(list(curr_node.children.keys()))
+            if not curr_node.children[i]:
+                return None
+            c = choice(curr_node.children[i])
+            o = c.output
+            if self.automaton_type == 'mdp':
+                next_state = next(
+                    (out_state[0] for out_state in curr_state.transitions[i] if out_state[0].output == o), None)
+            else:
+                next_state = next((out_state[0] for out_state in curr_state.transitions[i] if out_state[1] == o),
+                                  None)
+            if not next_state:
+                return trace + (i,)
+            if random() <= stop_prob:
+                return None
+            else:
+                curr_node = c
+                curr_state = next_state
+                trace = trace + (i,) + (o,)
+
+    def dfs_for_cex_in_tree(self, hypothesis, nr_traces, stop_prob):
+        for i in range(nr_traces):
+            cex = self.single_dfs_for_cex(stop_prob, hypothesis)
+            if cex:
+                return cex
+        return None
+
+    def bfs_for_cex_in_tree(self, hypothesis):
+        # BFS for cex
+        if self.automaton_type == "mdp":
+            to_check = [(self.root_node, hypothesis.initial_state, tuple(self.initial_value))]
+        else:
+            to_check = [(self.root_node, hypothesis.initial_state, ())]
+
+        while to_check:
+            (curr_node, curr_state, trace) = to_check.pop(0)
+            rep_trace = curr_state.prefix
+            if trace != rep_trace:
+                for i in curr_node.children.keys():
+                    freq_in_tree = self.frequency_query(trace, (i,))
+                    freq_in_hyp = self.frequency_query(rep_trace, (i,))
+                    if self.compatibility_checker.check_difference(freq_in_tree, freq_in_hyp):
+                        return trace + (i,)
+            for i in curr_node.children.keys():
+                for c in curr_node.children[i]:
+                    o = c.output
+                    if self.automaton_type == 'mdp':
+                        next_state = next((out_state[0] for out_state in curr_state.transitions[i]
+                                           if out_state[0].output == o), None)
+                    else:
+                        next_state = next((out_state[0] for out_state in curr_state.transitions[i]
+                                           if out_state[1] == o), None)
+                    if not next_state:
+                        return trace + (i,)
+                    new_trace = trace + (i,) + (o,)
+                    to_check.append((c, next_state, new_trace))
+        return None
 
     def equivalence_query(self, hypothesis):
         """
@@ -250,10 +349,37 @@ class StochasticTeacher:
             counterexample
 
         """
+        if self.samples_cex_strategy:
+            if self.samples_cex_strategy == 'bfs':
+                cex = self.bfs_for_cex_in_tree(hypothesis)
+                if cex:
+                    return cex
+            elif self.samples_cex_strategy == 'random':
+                # format for random: "random:<#traces to check:int>:<stop probability for single trace in [0,1)>"
+                split_strategy = self.samples_cex_strategy.split(":")
+                try:
+                    nr_traces = int(split_strategy[1])
+                    stop_prob = float(split_strategy[2])
+                    cex = self.dfs_for_cex_in_tree(hypothesis, nr_traces, stop_prob)
+                    if cex:
+                        return cex
+                except Exception as e:
+                    print("Problem in random DFS for cex in samples:", e)
+
+        # Repeat same cex if it did not lead to state size increase
+        if self.last_cex and len(hypothesis.states) == self.last_hyp_size:
+            # TODO we can define some other requirement aside from length, such as reachability of cex
+            if random() <= 0.33:
+                cex = self.eq_oracle.find_cex(hypothesis)
+                if cex and len(cex) < len(self.last_cex):
+                    self.last_cex = cex[:-1]
+            return self.last_cex
+
+        self.last_hyp_size = len(hypothesis.states)
+
         cex = self.eq_oracle.find_cex(hypothesis)
-        for (inputs, outputs) in self.eq_oracle.executed_traces:
-            if self.automaton_type == 'mdp':
-                outputs.insert(0, self.initial_value[-1])
-            self.add(inputs, outputs)
-        self.eq_oracle.clear_traces()
+        if cex:  # remove last output
+            cex = cex[:-1]
+
+        self.last_cex = cex
         return cex
