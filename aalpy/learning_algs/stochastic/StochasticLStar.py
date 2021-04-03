@@ -57,8 +57,7 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_
     assert strategy in strategies
     assert samples_cex_strategy in cex_sampling_options
 
-    compatibility_checker = ChisquareChecker() if strategy == "chi-square" else \
-        AdvancedHoeffdingChecker() if strategy != "normal" else HoeffdingChecker()
+    compatibility_checker = AdvancedHoeffdingChecker() if strategy != "normal" else HoeffdingChecker()
 
     stochastic_teacher = StochasticTeacher(sul, n_c, eq_oracle, automaton_type, compatibility_checker,
                                            samples_cex_strategy=samples_cex_strategy)
@@ -89,7 +88,7 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_
         observation_table.trim(hypothesis)
 
         # If there is no chaos state is not reachable, remove it from state set
-        #cex = observation_table.chaos_counterexample(hypothesis)
+        # cex = observation_table.chaos_counterexample(hypothesis)
         chaos_cex_present = observation_table.chaos_counterexample(hypothesis)
 
         if not chaos_cex_present:
