@@ -1,13 +1,13 @@
 import time
 
 from aalpy.base import SUL, Oracle
-from aalpy.learning_algs.stochastic.DifferenceChecker import AdvancedHoeffdingChecker, HoeffdingChecker, ChisquareChecker
+from aalpy.learning_algs.stochastic.DifferenceChecker import AdvancedHoeffdingChecker, HoeffdingChecker
 from aalpy.learning_algs.stochastic.SamplingBasedObservationTable import SamplingBasedObservationTable
 from aalpy.learning_algs.stochastic.StochasticCexProcessing import stochastic_longest_prefix, stochastic_rs
 from aalpy.learning_algs.stochastic.StochasticTeacher import StochasticTeacher
 from aalpy.utils.HelperFunctions import print_learning_info, print_observation_table, get_cex_prefixes
 
-strategies = ['normal', 'no_cq', 'chi-square']
+strategies = ['normal', 'no_cq']
 cex_sampling_options = [None, 'bfs', 'random']
 print_options = [0, 1, 2, 3]
 
