@@ -41,74 +41,16 @@ All automata learning procedures follow this high-level approach:
 - [Choose the equivalence oracle](https://github.com/DES-Lab/AALpy/wiki/Equivalence-Oracles)
 - [Run the learning algorithm](https://github.com/DES-Lab/AALpy/wiki/Setting-Up-Learning)
 
-If you would like to learn a black-box Date Validator's behavior, your AALpy configuration would look something like this:
-```python
-from aalpy.base import SUL
-from aalpy.utils import visualize_automaton, DateValidator
-from aalpy.oracles import StatePrefixEqOracle
-from aalpy.learning_algs import run_Lstar
-
-class DateSUL(SUL):
-    """
-    An example implementation of a system under learning that 
-    can be used to learn the behavior of the date validator.
-    """
-
-    def __init__(self):
-        super().__init__()
-        # DateValidator is a black-box class used for date string verification
-        # The format of the dates is %d/%m/%Y'
-        # Its method is_date_accepted returns True if date is accepted, False otherwise
-        self.dv = DateValidator()
-        self.string = ""
-
-    def pre(self):
-        # reset the string used for testing
-        self.string = ""
-        pass
-
-    def post(self):
-        pass
-
-    def step(self, letter):
-        # add the input to the current string
-        if letter is not None:
-            self.string += str(letter)
-
-        # test if the current sting is accepted
-        return self.dv.is_date_accepted(self.string)
-
-
-# instantiate the SUL
-sul = DateSUL()
-
-# define the input alphabet
-alphabet = list(range(0, 9)) + ['/']
-
-# define a equivalence oracle
-
-eq_oracle = StatePrefixEqOracle(alphabet, sul, walks_per_state=500, walk_len=15)
-
-# run the learning algorithm
-
-learned_model = run_Lstar(alphabet, sul, eq_oracle, automaton_type='dfa')
-# visualize the automaton
-visualize_automaton(learned_model)
-```
-
-To make experiments reproducible, define a random seed at the beginning of your program.
-```python
-from random import seed
-seed(2) # all experiments will be reproducible
-```
-
-Automatons can be [loaded, saved or visualized](https://github.com/DES-Lab/AALpy/wiki/Loading,Saving,-Syntax-and-Visualization-of-Automata) or [randomly generated](https://github.com/DES-Lab/AALpy/wiki/Generation-of-Random-Automata).
-
 For more detailed examples, check out:
 - [How to learn Regex with AALpy](https://github.com/DES-Lab/AALpy/wiki/SUL-Interface%2C-or-How-to-Learn-Your-Systems/_edit#example---regexsul)
 - [How to learn MQTT with AALpy](https://github.com/DES-Lab/AALpy/wiki/SUL-Interface,-or-How-to-Learn-Your-Systems#example---mqtt)
 - [Interactive Examples](https://github.com/DES-Lab/AALpy/tree/master/notebooks)
 - [Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py)
+
+With AALpy, you can
+ - [Load, save and visualize automata](https://github.com/DES-Lab/AALpy/wiki/Loading,Saving,-Syntax-and-Visualization-of-Automata)
+ - [Randomly generated automata](https://github.com/DES-Lab/AALpy/wiki/Generation-of-Random-Automata)
+
 
 ## Research Contact
 If you have research suggestions or need specific help concerning your research, feel free to contact [edi.muskardin@silicon-austria.com](mailto:edi.muskardin@silicon-austria.com).
