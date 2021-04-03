@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from math import sqrt, log
-#from scipy.stats import chi2
 
 
 class DifferenceChecker(ABC):
