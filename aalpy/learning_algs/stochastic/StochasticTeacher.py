@@ -281,8 +281,8 @@ class StochasticTeacher:
             i = choice(list(curr_node.children.keys()))
             if not curr_node.children[i]:
                 return None
-            c = choice(curr_node.children[i])
-            o = c.output
+            c = choice(curr_node.children[i]) # TODO need refactoring
+            o = c.output # TODO need refactoring
             if self.automaton_type == 'mdp':
                 next_state = next(
                     (out_state[0] for out_state in curr_state.transitions[i] if out_state[0].output == o), None)
@@ -322,7 +322,7 @@ class StochasticTeacher:
                     if self.compatibility_checker.check_difference(freq_in_tree, freq_in_hyp):
                         return trace + (i,)
             for i in curr_node.children.keys():
-                for c in curr_node.children[i]:
+                for c in curr_node.children[i].values(): # TODO Martin please check
                     o = c.output
                     if self.automaton_type == 'mdp':
                         next_state = next((out_state[0] for out_state in curr_state.transitions[i]
