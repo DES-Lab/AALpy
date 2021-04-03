@@ -54,9 +54,6 @@
                         <li>
                                 <a class="function" href="#NonDetObservationTable.cex_processing">cex_processing</a>
                         </li>
-                        <li>
-                                <a class="function" href="#NonDetObservationTable.trim">trim</a>
-                        </li>
                 </ul>
 
             </li>
@@ -290,36 +287,6 @@
             <span class="n">suffixes</span> <span class="o">=</span> <span class="n">all_suffixes</span><span class="p">(</span><span class="n">cex</span><span class="p">)</span>
         <span class="n">suffixes</span><span class="o">.</span><span class="n">reverse</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">suffixes</span>
-
-    <span class="k">def</span> <span class="nf">trim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Not yet implemented. Should remove the need for all-weather assumption.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">s_to_remove</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">S</span><span class="p">):</span>
-            <span class="nb">repr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">row_to_hashable</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
-            <span class="n">has_long_trace</span> <span class="o">=</span> <span class="kc">False</span>
-            <span class="k">for</span> <span class="n">s1</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">S</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]:</span>
-                <span class="k">if</span> <span class="nb">repr</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">row_to_hashable</span><span class="p">(</span><span class="n">s1</span><span class="p">):</span>
-                    <span class="n">s_to_remove</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s1</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">S_dot_A</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="nb">repr</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">row_to_hashable</span><span class="p">(</span><span class="n">row</span><span class="p">):</span>
-                        <span class="n">has_long_trace</span> <span class="o">=</span> <span class="kc">True</span>
-                        <span class="k">break</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">has_long_trace</span><span class="p">:</span>
-                <span class="n">s_to_remove</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
-
-        <span class="k">for</span> <span class="n">to_remove</span> <span class="ow">in</span> <span class="n">s_to_remove</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">S</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">to_remove</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">to_remove</span><span class="p">)</span>
-            <span class="n">extensions</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">to_remove</span><span class="p">]:</span>
-                    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">to_remove</span><span class="p">][</span><span class="n">a</span><span class="p">]:</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">pop</span><span class="p">((</span><span class="n">to_remove</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">a</span><span class="p">,</span> <span class="n">to_remove</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="nb">tuple</span><span class="p">([</span><span class="n">t</span><span class="p">])))</span>
-                        <span class="n">extensions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">to_remove</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">a</span><span class="p">,</span> <span class="n">to_remove</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="nb">tuple</span><span class="p">([</span><span class="n">t</span><span class="p">])))</span>
-            <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">extensions</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">S_dot_A</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
 </pre></div>
 
         </details>
@@ -541,36 +508,6 @@
             <span class="n">suffixes</span> <span class="o">=</span> <span class="n">all_suffixes</span><span class="p">(</span><span class="n">cex</span><span class="p">)</span>
         <span class="n">suffixes</span><span class="o">.</span><span class="n">reverse</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">suffixes</span>
-
-    <span class="k">def</span> <span class="nf">trim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Not yet implemented. Should remove the need for all-weather assumption.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">s_to_remove</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">S</span><span class="p">):</span>
-            <span class="nb">repr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">row_to_hashable</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
-            <span class="n">has_long_trace</span> <span class="o">=</span> <span class="kc">False</span>
-            <span class="k">for</span> <span class="n">s1</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">S</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]:</span>
-                <span class="k">if</span> <span class="nb">repr</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">row_to_hashable</span><span class="p">(</span><span class="n">s1</span><span class="p">):</span>
-                    <span class="n">s_to_remove</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s1</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">S_dot_A</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="nb">repr</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">row_to_hashable</span><span class="p">(</span><span class="n">row</span><span class="p">):</span>
-                        <span class="n">has_long_trace</span> <span class="o">=</span> <span class="kc">True</span>
-                        <span class="k">break</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">has_long_trace</span><span class="p">:</span>
-                <span class="n">s_to_remove</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
-
-        <span class="k">for</span> <span class="n">to_remove</span> <span class="ow">in</span> <span class="n">s_to_remove</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">S</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">to_remove</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">to_remove</span><span class="p">)</span>
-            <span class="n">extensions</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">to_remove</span><span class="p">]:</span>
-                    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">to_remove</span><span class="p">][</span><span class="n">a</span><span class="p">]:</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">pop</span><span class="p">((</span><span class="n">to_remove</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">a</span><span class="p">,</span> <span class="n">to_remove</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="nb">tuple</span><span class="p">([</span><span class="n">t</span><span class="p">])))</span>
-                        <span class="n">extensions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">to_remove</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">a</span><span class="p">,</span> <span class="n">to_remove</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="nb">tuple</span><span class="p">([</span><span class="n">t</span><span class="p">])))</span>
-            <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">extensions</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">S_dot_A</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
 </pre></div>
 
         </details>
@@ -980,54 +917,6 @@ is needed.</p>
 
 <p>Returns:
     suffixes to add to the E set</p>
-</div>
-
-
-                            </div>
-                            <div id="NonDetObservationTable.trim" class="classattr">
-                                        <div class="attr function"><a class="headerlink" href="#NonDetObservationTable.trim">#&nbsp;&nbsp</a>
-
-        
-            <span class="def">def</span>
-            <span class="name">trim</span><span class="signature">(self)</span>:
-    </div>
-
-                <details>
-            <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">trim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Not yet implemented. Should remove the need for all-weather assumption.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">s_to_remove</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">S</span><span class="p">):</span>
-            <span class="nb">repr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">row_to_hashable</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
-            <span class="n">has_long_trace</span> <span class="o">=</span> <span class="kc">False</span>
-            <span class="k">for</span> <span class="n">s1</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">S</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]:</span>
-                <span class="k">if</span> <span class="nb">repr</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">row_to_hashable</span><span class="p">(</span><span class="n">s1</span><span class="p">):</span>
-                    <span class="n">s_to_remove</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s1</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">S_dot_A</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="nb">repr</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">row_to_hashable</span><span class="p">(</span><span class="n">row</span><span class="p">):</span>
-                        <span class="n">has_long_trace</span> <span class="o">=</span> <span class="kc">True</span>
-                        <span class="k">break</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">has_long_trace</span><span class="p">:</span>
-                <span class="n">s_to_remove</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
-
-        <span class="k">for</span> <span class="n">to_remove</span> <span class="ow">in</span> <span class="n">s_to_remove</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">S</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">to_remove</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">to_remove</span><span class="p">)</span>
-            <span class="n">extensions</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">A</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">to_remove</span><span class="p">]:</span>
-                    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">to_remove</span><span class="p">][</span><span class="n">a</span><span class="p">]:</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">pop</span><span class="p">((</span><span class="n">to_remove</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">a</span><span class="p">,</span> <span class="n">to_remove</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="nb">tuple</span><span class="p">([</span><span class="n">t</span><span class="p">])))</span>
-                        <span class="n">extensions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">to_remove</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">a</span><span class="p">,</span> <span class="n">to_remove</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="nb">tuple</span><span class="p">([</span><span class="n">t</span><span class="p">])))</span>
-            <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">extensions</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">S_dot_A</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
-</pre></div>
-
-        </details>
-
-            <div class="docstring"><p>Not yet implemented. Should remove the need for all-weather assumption.</p>
 </div>
 
 

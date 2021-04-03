@@ -28,6 +28,24 @@
                     <h2>API Documentation</h2>
                         <ul class="memberlist">
             <li>
+                    <a class="class" href="#StochasticSUL">StochasticSUL</a>
+                            <ul class="memberlist">
+                        <li>
+                                <a class="function" href="#StochasticSUL.__init__">StochasticSUL</a>
+                        </li>
+                        <li>
+                                <a class="function" href="#StochasticSUL.pre">pre</a>
+                        </li>
+                        <li>
+                                <a class="function" href="#StochasticSUL.post">post</a>
+                        </li>
+                        <li>
+                                <a class="function" href="#StochasticSUL.step">step</a>
+                        </li>
+                </ul>
+
+            </li>
+            <li>
                     <a class="class" href="#Node">Node</a>
                             <ul class="memberlist">
                         <li>
@@ -52,6 +70,9 @@
                                 <a class="function" href="#StochasticTeacher.__init__">StochasticTeacher</a>
                         </li>
                         <li>
+                                <a class="function" href="#StochasticTeacher.back_to_root">back_to_root</a>
+                        </li>
+                        <li>
                                 <a class="function" href="#StochasticTeacher.add">add</a>
                         </li>
                         <li>
@@ -62,6 +83,15 @@
                         </li>
                         <li>
                                 <a class="function" href="#StochasticTeacher.refine_query">refine_query</a>
+                        </li>
+                        <li>
+                                <a class="function" href="#StochasticTeacher.single_dfs_for_cex">single_dfs_for_cex</a>
+                        </li>
+                        <li>
+                                <a class="function" href="#StochasticTeacher.dfs_for_cex_in_tree">dfs_for_cex_in_tree</a>
+                        </li>
+                        <li>
+                                <a class="function" href="#StochasticTeacher.bfs_for_cex_in_tree">bfs_for_cex_in_tree</a>
                         </li>
                         <li>
                                 <a class="function" href="#StochasticTeacher.equivalence_query">equivalence_query</a>
@@ -91,16 +121,39 @@
 <span class="kn">from</span> <span class="nn">random</span> <span class="kn">import</span> <span class="n">choice</span><span class="p">,</span> <span class="n">random</span>
 
 <span class="kn">from</span> <span class="nn">aalpy.base</span> <span class="kn">import</span> <span class="n">SUL</span>
+<span class="kn">from</span> <span class="nn">aalpy.learning_algs.stochastic.DifferenceChecker</span> <span class="kn">import</span> <span class="n">DifferenceChecker</span>
+
+
+<span class="k">class</span> <span class="nc">StochasticSUL</span><span class="p">(</span><span class="n">SUL</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sul</span><span class="p">,</span> <span class="n">teacher</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sul</span> <span class="o">=</span> <span class="n">sul</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">teacher</span> <span class="o">=</span> <span class="n">teacher</span>
+
+    <span class="k">def</span> <span class="nf">pre</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_queries</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">teacher</span><span class="o">.</span><span class="n">back_to_root</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">letter</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_steps</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">letter</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">teacher</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">letter</span><span class="p">,</span> <span class="n">out</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span>
 
 
 <span class="k">class</span> <span class="nc">Node</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Node of the cache/multiset of all traces.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">output</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">frequency</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">children</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">children</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">input_frequencies</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">get_child</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inp</span><span class="p">,</span> <span class="n">out</span><span class="p">):</span>
@@ -116,7 +169,9 @@
 <span class="sd">            Child with output that equals to `out` reached when performing `inp`. If such child does not exist,</span>
 <span class="sd">            return None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">next</span><span class="p">((</span><span class="n">child</span> <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">inp</span><span class="p">]</span> <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">output</span> <span class="o">==</span> <span class="n">out</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">inp</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="ow">or</span> <span class="n">out</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">inp</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">inp</span><span class="p">][</span><span class="n">out</span><span class="p">]</span>
 
     <span class="k">def</span> <span class="nf">get_frequency_sum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_letter</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -139,7 +194,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">input_letter</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
             <span class="k">return</span> <span class="nb">dict</span><span class="p">()</span>
-        <span class="k">return</span> <span class="p">{</span><span class="n">child</span><span class="o">.</span><span class="n">output</span><span class="p">:</span> <span class="n">child</span><span class="o">.</span><span class="n">frequency</span> <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">input_letter</span><span class="p">]}</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">child</span><span class="o">.</span><span class="n">output</span><span class="p">:</span> <span class="n">child</span><span class="o">.</span><span class="n">frequency</span> <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">input_letter</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">()}</span>
 
 
 <span class="k">class</span> <span class="nc">StochasticTeacher</span><span class="p">:</span>
@@ -148,46 +203,51 @@
 <span class="sd">    Whenever new traces are sampled in the course of learning, they are added to S.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">n_c</span><span class="p">,</span> <span class="n">eq_oracle</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sul</span> <span class="o">=</span> <span class="n">sul</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">n_c</span><span class="p">,</span> <span class="n">eq_oracle</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">,</span> <span class="n">compatibility_checker</span><span class="p">:</span> <span class="n">DifferenceChecker</span><span class="p">,</span>
+                 <span class="n">samples_cex_strategy</span><span class="o">=</span><span class="s2">&quot;none&quot;</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">=</span> <span class="n">automaton_type</span>
         <span class="k">if</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">initial_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="nb">tuple</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">initial_value</span> <span class="o">=</span> <span class="n">sul</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="nb">tuple</span><span class="p">())</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_value</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">sul</span> <span class="o">=</span> <span class="n">StochasticSUL</span><span class="p">(</span><span class="n">sul</span><span class="o">=</span><span class="n">sul</span><span class="p">,</span> <span class="n">teacher</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">eq_oracle</span> <span class="o">=</span> <span class="n">eq_oracle</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">n_c</span> <span class="o">=</span> <span class="n">n_c</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">curr_node</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="c1"># cache</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">complete_query_cache</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">compatibility_checker</span> <span class="o">=</span> <span class="n">compatibility_checker</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">samples_cex_strategy</span> <span class="o">=</span> <span class="n">samples_cex_strategy</span>
 
-    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_seq</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">,</span> <span class="n">output_seq</span><span class="p">):</span>
+        <span class="c1"># eq query cache</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_hyp_size</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_cex</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">back_to_root</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">curr_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span>
+
+    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inp</span><span class="p">,</span> <span class="n">out</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Adds a trace and all of its prefixes to the multiset/tree of traces.</span>
+<span class="sd">        Adds a input/output to the tree.</span>
 
 <span class="sd">        Args:</span>
 
-<span class="sd">            input_seq: inputs</span>
-<span class="sd">            output_seq: outputs</span>
+<span class="sd">            inp: input</span>
+<span class="sd">            out: output</span>
 
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">output_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">output_seq</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="n">output_seq</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span><span class="o">.</span><span class="n">output</span>
-            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_seq</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">output_seq</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">curr_node</span><span class="o">.</span><span class="n">input_frequencies</span><span class="p">[</span><span class="n">inp</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">inp</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="ow">or</span> <span class="n">out</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">inp</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">node</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">inp</span><span class="p">][</span><span class="n">out</span><span class="p">]</span> <span class="o">=</span> <span class="n">node</span>
 
-        <span class="n">curr_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">input_seq</span><span class="p">,</span> <span class="n">output_seq</span><span class="p">):</span>
-            <span class="n">curr_node</span><span class="o">.</span><span class="n">input_frequencies</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="ow">or</span> <span class="n">o</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="n">child</span><span class="o">.</span><span class="n">output</span> <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">]}:</span>
-                <span class="n">node</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">o</span><span class="p">)</span>
-                <span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">node</span> <span class="o">=</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">get_child</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">o</span><span class="p">)</span>
-                <span class="k">assert</span> <span class="n">node</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="n">curr_node</span> <span class="o">=</span> <span class="n">node</span>
-            <span class="n">curr_node</span><span class="o">.</span><span class="n">frequency</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">curr_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">inp</span><span class="p">][</span><span class="n">out</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">curr_node</span><span class="o">.</span><span class="n">frequency</span> <span class="o">+=</span> <span class="mi">1</span>
 
     <span class="k">def</span> <span class="nf">frequency_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Output frequencies observed after trace s + e.</span>
@@ -204,14 +264,11 @@
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
-            <span class="n">input_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span>
-            <span class="n">output_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">input_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span>
-            <span class="n">output_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="n">output_seq</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span><span class="o">.</span><span class="n">output</span>
+        <span class="n">input_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span>
+        <span class="n">output_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span>
+
         <span class="n">last_input</span> <span class="o">=</span> <span class="n">input_seq</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
 
         <span class="n">curr_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span>
@@ -246,15 +303,11 @@
             <span class="k">return</span> <span class="kc">True</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
-            <span class="n">input_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span>
-            <span class="n">output_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">input_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span>
-            <span class="n">output_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
 
-        <span class="c1"># pop first output</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="n">output_seq</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span><span class="o">.</span><span class="n">output</span>
+        <span class="n">input_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span>
+        <span class="n">output_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span>
+
         <span class="c1"># get last input</span>
         <span class="n">last_input</span> <span class="o">=</span> <span class="n">input_seq</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
 
@@ -263,6 +316,8 @@
             <span class="n">new_node</span> <span class="o">=</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">get_child</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">o</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">new_node</span><span class="p">:</span>
                 <span class="n">curr_node_complete</span> <span class="o">=</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">get_frequency_sum</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_c</span>
+                <span class="c1"># if curr_node_complete:</span>
+                <span class="c1">#     self.complete_query_cache.add(s + e)</span>
                 <span class="k">return</span> <span class="n">curr_node_complete</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">curr_node</span> <span class="o">=</span> <span class="n">new_node</span>
@@ -286,7 +341,6 @@
 <span class="sd">            number of steps taken</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">num_queries</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
         <span class="n">curr_node</span> <span class="o">=</span> <span class="n">pta_root</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
@@ -304,6 +358,7 @@
                 <span class="k">else</span><span class="p">:</span>
                     <span class="c1"># use float random rather than integers to be able to work with non-integer frequency information</span>
                     <span class="n">selection_value</span> <span class="o">=</span> <span class="n">random</span><span class="p">()</span> <span class="o">*</span> <span class="n">frequency_sum</span>
+                    <span class="n">inp</span> <span class="o">=</span> <span class="kc">None</span>
                     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">input_frequencies</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
                         <span class="n">inp</span> <span class="o">=</span> <span class="n">i</span>
                         <span class="n">selection_value</span> <span class="o">-=</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">input_frequencies</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
@@ -316,15 +371,89 @@
                 <span class="k">if</span> <span class="n">new_node</span><span class="p">:</span>
                     <span class="n">curr_node</span> <span class="o">=</span> <span class="n">new_node</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">executed_inputs</span><span class="p">),</span> <span class="n">out</span><span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">num_steps</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">executed_inputs</span><span class="p">)</span>
                     <span class="k">return</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">executed_inputs</span><span class="p">),</span> <span class="n">out</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">num_steps</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">executed_inputs</span><span class="p">)</span>
                 <span class="k">return</span>
+
+    <span class="k">def</span> <span class="nf">single_dfs_for_cex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stop_prob</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">):</span>
+        <span class="n">curr_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span>
+        <span class="n">curr_state</span> <span class="o">=</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">initial_state</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s2">&quot;mdp&quot;</span><span class="p">:</span>
+            <span class="n">trace</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_value</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">trace</span> <span class="o">=</span> <span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span><span class="p">,</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">initial_state</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_value</span><span class="p">)</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">rep_trace</span> <span class="o">=</span> <span class="n">curr_state</span><span class="o">.</span><span class="n">prefix</span>
+            <span class="k">if</span> <span class="n">trace</span> <span class="o">!=</span> <span class="n">rep_trace</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                    <span class="n">freq_in_tree</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">frequency_query</span><span class="p">(</span><span class="n">trace</span><span class="p">,</span> <span class="p">(</span><span class="n">i</span><span class="p">,))</span>
+                    <span class="n">freq_in_hyp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">frequency_query</span><span class="p">(</span><span class="n">rep_trace</span><span class="p">,</span> <span class="p">(</span><span class="n">i</span><span class="p">,))</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">compatibility_checker</span><span class="o">.</span><span class="n">check_difference</span><span class="p">(</span><span class="n">freq_in_tree</span><span class="p">,</span> <span class="n">freq_in_hyp</span><span class="p">):</span>
+                        <span class="k">return</span> <span class="n">trace</span> <span class="o">+</span> <span class="p">(</span><span class="n">i</span><span class="p">,)</span>
+            <span class="c1"># choose next node randomly and return None if there is no next node</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="n">choice</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+                <span class="k">return</span> <span class="kc">None</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="n">choice</span><span class="p">(</span><span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="n">o</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">output</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
+                <span class="n">next_state</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
+                    <span class="p">(</span><span class="n">out_state</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">out_state</span> <span class="ow">in</span> <span class="n">curr_state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">if</span> <span class="n">out_state</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">output</span> <span class="o">==</span> <span class="n">o</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">next_state</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">out_state</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">out_state</span> <span class="ow">in</span> <span class="n">curr_state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">if</span> <span class="n">out_state</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">o</span><span class="p">),</span>
+                                  <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">next_state</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">trace</span> <span class="o">+</span> <span class="p">(</span><span class="n">i</span><span class="p">,)</span>
+            <span class="k">if</span> <span class="n">random</span><span class="p">()</span> <span class="o">&lt;=</span> <span class="n">stop_prob</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">curr_node</span> <span class="o">=</span> <span class="n">c</span>
+                <span class="n">curr_state</span> <span class="o">=</span> <span class="n">next_state</span>
+                <span class="n">trace</span> <span class="o">=</span> <span class="n">trace</span> <span class="o">+</span> <span class="p">(</span><span class="n">i</span><span class="p">,)</span> <span class="o">+</span> <span class="p">(</span><span class="n">o</span><span class="p">,)</span>
+
+    <span class="k">def</span> <span class="nf">dfs_for_cex_in_tree</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">,</span> <span class="n">nr_traces</span><span class="p">,</span> <span class="n">stop_prob</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nr_traces</span><span class="p">):</span>
+            <span class="n">cex</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">single_dfs_for_cex</span><span class="p">(</span><span class="n">stop_prob</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">cex</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">cex</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">bfs_for_cex_in_tree</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">):</span>
+        <span class="c1"># BFS for cex</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s2">&quot;mdp&quot;</span><span class="p">:</span>
+            <span class="n">to_check</span> <span class="o">=</span> <span class="p">[(</span><span class="bp">self</span><span class="o">.</span><span class="n">root_node</span><span class="p">,</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">initial_state</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_value</span><span class="p">))]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">to_check</span> <span class="o">=</span> <span class="p">[(</span><span class="bp">self</span><span class="o">.</span><span class="n">root_node</span><span class="p">,</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">initial_state</span><span class="p">,</span> <span class="p">())]</span>
+
+        <span class="k">while</span> <span class="n">to_check</span><span class="p">:</span>
+            <span class="p">(</span><span class="n">curr_node</span><span class="p">,</span> <span class="n">curr_state</span><span class="p">,</span> <span class="n">trace</span><span class="p">)</span> <span class="o">=</span> <span class="n">to_check</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">rep_trace</span> <span class="o">=</span> <span class="n">curr_state</span><span class="o">.</span><span class="n">prefix</span>
+            <span class="k">if</span> <span class="n">trace</span> <span class="o">!=</span> <span class="n">rep_trace</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                    <span class="n">freq_in_tree</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">frequency_query</span><span class="p">(</span><span class="n">trace</span><span class="p">,</span> <span class="p">(</span><span class="n">i</span><span class="p">,))</span>
+                    <span class="n">freq_in_hyp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">frequency_query</span><span class="p">(</span><span class="n">rep_trace</span><span class="p">,</span> <span class="p">(</span><span class="n">i</span><span class="p">,))</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">compatibility_checker</span><span class="o">.</span><span class="n">check_difference</span><span class="p">(</span><span class="n">freq_in_tree</span><span class="p">,</span> <span class="n">freq_in_hyp</span><span class="p">):</span>
+                        <span class="k">return</span> <span class="n">trace</span> <span class="o">+</span> <span class="p">(</span><span class="n">i</span><span class="p">,)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+                    <span class="n">o</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">output</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
+                        <span class="n">next_state</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">out_state</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">out_state</span> <span class="ow">in</span> <span class="n">curr_state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                                           <span class="k">if</span> <span class="n">out_state</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">output</span> <span class="o">==</span> <span class="n">o</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">next_state</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">out_state</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">out_state</span> <span class="ow">in</span> <span class="n">curr_state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                                           <span class="k">if</span> <span class="n">out_state</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">o</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">next_state</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="n">trace</span> <span class="o">+</span> <span class="p">(</span><span class="n">i</span><span class="p">,)</span>
+                    <span class="n">new_trace</span> <span class="o">=</span> <span class="n">trace</span> <span class="o">+</span> <span class="p">(</span><span class="n">i</span><span class="p">,)</span> <span class="o">+</span> <span class="p">(</span><span class="n">o</span><span class="p">,)</span>
+                    <span class="n">to_check</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">c</span><span class="p">,</span> <span class="n">next_state</span><span class="p">,</span> <span class="n">new_trace</span><span class="p">))</span>
+        <span class="k">return</span> <span class="kc">None</span>
 
     <span class="k">def</span> <span class="nf">equivalence_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -339,18 +468,192 @@
 <span class="sd">            counterexample</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">samples_cex_strategy</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">samples_cex_strategy</span> <span class="o">==</span> <span class="s1">&#39;bfs&#39;</span><span class="p">:</span>
+                <span class="n">cex</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bfs_for_cex_in_tree</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">cex</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">cex</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">samples_cex_strategy</span> <span class="o">==</span> <span class="s1">&#39;random&#39;</span><span class="p">:</span>
+                <span class="c1"># format for random: &quot;random:&lt;#traces to check:int&gt;:&lt;stop probability for single trace in [0,1)&gt;&quot;</span>
+                <span class="n">split_strategy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">samples_cex_strategy</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">nr_traces</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">split_strategy</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                    <span class="n">stop_prob</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">split_strategy</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+                    <span class="n">cex</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dfs_for_cex_in_tree</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">nr_traces</span><span class="p">,</span> <span class="n">stop_prob</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">cex</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="n">cex</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Problem in random DFS for cex in samples:&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+
+        <span class="c1"># Repeat same cex if it did not lead to state size increase</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_cex</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_hyp_size</span><span class="p">:</span>
+            <span class="c1"># TODO we can define some other requirement aside from length, such as reachability of cex</span>
+            <span class="k">if</span> <span class="n">random</span><span class="p">()</span> <span class="o">&lt;=</span> <span class="mf">0.33</span><span class="p">:</span>
+                <span class="n">cex</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eq_oracle</span><span class="o">.</span><span class="n">find_cex</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">cex</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">cex</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">last_cex</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">last_cex</span> <span class="o">=</span> <span class="n">cex</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_cex</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_hyp_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">)</span>
+
         <span class="n">cex</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eq_oracle</span><span class="o">.</span><span class="n">find_cex</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
-        <span class="k">for</span> <span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">eq_oracle</span><span class="o">.</span><span class="n">executed_traces</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
-                <span class="n">outputs</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_value</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">eq_oracle</span><span class="o">.</span><span class="n">clear_traces</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">cex</span><span class="p">:</span>  <span class="c1"># remove last output</span>
+            <span class="n">cex</span> <span class="o">=</span> <span class="n">cex</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_cex</span> <span class="o">=</span> <span class="n">cex</span>
         <span class="k">return</span> <span class="n">cex</span>
 </pre></div>
 
         </details>
 
             </section>
+                <section id="StochasticSUL">
+                                <div class="attr class">
+        <a class="headerlink" href="#StochasticSUL">#&nbsp;&nbsp</a>
+
+        
+        <span class="def">class</span>
+        <span class="name">StochasticSUL</span>(<span class="base"><a href="../../base/SUL.html#SUL">aalpy.base.SUL.SUL</a></span>):
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">StochasticSUL</span><span class="p">(</span><span class="n">SUL</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sul</span><span class="p">,</span> <span class="n">teacher</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sul</span> <span class="o">=</span> <span class="n">sul</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">teacher</span> <span class="o">=</span> <span class="n">teacher</span>
+
+    <span class="k">def</span> <span class="nf">pre</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_queries</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">teacher</span><span class="o">.</span><span class="n">back_to_root</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">letter</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_steps</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">letter</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">teacher</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">letter</span><span class="p">,</span> <span class="n">out</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span>
+</pre></div>
+
+        </details>
+
+            <div class="docstring"><p>System Under Learning (SUL) abstract class. Defines the interaction between the learning algorithm and the system
+under learning. All systems under learning have to implement this class, as it is
+passed to the learning algorithm and the equivalence oracle.</p>
+</div>
+
+
+                            <div id="StochasticSUL.__init__" class="classattr">
+                                        <div class="attr function"><a class="headerlink" href="#StochasticSUL.__init__">#&nbsp;&nbsp</a>
+
+        
+            <span class="name">StochasticSUL</span><span class="signature">(sul, teacher)</span>    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sul</span><span class="p">,</span> <span class="n">teacher</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sul</span> <span class="o">=</span> <span class="n">sul</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">teacher</span> <span class="o">=</span> <span class="n">teacher</span>
+</pre></div>
+
+        </details>
+
+    
+
+                            </div>
+                            <div id="StochasticSUL.pre" class="classattr">
+                                        <div class="attr function"><a class="headerlink" href="#StochasticSUL.pre">#&nbsp;&nbsp</a>
+
+        
+            <span class="def">def</span>
+            <span class="name">pre</span><span class="signature">(self)</span>:
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">pre</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_queries</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">teacher</span><span class="o">.</span><span class="n">back_to_root</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
+</pre></div>
+
+        </details>
+
+            <div class="docstring"><p>Resets the system. Called after post method in the equivalence query.</p>
+</div>
+
+
+                            </div>
+                            <div id="StochasticSUL.post" class="classattr">
+                                        <div class="attr function"><a class="headerlink" href="#StochasticSUL.post">#&nbsp;&nbsp</a>
+
+        
+            <span class="def">def</span>
+            <span class="name">post</span><span class="signature">(self)</span>:
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
+</pre></div>
+
+        </details>
+
+            <div class="docstring"><p>Performs additional cleanup on the system in necessary. Called before pre method in the equivalence query.</p>
+</div>
+
+
+                            </div>
+                            <div id="StochasticSUL.step" class="classattr">
+                                        <div class="attr function"><a class="headerlink" href="#StochasticSUL.step">#&nbsp;&nbsp</a>
+
+        
+            <span class="def">def</span>
+            <span class="name">step</span><span class="signature">(self, letter)</span>:
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">letter</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_steps</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">letter</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">teacher</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">letter</span><span class="p">,</span> <span class="n">out</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span>
+</pre></div>
+
+        </details>
+
+            <div class="docstring"><p>Executes an action on the system under learning and returns its result.</p>
+
+<p>Args:</p>
+
+<pre><code>letter: Single input that is executed on the SUL.
+</code></pre>
+
+<p>Returns:</p>
+
+<pre><code>Output received after executing the input.
+</code></pre>
+</div>
+
+
+                            </div>
+                            <div class="inherited">
+                                <h5>Inherited Members</h5>
+                                <dl>
+                                    <div><dt><a href="../../base/SUL.html#SUL">aalpy.base.SUL.SUL</a></dt>
+                                <dd id="StochasticSUL.query" class="function"><a href="../../base/SUL.html#SUL.query">query</a></dd>
+
+            </div>
+                                </dl>
+                            </div>
+                </section>
                 <section id="Node">
                                 <div class="attr class">
         <a class="headerlink" href="#Node">#&nbsp;&nbsp</a>
@@ -366,10 +669,11 @@
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Node of the cache/multiset of all traces.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">output</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">frequency</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">children</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">children</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">input_frequencies</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">get_child</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inp</span><span class="p">,</span> <span class="n">out</span><span class="p">):</span>
@@ -385,7 +689,9 @@
 <span class="sd">            Child with output that equals to `out` reached when performing `inp`. If such child does not exist,</span>
 <span class="sd">            return None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">next</span><span class="p">((</span><span class="n">child</span> <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">inp</span><span class="p">]</span> <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">output</span> <span class="o">==</span> <span class="n">out</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">inp</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="ow">or</span> <span class="n">out</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">inp</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">inp</span><span class="p">][</span><span class="n">out</span><span class="p">]</span>
 
     <span class="k">def</span> <span class="nf">get_frequency_sum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_letter</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -408,7 +714,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">input_letter</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
             <span class="k">return</span> <span class="nb">dict</span><span class="p">()</span>
-        <span class="k">return</span> <span class="p">{</span><span class="n">child</span><span class="o">.</span><span class="n">output</span><span class="p">:</span> <span class="n">child</span><span class="o">.</span><span class="n">frequency</span> <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">input_letter</span><span class="p">]}</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">child</span><span class="o">.</span><span class="n">output</span><span class="p">:</span> <span class="n">child</span><span class="o">.</span><span class="n">frequency</span> <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">input_letter</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">()}</span>
 </pre></div>
 
         </details>
@@ -428,7 +734,7 @@
             <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">output</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">frequency</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">children</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">children</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">input_frequencies</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
 </pre></div>
 
@@ -460,7 +766,9 @@
 <span class="sd">            Child with output that equals to `out` reached when performing `inp`. If such child does not exist,</span>
 <span class="sd">            return None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">next</span><span class="p">((</span><span class="n">child</span> <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">inp</span><span class="p">]</span> <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">output</span> <span class="o">==</span> <span class="n">out</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">inp</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="ow">or</span> <span class="n">out</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">inp</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">inp</span><span class="p">][</span><span class="n">out</span><span class="p">]</span>
 </pre></div>
 
         </details>
@@ -532,7 +840,7 @@ return None.
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">input_letter</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
             <span class="k">return</span> <span class="nb">dict</span><span class="p">()</span>
-        <span class="k">return</span> <span class="p">{</span><span class="n">child</span><span class="o">.</span><span class="n">output</span><span class="p">:</span> <span class="n">child</span><span class="o">.</span><span class="n">frequency</span> <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">input_letter</span><span class="p">]}</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">child</span><span class="o">.</span><span class="n">output</span><span class="p">:</span> <span class="n">child</span><span class="o">.</span><span class="n">frequency</span> <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">input_letter</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">()}</span>
 </pre></div>
 
         </details>
@@ -568,46 +876,51 @@ return None.
 <span class="sd">    Whenever new traces are sampled in the course of learning, they are added to S.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">n_c</span><span class="p">,</span> <span class="n">eq_oracle</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sul</span> <span class="o">=</span> <span class="n">sul</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">n_c</span><span class="p">,</span> <span class="n">eq_oracle</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">,</span> <span class="n">compatibility_checker</span><span class="p">:</span> <span class="n">DifferenceChecker</span><span class="p">,</span>
+                 <span class="n">samples_cex_strategy</span><span class="o">=</span><span class="s2">&quot;none&quot;</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">=</span> <span class="n">automaton_type</span>
         <span class="k">if</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">initial_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="nb">tuple</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">initial_value</span> <span class="o">=</span> <span class="n">sul</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="nb">tuple</span><span class="p">())</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_value</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">sul</span> <span class="o">=</span> <span class="n">StochasticSUL</span><span class="p">(</span><span class="n">sul</span><span class="o">=</span><span class="n">sul</span><span class="p">,</span> <span class="n">teacher</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">eq_oracle</span> <span class="o">=</span> <span class="n">eq_oracle</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">n_c</span> <span class="o">=</span> <span class="n">n_c</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">curr_node</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="c1"># cache</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">complete_query_cache</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">compatibility_checker</span> <span class="o">=</span> <span class="n">compatibility_checker</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">samples_cex_strategy</span> <span class="o">=</span> <span class="n">samples_cex_strategy</span>
 
-    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_seq</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">,</span> <span class="n">output_seq</span><span class="p">):</span>
+        <span class="c1"># eq query cache</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_hyp_size</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_cex</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">back_to_root</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">curr_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span>
+
+    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inp</span><span class="p">,</span> <span class="n">out</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Adds a trace and all of its prefixes to the multiset/tree of traces.</span>
+<span class="sd">        Adds a input/output to the tree.</span>
 
 <span class="sd">        Args:</span>
 
-<span class="sd">            input_seq: inputs</span>
-<span class="sd">            output_seq: outputs</span>
+<span class="sd">            inp: input</span>
+<span class="sd">            out: output</span>
 
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">output_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">output_seq</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="n">output_seq</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span><span class="o">.</span><span class="n">output</span>
-            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_seq</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">output_seq</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">curr_node</span><span class="o">.</span><span class="n">input_frequencies</span><span class="p">[</span><span class="n">inp</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">inp</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="ow">or</span> <span class="n">out</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">inp</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">node</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">inp</span><span class="p">][</span><span class="n">out</span><span class="p">]</span> <span class="o">=</span> <span class="n">node</span>
 
-        <span class="n">curr_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">input_seq</span><span class="p">,</span> <span class="n">output_seq</span><span class="p">):</span>
-            <span class="n">curr_node</span><span class="o">.</span><span class="n">input_frequencies</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="ow">or</span> <span class="n">o</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="n">child</span><span class="o">.</span><span class="n">output</span> <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">]}:</span>
-                <span class="n">node</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">o</span><span class="p">)</span>
-                <span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">node</span> <span class="o">=</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">get_child</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">o</span><span class="p">)</span>
-                <span class="k">assert</span> <span class="n">node</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="n">curr_node</span> <span class="o">=</span> <span class="n">node</span>
-            <span class="n">curr_node</span><span class="o">.</span><span class="n">frequency</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">curr_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">inp</span><span class="p">][</span><span class="n">out</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">curr_node</span><span class="o">.</span><span class="n">frequency</span> <span class="o">+=</span> <span class="mi">1</span>
 
     <span class="k">def</span> <span class="nf">frequency_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Output frequencies observed after trace s + e.</span>
@@ -624,14 +937,11 @@ return None.
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
-            <span class="n">input_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span>
-            <span class="n">output_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">input_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span>
-            <span class="n">output_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="n">output_seq</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span><span class="o">.</span><span class="n">output</span>
+        <span class="n">input_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span>
+        <span class="n">output_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span>
+
         <span class="n">last_input</span> <span class="o">=</span> <span class="n">input_seq</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
 
         <span class="n">curr_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span>
@@ -666,15 +976,11 @@ return None.
             <span class="k">return</span> <span class="kc">True</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
-            <span class="n">input_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span>
-            <span class="n">output_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">input_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span>
-            <span class="n">output_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
 
-        <span class="c1"># pop first output</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="n">output_seq</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span><span class="o">.</span><span class="n">output</span>
+        <span class="n">input_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span>
+        <span class="n">output_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span>
+
         <span class="c1"># get last input</span>
         <span class="n">last_input</span> <span class="o">=</span> <span class="n">input_seq</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
 
@@ -683,6 +989,8 @@ return None.
             <span class="n">new_node</span> <span class="o">=</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">get_child</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">o</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">new_node</span><span class="p">:</span>
                 <span class="n">curr_node_complete</span> <span class="o">=</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">get_frequency_sum</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_c</span>
+                <span class="c1"># if curr_node_complete:</span>
+                <span class="c1">#     self.complete_query_cache.add(s + e)</span>
                 <span class="k">return</span> <span class="n">curr_node_complete</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">curr_node</span> <span class="o">=</span> <span class="n">new_node</span>
@@ -706,7 +1014,6 @@ return None.
 <span class="sd">            number of steps taken</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">num_queries</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
         <span class="n">curr_node</span> <span class="o">=</span> <span class="n">pta_root</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
@@ -724,6 +1031,7 @@ return None.
                 <span class="k">else</span><span class="p">:</span>
                     <span class="c1"># use float random rather than integers to be able to work with non-integer frequency information</span>
                     <span class="n">selection_value</span> <span class="o">=</span> <span class="n">random</span><span class="p">()</span> <span class="o">*</span> <span class="n">frequency_sum</span>
+                    <span class="n">inp</span> <span class="o">=</span> <span class="kc">None</span>
                     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">input_frequencies</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
                         <span class="n">inp</span> <span class="o">=</span> <span class="n">i</span>
                         <span class="n">selection_value</span> <span class="o">-=</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">input_frequencies</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
@@ -736,15 +1044,89 @@ return None.
                 <span class="k">if</span> <span class="n">new_node</span><span class="p">:</span>
                     <span class="n">curr_node</span> <span class="o">=</span> <span class="n">new_node</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">executed_inputs</span><span class="p">),</span> <span class="n">out</span><span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">num_steps</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">executed_inputs</span><span class="p">)</span>
                     <span class="k">return</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">executed_inputs</span><span class="p">),</span> <span class="n">out</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">num_steps</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">executed_inputs</span><span class="p">)</span>
                 <span class="k">return</span>
+
+    <span class="k">def</span> <span class="nf">single_dfs_for_cex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stop_prob</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">):</span>
+        <span class="n">curr_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span>
+        <span class="n">curr_state</span> <span class="o">=</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">initial_state</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s2">&quot;mdp&quot;</span><span class="p">:</span>
+            <span class="n">trace</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_value</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">trace</span> <span class="o">=</span> <span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span><span class="p">,</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">initial_state</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_value</span><span class="p">)</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">rep_trace</span> <span class="o">=</span> <span class="n">curr_state</span><span class="o">.</span><span class="n">prefix</span>
+            <span class="k">if</span> <span class="n">trace</span> <span class="o">!=</span> <span class="n">rep_trace</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                    <span class="n">freq_in_tree</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">frequency_query</span><span class="p">(</span><span class="n">trace</span><span class="p">,</span> <span class="p">(</span><span class="n">i</span><span class="p">,))</span>
+                    <span class="n">freq_in_hyp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">frequency_query</span><span class="p">(</span><span class="n">rep_trace</span><span class="p">,</span> <span class="p">(</span><span class="n">i</span><span class="p">,))</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">compatibility_checker</span><span class="o">.</span><span class="n">check_difference</span><span class="p">(</span><span class="n">freq_in_tree</span><span class="p">,</span> <span class="n">freq_in_hyp</span><span class="p">):</span>
+                        <span class="k">return</span> <span class="n">trace</span> <span class="o">+</span> <span class="p">(</span><span class="n">i</span><span class="p">,)</span>
+            <span class="c1"># choose next node randomly and return None if there is no next node</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="n">choice</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+                <span class="k">return</span> <span class="kc">None</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="n">choice</span><span class="p">(</span><span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="n">o</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">output</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
+                <span class="n">next_state</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
+                    <span class="p">(</span><span class="n">out_state</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">out_state</span> <span class="ow">in</span> <span class="n">curr_state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">if</span> <span class="n">out_state</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">output</span> <span class="o">==</span> <span class="n">o</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">next_state</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">out_state</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">out_state</span> <span class="ow">in</span> <span class="n">curr_state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">if</span> <span class="n">out_state</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">o</span><span class="p">),</span>
+                                  <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">next_state</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">trace</span> <span class="o">+</span> <span class="p">(</span><span class="n">i</span><span class="p">,)</span>
+            <span class="k">if</span> <span class="n">random</span><span class="p">()</span> <span class="o">&lt;=</span> <span class="n">stop_prob</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">curr_node</span> <span class="o">=</span> <span class="n">c</span>
+                <span class="n">curr_state</span> <span class="o">=</span> <span class="n">next_state</span>
+                <span class="n">trace</span> <span class="o">=</span> <span class="n">trace</span> <span class="o">+</span> <span class="p">(</span><span class="n">i</span><span class="p">,)</span> <span class="o">+</span> <span class="p">(</span><span class="n">o</span><span class="p">,)</span>
+
+    <span class="k">def</span> <span class="nf">dfs_for_cex_in_tree</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">,</span> <span class="n">nr_traces</span><span class="p">,</span> <span class="n">stop_prob</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nr_traces</span><span class="p">):</span>
+            <span class="n">cex</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">single_dfs_for_cex</span><span class="p">(</span><span class="n">stop_prob</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">cex</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">cex</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">bfs_for_cex_in_tree</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">):</span>
+        <span class="c1"># BFS for cex</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s2">&quot;mdp&quot;</span><span class="p">:</span>
+            <span class="n">to_check</span> <span class="o">=</span> <span class="p">[(</span><span class="bp">self</span><span class="o">.</span><span class="n">root_node</span><span class="p">,</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">initial_state</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_value</span><span class="p">))]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">to_check</span> <span class="o">=</span> <span class="p">[(</span><span class="bp">self</span><span class="o">.</span><span class="n">root_node</span><span class="p">,</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">initial_state</span><span class="p">,</span> <span class="p">())]</span>
+
+        <span class="k">while</span> <span class="n">to_check</span><span class="p">:</span>
+            <span class="p">(</span><span class="n">curr_node</span><span class="p">,</span> <span class="n">curr_state</span><span class="p">,</span> <span class="n">trace</span><span class="p">)</span> <span class="o">=</span> <span class="n">to_check</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">rep_trace</span> <span class="o">=</span> <span class="n">curr_state</span><span class="o">.</span><span class="n">prefix</span>
+            <span class="k">if</span> <span class="n">trace</span> <span class="o">!=</span> <span class="n">rep_trace</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                    <span class="n">freq_in_tree</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">frequency_query</span><span class="p">(</span><span class="n">trace</span><span class="p">,</span> <span class="p">(</span><span class="n">i</span><span class="p">,))</span>
+                    <span class="n">freq_in_hyp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">frequency_query</span><span class="p">(</span><span class="n">rep_trace</span><span class="p">,</span> <span class="p">(</span><span class="n">i</span><span class="p">,))</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">compatibility_checker</span><span class="o">.</span><span class="n">check_difference</span><span class="p">(</span><span class="n">freq_in_tree</span><span class="p">,</span> <span class="n">freq_in_hyp</span><span class="p">):</span>
+                        <span class="k">return</span> <span class="n">trace</span> <span class="o">+</span> <span class="p">(</span><span class="n">i</span><span class="p">,)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+                    <span class="n">o</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">output</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
+                        <span class="n">next_state</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">out_state</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">out_state</span> <span class="ow">in</span> <span class="n">curr_state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                                           <span class="k">if</span> <span class="n">out_state</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">output</span> <span class="o">==</span> <span class="n">o</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">next_state</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">out_state</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">out_state</span> <span class="ow">in</span> <span class="n">curr_state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                                           <span class="k">if</span> <span class="n">out_state</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">o</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">next_state</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="n">trace</span> <span class="o">+</span> <span class="p">(</span><span class="n">i</span><span class="p">,)</span>
+                    <span class="n">new_trace</span> <span class="o">=</span> <span class="n">trace</span> <span class="o">+</span> <span class="p">(</span><span class="n">i</span><span class="p">,)</span> <span class="o">+</span> <span class="p">(</span><span class="n">o</span><span class="p">,)</span>
+                    <span class="n">to_check</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">c</span><span class="p">,</span> <span class="n">next_state</span><span class="p">,</span> <span class="n">new_trace</span><span class="p">))</span>
+        <span class="k">return</span> <span class="kc">None</span>
 
     <span class="k">def</span> <span class="nf">equivalence_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -759,12 +1141,39 @@ return None.
 <span class="sd">            counterexample</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">samples_cex_strategy</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">samples_cex_strategy</span> <span class="o">==</span> <span class="s1">&#39;bfs&#39;</span><span class="p">:</span>
+                <span class="n">cex</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bfs_for_cex_in_tree</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">cex</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">cex</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">samples_cex_strategy</span> <span class="o">==</span> <span class="s1">&#39;random&#39;</span><span class="p">:</span>
+                <span class="c1"># format for random: &quot;random:&lt;#traces to check:int&gt;:&lt;stop probability for single trace in [0,1)&gt;&quot;</span>
+                <span class="n">split_strategy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">samples_cex_strategy</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">nr_traces</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">split_strategy</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                    <span class="n">stop_prob</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">split_strategy</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+                    <span class="n">cex</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dfs_for_cex_in_tree</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">nr_traces</span><span class="p">,</span> <span class="n">stop_prob</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">cex</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="n">cex</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Problem in random DFS for cex in samples:&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+
+        <span class="c1"># Repeat same cex if it did not lead to state size increase</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_cex</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_hyp_size</span><span class="p">:</span>
+            <span class="c1"># TODO we can define some other requirement aside from length, such as reachability of cex</span>
+            <span class="k">if</span> <span class="n">random</span><span class="p">()</span> <span class="o">&lt;=</span> <span class="mf">0.33</span><span class="p">:</span>
+                <span class="n">cex</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eq_oracle</span><span class="o">.</span><span class="n">find_cex</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">cex</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">cex</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">last_cex</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">last_cex</span> <span class="o">=</span> <span class="n">cex</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_cex</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_hyp_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">)</span>
+
         <span class="n">cex</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eq_oracle</span><span class="o">.</span><span class="n">find_cex</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
-        <span class="k">for</span> <span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">eq_oracle</span><span class="o">.</span><span class="n">executed_traces</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
-                <span class="n">outputs</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_value</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">eq_oracle</span><span class="o">.</span><span class="n">clear_traces</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">cex</span><span class="p">:</span>  <span class="c1"># remove last output</span>
+            <span class="n">cex</span> <span class="o">=</span> <span class="n">cex</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_cex</span> <span class="o">=</span> <span class="n">cex</span>
         <span class="k">return</span> <span class="n">cex</span>
 </pre></div>
 
@@ -779,22 +1188,60 @@ Whenever new traces are sampled in the course of learning, they are added to S.<
                                         <div class="attr function"><a class="headerlink" href="#StochasticTeacher.__init__">#&nbsp;&nbsp</a>
 
         
-            <span class="name">StochasticTeacher</span><span class="signature">(sul: <a href="../../base/SUL.html#SUL">aalpy.base.SUL.SUL</a>, n_c, eq_oracle, automaton_type)</span>    </div>
+            <span class="name">StochasticTeacher</span><span class="signature">(
+    self,
+    sul: <a href="../../base/SUL.html#SUL">aalpy.base.SUL.SUL</a>,
+    n_c,
+    eq_oracle,
+    automaton_type,
+    compatibility_checker: <a href="DifferenceChecker.html#DifferenceChecker">aalpy.learning_algs.stochastic.DifferenceChecker.DifferenceChecker</a>,
+    samples_cex_strategy=&#39;none&#39;
+)</span>    </div>
 
                 <details>
             <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">n_c</span><span class="p">,</span> <span class="n">eq_oracle</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sul</span> <span class="o">=</span> <span class="n">sul</span>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">n_c</span><span class="p">,</span> <span class="n">eq_oracle</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">,</span> <span class="n">compatibility_checker</span><span class="p">:</span> <span class="n">DifferenceChecker</span><span class="p">,</span>
+                 <span class="n">samples_cex_strategy</span><span class="o">=</span><span class="s2">&quot;none&quot;</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">=</span> <span class="n">automaton_type</span>
         <span class="k">if</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">initial_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="nb">tuple</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">initial_value</span> <span class="o">=</span> <span class="n">sul</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="nb">tuple</span><span class="p">())</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_value</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">sul</span> <span class="o">=</span> <span class="n">StochasticSUL</span><span class="p">(</span><span class="n">sul</span><span class="o">=</span><span class="n">sul</span><span class="p">,</span> <span class="n">teacher</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">eq_oracle</span> <span class="o">=</span> <span class="n">eq_oracle</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">n_c</span> <span class="o">=</span> <span class="n">n_c</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">curr_node</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="c1"># cache</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">complete_query_cache</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">compatibility_checker</span> <span class="o">=</span> <span class="n">compatibility_checker</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">samples_cex_strategy</span> <span class="o">=</span> <span class="n">samples_cex_strategy</span>
+
+        <span class="c1"># eq query cache</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_hyp_size</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_cex</span> <span class="o">=</span> <span class="kc">None</span>
+</pre></div>
+
+        </details>
+
+    
+
+                            </div>
+                            <div id="StochasticTeacher.back_to_root" class="classattr">
+                                        <div class="attr function"><a class="headerlink" href="#StochasticTeacher.back_to_root">#&nbsp;&nbsp</a>
+
+        
+            <span class="def">def</span>
+            <span class="name">back_to_root</span><span class="signature">(self)</span>:
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">back_to_root</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">curr_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span>
 </pre></div>
 
         </details>
@@ -807,48 +1254,39 @@ Whenever new traces are sampled in the course of learning, they are added to S.<
 
         
             <span class="def">def</span>
-            <span class="name">add</span><span class="signature">(self, input_seq: tuple, output_seq)</span>:
+            <span class="name">add</span><span class="signature">(self, inp, out)</span>:
     </div>
 
                 <details>
             <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_seq</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">,</span> <span class="n">output_seq</span><span class="p">):</span>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inp</span><span class="p">,</span> <span class="n">out</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Adds a trace and all of its prefixes to the multiset/tree of traces.</span>
+<span class="sd">        Adds a input/output to the tree.</span>
 
 <span class="sd">        Args:</span>
 
-<span class="sd">            input_seq: inputs</span>
-<span class="sd">            output_seq: outputs</span>
+<span class="sd">            inp: input</span>
+<span class="sd">            out: output</span>
 
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">output_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">output_seq</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="n">output_seq</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span><span class="o">.</span><span class="n">output</span>
-            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_seq</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">output_seq</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">curr_node</span><span class="o">.</span><span class="n">input_frequencies</span><span class="p">[</span><span class="n">inp</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">inp</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="ow">or</span> <span class="n">out</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">inp</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">node</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">inp</span><span class="p">][</span><span class="n">out</span><span class="p">]</span> <span class="o">=</span> <span class="n">node</span>
 
-        <span class="n">curr_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">input_seq</span><span class="p">,</span> <span class="n">output_seq</span><span class="p">):</span>
-            <span class="n">curr_node</span><span class="o">.</span><span class="n">input_frequencies</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="ow">or</span> <span class="n">o</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="n">child</span><span class="o">.</span><span class="n">output</span> <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">]}:</span>
-                <span class="n">node</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">o</span><span class="p">)</span>
-                <span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">node</span> <span class="o">=</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">get_child</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">o</span><span class="p">)</span>
-                <span class="k">assert</span> <span class="n">node</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="n">curr_node</span> <span class="o">=</span> <span class="n">node</span>
-            <span class="n">curr_node</span><span class="o">.</span><span class="n">frequency</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">curr_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">inp</span><span class="p">][</span><span class="n">out</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">curr_node</span><span class="o">.</span><span class="n">frequency</span> <span class="o">+=</span> <span class="mi">1</span>
 </pre></div>
 
         </details>
 
-            <div class="docstring"><p>Adds a trace and all of its prefixes to the multiset/tree of traces.</p>
+            <div class="docstring"><p>Adds a input/output to the tree.</p>
 
 <p>Args:</p>
 
-<pre><code>input_seq: inputs
-output_seq: outputs
+<pre><code>inp: input
+out: output
 </code></pre>
 </div>
 
@@ -879,14 +1317,11 @@ output_seq: outputs
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
-            <span class="n">input_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span>
-            <span class="n">output_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">input_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span>
-            <span class="n">output_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="n">output_seq</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span><span class="o">.</span><span class="n">output</span>
+        <span class="n">input_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span>
+        <span class="n">output_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span>
+
         <span class="n">last_input</span> <span class="o">=</span> <span class="n">input_seq</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
 
         <span class="n">curr_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span>
@@ -950,15 +1385,11 @@ e: sequence from E set
             <span class="k">return</span> <span class="kc">True</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
-            <span class="n">input_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span>
-            <span class="n">output_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">input_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span>
-            <span class="n">output_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
 
-        <span class="c1"># pop first output</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="n">output_seq</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span><span class="o">.</span><span class="n">output</span>
+        <span class="n">input_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span>
+        <span class="n">output_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span>
+
         <span class="c1"># get last input</span>
         <span class="n">last_input</span> <span class="o">=</span> <span class="n">input_seq</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
 
@@ -967,6 +1398,8 @@ e: sequence from E set
             <span class="n">new_node</span> <span class="o">=</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">get_child</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">o</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">new_node</span><span class="p">:</span>
                 <span class="n">curr_node_complete</span> <span class="o">=</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">get_frequency_sum</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_c</span>
+                <span class="c1"># if curr_node_complete:</span>
+                <span class="c1">#     self.complete_query_cache.add(s + e)</span>
                 <span class="k">return</span> <span class="n">curr_node_complete</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">curr_node</span> <span class="o">=</span> <span class="n">new_node</span>
@@ -1020,7 +1453,6 @@ e: sequence from E set
 <span class="sd">            number of steps taken</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">num_queries</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
         <span class="n">curr_node</span> <span class="o">=</span> <span class="n">pta_root</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
@@ -1038,6 +1470,7 @@ e: sequence from E set
                 <span class="k">else</span><span class="p">:</span>
                     <span class="c1"># use float random rather than integers to be able to work with non-integer frequency information</span>
                     <span class="n">selection_value</span> <span class="o">=</span> <span class="n">random</span><span class="p">()</span> <span class="o">*</span> <span class="n">frequency_sum</span>
+                    <span class="n">inp</span> <span class="o">=</span> <span class="kc">None</span>
                     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">input_frequencies</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
                         <span class="n">inp</span> <span class="o">=</span> <span class="n">i</span>
                         <span class="n">selection_value</span> <span class="o">-=</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">input_frequencies</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
@@ -1050,14 +1483,10 @@ e: sequence from E set
                 <span class="k">if</span> <span class="n">new_node</span><span class="p">:</span>
                     <span class="n">curr_node</span> <span class="o">=</span> <span class="n">new_node</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">executed_inputs</span><span class="p">),</span> <span class="n">out</span><span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">num_steps</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">executed_inputs</span><span class="p">)</span>
                     <span class="k">return</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">executed_inputs</span><span class="p">),</span> <span class="n">out</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">num_steps</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">executed_inputs</span><span class="p">)</span>
                 <span class="k">return</span>
 </pre></div>
 
@@ -1077,6 +1506,132 @@ outputs, trace to that point is added to the tree, otherwise whole trace is exec
 </code></pre>
 </div>
 
+
+                            </div>
+                            <div id="StochasticTeacher.single_dfs_for_cex" class="classattr">
+                                        <div class="attr function"><a class="headerlink" href="#StochasticTeacher.single_dfs_for_cex">#&nbsp;&nbsp</a>
+
+        
+            <span class="def">def</span>
+            <span class="name">single_dfs_for_cex</span><span class="signature">(self, stop_prob, hypothesis)</span>:
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">single_dfs_for_cex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stop_prob</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">):</span>
+        <span class="n">curr_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span>
+        <span class="n">curr_state</span> <span class="o">=</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">initial_state</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s2">&quot;mdp&quot;</span><span class="p">:</span>
+            <span class="n">trace</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_value</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">trace</span> <span class="o">=</span> <span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span><span class="p">,</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">initial_state</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_value</span><span class="p">)</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">rep_trace</span> <span class="o">=</span> <span class="n">curr_state</span><span class="o">.</span><span class="n">prefix</span>
+            <span class="k">if</span> <span class="n">trace</span> <span class="o">!=</span> <span class="n">rep_trace</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                    <span class="n">freq_in_tree</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">frequency_query</span><span class="p">(</span><span class="n">trace</span><span class="p">,</span> <span class="p">(</span><span class="n">i</span><span class="p">,))</span>
+                    <span class="n">freq_in_hyp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">frequency_query</span><span class="p">(</span><span class="n">rep_trace</span><span class="p">,</span> <span class="p">(</span><span class="n">i</span><span class="p">,))</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">compatibility_checker</span><span class="o">.</span><span class="n">check_difference</span><span class="p">(</span><span class="n">freq_in_tree</span><span class="p">,</span> <span class="n">freq_in_hyp</span><span class="p">):</span>
+                        <span class="k">return</span> <span class="n">trace</span> <span class="o">+</span> <span class="p">(</span><span class="n">i</span><span class="p">,)</span>
+            <span class="c1"># choose next node randomly and return None if there is no next node</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="n">choice</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+                <span class="k">return</span> <span class="kc">None</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="n">choice</span><span class="p">(</span><span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="n">o</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">output</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
+                <span class="n">next_state</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
+                    <span class="p">(</span><span class="n">out_state</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">out_state</span> <span class="ow">in</span> <span class="n">curr_state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">if</span> <span class="n">out_state</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">output</span> <span class="o">==</span> <span class="n">o</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">next_state</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">out_state</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">out_state</span> <span class="ow">in</span> <span class="n">curr_state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">if</span> <span class="n">out_state</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">o</span><span class="p">),</span>
+                                  <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">next_state</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">trace</span> <span class="o">+</span> <span class="p">(</span><span class="n">i</span><span class="p">,)</span>
+            <span class="k">if</span> <span class="n">random</span><span class="p">()</span> <span class="o">&lt;=</span> <span class="n">stop_prob</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">curr_node</span> <span class="o">=</span> <span class="n">c</span>
+                <span class="n">curr_state</span> <span class="o">=</span> <span class="n">next_state</span>
+                <span class="n">trace</span> <span class="o">=</span> <span class="n">trace</span> <span class="o">+</span> <span class="p">(</span><span class="n">i</span><span class="p">,)</span> <span class="o">+</span> <span class="p">(</span><span class="n">o</span><span class="p">,)</span>
+</pre></div>
+
+        </details>
+
+    
+
+                            </div>
+                            <div id="StochasticTeacher.dfs_for_cex_in_tree" class="classattr">
+                                        <div class="attr function"><a class="headerlink" href="#StochasticTeacher.dfs_for_cex_in_tree">#&nbsp;&nbsp</a>
+
+        
+            <span class="def">def</span>
+            <span class="name">dfs_for_cex_in_tree</span><span class="signature">(self, hypothesis, nr_traces, stop_prob)</span>:
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">dfs_for_cex_in_tree</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">,</span> <span class="n">nr_traces</span><span class="p">,</span> <span class="n">stop_prob</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nr_traces</span><span class="p">):</span>
+            <span class="n">cex</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">single_dfs_for_cex</span><span class="p">(</span><span class="n">stop_prob</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">cex</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">cex</span>
+        <span class="k">return</span> <span class="kc">None</span>
+</pre></div>
+
+        </details>
+
+    
+
+                            </div>
+                            <div id="StochasticTeacher.bfs_for_cex_in_tree" class="classattr">
+                                        <div class="attr function"><a class="headerlink" href="#StochasticTeacher.bfs_for_cex_in_tree">#&nbsp;&nbsp</a>
+
+        
+            <span class="def">def</span>
+            <span class="name">bfs_for_cex_in_tree</span><span class="signature">(self, hypothesis)</span>:
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">bfs_for_cex_in_tree</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">):</span>
+        <span class="c1"># BFS for cex</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s2">&quot;mdp&quot;</span><span class="p">:</span>
+            <span class="n">to_check</span> <span class="o">=</span> <span class="p">[(</span><span class="bp">self</span><span class="o">.</span><span class="n">root_node</span><span class="p">,</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">initial_state</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_value</span><span class="p">))]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">to_check</span> <span class="o">=</span> <span class="p">[(</span><span class="bp">self</span><span class="o">.</span><span class="n">root_node</span><span class="p">,</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">initial_state</span><span class="p">,</span> <span class="p">())]</span>
+
+        <span class="k">while</span> <span class="n">to_check</span><span class="p">:</span>
+            <span class="p">(</span><span class="n">curr_node</span><span class="p">,</span> <span class="n">curr_state</span><span class="p">,</span> <span class="n">trace</span><span class="p">)</span> <span class="o">=</span> <span class="n">to_check</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">rep_trace</span> <span class="o">=</span> <span class="n">curr_state</span><span class="o">.</span><span class="n">prefix</span>
+            <span class="k">if</span> <span class="n">trace</span> <span class="o">!=</span> <span class="n">rep_trace</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                    <span class="n">freq_in_tree</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">frequency_query</span><span class="p">(</span><span class="n">trace</span><span class="p">,</span> <span class="p">(</span><span class="n">i</span><span class="p">,))</span>
+                    <span class="n">freq_in_hyp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">frequency_query</span><span class="p">(</span><span class="n">rep_trace</span><span class="p">,</span> <span class="p">(</span><span class="n">i</span><span class="p">,))</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">compatibility_checker</span><span class="o">.</span><span class="n">check_difference</span><span class="p">(</span><span class="n">freq_in_tree</span><span class="p">,</span> <span class="n">freq_in_hyp</span><span class="p">):</span>
+                        <span class="k">return</span> <span class="n">trace</span> <span class="o">+</span> <span class="p">(</span><span class="n">i</span><span class="p">,)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+                    <span class="n">o</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">output</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
+                        <span class="n">next_state</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">out_state</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">out_state</span> <span class="ow">in</span> <span class="n">curr_state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                                           <span class="k">if</span> <span class="n">out_state</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">output</span> <span class="o">==</span> <span class="n">o</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">next_state</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">out_state</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">out_state</span> <span class="ow">in</span> <span class="n">curr_state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                                           <span class="k">if</span> <span class="n">out_state</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">o</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">next_state</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="n">trace</span> <span class="o">+</span> <span class="p">(</span><span class="n">i</span><span class="p">,)</span>
+                    <span class="n">new_trace</span> <span class="o">=</span> <span class="n">trace</span> <span class="o">+</span> <span class="p">(</span><span class="n">i</span><span class="p">,)</span> <span class="o">+</span> <span class="p">(</span><span class="n">o</span><span class="p">,)</span>
+                    <span class="n">to_check</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">c</span><span class="p">,</span> <span class="n">next_state</span><span class="p">,</span> <span class="n">new_trace</span><span class="p">))</span>
+        <span class="k">return</span> <span class="kc">None</span>
+</pre></div>
+
+        </details>
+
+    
 
                             </div>
                             <div id="StochasticTeacher.equivalence_query" class="classattr">
@@ -1102,12 +1657,39 @@ outputs, trace to that point is added to the tree, otherwise whole trace is exec
 <span class="sd">            counterexample</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">samples_cex_strategy</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">samples_cex_strategy</span> <span class="o">==</span> <span class="s1">&#39;bfs&#39;</span><span class="p">:</span>
+                <span class="n">cex</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bfs_for_cex_in_tree</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">cex</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">cex</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">samples_cex_strategy</span> <span class="o">==</span> <span class="s1">&#39;random&#39;</span><span class="p">:</span>
+                <span class="c1"># format for random: &quot;random:&lt;#traces to check:int&gt;:&lt;stop probability for single trace in [0,1)&gt;&quot;</span>
+                <span class="n">split_strategy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">samples_cex_strategy</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">nr_traces</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">split_strategy</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                    <span class="n">stop_prob</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">split_strategy</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+                    <span class="n">cex</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dfs_for_cex_in_tree</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">nr_traces</span><span class="p">,</span> <span class="n">stop_prob</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">cex</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="n">cex</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Problem in random DFS for cex in samples:&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+
+        <span class="c1"># Repeat same cex if it did not lead to state size increase</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_cex</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_hyp_size</span><span class="p">:</span>
+            <span class="c1"># TODO we can define some other requirement aside from length, such as reachability of cex</span>
+            <span class="k">if</span> <span class="n">random</span><span class="p">()</span> <span class="o">&lt;=</span> <span class="mf">0.33</span><span class="p">:</span>
+                <span class="n">cex</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eq_oracle</span><span class="o">.</span><span class="n">find_cex</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">cex</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">cex</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">last_cex</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">last_cex</span> <span class="o">=</span> <span class="n">cex</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_cex</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_hyp_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">)</span>
+
         <span class="n">cex</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eq_oracle</span><span class="o">.</span><span class="n">find_cex</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
-        <span class="k">for</span> <span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">eq_oracle</span><span class="o">.</span><span class="n">executed_traces</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
-                <span class="n">outputs</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_value</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">eq_oracle</span><span class="o">.</span><span class="n">clear_traces</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">cex</span><span class="p">:</span>  <span class="c1"># remove last output</span>
+            <span class="n">cex</span> <span class="o">=</span> <span class="n">cex</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_cex</span> <span class="o">=</span> <span class="n">cex</span>
         <span class="k">return</span> <span class="n">cex</span>
 </pre></div>
 

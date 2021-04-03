@@ -28,9 +28,6 @@
                     <h2>API Documentation</h2>
                         <ul class="memberlist">
             <li>
-                    <a class="function" href="#is_suffix_of">is_suffix_of</a>
-            </li>
-            <li>
                     <a class="class" href="#SamplingBasedObservationTable">SamplingBasedObservationTable</a>
                             <ul class="memberlist">
                         <li>
@@ -106,30 +103,18 @@
                         <details>
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
-<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">log</span>
 
 <span class="kn">from</span> <span class="nn">aalpy.automata</span> <span class="kn">import</span> <span class="n">Mdp</span><span class="p">,</span> <span class="n">MdpState</span><span class="p">,</span> <span class="n">StochasticMealyState</span><span class="p">,</span> <span class="n">StochasticMealyMachine</span>
+<span class="kn">from</span> <span class="nn">.DifferenceChecker</span> <span class="kn">import</span> <span class="n">DifferenceChecker</span>
 <span class="kn">from</span> <span class="nn">.StochasticTeacher</span> <span class="kn">import</span> <span class="n">StochasticTeacher</span><span class="p">,</span> <span class="n">Node</span>
-
-
-<span class="k">def</span> <span class="nf">is_suffix_of</span><span class="p">(</span><span class="n">suffix</span><span class="p">,</span> <span class="n">trace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">      suffix: </span>
-<span class="sd">      trace: </span>
-
-<span class="sd">    Returns:</span>
-
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">trace</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">suffix</span><span class="p">):</span>
-        <span class="k">return</span> <span class="kc">False</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">trace</span><span class="p">[</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">suffix</span><span class="p">):]</span> <span class="o">==</span> <span class="n">suffix</span>
+<span class="kn">from</span> <span class="nn">...utils.HelperFunctions</span> <span class="kn">import</span> <span class="n">is_suffix_of</span>
 
 
 <span class="k">class</span> <span class="nc">SamplingBasedObservationTable</span><span class="p">:</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_alphabet</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">,</span> <span class="n">teacher</span><span class="p">:</span> <span class="n">StochasticTeacher</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="s1">&#39;normal&#39;</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_alphabet</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">,</span> <span class="n">teacher</span><span class="p">:</span> <span class="n">StochasticTeacher</span><span class="p">,</span>
+                 <span class="n">compatibility_checker</span><span class="p">:</span> <span class="n">DifferenceChecker</span><span class="p">,</span>
+                 <span class="n">alpha</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="s1">&#39;normal&#39;</span><span class="p">,</span>
+                 <span class="n">cex_processing</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Constructor of the observation table. Initial queries are asked in the constructor.</span>
 
 <span class="sd">        Args:</span>
@@ -139,6 +124,7 @@
 <span class="sd">          alpha: constant used in Hoeffding bound</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">compatibility_checker</span> <span class="o">=</span> <span class="n">compatibility_checker</span>
         <span class="k">assert</span> <span class="n">input_alphabet</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">teacher</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">=</span> <span class="n">automaton_type</span>
 
@@ -152,6 +138,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">empty_word</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">=</span> <span class="n">strategy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cex_processing</span> <span class="o">=</span> <span class="n">cex_processing</span>
 
         <span class="c1"># initial output</span>
         <span class="k">if</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
@@ -175,6 +162,7 @@
 
 <span class="sd">        Returns:</span>
 
+<span class="sd">            False if no cells are to be refined, True if refining happened</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
             <span class="n">pta_root</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_output</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
@@ -189,7 +177,7 @@
                         <span class="n">to_refine</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span> <span class="o">+</span> <span class="n">e</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="ow">not</span> <span class="n">to_refine</span><span class="p">:</span>
-                <span class="k">return</span>
+                <span class="k">return</span> <span class="kc">False</span>
 
             <span class="n">to_refine</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="nb">len</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
@@ -216,6 +204,7 @@
 
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_resample</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">teacher</span><span class="o">.</span><span class="n">refine_query</span><span class="p">(</span><span class="n">pta_root</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span>
 
     <span class="k">def</span> <span class="nf">update_obs_table_with_freq_obs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element_of_s</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Updates cells in the observation table with frequency data. If the row in S has no extension yet, it is</span>
@@ -321,21 +310,24 @@
 <span class="sd">        Returns:</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">for</span> <span class="n">ind</span><span class="p">,</span> <span class="n">s1</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">compatibility_classes_representatives</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">s2</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">compatibility_class_rows</span><span class="p">[</span><span class="n">s1</span><span class="p">]:</span>
-                <span class="c1"># if self.are_rows_compatible(s1, s2, ignore):</span>
-                <span class="n">i_o_pairs</span> <span class="o">=</span> <span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">([</span><span class="n">o</span><span class="p">]))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_alphabet</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span><span class="p">][</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()]</span>
-                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">i_o_pairs</span><span class="p">:</span>
-                    <span class="n">s1_keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="n">o</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
-                    <span class="n">s2_keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s2</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="n">o</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
-                    <span class="k">if</span> <span class="ow">not</span> <span class="n">s1_keys</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">s2_keys</span><span class="p">:</span>
-                        <span class="k">continue</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cex_processing</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
 
-                    <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">E</span><span class="p">:</span>
-                        <span class="k">if</span> <span class="n">e</span> <span class="o">==</span> <span class="n">ignore</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">ind</span><span class="p">,</span> <span class="n">s1</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">S</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">s2</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">S</span><span class="p">[</span><span class="n">ind</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">are_rows_compatible</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span> <span class="n">s2</span><span class="p">,</span> <span class="n">ignore</span><span class="p">):</span>
+                    <span class="n">i_o_pairs</span> <span class="o">=</span> <span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">([</span><span class="n">o</span><span class="p">]))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_alphabet</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span><span class="p">][</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()]</span>
+                    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">i_o_pairs</span><span class="p">:</span>
+                        <span class="n">s1_keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="n">o</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+                        <span class="n">s2_keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s2</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="n">o</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="n">s1_keys</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">s2_keys</span><span class="p">:</span>
                             <span class="k">continue</span>
-                        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cell_diff</span><span class="p">(</span><span class="n">s1</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="n">o</span><span class="p">,</span> <span class="n">s2</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="n">o</span><span class="p">,</span> <span class="n">e</span><span class="p">):</span>
-                            <span class="k">return</span> <span class="n">i</span> <span class="o">+</span> <span class="n">o</span> <span class="o">+</span> <span class="n">e</span>
+
+                        <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">E</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="n">e</span> <span class="o">==</span> <span class="n">ignore</span><span class="p">:</span>
+                                <span class="k">continue</span>
+                            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cell_diff</span><span class="p">(</span><span class="n">s1</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="n">o</span><span class="p">,</span> <span class="n">s2</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="n">o</span><span class="p">,</span> <span class="n">e</span><span class="p">):</span>
+                                <span class="k">return</span> <span class="n">i</span> <span class="o">+</span> <span class="n">o</span> <span class="o">+</span> <span class="n">e</span>
         <span class="k">return</span> <span class="kc">None</span>
 
     <span class="k">def</span> <span class="nf">get_representative</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
@@ -477,6 +469,7 @@
 
     <span class="k">def</span> <span class="nf">cell_diff</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s1</span><span class="p">,</span> <span class="n">s2</span><span class="p">,</span> <span class="n">e</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Checks if 2 cells are considered different.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">          s1: prefix of row s1</span>
@@ -489,39 +482,10 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">==</span> <span class="s1">&#39;normal&#39;</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">teacher</span><span class="o">.</span><span class="n">complete_query</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">teacher</span><span class="o">.</span><span class="n">complete_query</span><span class="p">(</span><span class="n">s2</span><span class="p">,</span> <span class="n">e</span><span class="p">):</span>
-                <span class="n">c1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span><span class="p">][</span><span class="n">e</span><span class="p">]</span>
-                <span class="n">c2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s2</span><span class="p">][</span><span class="n">e</span><span class="p">]</span>
-
-                <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="n">c1</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">!=</span> <span class="nb">set</span><span class="p">(</span><span class="n">c2</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
-                    <span class="k">return</span> <span class="kc">True</span>
-
-                <span class="n">n1</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c1</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-                <span class="n">n2</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c2</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-
-                <span class="k">if</span> <span class="n">n1</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">n2</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">c1</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-                        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">c1</span><span class="p">[</span><span class="n">o</span><span class="p">]</span> <span class="o">/</span> <span class="n">n1</span> <span class="o">-</span> <span class="n">c2</span><span class="p">[</span><span class="n">o</span><span class="p">]</span> <span class="o">/</span> <span class="n">n2</span><span class="p">)</span> <span class="o">&gt;</span> \
-                                <span class="p">((</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">n1</span><span class="p">)</span> <span class="o">+</span> <span class="n">sqrt</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">n2</span><span class="p">))</span> <span class="o">*</span> <span class="n">sqrt</span><span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">log</span><span class="p">(</span><span class="mi">2</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">))):</span>
-                            <span class="k">return</span> <span class="kc">True</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">compatibility_checker</span><span class="o">.</span><span class="n">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span><span class="p">][</span><span class="n">e</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s2</span><span class="p">][</span><span class="n">e</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span><span class="p">]</span> <span class="ow">and</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s2</span><span class="p">]:</span>
-                <span class="n">c1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span><span class="p">][</span><span class="n">e</span><span class="p">]</span>
-                <span class="n">c2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s2</span><span class="p">][</span><span class="n">e</span><span class="p">]</span>
-
-                <span class="n">n1</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c1</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-                <span class="n">n2</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c2</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-
-                <span class="k">if</span> <span class="n">n1</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">n2</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">c1</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="n">c2</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
-                        <span class="n">c1o</span> <span class="o">=</span> <span class="n">c1</span><span class="p">[</span><span class="n">o</span><span class="p">]</span> <span class="k">if</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">c1</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">else</span> <span class="mi">0</span>
-                        <span class="n">c2o</span> <span class="o">=</span> <span class="n">c2</span><span class="p">[</span><span class="n">o</span><span class="p">]</span> <span class="k">if</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">c2</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">else</span> <span class="mi">0</span>
-                        <span class="n">alpha1</span> <span class="o">=</span> <span class="mf">0.05</span> 
-                        <span class="n">alpha2</span> <span class="o">=</span> <span class="mf">0.05</span> 
-                        <span class="n">epsilon1</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">((</span><span class="mf">1.</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">n1</span><span class="p">))</span> <span class="o">*</span> <span class="n">log</span><span class="p">(</span><span class="mf">2.</span> <span class="o">/</span> <span class="n">alpha1</span><span class="p">))</span>
-                        <span class="n">epsilon2</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">((</span><span class="mf">1.</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">n2</span><span class="p">))</span> <span class="o">*</span> <span class="n">log</span><span class="p">(</span><span class="mf">2.</span> <span class="o">/</span> <span class="n">alpha2</span><span class="p">))</span>
-
-                        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">c1o</span> <span class="o">/</span> <span class="n">n1</span> <span class="o">-</span> <span class="n">c2o</span> <span class="o">/</span> <span class="n">n2</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">epsilon1</span> <span class="o">+</span> <span class="n">epsilon2</span><span class="p">:</span>
-                            <span class="k">return</span> <span class="kc">True</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">compatibility_checker</span><span class="o">.</span><span class="n">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span><span class="p">][</span><span class="n">e</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s2</span><span class="p">][</span><span class="n">e</span><span class="p">])</span>
         <span class="k">return</span> <span class="kc">False</span>
 
     <span class="k">def</span> <span class="nf">are_rows_compatible</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s1</span><span class="p">,</span> <span class="n">s2</span><span class="p">,</span> <span class="n">e_ignore</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -556,7 +520,14 @@
             <span class="n">rank</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s</span><span class="p">][</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_alphabet</span><span class="p">])</span>
             <span class="n">class_rank_pair</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">s</span><span class="p">,</span> <span class="n">rank</span><span class="p">))</span>
 
-        <span class="n">class_rank_pair</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># sort according to frequency</span>
+        <span class="c1"># class_rank_pair.sort(key=lambda x: x[1], reverse=True)</span>
+
+        <span class="c1"># sort according to prefix length, and elements of same length sort by value</span>
+        <span class="n">class_rank_pair</span> <span class="o">=</span> <span class="p">[(</span><span class="n">s</span><span class="p">,</span> <span class="o">-</span><span class="n">rank</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="n">rank</span><span class="p">)</span> <span class="ow">in</span> <span class="n">class_rank_pair</span><span class="p">]</span>
+        <span class="n">class_rank_pair</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="n">class_rank_pair</span> <span class="o">=</span> <span class="p">[(</span><span class="n">s</span><span class="p">,</span> <span class="o">-</span><span class="n">rank</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="n">rank</span><span class="p">)</span> <span class="ow">in</span> <span class="n">class_rank_pair</span><span class="p">]</span>
+
         <span class="n">compatibility_classes</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">class_rank_pair</span><span class="p">]</span>
 
         <span class="n">tmp_classes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">compatibility_classes</span><span class="p">)</span>
@@ -595,17 +566,24 @@
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s2">&quot;mdp&quot;</span> <span class="ow">and</span> <span class="n">state</span><span class="o">.</span><span class="n">output</span> <span class="o">==</span> <span class="s2">&quot;chaos&quot;</span> \
+                    <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s2">&quot;smm&quot;</span> <span class="ow">and</span> <span class="n">state</span><span class="o">.</span><span class="n">state_id</span> <span class="o">==</span> <span class="s2">&quot;chaos&quot;</span><span class="p">:</span>
+                <span class="c1"># we are not interested in chaos state, but in prefix to chaos</span>
+                <span class="k">continue</span>
             <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_alphabet</span><span class="p">:</span>
                 <span class="n">output_states</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
                     <span class="k">for</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="ow">in</span> <span class="n">output_states</span><span class="p">:</span>
                         <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">output</span> <span class="o">==</span> <span class="s1">&#39;chaos&#39;</span><span class="p">:</span>
-                            <span class="k">return</span> <span class="n">state</span><span class="o">.</span><span class="n">prefix</span>
+                            <span class="k">return</span> <span class="kc">True</span>
+                            <span class="c1">#return state.prefix + i</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="k">for</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">o</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="ow">in</span> <span class="n">output_states</span><span class="p">:</span>
                         <span class="k">if</span> <span class="n">o</span> <span class="o">==</span> <span class="s1">&#39;chaos&#39;</span><span class="p">:</span>
-                            <span class="k">return</span> <span class="n">state</span><span class="o">.</span><span class="n">prefix</span>
-        <span class="k">return</span> <span class="kc">None</span>
+                            <span class="k">return</span> <span class="kc">True</span>
+                            <span class="c1">#return state.prefix</span>
+        <span class="k">return</span> <span class="kc">False</span>
+        <span class="c1">#return None</span>
 
     <span class="k">def</span> <span class="nf">add_to_PTA</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pta_root</span><span class="p">,</span> <span class="n">trace</span><span class="p">,</span> <span class="n">uncertainty_value</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Adds a trace to the PTA. PTA is later used for online sampling. The uncertainty value is added to inputs as</span>
@@ -633,7 +611,7 @@
                 <span class="n">curr_node</span> <span class="o">=</span> <span class="n">child</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">new_node</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
-                <span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">inp</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_node</span><span class="p">)</span>
+                <span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">inp</span><span class="p">][</span><span class="n">output</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_node</span>
                 <span class="n">curr_node</span> <span class="o">=</span> <span class="n">new_node</span>
 
     <span class="k">def</span> <span class="nf">generate_hypothesis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -653,6 +631,7 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">r_state_map</span><span class="p">[</span><span class="n">r</span><span class="p">]</span> <span class="o">=</span> <span class="n">StochasticMealyState</span><span class="p">(</span><span class="n">state_id</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;s</span><span class="si">{</span><span class="n">state_counter</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
             <span class="n">r_state_map</span><span class="p">[</span><span class="n">r</span><span class="p">]</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="n">r</span>
+
             <span class="n">state_counter</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
             <span class="n">r_state_map</span><span class="p">[</span><span class="s1">&#39;chaos&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">MdpState</span><span class="p">(</span><span class="n">state_id</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;s</span><span class="si">{</span><span class="n">state_counter</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="s1">&#39;chaos&#39;</span><span class="p">)</span>
@@ -670,8 +649,8 @@
                 <span class="n">total_sum</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">freq_dict</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
 
                 <span class="n">origin_state</span> <span class="o">=</span> <span class="n">s</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">==</span> <span class="s1">&#39;normal&#39;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">teacher</span><span class="o">.</span><span class="n">complete_query</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">!=</span> <span class="s1">&#39;normal&#39;</span> <span class="ow">and</span>\
-                        <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s</span><span class="p">]:</span>  <span class="c1"># if not self.teacher.complete_query(s, i):</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">==</span> <span class="s1">&#39;normal&#39;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">teacher</span><span class="o">.</span><span class="n">complete_query</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span> \
+                        <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">!=</span> <span class="s1">&#39;normal&#39;</span> <span class="ow">and</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s</span><span class="p">]:</span>
                     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
                         <span class="n">r_state_map</span><span class="p">[</span><span class="n">origin_state</span><span class="p">]</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">r_state_map</span><span class="p">[</span><span class="s1">&#39;chaos&#39;</span><span class="p">],</span> <span class="mf">1.</span><span class="p">))</span>
                     <span class="k">else</span><span class="p">:</span>
@@ -701,43 +680,6 @@
         </details>
 
             </section>
-                <section id="is_suffix_of">
-                            <div class="attr function"><a class="headerlink" href="#is_suffix_of">#&nbsp;&nbsp</a>
-
-        
-            <span class="def">def</span>
-            <span class="name">is_suffix_of</span><span class="signature">(suffix, trace) -&gt; bool</span>:
-    </div>
-
-                <details>
-            <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">is_suffix_of</span><span class="p">(</span><span class="n">suffix</span><span class="p">,</span> <span class="n">trace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">      suffix: </span>
-<span class="sd">      trace: </span>
-
-<span class="sd">    Returns:</span>
-
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">trace</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">suffix</span><span class="p">):</span>
-        <span class="k">return</span> <span class="kc">False</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">trace</span><span class="p">[</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">suffix</span><span class="p">):]</span> <span class="o">==</span> <span class="n">suffix</span>
-</pre></div>
-
-        </details>
-
-            <div class="docstring"><p>Args:
-  suffix: 
-  trace: </p>
-
-<p>Returns:</p>
-</div>
-
-
-                </section>
                 <section id="SamplingBasedObservationTable">
                                 <div class="attr class">
         <a class="headerlink" href="#SamplingBasedObservationTable">#&nbsp;&nbsp</a>
@@ -750,7 +692,10 @@
                 <details>
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">SamplingBasedObservationTable</span><span class="p">:</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_alphabet</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">,</span> <span class="n">teacher</span><span class="p">:</span> <span class="n">StochasticTeacher</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="s1">&#39;normal&#39;</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_alphabet</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">,</span> <span class="n">teacher</span><span class="p">:</span> <span class="n">StochasticTeacher</span><span class="p">,</span>
+                 <span class="n">compatibility_checker</span><span class="p">:</span> <span class="n">DifferenceChecker</span><span class="p">,</span>
+                 <span class="n">alpha</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="s1">&#39;normal&#39;</span><span class="p">,</span>
+                 <span class="n">cex_processing</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Constructor of the observation table. Initial queries are asked in the constructor.</span>
 
 <span class="sd">        Args:</span>
@@ -760,6 +705,7 @@
 <span class="sd">          alpha: constant used in Hoeffding bound</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">compatibility_checker</span> <span class="o">=</span> <span class="n">compatibility_checker</span>
         <span class="k">assert</span> <span class="n">input_alphabet</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">teacher</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">=</span> <span class="n">automaton_type</span>
 
@@ -773,6 +719,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">empty_word</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">=</span> <span class="n">strategy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cex_processing</span> <span class="o">=</span> <span class="n">cex_processing</span>
 
         <span class="c1"># initial output</span>
         <span class="k">if</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
@@ -796,6 +743,7 @@
 
 <span class="sd">        Returns:</span>
 
+<span class="sd">            False if no cells are to be refined, True if refining happened</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
             <span class="n">pta_root</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_output</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
@@ -810,7 +758,7 @@
                         <span class="n">to_refine</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span> <span class="o">+</span> <span class="n">e</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="ow">not</span> <span class="n">to_refine</span><span class="p">:</span>
-                <span class="k">return</span>
+                <span class="k">return</span> <span class="kc">False</span>
 
             <span class="n">to_refine</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="nb">len</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
@@ -837,6 +785,7 @@
 
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_resample</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">teacher</span><span class="o">.</span><span class="n">refine_query</span><span class="p">(</span><span class="n">pta_root</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span>
 
     <span class="k">def</span> <span class="nf">update_obs_table_with_freq_obs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element_of_s</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Updates cells in the observation table with frequency data. If the row in S has no extension yet, it is</span>
@@ -942,21 +891,24 @@
 <span class="sd">        Returns:</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">for</span> <span class="n">ind</span><span class="p">,</span> <span class="n">s1</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">compatibility_classes_representatives</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">s2</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">compatibility_class_rows</span><span class="p">[</span><span class="n">s1</span><span class="p">]:</span>
-                <span class="c1"># if self.are_rows_compatible(s1, s2, ignore):</span>
-                <span class="n">i_o_pairs</span> <span class="o">=</span> <span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">([</span><span class="n">o</span><span class="p">]))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_alphabet</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span><span class="p">][</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()]</span>
-                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">i_o_pairs</span><span class="p">:</span>
-                    <span class="n">s1_keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="n">o</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
-                    <span class="n">s2_keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s2</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="n">o</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
-                    <span class="k">if</span> <span class="ow">not</span> <span class="n">s1_keys</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">s2_keys</span><span class="p">:</span>
-                        <span class="k">continue</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cex_processing</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
 
-                    <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">E</span><span class="p">:</span>
-                        <span class="k">if</span> <span class="n">e</span> <span class="o">==</span> <span class="n">ignore</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">ind</span><span class="p">,</span> <span class="n">s1</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">S</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">s2</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">S</span><span class="p">[</span><span class="n">ind</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">are_rows_compatible</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span> <span class="n">s2</span><span class="p">,</span> <span class="n">ignore</span><span class="p">):</span>
+                    <span class="n">i_o_pairs</span> <span class="o">=</span> <span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">([</span><span class="n">o</span><span class="p">]))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_alphabet</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span><span class="p">][</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()]</span>
+                    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">i_o_pairs</span><span class="p">:</span>
+                        <span class="n">s1_keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="n">o</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+                        <span class="n">s2_keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s2</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="n">o</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="n">s1_keys</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">s2_keys</span><span class="p">:</span>
                             <span class="k">continue</span>
-                        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cell_diff</span><span class="p">(</span><span class="n">s1</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="n">o</span><span class="p">,</span> <span class="n">s2</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="n">o</span><span class="p">,</span> <span class="n">e</span><span class="p">):</span>
-                            <span class="k">return</span> <span class="n">i</span> <span class="o">+</span> <span class="n">o</span> <span class="o">+</span> <span class="n">e</span>
+
+                        <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">E</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="n">e</span> <span class="o">==</span> <span class="n">ignore</span><span class="p">:</span>
+                                <span class="k">continue</span>
+                            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cell_diff</span><span class="p">(</span><span class="n">s1</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="n">o</span><span class="p">,</span> <span class="n">s2</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="n">o</span><span class="p">,</span> <span class="n">e</span><span class="p">):</span>
+                                <span class="k">return</span> <span class="n">i</span> <span class="o">+</span> <span class="n">o</span> <span class="o">+</span> <span class="n">e</span>
         <span class="k">return</span> <span class="kc">None</span>
 
     <span class="k">def</span> <span class="nf">get_representative</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
@@ -1098,6 +1050,7 @@
 
     <span class="k">def</span> <span class="nf">cell_diff</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s1</span><span class="p">,</span> <span class="n">s2</span><span class="p">,</span> <span class="n">e</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Checks if 2 cells are considered different.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">          s1: prefix of row s1</span>
@@ -1110,39 +1063,10 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">==</span> <span class="s1">&#39;normal&#39;</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">teacher</span><span class="o">.</span><span class="n">complete_query</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">teacher</span><span class="o">.</span><span class="n">complete_query</span><span class="p">(</span><span class="n">s2</span><span class="p">,</span> <span class="n">e</span><span class="p">):</span>
-                <span class="n">c1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span><span class="p">][</span><span class="n">e</span><span class="p">]</span>
-                <span class="n">c2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s2</span><span class="p">][</span><span class="n">e</span><span class="p">]</span>
-
-                <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="n">c1</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">!=</span> <span class="nb">set</span><span class="p">(</span><span class="n">c2</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
-                    <span class="k">return</span> <span class="kc">True</span>
-
-                <span class="n">n1</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c1</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-                <span class="n">n2</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c2</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-
-                <span class="k">if</span> <span class="n">n1</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">n2</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">c1</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-                        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">c1</span><span class="p">[</span><span class="n">o</span><span class="p">]</span> <span class="o">/</span> <span class="n">n1</span> <span class="o">-</span> <span class="n">c2</span><span class="p">[</span><span class="n">o</span><span class="p">]</span> <span class="o">/</span> <span class="n">n2</span><span class="p">)</span> <span class="o">&gt;</span> \
-                                <span class="p">((</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">n1</span><span class="p">)</span> <span class="o">+</span> <span class="n">sqrt</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">n2</span><span class="p">))</span> <span class="o">*</span> <span class="n">sqrt</span><span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">log</span><span class="p">(</span><span class="mi">2</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">))):</span>
-                            <span class="k">return</span> <span class="kc">True</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">compatibility_checker</span><span class="o">.</span><span class="n">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span><span class="p">][</span><span class="n">e</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s2</span><span class="p">][</span><span class="n">e</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span><span class="p">]</span> <span class="ow">and</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s2</span><span class="p">]:</span>
-                <span class="n">c1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span><span class="p">][</span><span class="n">e</span><span class="p">]</span>
-                <span class="n">c2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s2</span><span class="p">][</span><span class="n">e</span><span class="p">]</span>
-
-                <span class="n">n1</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c1</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-                <span class="n">n2</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c2</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-
-                <span class="k">if</span> <span class="n">n1</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">n2</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">c1</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="n">c2</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
-                        <span class="n">c1o</span> <span class="o">=</span> <span class="n">c1</span><span class="p">[</span><span class="n">o</span><span class="p">]</span> <span class="k">if</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">c1</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">else</span> <span class="mi">0</span>
-                        <span class="n">c2o</span> <span class="o">=</span> <span class="n">c2</span><span class="p">[</span><span class="n">o</span><span class="p">]</span> <span class="k">if</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">c2</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">else</span> <span class="mi">0</span>
-                        <span class="n">alpha1</span> <span class="o">=</span> <span class="mf">0.05</span> 
-                        <span class="n">alpha2</span> <span class="o">=</span> <span class="mf">0.05</span> 
-                        <span class="n">epsilon1</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">((</span><span class="mf">1.</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">n1</span><span class="p">))</span> <span class="o">*</span> <span class="n">log</span><span class="p">(</span><span class="mf">2.</span> <span class="o">/</span> <span class="n">alpha1</span><span class="p">))</span>
-                        <span class="n">epsilon2</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">((</span><span class="mf">1.</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">n2</span><span class="p">))</span> <span class="o">*</span> <span class="n">log</span><span class="p">(</span><span class="mf">2.</span> <span class="o">/</span> <span class="n">alpha2</span><span class="p">))</span>
-
-                        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">c1o</span> <span class="o">/</span> <span class="n">n1</span> <span class="o">-</span> <span class="n">c2o</span> <span class="o">/</span> <span class="n">n2</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">epsilon1</span> <span class="o">+</span> <span class="n">epsilon2</span><span class="p">:</span>
-                            <span class="k">return</span> <span class="kc">True</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">compatibility_checker</span><span class="o">.</span><span class="n">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span><span class="p">][</span><span class="n">e</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s2</span><span class="p">][</span><span class="n">e</span><span class="p">])</span>
         <span class="k">return</span> <span class="kc">False</span>
 
     <span class="k">def</span> <span class="nf">are_rows_compatible</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s1</span><span class="p">,</span> <span class="n">s2</span><span class="p">,</span> <span class="n">e_ignore</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -1177,7 +1101,14 @@
             <span class="n">rank</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s</span><span class="p">][</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_alphabet</span><span class="p">])</span>
             <span class="n">class_rank_pair</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">s</span><span class="p">,</span> <span class="n">rank</span><span class="p">))</span>
 
-        <span class="n">class_rank_pair</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># sort according to frequency</span>
+        <span class="c1"># class_rank_pair.sort(key=lambda x: x[1], reverse=True)</span>
+
+        <span class="c1"># sort according to prefix length, and elements of same length sort by value</span>
+        <span class="n">class_rank_pair</span> <span class="o">=</span> <span class="p">[(</span><span class="n">s</span><span class="p">,</span> <span class="o">-</span><span class="n">rank</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="n">rank</span><span class="p">)</span> <span class="ow">in</span> <span class="n">class_rank_pair</span><span class="p">]</span>
+        <span class="n">class_rank_pair</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="n">class_rank_pair</span> <span class="o">=</span> <span class="p">[(</span><span class="n">s</span><span class="p">,</span> <span class="o">-</span><span class="n">rank</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="n">rank</span><span class="p">)</span> <span class="ow">in</span> <span class="n">class_rank_pair</span><span class="p">]</span>
+
         <span class="n">compatibility_classes</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">class_rank_pair</span><span class="p">]</span>
 
         <span class="n">tmp_classes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">compatibility_classes</span><span class="p">)</span>
@@ -1216,17 +1147,24 @@
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s2">&quot;mdp&quot;</span> <span class="ow">and</span> <span class="n">state</span><span class="o">.</span><span class="n">output</span> <span class="o">==</span> <span class="s2">&quot;chaos&quot;</span> \
+                    <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s2">&quot;smm&quot;</span> <span class="ow">and</span> <span class="n">state</span><span class="o">.</span><span class="n">state_id</span> <span class="o">==</span> <span class="s2">&quot;chaos&quot;</span><span class="p">:</span>
+                <span class="c1"># we are not interested in chaos state, but in prefix to chaos</span>
+                <span class="k">continue</span>
             <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_alphabet</span><span class="p">:</span>
                 <span class="n">output_states</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
                     <span class="k">for</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="ow">in</span> <span class="n">output_states</span><span class="p">:</span>
                         <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">output</span> <span class="o">==</span> <span class="s1">&#39;chaos&#39;</span><span class="p">:</span>
-                            <span class="k">return</span> <span class="n">state</span><span class="o">.</span><span class="n">prefix</span>
+                            <span class="k">return</span> <span class="kc">True</span>
+                            <span class="c1">#return state.prefix + i</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="k">for</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">o</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="ow">in</span> <span class="n">output_states</span><span class="p">:</span>
                         <span class="k">if</span> <span class="n">o</span> <span class="o">==</span> <span class="s1">&#39;chaos&#39;</span><span class="p">:</span>
-                            <span class="k">return</span> <span class="n">state</span><span class="o">.</span><span class="n">prefix</span>
-        <span class="k">return</span> <span class="kc">None</span>
+                            <span class="k">return</span> <span class="kc">True</span>
+                            <span class="c1">#return state.prefix</span>
+        <span class="k">return</span> <span class="kc">False</span>
+        <span class="c1">#return None</span>
 
     <span class="k">def</span> <span class="nf">add_to_PTA</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pta_root</span><span class="p">,</span> <span class="n">trace</span><span class="p">,</span> <span class="n">uncertainty_value</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Adds a trace to the PTA. PTA is later used for online sampling. The uncertainty value is added to inputs as</span>
@@ -1254,7 +1192,7 @@
                 <span class="n">curr_node</span> <span class="o">=</span> <span class="n">child</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">new_node</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
-                <span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">inp</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_node</span><span class="p">)</span>
+                <span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">inp</span><span class="p">][</span><span class="n">output</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_node</span>
                 <span class="n">curr_node</span> <span class="o">=</span> <span class="n">new_node</span>
 
     <span class="k">def</span> <span class="nf">generate_hypothesis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1274,6 +1212,7 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">r_state_map</span><span class="p">[</span><span class="n">r</span><span class="p">]</span> <span class="o">=</span> <span class="n">StochasticMealyState</span><span class="p">(</span><span class="n">state_id</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;s</span><span class="si">{</span><span class="n">state_counter</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
             <span class="n">r_state_map</span><span class="p">[</span><span class="n">r</span><span class="p">]</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="n">r</span>
+
             <span class="n">state_counter</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
             <span class="n">r_state_map</span><span class="p">[</span><span class="s1">&#39;chaos&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">MdpState</span><span class="p">(</span><span class="n">state_id</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;s</span><span class="si">{</span><span class="n">state_counter</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="s1">&#39;chaos&#39;</span><span class="p">)</span>
@@ -1291,8 +1230,8 @@
                 <span class="n">total_sum</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">freq_dict</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
 
                 <span class="n">origin_state</span> <span class="o">=</span> <span class="n">s</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">==</span> <span class="s1">&#39;normal&#39;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">teacher</span><span class="o">.</span><span class="n">complete_query</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">!=</span> <span class="s1">&#39;normal&#39;</span> <span class="ow">and</span>\
-                        <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s</span><span class="p">]:</span>  <span class="c1"># if not self.teacher.complete_query(s, i):</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">==</span> <span class="s1">&#39;normal&#39;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">teacher</span><span class="o">.</span><span class="n">complete_query</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span> \
+                        <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">!=</span> <span class="s1">&#39;normal&#39;</span> <span class="ow">and</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s</span><span class="p">]:</span>
                     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
                         <span class="n">r_state_map</span><span class="p">[</span><span class="n">origin_state</span><span class="p">]</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">r_state_map</span><span class="p">[</span><span class="s1">&#39;chaos&#39;</span><span class="p">],</span> <span class="mf">1.</span><span class="p">))</span>
                     <span class="k">else</span><span class="p">:</span>
@@ -1332,13 +1271,18 @@
     input_alphabet: list,
     automaton_type,
     teacher: <a href="StochasticTeacher.html#StochasticTeacher">aalpy.learning_algs.stochastic.StochasticTeacher.StochasticTeacher</a>,
+    compatibility_checker: <a href="DifferenceChecker.html#DifferenceChecker">aalpy.learning_algs.stochastic.DifferenceChecker.DifferenceChecker</a>,
     alpha=0.05,
-    strategy=&#39;normal&#39;
+    strategy=&#39;normal&#39;,
+    cex_processing=None
 )</span>    </div>
 
                 <details>
             <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_alphabet</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">,</span> <span class="n">teacher</span><span class="p">:</span> <span class="n">StochasticTeacher</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="s1">&#39;normal&#39;</span><span class="p">):</span>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_alphabet</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">,</span> <span class="n">teacher</span><span class="p">:</span> <span class="n">StochasticTeacher</span><span class="p">,</span>
+                 <span class="n">compatibility_checker</span><span class="p">:</span> <span class="n">DifferenceChecker</span><span class="p">,</span>
+                 <span class="n">alpha</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="s1">&#39;normal&#39;</span><span class="p">,</span>
+                 <span class="n">cex_processing</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Constructor of the observation table. Initial queries are asked in the constructor.</span>
 
 <span class="sd">        Args:</span>
@@ -1348,6 +1292,7 @@
 <span class="sd">          alpha: constant used in Hoeffding bound</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">compatibility_checker</span> <span class="o">=</span> <span class="n">compatibility_checker</span>
         <span class="k">assert</span> <span class="n">input_alphabet</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">teacher</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">=</span> <span class="n">automaton_type</span>
 
@@ -1361,6 +1306,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">empty_word</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">=</span> <span class="n">strategy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cex_processing</span> <span class="o">=</span> <span class="n">cex_processing</span>
 
         <span class="c1"># initial output</span>
         <span class="k">if</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
@@ -1408,6 +1354,7 @@
 
 <span class="sd">        Returns:</span>
 
+<span class="sd">            False if no cells are to be refined, True if refining happened</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
             <span class="n">pta_root</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_output</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
@@ -1422,7 +1369,7 @@
                         <span class="n">to_refine</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span> <span class="o">+</span> <span class="n">e</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="ow">not</span> <span class="n">to_refine</span><span class="p">:</span>
-                <span class="k">return</span>
+                <span class="k">return</span> <span class="kc">False</span>
 
             <span class="n">to_refine</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="nb">len</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
@@ -1449,6 +1396,7 @@
 
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_resample</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">teacher</span><span class="o">.</span><span class="n">refine_query</span><span class="p">(</span><span class="n">pta_root</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span>
 </pre></div>
 
         </details>
@@ -1461,6 +1409,9 @@ for online testing/sampling.</p>
   n_resample: Number of resamples</p>
 
 <p>Returns:</p>
+
+<pre><code>False if no cells are to be refined, True if refining happened
+</code></pre>
 </div>
 
 
@@ -1672,21 +1623,24 @@ equivalence no sampling is needed.</p>
 <span class="sd">        Returns:</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">for</span> <span class="n">ind</span><span class="p">,</span> <span class="n">s1</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">compatibility_classes_representatives</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">s2</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">compatibility_class_rows</span><span class="p">[</span><span class="n">s1</span><span class="p">]:</span>
-                <span class="c1"># if self.are_rows_compatible(s1, s2, ignore):</span>
-                <span class="n">i_o_pairs</span> <span class="o">=</span> <span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">([</span><span class="n">o</span><span class="p">]))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_alphabet</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span><span class="p">][</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()]</span>
-                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">i_o_pairs</span><span class="p">:</span>
-                    <span class="n">s1_keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="n">o</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
-                    <span class="n">s2_keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s2</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="n">o</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
-                    <span class="k">if</span> <span class="ow">not</span> <span class="n">s1_keys</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">s2_keys</span><span class="p">:</span>
-                        <span class="k">continue</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cex_processing</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
 
-                    <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">E</span><span class="p">:</span>
-                        <span class="k">if</span> <span class="n">e</span> <span class="o">==</span> <span class="n">ignore</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">ind</span><span class="p">,</span> <span class="n">s1</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">S</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">s2</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">S</span><span class="p">[</span><span class="n">ind</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">are_rows_compatible</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span> <span class="n">s2</span><span class="p">,</span> <span class="n">ignore</span><span class="p">):</span>
+                    <span class="n">i_o_pairs</span> <span class="o">=</span> <span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">([</span><span class="n">o</span><span class="p">]))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_alphabet</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span><span class="p">][</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()]</span>
+                    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">i_o_pairs</span><span class="p">:</span>
+                        <span class="n">s1_keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="n">o</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+                        <span class="n">s2_keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s2</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="n">o</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="n">s1_keys</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">s2_keys</span><span class="p">:</span>
                             <span class="k">continue</span>
-                        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cell_diff</span><span class="p">(</span><span class="n">s1</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="n">o</span><span class="p">,</span> <span class="n">s2</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="n">o</span><span class="p">,</span> <span class="n">e</span><span class="p">):</span>
-                            <span class="k">return</span> <span class="n">i</span> <span class="o">+</span> <span class="n">o</span> <span class="o">+</span> <span class="n">e</span>
+
+                        <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">E</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="n">e</span> <span class="o">==</span> <span class="n">ignore</span><span class="p">:</span>
+                                <span class="k">continue</span>
+                            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cell_diff</span><span class="p">(</span><span class="n">s1</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="n">o</span><span class="p">,</span> <span class="n">s2</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="n">o</span><span class="p">,</span> <span class="n">e</span><span class="p">):</span>
+                                <span class="k">return</span> <span class="n">i</span> <span class="o">+</span> <span class="n">o</span> <span class="o">+</span> <span class="n">e</span>
         <span class="k">return</span> <span class="kc">None</span>
 </pre></div>
 
@@ -1950,6 +1904,7 @@ equivalence no sampling is needed.</p>
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">cell_diff</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s1</span><span class="p">,</span> <span class="n">s2</span><span class="p">,</span> <span class="n">e</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Checks if 2 cells are considered different.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">          s1: prefix of row s1</span>
@@ -1962,45 +1917,18 @@ equivalence no sampling is needed.</p>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">==</span> <span class="s1">&#39;normal&#39;</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">teacher</span><span class="o">.</span><span class="n">complete_query</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">teacher</span><span class="o">.</span><span class="n">complete_query</span><span class="p">(</span><span class="n">s2</span><span class="p">,</span> <span class="n">e</span><span class="p">):</span>
-                <span class="n">c1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span><span class="p">][</span><span class="n">e</span><span class="p">]</span>
-                <span class="n">c2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s2</span><span class="p">][</span><span class="n">e</span><span class="p">]</span>
-
-                <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="n">c1</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">!=</span> <span class="nb">set</span><span class="p">(</span><span class="n">c2</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
-                    <span class="k">return</span> <span class="kc">True</span>
-
-                <span class="n">n1</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c1</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-                <span class="n">n2</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c2</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-
-                <span class="k">if</span> <span class="n">n1</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">n2</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">c1</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-                        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">c1</span><span class="p">[</span><span class="n">o</span><span class="p">]</span> <span class="o">/</span> <span class="n">n1</span> <span class="o">-</span> <span class="n">c2</span><span class="p">[</span><span class="n">o</span><span class="p">]</span> <span class="o">/</span> <span class="n">n2</span><span class="p">)</span> <span class="o">&gt;</span> \
-                                <span class="p">((</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">n1</span><span class="p">)</span> <span class="o">+</span> <span class="n">sqrt</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">n2</span><span class="p">))</span> <span class="o">*</span> <span class="n">sqrt</span><span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">log</span><span class="p">(</span><span class="mi">2</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">))):</span>
-                            <span class="k">return</span> <span class="kc">True</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">compatibility_checker</span><span class="o">.</span><span class="n">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span><span class="p">][</span><span class="n">e</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s2</span><span class="p">][</span><span class="n">e</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span><span class="p">]</span> <span class="ow">and</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s2</span><span class="p">]:</span>
-                <span class="n">c1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span><span class="p">][</span><span class="n">e</span><span class="p">]</span>
-                <span class="n">c2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s2</span><span class="p">][</span><span class="n">e</span><span class="p">]</span>
-
-                <span class="n">n1</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c1</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-                <span class="n">n2</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c2</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-
-                <span class="k">if</span> <span class="n">n1</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">n2</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">c1</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="n">c2</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
-                        <span class="n">c1o</span> <span class="o">=</span> <span class="n">c1</span><span class="p">[</span><span class="n">o</span><span class="p">]</span> <span class="k">if</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">c1</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">else</span> <span class="mi">0</span>
-                        <span class="n">c2o</span> <span class="o">=</span> <span class="n">c2</span><span class="p">[</span><span class="n">o</span><span class="p">]</span> <span class="k">if</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">c2</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">else</span> <span class="mi">0</span>
-                        <span class="n">alpha1</span> <span class="o">=</span> <span class="mf">0.05</span> 
-                        <span class="n">alpha2</span> <span class="o">=</span> <span class="mf">0.05</span> 
-                        <span class="n">epsilon1</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">((</span><span class="mf">1.</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">n1</span><span class="p">))</span> <span class="o">*</span> <span class="n">log</span><span class="p">(</span><span class="mf">2.</span> <span class="o">/</span> <span class="n">alpha1</span><span class="p">))</span>
-                        <span class="n">epsilon2</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">((</span><span class="mf">1.</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">n2</span><span class="p">))</span> <span class="o">*</span> <span class="n">log</span><span class="p">(</span><span class="mf">2.</span> <span class="o">/</span> <span class="n">alpha2</span><span class="p">))</span>
-
-                        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">c1o</span> <span class="o">/</span> <span class="n">n1</span> <span class="o">-</span> <span class="n">c2o</span> <span class="o">/</span> <span class="n">n2</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">epsilon1</span> <span class="o">+</span> <span class="n">epsilon2</span><span class="p">:</span>
-                            <span class="k">return</span> <span class="kc">True</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">compatibility_checker</span><span class="o">.</span><span class="n">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span><span class="p">][</span><span class="n">e</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s2</span><span class="p">][</span><span class="n">e</span><span class="p">])</span>
         <span class="k">return</span> <span class="kc">False</span>
 </pre></div>
 
         </details>
 
-            <div class="docstring"><p>Args:
+            <div class="docstring"><p>Checks if 2 cells are considered different.</p>
+
+<p>Args:
   s1: prefix of row s1
   s2: prefix of row s2
   e: element of E</p>
@@ -2081,7 +2009,14 @@ end in the same output element.</p>
             <span class="n">rank</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s</span><span class="p">][</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_alphabet</span><span class="p">])</span>
             <span class="n">class_rank_pair</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">s</span><span class="p">,</span> <span class="n">rank</span><span class="p">))</span>
 
-        <span class="n">class_rank_pair</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># sort according to frequency</span>
+        <span class="c1"># class_rank_pair.sort(key=lambda x: x[1], reverse=True)</span>
+
+        <span class="c1"># sort according to prefix length, and elements of same length sort by value</span>
+        <span class="n">class_rank_pair</span> <span class="o">=</span> <span class="p">[(</span><span class="n">s</span><span class="p">,</span> <span class="o">-</span><span class="n">rank</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="n">rank</span><span class="p">)</span> <span class="ow">in</span> <span class="n">class_rank_pair</span><span class="p">]</span>
+        <span class="n">class_rank_pair</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="n">class_rank_pair</span> <span class="o">=</span> <span class="p">[(</span><span class="n">s</span><span class="p">,</span> <span class="o">-</span><span class="n">rank</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="n">rank</span><span class="p">)</span> <span class="ow">in</span> <span class="n">class_rank_pair</span><span class="p">]</span>
+
         <span class="n">compatibility_classes</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">class_rank_pair</span><span class="p">]</span>
 
         <span class="n">tmp_classes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">compatibility_classes</span><span class="p">)</span>
@@ -2138,17 +2073,23 @@ end in the same output element.</p>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s2">&quot;mdp&quot;</span> <span class="ow">and</span> <span class="n">state</span><span class="o">.</span><span class="n">output</span> <span class="o">==</span> <span class="s2">&quot;chaos&quot;</span> \
+                    <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s2">&quot;smm&quot;</span> <span class="ow">and</span> <span class="n">state</span><span class="o">.</span><span class="n">state_id</span> <span class="o">==</span> <span class="s2">&quot;chaos&quot;</span><span class="p">:</span>
+                <span class="c1"># we are not interested in chaos state, but in prefix to chaos</span>
+                <span class="k">continue</span>
             <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_alphabet</span><span class="p">:</span>
                 <span class="n">output_states</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
                     <span class="k">for</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="ow">in</span> <span class="n">output_states</span><span class="p">:</span>
                         <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">output</span> <span class="o">==</span> <span class="s1">&#39;chaos&#39;</span><span class="p">:</span>
-                            <span class="k">return</span> <span class="n">state</span><span class="o">.</span><span class="n">prefix</span>
+                            <span class="k">return</span> <span class="kc">True</span>
+                            <span class="c1">#return state.prefix + i</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="k">for</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">o</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="ow">in</span> <span class="n">output_states</span><span class="p">:</span>
                         <span class="k">if</span> <span class="n">o</span> <span class="o">==</span> <span class="s1">&#39;chaos&#39;</span><span class="p">:</span>
-                            <span class="k">return</span> <span class="n">state</span><span class="o">.</span><span class="n">prefix</span>
-        <span class="k">return</span> <span class="kc">None</span>
+                            <span class="k">return</span> <span class="kc">True</span>
+                            <span class="c1">#return state.prefix</span>
+        <span class="k">return</span> <span class="kc">False</span>
 </pre></div>
 
         </details>
@@ -2201,7 +2142,7 @@ end in the same output element.</p>
                 <span class="n">curr_node</span> <span class="o">=</span> <span class="n">child</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">new_node</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
-                <span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">inp</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_node</span><span class="p">)</span>
+                <span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">inp</span><span class="p">][</span><span class="n">output</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_node</span>
                 <span class="n">curr_node</span> <span class="o">=</span> <span class="n">new_node</span>
 </pre></div>
 
@@ -2247,6 +2188,7 @@ frequencies, which specify how often a particular input should be sampled.</p>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">r_state_map</span><span class="p">[</span><span class="n">r</span><span class="p">]</span> <span class="o">=</span> <span class="n">StochasticMealyState</span><span class="p">(</span><span class="n">state_id</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;s</span><span class="si">{</span><span class="n">state_counter</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
             <span class="n">r_state_map</span><span class="p">[</span><span class="n">r</span><span class="p">]</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="n">r</span>
+
             <span class="n">state_counter</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
             <span class="n">r_state_map</span><span class="p">[</span><span class="s1">&#39;chaos&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">MdpState</span><span class="p">(</span><span class="n">state_id</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;s</span><span class="si">{</span><span class="n">state_counter</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="s1">&#39;chaos&#39;</span><span class="p">)</span>
@@ -2264,8 +2206,8 @@ frequencies, which specify how often a particular input should be sampled.</p>
                 <span class="n">total_sum</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">freq_dict</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
 
                 <span class="n">origin_state</span> <span class="o">=</span> <span class="n">s</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">==</span> <span class="s1">&#39;normal&#39;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">teacher</span><span class="o">.</span><span class="n">complete_query</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">!=</span> <span class="s1">&#39;normal&#39;</span> <span class="ow">and</span>\
-                        <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s</span><span class="p">]:</span>  <span class="c1"># if not self.teacher.complete_query(s, i):</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">==</span> <span class="s1">&#39;normal&#39;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">teacher</span><span class="o">.</span><span class="n">complete_query</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span> \
+                        <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">!=</span> <span class="s1">&#39;normal&#39;</span> <span class="ow">and</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s</span><span class="p">]:</span>
                     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
                         <span class="n">r_state_map</span><span class="p">[</span><span class="n">origin_state</span><span class="p">]</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">r_state_map</span><span class="p">[</span><span class="s1">&#39;chaos&#39;</span><span class="p">],</span> <span class="mf">1.</span><span class="p">))</span>
                     <span class="k">else</span><span class="p">:</span>

@@ -28,9 +28,6 @@
                     <h2>API Documentation</h2>
                         <ul class="memberlist">
             <li>
-                    <a class="function" href="#get_cex_prefixes">get_cex_prefixes</a>
-            </li>
-            <li>
                     <a class="function" href="#run_stochastic_Lstar">run_stochastic_Lstar</a>
             </li>
     </ul>
@@ -54,33 +51,20 @@
             <div class="codehilite"><pre><span></span><span class="kn">import</span> <span class="nn">time</span>
 
 <span class="kn">from</span> <span class="nn">aalpy.base</span> <span class="kn">import</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">Oracle</span>
+<span class="kn">from</span> <span class="nn">aalpy.learning_algs.stochastic.DifferenceChecker</span> <span class="kn">import</span> <span class="n">AdvancedHoeffdingChecker</span><span class="p">,</span> <span class="n">HoeffdingChecker</span>
 <span class="kn">from</span> <span class="nn">aalpy.learning_algs.stochastic.SamplingBasedObservationTable</span> <span class="kn">import</span> <span class="n">SamplingBasedObservationTable</span>
+<span class="kn">from</span> <span class="nn">aalpy.learning_algs.stochastic.StochasticCexProcessing</span> <span class="kn">import</span> <span class="n">stochastic_longest_prefix</span><span class="p">,</span> <span class="n">stochastic_rs</span>
 <span class="kn">from</span> <span class="nn">aalpy.learning_algs.stochastic.StochasticTeacher</span> <span class="kn">import</span> <span class="n">StochasticTeacher</span>
-<span class="kn">from</span> <span class="nn">aalpy.utils.HelperFunctions</span> <span class="kn">import</span> <span class="n">print_learning_info</span><span class="p">,</span> <span class="n">print_observation_table</span>
-
-
-<span class="k">def</span> <span class="nf">get_cex_prefixes</span><span class="p">(</span><span class="n">cex</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        cex: counterexample</span>
-<span class="sd">        automaton_type: `mdp` or `smm`</span>
-
-<span class="sd">    Returns:</span>
-
-<span class="sd">        all prefixes of the counterexample based on the `automaton_type`</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">cex</span><span class="p">[:</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">cex</span><span class="p">),</span> <span class="mi">2</span><span class="p">)]</span>
-    <span class="k">return</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">cex</span><span class="p">[:</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">cex</span><span class="p">),</span> <span class="mi">2</span><span class="p">)]</span>
-
+<span class="kn">from</span> <span class="nn">aalpy.utils.HelperFunctions</span> <span class="kn">import</span> <span class="n">print_learning_info</span><span class="p">,</span> <span class="n">print_observation_table</span><span class="p">,</span> <span class="n">get_cex_prefixes</span>
 
 <span class="n">strategies</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;normal&#39;</span><span class="p">,</span> <span class="s1">&#39;no_cq&#39;</span><span class="p">]</span>
+<span class="n">cex_sampling_options</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;bfs&#39;</span><span class="p">,</span> <span class="s1">&#39;random&#39;</span><span class="p">]</span>
 <span class="n">print_options</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
 
 
 <span class="k">def</span> <span class="nf">run_stochastic_Lstar</span><span class="p">(</span><span class="n">input_alphabet</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">eq_oracle</span><span class="p">:</span> <span class="n">Oracle</span><span class="p">,</span> <span class="n">n_c</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">n_resample</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">min_rounds</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
-                         <span class="n">max_rounds</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">automaton_type</span><span class="o">=</span><span class="s1">&#39;mdp&#39;</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="s1">&#39;normal&#39;</span><span class="p">,</span> <span class="n">return_data</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">print_level</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+                         <span class="n">max_rounds</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">automaton_type</span><span class="o">=</span><span class="s1">&#39;mdp&#39;</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="s1">&#39;normal&#39;</span><span class="p">,</span> <span class="n">cex_processing</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                         <span class="n">samples_cex_strategy</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">return_data</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">print_level</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Learning of Markov Decision Processes based on &#39;L*-Based Learning of Markov Decision Processes&#39; by Tappler et al.</span>
 
@@ -104,6 +88,10 @@
 
 <span class="sd">        strategy: if no_cq, improved version of the algorithm will be used (Default value = &#39;normal&#39;)</span>
 
+<span class="sd">        cex_processing: cex processing strategy, None , &#39;longest_prefix&#39; or &#39;rs&#39; (rs is experimental)</span>
+
+<span class="sd">        samples_cex_strategy: strategy for finding counterexamples in the trace tree</span>
+
 <span class="sd">        return_data: if True, map containing all information like number of queries... will be returned</span>
 <span class="sd">            (Default value = False)</span>
 
@@ -117,10 +105,20 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">assert</span> <span class="n">strategy</span> <span class="ow">in</span> <span class="n">strategies</span>
-    <span class="c1"># Initialize teacher and observation table</span>
-    <span class="n">stochastic_teacher</span> <span class="o">=</span> <span class="n">StochasticTeacher</span><span class="p">(</span><span class="n">sul</span><span class="p">,</span> <span class="n">n_c</span><span class="p">,</span> <span class="n">eq_oracle</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">samples_cex_strategy</span> <span class="ow">in</span> <span class="n">cex_sampling_options</span>
+
+    <span class="n">compatibility_checker</span> <span class="o">=</span> <span class="n">AdvancedHoeffdingChecker</span><span class="p">()</span> <span class="k">if</span> <span class="n">strategy</span> <span class="o">!=</span> <span class="s2">&quot;normal&quot;</span> <span class="k">else</span> <span class="n">HoeffdingChecker</span><span class="p">()</span>
+
+    <span class="n">stochastic_teacher</span> <span class="o">=</span> <span class="n">StochasticTeacher</span><span class="p">(</span><span class="n">sul</span><span class="p">,</span> <span class="n">n_c</span><span class="p">,</span> <span class="n">eq_oracle</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">,</span> <span class="n">compatibility_checker</span><span class="p">,</span>
+                                           <span class="n">samples_cex_strategy</span><span class="o">=</span><span class="n">samples_cex_strategy</span><span class="p">)</span>
+
+    <span class="c1"># This way all steps from eq. oracle will be added to the tree</span>
+    <span class="n">eq_oracle</span><span class="o">.</span><span class="n">sul</span> <span class="o">=</span> <span class="n">stochastic_teacher</span><span class="o">.</span><span class="n">sul</span>
+
     <span class="n">observation_table</span> <span class="o">=</span> <span class="n">SamplingBasedObservationTable</span><span class="p">(</span><span class="n">input_alphabet</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">,</span>
-                                                      <span class="n">stochastic_teacher</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="n">strategy</span><span class="p">)</span>
+                                                      <span class="n">stochastic_teacher</span><span class="p">,</span> <span class="n">compatibility_checker</span><span class="o">=</span><span class="n">compatibility_checker</span><span class="p">,</span>
+                                                      <span class="n">strategy</span><span class="o">=</span><span class="n">strategy</span><span class="p">,</span>
+                                                      <span class="n">cex_processing</span><span class="o">=</span><span class="n">cex_processing</span><span class="p">)</span>
 
     <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
     <span class="n">eq_query_time</span> <span class="o">=</span> <span class="mi">0</span>
@@ -140,10 +138,10 @@
         <span class="n">observation_table</span><span class="o">.</span><span class="n">trim</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
 
         <span class="c1"># If there is no chaos state is not reachable, remove it from state set</span>
-        <span class="n">cex</span> <span class="o">=</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">chaos_counterexample</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
-        <span class="n">chaos_cex_present</span> <span class="o">=</span> <span class="kc">True</span> <span class="k">if</span> <span class="n">cex</span> <span class="k">else</span> <span class="kc">False</span>
+        <span class="c1"># cex = observation_table.chaos_counterexample(hypothesis)</span>
+        <span class="n">chaos_cex_present</span> <span class="o">=</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">chaos_counterexample</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">cex</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">chaos_cex_present</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
                 <span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="n">state</span> <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span> <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">output</span> <span class="o">==</span> <span class="s1">&#39;chaos&#39;</span><span class="p">))</span>
             <span class="k">else</span><span class="p">:</span>
@@ -157,25 +155,44 @@
                                     <span class="n">observation_table</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
 
         <span class="c1"># If there is a prefix leading to chaos state, use that as a counterexample, otherwise preform equivalence query</span>
-        <span class="n">eq_query_start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-        <span class="n">cex</span> <span class="o">=</span> <span class="n">stochastic_teacher</span><span class="o">.</span><span class="n">equivalence_query</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">cex</span> <span class="k">else</span> <span class="n">cex</span>
-        <span class="n">eq_query_time</span> <span class="o">+=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">eq_query_start</span>
+        <span class="n">cex</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">chaos_cex_present</span><span class="p">:</span>
+            <span class="n">eq_query_start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            <span class="n">cex</span> <span class="o">=</span> <span class="n">stochastic_teacher</span><span class="o">.</span><span class="n">equivalence_query</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
+            <span class="n">eq_query_time</span> <span class="o">+=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">eq_query_start</span>
 
         <span class="k">if</span> <span class="n">cex</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">print_level</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Counterexample&#39;</span><span class="p">,</span> <span class="n">cex</span><span class="p">)</span>
             <span class="c1"># get all prefixes and add them to the S set</span>
-            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">get_cex_prefixes</span><span class="p">(</span><span class="n">cex</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">):</span>
-                <span class="k">if</span> <span class="n">p</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">S</span><span class="p">:</span>
-                    <span class="n">observation_table</span><span class="o">.</span><span class="n">S</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">cex_processing</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">pre</span> <span class="ow">in</span> <span class="n">get_cex_prefixes</span><span class="p">(</span><span class="n">cex</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">pre</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">S</span><span class="p">:</span>
+                        <span class="n">observation_table</span><span class="o">.</span><span class="n">S</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pre</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">suffixes</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">if</span> <span class="n">cex_processing</span> <span class="o">==</span> <span class="s1">&#39;longest_prefix&#39;</span><span class="p">:</span>
+                    <span class="n">prefixes</span> <span class="o">=</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">S</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">observation_table</span><span class="o">.</span><span class="n">get_extended_s</span><span class="p">())</span>
+                    <span class="n">suffixes</span> <span class="o">=</span> <span class="n">stochastic_longest_prefix</span><span class="p">(</span><span class="n">cex</span><span class="p">,</span> <span class="n">prefixes</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">cex_processing</span> <span class="o">==</span> <span class="s1">&#39;rs&#39;</span><span class="p">:</span>
+                    <span class="n">suffixes</span> <span class="o">=</span> <span class="n">stochastic_rs</span><span class="p">(</span><span class="n">sul</span><span class="p">,</span> <span class="n">cex</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">suf</span> <span class="ow">in</span> <span class="n">suffixes</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">suf</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">E</span><span class="p">:</span>
+                        <span class="n">observation_table</span><span class="o">.</span><span class="n">E</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">suf</span><span class="p">)</span>
 
+        <span class="c1"># print(&#39;Size of E:&#39;, len(observation_table.E))</span>
         <span class="c1"># Ask queries for non-completed cells and update the observation table</span>
-        <span class="n">observation_table</span><span class="o">.</span><span class="n">refine_not_completed_cells</span><span class="p">(</span><span class="n">n_resample</span><span class="p">)</span>
+        <span class="n">refined</span> <span class="o">=</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">refine_not_completed_cells</span><span class="p">(</span><span class="n">n_resample</span><span class="p">)</span>
         <span class="n">observation_table</span><span class="o">.</span><span class="n">update_obs_table_with_freq_obs</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">learning_rounds</span><span class="p">,</span> <span class="n">chaos_present</span><span class="o">=</span><span class="n">chaos_cex_present</span><span class="p">,</span> <span class="n">min_rounds</span><span class="o">=</span><span class="n">min_rounds</span><span class="p">,</span>
                                   <span class="n">max_rounds</span><span class="o">=</span><span class="n">max_rounds</span><span class="p">,</span> <span class="n">print_unambiguity</span><span class="o">=</span><span class="n">print_level</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">):</span>
             <span class="k">break</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">refined</span><span class="p">:</span>
+            <span class="c1"># If all cells were refined, but stopping did not happen, increase n_c</span>
+            <span class="n">stochastic_teacher</span><span class="o">.</span><span class="n">n_c</span> <span class="o">*=</span> <span class="mf">1.5</span>
+            <span class="n">stochastic_teacher</span><span class="o">.</span><span class="n">complete_query_cache</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
 
     <span class="n">total_time</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
     <span class="n">eq_query_time</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">eq_query_time</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
@@ -184,8 +201,8 @@
     <span class="n">info</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s1">&#39;learning_rounds&#39;</span><span class="p">:</span> <span class="n">learning_rounds</span><span class="p">,</span>
         <span class="s1">&#39;automaton_size&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">),</span>
-        <span class="s1">&#39;queries_learning&#39;</span><span class="p">:</span> <span class="n">sul</span><span class="o">.</span><span class="n">num_queries</span><span class="p">,</span>
-        <span class="s1">&#39;steps_learning&#39;</span><span class="p">:</span> <span class="n">sul</span><span class="o">.</span><span class="n">num_steps</span><span class="p">,</span>
+        <span class="s1">&#39;queries_learning&#39;</span><span class="p">:</span> <span class="n">stochastic_teacher</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">num_queries</span> <span class="o">-</span> <span class="n">eq_oracle</span><span class="o">.</span><span class="n">num_queries</span><span class="p">,</span>
+        <span class="s1">&#39;steps_learning&#39;</span><span class="p">:</span> <span class="n">stochastic_teacher</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">num_steps</span> <span class="o">-</span> <span class="n">eq_oracle</span><span class="o">.</span><span class="n">num_queries</span><span class="p">,</span>
         <span class="s1">&#39;queries_eq_oracle&#39;</span><span class="p">:</span> <span class="n">eq_oracle</span><span class="o">.</span><span class="n">num_queries</span><span class="p">,</span>
         <span class="s1">&#39;steps_eq_oracle&#39;</span><span class="p">:</span> <span class="n">eq_oracle</span><span class="o">.</span><span class="n">num_steps</span><span class="p">,</span>
         <span class="s1">&#39;learning_time&#39;</span><span class="p">:</span> <span class="n">learning_time</span><span class="p">,</span>
@@ -205,46 +222,6 @@
         </details>
 
             </section>
-                <section id="get_cex_prefixes">
-                            <div class="attr function"><a class="headerlink" href="#get_cex_prefixes">#&nbsp;&nbsp</a>
-
-        
-            <span class="def">def</span>
-            <span class="name">get_cex_prefixes</span><span class="signature">(cex, automaton_type)</span>:
-    </div>
-
-                <details>
-            <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">get_cex_prefixes</span><span class="p">(</span><span class="n">cex</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        cex: counterexample</span>
-<span class="sd">        automaton_type: `mdp` or `smm`</span>
-
-<span class="sd">    Returns:</span>
-
-<span class="sd">        all prefixes of the counterexample based on the `automaton_type`</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">cex</span><span class="p">[:</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">cex</span><span class="p">),</span> <span class="mi">2</span><span class="p">)]</span>
-    <span class="k">return</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">cex</span><span class="p">[:</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">cex</span><span class="p">),</span> <span class="mi">2</span><span class="p">)]</span>
-</pre></div>
-
-        </details>
-
-            <div class="docstring"><p>Args:
-    cex: counterexample
-    automaton_type: <code>mdp</code> or <code>smm</code></p>
-
-<p>Returns:</p>
-
-<pre><code>all prefixes of the counterexample based on the `automaton_type`
-</code></pre>
-</div>
-
-
-                </section>
                 <section id="run_stochastic_Lstar">
                             <div class="attr function"><a class="headerlink" href="#run_stochastic_Lstar">#&nbsp;&nbsp</a>
 
@@ -260,6 +237,8 @@
     max_rounds=200,
     automaton_type=&#39;mdp&#39;,
     strategy=&#39;normal&#39;,
+    cex_processing=None,
+    samples_cex_strategy=None,
     return_data=False,
     print_level=2
 )</span>:
@@ -268,7 +247,8 @@
                 <details>
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">run_stochastic_Lstar</span><span class="p">(</span><span class="n">input_alphabet</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">eq_oracle</span><span class="p">:</span> <span class="n">Oracle</span><span class="p">,</span> <span class="n">n_c</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">n_resample</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">min_rounds</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
-                         <span class="n">max_rounds</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">automaton_type</span><span class="o">=</span><span class="s1">&#39;mdp&#39;</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="s1">&#39;normal&#39;</span><span class="p">,</span> <span class="n">return_data</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">print_level</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+                         <span class="n">max_rounds</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">automaton_type</span><span class="o">=</span><span class="s1">&#39;mdp&#39;</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="s1">&#39;normal&#39;</span><span class="p">,</span> <span class="n">cex_processing</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                         <span class="n">samples_cex_strategy</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">return_data</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">print_level</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Learning of Markov Decision Processes based on &#39;L*-Based Learning of Markov Decision Processes&#39; by Tappler et al.</span>
 
@@ -292,6 +272,10 @@
 
 <span class="sd">        strategy: if no_cq, improved version of the algorithm will be used (Default value = &#39;normal&#39;)</span>
 
+<span class="sd">        cex_processing: cex processing strategy, None , &#39;longest_prefix&#39; or &#39;rs&#39; (rs is experimental)</span>
+
+<span class="sd">        samples_cex_strategy: strategy for finding counterexamples in the trace tree</span>
+
 <span class="sd">        return_data: if True, map containing all information like number of queries... will be returned</span>
 <span class="sd">            (Default value = False)</span>
 
@@ -305,10 +289,20 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">assert</span> <span class="n">strategy</span> <span class="ow">in</span> <span class="n">strategies</span>
-    <span class="c1"># Initialize teacher and observation table</span>
-    <span class="n">stochastic_teacher</span> <span class="o">=</span> <span class="n">StochasticTeacher</span><span class="p">(</span><span class="n">sul</span><span class="p">,</span> <span class="n">n_c</span><span class="p">,</span> <span class="n">eq_oracle</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">samples_cex_strategy</span> <span class="ow">in</span> <span class="n">cex_sampling_options</span>
+
+    <span class="n">compatibility_checker</span> <span class="o">=</span> <span class="n">AdvancedHoeffdingChecker</span><span class="p">()</span> <span class="k">if</span> <span class="n">strategy</span> <span class="o">!=</span> <span class="s2">&quot;normal&quot;</span> <span class="k">else</span> <span class="n">HoeffdingChecker</span><span class="p">()</span>
+
+    <span class="n">stochastic_teacher</span> <span class="o">=</span> <span class="n">StochasticTeacher</span><span class="p">(</span><span class="n">sul</span><span class="p">,</span> <span class="n">n_c</span><span class="p">,</span> <span class="n">eq_oracle</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">,</span> <span class="n">compatibility_checker</span><span class="p">,</span>
+                                           <span class="n">samples_cex_strategy</span><span class="o">=</span><span class="n">samples_cex_strategy</span><span class="p">)</span>
+
+    <span class="c1"># This way all steps from eq. oracle will be added to the tree</span>
+    <span class="n">eq_oracle</span><span class="o">.</span><span class="n">sul</span> <span class="o">=</span> <span class="n">stochastic_teacher</span><span class="o">.</span><span class="n">sul</span>
+
     <span class="n">observation_table</span> <span class="o">=</span> <span class="n">SamplingBasedObservationTable</span><span class="p">(</span><span class="n">input_alphabet</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">,</span>
-                                                      <span class="n">stochastic_teacher</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="n">strategy</span><span class="p">)</span>
+                                                      <span class="n">stochastic_teacher</span><span class="p">,</span> <span class="n">compatibility_checker</span><span class="o">=</span><span class="n">compatibility_checker</span><span class="p">,</span>
+                                                      <span class="n">strategy</span><span class="o">=</span><span class="n">strategy</span><span class="p">,</span>
+                                                      <span class="n">cex_processing</span><span class="o">=</span><span class="n">cex_processing</span><span class="p">)</span>
 
     <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
     <span class="n">eq_query_time</span> <span class="o">=</span> <span class="mi">0</span>
@@ -328,10 +322,10 @@
         <span class="n">observation_table</span><span class="o">.</span><span class="n">trim</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
 
         <span class="c1"># If there is no chaos state is not reachable, remove it from state set</span>
-        <span class="n">cex</span> <span class="o">=</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">chaos_counterexample</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
-        <span class="n">chaos_cex_present</span> <span class="o">=</span> <span class="kc">True</span> <span class="k">if</span> <span class="n">cex</span> <span class="k">else</span> <span class="kc">False</span>
+        <span class="c1"># cex = observation_table.chaos_counterexample(hypothesis)</span>
+        <span class="n">chaos_cex_present</span> <span class="o">=</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">chaos_counterexample</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">cex</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">chaos_cex_present</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
                 <span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="n">state</span> <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span> <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">output</span> <span class="o">==</span> <span class="s1">&#39;chaos&#39;</span><span class="p">))</span>
             <span class="k">else</span><span class="p">:</span>
@@ -345,25 +339,44 @@
                                     <span class="n">observation_table</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
 
         <span class="c1"># If there is a prefix leading to chaos state, use that as a counterexample, otherwise preform equivalence query</span>
-        <span class="n">eq_query_start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-        <span class="n">cex</span> <span class="o">=</span> <span class="n">stochastic_teacher</span><span class="o">.</span><span class="n">equivalence_query</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">cex</span> <span class="k">else</span> <span class="n">cex</span>
-        <span class="n">eq_query_time</span> <span class="o">+=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">eq_query_start</span>
+        <span class="n">cex</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">chaos_cex_present</span><span class="p">:</span>
+            <span class="n">eq_query_start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            <span class="n">cex</span> <span class="o">=</span> <span class="n">stochastic_teacher</span><span class="o">.</span><span class="n">equivalence_query</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
+            <span class="n">eq_query_time</span> <span class="o">+=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">eq_query_start</span>
 
         <span class="k">if</span> <span class="n">cex</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">print_level</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Counterexample&#39;</span><span class="p">,</span> <span class="n">cex</span><span class="p">)</span>
             <span class="c1"># get all prefixes and add them to the S set</span>
-            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">get_cex_prefixes</span><span class="p">(</span><span class="n">cex</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">):</span>
-                <span class="k">if</span> <span class="n">p</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">S</span><span class="p">:</span>
-                    <span class="n">observation_table</span><span class="o">.</span><span class="n">S</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">cex_processing</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">pre</span> <span class="ow">in</span> <span class="n">get_cex_prefixes</span><span class="p">(</span><span class="n">cex</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">pre</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">S</span><span class="p">:</span>
+                        <span class="n">observation_table</span><span class="o">.</span><span class="n">S</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pre</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">suffixes</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">if</span> <span class="n">cex_processing</span> <span class="o">==</span> <span class="s1">&#39;longest_prefix&#39;</span><span class="p">:</span>
+                    <span class="n">prefixes</span> <span class="o">=</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">S</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">observation_table</span><span class="o">.</span><span class="n">get_extended_s</span><span class="p">())</span>
+                    <span class="n">suffixes</span> <span class="o">=</span> <span class="n">stochastic_longest_prefix</span><span class="p">(</span><span class="n">cex</span><span class="p">,</span> <span class="n">prefixes</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">cex_processing</span> <span class="o">==</span> <span class="s1">&#39;rs&#39;</span><span class="p">:</span>
+                    <span class="n">suffixes</span> <span class="o">=</span> <span class="n">stochastic_rs</span><span class="p">(</span><span class="n">sul</span><span class="p">,</span> <span class="n">cex</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">suf</span> <span class="ow">in</span> <span class="n">suffixes</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">suf</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">E</span><span class="p">:</span>
+                        <span class="n">observation_table</span><span class="o">.</span><span class="n">E</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">suf</span><span class="p">)</span>
 
+        <span class="c1"># print(&#39;Size of E:&#39;, len(observation_table.E))</span>
         <span class="c1"># Ask queries for non-completed cells and update the observation table</span>
-        <span class="n">observation_table</span><span class="o">.</span><span class="n">refine_not_completed_cells</span><span class="p">(</span><span class="n">n_resample</span><span class="p">)</span>
+        <span class="n">refined</span> <span class="o">=</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">refine_not_completed_cells</span><span class="p">(</span><span class="n">n_resample</span><span class="p">)</span>
         <span class="n">observation_table</span><span class="o">.</span><span class="n">update_obs_table_with_freq_obs</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">learning_rounds</span><span class="p">,</span> <span class="n">chaos_present</span><span class="o">=</span><span class="n">chaos_cex_present</span><span class="p">,</span> <span class="n">min_rounds</span><span class="o">=</span><span class="n">min_rounds</span><span class="p">,</span>
                                   <span class="n">max_rounds</span><span class="o">=</span><span class="n">max_rounds</span><span class="p">,</span> <span class="n">print_unambiguity</span><span class="o">=</span><span class="n">print_level</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">):</span>
             <span class="k">break</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">refined</span><span class="p">:</span>
+            <span class="c1"># If all cells were refined, but stopping did not happen, increase n_c</span>
+            <span class="n">stochastic_teacher</span><span class="o">.</span><span class="n">n_c</span> <span class="o">*=</span> <span class="mf">1.5</span>
+            <span class="n">stochastic_teacher</span><span class="o">.</span><span class="n">complete_query_cache</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
 
     <span class="n">total_time</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
     <span class="n">eq_query_time</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">eq_query_time</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
@@ -372,8 +385,8 @@
     <span class="n">info</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s1">&#39;learning_rounds&#39;</span><span class="p">:</span> <span class="n">learning_rounds</span><span class="p">,</span>
         <span class="s1">&#39;automaton_size&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">),</span>
-        <span class="s1">&#39;queries_learning&#39;</span><span class="p">:</span> <span class="n">sul</span><span class="o">.</span><span class="n">num_queries</span><span class="p">,</span>
-        <span class="s1">&#39;steps_learning&#39;</span><span class="p">:</span> <span class="n">sul</span><span class="o">.</span><span class="n">num_steps</span><span class="p">,</span>
+        <span class="s1">&#39;queries_learning&#39;</span><span class="p">:</span> <span class="n">stochastic_teacher</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">num_queries</span> <span class="o">-</span> <span class="n">eq_oracle</span><span class="o">.</span><span class="n">num_queries</span><span class="p">,</span>
+        <span class="s1">&#39;steps_learning&#39;</span><span class="p">:</span> <span class="n">stochastic_teacher</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">num_steps</span> <span class="o">-</span> <span class="n">eq_oracle</span><span class="o">.</span><span class="n">num_queries</span><span class="p">,</span>
         <span class="s1">&#39;queries_eq_oracle&#39;</span><span class="p">:</span> <span class="n">eq_oracle</span><span class="o">.</span><span class="n">num_queries</span><span class="p">,</span>
         <span class="s1">&#39;steps_eq_oracle&#39;</span><span class="p">:</span> <span class="n">eq_oracle</span><span class="o">.</span><span class="n">num_steps</span><span class="p">,</span>
         <span class="s1">&#39;learning_time&#39;</span><span class="p">:</span> <span class="n">learning_time</span><span class="p">,</span>
@@ -413,6 +426,10 @@ max_rounds: if learning_rounds &gt;= max_rounds, learning will stop (Default val
 automaton_type: either 'mdp' or 'smm' (Default value = 'mdp')
 
 strategy: if no_cq, improved version of the algorithm will be used (Default value = 'normal')
+
+cex_processing: cex processing strategy, None , 'longest_prefix' or 'rs' (rs is experimental)
+
+samples_cex_strategy: strategy for finding counterexamples in the trace tree
 
 return_data: if True, map containing all information like number of queries... will be returned
     (Default value = False)

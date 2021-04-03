@@ -51,6 +51,12 @@
             <li>
                     <a class="function" href="#print_observation_table">print_observation_table</a>
             </li>
+            <li>
+                    <a class="function" href="#is_suffix_of">is_suffix_of</a>
+            </li>
+            <li>
+                    <a class="function" href="#get_cex_prefixes">get_cex_prefixes</a>
+            </li>
     </ul>
 
 
@@ -270,6 +276,38 @@
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;-&quot;</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">row</span><span class="p">))</span>
         <span class="nb">print</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;-&#39;</span> <span class="o">*</span> <span class="n">row_len</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">is_suffix_of</span><span class="p">(</span><span class="n">suffix</span><span class="p">,</span> <span class="n">trace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      suffix:</span>
+<span class="sd">      trace:</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">trace</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">suffix</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">trace</span><span class="p">[</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">suffix</span><span class="p">):]</span> <span class="o">==</span> <span class="n">suffix</span>
+
+
+<span class="k">def</span> <span class="nf">get_cex_prefixes</span><span class="p">(</span><span class="n">cex</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        cex: counterexample</span>
+<span class="sd">        automaton_type: `mdp` or `smm`</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">        all prefixes of the counterexample based on the `automaton_type`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">cex</span><span class="p">[:</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">cex</span><span class="p">),</span> <span class="mi">2</span><span class="p">)]</span>
+    <span class="k">return</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">cex</span><span class="p">[:</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">cex</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)]</span>
 </pre></div>
 
         </details>
@@ -645,6 +683,83 @@ They are stored as lists, so with this function set property is maintained.
     for optimization.(Default value = True)</p>
 
 <p>Returns:</p>
+</div>
+
+
+                </section>
+                <section id="is_suffix_of">
+                            <div class="attr function"><a class="headerlink" href="#is_suffix_of">#&nbsp;&nbsp</a>
+
+        
+            <span class="def">def</span>
+            <span class="name">is_suffix_of</span><span class="signature">(suffix, trace) -&gt; bool</span>:
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">is_suffix_of</span><span class="p">(</span><span class="n">suffix</span><span class="p">,</span> <span class="n">trace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      suffix:</span>
+<span class="sd">      trace:</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">trace</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">suffix</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">trace</span><span class="p">[</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">suffix</span><span class="p">):]</span> <span class="o">==</span> <span class="n">suffix</span>
+</pre></div>
+
+        </details>
+
+            <div class="docstring"><p>Args:
+  suffix:
+  trace:</p>
+
+<p>Returns:</p>
+</div>
+
+
+                </section>
+                <section id="get_cex_prefixes">
+                            <div class="attr function"><a class="headerlink" href="#get_cex_prefixes">#&nbsp;&nbsp</a>
+
+        
+            <span class="def">def</span>
+            <span class="name">get_cex_prefixes</span><span class="signature">(cex, automaton_type)</span>:
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">get_cex_prefixes</span><span class="p">(</span><span class="n">cex</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        cex: counterexample</span>
+<span class="sd">        automaton_type: `mdp` or `smm`</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">        all prefixes of the counterexample based on the `automaton_type`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">cex</span><span class="p">[:</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">cex</span><span class="p">),</span> <span class="mi">2</span><span class="p">)]</span>
+    <span class="k">return</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">cex</span><span class="p">[:</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">cex</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)]</span>
+</pre></div>
+
+        </details>
+
+            <div class="docstring"><p>Args:
+    cex: counterexample
+    automaton_type: <code>mdp</code> or <code>smm</code></p>
+
+<p>Returns:</p>
+
+<pre><code>all prefixes of the counterexample based on the `automaton_type`
+</code></pre>
 </div>
 
 

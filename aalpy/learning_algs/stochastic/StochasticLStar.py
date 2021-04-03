@@ -38,7 +38,7 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_
 
         strategy: if no_cq, improved version of the algorithm will be used (Default value = 'normal')
 
-        cex_processing: cex processing strategy, None or 'longest_prefix' so far
+        cex_processing: cex processing strategy, None , 'longest_prefix' or 'rs' (rs is experimental)
 
         samples_cex_strategy: strategy for finding counterexamples in the trace tree
 
