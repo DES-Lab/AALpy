@@ -266,7 +266,6 @@ class StochasticTeacher:
         else:
             trace = ()
 
-        #self.root_node, hypothesis.initial_state, tuple(self.initial_value)
         while True:
             rep_trace = curr_state.prefix
             if trace != rep_trace:
@@ -322,7 +321,7 @@ class StochasticTeacher:
                     if self.compatibility_checker.check_difference(freq_in_tree, freq_in_hyp):
                         return trace + (i,)
             for i in curr_node.children.keys():
-                for c in curr_node.children[i].values(): # TODO Martin please check
+                for c in curr_node.children[i].values():
                     o = c.output
                     if self.automaton_type == 'mdp':
                         next_state = next((out_state[0] for out_state in curr_state.transitions[i]
@@ -349,6 +348,7 @@ class StochasticTeacher:
             counterexample
 
         """
+        # TODO we could add that the cex is saved and repeated if it still holds, or search for shorter one
         if self.samples_cex_strategy:
             cex = None
             if self.samples_cex_strategy == 'bfs':
@@ -366,7 +366,7 @@ class StochasticTeacher:
 
         # Repeat same cex if it did not lead to state size increase
         if self.last_cex and len(hypothesis.states) == self.last_hyp_size:
-            # TODO we can define some other requirement aside from length, such as reachability of cex
+            # TODO:IDEA we can define some other requirement aside from length, such as reachability of cex
             if random() <= 0.33:
                 cex = self.eq_oracle.find_cex(hypothesis)
                 if cex and len(cex) < len(self.last_cex):

@@ -102,8 +102,7 @@ def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type,
             print(f'Hypothesis {learning_rounds}: {len(hypothesis.states)} states.')
 
         if print_level == 3:
-            print_observation_table(observation_table.S, observation_table.s_dot_a(),
-                                    observation_table.E, observation_table.T)
+            print_observation_table(observation_table, 'det')
 
         # Find counterexample
         eq_query_start = time.time()

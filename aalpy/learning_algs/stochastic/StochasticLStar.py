@@ -8,7 +8,7 @@ from aalpy.learning_algs.stochastic.StochasticTeacher import StochasticTeacher
 from aalpy.utils.HelperFunctions import print_learning_info, print_observation_table, get_cex_prefixes
 
 strategies = ['normal', 'no_cq']
-cex_sampling_options = [None, 'bfs', 'random']
+cex_sampling_options = [None, 'bfs']
 print_options = [0, 1, 2, 3]
 
 
@@ -51,8 +51,8 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_
 
 
     Returns:
-      learned MDP/SMM
 
+      learned MDP/SMM
     """
 
     assert strategy in strategies
@@ -102,8 +102,7 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_
             print(f'Hypothesis: {learning_rounds}: {len(hypothesis.states)} states.')
 
         if print_level == 3:
-            print_observation_table(observation_table.S, observation_table.get_extended_s(), observation_table.E,
-                                    observation_table.T, False)
+            print_observation_table(observation_table, 'stoc')
 
         # If there is a prefix leading to chaos state, use that as a counterexample, otherwise preform equivalence query
         cex = None
@@ -142,6 +141,7 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_
 
         if not refined:
             # If all cells were refined, but stopping did not happen, increase n_c
+            # We could also break here
             stochastic_teacher.n_c *= 1.5
             stochastic_teacher.complete_query_cache.clear()
 

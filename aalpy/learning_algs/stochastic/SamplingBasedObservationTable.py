@@ -45,11 +45,12 @@ class SamplingBasedObservationTable:
 
         # Cache
         self.compatibility_classes_representatives = None
-        self.compatibility_class_rows = dict()
+        self.compatibility_class = dict()
         self.freq_query_cache = dict()
 
     def refine_not_completed_cells(self, n_resample, uniform=False):
-        """Firstly a prefix-tree acceptor is constructed for all non-completed cells and then that tree is used
+        """
+        Firstly a prefix-tree acceptor is constructed for all non-completed cells and then that tree is used
         for online testing/sampling.
 
         Args:
@@ -103,7 +104,8 @@ class SamplingBasedObservationTable:
         return True
 
     def update_obs_table_with_freq_obs(self, element_of_s=None):
-        """Updates cells in the observation table with frequency data. If the row in S has no extension yet, it is
+        """
+        Updates cells in the observation table with frequency data. If the row in S has no extension yet, it is
         generated and its cells populated.
 
         Args:
@@ -145,13 +147,9 @@ class SamplingBasedObservationTable:
                         yield new_pref
 
     def make_closed_and_consistent(self):
-        """Observation table is updated until it is closed and consistent. Note that due the updated notion of row
+        """
+        Observation table is updated until it is closed and consistent. Note that due the updated notion of row
         equivalence no sampling is needed.
-
-        Args:
-
-        Returns:
-
         """
         self.update_compatibility_classes()
 
@@ -181,10 +179,9 @@ class SamplingBasedObservationTable:
         """Returns a row that is not closed.
         :return: single row that is not closed
 
-        Args:
-
         Returns:
 
+            row that needs to be closed
         """
         for lt in self.get_extended_s():
             row_is_closed = False
@@ -205,6 +202,7 @@ class SamplingBasedObservationTable:
 
         Returns:
 
+            i + o + e that violate consistency
         """
         if self.cex_processing is not None:
             return None
@@ -236,10 +234,15 @@ class SamplingBasedObservationTable:
           a representative compatible with the target
 
         """
-        for r in self.compatibility_classes_representatives:
-            if self.are_rows_compatible(r, target):
-                return r
-        return None
+        if target in self.S:
+            for r in self.compatibility_classes_representatives:
+                if target == r or target in self.compatibility_class[r]:
+                    return r
+        else:
+            for r in self.compatibility_classes_representatives:
+                if self.are_rows_compatible(r, target):
+                    return r
+        assert False
 
     def trim_columns(self):
         """ """
@@ -271,12 +274,11 @@ class SamplingBasedObservationTable:
                     self.T[s].pop(e)
 
     def trim(self, hypothesis):
-        """Removes unnecessary rows from the observation table.
+        """
+        Removes unnecessary rows from the observation table.
 
         Args:
           hypothesis: 
-
-        Returns:
 
         """
 
@@ -324,9 +326,11 @@ class SamplingBasedObservationTable:
 
     def stop(self, learning_round, chaos_present, min_rounds=5, max_rounds=None,
              target_unambiguity=0.99, print_unambiguity=False):
-        """Decide if learning should terminate.
+        """
+        Decide if learning should terminate.
 
         Args:
+
           learning_round: current learning round
           chaos_present: True if chaos counterexample existed in current learning round
           min_rounds: minimum number of learning rounds (Default value = 5)
@@ -335,8 +339,8 @@ class SamplingBasedObservationTable:
           print_unambiguity: if true, current unambiguity rate will be printed (Default value = False)
 
         Returns:
-          True if stopping condition satisfied, false otherwise
 
+          True if stopping condition satisfied, false otherwise
         """
         if max_rounds:
             assert min_rounds <= max_rounds
@@ -385,7 +389,8 @@ class SamplingBasedObservationTable:
         return False
 
     def are_rows_compatible(self, s1, s2, e_ignore=None):
-        """Check if the rows are compatible.
+        """
+        Check if the rows are compatible.
         Rows are compatible if all cells are compatible(not different) and their prefixes
         end in the same output element.
 
@@ -410,7 +415,8 @@ class SamplingBasedObservationTable:
 
     def update_compatibility_classes(self):
         """Updates the compatibility classes and stores their representatives."""
-        self.compatibility_class_rows.clear()
+        self.compatibility_class.clear()
+
         class_rank_pair = []
         for s in self.S:
             rank = sum([sum(self.T[s][i].values()) for i in self.input_alphabet])
@@ -420,9 +426,9 @@ class SamplingBasedObservationTable:
         # class_rank_pair.sort(key=lambda x: x[1], reverse=True)
 
         # sort according to prefix length, and elements of same length sort by value
-        class_rank_pair = [(s, -rank) for (s,rank) in class_rank_pair]
+        class_rank_pair = [(s, -rank) for (s, rank) in class_rank_pair]
         class_rank_pair.sort(key=lambda x: (len(x[0]), x[1]))
-        class_rank_pair = [(s, -rank) for (s,rank) in class_rank_pair]
+        class_rank_pair = [(s, -rank) for (s, rank) in class_rank_pair]
 
         compatibility_classes = [c[0] for c in class_rank_pair]
 
@@ -436,12 +442,12 @@ class SamplingBasedObservationTable:
 
             cg_r = [s for s in not_partitioned if self.are_rows_compatible(r, s)]
 
-            comp_rows = []
-            for s in self.S:
-                if s not in cg_r and self.are_rows_compatible(r, s):
-                    comp_rows.append(s)
+            # other_comp_rows = []
+            # for s in self.S:
+            #     if s not in cg_r and self.are_rows_compatible(r, s):
+            #         other_comp_rows.append(s)
 
-            self.compatibility_class_rows[r] = cg_r + comp_rows
+            self.compatibility_class[r] = cg_r
 
             representatives.append(r)
             for sp in cg_r:
@@ -472,14 +478,14 @@ class SamplingBasedObservationTable:
                     for (s, _) in output_states:
                         if s.output == 'chaos':
                             return True
-                            #return state.prefix + i
+                            # return state.prefix + i
                 else:
                     for (_, o, _) in output_states:
                         if o == 'chaos':
                             return True
-                            #return state.prefix
+                            # return state.prefix
         return False
-        #return None
+        # return None
 
     def add_to_PTA(self, pta_root, trace, uncertainty_value=None):
         """Adds a trace to the PTA. PTA is later used for online sampling. The uncertainty value is added to inputs as
@@ -571,4 +577,3 @@ class SamplingBasedObservationTable:
             return Mdp(r_state_map[self.get_representative(self.initial_output)], list(r_state_map.values()))
         else:
             return StochasticMealyMachine(r_state_map[tuple()], list(r_state_map.values()))
-

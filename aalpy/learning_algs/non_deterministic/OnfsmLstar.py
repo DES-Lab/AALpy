@@ -83,8 +83,7 @@ def run_Lstar_ONFSM(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=50,
             print(f'Hypothesis {learning_rounds}: {len(hypothesis.states)} states.')
 
         if print_level == 3:
-            print_observation_table(observation_table.S, observation_table.S_dot_A, observation_table.E,
-                                    observation_table.T, False)
+            print_observation_table(observation_table, 'non-det')
 
         # Find counterexample
         eq_query_start = time.time()
