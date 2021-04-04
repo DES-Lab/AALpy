@@ -40,7 +40,8 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_
 
         cex_processing: cex processing strategy, None , 'longest_prefix' or 'rs' (rs is experimental)
 
-        samples_cex_strategy: strategy for finding counterexamples in the trace tree
+        samples_cex_strategy: strategy for finding counterexamples in the trace tree. None, 'bfs' or
+            "random:<#traces to check:int>:<stop probability for single trace in [0,1)>" eg. random:200:0.2
 
         return_data: if True, map containing all information like number of queries... will be returned
             (Default value = False)
@@ -55,7 +56,7 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_
     """
 
     assert strategy in strategies
-    assert samples_cex_strategy in cex_sampling_options
+    assert samples_cex_strategy in cex_sampling_options or samples_cex_strategy.startswith('random')
 
     compatibility_checker = AdvancedHoeffdingChecker() if strategy != "normal" else HoeffdingChecker()
 

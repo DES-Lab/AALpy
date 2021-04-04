@@ -266,7 +266,7 @@ class StochasticTeacher:
         else:
             trace = ()
 
-        self.root_node, hypothesis.initial_state, tuple(self.initial_value)
+        #self.root_node, hypothesis.initial_state, tuple(self.initial_value)
         while True:
             rep_trace = curr_state.prefix
             if trace != rep_trace:
@@ -281,8 +281,8 @@ class StochasticTeacher:
             i = choice(list(curr_node.children.keys()))
             if not curr_node.children[i]:
                 return None
-            c = choice(curr_node.children[i]) # TODO need refactoring
-            o = c.output # TODO need refactoring
+            c = choice(list(curr_node.children[i].values()))
+            o = c.output
             if self.automaton_type == 'mdp':
                 next_state = next(
                     (out_state[0] for out_state in curr_state.transitions[i] if out_state[0].output == o), None)
@@ -350,21 +350,19 @@ class StochasticTeacher:
 
         """
         if self.samples_cex_strategy:
+            cex = None
             if self.samples_cex_strategy == 'bfs':
                 cex = self.bfs_for_cex_in_tree(hypothesis)
-                if cex:
-                    return cex
-            elif self.samples_cex_strategy == 'random':
-                # format for random: "random:<#traces to check:int>:<stop probability for single trace in [0,1)>"
+            elif self.samples_cex_strategy.startswith('random'):
                 split_strategy = self.samples_cex_strategy.split(":")
                 try:
                     nr_traces = int(split_strategy[1])
                     stop_prob = float(split_strategy[2])
                     cex = self.dfs_for_cex_in_tree(hypothesis, nr_traces, stop_prob)
-                    if cex:
-                        return cex
                 except Exception as e:
                     print("Problem in random DFS for cex in samples:", e)
+            if cex:
+                return cex
 
         # Repeat same cex if it did not lead to state size increase
         if self.last_cex and len(hypothesis.states) == self.last_hyp_size:
