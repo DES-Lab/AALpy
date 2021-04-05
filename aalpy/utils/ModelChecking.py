@@ -110,11 +110,8 @@ def eval_property(prism_executable, prism_file_name, properties_file_name, prope
         if not line:
             break
         else:
-            if 'Result:' in line:
-                print(line)
             match = prism_prob_output_regex.match(line)
             if match:
-                print('MATCH ', line)
                 return float(match.group(1))
     return 0.0
 
