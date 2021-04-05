@@ -1,3 +1,4 @@
+import re
 import string
 from collections import defaultdict
 
@@ -233,10 +234,3 @@ def get_cex_prefixes(cex, automaton_type):
     if automaton_type == 'mdp':
         return [tuple(cex[:i + 1]) for i in range(0, len(cex), 2)]
     return [tuple(cex[:i]) for i in range(0, len(cex) + 1, 2)]
-
-
-def model_check_with_prism(path_to_prism:str, model:Mdp, exp_name, properties:str):
-    from aalpy.utils import mdp_2_prism_format
-    prism_format = mdp_2_prism_format(mdp=model, name=exp_name, output_path=exp_name)
-    # TODO do the prism model checking here
-    pass

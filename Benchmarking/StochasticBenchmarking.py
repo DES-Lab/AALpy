@@ -4,8 +4,7 @@ from aalpy.learning_algs import run_stochastic_Lstar
 from aalpy.oracles.RandomWalkEqOracle import UnseenOutputRandomWalkEqOracle
 from aalpy.SULs import MdpSUL
 from aalpy.utils import load_automaton_from_file
-from aalpy.utils.FileHandler import mdp_2_prism_format
-from aalpy.utils.HelperFunctions import smm_to_mdp_conversion
+from aalpy.utils import mdp_2_prism_format, smm_to_mdp_conversion
 
 path_to_dir = '../DotModels/MDPs/'
 files = ['first_grid.dot', 'second_grid.dot',

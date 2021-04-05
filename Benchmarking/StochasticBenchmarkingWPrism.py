@@ -7,8 +7,8 @@ import subprocess
 
 from aalpy.SULs import MdpSUL
 from aalpy.utils import load_automaton_from_file
-from aalpy.utils.HelperFunctions import smm_to_mdp_conversion
-from aalpy.utils.FileHandler import mdp_2_prism_format
+from aalpy.utils import smm_to_mdp_conversion
+from aalpy.utils import mdp_2_prism_format
 from aalpy.oracles.RandomWalkEqOracle import UnseenOutputRandomWalkEqOracle
 from aalpy.learning_algs import run_stochastic_Lstar
 
