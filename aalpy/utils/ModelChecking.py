@@ -4,7 +4,7 @@ from collections import defaultdict
 
 from aalpy.automata import Mdp
 
-prism_prob_output_regex = re.compile("Result: (.+?) \\(.*\\)")
+prism_prob_output_regex = re.compile("Result: (\d+\.\d+)")
 
 
 def _target_string(target, orig_id_to_int_id):
@@ -110,8 +110,11 @@ def eval_property(prism_executable, prism_file_name, properties_file_name, prope
         if not line:
             break
         else:
+            if 'Result:' in line:
+                print(line)
             match = prism_prob_output_regex.match(line)
             if match:
+                print('MATCH ', line)
                 return float(match.group(1))
     return 0.0
 
@@ -163,8 +166,8 @@ def model_check_experiment(path_to_prism, exp_name, mdp):
         'shared_coin': {'prob1': 0.10694382182657244, 'prob2': 0.5555528623795738, 'prob3': 0.3333324384052837,
                         'prob4': 0.42857002816478273, 'prob5': 0.001708984375, 'prob6': 0.266845703125,
                         'prob7': 0.244384765625, 'prob8': 0.263427734375},
-        'slot_machine': {'prob1': 0.36380049887344645, 'prob2': 0.6445910164135946, 'prob3': 1.0, 'prob4': 0.0,
-                         'prob5': 0.0, 'prob6': 0.2500000000000001, 'prob7': 0.0},
+        'slot_machine': {'prob1': 0.36380049887344645, 'prob2': 0.6445910164135946, 'prob3': 1.0, 'prob4': 0.159,
+                         'prob5': 0.28567, 'prob6': 0.2500000000000001, 'prob7': 0.025445087448668406},
         'mqtt': {'prob1': 0.9612, 'prob2': 0.34390000000000004, 'prob3': 0.6513215599000001, 'prob4': 0.814697981114816,
                  'prob5': 0.7290000000000001},
         'tcp': {'prob1': 0.19, 'prob2': 0.5695327900000001, 'prob3': 0.7712320754503901, 'prob4': 0.8784233454094308}

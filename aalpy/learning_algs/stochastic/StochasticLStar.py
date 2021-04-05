@@ -9,6 +9,7 @@ from aalpy.utils.HelperFunctions import print_learning_info, print_observation_t
 
 strategies = ['normal', 'no_cq']
 cex_sampling_options = [None, 'bfs']
+cex_processing_options = [None, 'longest_prefix', 'rs']
 print_options = [0, 1, 2, 3]
 
 
@@ -57,6 +58,7 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_
 
     assert strategy in strategies
     assert samples_cex_strategy in cex_sampling_options or samples_cex_strategy.startswith('random')
+    assert cex_processing in cex_processing_options
 
     compatibility_checker = AdvancedHoeffdingChecker() if strategy != "normal" else HoeffdingChecker()
 
