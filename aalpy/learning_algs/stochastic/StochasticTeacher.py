@@ -107,6 +107,7 @@ class StochasticTeacher:
         # eq query cache
         self.last_hyp_size = 0
         self.last_cex = None
+        self.last_tree_cex = None
 
     def back_to_root(self):
         self.curr_node = self.root_node
@@ -349,6 +350,9 @@ class StochasticTeacher:
 
         """
         # TODO we could add that the cex is saved and repeated if it still holds, or search for shorter one
+        # if self.last_tree_cex and len(hypothesis.states) == self.last_hyp_size:
+        #     return self.last_tree_cex
+
         if self.samples_cex_strategy:
             cex = None
             if self.samples_cex_strategy == 'bfs':
@@ -362,6 +366,7 @@ class StochasticTeacher:
                 except Exception as e:
                     print("Problem in random DFS for cex in samples:", e)
             if cex:
+                self.last_tree_cex = cex
                 return cex
 
         # Repeat same cex if it did not lead to state size increase
