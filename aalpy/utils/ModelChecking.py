@@ -143,17 +143,16 @@ def model_check_with_prism(path_to_prism: str, model: Mdp, exp_name, properties:
     return data
 
 
-def model_check_experiment(path_to_prism, exp_name, mdp):
+def model_check_experiment(path_to_prism, exp_name, mdp, properties_folder='Benchmarking/prism_eval_props/', precision=4):
     assert exp_name in ['first_grid', 'second_grid', 'shared_coin', 'slot_machine', 'mqtt', 'tcp']
 
-    folder = 'Benchmarking/prism_eval_props/'
     property_files = {
-        'first_grid': folder + 'first_eval.props',
-        'second_grid': folder + 'second_eval.props',
-        'shared_coin': folder + 'shared_coin_eval.props',
-        'slot_machine': folder + 'slot_machine_eval.props',
-        'mqtt': folder + 'emqtt_two_client.props',
-        'tcp': folder + 'tcp_eval.props'
+        'first_grid': properties_folder + 'first_eval.props',
+        'second_grid': properties_folder + 'second_eval.props',
+        'shared_coin': properties_folder + 'shared_coin_eval.props',
+        'slot_machine': properties_folder + 'slot_machine_eval.props',
+        'mqtt': properties_folder + 'emqtt_two_client.props',
+        'tcp': properties_folder + 'tcp_eval.props'
     }
 
     correct_model_properties = {
@@ -174,6 +173,7 @@ def model_check_experiment(path_to_prism, exp_name, mdp):
 
     diff_2_correct = dict()
     for prop, val in model_checking_results.items():
-        diff_2_correct[prop] = abs(correct_model_properties[exp_name][prop] - val)
+        diff_2_correct[prop] = round(abs(correct_model_properties[exp_name][prop] - val), precision)
 
-    return diff_2_correct
+    results = {key : round(val,precision) for key, val in model_checking_results.items()}
+    return results, diff_2_correct

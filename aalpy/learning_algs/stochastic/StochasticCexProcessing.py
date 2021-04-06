@@ -1,5 +1,5 @@
 from aalpy.automata import Mdp
-from build.lib.aalpy.base import SUL
+from aalpy.base import SUL
 
 
 def stochastic_longest_prefix(cex, prefixes):
