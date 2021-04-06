@@ -19,7 +19,7 @@ prism_executable = "C:/Program Files/prism-4.6/bin/prism.bat"
 n_c = 20
 n_resample = 1000
 min_rounds = 10
-max_rounds = 15
+max_rounds = 1000
 
 strategy = "no_cq"
 
@@ -44,15 +44,23 @@ for seed in range(1, 4):
                 n_c, n_resample = n_c, n_resample
             elif exp_name == 'slot_machine':
                 n_c, n_resample = n_c, n_resample
+            elif exp_name == 'mqtt':
+                n_c, n_resample = n_c, n_resample
+            elif exp_name == 'tcp':
+                n_c, n_resample = n_c, n_resample
         else:
             if exp_name == 'first_grid':
                 n_c, n_resample = 20, 1000
             elif exp_name == 'second_grid':
                 n_c, n_resample = 20, 1000
             elif exp_name == 'shared_coin':
-                n_c, n_resample = 50, 5000
+                n_c, n_resample = 30, 3000
             elif exp_name == 'slot_machine':
-                n_c, n_resample = 100, 10000
+                n_c, n_resample = 40, 5000
+            elif exp_name == 'mqtt':
+                n_c, n_resample = 20, 1000
+            elif exp_name == 'tcp':
+                n_c, n_resample = 20, 1000
 
         original_mdp = load_automaton_from_file(path_to_dir + file, automaton_type='mdp')
         input_alphabet = original_mdp.get_input_alphabet()
@@ -85,7 +93,7 @@ for seed in range(1, 4):
 
         text_file.write('Exp_Name, n_c, n_resample, Final Hypothesis Size, Learning time,'
                         'Eq. Query Time, Learning Rounds, #MQ Learning, # Steps Learning,'
-                        f'# MQ Eq.Oracle, # Steps Eq.Oracle , {properties_string_header}\n')
+                        f'# MQ Eq.Queries, # Steps Eq.Queries , {properties_string_header}\n')
 
         text_file.write(f'learned_mdp_{exp_name},{n_c},{n_resample}, {data_mdp["automaton_size"]}, '
                         f'{data_mdp["learning_time"]}, {data_mdp["eq_oracle_time"]}, '

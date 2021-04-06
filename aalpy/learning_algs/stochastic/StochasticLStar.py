@@ -1,13 +1,13 @@
 import time
 
 from aalpy.base import SUL, Oracle
-from aalpy.learning_algs.stochastic.DifferenceChecker import AdvancedHoeffdingChecker, HoeffdingChecker
+from aalpy.learning_algs.stochastic.DifferenceChecker import AdvancedHoeffdingChecker, HoeffdingChecker, ChisquareChecker
 from aalpy.learning_algs.stochastic.SamplingBasedObservationTable import SamplingBasedObservationTable
 from aalpy.learning_algs.stochastic.StochasticCexProcessing import stochastic_longest_prefix, stochastic_rs
 from aalpy.learning_algs.stochastic.StochasticTeacher import StochasticTeacher
 from aalpy.utils.HelperFunctions import print_learning_info, print_observation_table, get_cex_prefixes
 
-strategies = ['normal', 'no_cq']
+strategies = ['normal', 'no_cq', 'chi_square']
 cex_sampling_options = [None, 'bfs']
 cex_processing_options = [None, 'longest_prefix', 'rs']
 print_options = [0, 1, 2, 3]
@@ -60,7 +60,8 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_
     assert samples_cex_strategy in cex_sampling_options or samples_cex_strategy.startswith('random')
     assert cex_processing in cex_processing_options
 
-    compatibility_checker = AdvancedHoeffdingChecker() if strategy != "normal" else HoeffdingChecker()
+    compatibility_checker = ChisquareChecker() if strategy == "chi_square" else \
+        AdvancedHoeffdingChecker() if strategy != "normal" else HoeffdingChecker()
 
     stochastic_teacher = StochasticTeacher(sul, n_c, eq_oracle, automaton_type, compatibility_checker,
                                            samples_cex_strategy=samples_cex_strategy)
