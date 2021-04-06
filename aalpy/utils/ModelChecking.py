@@ -104,7 +104,7 @@ def eval_property(prism_executable, prism_file_name, properties_file_name, prope
     properties_als_path = path.abspath(properties_file_name)
 
     proc = subprocess.Popen(
-        [prism_file, file_abs_path, properties_als_path, "-prop", str(property_index)],
+        [prism_executable, file_abs_path, properties_als_path, "-prop", str(property_index)],
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=path_to_prism_file)
     for line in io.TextIOWrapper(proc.stdout, encoding="utf-8"):
         if not line:
