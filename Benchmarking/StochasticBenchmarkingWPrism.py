@@ -19,11 +19,11 @@ prism_executable = "C:/Program Files/prism-4.6/bin/prism.bat"
 n_c = 20
 n_resample = 1000
 min_rounds = 10
-max_rounds = 50
+max_rounds = 15
 
 strategy = "no_cq"
 
-for seed in range(1, 2):
+for seed in range(1, 4):
     random.seed(seed)
     benchmark_dir = f"benchmark_complete_no_cq/benchmark_data_{seed}"
     import os
@@ -78,14 +78,14 @@ for seed in range(1, 2):
         mdp_results, mdp_err = model_check_experiment(prism_executable, exp_name, learned_mdp, prop_folder)
         smm_results, smm_err = model_check_experiment(prism_executable, exp_name, smm_2_mdp, prop_folder)
 
-        properties_string_header = ",".join([f'{key}_val,f{key}_err' for key in mdp_results.keys()])
+        properties_string_header = ",".join([f'{key}_val,{key}_err' for key in mdp_results.keys()])
 
         property_string_mdp = ",".join([f'{str(mdp_results[p])},{str(mdp_err[p])}' for p in mdp_results.keys()])
         property_string_smm = ",".join([f'{str(smm_results[p])},{str(smm_err[p])}' for p in smm_results.keys()])
 
         text_file.write('Exp_Name, n_c, n_resample, Final Hypothesis Size, Learning time,'
-                        'Eq. Query Time, Learning Rounds, Learning # MQ, Learning # Steps'
-                        f'Eq.Oracle # MQ, Eq.Oracle # Steps,Num Steps, {properties_string_header}\n')
+                        'Eq. Query Time, Learning Rounds, #MQ Learning, # Steps Learning,'
+                        f'# MQ Eq.Oracle, # Steps Eq.Oracle , {properties_string_header}\n')
 
         text_file.write(f'learned_mdp_{exp_name},{n_c},{n_resample}, {data_mdp["automaton_size"]}, '
                         f'{data_mdp["learning_time"]}, {data_mdp["eq_oracle_time"]}, '
