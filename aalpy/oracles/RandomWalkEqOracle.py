@@ -115,7 +115,6 @@ class UnseenOutputRandomWalkEqOracle(Oracle):
             inputs.append(random.choice(self.alphabet))
 
             out_sul = self.sul.step(inputs[-1])
-            self.random_steps_done += 1
 
             outputs.append(out_sul)
             out_hyp = hypothesis.step_to(inputs[-1], out_sul)
