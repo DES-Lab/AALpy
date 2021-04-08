@@ -1,3 +1,4 @@
+import re
 import string
 from collections import defaultdict
 
@@ -148,34 +149,36 @@ def print_learning_info(info: dict):
     print('-----------------------------------')
 
 
-def print_observation_table(s_set, extended_s, e_set, table, det_table=True):
+def print_observation_table(ot, table_type):
     """
 
     Args:
-      s_set: S set
-      extended_s: extended S set
-      e_set: E set
-      table: T function
-      det_table: is table from deterministic learning. Needed as the table is differently encoded
-        for optimization.(Default value = True)
 
-    Returns:
+        ot: observation table
+        table_type: 'det', 'non-det', or 'stoc'
 
     """
+    if table_type == 'det':
+        s_set, extended_s, e_set, table = ot.S, ot.s_dot_a(), ot.E, ot.T
+    elif table_type == 'non-det':
+        s_set, extended_s, e_set, table = ot.S, ot.S_dot_A, ot.E, ot.T
+    else:
+        s_set, extended_s, e_set, table = ot.S, ot.get_extended_s(), ot.E, ot.T
+
     headers = [str(e) for e in e_set]
     s_rows = []
     extended_rows = []
     headers.insert(0, 'Prefixes / E set')
     for s in s_set:
         row = [str(s)]
-        if det_table:
+        if table_type == 'det':
             row.extend(str(e) for e in table[s])
         else:
             row.extend(str(table[s][e]) for e in e_set)
         s_rows.append(row)
     for s in extended_s:
         row = [str(s)]
-        if det_table:
+        if table_type == 'det':
             row.extend(str(e) for e in table[s])
         else:
             row.extend(str(table[s][e]) for e in e_set)
@@ -199,3 +202,35 @@ def print_observation_table(s_set, extended_s, e_set, table, det_table=True):
         print("-" * len(row))
         print(row)
     print('-' * row_len)
+
+
+def is_suffix_of(suffix, trace) -> bool:
+    """
+
+    Args:
+      suffix:
+      trace:
+
+    Returns:
+
+    """
+    if len(trace) < len(suffix):
+        return False
+    else:
+        return trace[-len(suffix):] == suffix
+
+
+def get_cex_prefixes(cex, automaton_type):
+    """
+
+    Args:
+        cex: counterexample
+        automaton_type: `mdp` or `smm`
+
+    Returns:
+
+        all prefixes of the counterexample based on the `automaton_type`
+    """
+    if automaton_type == 'mdp':
+        return [tuple(cex[:i + 1]) for i in range(0, len(cex), 2)]
+    return [tuple(cex[:i]) for i in range(0, len(cex) + 1, 2)]

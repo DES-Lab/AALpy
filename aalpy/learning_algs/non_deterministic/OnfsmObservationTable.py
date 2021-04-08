@@ -210,33 +210,3 @@ class NonDetObservationTable:
             suffixes = all_suffixes(cex)
         suffixes.reverse()
         return suffixes
-
-    def trim(self):
-        """
-        Not yet implemented. Should remove the need for all-weather assumption.
-        """
-        s_to_remove = []
-        for i, s in enumerate(self.S):
-            repr = self.row_to_hashable(s)
-            has_long_trace = False
-            for s1 in self.S[i + 1:]:
-                if repr == self.row_to_hashable(s1):
-                    s_to_remove.append(s1)
-                for row in self.S_dot_A:
-                    if repr == self.row_to_hashable(row):
-                        has_long_trace = True
-                        break
-            if not has_long_trace:
-                s_to_remove.append(s)
-
-        for to_remove in s_to_remove:
-            self.S.remove(to_remove)
-            self.T.pop(to_remove)
-            extensions = []
-            for a in self.A:
-                if a in self.T[to_remove]:
-                    for t in self.T[to_remove][a]:
-                        self.T.pop((to_remove[0] + a, to_remove[1] + tuple([t])))
-                        extensions.append((to_remove[0] + a, to_remove[1] + tuple([t])))
-            for e in extensions:
-                self.S_dot_A.remove(e)

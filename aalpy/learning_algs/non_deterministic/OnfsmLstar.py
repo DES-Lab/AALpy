@@ -13,6 +13,10 @@ def run_Lstar_ONFSM(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=50,
     """
     Based on ''Learning Finite State Models of Observable Nondeterministic Systems in a Testing Context '' from Fakih
     et al. Relies on the all-weather assumption. (By sampling we will obtain all possible non-deterministic outputs.
+    Learning ONFSM relies on all-weather assumption. If this assumption is not satisfied by sampling,
+    learning might not converge to the minimal model and runtime could increase substantially.
+    Note that this is the inherent flaw of the all-weather assumption. (All outputs will be seen)
+    AALpy v.2.0 will try to solve that problem with a novel approach.
 
     Args:
 
@@ -37,6 +41,10 @@ def run_Lstar_ONFSM(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=50,
         learned ONFSM
 
     """
+    # Print warning
+    print('Starting learning with an all-weather assumption.\n'
+          'See run_Lstar_ONFSM documentation for more details about possible non-convergence.')
+
     start_time = time.time()
     eq_query_time = 0
     learning_rounds = 0
@@ -72,11 +80,10 @@ def run_Lstar_ONFSM(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=50,
         hypothesis = observation_table.gen_hypothesis()
 
         if print_level > 1:
-            print(f'Hypothesis {learning_rounds} has {len(hypothesis.states)} states.')
+            print(f'Hypothesis {learning_rounds}: {len(hypothesis.states)} states.')
 
         if print_level == 3:
-            print_observation_table(observation_table.S, observation_table.S_dot_A, observation_table.E,
-                                    observation_table.T, False)
+            print_observation_table(observation_table, 'non-det')
 
         # Find counterexample
         eq_query_start = time.time()

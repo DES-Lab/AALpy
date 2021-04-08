@@ -3,10 +3,12 @@ from aalpy.base import Oracle, SUL
 from random import randint, choice
 
 
+
 class RandomWordEqOracle(Oracle):
     """
     Equivalence oracle where queries are of random length in a predefined range.
     """
+
     def __init__(self, alphabet: list, sul: SUL, num_walks=100, min_walk_len=10, max_walk_len=100,
                  reset_after_cex=True):
         """
@@ -67,6 +69,7 @@ class UnseenOutputRandomWordEqOracle(Oracle):
     outputs of the SUL. If our hypothesis cannot step to the new state-based on random input and SULs output,
     a counterexample is returned.
     """
+
     def __init__(self, alphabet: list, sul: SUL, num_walks=100, min_walk_len=10, max_walk_len=100,
                  reset_after_cex=True):
         """
@@ -90,11 +93,6 @@ class UnseenOutputRandomWordEqOracle(Oracle):
         self.max_walk_len = max_walk_len
         self.reset_after_cex = reset_after_cex
         self.num_walks_done = 0
-        self.executed_traces = []
-
-    def clear_traces(self):
-        """ """
-        self.executed_traces.clear()
 
     def find_cex(self, hypothesis):
 
@@ -123,14 +121,12 @@ class UnseenOutputRandomWordEqOracle(Oracle):
                         self.num_walks_done = 0
 
                     if isinstance(hypothesis, Onfsm):
-                        self.executed_traces.append((inputs, outputs))
                         return inputs, outputs
                     elif isinstance(hypothesis, Mdp):
                         # hypothesis is MDP
                         cex = [hypothesis.initial_state.output]
                         for i, o in zip(inputs, outputs):
                             cex.extend([i, o])
-                        cex.append(inputs[-1])
                         return cex
                     else:
                         # stochastic MM

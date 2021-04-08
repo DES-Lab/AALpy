@@ -1,0 +1,4 @@
+1. For commenting use Google style with one additional space for between Args: and arguments, and one space between
+    Returns and return values.
+2. Install pdoc with pip install pdoc
+3. pdoc -o docs/documentation  ./aalpy

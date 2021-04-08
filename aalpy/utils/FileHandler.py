@@ -13,6 +13,7 @@ automaton_types = ['dfa', 'mealy', 'moore', 'mdp', 'smm', 'onfsm']
 def visualize_automaton(automaton, path="LearnedModel", file_type='pdf', display_same_state_trans=True):
     """
     Create a graphical representation of the automaton.
+    Function is round in the separate thread in the background.
     If possible, it will be opened by systems default program.
 
     Args:
@@ -26,7 +27,15 @@ def visualize_automaton(automaton, path="LearnedModel", file_type='pdf', display
         display_same_state_trans: if True, same state transitions will be displayed (Default value = True)
 
     """
-    save_automaton_to_file(automaton, path=path, file_type=file_type, display_same_state_trans=display_same_state_trans)
+    print('Visualization started in the background thread.')
+    if len(automaton.states) >= 25:
+        print(f'Visualizing {len(automaton.states)} state automaton could take some time.')
+
+    import threading
+    visualization_thread = threading.Thread(target=save_automaton_to_file, name="Visualization",
+                                            args={automaton: automaton, path: path, file_type: file_type,
+                                                  display_same_state_trans: display_same_state_trans})
+    visualization_thread.start()
 
 
 def save_automaton_to_file(automaton, path="LearnedModel", file_type='dot',
@@ -231,76 +240,3 @@ def _process_label(label: str) -> str:
         label = label[1:-1]
     label = label.replace(" ", "")
     return label
-
-
-def _target_string(target, orig_id_to_int_id):
-    target_state = target[0]
-    target_prob = target[1]
-    target_id = orig_id_to_int_id[target_state.state_id]
-    return f"{target_prob} : (loc'={target_id})"
-
-
-def _sanitize_for_prism(symbol):
-    if symbol in ["mdp", "init", "module", "endmodule", "label"]:
-        return "___" + symbol + "___"
-    else:
-        return symbol
-
-
-def mdp_2_prism_format(mdp: Mdp, name: str, output_path=None):
-    """
-    Translates MDP to Prims modelling language.
-
-    Args:
-
-        mdp: markov decision process
-
-        name: name of the mdp/experiment
-
-        output_path: output file (Default value = None)
-
-    """
-    module_string = "mdp"
-    module_string += os.linesep
-    module_string += f"module {name}"
-    module_string += os.linesep
-
-    nr_states = len(mdp.states)
-    orig_id_to_int_id = dict()
-    for i, s in enumerate(mdp.states):
-        orig_id_to_int_id[s.state_id] = i
-    module_string += "loc : [0..{}] init {};".format(nr_states, orig_id_to_int_id[mdp.initial_state.state_id])
-    module_string += os.linesep
-
-    # print transitions
-    for source in mdp.states:
-        source_id = orig_id_to_int_id[source.state_id]
-        for inp in source.transitions.keys():
-            if source.transitions[inp]:
-                target_strings = \
-                    map(lambda target: _target_string(target, orig_id_to_int_id), source.transitions[inp])
-                target_joined = " + ".join(target_strings)
-                module_string += f"[{_sanitize_for_prism(inp)}] loc={source_id} -> {os.linesep} {target_joined};"
-                module_string += os.linesep
-    module_string += "endmodule"
-    module_string += os.linesep
-    # labelling function
-    output_to_state_id = defaultdict(list)
-    for s in mdp.states:
-        joined_output = s.output
-        outputs = joined_output.split("__")
-        for o in outputs:
-            if o:
-                output_to_state_id[o].append(orig_id_to_int_id[s.state_id])
-
-    for output, states in output_to_state_id.items():
-        state_propositions = map(lambda s_id: "loc={}".format(s_id), states)
-        state_disjunction = "|".join(state_propositions)
-        output_string = _sanitize_for_prism(output)
-        module_string += f"label \"{output_string}\" = {state_disjunction};"
-        module_string += os.linesep
-
-    if output_path:
-        with open(output_path, "w") as text_file:
-            text_file.write(module_string)
-    return module_string
