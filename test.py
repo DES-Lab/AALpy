@@ -13,9 +13,9 @@ from aalpy.utils import generate_random_mealy_machine
 
 # define parameters and create random Mealy machine based on them
 
-number_of_states = 50
-alphabet_size = 10
-output_size = 10
+number_of_states = 400
+alphabet_size = 100
+output_size = 100
 
 
 alphabet = [*range(0, alphabet_size)]
@@ -40,7 +40,7 @@ state_origin_eq_oracle = StatePrefixEqOracle(alphabet, sul_mealy, walks_per_stat
 
 random_W_method_eq_oracle = RandomWMethodEqOracle(alphabet, sul_mealy, walks_per_state=10, walk_len=50)
 
-k_way_transition_coverage_eq_oracle = KWayTransitionCoverageEqOracle(alphabet, sul_mealy, k=2, random_walk_len=1)
+k_way_transition_coverage_eq_oracle = KWayTransitionCoverageEqOracle(alphabet, sul_mealy, k=2, random_walk_len=0)
 
 
 # %%

@@ -16,13 +16,13 @@ class KWayTransitionCoverageEqOracle(Oracle):
     def find_cex(self, hypothesis: Automaton):                
 
         states = hypothesis.states
-        shuffle(states)
+        # shuffle(states)
 
-        for center_state in states:
+        for target_state in states:
             self.num_queries += 1
 
-            for prev_state, letter in hypothesis.get_prev_states(center_state):
-                path = prev_state.prefix + tuple((letter,))
+            for prev_state, transition in hypothesis.get_prev_states(target_state):
+                path = prev_state.prefix + (transition,)
 
                 path += tuple(choices(self.alphabet, k=self.random_walk_len))
                 counter_example = self.check_path(hypothesis, path)

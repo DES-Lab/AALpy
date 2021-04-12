@@ -129,11 +129,10 @@ class Automaton(ABC):
         prev_states = []
 
         for node in self.states: 
-            for letter, neighbour in node.transitions.items():
+            for transition, neighbour in node.transitions.items():
                 if neighbour == target_state: 
-                    prev_states.append(tuple((neighbour, letter)))
+                    prev_states.append(tuple((neighbour, transition)))
 
-       
         return list(prev_states)
 
     def is_strongly_connected(self) -> bool:
