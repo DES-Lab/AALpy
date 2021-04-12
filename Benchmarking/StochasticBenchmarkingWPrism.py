@@ -1,5 +1,7 @@
 import random
 
+import aalpy.paths
+
 from aalpy.SULs import MdpSUL
 from aalpy.learning_algs import run_stochastic_Lstar
 from aalpy.oracles.RandomWalkEqOracle import UnseenOutputRandomWalkEqOracle
@@ -8,20 +10,17 @@ from aalpy.utils import smm_to_mdp_conversion, model_check_experiment
 
 path_to_dir = '../DotModels/MDPs/'
 files = ['first_grid.dot', 'second_grid.dot',
-         'slot_machine.dot', 'shared_coin.dot', 'mqtt.dot', 'tcp.dot']
+         'slot_machine.dot', 'mqtt.dot', 'tcp.dot'] # 'shared_coin.dot'
 
-prop_folder = 'prism_eval_props/'
-
-# TODO Change the path to your PRIMS executable
-prism_executable = "/home/mtappler/Programs/prism-4.4-linux64/bin/prism"
-prism_executable = "C:/Program Files/prism-4.6/bin/prism.bat"
+aalpy.paths.path_to_prism =      "C:/Program Files/prism-4.6/bin/prism.bat"
+aalpy.paths.path_to_properties = "prism_eval_props/"
 
 n_c = 20
 n_resample = 1000
 min_rounds = 10
 max_rounds = 1000
 
-strategy = "no_cq"
+strategy = "normal"
 
 for seed in range(1, 4):
     random.seed(seed)
@@ -83,8 +82,8 @@ for seed in range(1, 4):
 
         smm_2_mdp = smm_to_mdp_conversion(learned_smm)
 
-        mdp_results, mdp_err = model_check_experiment(prism_executable, exp_name, learned_mdp, prop_folder)
-        smm_results, smm_err = model_check_experiment(prism_executable, exp_name, smm_2_mdp, prop_folder)
+        mdp_results, mdp_err = model_check_experiment(exp_name, learned_mdp)
+        smm_results, smm_err = model_check_experiment(exp_name, smm_2_mdp)
 
         properties_string_header = ",".join([f'{key}_val,{key}_err' for key in mdp_results.keys()])
 

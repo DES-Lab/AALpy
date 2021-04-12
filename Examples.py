@@ -237,7 +237,7 @@ def mqtt_example():
                 return self.mqtt.unsubscribe(topic='test')
 
     sul = MQTT_SUL()
-    input_al = ['connect', 'disconnect', 'publish','subscribe', 'unsubscribe']
+    input_al = ['connect', 'disconnect', 'publish', 'subscribe', 'unsubscribe']
 
     eq_oracle = RandomWalkEqOracle(input_al, sul, num_steps=2000, reset_after_cex=True, reset_prob=0.15)
 
@@ -268,19 +268,23 @@ def onfsm_mealy_paper_example():
     return learned_onfsm
 
 
-def faulty_coffee_machine_mdp_example():
+def faulty_coffee_machine_mdp_example(automaton_type='mdp'):
     """
     Learning faulty coffee machine that can be found in Chapter 5 and Chapter 7 of Martin's Tappler PhD thesis.
+    :automaton_type either mdp or smm
     :return learned MDP
     """
     mdp = get_faulty_coffee_machine_MDP()
     input_alphabet = mdp.get_input_alphabet()
     sul = MdpSUL(mdp)
+
     eq_oracle = UnseenOutputRandomWalkEqOracle(input_alphabet, sul=sul, num_steps=500, reset_prob=0.11,
                                                reset_after_cex=False)
 
-    learned_mdp = run_stochastic_Lstar(input_alphabet, sul, eq_oracle, n_c=20, n_resample=100, min_rounds=10,
-                                       max_rounds=50, print_level=3, cex_processing=None)
+    learned_mdp = run_stochastic_Lstar(input_alphabet, sul, automaton_type=automaton_type,
+                                       eq_oracle=eq_oracle, n_c=20, n_resample=100, min_rounds=10,
+                                       max_rounds=50, print_level=3, cex_processing='longest_prefix',
+                                       samples_cex_strategy='bfs')
 
     return learned_mdp
 
@@ -298,46 +302,14 @@ def weird_coffee_machine_mdp_example():
                                                reset_after_cex=True)
 
     learned_mdp = run_stochastic_Lstar(input_alphabet, sul, eq_oracle, n_c=20, n_resample=1000, min_rounds=10,
-                                       max_rounds=500, strategy='normal', cex_processing=None)
+                                       max_rounds=500, strategy='normal', cex_processing=None,
+                                       samples_cex_strategy='bfs', automaton_type='mdp')
 
     return learned_mdp
 
 
-def benchmark_mdp_example(example='first_grid', n_c=20, n_resample=500, min_rounds=10, max_rounds=500,
-                          strategy='normal',cex_processing=None, reset_prob = 0.125, samples_cex_strategy=None):
-    """
-    Learning the MDP various benchmarking examples found in Chapter 7 of Martin's Tappler PhD thesis.
-    :param example: One of ['first_grid', 'second_grid', 'shared_coin', 'slot_machine']
-    :param n_c: cutoff for a state to be considered complete
-    :param n_resample: resampling size
-    :param min_rounds: minimum number of learning rounds
-    :param max_rounds: maximum number of learning rounds
-    :param strategy: normal or no_cq
-    :param cex_processing: counterexample processing stategy
-    :param reset_prob: reset probability for random walk eq oracle
-    :param samples_cex_strategy: strategy to sample cex in the trace tree
-    :return: learned MDP
-    """
-    mdp = load_automaton_from_file(f'./DotModels/MDPs/{example}.dot', automaton_type='mdp')
-
-    input_alphabet = mdp.get_input_alphabet()
-    output_alphabet = list({state.output for state in mdp.states})
-    sul = MdpSUL(mdp)
-    eq_oracle = UnseenOutputRandomWalkEqOracle(input_alphabet, sul=sul, num_steps=n_resample / reset_prob,
-                                               reset_prob=reset_prob, reset_after_cex=True)
-    eq_oracle = UnseenOutputRandomWordEqOracle(input_alphabet, sul, num_walks=500, min_walk_len=5, max_walk_len=12,
-                                               reset_after_cex=True)
-
-    learned_mdp = run_stochastic_Lstar(input_alphabet=input_alphabet, sul=sul, eq_oracle=eq_oracle,
-                                       n_c=n_c, n_resample=n_resample, min_rounds=min_rounds, max_rounds=max_rounds,
-                                       strategy=strategy, cex_processing=cex_processing,
-                                       samples_cex_strategy=samples_cex_strategy)
-
-    return learned_mdp
-
-
-def benchmark_mdp_2_smm_example(example='first_grid', n_c=20, n_resample=1000, min_rounds=10, max_rounds=500,
-                                strategy='normal', cex_processing=None, reset_prob = 0.125, samples_cex_strategy=None):
+def benchmark_stochastic_example(example, automaton_type='smm', n_c=20, n_resample=1000, min_rounds=10, max_rounds=500,
+                                 strategy='normal', cex_processing=None, error_bound=None, samples_cex_strategy=None):
     """
     Learning the stochastic Mealy Machine(SMM) various benchmarking examples
     found in Chapter 7 of Martin's Tappler PhD thesis.
@@ -346,9 +318,8 @@ def benchmark_mdp_2_smm_example(example='first_grid', n_c=20, n_resample=1000, m
     :param example: One of ['first_grid', 'second_grid', 'shared_coin', 'slot_machine']
     :param min_rounds: minimum number of learning rounds
     :param max_rounds: maximum number of learning rounds
-    :param strategy: normal or no_cq
+    :param strategy: normal, classic or chi2
     :param cex_processing: counterexample processing stategy
-    :param reset_prob: reset probability for random walk eq oracle
     :param samples_cex_strategy: strategy to sample cex in the trace tree
     :return: learned SMM
     """
@@ -363,8 +334,9 @@ def benchmark_mdp_2_smm_example(example='first_grid', n_c=20, n_resample=1000, m
 
     learned_mdp = run_stochastic_Lstar(input_alphabet=input_alphabet, eq_oracle=eq_oracle, sul=sul, n_c=n_c,
                                        n_resample=n_resample, min_rounds=min_rounds, max_rounds=max_rounds,
-                                       automaton_type='smm', strategy=strategy, cex_processing=cex_processing,
-                                       samples_cex_strategy=samples_cex_strategy)
+                                       automaton_type=automaton_type, strategy=strategy, cex_processing=cex_processing,
+                                       samples_cex_strategy=samples_cex_strategy, target_unambiguity=0.995,
+                                       error_bound=error_bound, property_stop_exp_name=example if error_bound else None)
 
     return learned_mdp
 

@@ -48,12 +48,15 @@ class SamplingBasedObservationTable:
         self.compatibility_class = dict()
         self.freq_query_cache = dict()
 
+        self.unambiguity_values = []
+
     def refine_not_completed_cells(self, n_resample, uniform=False):
         """
         Firstly a prefix-tree acceptor is constructed for all non-completed cells and then that tree is used
         for online testing/sampling.
 
         Args:
+
           uniform: if true, all cells will be uniformly sampled (Default value = False)
           n_resample: Number of resamples
 
@@ -66,7 +69,8 @@ class SamplingBasedObservationTable:
         else:
             pta_root = Node(None)
 
-        if self.strategy == 'normal':
+        dynamic = 0
+        if self.strategy == 'classic':
             to_refine = []
             for s in self.S + list(self.get_extended_s()):
                 for e in self.E:
@@ -96,10 +100,14 @@ class SamplingBasedObservationTable:
                             if self.are_rows_compatible(longest_row_trace_prefix, r):
                                 row_repr += 1
                         # row_repr can be zero for non-closed
+                        # (int(row_repr - 1 * 2))
                         uncertainty_value = max((row_repr - 1) * 2, 1)
+                        dynamic += uncertainty_value
                         self.add_to_PTA(pta_root, s + e, uncertainty_value)
 
-        for i in range(n_resample):
+        resample_value = n_resample if self.strategy == 'classic' else max(dynamic // 2, 500)
+
+        for i in range(resample_value):
             self.teacher.refine_query(pta_root)
         return True
 
@@ -176,8 +184,8 @@ class SamplingBasedObservationTable:
                 break
 
     def get_row_to_close(self):
-        """Returns a row that is not closed.
-        :return: single row that is not closed
+        """
+        Returns a row that is not closed.
 
         Returns:
 
@@ -234,14 +242,37 @@ class SamplingBasedObservationTable:
           a representative compatible with the target
 
         """
-        if target in self.S:
+        if self.compatibility_checker.use_diff_value():
+            smallest_diff_value = 2 ** 32
+            best_rep = None
+            if target in self.compatibility_classes_representatives:
+                return target
             for r in self.compatibility_classes_representatives:
-                if target == r or target in self.compatibility_class[r]:
-                    return r
+                if self.automaton_type == "mdp" and r[-1] != target[-1]:
+                    continue
+                if not self.are_rows_compatible(r, target):
+                    continue
+                diff_value = 0
+                row_target = self.T[target]
+                row_r = self.T[r]
+                for e in self.E:
+                    diff_value += self.compatibility_checker.difference_value(row_r.get(e, None),
+                                                                              row_target.get(e, None))
+                if diff_value < smallest_diff_value:
+                    # if smallest_diff_value != 2**32:
+                    #    print("Found a better rep")
+                    smallest_diff_value = diff_value
+                    best_rep = r
+            return best_rep
         else:
-            for r in self.compatibility_classes_representatives:
-                if self.are_rows_compatible(r, target):
-                    return r
+            if target in self.S:
+                for r in self.compatibility_classes_representatives:
+                    if target == r or target in self.compatibility_class[r]:
+                        return r
+            else:
+                for r in self.compatibility_classes_representatives:
+                    if self.are_rows_compatible(r, target):
+                        return r
         assert False
 
     def trim_columns(self):
@@ -324,7 +355,7 @@ class SamplingBasedObservationTable:
 
         self.trim_columns()
 
-    def stop(self, learning_round, chaos_present, min_rounds=5, max_rounds=None,
+    def stop(self, learning_round, chaos_present, min_rounds=10, max_rounds=None,
              target_unambiguity=0.99, print_unambiguity=False):
         """
         Decide if learning should terminate.
@@ -361,26 +392,56 @@ class SamplingBasedObservationTable:
             numerator += 1 if row_repr == 1 else 0
 
         unambiguous_rows_percentage = numerator / len(self.S + extended_s)
+
+        self.unambiguity_values.append(unambiguous_rows_percentage)
+        if self.strategy != 'classic' and learning_round >= min_rounds:
+            # keys are number of last unambiguity values and value is maximum differance allowed between them
+            stopping_dict = {12: 0.001, 18: 0.002, 25: 0.005, 30: 0.01, 35: 0.02}
+
+            for num_last, diff in stopping_dict.items():
+                last_n_unamb = self.unambiguity_values[-num_last:]
+                if abs(max(last_n_unamb) - min(last_n_unamb) <= diff):
+                    print(num_last, diff)
+                    return True
+
         if print_unambiguity and learning_round % 5 == 0:
             print(f'Unambiguous rows: {round(unambiguous_rows_percentage * 100, 2)}%;'
                   f' {numerator} out of {len(self.S + extended_s)}')
         if learning_round >= min_rounds and unambiguous_rows_percentage >= target_unambiguity:
             return True
 
+        return False
+
+    def get_unamb_percentage(self):
+        extended_s = list(self.get_extended_s())
+        self.update_compatibility_classes()
+        numerator = 0
+        for row in self.S + extended_s:
+            row_repr = 0
+            for r in self.compatibility_classes_representatives:
+                if self.are_rows_compatible(row, r):
+                    row_repr += 1
+            numerator += 1 if row_repr == 1 else 0
+
+        unambiguous_rows_percentage = numerator / len(self.S + extended_s)
+        return round(unambiguous_rows_percentage * 100, 2)
+
     def cell_diff(self, s1, s2, e):
         """
         Checks if 2 cells are considered different.
 
         Args:
+
           s1: prefix of row s1
           s2: prefix of row s2
           e: element of E
 
         Returns:
+
           True if cells are different, false otherwise
 
         """
-        if self.strategy == 'normal':
+        if self.strategy == 'classic':
             if self.teacher.complete_query(s1, e) and self.teacher.complete_query(s2, e):
                 return self.compatibility_checker.check_difference(self.T[s1][e], self.T[s2][e])
         else:
@@ -423,12 +484,12 @@ class SamplingBasedObservationTable:
             class_rank_pair.append((s, rank))
 
         # sort according to frequency
-        # class_rank_pair.sort(key=lambda x: x[1], reverse=True)
+        class_rank_pair.sort(key=lambda x: x[1], reverse=True)
 
-        # sort according to prefix length, and elements of same length sort by value
-        class_rank_pair = [(s, -rank) for (s, rank) in class_rank_pair]
-        class_rank_pair.sort(key=lambda x: (len(x[0]), x[1]))
-        class_rank_pair = [(s, -rank) for (s, rank) in class_rank_pair]
+        # # sort according to prefix length, and elements of same length sort by value
+        # class_rank_pair = [(s, -rank) for (s, rank) in class_rank_pair]
+        # class_rank_pair.sort(key=lambda x: (len(x[0]), x[1]))
+        # class_rank_pair = [(s, -rank) for (s, rank) in class_rank_pair]
 
         compatibility_classes = [c[0] for c in class_rank_pair]
 
@@ -442,11 +503,6 @@ class SamplingBasedObservationTable:
 
             cg_r = [s for s in not_partitioned if self.are_rows_compatible(r, s)]
 
-            # other_comp_rows = []
-            # for s in self.S:
-            #     if s not in cg_r and self.are_rows_compatible(r, s):
-            #         other_comp_rows.append(s)
-
             self.compatibility_class[r] = cg_r
 
             representatives.append(r)
@@ -456,15 +512,14 @@ class SamplingBasedObservationTable:
 
         self.compatibility_classes_representatives = representatives
 
-    def chaos_counterexample(self, hypothesis: Mdp):
-        """If chaos state is reachable, return path to chaos
+    def chaos_counterexample(self, hypothesis):
+        """ Check whether the chaos state is reachable.
 
         Args:
           hypothesis: current hypothesis
-          hypothesis: Mdp: 
 
         Returns:
-          prefix leading to a state from which chaos state is reachable
+          True if chaos state is reachable, False otherwise
 
         """
         for state in hypothesis.states:
@@ -551,8 +606,8 @@ class SamplingBasedObservationTable:
                 total_sum = sum(freq_dict.values())
 
                 origin_state = s
-                if self.strategy == 'normal' and not self.teacher.complete_query(s, i) \
-                        or self.strategy != 'normal' and i not in self.T[s]:
+                if self.strategy == 'classic' and not self.teacher.complete_query(s, i) \
+                        or self.strategy != 'classic' and i not in self.T[s]:
                     if self.automaton_type == 'mdp':
                         r_state_map[origin_state].transitions[i[0]].append((r_state_map['chaos'], 1.))
                     else:
