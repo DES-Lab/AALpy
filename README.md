@@ -12,7 +12,7 @@ and **Mealy machines** of deterministic systems.
 If the system that you would like to learn shows non-deterministic or
 stochastic behavior, AALpy allows you to learn **observable
 nondeterministic finite-state machines**, **Markov decision processes**, 
-or **stochastic transducers**.
+or **stochastic Mealy machines**.
 
 AALpy enables efficient learning by providing a **large array of equivalence oracles**, implementing various **conformance testing** strategies. Learning 
 is mostly based on Angluin's [L* algorithm](https://people.eecs.berkeley.edu/~dawnsong/teaching/s10/papers/angluin87.pdf), for which AALpy supports a 
