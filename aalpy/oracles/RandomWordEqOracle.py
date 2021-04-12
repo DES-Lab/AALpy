@@ -3,7 +3,6 @@ from aalpy.base import Oracle, SUL
 from random import randint, choice
 
 
-
 class RandomWordEqOracle(Oracle):
     """
     Equivalence oracle where queries are of random length in a predefined range.

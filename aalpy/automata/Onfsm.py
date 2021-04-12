@@ -65,6 +65,20 @@ class Onfsm(Automaton):
         self.current_state = transition[1]
         return output
 
+    def outputs_on_input(self, letter):
+        """All possible observable outputs after executing the current input 'letter'.
+
+        Args:
+
+            letter: input
+
+        Returns:
+
+            list of observeable outputs
+
+        """
+        return [trans[0] for trans in self.current_state.transitions[letter]]
+
     def step_to(self, inp, out):
         """Performs a step on the automaton based on the input `inp` and output `out`.
 

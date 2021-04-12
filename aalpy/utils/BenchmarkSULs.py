@@ -48,6 +48,50 @@ def get_benchmark_ONFSM():
     return Onfsm(a, [a, b, c, d])
 
 
+def get_ONFSM():
+    """
+    Returns example of an ONFSM.
+    """
+    q0 = OnfsmState('q0')
+    q1 = OnfsmState('q1')
+    q2 = OnfsmState('q2')
+    q3 = OnfsmState('q3')
+    q4 = OnfsmState('q4')
+    q5 = OnfsmState('q5')
+    q6 = OnfsmState('q6')
+    q7 = OnfsmState('q7')
+    q8 = OnfsmState('q8')
+
+    q0.transitions['a'].append((2, q1))
+    q0.transitions['b'].append((0, q0))
+
+    q1.transitions['a'].append((2, q0))
+    q1.transitions['b'].append((0, q2))
+
+    q2.transitions['a'].append((1, q2))
+    q2.transitions['b'].append((0, q3))
+
+    q3.transitions['a'].append((2, q8))
+    q3.transitions['b'].append((0, q4))
+
+    q4.transitions['a'].append((1, q4))
+    q4.transitions['b'].append((0, q5))
+
+    q5.transitions['a'].append((2, q6))
+    q5.transitions['b'].append((0, q7))
+
+    q6.transitions['a'].append((2, q5))
+    q6.transitions['b'].append((0, q6))
+
+    q7.transitions['a'].append((1, q7))
+    q7.transitions['b'].append(('O', q0))
+
+    q8.transitions['a'].append((2, q3))
+    q8.transitions['b'].append((0, q8))
+
+    return Onfsm(q0, [q0, q1, q2, q3, q4, q5, q6, q7, q8])
+
+
 def get_faulty_coffee_machine_MDP():
     q0 = MdpState("q0", "init")
     q1 = MdpState("q1", "beep")
