@@ -36,6 +36,9 @@ class AutomatonState(ABC):
         all_trans = set(self.transitions.keys())
         return [t for t in all_trans if t not in dst]
 
+    def get_transitions(self) -> list:
+        return [t for t in self.transitions.keys()]
+
 
 class Automaton(ABC):
     """

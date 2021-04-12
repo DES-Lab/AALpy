@@ -13,15 +13,16 @@ from aalpy.utils import generate_random_mealy_machine
 
 # define parameters and create random Mealy machine based on them
 
-number_of_states = 400
-alphabet_size = 100
-output_size = 100
+number_of_states = 10
+alphabet_size = 4
+output_size = 2
 
 
 alphabet = [*range(0, alphabet_size)]
 
 random_mealy = generate_random_mealy_machine(number_of_states, alphabet, output_alphabet=list(range(output_size)))
 
+print(random_mealy)
 
 # %%
 from aalpy.SULs import MealySUL
@@ -40,7 +41,7 @@ state_origin_eq_oracle = StatePrefixEqOracle(alphabet, sul_mealy, walks_per_stat
 
 random_W_method_eq_oracle = RandomWMethodEqOracle(alphabet, sul_mealy, walks_per_state=10, walk_len=50)
 
-k_way_transition_coverage_eq_oracle = KWayTransitionCoverageEqOracle(alphabet, sul_mealy, k=2, random_walk_len=0)
+k_way_transition_coverage_eq_oracle = KWayTransitionCoverageEqOracle(alphabet, sul_mealy, k=2, random_walk_len=10)
 
 
 # %%
@@ -50,7 +51,7 @@ from aalpy.learning_algs import run_Lstar
 
 learned_mealy = run_Lstar(alphabet, sul_mealy, random_W_method_eq_oracle, automaton_type='mealy')
 
-# print(learned_mealy)
+print(learned_mealy)
 
 print('################################')
 
@@ -58,6 +59,6 @@ learned_mealy = run_Lstar(alphabet, sul_mealy, k_way_transition_coverage_eq_orac
 
 # %%
 # print the DOT represetnation of the learned Mealy machine
-# print(learned_mealy)
+print(learned_mealy)
 
 
