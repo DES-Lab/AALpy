@@ -121,6 +121,20 @@ class Automaton(ABC):
                 # mark node as explored
                 explored.append(node)
         return ()
+    
+    def get_prev_states(self, target_state: AutomatonState) -> list:
+        if target_state not in self.states:
+            raise SystemExit("State not in the automaton.")
+
+        prev_states = []
+
+        for node in self.states: 
+            for letter, neighbour in node.transitions.items():
+                if neighbour == target_state: 
+                    prev_states.append(tuple((neighbour, letter)))
+
+       
+        return list(prev_states)
 
     def is_strongly_connected(self) -> bool:
         """
