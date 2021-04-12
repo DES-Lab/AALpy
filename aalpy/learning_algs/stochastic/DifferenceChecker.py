@@ -30,6 +30,12 @@ class DifferenceChecker(ABC):
     def check_difference(self, c1: dict, c2: dict) -> bool:
         pass
 
+    def difference_value(self, c1: dict, c2: dict):
+        return None
+
+    def use_diff_value(self):
+        return False
+
 
 class HoeffdingChecker(DifferenceChecker):
 
@@ -48,11 +54,13 @@ class HoeffdingChecker(DifferenceChecker):
                 if abs(c1[o] / n1 - c2[o] / n2) > \
                         ((sqrt(1 / n1) + sqrt(1 / n2)) * sqrt(0.5 * log(2 / self.alpha))):
                     return True
+        return False
 
 
 class AdvancedHoeffdingChecker(DifferenceChecker):
-    def __init__(self, alpha=0.05):
+    def __init__(self, alpha=0.05, use_diff=False):
         self.alpha = alpha
+        self.use_diff = use_diff
 
     def check_difference(self, c1: dict, c2: dict) -> bool:
         n1 = sum(c1.values())
@@ -62,24 +70,52 @@ class AdvancedHoeffdingChecker(DifferenceChecker):
             for o in set(c1.keys()).union(c2.keys()):
                 c1o = c1[o] if o in c1.keys() else 0
                 c2o = c2[o] if o in c2.keys() else 0
-                alpha1 = 0.05
-                alpha2 = 0.05
-                epsilon1 = sqrt((1. / (2 * n1)) * log(2. / alpha1))
-                epsilon2 = sqrt((1. / (2 * n2)) * log(2. / alpha2))
+                alpha1 = self.alpha
+                alpha2 = self.alpha
+                epsilon1 = self.comute_eps(alpha1, n1)
+                epsilon2 = self.comute_eps(alpha2, n2)
 
                 if abs(c1o / n1 - c2o / n2) > epsilon1 + epsilon2:
                     return True
-            return False
+        return False
+
+    def use_diff_value(self):
+        return self.use_diff
+
+    def difference_value(self, c1_out_freq: dict, c2_out_freq: dict):
+        n1 = 0 if not c1_out_freq else sum(c1_out_freq.values())
+        n2 = 0 if not c2_out_freq else sum(c2_out_freq.values())
+
+        if n1 > 0 and n2 > 0:
+            dist = 0
+            for o in set(c1_out_freq.keys()).union(c2_out_freq.keys()):
+                c1o = c1_out_freq[o] if o in c1_out_freq.keys() else 0
+                c2o = c2_out_freq[o] if o in c2_out_freq.keys() else 0
+                dist += abs(c1o / n1 - c2o / n2)
+            return dist
+        elif n1 > 0 or n2 > 0:
+            alpha1 = self.alpha
+            alpha2 = self.alpha
+            epsilon1 = self.comute_eps(alpha1, max(n1, n2))
+            epsilon2 = self.comute_eps(alpha2, max(n1, n2))
+            return epsilon1 + epsilon2
+        else:
+            return 0
+
+    def comute_eps(self, alpha1, n1):
+        epsilon1 = sqrt((1. / (2 * n1)) * log(2. / alpha1))
+        return epsilon1
 
 
 class ChisquareChecker(DifferenceChecker):
 
-    def __init__(self, alpha=0.001):
+    def __init__(self, alpha=0.001, use_diff_value=False):
         self.alpha = alpha
         self.chi2_cache = dict()
         if 1 - self.alpha not in chi2_table.keys():
             raise ValueError("alpha must be in [0.01,0.001,0.05]")
         self.chi2_values = chi2_table[1 - self.alpha]
+        self.use_diff = use_diff_value
 
     def check_difference(self, c1_out_freq: dict, c2_out_freq: dict) -> bool:
         # chi square test for homogeneity (see, for instance: https://online.stat.psu.edu/stat415/lesson/17/17.1)
@@ -89,18 +125,52 @@ class ChisquareChecker(DifferenceChecker):
         dof = len(keys) - 1
         if dof == 0:
             return False
-        n_1 = sum(c1_out_freq.values())
-        n_2 = sum(c2_out_freq.values())
-        default_val = 0
-        Q = 0
-        for k in keys:
-            p_hat_k = float(c1_out_freq.get(k, default_val) + c2_out_freq.get(k, default_val)) / (n_1 + n_2)
-            q_1_k = float((c1_out_freq.get(k, default_val) - n_1 * p_hat_k) ** 2) / (n_1 * p_hat_k)
-            q_2_k = float((c2_out_freq.get(k, default_val) - n_2 * p_hat_k) ** 2) / (n_2 * p_hat_k)
-            Q = Q + q_1_k + q_2_k
+        shared_keys = set(c1_out_freq.keys()).intersection(c2_out_freq.keys())
+        if len(shared_keys) == 0:
+            # if the supports of the tested frequencies are completely then chi2 makes no sense, use the Hoeffding test
+            # to determine if there are enough observations for a difference
+            hoeffding_checker = AdvancedHoeffdingChecker()
+            return hoeffding_checker.check_difference(c1_out_freq, c2_out_freq)
+
+        Q = self.compute_Q(c1_out_freq, c2_out_freq, keys)
         if dof not in self.chi2_values.keys():
             raise ValueError("Too many possible outputs, chi2 table needs to be extended.")
         else:
             chi2_val = self.chi2_values[dof]
 
         return Q >= chi2_val
+
+    def use_diff_value(self):
+        return self.use_diff
+
+    def difference_value(self, c1_out_freq: dict, c2_out_freq: dict):
+        if not c1_out_freq or not c2_out_freq:
+            # return a value on the threshold if we don't have information
+            c1_outs = set(c1_out_freq.keys()) if c1_out_freq else set()
+            c2_outs = set(c2_out_freq.keys()) if c2_out_freq else set()
+            nr_outs = len(c1_outs.union(c2_outs))
+            return self.chi2_values[max(1, nr_outs)]
+        keys = list(set(c1_out_freq.keys()).union(c2_out_freq.keys()))
+        shared_keys = set(c1_out_freq.keys()).intersection(c2_out_freq.keys())
+        dof = len(keys) - 1
+        if dof == 0:
+            return 0
+        Q = self.compute_Q(c1_out_freq, c2_out_freq, keys)
+        return Q
+
+    def compute_Q(self, c1_out_freq, c2_out_freq, keys):
+        n_1 = sum(c1_out_freq.values())
+        n_2 = sum(c2_out_freq.values())
+
+        Q = 0
+        default_val = 0
+        yates_correction = -0.5 if len(keys) == 2 and \
+                                   any(c1_out_freq.get(k, 0) < 5 or c2_out_freq.get(k, 0) < 5 for k in keys) else 0
+        for k in keys:
+            p_hat_k = float(c1_out_freq.get(k, default_val) + c2_out_freq.get(k, default_val)) / (n_1 + n_2)
+            q_1_k = float(((abs(c1_out_freq.get(k, default_val) - n_1 * p_hat_k)) + yates_correction) ** 2) / (
+                    n_1 * p_hat_k)
+            q_2_k = float(((abs(c2_out_freq.get(k, default_val) - n_2 * p_hat_k)) + yates_correction) ** 2) / (
+                    n_2 * p_hat_k)
+            Q = Q + q_1_k + q_2_k
+        return Q

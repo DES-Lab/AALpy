@@ -1,21 +1,24 @@
 import time
 
 from aalpy.base import SUL, Oracle
-from aalpy.learning_algs.stochastic.DifferenceChecker import AdvancedHoeffdingChecker, HoeffdingChecker, ChisquareChecker
+from aalpy.learning_algs.stochastic.DifferenceChecker import AdvancedHoeffdingChecker, HoeffdingChecker, \
+    ChisquareChecker
 from aalpy.learning_algs.stochastic.SamplingBasedObservationTable import SamplingBasedObservationTable
 from aalpy.learning_algs.stochastic.StochasticCexProcessing import stochastic_longest_prefix, stochastic_rs
 from aalpy.learning_algs.stochastic.StochasticTeacher import StochasticTeacher
 from aalpy.utils.HelperFunctions import print_learning_info, print_observation_table, get_cex_prefixes
+from aalpy.utils.ModelChecking import stop_based_on_confidence
 
-strategies = ['normal', 'no_cq', 'chi_square']
+strategies = ['classic', 'normal', 'chi2']
 cex_sampling_options = [None, 'bfs']
 cex_processing_options = [None, 'longest_prefix', 'rs']
 print_options = [0, 1, 2, 3]
 
 
-def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_resample=100, min_rounds=10,
-                         max_rounds=200, automaton_type='mdp', strategy='normal', cex_processing=None,
-                         samples_cex_strategy=None, return_data=False, print_level=2):
+def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_resample=100, target_unambiguity=0.99,
+                         min_rounds=10, max_rounds=200, automaton_type='mdp', strategy='normal',
+                         cex_processing='longest_prefix',samples_cex_strategy='bfs', return_data=False,
+                         error_bound=None, property_stop_exp_name=None, print_level=2):
     """
     Learning of Markov Decision Processes based on 'L*-Based Learning of Markov Decision Processes' by Tappler et al.
 
@@ -31,18 +34,25 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_
 
         n_resample: resampling size (Default value = 100)
 
+        target_unambiguity: target unambiguity value (default 0.99)
+
         min_rounds: minimum number of learning rounds (Default value = 10)
 
         max_rounds: if learning_rounds >= max_rounds, learning will stop (Default value = 200)
 
         automaton_type: either 'mdp' or 'smm' (Default value = 'mdp')
 
-        strategy: if no_cq, improved version of the algorithm will be used (Default value = 'normal')
+        strategy: one of ['classic', 'normal', 'chi2'], default value is 'normal'. Classic strategy is the one presented
+            in the seed paper, 'normal' is the updated version and chi2 is based on chi squared.
 
         cex_processing: cex processing strategy, None , 'longest_prefix' or 'rs' (rs is experimental)
 
         samples_cex_strategy: strategy for finding counterexamples in the trace tree. None, 'bfs' or
             "random:<#traces to check:int>:<stop probability for single trace in [0,1)>" eg. random:200:0.2
+
+        error_bound: allowed error for each property. Reccomended one is 0.02
+
+        property_stop_exp_name: properties to reach withing error bound for early stopping
 
         return_data: if True, map containing all information like number of queries... will be returned
             (Default value = False)
@@ -60,8 +70,8 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_
     assert samples_cex_strategy in cex_sampling_options or samples_cex_strategy.startswith('random')
     assert cex_processing in cex_processing_options
 
-    compatibility_checker = ChisquareChecker() if strategy == "chi_square" else \
-        AdvancedHoeffdingChecker() if strategy != "normal" else HoeffdingChecker()
+    compatibility_checker = ChisquareChecker() if strategy == "chi2" else \
+        AdvancedHoeffdingChecker() if strategy != "classic" else HoeffdingChecker()
 
     stochastic_teacher = StochasticTeacher(sul, n_c, eq_oracle, automaton_type, compatibility_checker,
                                            samples_cex_strategy=samples_cex_strategy)
@@ -92,7 +102,6 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_
         observation_table.trim(hypothesis)
 
         # If there is no chaos state is not reachable, remove it from state set
-        # cex = observation_table.chaos_counterexample(hypothesis)
         chaos_cex_present = observation_table.chaos_counterexample(hypothesis)
 
         if not chaos_cex_present:
@@ -105,9 +114,8 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_
             print(f'Hypothesis: {learning_rounds}: {len(hypothesis.states)} states.')
 
         if print_level == 3:
-            print_observation_table(observation_table, 'stoc')
+            print_observation_table(observation_table, 'stochastic')
 
-        # If there is a prefix leading to chaos state, use that as a counterexample, otherwise preform equivalence query
         cex = None
         if not chaos_cex_present:
             eq_query_start = time.time()
@@ -133,20 +141,21 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_
                     if suf not in observation_table.E:
                         observation_table.E.append(suf)
 
-        # print('Size of E:', len(observation_table.E))
         # Ask queries for non-completed cells and update the observation table
         refined = observation_table.refine_not_completed_cells(n_resample)
         observation_table.update_obs_table_with_freq_obs()
 
+        if not chaos_cex_present and property_stop_exp_name and learning_rounds >= min_rounds and \
+                stop_based_on_confidence(error_bound, hypothesis, property_stop_exp_name, print_level):
+            break
+
         if observation_table.stop(learning_rounds, chaos_present=chaos_cex_present, min_rounds=min_rounds,
-                                  max_rounds=max_rounds, print_unambiguity=print_level > 1):
+                                  max_rounds=max_rounds, print_unambiguity=print_level > 1,
+                                  target_unambiguity=target_unambiguity):
             break
 
         if not refined:
-            # If all cells were refined, but stopping did not happen, increase n_c
-            # We could also break here
-            stochastic_teacher.n_c *= 1.5
-            stochastic_teacher.complete_query_cache.clear()
+            break
 
     total_time = round(time.time() - start_time, 2)
     eq_query_time = round(eq_query_time, 2)

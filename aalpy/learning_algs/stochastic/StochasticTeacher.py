@@ -85,7 +85,7 @@ class StochasticTeacher:
     """
 
     def __init__(self, sul: SUL, n_c, eq_oracle, automaton_type, compatibility_checker: DifferenceChecker,
-                 samples_cex_strategy="none"):
+                 samples_cex_strategy=None):
         self.automaton_type = automaton_type
         if automaton_type == 'mdp':
             self.initial_value = sul.query(tuple())
@@ -225,13 +225,12 @@ class StochasticTeacher:
         """
         self.sul.pre()
         curr_node = pta_root
-        if self.automaton_type == 'mdp':
-            out = [pta_root.output]
-        else:
-            out = []
-        executed_inputs = []
+
+        inputs = []
+        outputs = []
 
         while True:
+
             if curr_node.children:
                 frequency_sum = sum(curr_node.input_frequencies.values())
                 if frequency_sum == 0:
@@ -246,16 +245,23 @@ class StochasticTeacher:
                         selection_value -= curr_node.input_frequencies[i]
                         if selection_value <= 0:
                             break
+                    # curr_node.input_frequencies[inp] -= 1
 
-                executed_inputs.append(inp)
-                out.append(self.sul.step(inp))
-                new_node = curr_node.get_child(inp, out[-1])
+                inputs.append(inp)
+                out = self.sul.step(inp)
+                new_node = curr_node.get_child(inp, out)
+
                 if new_node:
+                    outputs.append(out)
                     curr_node = new_node
                 else:
                     self.sul.post()
                     return
             else:
+                curr_node = pta_root
+                for i, o in zip(inputs, outputs):
+                    self.curr_node.input_frequencies[i] -= 1
+                    curr_node = curr_node.get_child(i, o)
                 self.sul.post()
                 return
 
@@ -349,9 +355,6 @@ class StochasticTeacher:
             counterexample
 
         """
-        # TODO we could add that the cex is saved and repeated if it still holds, or search for shorter one
-        # if self.last_tree_cex and len(hypothesis.states) == self.last_hyp_size:
-        #     return self.last_tree_cex
 
         if self.samples_cex_strategy:
             cex = None
@@ -371,7 +374,6 @@ class StochasticTeacher:
 
         # Repeat same cex if it did not lead to state size increase
         if self.last_cex and len(hypothesis.states) == self.last_hyp_size:
-            # TODO:IDEA we can define some other requirement aside from length, such as reachability of cex
             if random() <= 0.33:
                 cex = self.eq_oracle.find_cex(hypothesis)
                 if cex and len(cex) < len(self.last_cex):

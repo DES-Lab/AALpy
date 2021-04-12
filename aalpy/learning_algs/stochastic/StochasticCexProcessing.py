@@ -3,6 +3,17 @@ from aalpy.base import SUL
 
 
 def stochastic_longest_prefix(cex, prefixes):
+    """
+    Counterexample processing based on Shabaz-Groz cex processing.
+
+    Args:
+
+        cex: counterexample
+        prefixes: all prefixes in the observation table
+    Returns:
+
+        Single suffix.
+    """
     prefixes = list(prefixes)
     prefixes.sort(key=len, reverse=True)
 
@@ -25,13 +36,14 @@ def stochastic_longest_prefix(cex, prefixes):
 
     # prefixes
     # need to pop 0 for MDP, for SMM remove the line
-    trimmed_cex.pop(0)
-    prefixes = [tuple(trimmed_cex[:i + 1]) for i in range(0, len(trimmed_cex), 2)]
+    # trimmed_cex.pop(0)
+    # prefixes = [tuple(trimmed_cex[:i + 1]) for i in range(0, len(trimmed_cex), 2)]
 
-    return suffixes
+    # TODO we could return all suffixes, remains as a option to be seen
+    return [suffixes[-1]]
 
 
-def stochastic_rs(sul: SUL, cex: tuple, hypothesis, suffix_closedness=True, closedness='suffix'):
+def stochastic_rs(sul: SUL, cex: tuple, hypothesis):
     """Riverst-Schapire counter example processing.
 
     Args:
@@ -39,10 +51,6 @@ def stochastic_rs(sul: SUL, cex: tuple, hypothesis, suffix_closedness=True, clos
         sul: system under learning
         cex: found counterexample
         hypothesis: hypothesis on which counterexample was found
-        suffix_closedness: If true all suffixes will be added, else just one (Default value = True)
-        closedness: either 'suffix' or 'prefix'. (Default value = 'suffix')
-        cex: tuple: counterexample
-
     Returns:
 
         suffixes to be added to the E set
@@ -75,7 +83,7 @@ def stochastic_rs(sul: SUL, cex: tuple, hypothesis, suffix_closedness=True, clos
         # prefix in hyp is reached
 
         prefix_inputs = s_bracket[1::2] if isinstance(hypothesis, Mdp) else s_bracket[::2]
-        prefix_outputs = s_bracket[0::2] if isinstance(hypothesis, Mdp) else s_bracket[1::2]
+        # prefix_outputs = s_bracket[0::2] if isinstance(hypothesis, Mdp) else s_bracket[1::2]
 
         not_same = False
 
@@ -96,7 +104,6 @@ def stochastic_rs(sul: SUL, cex: tuple, hypothesis, suffix_closedness=True, clos
 
             prefix_reached = not repeat
 
-        o_hyp = None
         for inp in inputs[mid:]:
 
             o_sul = sul.step(inp)
