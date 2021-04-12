@@ -5,7 +5,7 @@ from random import seed
 
 # By defining the radnom seed, experiment is repr
 
-seed(5)
+# seed(5)
 
 
 # %%
@@ -41,7 +41,7 @@ state_origin_eq_oracle = StatePrefixEqOracle(alphabet, sul_mealy, walks_per_stat
 
 random_W_method_eq_oracle = RandomWMethodEqOracle(alphabet, sul_mealy, walks_per_state=10, walk_len=50)
 
-k_way_transition_coverage_eq_oracle = KWayTransitionCoverageEqOracle(alphabet, sul_mealy, k=2, random_walk_len=10)
+k_way_transition_coverage_eq_oracle = KWayTransitionCoverageEqOracle(alphabet, sul_mealy, k=2, random_walk_len=1)
 
 
 # %%
@@ -51,7 +51,7 @@ from aalpy.learning_algs import run_Lstar
 
 learned_mealy = run_Lstar(alphabet, sul_mealy, random_W_method_eq_oracle, automaton_type='mealy')
 
-print(learned_mealy)
+# print(learned_mealy)
 
 print('################################')
 
@@ -59,6 +59,6 @@ learned_mealy = run_Lstar(alphabet, sul_mealy, k_way_transition_coverage_eq_orac
 
 # %%
 # print the DOT represetnation of the learned Mealy machine
-print(learned_mealy)
+# print(learned_mealy)
 
 

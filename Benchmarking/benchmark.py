@@ -3,7 +3,7 @@ from statistics import mean
 
 from aalpy.SULs import DfaSUL
 from aalpy.learning_algs import run_Lstar
-from aalpy.oracles import StatePrefixEqOracle
+from aalpy.oracles import StatePrefixEqOracle, KWayTransitionCoverageEqOracle
 from aalpy.utils import load_automaton_from_file
 
 dfa_1000_states_20_inputs = '../DotModels/DFA_1000_states_20_inp'
@@ -30,7 +30,7 @@ for b in benchmarks:
 
     sul_dfa = sul(automaton)
 
-    state_origin_eq_oracle = StatePrefixEqOracle(input_al, sul_dfa, walks_per_state=5, walk_len=25)
+    state_origin_eq_oracle = KWayTransitionCoverageEqOracle(input_al, sul_dfa, k=2, random_walk_len=25)
 
     learned_dfa, data = run_Lstar(input_al, sul_dfa, state_origin_eq_oracle, automaton_type='dfa',
                             cache_and_non_det_check=False, cex_processing='rs', return_data=True, print_level=0)
