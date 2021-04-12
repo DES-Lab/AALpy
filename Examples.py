@@ -74,7 +74,6 @@ def random_dfa_example(alphabet_size, number_of_states, num_accepting_states=1):
     alphabet = list(string.ascii_letters[:26])[:alphabet_size]
     random_dfa = generate_random_dfa(number_of_states, alphabet, num_accepting_states)
     alphabet = list(string.ascii_letters[:26])[:alphabet_size]
-    from aalpy.utils import generate_random_dfa
     # visualize_automaton(random_dfa, path='correct')
     sul_dfa = DfaSUL(random_dfa)
 
@@ -127,7 +126,7 @@ def random_onfsm_example(num_states, input_size, output_size, n_sampling):
 def random_mdp_example(num_states, input_len, num_outputs, n_c=20, n_resample=1000, min_rounds=10, max_rounds=1000):
     """
     Generate and learn random MDP.
-    :param num_states: nubmer of states in generated MDP
+    :param num_states: number of states in generated MDP
     :param input_len: size of input alphabet
     :param n_c: cutoff for a state to be considered complete
     :param n_resample: resampling size
@@ -154,7 +153,7 @@ def random_mdp_example(num_states, input_len, num_outputs, n_c=20, n_resample=10
 
 def angluin_seminal_example():
     """
-    Example automaton from Anguin's seminal paper.
+    Example automaton from Angluin's seminal paper.
     :return: learned DFA
     """
     from aalpy.SULs import DfaSUL
@@ -164,12 +163,12 @@ def angluin_seminal_example():
 
     dfa = get_Angluin_dfa()
 
-    alph = dfa.get_input_alphabet()
+    alphabet = dfa.get_input_alphabet()
 
     sul = DfaSUL(dfa)
-    eq_oracle = RandomWalkEqOracle(alph, sul, 500)
+    eq_oracle = RandomWalkEqOracle(alphabet, sul, 500)
 
-    learned_dfa = run_Lstar(alph, sul, eq_oracle, automaton_type='dfa',
+    learned_dfa = run_Lstar(alphabet, sul, eq_oracle, automaton_type='dfa',
                             cache_and_non_det_check=True, cex_processing=None, print_level=3)
 
     return learned_dfa
@@ -299,13 +298,13 @@ def onfsm_mealy_paper_example():
     seed(3)
 
     onfsm = get_benchmark_ONFSM()
-    alph = onfsm.get_input_alphabet()
+    alphabet = onfsm.get_input_alphabet()
 
     sul = OnfsmSUL(onfsm)
-    eq_oracle = UnseenOutputRandomWalkEqOracle(alph, sul, num_steps=5000, reset_prob=0.09, reset_after_cex=True)
-    eq_oracle = UnseenOutputRandomWordEqOracle(alph, sul, num_walks=500, min_walk_len=4, max_walk_len=10)
+    eq_oracle = UnseenOutputRandomWalkEqOracle(alphabet, sul, num_steps=5000, reset_prob=0.09, reset_after_cex=True)
+    eq_oracle = UnseenOutputRandomWordEqOracle(alphabet, sul, num_walks=500, min_walk_len=4, max_walk_len=10)
 
-    learned_onfsm = run_Lstar_ONFSM(alph, sul, eq_oracle, n_sampling=15, print_level=3)
+    learned_onfsm = run_Lstar_ONFSM(alphabet, sul, eq_oracle, n_sampling=15, print_level=3)
 
     return learned_onfsm
 
@@ -324,14 +323,14 @@ def abstracted_onfsm_example():
 
     onfsm = get_ONFSM()
 
-    alph = onfsm.get_input_alphabet()
+    alphabet = onfsm.get_input_alphabet()
 
     sul = OnfsmSUL(onfsm)
-    eq_oracle = UnseenOutputRandomWalkEqOracle(alph, sul, num_steps=5000, reset_prob=0.5, reset_after_cex=True)
+    eq_oracle = UnseenOutputRandomWalkEqOracle(alphabet, sul, num_steps=5000, reset_prob=0.5, reset_after_cex=True)
 
     abstraction_mapping = {0: 0, 'O': 0}
 
-    learned_onfsm = run_abstracted_Lstar_ONFSM(alph, sul, eq_oracle=eq_oracle, abstraction_mapping=abstraction_mapping,
+    learned_onfsm = run_abstracted_Lstar_ONFSM(alphabet, sul, eq_oracle=eq_oracle, abstraction_mapping=abstraction_mapping,
                                                n_sampling=50, print_level=3)
 
     return learned_onfsm
@@ -393,25 +392,26 @@ def benchmark_stochastic_example(example, automaton_type='smm', n_c=20, n_resamp
     Learning the stochastic Mealy Machine(SMM) various benchmarking examples
     found in Chapter 7 of Martin's Tappler PhD thesis.
     :param n_c: cutoff for a state to be considered complete
+    :param automaton_type: either smm (stochastic mealy machine) or mdp (Markov decision process)
     :param n_resample: resampling size
     :param example: One of ['first_grid', 'second_grid', 'shared_coin', 'slot_machine']
     :param min_rounds: minimum number of learning rounds
     :param max_rounds: maximum number of learning rounds
     :param strategy: normal, classic or chi2
-    :param cex_processing: counterexample processing stategy
+    :param cex_processing: counterexample processing strategy
     :param samples_cex_strategy: strategy to sample cex in the trace tree
     :return: learned SMM
     """
     from aalpy.SULs import StochasticMealySUL
     from aalpy.oracles import UnseenOutputRandomWalkEqOracle, UnseenOutputRandomWordEqOracle
     from aalpy.learning_algs import run_stochastic_Lstar
-    from build.lib.aalpy.utils import load_automaton_from_file
+    from aalpy.utils import load_automaton_from_file
 
     mdp = load_automaton_from_file(f'./DotModels/MDPs/{example}.dot', automaton_type='mdp')
     input_alphabet = mdp.get_input_alphabet()
 
     sul = StochasticMealySUL(mdp)
-    eq_oracle = UnseenOutputRandomWalkEqOracle(input_alphabet, sul=sul, num_steps=5000, reset_prob=0.09,
+    eq_oracle = UnseenOutputRandomWalkEqOracle(input_alphabet, sul=sul, num_steps=200, reset_prob=0.25,
                                                reset_after_cex=True)
     eq_oracle = UnseenOutputRandomWordEqOracle(input_alphabet, sul, num_walks=150, min_walk_len=5, max_walk_len=15,
                                                reset_after_cex=True)
@@ -419,7 +419,7 @@ def benchmark_stochastic_example(example, automaton_type='smm', n_c=20, n_resamp
     learned_mdp = run_stochastic_Lstar(input_alphabet=input_alphabet, eq_oracle=eq_oracle, sul=sul, n_c=n_c,
                                        n_resample=n_resample, min_rounds=min_rounds, max_rounds=max_rounds,
                                        automaton_type=automaton_type, strategy=strategy, cex_processing=cex_processing,
-                                       samples_cex_strategy=samples_cex_strategy, target_unambiguity=0.995,
+                                       samples_cex_strategy=samples_cex_strategy, target_unambiguity=0.99,
                                        error_bound=error_bound, property_stop_exp_name=example if error_bound else None)
 
     return learned_mdp
