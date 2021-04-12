@@ -6,3 +6,4 @@ from .BreadthFirstExplorationEqOracle import BreadthFirstExplorationEqOracle
 from .TransitionFocusOracle import TransitionFocusOracle
 from .RandomWalkEqOracle import RandomWalkEqOracle, UnseenOutputRandomWalkEqOracle
 from .CacheBasedEqOracle import CacheBasedEqOracle
+from .kWayTransitionCoverageEqOracle import KWayTransitionCoverageEqOracle
