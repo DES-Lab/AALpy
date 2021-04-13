@@ -5,6 +5,8 @@ from statistics import mean
 
 # directory = 'FM_mdp_smm/benchmark_no_cq_bfs_longest_prefix/'
 directory = 'FM_mdp_smm/benchmark_no_cq_merged_longest_prefix/'
+#directory = 'FM_mdp_smm/benchmark_new_chi2/'
+
 # directory = 'FM_mdp_smm/benchmark_no_cq_None_longest_prefix/'
 # directory = 'FM_mdp_smm/benchmark_chi_square_None_longest_prefix/'
 
@@ -83,7 +85,7 @@ for e_index in range(0, len(experiments), 2):
         print(f'Avr : {avr_values_dict[experiments[e_index]][i]} vs {avr_values_dict[experiments[e_index + 1]][i]}| SMM efficiency : {avr_eff}')
     print('-------------------------------------------------')
 
-with open('fm_statistics.csv', 'w',newline='') as file:
+with open('fm_statistics_old.csv', 'w',newline='') as file:
     writer = csv.writer(file)
 
     experiments = list(min_values_dict.keys())

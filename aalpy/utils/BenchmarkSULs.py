@@ -331,9 +331,9 @@ The format of the dates is %d/%m/%Y'    """
             return False
         try:
             day = int(values[0])
-            month = int(values[2])
+            month = int(values[1])
             year = int(values[2])
-        except:
+        except ValueError:
             return False
 
         if not (0 <= year <= 9999):
