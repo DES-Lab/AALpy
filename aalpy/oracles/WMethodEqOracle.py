@@ -57,7 +57,7 @@ class WMethodEqOracle(Oracle):
 
                 outputs.append(out_sul)
                 if out_hyp != out_sul:
-                    return seq[:ind + 1], outputs
+                    return seq[:ind + 1]
             self.cache.add(seq)
 
         return None
