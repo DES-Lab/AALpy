@@ -29,11 +29,18 @@ class UserInputEqOracle(Oracle):
 
     def find_cex(self, hypothesis):
 
+        hypothesis.reset_to_initial()
+        self.sul.post()
+        self.sul.pre()
         self.curr_hypothesis += 1
         inputs = []
         visualize_automaton(hypothesis, path=f'Hypothesis_{self.curr_hypothesis}')
         while True:
             inp = input('Please provide an input: ')
+            if inp == 'help':
+                print('Use one of following commands [print alphabet, current inputs, cex, end, reset] '
+                      'or provide an input')
+                continue
             if inp == 'print alphabet':
                 print(self.alphabet)
                 continue
@@ -48,11 +55,17 @@ class UserInputEqOracle(Oracle):
             if inp == 'reset':
                 inputs.clear()
                 hypothesis.reset_to_initial()
+                self.sul.post()
+                self.sul.pre()
                 print('You are back in the initial state. Please provide an input: ')
                 continue
             if inp not in self.alphabet:
                 print("Provided input is not in the input alphabet.")
                 continue
             inputs.append(inp)
-            out = hypothesis.step(inp)
-            print('Output:', out)
+            out_hyp = hypothesis.step(inp)
+            out_sul = self.sul.step(inp)
+            print('Hypothesis Output :', out_hyp)
+            print('SUL Output        :', out_sul)
+            if out_hyp != out_sul:
+                print('Counterexample found.\nIf you want to return it, type \'end\'.')
