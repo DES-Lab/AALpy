@@ -18,13 +18,13 @@ for file in benchmarks:
 
         for i in range(0, len(data), 3):
             header = data[i]
-            mdp,smm = data[i+1], data[i + 2]
+            mdp, smm = data[i + 1], data[i + 2]
 
             for formalism in [mdp, smm]:
                 for i, val in enumerate(formalism[1:]):
                     if formalism[0] not in values.keys():
                         values[formalism[0]] = defaultdict(list)
-                    values[formalism[0]][header[i+1]].append(round(float(val), 2))
+                    values[formalism[0]][header[i + 1]].append(round(float(val), 2))
 
 min_values_dict = dict()
 max_values_dict = dict()
@@ -44,19 +44,7 @@ for exp in values:
         max_values_dict[name][category] = max(value)
         avr_values_dict[name][category] = round(mean(value), 2)
 
-import matplotlib.pyplot as plt
-import matplotlib
-
-matplotlib.use("pgf")
-matplotlib.rcParams.update({
-    "pgf.texsystem": "pdflatex",
-    'font.family': 'serif',
-    'text.usetex': True,
-    'pgf.rcfonts': False,
-})
-
 interesting_fields = [' Learning time', ' Learning Rounds', ' #MQ Learning', ' # Steps Learning']
-
 
 print('ALL ERRORS ARE LESS THAN 2%. THAT WAS USED AS STOPPING CRITERION')
 experiments = list(min_values_dict.keys())
@@ -69,6 +57,7 @@ for e_index in range(0, len(experiments), 2):
         print(f'Max : {max_values_dict[experiments[e_index]][i]} vs {max_values_dict[experiments[e_index + 1]][i]} | SMM efficiency : {max_eff}')
         avr_eff = round(avr_values_dict[experiments[e_index]][i] / avr_values_dict[experiments[e_index + 1]][i]*100 , 2)
         print(f'Avr : {avr_values_dict[experiments[e_index]][i]} vs {avr_values_dict[experiments[e_index + 1]][i]}| SMM efficiency : {avr_eff}')
+
     print('-------------------------------------------------')
 
 with open('error_benchmark.csv', 'w',newline='') as file:
@@ -88,3 +77,4 @@ with open('error_benchmark.csv', 'w',newline='') as file:
         writer.writerow([])
 
         print('-------------------------------------------------')
+
