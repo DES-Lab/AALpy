@@ -1,4 +1,3 @@
-
 def random_mealy_example(alphabet_size, number_of_states, output_size=8):
     """
     Generate a random Mealy machine and learn it.
@@ -65,8 +64,8 @@ def random_dfa_example(alphabet_size, number_of_states, num_accepting_states=1):
     from aalpy.SULs import DfaSUL
     from aalpy.learning_algs import run_Lstar
     from aalpy.oracles import StatePrefixEqOracle, TransitionFocusOracle, WMethodEqOracle, \
-        RandomWalkEqOracle, RandomWMethodEqOracle, BreadthFirstExplorationEqOracle, RandomWordEqOracle,\
-        CacheBasedEqOracle,  UserInputEqOracle, KWayStateCoverageEqOracle
+        RandomWalkEqOracle, RandomWMethodEqOracle, BreadthFirstExplorationEqOracle, RandomWordEqOracle, \
+        CacheBasedEqOracle, UserInputEqOracle, KWayStateCoverageEqOracle
     from aalpy.utils import generate_random_dfa
 
     assert num_accepting_states <= number_of_states
@@ -309,6 +308,110 @@ def onfsm_mealy_paper_example():
     return learned_onfsm
 
 
+def multi_client_mqtt_example():
+    """
+    Example from paper P'Learning Abstracted Non-deterministic Finite State Machines'.
+    https://link.springer.com/chapter/10.1007/978-3-030-64881-7_4
+
+    Returns:
+
+        learned automaton
+    """
+    import random
+
+    from aalpy.base import SUL
+    from aalpy.oracles import UnseenOutputRandomWalkEqOracle
+    from aalpy.learning_algs import run_abstracted_Lstar_ONFSM
+    from aalpy.SULs import MealySUL
+    from aalpy.utils import load_automaton_from_file
+
+    class Multi_Client_MQTT_Mapper(SUL):
+        def __init__(self):
+            super().__init__()
+
+            five_clients_mqtt_mealy = load_automaton_from_file('DotModels/mqtt_multi_client_solution.dot',
+                                                               automaton_type='mealy')
+            self.five_client_mqtt = MealySUL(five_clients_mqtt_mealy)
+            self.connected_clients = set()
+            self.subscribed_clients = set()
+
+            self.clients = ('c0', 'c1', 'c2', 'c3', 'c4')
+
+        def get_input_alphabet(self):
+            return ['connect', 'disconnect', 'subscribe', 'unsubscribe', 'publish']
+
+        def pre(self):
+            self.five_client_mqtt.pre()
+
+        def post(self):
+            self.five_client_mqtt.post()
+            self.connected_clients = set()
+            self.subscribed_clients = set()
+
+        def step(self, letter):
+            client = random.choice(self.clients)
+            inp = client + '_' + letter
+            concrete_output = self.five_client_mqtt.step(inp)
+            all_out = ''
+
+            if letter == 'connect':
+                if client not in self.connected_clients:
+                    self.connected_clients.add(client)
+                elif client in self.connected_clients:
+                    self.connected_clients.remove(client)
+                    if client in self.subscribed_clients:
+                        self.subscribed_clients.remove(client)
+                    if len(self.subscribed_clients) == 0:
+                        all_out = '_UNSUB_ALL'
+
+            elif letter == 'subscribe' and client in self.connected_clients:
+                self.subscribed_clients.add(client)
+            elif letter == 'disconnect' and client in self.connected_clients:
+                self.connected_clients.remove(client)
+                if client in self.subscribed_clients:
+                    self.subscribed_clients.remove(client)
+                if len(self.subscribed_clients) == 0:
+                    all_out = '_UNSUB_ALL'
+            elif letter == 'unsubscribe' and client in self.connected_clients:
+                if client in self.subscribed_clients:
+                    self.subscribed_clients.remove(client)
+                if len(self.subscribed_clients) == 0:
+                    all_out = '_ALL'
+
+            concrete_outputs = concrete_output.split('__')
+            abstract_outputs = set([e[3:] for e in concrete_outputs])
+            if 'Empty' in abstract_outputs:
+                abstract_outputs.remove('Empty')
+            if abstract_outputs == {'CONCLOSED'}:
+                if len(self.connected_clients) == 0:
+                    all_out = '_ALL'
+                return 'CONCLOSED' + all_out
+            else:
+                if 'CONCLOSED' in abstract_outputs:
+                    abstract_outputs.remove('CONCLOSED')
+                abstract_outputs = sorted(list(abstract_outputs))
+                output = '_'.join(abstract_outputs)
+                return '_'.join(set(output.split('_'))) + all_out
+
+    sul = Multi_Client_MQTT_Mapper()
+    alphabet = sul.get_input_alphabet()
+
+    eq_oracle = UnseenOutputRandomWalkEqOracle(alphabet, sul, num_steps=5000, reset_prob=0.09, reset_after_cex=True)
+
+    abstraction_mapping = {
+        'CONCLOSED': 'CONCLOSED',
+        'CONCLOSED_UNSUB_ALL': 'CONCLOSED',
+        'CONCLOSED_ALL': 'CONCLOSED',
+        'UNSUBACK' : 'UNSUBACK',
+        'UNSUBACK_ALL': 'UNSUBACK'
+    }
+
+    learned_onfsm = run_abstracted_Lstar_ONFSM(alphabet, sul, eq_oracle, abstraction_mapping=abstraction_mapping,
+                                               n_sampling=200, print_level=3)
+
+    return learned_onfsm
+
+
 def abstracted_onfsm_example():
     """
     Learning an abstracted ONFSM. The original ONFSM has 9 states.
@@ -330,7 +433,8 @@ def abstracted_onfsm_example():
 
     abstraction_mapping = {0: 0, 'O': 0}
 
-    learned_onfsm = run_abstracted_Lstar_ONFSM(alphabet, sul, eq_oracle=eq_oracle, abstraction_mapping=abstraction_mapping,
+    learned_onfsm = run_abstracted_Lstar_ONFSM(alphabet, sul, eq_oracle=eq_oracle,
+                                               abstraction_mapping=abstraction_mapping,
                                                n_sampling=50, print_level=3)
 
     return learned_onfsm
