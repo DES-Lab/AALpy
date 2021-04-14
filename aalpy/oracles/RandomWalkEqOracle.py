@@ -34,20 +34,14 @@ class RandomWalkEqOracle(Oracle):
     def find_cex(self, hypothesis: Automaton):
 
         inputs = []
-        self.sul.post()
-        self.sul.pre()
-        hypothesis.reset_to_initial()
-        self.num_queries += 1
+        self.reset_hyp_and_sul(hypothesis)
 
         while self.random_steps_done < self.step_limit:
             self.num_steps += 1
             self.random_steps_done += 1
 
             if random.random() <= self.reset_prob:
-                self.sul.post()
-                self.sul.pre()
-                self.num_queries += 1
-                hypothesis.reset_to_initial()
+                self.reset_hyp_and_sul(hypothesis)
                 inputs.clear()
 
             inputs.append(random.choice(self.alphabet))
@@ -97,20 +91,14 @@ class UnseenOutputRandomWalkEqOracle(Oracle):
 
         inputs = []
         outputs = []
-        self.sul.post()
-        self.sul.pre()
-        hypothesis.reset_to_initial()
-        self.num_queries += 1
+        self.reset_hyp_and_sul(hypothesis)
 
         while self.random_steps_done < self.step_limit:
             self.random_steps_done += 1
             self.num_steps += 1
 
             if random.random() <= self.reset_prob:
-                self.sul.post()
-                self.sul.pre()
-                self.num_queries += 1
-                hypothesis.reset_to_initial()
+                self.reset_hyp_and_sul(hypothesis)
                 inputs.clear()
                 outputs = []
 

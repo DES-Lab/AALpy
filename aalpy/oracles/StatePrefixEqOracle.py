@@ -53,10 +53,7 @@ class StatePrefixEqOracle(Oracle):
         for state in states_to_cover:
             self.freq_dict[state.prefix] = self.freq_dict[state.prefix] + 1
 
-            self.sul.post()
-            self.sul.pre()
-            self.num_queries += 1
-            hypothesis.reset_to_initial()
+            self.reset_hyp_and_sul(hypothesis)
 
             prefix = state.prefix
             for p in prefix:

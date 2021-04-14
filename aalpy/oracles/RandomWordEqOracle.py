@@ -37,10 +37,7 @@ class RandomWordEqOracle(Oracle):
 
         while self.num_walks_done < self.num_walks:
             inputs = []
-            self.sul.post()
-            self.sul.pre()
-            hypothesis.reset_to_initial()
-            self.num_queries += 1
+            self.reset_hyp_and_sul(hypothesis)
             self.num_walks_done += 1
 
             num_steps = randint(self.min_walk_len, self.max_walk_len)
@@ -98,10 +95,7 @@ class UnseenOutputRandomWordEqOracle(Oracle):
         while self.num_walks_done < self.num_walks:
             inputs = []
             outputs = []
-            self.sul.post()
-            self.sul.pre()
-            hypothesis.reset_to_initial()
-            self.num_queries += 1
+            self.reset_hyp_and_sul(hypothesis)
             self.num_walks_done += 1
 
             num_steps = randint(self.min_walk_len, self.max_walk_len)

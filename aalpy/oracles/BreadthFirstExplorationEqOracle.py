@@ -38,10 +38,7 @@ class BreadthFirstExplorationEqOracle(Oracle):
             shuffle(self.queue)
 
             for seq in self.queue:
-                hypothesis.reset_to_initial()
-                self.sul.post()
-                self.sul.pre()
-                self.num_queries += 1
+                self.reset_hyp_and_sul(hypothesis)
 
                 for ind, letter in enumerate(seq):
                     out_hyp = hypothesis.step(letter)

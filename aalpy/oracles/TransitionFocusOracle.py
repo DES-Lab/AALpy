@@ -29,10 +29,7 @@ class TransitionFocusOracle(Oracle):
     def find_cex(self, hypothesis):
 
         for _ in range(self.num_walks):
-            self.sul.post()
-            self.sul.pre()
-            self.num_queries += 1
-            hypothesis.reset_to_initial()
+            self.reset_hyp_and_sul(hypothesis)
 
             curr_state = hypothesis.initial_state
             inputs = []

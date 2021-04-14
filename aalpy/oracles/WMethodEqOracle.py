@@ -47,10 +47,7 @@ class WMethodEqOracle(Oracle):
             test_set.sort(key=len, reverse=True)
 
         for seq in test_set:
-            hypothesis.reset_to_initial()
-            self.sul.post()
-            self.sul.pre()
-            self.num_queries += 1
+            self.reset_hyp_and_sul(hypothesis)
             outputs = []
 
             for ind, letter in enumerate(seq):
@@ -104,10 +101,7 @@ class RandomWMethodEqOracle(Oracle):
         for state in states_to_cover:
             self.freq_dict[state.prefix] = self.freq_dict[state.prefix] + 1
 
-            self.sul.post()
-            self.sul.pre()
-            self.num_queries += 1
-            hypothesis.reset_to_initial()
+            self.reset_hyp_and_sul(hypothesis)
 
             prefix = state.prefix
             random_walk = tuple(choice(self.alphabet) for _ in range(randint(1, self.random_walk_len)))

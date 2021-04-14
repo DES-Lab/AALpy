@@ -11,7 +11,7 @@ class CacheBasedEqOracle(Oracle):
     of length (max_tree_depth + 'depth_increase') - len(prefix), where prefix is a path to the leaf.
     """
 
-    def __init__(self, alphabet: list, sul: SUL, num_walks=1000, depth_increase=5, reset_after_cex=True):
+    def __init__(self, alphabet: list, sul: SUL, num_walks=100, depth_increase=5, reset_after_cex=True):
         """
 
         Args:
@@ -44,15 +44,13 @@ class CacheBasedEqOracle(Oracle):
         max_tree_depth = len(max(paths_to_leaves, key=len))
 
         while self.num_walks_done < self.num_walks:
+            self.num_walks_done += 1
+            self.reset_hyp_and_sul(hypothesis)
 
             prefix = choice(paths_to_leaves)
             walk_len = (max_tree_depth + self.depth_increase) - len(prefix)
             inputs = []
             inputs.extend(prefix)
-
-            hypothesis.reset_to_initial()
-            self.sul.post()
-            self.sul.pre()
 
             for p in prefix:
                 hypothesis.step(p)
