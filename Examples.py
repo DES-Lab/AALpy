@@ -329,7 +329,7 @@ def multi_client_mqtt_example():
         def __init__(self):
             super().__init__()
 
-            five_clients_mqtt_mealy = load_automaton_from_file('DotModels/mqtt_multi_client_solution.dot',
+            five_clients_mqtt_mealy = load_automaton_from_file('DotModels/five_clients_mqtt_abstracted_onfsm.dot',
                                                                automaton_type='mealy')
             self.five_client_mqtt = MealySUL(five_clients_mqtt_mealy)
             self.connected_clients = set()
