@@ -36,6 +36,7 @@ class RandomWalkEqOracle(Oracle):
         inputs = []
         self.sul.post()
         self.sul.pre()
+        hypothesis.reset_to_initial()
         self.num_queries += 1
 
         while self.random_steps_done < self.step_limit:
@@ -98,6 +99,7 @@ class UnseenOutputRandomWalkEqOracle(Oracle):
         outputs = []
         self.sul.post()
         self.sul.pre()
+        hypothesis.reset_to_initial()
         self.num_queries += 1
 
         while self.random_steps_done < self.step_limit:
