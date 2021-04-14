@@ -120,7 +120,6 @@ class UnseenOutputRandomWalkEqOracle(Oracle):
                     cex = [hypothesis.initial_state.output]
                     for i, o in zip(inputs, outputs):
                         cex.extend([i, o])
-
                     return cex
                 else:
                     # stochastic MM
