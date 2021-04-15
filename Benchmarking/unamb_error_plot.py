@@ -424,37 +424,92 @@ second_grid_unamb_mdp_2 = [80.0, 71.43, 70.97, 73.75, 73.0, 66.67, 59.44, 64.24,
                            93.86, 93.86, 93.86, 93.86, 94.05, 93.86, 93.86, 93.86, 94.05, 94.05, 94.05, 94.05, 94.05,
                            94.24, 94.24, 94.24, 94.24, 94.24, 94.24, 94.24, 94.05, 93.56, 94.43, 94.24, 94.43, 94.05]
 
+def single_plot():
+    matplotlib.use("pgf")
+    matplotlib.rcParams.update({
+        "pgf.texsystem": "pdflatex",
+        'font.family': 'serif',
+        'text.usetex': True,
+        'pgf.rcfonts': False,
+    })
 
-matplotlib.use("pgf")
-matplotlib.rcParams.update({
-    "pgf.texsystem": "pdflatex",
-    'font.family': 'serif',
-    'text.usetex': True,
-    'pgf.rcfonts': False,
-})
+    r = list(range(len(second_grid_max_err_2)))
+    # plt.plot(r, second_grid_max_err_2, label = 'max_error_%')
+    # plt.plot(r, second_grid_avr_err_2, label = 'avr_error_%')
+    # plt.plot(r, second_grid_unamb_2, label='unamb_%')
 
-r = list(range(len(second_grid_max_err_2)))
-# plt.plot(r, second_grid_max_err_2, label = 'max_error_%')
-# plt.plot(r, second_grid_avr_err_2, label = 'avr_error_%')
-# plt.plot(r, second_grid_unamb_2, label='unamb_%')
-
-plt.plot(r, mqtt_max_err_1, label='Maximum Error')
-plt.plot(r, mqtt_avr_err_1, label='Average Error')
-plt.plot(r, mqtt_unamb_1, label='Unambiguous Rows')
+    plt.plot(r, mqtt_max_err_1, label='Maximum Error')
+    plt.plot(r, mqtt_avr_err_1, label='Average Error')
+    plt.plot(r, mqtt_unamb_1, label='Unambiguous Rows')
 
 
-# second_grid_avr_err_2 looks nice
-# plt.plot(r, [100 - r for r in second_grid_unamb_2], label='unamb_%')
-plt.ylabel('Percentage')
-plt.xlabel('Learning Round')
-plt.title('MQTT')
+    # second_grid_avr_err_2 looks nice
+    # plt.plot(r, [100 - r for r in second_grid_unamb_2], label='unamb_%')
+    plt.ylabel('Percentage')
+    plt.xlabel('Learning Round')
+    plt.title('MQTT')
 
-plt.grid(axis='y')
-plt.legend()
-#plt.show()
+    plt.grid(axis='y')
+    plt.legend()
+    #plt.show()
 
-plt.savefig("stoppingAndUnamb_mqtt.pgf")
+    plt.savefig("stoppingAndUnamb_mqtt.pgf")
 
-import tikzplotlib
+    import tikzplotlib
 
-tikzplotlib.save("stoppingAndUnamb_mqtt.tex")
+    tikzplotlib.save("stoppingAndUnamb_mqtt.tex")
+
+
+def side_by_side():
+
+    matplotlib.use("pgf")
+    matplotlib.rcParams.update({
+        "pgf.texsystem": "pdflatex",
+        'font.family': 'serif',
+        'text.usetex': True,
+        'pgf.rcfonts': False,
+    })
+
+    r = list(range(len(second_grid_max_err_2)))
+    # plt.plot(r, second_grid_max_err_2, label = 'max_error_%')
+    # plt.plot(r, second_grid_avr_err_2, label = 'avr_error_%')
+    # plt.plot(r, second_grid_unamb_2, label='unamb_%')
+
+    fig, (plt1, plt2) = plt.subplots(1, 2, figsize=(10, 3))
+
+    plt1.plot(r, second_grid_max_err_2, label='Maximum Error')
+    plt1.plot(r, second_grid_avr_err_2, label='Average Error')
+    plt1.plot(r, second_grid_unamb_2, label='Unambiguous Rows')
+
+    # second_grid_avr_err_2 looks nice
+    # plt.plot(r, [100 - r for r in second_grid_unamb_2], label='unamb_%')
+    plt1.set_ylabel('Percentage')
+    plt1.set_xlabel('Learning Round')
+    plt1.set_title('72 State Gridworld')
+
+    plt1.grid(axis='y')
+    plt1.legend()
+
+    plt2.plot(r, mqtt_max_err_1, label='Maximum Error')
+    plt2.plot(r, mqtt_avr_err_1, label='Average Error')
+    plt2.plot(r, mqtt_unamb_1, label='Unambiguous Rows')
+
+    # second_grid_avr_err_2 looks nice
+    # plt.plot(r, [100 - r for r in second_grid_unamb_2], label='unamb_%')
+    plt2.set_ylabel('Percentage')
+    plt2.set_xlabel('Learning Round')
+    plt2.set_title('MQTT')
+
+    plt2.grid(axis='y')
+    plt2.legend()
+    # plt.show()
+    fig.tight_layout()
+
+    fig.savefig("stoppingAndUnamb2plots.pgf")
+
+    import tikzplotlib
+
+    tikzplotlib.save("stoppingAndUnamb2plots.tex")
+
+if __name__ == '__main__':
+    side_by_side()

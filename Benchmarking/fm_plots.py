@@ -53,8 +53,8 @@ def plot_error():
     ax_mq.ticklabel_format(axis='y', style='sci', scilimits=(1, 4))
     ax_mq.set_xticks(ind + width / 2)
     ax_mq.set_xticklabels(('35 State\nGridworld', '72 State\nGridworld', 'MQTT', 'TCP',))
-
     ax_mq.legend(loc='upper left')
+
 
     ax_mq.grid(axis='y')
     fig.tight_layout()
@@ -134,3 +134,6 @@ def plot_benchmarks():
     import tikzplotlib
 
     tikzplotlib.save("benchmarking.tex")
+
+if __name__ == '__main__':
+    plot_error()
