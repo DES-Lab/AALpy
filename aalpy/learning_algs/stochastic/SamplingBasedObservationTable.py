@@ -404,7 +404,6 @@ class SamplingBasedObservationTable:
             for num_last, diff in stopping_dict.items():
                 last_n_unamb = self.unambiguity_values[-num_last:]
                 if abs(max(last_n_unamb) - min(last_n_unamb) <= diff):
-                    print(num_last, diff)
                     return True
 
         if print_unambiguity and learning_round % 5 == 0:
