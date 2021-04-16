@@ -459,7 +459,7 @@ def faulty_coffee_machine_mdp_example(automaton_type='mdp'):
                                                reset_after_cex=False)
 
     learned_mdp = run_stochastic_Lstar(input_alphabet, sul, automaton_type=automaton_type,
-                                       eq_oracle=eq_oracle, n_c=20, n_resample=100, min_rounds=10,
+                                       eq_oracle=eq_oracle, n_c=20, n_resample=100, min_rounds=3,
                                        max_rounds=50, print_level=3, cex_processing='longest_prefix',
                                        samples_cex_strategy='bfs')
 

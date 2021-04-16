@@ -151,7 +151,7 @@ class SamplingBasedObservationTable:
                     freq_dict = self.teacher.frequency_query(s, i)
                 for out, freq in freq_dict.items():
                     new_pref = s + i + tuple([out])
-                    if freq > 0:
+                    if freq > 0 and new_pref not in self.S:
                         yield new_pref
 
     def make_closed_and_consistent(self):
