@@ -88,11 +88,17 @@
 
     <span class="k">def</span> <span class="nf">find_cex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">):</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">reset_hyp_and_sul</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">curr_hypothesis</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="n">inputs</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">visualize_automaton</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;Hypothesis_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">curr_hypothesis</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
         <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
             <span class="n">inp</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span><span class="s1">&#39;Please provide an input: &#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">inp</span> <span class="o">==</span> <span class="s1">&#39;help&#39;</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Use one of following commands [print alphabet, current inputs, cex, end, reset] &#39;</span>
+                      <span class="s1">&#39;or provide an input&#39;</span><span class="p">)</span>
+                <span class="k">continue</span>
             <span class="k">if</span> <span class="n">inp</span> <span class="o">==</span> <span class="s1">&#39;print alphabet&#39;</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">)</span>
                 <span class="k">continue</span>
@@ -106,15 +112,20 @@
                 <span class="k">return</span> <span class="kc">None</span>
             <span class="k">if</span> <span class="n">inp</span> <span class="o">==</span> <span class="s1">&#39;reset&#39;</span><span class="p">:</span>
                 <span class="n">inputs</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-                <span class="n">hypothesis</span><span class="o">.</span><span class="n">reset_to_initial</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">reset_hyp_and_sul</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
                 <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;You are back in the initial state. Please provide an input: &#39;</span><span class="p">)</span>
                 <span class="k">continue</span>
             <span class="k">if</span> <span class="n">inp</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Provided input is not in the input alphabet.&quot;</span><span class="p">)</span>
                 <span class="k">continue</span>
             <span class="n">inputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">inp</span><span class="p">)</span>
-            <span class="n">out</span> <span class="o">=</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">inp</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Output:&#39;</span><span class="p">,</span> <span class="n">out</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">num_steps</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">out_hyp</span> <span class="o">=</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">inp</span><span class="p">)</span>
+            <span class="n">out_sul</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">inp</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Hypothesis Output :&#39;</span><span class="p">,</span> <span class="n">out_hyp</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;SUL Output        :&#39;</span><span class="p">,</span> <span class="n">out_sul</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">out_hyp</span> <span class="o">!=</span> <span class="n">out_sul</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Counterexample found.</span><span class="se">\n</span><span class="s1">If you want to return it, type </span><span class="se">\&#39;</span><span class="s1">end</span><span class="se">\&#39;</span><span class="s1">.&#39;</span><span class="p">)</span>
 </pre></div>
 
         </details>
@@ -158,11 +169,17 @@
 
     <span class="k">def</span> <span class="nf">find_cex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">):</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">reset_hyp_and_sul</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">curr_hypothesis</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="n">inputs</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">visualize_automaton</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;Hypothesis_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">curr_hypothesis</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
         <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
             <span class="n">inp</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span><span class="s1">&#39;Please provide an input: &#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">inp</span> <span class="o">==</span> <span class="s1">&#39;help&#39;</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Use one of following commands [print alphabet, current inputs, cex, end, reset] &#39;</span>
+                      <span class="s1">&#39;or provide an input&#39;</span><span class="p">)</span>
+                <span class="k">continue</span>
             <span class="k">if</span> <span class="n">inp</span> <span class="o">==</span> <span class="s1">&#39;print alphabet&#39;</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">)</span>
                 <span class="k">continue</span>
@@ -176,15 +193,20 @@
                 <span class="k">return</span> <span class="kc">None</span>
             <span class="k">if</span> <span class="n">inp</span> <span class="o">==</span> <span class="s1">&#39;reset&#39;</span><span class="p">:</span>
                 <span class="n">inputs</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-                <span class="n">hypothesis</span><span class="o">.</span><span class="n">reset_to_initial</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">reset_hyp_and_sul</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
                 <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;You are back in the initial state. Please provide an input: &#39;</span><span class="p">)</span>
                 <span class="k">continue</span>
             <span class="k">if</span> <span class="n">inp</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Provided input is not in the input alphabet.&quot;</span><span class="p">)</span>
                 <span class="k">continue</span>
             <span class="n">inputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">inp</span><span class="p">)</span>
-            <span class="n">out</span> <span class="o">=</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">inp</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Output:&#39;</span><span class="p">,</span> <span class="n">out</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">num_steps</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">out_hyp</span> <span class="o">=</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">inp</span><span class="p">)</span>
+            <span class="n">out_sul</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">inp</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Hypothesis Output :&#39;</span><span class="p">,</span> <span class="n">out_hyp</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;SUL Output        :&#39;</span><span class="p">,</span> <span class="n">out_sul</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">out_hyp</span> <span class="o">!=</span> <span class="n">out_sul</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Counterexample found.</span><span class="se">\n</span><span class="s1">If you want to return it, type </span><span class="se">\&#39;</span><span class="s1">end</span><span class="se">\&#39;</span><span class="s1">.&#39;</span><span class="p">)</span>
 </pre></div>
 
         </details>
@@ -249,11 +271,17 @@ sul: system under learning
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">find_cex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">):</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">reset_hyp_and_sul</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">curr_hypothesis</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="n">inputs</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">visualize_automaton</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;Hypothesis_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">curr_hypothesis</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
         <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
             <span class="n">inp</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span><span class="s1">&#39;Please provide an input: &#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">inp</span> <span class="o">==</span> <span class="s1">&#39;help&#39;</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Use one of following commands [print alphabet, current inputs, cex, end, reset] &#39;</span>
+                      <span class="s1">&#39;or provide an input&#39;</span><span class="p">)</span>
+                <span class="k">continue</span>
             <span class="k">if</span> <span class="n">inp</span> <span class="o">==</span> <span class="s1">&#39;print alphabet&#39;</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">)</span>
                 <span class="k">continue</span>
@@ -267,15 +295,20 @@ sul: system under learning
                 <span class="k">return</span> <span class="kc">None</span>
             <span class="k">if</span> <span class="n">inp</span> <span class="o">==</span> <span class="s1">&#39;reset&#39;</span><span class="p">:</span>
                 <span class="n">inputs</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-                <span class="n">hypothesis</span><span class="o">.</span><span class="n">reset_to_initial</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">reset_hyp_and_sul</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
                 <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;You are back in the initial state. Please provide an input: &#39;</span><span class="p">)</span>
                 <span class="k">continue</span>
             <span class="k">if</span> <span class="n">inp</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Provided input is not in the input alphabet.&quot;</span><span class="p">)</span>
                 <span class="k">continue</span>
             <span class="n">inputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">inp</span><span class="p">)</span>
-            <span class="n">out</span> <span class="o">=</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">inp</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Output:&#39;</span><span class="p">,</span> <span class="n">out</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">num_steps</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">out_hyp</span> <span class="o">=</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">inp</span><span class="p">)</span>
+            <span class="n">out_sul</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">inp</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Hypothesis Output :&#39;</span><span class="p">,</span> <span class="n">out_hyp</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;SUL Output        :&#39;</span><span class="p">,</span> <span class="n">out_sul</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">out_hyp</span> <span class="o">!=</span> <span class="n">out_sul</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Counterexample found.</span><span class="se">\n</span><span class="s1">If you want to return it, type </span><span class="se">\&#39;</span><span class="s1">end</span><span class="se">\&#39;</span><span class="s1">.&#39;</span><span class="p">)</span>
 </pre></div>
 
         </details>
@@ -294,6 +327,15 @@ current hypothesis.</p>
 </div>
 
 
+                            </div>
+                            <div class="inherited">
+                                <h5>Inherited Members</h5>
+                                <dl>
+                                    <div><dt><a href="../base/Oracle.html#Oracle">aalpy.base.Oracle.Oracle</a></dt>
+                                <dd id="UserInputEqOracle.reset_hyp_and_sul" class="function"><a href="../base/Oracle.html#Oracle.reset_hyp_and_sul">reset_hyp_and_sul</a></dd>
+
+            </div>
+                                </dl>
                             </div>
                 </section>
     </main>

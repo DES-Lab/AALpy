@@ -74,7 +74,6 @@
 <span class="kn">from</span> <span class="nn">random</span> <span class="kn">import</span> <span class="n">randint</span><span class="p">,</span> <span class="n">choice</span>
 
 
-
 <span class="k">class</span> <span class="nc">RandomWordEqOracle</span><span class="p">(</span><span class="n">Oracle</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Equivalence oracle where queries are of random length in a predefined range.</span>
@@ -109,10 +108,7 @@
 
         <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_walks_done</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_walks</span><span class="p">:</span>
             <span class="n">inputs</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
-            <span class="n">hypothesis</span><span class="o">.</span><span class="n">reset_to_initial</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">num_queries</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reset_hyp_and_sul</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">num_walks_done</span> <span class="o">+=</span> <span class="mi">1</span>
 
             <span class="n">num_steps</span> <span class="o">=</span> <span class="n">randint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">min_walk_len</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_walk_len</span><span class="p">)</span>
@@ -170,10 +166,7 @@
         <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_walks_done</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_walks</span><span class="p">:</span>
             <span class="n">inputs</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="n">outputs</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
-            <span class="n">hypothesis</span><span class="o">.</span><span class="n">reset_to_initial</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">num_queries</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reset_hyp_and_sul</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">num_walks_done</span> <span class="o">+=</span> <span class="mi">1</span>
 
             <span class="n">num_steps</span> <span class="o">=</span> <span class="n">randint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">min_walk_len</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_walk_len</span><span class="p">)</span>
@@ -257,10 +250,7 @@
 
         <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_walks_done</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_walks</span><span class="p">:</span>
             <span class="n">inputs</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
-            <span class="n">hypothesis</span><span class="o">.</span><span class="n">reset_to_initial</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">num_queries</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reset_hyp_and_sul</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">num_walks_done</span> <span class="o">+=</span> <span class="mi">1</span>
 
             <span class="n">num_steps</span> <span class="o">=</span> <span class="n">randint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">min_walk_len</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_walk_len</span><span class="p">)</span>
@@ -363,10 +353,7 @@ reset_after_cex: if True, num_walks will be preformed after every counter exampl
 
         <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_walks_done</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_walks</span><span class="p">:</span>
             <span class="n">inputs</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
-            <span class="n">hypothesis</span><span class="o">.</span><span class="n">reset_to_initial</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">num_queries</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reset_hyp_and_sul</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">num_walks_done</span> <span class="o">+=</span> <span class="mi">1</span>
 
             <span class="n">num_steps</span> <span class="o">=</span> <span class="n">randint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">min_walk_len</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_walk_len</span><span class="p">)</span>
@@ -403,6 +390,15 @@ current hypothesis.</p>
 </div>
 
 
+                            </div>
+                            <div class="inherited">
+                                <h5>Inherited Members</h5>
+                                <dl>
+                                    <div><dt><a href="../base/Oracle.html#Oracle">aalpy.base.Oracle.Oracle</a></dt>
+                                <dd id="RandomWordEqOracle.reset_hyp_and_sul" class="function"><a href="../base/Oracle.html#Oracle.reset_hyp_and_sul">reset_hyp_and_sul</a></dd>
+
+            </div>
+                                </dl>
                             </div>
                 </section>
                 <section id="UnseenOutputRandomWordEqOracle">
@@ -453,10 +449,7 @@ current hypothesis.</p>
         <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_walks_done</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_walks</span><span class="p">:</span>
             <span class="n">inputs</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="n">outputs</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
-            <span class="n">hypothesis</span><span class="o">.</span><span class="n">reset_to_initial</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">num_queries</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reset_hyp_and_sul</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">num_walks_done</span> <span class="o">+=</span> <span class="mi">1</span>
 
             <span class="n">num_steps</span> <span class="o">=</span> <span class="n">randint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">min_walk_len</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_walk_len</span><span class="p">)</span>
@@ -577,10 +570,7 @@ reset_after_cex: if True, num_walks will be preformed after every counter exampl
         <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_walks_done</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_walks</span><span class="p">:</span>
             <span class="n">inputs</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="n">outputs</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
-            <span class="n">hypothesis</span><span class="o">.</span><span class="n">reset_to_initial</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">num_queries</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reset_hyp_and_sul</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">num_walks_done</span> <span class="o">+=</span> <span class="mi">1</span>
 
             <span class="n">num_steps</span> <span class="o">=</span> <span class="n">randint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">min_walk_len</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_walk_len</span><span class="p">)</span>
@@ -632,6 +622,15 @@ current hypothesis.</p>
 </div>
 
 
+                            </div>
+                            <div class="inherited">
+                                <h5>Inherited Members</h5>
+                                <dl>
+                                    <div><dt><a href="../base/Oracle.html#Oracle">aalpy.base.Oracle.Oracle</a></dt>
+                                <dd id="UnseenOutputRandomWordEqOracle.reset_hyp_and_sul" class="function"><a href="../base/Oracle.html#Oracle.reset_hyp_and_sul">reset_hyp_and_sul</a></dd>
+
+            </div>
+                                </dl>
                             </div>
                 </section>
     </main>

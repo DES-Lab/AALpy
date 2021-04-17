@@ -30,6 +30,7 @@
                             <li><a href="utils/BenchmarkSULs.html">aalpy.utils.BenchmarkSULs</a></li>
                             <li><a href="utils/FileHandler.html">aalpy.utils.FileHandler</a></li>
                             <li><a href="utils/HelperFunctions.html">aalpy.utils.HelperFunctions</a></li>
+                            <li><a href="utils/ModelChecking.html">aalpy.utils.ModelChecking</a></li>
                     </ul>
 
 
@@ -50,7 +51,8 @@
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">.AutomatonGenerators</span> <span class="kn">import</span> <span class="n">generate_random_dfa</span><span class="p">,</span> <span class="n">generate_random_mealy_machine</span><span class="p">,</span> <span class="n">generate_random_moore_machine</span>
 <span class="kn">from</span> <span class="nn">.AutomatonGenerators</span> <span class="kn">import</span> <span class="n">generate_random_mdp</span><span class="p">,</span> <span class="n">generate_random_ONFSM</span>
-<span class="kn">from</span> <span class="nn">.FileHandler</span> <span class="kn">import</span> <span class="n">save_automaton_to_file</span><span class="p">,</span> <span class="n">load_automaton_from_file</span><span class="p">,</span> <span class="n">visualize_automaton</span><span class="p">,</span> <span class="n">mdp_2_prism_format</span>
+<span class="kn">from</span> <span class="nn">.FileHandler</span> <span class="kn">import</span> <span class="n">save_automaton_to_file</span><span class="p">,</span> <span class="n">load_automaton_from_file</span><span class="p">,</span> <span class="n">visualize_automaton</span>
+<span class="kn">from</span> <span class="nn">.ModelChecking</span> <span class="kn">import</span> <span class="n">model_check_experiment</span><span class="p">,</span> <span class="n">mdp_2_prism_format</span><span class="p">,</span> <span class="n">model_check_properties</span>
 <span class="kn">from</span> <span class="nn">.HelperFunctions</span> <span class="kn">import</span> <span class="n">smm_to_mdp_conversion</span>
 <span class="kn">from</span> <span class="nn">.BenchmarkSULs</span> <span class="kn">import</span> <span class="o">*</span>
 </pre></div>

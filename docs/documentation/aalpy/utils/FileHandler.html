@@ -36,9 +36,6 @@
             <li>
                     <a class="function" href="#load_automaton_from_file">load_automaton_from_file</a>
             </li>
-            <li>
-                    <a class="function" href="#mdp_2_prism_format">mdp_2_prism_format</a>
-            </li>
     </ul>
 
 
@@ -299,79 +296,6 @@
         <span class="n">label</span> <span class="o">=</span> <span class="n">label</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
     <span class="n">label</span> <span class="o">=</span> <span class="n">label</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">label</span>
-
-
-<span class="k">def</span> <span class="nf">_target_string</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">orig_id_to_int_id</span><span class="p">):</span>
-    <span class="n">target_state</span> <span class="o">=</span> <span class="n">target</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">target_prob</span> <span class="o">=</span> <span class="n">target</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-    <span class="n">target_id</span> <span class="o">=</span> <span class="n">orig_id_to_int_id</span><span class="p">[</span><span class="n">target_state</span><span class="o">.</span><span class="n">state_id</span><span class="p">]</span>
-    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">target_prob</span><span class="si">}</span><span class="s2"> : (loc&#39;=</span><span class="si">{</span><span class="n">target_id</span><span class="si">}</span><span class="s2">)&quot;</span>
-
-
-<span class="k">def</span> <span class="nf">_sanitize_for_prism</span><span class="p">(</span><span class="n">symbol</span><span class="p">):</span>
-    <span class="k">if</span> <span class="n">symbol</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;mdp&quot;</span><span class="p">,</span> <span class="s2">&quot;init&quot;</span><span class="p">,</span> <span class="s2">&quot;module&quot;</span><span class="p">,</span> <span class="s2">&quot;endmodule&quot;</span><span class="p">,</span> <span class="s2">&quot;label&quot;</span><span class="p">]:</span>
-        <span class="k">return</span> <span class="s2">&quot;___&quot;</span> <span class="o">+</span> <span class="n">symbol</span> <span class="o">+</span> <span class="s2">&quot;___&quot;</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">symbol</span>
-
-
-<span class="k">def</span> <span class="nf">mdp_2_prism_format</span><span class="p">(</span><span class="n">mdp</span><span class="p">:</span> <span class="n">Mdp</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">output_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Translates MDP to Prims modelling language.</span>
-
-<span class="sd">    Args:</span>
-
-<span class="sd">        mdp: markov decision process</span>
-
-<span class="sd">        name: name of the mdp/experiment</span>
-
-<span class="sd">        output_path: output file (Default value = None)</span>
-
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">module_string</span> <span class="o">=</span> <span class="s2">&quot;mdp&quot;</span>
-    <span class="n">module_string</span> <span class="o">+=</span> <span class="n">os</span><span class="o">.</span><span class="n">linesep</span>
-    <span class="n">module_string</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;module </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
-    <span class="n">module_string</span> <span class="o">+=</span> <span class="n">os</span><span class="o">.</span><span class="n">linesep</span>
-
-    <span class="n">nr_states</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">mdp</span><span class="o">.</span><span class="n">states</span><span class="p">)</span>
-    <span class="n">orig_id_to_int_id</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">mdp</span><span class="o">.</span><span class="n">states</span><span class="p">):</span>
-        <span class="n">orig_id_to_int_id</span><span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">state_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span>
-    <span class="n">module_string</span> <span class="o">+=</span> <span class="s2">&quot;loc : [0..</span><span class="si">{}</span><span class="s2">] init </span><span class="si">{}</span><span class="s2">;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">nr_states</span><span class="p">,</span> <span class="n">orig_id_to_int_id</span><span class="p">[</span><span class="n">mdp</span><span class="o">.</span><span class="n">initial_state</span><span class="o">.</span><span class="n">state_id</span><span class="p">])</span>
-    <span class="n">module_string</span> <span class="o">+=</span> <span class="n">os</span><span class="o">.</span><span class="n">linesep</span>
-
-    <span class="c1"># print transitions</span>
-    <span class="k">for</span> <span class="n">source</span> <span class="ow">in</span> <span class="n">mdp</span><span class="o">.</span><span class="n">states</span><span class="p">:</span>
-        <span class="n">source_id</span> <span class="o">=</span> <span class="n">orig_id_to_int_id</span><span class="p">[</span><span class="n">source</span><span class="o">.</span><span class="n">state_id</span><span class="p">]</span>
-        <span class="k">for</span> <span class="n">inp</span> <span class="ow">in</span> <span class="n">source</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">inp</span><span class="p">]:</span>
-                <span class="n">target_strings</span> <span class="o">=</span> \
-                    <span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">target</span><span class="p">:</span> <span class="n">_target_string</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">orig_id_to_int_id</span><span class="p">),</span> <span class="n">source</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">inp</span><span class="p">])</span>
-                <span class="n">target_joined</span> <span class="o">=</span> <span class="s2">&quot; + &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">target_strings</span><span class="p">)</span>
-                <span class="n">module_string</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">_sanitize_for_prism</span><span class="p">(</span><span class="n">inp</span><span class="p">)</span><span class="si">}</span><span class="s2">] loc=</span><span class="si">{</span><span class="n">source_id</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">linesep</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">target_joined</span><span class="si">}</span><span class="s2">;&quot;</span>
-                <span class="n">module_string</span> <span class="o">+=</span> <span class="n">os</span><span class="o">.</span><span class="n">linesep</span>
-    <span class="n">module_string</span> <span class="o">+=</span> <span class="s2">&quot;endmodule&quot;</span>
-    <span class="n">module_string</span> <span class="o">+=</span> <span class="n">os</span><span class="o">.</span><span class="n">linesep</span>
-    <span class="c1"># labelling function</span>
-    <span class="n">output_to_state_id</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">mdp</span><span class="o">.</span><span class="n">states</span><span class="p">:</span>
-        <span class="n">joined_output</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">output</span>
-        <span class="n">outputs</span> <span class="o">=</span> <span class="n">joined_output</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;__&quot;</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">outputs</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">o</span><span class="p">:</span>
-                <span class="n">output_to_state_id</span><span class="p">[</span><span class="n">o</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">orig_id_to_int_id</span><span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">state_id</span><span class="p">])</span>
-
-    <span class="k">for</span> <span class="n">output</span><span class="p">,</span> <span class="n">states</span> <span class="ow">in</span> <span class="n">output_to_state_id</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="n">state_propositions</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s_id</span><span class="p">:</span> <span class="s2">&quot;loc=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">s_id</span><span class="p">),</span> <span class="n">states</span><span class="p">)</span>
-        <span class="n">state_disjunction</span> <span class="o">=</span> <span class="s2">&quot;|&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">state_propositions</span><span class="p">)</span>
-        <span class="n">output_string</span> <span class="o">=</span> <span class="n">_sanitize_for_prism</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
-        <span class="n">module_string</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;label </span><span class="se">\&quot;</span><span class="si">{</span><span class="n">output_string</span><span class="si">}</span><span class="se">\&quot;</span><span class="s2"> = </span><span class="si">{</span><span class="n">state_disjunction</span><span class="si">}</span><span class="s2">;&quot;</span>
-        <span class="n">module_string</span> <span class="o">+=</span> <span class="n">os</span><span class="o">.</span><span class="n">linesep</span>
-
-    <span class="k">if</span> <span class="n">output_path</span><span class="p">:</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">text_file</span><span class="p">:</span>
-            <span class="n">text_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">module_string</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">module_string</span>
 </pre></div>
 
         </details>
@@ -697,91 +621,6 @@ compute_prefixes: it True, shortest path to reach every state will be computed a
 
 <p>Returns:
   automaton</p>
-</div>
-
-
-                </section>
-                <section id="mdp_2_prism_format">
-                            <div class="attr function"><a class="headerlink" href="#mdp_2_prism_format">#&nbsp;&nbsp</a>
-
-        
-            <span class="def">def</span>
-            <span class="name">mdp_2_prism_format</span><span class="signature">(mdp: <a href="../automata/Mdp.html#Mdp">aalpy.automata.Mdp.Mdp</a>, name: str, output_path=None)</span>:
-    </div>
-
-                <details>
-            <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">mdp_2_prism_format</span><span class="p">(</span><span class="n">mdp</span><span class="p">:</span> <span class="n">Mdp</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">output_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Translates MDP to Prims modelling language.</span>
-
-<span class="sd">    Args:</span>
-
-<span class="sd">        mdp: markov decision process</span>
-
-<span class="sd">        name: name of the mdp/experiment</span>
-
-<span class="sd">        output_path: output file (Default value = None)</span>
-
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">module_string</span> <span class="o">=</span> <span class="s2">&quot;mdp&quot;</span>
-    <span class="n">module_string</span> <span class="o">+=</span> <span class="n">os</span><span class="o">.</span><span class="n">linesep</span>
-    <span class="n">module_string</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;module </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
-    <span class="n">module_string</span> <span class="o">+=</span> <span class="n">os</span><span class="o">.</span><span class="n">linesep</span>
-
-    <span class="n">nr_states</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">mdp</span><span class="o">.</span><span class="n">states</span><span class="p">)</span>
-    <span class="n">orig_id_to_int_id</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">mdp</span><span class="o">.</span><span class="n">states</span><span class="p">):</span>
-        <span class="n">orig_id_to_int_id</span><span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">state_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span>
-    <span class="n">module_string</span> <span class="o">+=</span> <span class="s2">&quot;loc : [0..</span><span class="si">{}</span><span class="s2">] init </span><span class="si">{}</span><span class="s2">;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">nr_states</span><span class="p">,</span> <span class="n">orig_id_to_int_id</span><span class="p">[</span><span class="n">mdp</span><span class="o">.</span><span class="n">initial_state</span><span class="o">.</span><span class="n">state_id</span><span class="p">])</span>
-    <span class="n">module_string</span> <span class="o">+=</span> <span class="n">os</span><span class="o">.</span><span class="n">linesep</span>
-
-    <span class="c1"># print transitions</span>
-    <span class="k">for</span> <span class="n">source</span> <span class="ow">in</span> <span class="n">mdp</span><span class="o">.</span><span class="n">states</span><span class="p">:</span>
-        <span class="n">source_id</span> <span class="o">=</span> <span class="n">orig_id_to_int_id</span><span class="p">[</span><span class="n">source</span><span class="o">.</span><span class="n">state_id</span><span class="p">]</span>
-        <span class="k">for</span> <span class="n">inp</span> <span class="ow">in</span> <span class="n">source</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">inp</span><span class="p">]:</span>
-                <span class="n">target_strings</span> <span class="o">=</span> \
-                    <span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">target</span><span class="p">:</span> <span class="n">_target_string</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">orig_id_to_int_id</span><span class="p">),</span> <span class="n">source</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">inp</span><span class="p">])</span>
-                <span class="n">target_joined</span> <span class="o">=</span> <span class="s2">&quot; + &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">target_strings</span><span class="p">)</span>
-                <span class="n">module_string</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">_sanitize_for_prism</span><span class="p">(</span><span class="n">inp</span><span class="p">)</span><span class="si">}</span><span class="s2">] loc=</span><span class="si">{</span><span class="n">source_id</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">linesep</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">target_joined</span><span class="si">}</span><span class="s2">;&quot;</span>
-                <span class="n">module_string</span> <span class="o">+=</span> <span class="n">os</span><span class="o">.</span><span class="n">linesep</span>
-    <span class="n">module_string</span> <span class="o">+=</span> <span class="s2">&quot;endmodule&quot;</span>
-    <span class="n">module_string</span> <span class="o">+=</span> <span class="n">os</span><span class="o">.</span><span class="n">linesep</span>
-    <span class="c1"># labelling function</span>
-    <span class="n">output_to_state_id</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">mdp</span><span class="o">.</span><span class="n">states</span><span class="p">:</span>
-        <span class="n">joined_output</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">output</span>
-        <span class="n">outputs</span> <span class="o">=</span> <span class="n">joined_output</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;__&quot;</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">outputs</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">o</span><span class="p">:</span>
-                <span class="n">output_to_state_id</span><span class="p">[</span><span class="n">o</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">orig_id_to_int_id</span><span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">state_id</span><span class="p">])</span>
-
-    <span class="k">for</span> <span class="n">output</span><span class="p">,</span> <span class="n">states</span> <span class="ow">in</span> <span class="n">output_to_state_id</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="n">state_propositions</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s_id</span><span class="p">:</span> <span class="s2">&quot;loc=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">s_id</span><span class="p">),</span> <span class="n">states</span><span class="p">)</span>
-        <span class="n">state_disjunction</span> <span class="o">=</span> <span class="s2">&quot;|&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">state_propositions</span><span class="p">)</span>
-        <span class="n">output_string</span> <span class="o">=</span> <span class="n">_sanitize_for_prism</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
-        <span class="n">module_string</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;label </span><span class="se">\&quot;</span><span class="si">{</span><span class="n">output_string</span><span class="si">}</span><span class="se">\&quot;</span><span class="s2"> = </span><span class="si">{</span><span class="n">state_disjunction</span><span class="si">}</span><span class="s2">;&quot;</span>
-        <span class="n">module_string</span> <span class="o">+=</span> <span class="n">os</span><span class="o">.</span><span class="n">linesep</span>
-
-    <span class="k">if</span> <span class="n">output_path</span><span class="p">:</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">text_file</span><span class="p">:</span>
-            <span class="n">text_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">module_string</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">module_string</span>
-</pre></div>
-
-        </details>
-
-            <div class="docstring"><p>Translates MDP to Prims modelling language.</p>
-
-<p>Args:</p>
-
-<pre><code>mdp: markov decision process
-
-name: name of the mdp/experiment
-
-output_path: output file (Default value = None)
-</code></pre>
 </div>
 
 

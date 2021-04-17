@@ -152,8 +152,7 @@
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Hypothesis </span><span class="si">{</span><span class="n">learning_rounds</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">)</span><span class="si">}</span><span class="s1"> states.&#39;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">print_level</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
-            <span class="n">print_observation_table</span><span class="p">(</span><span class="n">observation_table</span><span class="o">.</span><span class="n">S</span><span class="p">,</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">s_dot_a</span><span class="p">(),</span>
-                                    <span class="n">observation_table</span><span class="o">.</span><span class="n">E</span><span class="p">,</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+            <span class="n">print_observation_table</span><span class="p">(</span><span class="n">observation_table</span><span class="p">,</span> <span class="s1">&#39;det&#39;</span><span class="p">)</span>
 
         <span class="c1"># Find counterexample</span>
         <span class="n">eq_query_start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
@@ -199,7 +198,8 @@
         <span class="s1">&#39;steps_eq_oracle&#39;</span><span class="p">:</span> <span class="n">eq_oracle</span><span class="o">.</span><span class="n">num_steps</span><span class="p">,</span>
         <span class="s1">&#39;learning_time&#39;</span><span class="p">:</span> <span class="n">learning_time</span><span class="p">,</span>
         <span class="s1">&#39;eq_oracle_time&#39;</span><span class="p">:</span> <span class="n">eq_query_time</span><span class="p">,</span>
-        <span class="s1">&#39;total_time&#39;</span><span class="p">:</span> <span class="n">total_time</span>
+        <span class="s1">&#39;total_time&#39;</span><span class="p">:</span> <span class="n">total_time</span><span class="p">,</span>
+        <span class="s1">&#39;characterization set&#39;</span><span class="p">:</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">E</span>
     <span class="p">}</span>
     <span class="k">if</span> <span class="n">cache_and_non_det_check</span><span class="p">:</span>
         <span class="n">info</span><span class="p">[</span><span class="s1">&#39;cache_saved&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sul</span><span class="o">.</span><span class="n">num_cached_queries</span>
@@ -330,8 +330,7 @@
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Hypothesis </span><span class="si">{</span><span class="n">learning_rounds</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">)</span><span class="si">}</span><span class="s1"> states.&#39;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">print_level</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
-            <span class="n">print_observation_table</span><span class="p">(</span><span class="n">observation_table</span><span class="o">.</span><span class="n">S</span><span class="p">,</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">s_dot_a</span><span class="p">(),</span>
-                                    <span class="n">observation_table</span><span class="o">.</span><span class="n">E</span><span class="p">,</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+            <span class="n">print_observation_table</span><span class="p">(</span><span class="n">observation_table</span><span class="p">,</span> <span class="s1">&#39;det&#39;</span><span class="p">)</span>
 
         <span class="c1"># Find counterexample</span>
         <span class="n">eq_query_start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
@@ -377,7 +376,8 @@
         <span class="s1">&#39;steps_eq_oracle&#39;</span><span class="p">:</span> <span class="n">eq_oracle</span><span class="o">.</span><span class="n">num_steps</span><span class="p">,</span>
         <span class="s1">&#39;learning_time&#39;</span><span class="p">:</span> <span class="n">learning_time</span><span class="p">,</span>
         <span class="s1">&#39;eq_oracle_time&#39;</span><span class="p">:</span> <span class="n">eq_query_time</span><span class="p">,</span>
-        <span class="s1">&#39;total_time&#39;</span><span class="p">:</span> <span class="n">total_time</span>
+        <span class="s1">&#39;total_time&#39;</span><span class="p">:</span> <span class="n">total_time</span><span class="p">,</span>
+        <span class="s1">&#39;characterization set&#39;</span><span class="p">:</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">E</span>
     <span class="p">}</span>
     <span class="k">if</span> <span class="n">cache_and_non_det_check</span><span class="p">:</span>
         <span class="n">info</span><span class="p">[</span><span class="s1">&#39;cache_saved&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sul</span><span class="o">.</span><span class="n">num_cached_queries</span>

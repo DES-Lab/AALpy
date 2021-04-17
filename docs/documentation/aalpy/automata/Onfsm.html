@@ -52,6 +52,9 @@
                                 <a class="function" href="#Onfsm.step">step</a>
                         </li>
                         <li>
+                                <a class="function" href="#Onfsm.outputs_on_input">outputs_on_input</a>
+                        </li>
+                        <li>
                                 <a class="function" href="#Onfsm.step_to">step_to</a>
                         </li>
                 </ul>
@@ -141,6 +144,20 @@
         <span class="n">output</span> <span class="o">=</span> <span class="n">transition</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">current_state</span> <span class="o">=</span> <span class="n">transition</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">output</span>
+
+    <span class="k">def</span> <span class="nf">outputs_on_input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">letter</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;All possible observable outputs after executing the current input &#39;letter&#39;.</span>
+
+<span class="sd">        Args:</span>
+
+<span class="sd">            letter: input</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">            list of observeable outputs</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">trans</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">trans</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">letter</span><span class="p">]]</span>
 
     <span class="k">def</span> <span class="nf">step_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inp</span><span class="p">,</span> <span class="n">out</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Performs a step on the automaton based on the input `inp` and output `out`.</span>
@@ -365,6 +382,20 @@ state.</p>
         <span class="bp">self</span><span class="o">.</span><span class="n">current_state</span> <span class="o">=</span> <span class="n">transition</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">output</span>
 
+    <span class="k">def</span> <span class="nf">outputs_on_input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">letter</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;All possible observable outputs after executing the current input &#39;letter&#39;.</span>
+
+<span class="sd">        Args:</span>
+
+<span class="sd">            letter: input</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">            list of observeable outputs</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">trans</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">trans</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">letter</span><span class="p">]]</span>
+
     <span class="k">def</span> <span class="nf">step_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inp</span><span class="p">,</span> <span class="n">out</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Performs a step on the automaton based on the input `inp` and output `out`.</span>
 
@@ -454,6 +485,48 @@ states (list) : list containing all states of the automaton
 <p>Returns:</p>
 
 <pre><code>output of the probabilistically chosen transition
+</code></pre>
+</div>
+
+
+                            </div>
+                            <div id="Onfsm.outputs_on_input" class="classattr">
+                                        <div class="attr function"><a class="headerlink" href="#Onfsm.outputs_on_input">#&nbsp;&nbsp</a>
+
+        
+            <span class="def">def</span>
+            <span class="name">outputs_on_input</span><span class="signature">(self, letter)</span>:
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">outputs_on_input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">letter</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;All possible observable outputs after executing the current input &#39;letter&#39;.</span>
+
+<span class="sd">        Args:</span>
+
+<span class="sd">            letter: input</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">            list of observeable outputs</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">trans</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">trans</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">letter</span><span class="p">]]</span>
+</pre></div>
+
+        </details>
+
+            <div class="docstring"><p>All possible observable outputs after executing the current input 'letter'.</p>
+
+<p>Args:</p>
+
+<pre><code>letter: input
+</code></pre>
+
+<p>Returns:</p>
+
+<pre><code>list of observeable outputs
 </code></pre>
 </div>
 

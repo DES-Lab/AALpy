@@ -36,6 +36,9 @@
                         <li>
                                 <a class="function" href="#Oracle.find_cex">find_cex</a>
                         </li>
+                        <li>
+                                <a class="function" href="#Oracle.reset_hyp_and_sul">reset_hyp_and_sul</a>
+                        </li>
                 </ul>
 
             </li>
@@ -95,6 +98,20 @@
 <span class="sd">            tuple or list containing counterexample inputs, None if no counterexample is found</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">reset_hyp_and_sul</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reset SUL and hypothesis to initial state.</span>
+
+<span class="sd">        Args:</span>
+
+<span class="sd">            hypothesis: current hypothesis</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">hypothesis</span><span class="o">.</span><span class="n">reset_to_initial</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_queries</span> <span class="o">+=</span> <span class="mi">1</span>
 </pre></div>
 
         </details>
@@ -144,6 +161,20 @@
 <span class="sd">            tuple or list containing counterexample inputs, None if no counterexample is found</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">reset_hyp_and_sul</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reset SUL and hypothesis to initial state.</span>
+
+<span class="sd">        Args:</span>
+
+<span class="sd">            hypothesis: current hypothesis</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">hypothesis</span><span class="o">.</span><span class="n">reset_to_initial</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_queries</span> <span class="o">+=</span> <span class="mi">1</span>
 </pre></div>
 
         </details>
@@ -233,6 +264,43 @@ current hypothesis.</p>
 <p>Returns:</p>
 
 <pre><code>tuple or list containing counterexample inputs, None if no counterexample is found
+</code></pre>
+</div>
+
+
+                            </div>
+                            <div id="Oracle.reset_hyp_and_sul" class="classattr">
+                                        <div class="attr function"><a class="headerlink" href="#Oracle.reset_hyp_and_sul">#&nbsp;&nbsp</a>
+
+        
+            <span class="def">def</span>
+            <span class="name">reset_hyp_and_sul</span><span class="signature">(self, hypothesis)</span>:
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">reset_hyp_and_sul</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reset SUL and hypothesis to initial state.</span>
+
+<span class="sd">        Args:</span>
+
+<span class="sd">            hypothesis: current hypothesis</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">hypothesis</span><span class="o">.</span><span class="n">reset_to_initial</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_queries</span> <span class="o">+=</span> <span class="mi">1</span>
+</pre></div>
+
+        </details>
+
+            <div class="docstring"><p>Reset SUL and hypothesis to initial state.</p>
+
+<p>Args:</p>
+
+<pre><code>hypothesis: current hypothesis
 </code></pre>
 </div>
 
