@@ -90,7 +90,7 @@ def random_dfa_example(alphabet_size, number_of_states, num_accepting_states=1):
     user_based_eq_oracle = UserInputEqOracle(alphabet, sul_dfa)
     kWayStateCoverageEqOracle = KWayStateCoverageEqOracle(alphabet, sul_dfa)
     learned_dfa = run_Lstar(alphabet, sul_dfa, random_walk_eq_oracle, automaton_type='dfa',
-                            cache_and_non_det_check=False, cex_processing='rs')
+                            cache_and_non_det_check=True, cex_processing='rs')
 
     # visualize_automaton(learned_dfa)
     return learned_dfa

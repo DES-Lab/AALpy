@@ -112,9 +112,11 @@ class ObservationTable:
         """
         Helper generator function that returns extended S, or S.A set.
         """
+        s_set = set(self.S)
         for s in self.S:
             for a in self.A:
-                yield s + a
+                if s + a not in s_set:
+                    yield s + a
 
     def update_obs_table(self, s_set: list = None, e_set: list = None):
         """

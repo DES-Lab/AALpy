@@ -69,7 +69,9 @@ class NonDetObservationTable:
         extension = []
         for a in self.A:
             for t in self.T[row][a]:
-                extension.append((row[0] + a, row[1] + tuple([t])))
+                new_row = (row[0] + a, row[1] + tuple([t]))
+                if new_row not in self.S:
+                    extension.append(new_row)
 
         self.S_dot_A.extend(extension)
         return extension
