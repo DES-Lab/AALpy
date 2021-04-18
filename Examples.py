@@ -491,7 +491,7 @@ def weird_coffee_machine_mdp_example():
 
 
 def benchmark_stochastic_example(example, automaton_type='smm', n_c=20, n_resample=1000, min_rounds=10, max_rounds=500,
-                                 strategy='normal', cex_processing=None, stopping_based_on_prop=None, samples_cex_strategy=None):
+                                 strategy='normal', cex_processing='longest_prefix', stopping_based_on_prop=None, samples_cex_strategy=None):
     """
     Learning the stochastic Mealy Machine(SMM) various benchmarking examples
     found in Chapter 7 of Martin's Tappler PhD thesis.
