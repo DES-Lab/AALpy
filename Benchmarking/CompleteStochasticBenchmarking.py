@@ -6,7 +6,7 @@ import aalpy.paths
 from aalpy.SULs import MdpSUL
 from aalpy.learning_algs import run_stochastic_Lstar
 from aalpy.oracles.RandomWordEqOracle import UnseenOutputRandomWordEqOracle
-from aalpy.utils import load_automaton_from_file
+from aalpy.utils import load_automaton_from_file, get_properties_file, get_correct_prop_values
 from aalpy.utils import smm_to_mdp_conversion, model_check_experiment
 
 seeds = [291334,15354,9430459,92344168,55451679,569315,7776892,3875261,811,51,766603,778438967,9819877,6755560,52903,5257,4635,358,1441,838]
@@ -30,7 +30,7 @@ experiment_repetition = 20
 uniform_parameters = False
 strategy = ["normal", "chi2"] # chi_square
 cex_sampling = ['bfs',] # random:100:0.15
-cex_processing = ['longest_prefix'] # add a single prefix
+cex_processing = [None, 'longest_prefix'] # add a single prefix
 start = time.time()
 
 for strat in strategy:
@@ -63,7 +63,7 @@ for strat in strategy:
                     learned_mdp, data_mdp = run_stochastic_Lstar(input_alphabet, mdp_sul, eq_oracle, automaton_type='mdp',
                                                                  min_rounds=min_rounds, strategy=strat,
                                                                  max_rounds=max_rounds, return_data=True, samples_cex_strategy=cex_stat,
-                                                                 print_level=1, cex_processing=cex_proc, target_unambiguity=0.995)
+                                                                 print_level=1, cex_processing=cex_proc, target_unambiguity=0.99)
 
                     del mdp_sul
                     del eq_oracle
@@ -76,12 +76,14 @@ for strat in strategy:
                     learned_smm, data_smm = run_stochastic_Lstar(input_alphabet, mdp_sul, eq_oracle, automaton_type='smm',
                                                                  min_rounds=min_rounds, strategy=strat,
                                                                  max_rounds=max_rounds, return_data=True, samples_cex_strategy=cex_stat,
-                                                                 print_level=1, cex_processing=cex_proc, target_unambiguity=0.995)
+                                                                 print_level=1, cex_processing=cex_proc, target_unambiguity=0.99)
 
                     smm_2_mdp = smm_to_mdp_conversion(learned_smm)
 
-                    mdp_results, mdp_err = model_check_experiment(exp_name, learned_mdp)
-                    smm_results, smm_err = model_check_experiment(exp_name, smm_2_mdp)
+                    mdp_results, mdp_err = model_check_experiment(get_properties_file(exp_name),
+                                                                  get_correct_prop_values(exp_name), learned_mdp)
+                    smm_results, smm_err = model_check_experiment(get_properties_file(exp_name),
+                                                                  get_correct_prop_values(exp_name), smm_2_mdp)
 
                     properties_string_header = ",".join([f'{key}_val,{key}_err' for key in mdp_results.keys()])
 

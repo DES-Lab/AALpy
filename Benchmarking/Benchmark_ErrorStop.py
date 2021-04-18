@@ -6,7 +6,7 @@ import aalpy.paths
 from aalpy.SULs import MdpSUL
 from aalpy.learning_algs import run_stochastic_Lstar
 from aalpy.oracles.RandomWordEqOracle import UnseenOutputRandomWordEqOracle
-from aalpy.utils import load_automaton_from_file
+from aalpy.utils import load_automaton_from_file, get_properties_file, get_correct_prop_values
 from aalpy.utils import smm_to_mdp_conversion, model_check_experiment
 
 seeds = [1212,4557,19059,468,43,654,235345,6546,76768,4563,543526,777676,5555,776767,87878787,98989,60967553,3866677,1555841,8638]
@@ -77,6 +77,8 @@ for strat in strategy:
                         elif exp_name == 'tcp':
                             n_c, n_resample = 20, 1000
 
+                    stopping_data = (get_properties_file(exp_name), get_correct_prop_values(exp_name), 0.02)
+
                     original_mdp = load_automaton_from_file(path_to_dir + file, automaton_type='mdp')
                     input_alphabet = original_mdp.get_input_alphabet()
 
@@ -88,7 +90,7 @@ for strat in strategy:
                     learned_mdp, data_mdp = run_stochastic_Lstar(input_alphabet, mdp_sul, eq_oracle, automaton_type='mdp',
                                                                  n_c=n_c, n_resample=n_resample, min_rounds=min_rounds, strategy=strat,
                                                                  max_rounds=max_rounds, return_data=True, samples_cex_strategy=cex_stat,
-                                                                 print_level=1, cex_processing=cex_proc, error_bound=0.02, property_stop_exp_name=exp_name)
+                                                                 print_level=1, cex_processing=cex_proc, property_based_stopping=stopping_data)
 
                     del mdp_sul
                     del eq_oracle
@@ -101,12 +103,14 @@ for strat in strategy:
                     learned_smm, data_smm = run_stochastic_Lstar(input_alphabet, mdp_sul, eq_oracle, automaton_type='smm',
                                                                  n_c=n_c, n_resample=n_resample, min_rounds=min_rounds, strategy=strat,
                                                                  max_rounds=max_rounds, return_data=True, samples_cex_strategy=cex_stat,
-                                                                 print_level=1, cex_processing=cex_proc, error_bound=0.02, property_stop_exp_name=exp_name)
+                                                                 print_level=1, cex_processing=cex_proc, property_based_stopping=stopping_data)
 
                     smm_2_mdp = smm_to_mdp_conversion(learned_smm)
 
-                    mdp_results, mdp_err = model_check_experiment(exp_name, learned_mdp)
-                    smm_results, smm_err = model_check_experiment(exp_name, smm_2_mdp)
+                    mdp_results, mdp_err = model_check_experiment(get_properties_file(exp_name),
+                                                                  get_correct_prop_values(exp_name), learned_mdp)
+                    smm_results, smm_err = model_check_experiment(get_properties_file(exp_name),
+                                                                  get_correct_prop_values(exp_name), smm_2_mdp)
 
                     properties_string_header = ",".join([f'{key}_val,{key}_err' for key in mdp_results.keys()])
 

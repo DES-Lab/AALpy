@@ -491,7 +491,7 @@ def weird_coffee_machine_mdp_example():
 
 
 def benchmark_stochastic_example(example, automaton_type='smm', n_c=20, n_resample=1000, min_rounds=10, max_rounds=500,
-                                 strategy='normal', cex_processing=None, error_bound=None, samples_cex_strategy=None):
+                                 strategy='normal', cex_processing=None, stopping_based_on_prop=None, samples_cex_strategy=None):
     """
     Learning the stochastic Mealy Machine(SMM) various benchmarking examples
     found in Chapter 7 of Martin's Tappler PhD thesis.
@@ -503,8 +503,10 @@ def benchmark_stochastic_example(example, automaton_type='smm', n_c=20, n_resamp
     :param max_rounds: maximum number of learning rounds
     :param strategy: normal, classic or chi2
     :param cex_processing: counterexample processing strategy
+    :stopping_based_on_prop: a tuple (path to properties, correct values, error bound)
     :param samples_cex_strategy: strategy to sample cex in the trace tree
     :return: learned SMM
+
     """
     from aalpy.SULs import StochasticMealySUL
     from aalpy.oracles import UnseenOutputRandomWalkEqOracle, UnseenOutputRandomWordEqOracle
@@ -524,7 +526,7 @@ def benchmark_stochastic_example(example, automaton_type='smm', n_c=20, n_resamp
                                        n_resample=n_resample, min_rounds=min_rounds, max_rounds=max_rounds,
                                        automaton_type=automaton_type, strategy=strategy, cex_processing=cex_processing,
                                        samples_cex_strategy=samples_cex_strategy, target_unambiguity=0.99,
-                                       error_bound=error_bound, property_stop_exp_name=example if error_bound else None)
+                                       property_based_stopping=stopping_based_on_prop)
 
     return learned_mdp
 

@@ -17,8 +17,8 @@ print_options = [0, 1, 2, 3]
 
 def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_resample=100, target_unambiguity=0.99,
                          min_rounds=10, max_rounds=200, automaton_type='mdp', strategy='normal',
-                         cex_processing='longest_prefix',samples_cex_strategy='bfs', return_data=False,
-                         error_bound=None, property_stop_exp_name=None, print_level=2):
+                         cex_processing='longest_prefix', samples_cex_strategy='bfs', return_data=False,
+                         property_based_stopping=None, print_level=2):
     """
     Learning of Markov Decision Processes based on 'L*-Based Learning of Markov Decision Processes' by Tappler et al.
 
@@ -50,9 +50,8 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_
         samples_cex_strategy: strategy for finding counterexamples in the trace tree. None, 'bfs' or
             "random:<#traces to check:int>:<stop probability for single trace in [0,1)>" eg. random:200:0.2
 
-        error_bound: allowed error for each property. Reccomended one is 0.02
-
-        property_stop_exp_name: properties to reach withing error bound for early stopping
+        property_based_stopping: A tuple containing (path to the properties file, correct values of each property,
+            allowed error for each property. Recommended one is 0.02 (2%)).
 
         return_data: if True, map containing all information like number of queries... will be returned
             (Default value = False)
@@ -69,6 +68,8 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_
     assert strategy in strategies
     assert samples_cex_strategy in cex_sampling_options or samples_cex_strategy.startswith('random')
     assert cex_processing in cex_processing_options
+    if property_based_stopping:
+        assert len(property_based_stopping) == 3
 
     compatibility_checker = ChiSquareChecker() if strategy == "chi2" else \
         AdvancedHoeffdingChecker() if strategy != "classic" else HoeffdingChecker()
@@ -145,13 +146,12 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_
         refined = observation_table.refine_not_completed_cells(n_resample)
         observation_table.update_obs_table_with_freq_obs()
 
-        if not chaos_cex_present and property_stop_exp_name and learning_rounds >= min_rounds and \
-                stop_based_on_confidence(error_bound, hypothesis, property_stop_exp_name, print_level):
+        if not chaos_cex_present and property_based_stopping and learning_rounds >= min_rounds and \
+                stop_based_on_confidence(hypothesis, property_based_stopping, print_level):
             break
-
-        if observation_table.stop(learning_rounds, chaos_present=chaos_cex_present, min_rounds=min_rounds,
-                                  max_rounds=max_rounds, print_unambiguity=print_level > 1,
-                                  target_unambiguity=target_unambiguity):
+        elif observation_table.stop(learning_rounds, chaos_present=chaos_cex_present, min_rounds=min_rounds,
+                                    max_rounds=max_rounds, print_unambiguity=print_level > 1,
+                                    target_unambiguity=target_unambiguity):
             break
 
         if not refined:
