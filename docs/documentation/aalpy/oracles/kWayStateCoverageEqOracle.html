@@ -68,6 +68,7 @@
 <span class="sd">    A test case will be computed for every k-combination or k-permutation of states with additional</span>
 <span class="sd">    random walk at the end.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alphabet</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">random_walk_len</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;combinations&#39;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 
@@ -103,7 +104,6 @@
                     <span class="n">out_hyp</span> <span class="o">=</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">num_steps</span> <span class="o">+=</span> <span class="mi">1</span>
 
-
                     <span class="k">if</span> <span class="n">out_sul</span> <span class="o">!=</span> <span class="n">out_hyp</span><span class="p">:</span>
                         <span class="k">return</span> <span class="n">path</span><span class="p">[:</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
 
@@ -111,7 +111,6 @@
         <span class="n">shuffle</span><span class="p">(</span><span class="n">states</span><span class="p">)</span>
 
         <span class="k">for</span> <span class="n">comb</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fun</span><span class="p">(</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">k</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">num_queries</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="n">prefixes</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span><span class="n">c</span><span class="o">.</span><span class="n">prefix</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">comb</span><span class="p">])</span>
             <span class="k">if</span> <span class="n">prefixes</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache</span><span class="p">:</span>
                 <span class="k">continue</span>
@@ -126,9 +125,8 @@
 
             <span class="n">path</span> <span class="o">+=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">choices</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">random_walk_len</span><span class="p">))</span>
 
-            <span class="n">hypothesis</span><span class="o">.</span><span class="n">reset_to_initial</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reset_hyp_and_sul</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
+
             <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
                 <span class="n">out_sul</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
                 <span class="n">out_hyp</span> <span class="o">=</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
@@ -159,6 +157,7 @@
 <span class="sd">    A test case will be computed for every k-combination or k-permutation of states with additional</span>
 <span class="sd">    random walk at the end.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alphabet</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">random_walk_len</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;combinations&#39;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 
@@ -194,7 +193,6 @@
                     <span class="n">out_hyp</span> <span class="o">=</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">num_steps</span> <span class="o">+=</span> <span class="mi">1</span>
 
-
                     <span class="k">if</span> <span class="n">out_sul</span> <span class="o">!=</span> <span class="n">out_hyp</span><span class="p">:</span>
                         <span class="k">return</span> <span class="n">path</span><span class="p">[:</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
 
@@ -202,7 +200,6 @@
         <span class="n">shuffle</span><span class="p">(</span><span class="n">states</span><span class="p">)</span>
 
         <span class="k">for</span> <span class="n">comb</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fun</span><span class="p">(</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">k</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">num_queries</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="n">prefixes</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span><span class="n">c</span><span class="o">.</span><span class="n">prefix</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">comb</span><span class="p">])</span>
             <span class="k">if</span> <span class="n">prefixes</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache</span><span class="p">:</span>
                 <span class="k">continue</span>
@@ -217,9 +214,8 @@
 
             <span class="n">path</span> <span class="o">+=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">choices</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">random_walk_len</span><span class="p">))</span>
 
-            <span class="n">hypothesis</span><span class="o">.</span><span class="n">reset_to_initial</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reset_hyp_and_sul</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
+
             <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
                 <span class="n">out_sul</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
                 <span class="n">out_hyp</span> <span class="o">=</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
@@ -317,7 +313,6 @@ method: either 'combinations' or 'permutations'
                     <span class="n">out_hyp</span> <span class="o">=</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">num_steps</span> <span class="o">+=</span> <span class="mi">1</span>
 
-
                     <span class="k">if</span> <span class="n">out_sul</span> <span class="o">!=</span> <span class="n">out_hyp</span><span class="p">:</span>
                         <span class="k">return</span> <span class="n">path</span><span class="p">[:</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
 
@@ -325,7 +320,6 @@ method: either 'combinations' or 'permutations'
         <span class="n">shuffle</span><span class="p">(</span><span class="n">states</span><span class="p">)</span>
 
         <span class="k">for</span> <span class="n">comb</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fun</span><span class="p">(</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">k</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">num_queries</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="n">prefixes</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span><span class="n">c</span><span class="o">.</span><span class="n">prefix</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">comb</span><span class="p">])</span>
             <span class="k">if</span> <span class="n">prefixes</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache</span><span class="p">:</span>
                 <span class="k">continue</span>
@@ -340,9 +334,8 @@ method: either 'combinations' or 'permutations'
 
             <span class="n">path</span> <span class="o">+=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">choices</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">random_walk_len</span><span class="p">))</span>
 
-            <span class="n">hypothesis</span><span class="o">.</span><span class="n">reset_to_initial</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reset_hyp_and_sul</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
+
             <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
                 <span class="n">out_sul</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
                 <span class="n">out_hyp</span> <span class="o">=</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
@@ -370,6 +363,15 @@ current hypothesis.</p>
 </div>
 
 
+                            </div>
+                            <div class="inherited">
+                                <h5>Inherited Members</h5>
+                                <dl>
+                                    <div><dt><a href="../base/Oracle.html#Oracle">aalpy.base.Oracle.Oracle</a></dt>
+                                <dd id="KWayStateCoverageEqOracle.reset_hyp_and_sul" class="function"><a href="../base/Oracle.html#Oracle.reset_hyp_and_sul">reset_hyp_and_sul</a></dd>
+
+            </div>
+                                </dl>
                             </div>
                 </section>
     </main>

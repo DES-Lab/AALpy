@@ -57,6 +57,11 @@ class HoeffdingChecker(DifferenceChecker):
         return False
 
 
+def compute_epsilon(alpha1, n1):
+    epsilon1 = sqrt((1. / (2 * n1)) * log(2. / alpha1))
+    return epsilon1
+
+
 class AdvancedHoeffdingChecker(DifferenceChecker):
     def __init__(self, alpha=0.05, use_diff=False):
         self.alpha = alpha
@@ -72,8 +77,8 @@ class AdvancedHoeffdingChecker(DifferenceChecker):
                 c2o = c2[o] if o in c2.keys() else 0
                 alpha1 = self.alpha
                 alpha2 = self.alpha
-                epsilon1 = self.comute_eps(alpha1, n1)
-                epsilon2 = self.comute_eps(alpha2, n2)
+                epsilon1 = compute_epsilon(alpha1, n1)
+                epsilon2 = compute_epsilon(alpha2, n2)
 
                 if abs(c1o / n1 - c2o / n2) > epsilon1 + epsilon2:
                     return True
@@ -96,18 +101,14 @@ class AdvancedHoeffdingChecker(DifferenceChecker):
         elif n1 > 0 or n2 > 0:
             alpha1 = self.alpha
             alpha2 = self.alpha
-            epsilon1 = self.comute_eps(alpha1, max(n1, n2))
-            epsilon2 = self.comute_eps(alpha2, max(n1, n2))
+            epsilon1 = compute_epsilon(alpha1, max(n1, n2))
+            epsilon2 = compute_epsilon(alpha2, max(n1, n2))
             return epsilon1 + epsilon2
         else:
             return 0
 
-    def comute_eps(self, alpha1, n1):
-        epsilon1 = sqrt((1. / (2 * n1)) * log(2. / alpha1))
-        return epsilon1
 
-
-class ChisquareChecker(DifferenceChecker):
+class ChiSquareChecker(DifferenceChecker):
 
     def __init__(self, alpha=0.001, use_diff_value=False):
         self.alpha = alpha

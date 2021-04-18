@@ -66,10 +66,13 @@ class NonDetObservationTable:
 
             New rows of extended S set.
         """
+        s_set = set(self.S)
         extension = []
         for a in self.A:
             for t in self.T[row][a]:
-                extension.append((row[0] + a, row[1] + tuple([t])))
+                new_row = (row[0] + a, row[1] + tuple([t]))
+                if new_row not in s_set:
+                    extension.append(new_row)
 
         self.S_dot_A.extend(extension)
         return extension

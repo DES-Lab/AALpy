@@ -1,0 +1,31 @@
+digraph g {
+__start0 [label="" shape="none"];
+q5 [shape="circle" margin=0 label="q5"];
+q2 [shape="circle" margin=0 label="q2"];
+q7 [shape="circle" margin=0 label="q7"];
+q8 [shape="circle" margin=0 label="q8"];
+q4 [shape="circle" margin=0 label="q4"];
+q6 [shape="circle" margin=0 label="q6"];
+q0 [shape="circle" margin=0 label="q0"];
+q1 [shape="circle" margin=0 label="q1"];
+q3 [shape="circle" margin=0 label="q3"];
+q8 -> q6 [label="b/0"];
+q5 -> q1 [label="b/O"];
+q1 -> q3 [label="a/2"];
+q7 -> q2 [label="b/0"];
+q2 -> q8 [label="b/0"];
+q8 -> q8 [label="a/1"];
+q6 -> q5 [label="b/0"];
+q2 -> q4 [label="a/2"];
+q4 -> q4 [label="b/0"];
+q1 -> q1 [label="b/0"];
+q5 -> q5 [label="a/1"];
+q3 -> q7 [label="b/0"];
+q6 -> q0 [label="a/2"];
+q0 -> q6 [label="a/2"];
+q4 -> q2 [label="a/2"];
+q3 -> q1 [label="a/2"];
+q0 -> q0 [label="b/0"];
+q7 -> q7 [label="a/1"];
+__start0 -> q1;
+}

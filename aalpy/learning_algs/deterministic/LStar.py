@@ -148,7 +148,8 @@ def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type,
         'steps_eq_oracle': eq_oracle.num_steps,
         'learning_time': learning_time,
         'eq_oracle_time': eq_query_time,
-        'total_time': total_time
+        'total_time': total_time,
+        'characterization set': observation_table.E
     }
     if cache_and_non_det_check:
         info['cache_saved'] = sul.num_cached_queries

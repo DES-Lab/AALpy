@@ -9,6 +9,7 @@ class KWayStateCoverageEqOracle(Oracle):
     A test case will be computed for every k-combination or k-permutation of states with additional
     random walk at the end.
     """
+
     def __init__(self, alphabet: list, sul: SUL, k=2, random_walk_len=100, method='combinations'):
         """
 
@@ -44,7 +45,6 @@ class KWayStateCoverageEqOracle(Oracle):
                     out_hyp = hypothesis.step(p)
                     self.num_steps += 1
 
-
                     if out_sul != out_hyp:
                         return path[:i + 1]
 
@@ -52,7 +52,6 @@ class KWayStateCoverageEqOracle(Oracle):
         shuffle(states)
 
         for comb in self.fun(hypothesis.states, self.k):
-            self.num_queries += 1
             prefixes = frozenset([c.prefix for c in comb])
             if prefixes in self.cache:
                 continue
@@ -67,9 +66,8 @@ class KWayStateCoverageEqOracle(Oracle):
 
             path += tuple(choices(self.alphabet, k=self.random_walk_len))
 
-            hypothesis.reset_to_initial()
-            self.sul.post()
-            self.sul.pre()
+            self.reset_hyp_and_sul(hypothesis)
+
             for i, p in enumerate(path):
                 out_sul = self.sul.step(p)
                 out_hyp = hypothesis.step(p)

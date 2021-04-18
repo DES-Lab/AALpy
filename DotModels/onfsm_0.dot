@@ -1,0 +1,10 @@
+digraph g {
+__start0 [label="" shape="none"];
+q0 [shape="circle" margin=0 label="q0"];
+q1 [shape="circle" margin=0 label="q1"];
+q0 -> q0 [label="a/1"];
+q0 -> q1 [label="b/0"];
+q1 -> q1 [label="b/O"];
+q1 -> q1 [label="a/1"];
+__start0 -> q0;
+}

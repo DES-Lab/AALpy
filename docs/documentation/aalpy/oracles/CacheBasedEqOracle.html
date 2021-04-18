@@ -73,7 +73,7 @@
 <span class="sd">    of length (max_tree_depth + &#39;depth_increase&#39;) - len(prefix), where prefix is a path to the leaf.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alphabet</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">num_walks</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">depth_increase</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">reset_after_cex</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alphabet</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">num_walks</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">depth_increase</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">reset_after_cex</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="sd">        Args:</span>
@@ -106,15 +106,13 @@
         <span class="n">max_tree_depth</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">paths_to_leaves</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="nb">len</span><span class="p">))</span>
 
         <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_walks_done</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_walks</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">num_walks_done</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reset_hyp_and_sul</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
 
             <span class="n">prefix</span> <span class="o">=</span> <span class="n">choice</span><span class="p">(</span><span class="n">paths_to_leaves</span><span class="p">)</span>
             <span class="n">walk_len</span> <span class="o">=</span> <span class="p">(</span><span class="n">max_tree_depth</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">depth_increase</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span>
             <span class="n">inputs</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="n">inputs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span>
-
-            <span class="n">hypothesis</span><span class="o">.</span><span class="n">reset_to_initial</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
 
             <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">prefix</span><span class="p">:</span>
                 <span class="n">hypothesis</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
@@ -182,7 +180,7 @@
 <span class="sd">    of length (max_tree_depth + &#39;depth_increase&#39;) - len(prefix), where prefix is a path to the leaf.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alphabet</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">num_walks</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">depth_increase</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">reset_after_cex</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alphabet</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">num_walks</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">depth_increase</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">reset_after_cex</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="sd">        Args:</span>
@@ -215,15 +213,13 @@
         <span class="n">max_tree_depth</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">paths_to_leaves</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="nb">len</span><span class="p">))</span>
 
         <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_walks_done</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_walks</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">num_walks_done</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reset_hyp_and_sul</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
 
             <span class="n">prefix</span> <span class="o">=</span> <span class="n">choice</span><span class="p">(</span><span class="n">paths_to_leaves</span><span class="p">)</span>
             <span class="n">walk_len</span> <span class="o">=</span> <span class="p">(</span><span class="n">max_tree_depth</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">depth_increase</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span>
             <span class="n">inputs</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="n">inputs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span>
-
-            <span class="n">hypothesis</span><span class="o">.</span><span class="n">reset_to_initial</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
 
             <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">prefix</span><span class="p">:</span>
                 <span class="n">hypothesis</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
@@ -286,14 +282,14 @@ of length (max_tree_depth + 'depth_increase') - len(prefix), where prefix is a p
     self,
     alphabet: list,
     sul: <a href="../base/SUL.html#SUL">aalpy.base.SUL.SUL</a>,
-    num_walks=1000,
+    num_walks=100,
     depth_increase=5,
     reset_after_cex=True
 )</span>    </div>
 
                 <details>
             <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alphabet</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">num_walks</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">depth_increase</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">reset_after_cex</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alphabet</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">num_walks</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">depth_increase</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">reset_after_cex</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="sd">        Args:</span>
@@ -356,15 +352,13 @@ reset_after_cex: if False, total number of queries will equal num_walks, if True
         <span class="n">max_tree_depth</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">paths_to_leaves</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="nb">len</span><span class="p">))</span>
 
         <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_walks_done</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_walks</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">num_walks_done</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reset_hyp_and_sul</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
 
             <span class="n">prefix</span> <span class="o">=</span> <span class="n">choice</span><span class="p">(</span><span class="n">paths_to_leaves</span><span class="p">)</span>
             <span class="n">walk_len</span> <span class="o">=</span> <span class="p">(</span><span class="n">max_tree_depth</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">depth_increase</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span>
             <span class="n">inputs</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="n">inputs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span>
-
-            <span class="n">hypothesis</span><span class="o">.</span><span class="n">reset_to_initial</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
 
             <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">prefix</span><span class="p">:</span>
                 <span class="n">hypothesis</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
@@ -450,6 +444,15 @@ current hypothesis.</p>
 </div>
 
 
+                            </div>
+                            <div class="inherited">
+                                <h5>Inherited Members</h5>
+                                <dl>
+                                    <div><dt><a href="../base/Oracle.html#Oracle">aalpy.base.Oracle.Oracle</a></dt>
+                                <dd id="CacheBasedEqOracle.reset_hyp_and_sul" class="function"><a href="../base/Oracle.html#Oracle.reset_hyp_and_sul">reset_hyp_and_sul</a></dd>
+
+            </div>
+                                </dl>
                             </div>
                 </section>
     </main>

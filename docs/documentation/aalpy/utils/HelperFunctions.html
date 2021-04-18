@@ -75,7 +75,8 @@
                 
                         <details>
             <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span><span class="kn">import</span> <span class="nn">string</span>
+            <div class="codehilite"><pre><span></span><span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">string</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
 
 <span class="kn">from</span> <span class="nn">aalpy.automata</span> <span class="kn">import</span> <span class="n">Mdp</span><span class="p">,</span> <span class="n">StochasticMealyMachine</span><span class="p">,</span> <span class="n">MdpState</span>
@@ -225,34 +226,36 @@
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;-----------------------------------&#39;</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">print_observation_table</span><span class="p">(</span><span class="n">s_set</span><span class="p">,</span> <span class="n">extended_s</span><span class="p">,</span> <span class="n">e_set</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">det_table</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">print_observation_table</span><span class="p">(</span><span class="n">ot</span><span class="p">,</span> <span class="n">table_type</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">      s_set: S set</span>
-<span class="sd">      extended_s: extended S set</span>
-<span class="sd">      e_set: E set</span>
-<span class="sd">      table: T function</span>
-<span class="sd">      det_table: is table from deterministic learning. Needed as the table is differently encoded</span>
-<span class="sd">        for optimization.(Default value = True)</span>
 
-<span class="sd">    Returns:</span>
+<span class="sd">        ot: observation table</span>
+<span class="sd">        table_type: &#39;det&#39;, &#39;non-det&#39;, or &#39;stoc&#39;</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">table_type</span> <span class="o">==</span> <span class="s1">&#39;det&#39;</span><span class="p">:</span>
+        <span class="n">s_set</span><span class="p">,</span> <span class="n">extended_s</span><span class="p">,</span> <span class="n">e_set</span><span class="p">,</span> <span class="n">table</span> <span class="o">=</span> <span class="n">ot</span><span class="o">.</span><span class="n">S</span><span class="p">,</span> <span class="n">ot</span><span class="o">.</span><span class="n">s_dot_a</span><span class="p">(),</span> <span class="n">ot</span><span class="o">.</span><span class="n">E</span><span class="p">,</span> <span class="n">ot</span><span class="o">.</span><span class="n">T</span>
+    <span class="k">elif</span> <span class="n">table_type</span> <span class="o">==</span> <span class="s1">&#39;non-det&#39;</span><span class="p">:</span>
+        <span class="n">s_set</span><span class="p">,</span> <span class="n">extended_s</span><span class="p">,</span> <span class="n">e_set</span><span class="p">,</span> <span class="n">table</span> <span class="o">=</span> <span class="n">ot</span><span class="o">.</span><span class="n">S</span><span class="p">,</span> <span class="n">ot</span><span class="o">.</span><span class="n">S_dot_A</span><span class="p">,</span> <span class="n">ot</span><span class="o">.</span><span class="n">E</span><span class="p">,</span> <span class="n">ot</span><span class="o">.</span><span class="n">T</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">s_set</span><span class="p">,</span> <span class="n">extended_s</span><span class="p">,</span> <span class="n">e_set</span><span class="p">,</span> <span class="n">table</span> <span class="o">=</span> <span class="n">ot</span><span class="o">.</span><span class="n">S</span><span class="p">,</span> <span class="n">ot</span><span class="o">.</span><span class="n">get_extended_s</span><span class="p">(),</span> <span class="n">ot</span><span class="o">.</span><span class="n">E</span><span class="p">,</span> <span class="n">ot</span><span class="o">.</span><span class="n">T</span>
+
     <span class="n">headers</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">e_set</span><span class="p">]</span>
     <span class="n">s_rows</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">extended_rows</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">headers</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Prefixes / E set&#39;</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">s_set</span><span class="p">:</span>
         <span class="n">row</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">)]</span>
-        <span class="k">if</span> <span class="n">det_table</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">table_type</span> <span class="o">==</span> <span class="s1">&#39;det&#39;</span><span class="p">:</span>
             <span class="n">row</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">table</span><span class="p">[</span><span class="n">s</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">row</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">table</span><span class="p">[</span><span class="n">s</span><span class="p">][</span><span class="n">e</span><span class="p">])</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">e_set</span><span class="p">)</span>
         <span class="n">s_rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">extended_s</span><span class="p">:</span>
         <span class="n">row</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">)]</span>
-        <span class="k">if</span> <span class="n">det_table</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">table_type</span> <span class="o">==</span> <span class="s1">&#39;det&#39;</span><span class="p">:</span>
             <span class="n">row</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">table</span><span class="p">[</span><span class="n">s</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">row</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">table</span><span class="p">[</span><span class="n">s</span><span class="p">][</span><span class="n">e</span><span class="p">])</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">e_set</span><span class="p">)</span>
@@ -614,39 +617,41 @@ They are stored as lists, so with this function set property is maintained.
 
         
             <span class="def">def</span>
-            <span class="name">print_observation_table</span><span class="signature">(s_set, extended_s, e_set, table, det_table=True)</span>:
+            <span class="name">print_observation_table</span><span class="signature">(ot, table_type)</span>:
     </div>
 
                 <details>
             <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">print_observation_table</span><span class="p">(</span><span class="n">s_set</span><span class="p">,</span> <span class="n">extended_s</span><span class="p">,</span> <span class="n">e_set</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">det_table</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">print_observation_table</span><span class="p">(</span><span class="n">ot</span><span class="p">,</span> <span class="n">table_type</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">      s_set: S set</span>
-<span class="sd">      extended_s: extended S set</span>
-<span class="sd">      e_set: E set</span>
-<span class="sd">      table: T function</span>
-<span class="sd">      det_table: is table from deterministic learning. Needed as the table is differently encoded</span>
-<span class="sd">        for optimization.(Default value = True)</span>
 
-<span class="sd">    Returns:</span>
+<span class="sd">        ot: observation table</span>
+<span class="sd">        table_type: &#39;det&#39;, &#39;non-det&#39;, or &#39;stoc&#39;</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">table_type</span> <span class="o">==</span> <span class="s1">&#39;det&#39;</span><span class="p">:</span>
+        <span class="n">s_set</span><span class="p">,</span> <span class="n">extended_s</span><span class="p">,</span> <span class="n">e_set</span><span class="p">,</span> <span class="n">table</span> <span class="o">=</span> <span class="n">ot</span><span class="o">.</span><span class="n">S</span><span class="p">,</span> <span class="n">ot</span><span class="o">.</span><span class="n">s_dot_a</span><span class="p">(),</span> <span class="n">ot</span><span class="o">.</span><span class="n">E</span><span class="p">,</span> <span class="n">ot</span><span class="o">.</span><span class="n">T</span>
+    <span class="k">elif</span> <span class="n">table_type</span> <span class="o">==</span> <span class="s1">&#39;non-det&#39;</span><span class="p">:</span>
+        <span class="n">s_set</span><span class="p">,</span> <span class="n">extended_s</span><span class="p">,</span> <span class="n">e_set</span><span class="p">,</span> <span class="n">table</span> <span class="o">=</span> <span class="n">ot</span><span class="o">.</span><span class="n">S</span><span class="p">,</span> <span class="n">ot</span><span class="o">.</span><span class="n">S_dot_A</span><span class="p">,</span> <span class="n">ot</span><span class="o">.</span><span class="n">E</span><span class="p">,</span> <span class="n">ot</span><span class="o">.</span><span class="n">T</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">s_set</span><span class="p">,</span> <span class="n">extended_s</span><span class="p">,</span> <span class="n">e_set</span><span class="p">,</span> <span class="n">table</span> <span class="o">=</span> <span class="n">ot</span><span class="o">.</span><span class="n">S</span><span class="p">,</span> <span class="n">ot</span><span class="o">.</span><span class="n">get_extended_s</span><span class="p">(),</span> <span class="n">ot</span><span class="o">.</span><span class="n">E</span><span class="p">,</span> <span class="n">ot</span><span class="o">.</span><span class="n">T</span>
+
     <span class="n">headers</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">e_set</span><span class="p">]</span>
     <span class="n">s_rows</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">extended_rows</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">headers</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Prefixes / E set&#39;</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">s_set</span><span class="p">:</span>
         <span class="n">row</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">)]</span>
-        <span class="k">if</span> <span class="n">det_table</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">table_type</span> <span class="o">==</span> <span class="s1">&#39;det&#39;</span><span class="p">:</span>
             <span class="n">row</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">table</span><span class="p">[</span><span class="n">s</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">row</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">table</span><span class="p">[</span><span class="n">s</span><span class="p">][</span><span class="n">e</span><span class="p">])</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">e_set</span><span class="p">)</span>
         <span class="n">s_rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">extended_s</span><span class="p">:</span>
         <span class="n">row</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">)]</span>
-        <span class="k">if</span> <span class="n">det_table</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">table_type</span> <span class="o">==</span> <span class="s1">&#39;det&#39;</span><span class="p">:</span>
             <span class="n">row</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">table</span><span class="p">[</span><span class="n">s</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">row</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">table</span><span class="p">[</span><span class="n">s</span><span class="p">][</span><span class="n">e</span><span class="p">])</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">e_set</span><span class="p">)</span>
@@ -674,15 +679,11 @@ They are stored as lists, so with this function set property is maintained.
 
         </details>
 
-            <div class="docstring"><p>Args:
-  s_set: S set
-  extended_s: extended S set
-  e_set: E set
-  table: T function
-  det_table: is table from deterministic learning. Needed as the table is differently encoded
-    for optimization.(Default value = True)</p>
+            <div class="docstring"><p>Args:</p>
 
-<p>Returns:</p>
+<pre><code>ot: observation table
+table_type: 'det', 'non-det', or 'stoc'
+</code></pre>
 </div>
 
 

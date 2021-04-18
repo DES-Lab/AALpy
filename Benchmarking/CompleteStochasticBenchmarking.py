@@ -9,7 +9,7 @@ from aalpy.oracles.RandomWordEqOracle import UnseenOutputRandomWordEqOracle
 from aalpy.utils import load_automaton_from_file
 from aalpy.utils import smm_to_mdp_conversion, model_check_experiment
 
-seeds = [2934,5354,90459,94168,51679,59315,76892,35261,89111,581,7603,738967,19877,675560,552903,53257,46235,35877,18441,86538]
+seeds = [291334,15354,9430459,92344168,55451679,569315,7776892,3875261,811,51,766603,778438967,9819877,6755560,52903,5257,4635,358,1441,838]
 
 path_to_dir = '../DotModels/MDPs/'
 files = ['first_grid.dot', 'second_grid.dot', 'slot_machine.dot', 'mqtt.dot', 'tcp.dot'] # 'slot_machine.dot' ,'shared_coin.dot'
@@ -23,7 +23,7 @@ aalpy.paths.path_to_properties = "prism_eval_props/"
 
 n_c = 20
 n_resample = 1000
-min_rounds = 25
+min_rounds = 35
 max_rounds = 500
 experiment_repetition = 20
 
@@ -37,7 +37,7 @@ for strat in strategy:
     for cex_stat in cex_sampling:
         for cex_proc in cex_processing:
             print(strat, cex_stat, cex_proc)
-            benchmark_dir = f'FM_mdp_smm/benchmark_new_{strat}/'
+            benchmark_dir = f'FM_mdp_smm/benchmark_new2_{strat}/'
             for seed in range(experiment_repetition):
                 print(seed)
                 random.seed(seeds[seed])
@@ -92,16 +92,16 @@ for strat in strategy:
                                     'Eq. Query Time,Learning Rounds,#MQ Learning,# Steps Learning,'
                                     f'# MQ Eq.Queries,# Steps Eq.Queries ,{properties_string_header}\n')
 
-                    text_file.write(f'learned_mdp_{exp_name},{n_c},{n_resample}, {data_mdp["automaton_size"]}, '
-                                    f'{data_mdp["learning_time"]}, {data_mdp["eq_oracle_time"]}, '
-                                    f'{data_mdp["learning_rounds"]}, {data_mdp["queries_learning"]}, {data_mdp["steps_learning"]},'
-                                    f'{data_mdp["queries_eq_oracle"]}, {data_mdp["steps_eq_oracle"]},'
+                    text_file.write(f'learned_mdp_{exp_name},{n_c},{n_resample},{data_mdp["automaton_size"]},'
+                                    f'{data_mdp["learning_time"]},{data_mdp["eq_oracle_time"]},'
+                                    f'{data_mdp["learning_rounds"]},{data_mdp["queries_learning"]},{data_mdp["steps_learning"]},'
+                                    f'{data_mdp["queries_eq_oracle"]},{data_mdp["steps_eq_oracle"]},'
                                     f'{property_string_mdp}\n')
 
-                    text_file.write(f'learned_smm_{exp_name},{n_c},{n_resample}, {data_smm["automaton_size"]}, '
-                                    f'{data_smm["learning_time"]}, {data_smm["eq_oracle_time"]}, '
-                                    f'{data_smm["learning_rounds"]}, {data_smm["queries_learning"]}, {data_smm["steps_learning"]},'
-                                    f'{data_smm["queries_eq_oracle"]}, {data_smm["steps_eq_oracle"]},'
+                    text_file.write(f'learned_smm_{exp_name},{n_c},{n_resample},{data_smm["automaton_size"]},'
+                                    f'{data_smm["learning_time"]},{data_smm["eq_oracle_time"]}, '
+                                    f'{data_smm["learning_rounds"]},{data_smm["queries_learning"]},{data_smm["steps_learning"]},'
+                                    f'{data_smm["queries_eq_oracle"]},{data_smm["steps_eq_oracle"]},'
                                     f'{property_string_smm}\n')
 
                     text_file.flush()

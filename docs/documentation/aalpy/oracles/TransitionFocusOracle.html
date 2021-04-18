@@ -88,10 +88,7 @@
     <span class="k">def</span> <span class="nf">find_cex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">):</span>
 
         <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_walks</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">num_queries</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="n">hypothesis</span><span class="o">.</span><span class="n">reset_to_initial</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reset_hyp_and_sul</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
 
             <span class="n">curr_state</span> <span class="o">=</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">initial_state</span>
             <span class="n">inputs</span> <span class="o">=</span> <span class="p">[]</span>
@@ -153,10 +150,7 @@
     <span class="k">def</span> <span class="nf">find_cex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">):</span>
 
         <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_walks</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">num_queries</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="n">hypothesis</span><span class="o">.</span><span class="n">reset_to_initial</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reset_hyp_and_sul</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
 
             <span class="n">curr_state</span> <span class="o">=</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">initial_state</span>
             <span class="n">inputs</span> <span class="o">=</span> <span class="p">[]</span>
@@ -244,10 +238,7 @@ focusing on transitions.</p>
             <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">find_cex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">):</span>
 
         <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_walks</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">num_queries</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="n">hypothesis</span><span class="o">.</span><span class="n">reset_to_initial</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reset_hyp_and_sul</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
 
             <span class="n">curr_state</span> <span class="o">=</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">initial_state</span>
             <span class="n">inputs</span> <span class="o">=</span> <span class="p">[]</span>
@@ -286,6 +277,15 @@ current hypothesis.</p>
 </div>
 
 
+                            </div>
+                            <div class="inherited">
+                                <h5>Inherited Members</h5>
+                                <dl>
+                                    <div><dt><a href="../base/Oracle.html#Oracle">aalpy.base.Oracle.Oracle</a></dt>
+                                <dd id="TransitionFocusOracle.reset_hyp_and_sul" class="function"><a href="../base/Oracle.html#Oracle.reset_hyp_and_sul">reset_hyp_and_sul</a></dd>
+
+            </div>
+                                </dl>
                             </div>
                 </section>
     </main>

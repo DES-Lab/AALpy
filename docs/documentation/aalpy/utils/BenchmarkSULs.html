@@ -34,6 +34,9 @@
                     <a class="function" href="#get_benchmark_ONFSM">get_benchmark_ONFSM</a>
             </li>
             <li>
+                    <a class="function" href="#get_ONFSM">get_ONFSM</a>
+            </li>
+            <li>
                     <a class="function" href="#get_faulty_coffee_machine_MDP">get_faulty_coffee_machine_MDP</a>
             </li>
             <li>
@@ -153,6 +156,50 @@
     <span class="n">d</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="n">d</span><span class="p">))</span>
 
     <span class="k">return</span> <span class="n">Onfsm</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="p">[</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">])</span>
+
+
+<span class="k">def</span> <span class="nf">get_ONFSM</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns example of an ONFSM.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">q0</span> <span class="o">=</span> <span class="n">OnfsmState</span><span class="p">(</span><span class="s1">&#39;q0&#39;</span><span class="p">)</span>
+    <span class="n">q1</span> <span class="o">=</span> <span class="n">OnfsmState</span><span class="p">(</span><span class="s1">&#39;q1&#39;</span><span class="p">)</span>
+    <span class="n">q2</span> <span class="o">=</span> <span class="n">OnfsmState</span><span class="p">(</span><span class="s1">&#39;q2&#39;</span><span class="p">)</span>
+    <span class="n">q3</span> <span class="o">=</span> <span class="n">OnfsmState</span><span class="p">(</span><span class="s1">&#39;q3&#39;</span><span class="p">)</span>
+    <span class="n">q4</span> <span class="o">=</span> <span class="n">OnfsmState</span><span class="p">(</span><span class="s1">&#39;q4&#39;</span><span class="p">)</span>
+    <span class="n">q5</span> <span class="o">=</span> <span class="n">OnfsmState</span><span class="p">(</span><span class="s1">&#39;q5&#39;</span><span class="p">)</span>
+    <span class="n">q6</span> <span class="o">=</span> <span class="n">OnfsmState</span><span class="p">(</span><span class="s1">&#39;q6&#39;</span><span class="p">)</span>
+    <span class="n">q7</span> <span class="o">=</span> <span class="n">OnfsmState</span><span class="p">(</span><span class="s1">&#39;q7&#39;</span><span class="p">)</span>
+    <span class="n">q8</span> <span class="o">=</span> <span class="n">OnfsmState</span><span class="p">(</span><span class="s1">&#39;q8&#39;</span><span class="p">)</span>
+
+    <span class="n">q0</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="n">q1</span><span class="p">))</span>
+    <span class="n">q0</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">q0</span><span class="p">))</span>
+
+    <span class="n">q1</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="n">q0</span><span class="p">))</span>
+    <span class="n">q1</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">q2</span><span class="p">))</span>
+
+    <span class="n">q2</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="n">q2</span><span class="p">))</span>
+    <span class="n">q2</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">q3</span><span class="p">))</span>
+
+    <span class="n">q3</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="n">q8</span><span class="p">))</span>
+    <span class="n">q3</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">q4</span><span class="p">))</span>
+
+    <span class="n">q4</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="n">q4</span><span class="p">))</span>
+    <span class="n">q4</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">q5</span><span class="p">))</span>
+
+    <span class="n">q5</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="n">q6</span><span class="p">))</span>
+    <span class="n">q5</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">q7</span><span class="p">))</span>
+
+    <span class="n">q6</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="n">q5</span><span class="p">))</span>
+    <span class="n">q6</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">q6</span><span class="p">))</span>
+
+    <span class="n">q7</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="n">q7</span><span class="p">))</span>
+    <span class="n">q7</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s1">&#39;O&#39;</span><span class="p">,</span> <span class="n">q0</span><span class="p">))</span>
+
+    <span class="n">q8</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="n">q3</span><span class="p">))</span>
+    <span class="n">q8</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">q8</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">Onfsm</span><span class="p">(</span><span class="n">q0</span><span class="p">,</span> <span class="p">[</span><span class="n">q0</span><span class="p">,</span> <span class="n">q1</span><span class="p">,</span> <span class="n">q2</span><span class="p">,</span> <span class="n">q3</span><span class="p">,</span> <span class="n">q4</span><span class="p">,</span> <span class="n">q5</span><span class="p">,</span> <span class="n">q6</span><span class="p">,</span> <span class="n">q7</span><span class="p">,</span> <span class="n">q8</span><span class="p">])</span>
 
 
 <span class="k">def</span> <span class="nf">get_faulty_coffee_machine_MDP</span><span class="p">():</span>
@@ -394,9 +441,9 @@
             <span class="k">return</span> <span class="kc">False</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">day</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-            <span class="n">month</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+            <span class="n">month</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
             <span class="n">year</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
-        <span class="k">except</span><span class="p">:</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">False</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">year</span> <span class="o">&lt;=</span> <span class="mi">9999</span><span class="p">):</span>
@@ -492,6 +539,67 @@
 
             <div class="docstring"><p>Returns ONFSM presented in 'Learning Finite State Models of Observable Nondeterministic Systems in a Testing
 Context'.</p>
+</div>
+
+
+                </section>
+                <section id="get_ONFSM">
+                            <div class="attr function"><a class="headerlink" href="#get_ONFSM">#&nbsp;&nbsp</a>
+
+        
+            <span class="def">def</span>
+            <span class="name">get_ONFSM</span><span class="signature">()</span>:
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">get_ONFSM</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns example of an ONFSM.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">q0</span> <span class="o">=</span> <span class="n">OnfsmState</span><span class="p">(</span><span class="s1">&#39;q0&#39;</span><span class="p">)</span>
+    <span class="n">q1</span> <span class="o">=</span> <span class="n">OnfsmState</span><span class="p">(</span><span class="s1">&#39;q1&#39;</span><span class="p">)</span>
+    <span class="n">q2</span> <span class="o">=</span> <span class="n">OnfsmState</span><span class="p">(</span><span class="s1">&#39;q2&#39;</span><span class="p">)</span>
+    <span class="n">q3</span> <span class="o">=</span> <span class="n">OnfsmState</span><span class="p">(</span><span class="s1">&#39;q3&#39;</span><span class="p">)</span>
+    <span class="n">q4</span> <span class="o">=</span> <span class="n">OnfsmState</span><span class="p">(</span><span class="s1">&#39;q4&#39;</span><span class="p">)</span>
+    <span class="n">q5</span> <span class="o">=</span> <span class="n">OnfsmState</span><span class="p">(</span><span class="s1">&#39;q5&#39;</span><span class="p">)</span>
+    <span class="n">q6</span> <span class="o">=</span> <span class="n">OnfsmState</span><span class="p">(</span><span class="s1">&#39;q6&#39;</span><span class="p">)</span>
+    <span class="n">q7</span> <span class="o">=</span> <span class="n">OnfsmState</span><span class="p">(</span><span class="s1">&#39;q7&#39;</span><span class="p">)</span>
+    <span class="n">q8</span> <span class="o">=</span> <span class="n">OnfsmState</span><span class="p">(</span><span class="s1">&#39;q8&#39;</span><span class="p">)</span>
+
+    <span class="n">q0</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="n">q1</span><span class="p">))</span>
+    <span class="n">q0</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">q0</span><span class="p">))</span>
+
+    <span class="n">q1</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="n">q0</span><span class="p">))</span>
+    <span class="n">q1</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">q2</span><span class="p">))</span>
+
+    <span class="n">q2</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="n">q2</span><span class="p">))</span>
+    <span class="n">q2</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">q3</span><span class="p">))</span>
+
+    <span class="n">q3</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="n">q8</span><span class="p">))</span>
+    <span class="n">q3</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">q4</span><span class="p">))</span>
+
+    <span class="n">q4</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="n">q4</span><span class="p">))</span>
+    <span class="n">q4</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">q5</span><span class="p">))</span>
+
+    <span class="n">q5</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="n">q6</span><span class="p">))</span>
+    <span class="n">q5</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">q7</span><span class="p">))</span>
+
+    <span class="n">q6</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="n">q5</span><span class="p">))</span>
+    <span class="n">q6</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">q6</span><span class="p">))</span>
+
+    <span class="n">q7</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="n">q7</span><span class="p">))</span>
+    <span class="n">q7</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s1">&#39;O&#39;</span><span class="p">,</span> <span class="n">q0</span><span class="p">))</span>
+
+    <span class="n">q8</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="n">q3</span><span class="p">))</span>
+    <span class="n">q8</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">q8</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">Onfsm</span><span class="p">(</span><span class="n">q0</span><span class="p">,</span> <span class="p">[</span><span class="n">q0</span><span class="p">,</span> <span class="n">q1</span><span class="p">,</span> <span class="n">q2</span><span class="p">,</span> <span class="n">q3</span><span class="p">,</span> <span class="n">q4</span><span class="p">,</span> <span class="n">q5</span><span class="p">,</span> <span class="n">q6</span><span class="p">,</span> <span class="n">q7</span><span class="p">,</span> <span class="n">q8</span><span class="p">])</span>
+</pre></div>
+
+        </details>
+
+            <div class="docstring"><p>Returns example of an ONFSM.</p>
 </div>
 
 
@@ -995,9 +1103,9 @@ Context'.</p>
             <span class="k">return</span> <span class="kc">False</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">day</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-            <span class="n">month</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+            <span class="n">month</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
             <span class="n">year</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
-        <span class="k">except</span><span class="p">:</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">False</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">year</span> <span class="o">&lt;=</span> <span class="mi">9999</span><span class="p">):</span>
@@ -1049,9 +1157,9 @@ The format of the dates is %d/%m/%Y'</p>
             <span class="k">return</span> <span class="kc">False</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">day</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-            <span class="n">month</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+            <span class="n">month</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
             <span class="n">year</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
-        <span class="k">except</span><span class="p">:</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">False</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">year</span> <span class="o">&lt;=</span> <span class="mi">9999</span><span class="p">):</span>

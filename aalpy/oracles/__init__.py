@@ -1,9 +1,12 @@
 from .BreadthFirstExplorationEqOracle import BreadthFirstExplorationEqOracle
-from .RandomWalkEqOracle import RandomWalkEqOracle, UnseenOutputRandomWalkEqOracle
-from .StatePrefixEqOracle import StatePrefixEqOracle
-from .WMethodEqOracle import WMethodEqOracle, RandomWMethodEqOracle
-from .BreadthFirstExplorationEqOracle import BreadthFirstExplorationEqOracle
-from .TransitionFocusOracle import TransitionFocusOracle
-from .RandomWalkEqOracle import RandomWalkEqOracle, UnseenOutputRandomWalkEqOracle
 from .CacheBasedEqOracle import CacheBasedEqOracle
+from .kWayStateCoverageEqOracle import KWayStateCoverageEqOracle
 from .kWayTransitionCoverageEqOracle import KWayTransitionCoverageEqOracle
+from .RandomWalkEqOracle import (RandomWalkEqOracle,
+                                 UnseenOutputRandomWalkEqOracle)
+from .RandomWordEqOracle import (RandomWordEqOracle,
+                                 UnseenOutputRandomWordEqOracle)
+from .StatePrefixEqOracle import StatePrefixEqOracle
+from .TransitionFocusOracle import TransitionFocusOracle
+from .UserInputEqOracle import UserInputEqOracle
+from .WMethodEqOracle import RandomWMethodEqOracle, WMethodEqOracle

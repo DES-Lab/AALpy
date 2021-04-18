@@ -151,7 +151,7 @@ class SamplingBasedObservationTable:
                     freq_dict = self.teacher.frequency_query(s, i)
                 for out, freq in freq_dict.items():
                     new_pref = s + i + tuple([out])
-                    if freq > 0:
+                    if freq > 0 and new_pref not in self.S:
                         yield new_pref
 
     def make_closed_and_consistent(self):
@@ -353,7 +353,10 @@ class SamplingBasedObservationTable:
                 for o in self.T[s + i]:
                     self.T.pop(s + i + o, None)
 
-        self.trim_columns()
+        if not self.cex_processing:
+            self.trim_columns()
+        else:
+            self.update_obs_table_with_freq_obs()
 
     def stop(self, learning_round, chaos_present, min_rounds=10, max_rounds=None,
              target_unambiguity=0.99, print_unambiguity=False):
@@ -401,7 +404,6 @@ class SamplingBasedObservationTable:
             for num_last, diff in stopping_dict.items():
                 last_n_unamb = self.unambiguity_values[-num_last:]
                 if abs(max(last_n_unamb) - min(last_n_unamb) <= diff):
-                    print(num_last, diff)
                     return True
 
         if print_unambiguity and learning_round % 5 == 0:

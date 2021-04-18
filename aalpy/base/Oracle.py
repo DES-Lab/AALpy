@@ -36,3 +36,17 @@ class Oracle(ABC):
             tuple or list containing counterexample inputs, None if no counterexample is found
         """
         pass
+
+    def reset_hyp_and_sul(self, hypothesis):
+        """
+        Reset SUL and hypothesis to initial state.
+
+        Args:
+
+            hypothesis: current hypothesis
+
+        """
+        hypothesis.reset_to_initial()
+        self.sul.post()
+        self.sul.pre()
+        self.num_queries += 1
