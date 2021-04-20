@@ -109,7 +109,7 @@ def random_onfsm_example(num_states, input_size, output_size, n_sampling):
     from aalpy.SULs import OnfsmSUL
     from aalpy.utils import generate_random_ONFSM
     from aalpy.oracles import UnseenOutputRandomWalkEqOracle, UnseenOutputRandomWordEqOracle
-    from aalpy.learning_algs import run_Lstar_ONFSM
+    from aalpy.learning_algs import run_non_det_Lstar
 
     onfsm = generate_random_ONFSM(num_states=num_states, num_inputs=input_size, num_outputs=output_size)
     alphabet = onfsm.get_input_alphabet()
@@ -118,7 +118,7 @@ def random_onfsm_example(num_states, input_size, output_size, n_sampling):
     eq_oracle = UnseenOutputRandomWordEqOracle(alphabet, sul, num_walks=500, min_walk_len=10, max_walk_len=50)
     eq_oracle = UnseenOutputRandomWalkEqOracle(alphabet, sul, num_steps=5000, reset_prob=0.15, reset_after_cex=True)
 
-    learned_model = run_Lstar_ONFSM(alphabet, sul, eq_oracle=eq_oracle, n_sampling=n_sampling)
+    learned_model = run_non_det_Lstar(alphabet, sul, eq_oracle=eq_oracle, n_sampling=n_sampling)
     return learned_model
 
 
@@ -292,7 +292,7 @@ def onfsm_mealy_paper_example():
     from random import seed
     from aalpy.SULs import OnfsmSUL
     from aalpy.oracles import UnseenOutputRandomWordEqOracle, UnseenOutputRandomWalkEqOracle
-    from aalpy.learning_algs import run_Lstar_ONFSM
+    from aalpy.learning_algs import run_non_det_Lstar
     from aalpy.utils import get_benchmark_ONFSM
     seed(3)
 
@@ -303,7 +303,7 @@ def onfsm_mealy_paper_example():
     eq_oracle = UnseenOutputRandomWalkEqOracle(alphabet, sul, num_steps=5000, reset_prob=0.09, reset_after_cex=True)
     eq_oracle = UnseenOutputRandomWordEqOracle(alphabet, sul, num_walks=500, min_walk_len=4, max_walk_len=10)
 
-    learned_onfsm = run_Lstar_ONFSM(alphabet, sul, eq_oracle, n_sampling=15, print_level=3)
+    learned_onfsm = run_non_det_Lstar(alphabet, sul, eq_oracle, n_sampling=15, print_level=3)
 
     return learned_onfsm
 
