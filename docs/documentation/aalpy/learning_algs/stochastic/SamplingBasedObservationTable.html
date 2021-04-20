@@ -465,7 +465,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">update_obs_table_with_freq_obs</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">learning_round</span><span class="p">,</span> <span class="n">chaos_present</span><span class="p">,</span> <span class="n">min_rounds</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">max_rounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">learning_round</span><span class="p">,</span> <span class="n">min_rounds</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">max_rounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
              <span class="n">target_unambiguity</span><span class="o">=</span><span class="mf">0.99</span><span class="p">,</span> <span class="n">print_unambiguity</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Decide if learning should terminate.</span>
@@ -473,7 +473,6 @@
 <span class="sd">        Args:</span>
 
 <span class="sd">          learning_round: current learning round</span>
-<span class="sd">          chaos_present: True if chaos counterexample existed in current learning round</span>
 <span class="sd">          min_rounds: minimum number of learning rounds (Default value = 5)</span>
 <span class="sd">          max_rounds: maximum number of learning rounds (Default value = None)</span>
 <span class="sd">          target_unambiguity: percentage of rows with unambiguous representatives (Default value = 0.99)</span>
@@ -487,9 +486,6 @@
             <span class="k">assert</span> <span class="n">min_rounds</span> <span class="o">&lt;=</span> <span class="n">max_rounds</span>
         <span class="k">if</span> <span class="n">max_rounds</span> <span class="ow">and</span> <span class="n">learning_round</span> <span class="o">==</span> <span class="n">max_rounds</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">True</span>
-
-        <span class="k">if</span> <span class="n">chaos_present</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">False</span>
 
         <span class="n">extended_s</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_extended_s</span><span class="p">())</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">update_compatibility_classes</span><span class="p">()</span>
@@ -1109,7 +1105,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">update_obs_table_with_freq_obs</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">learning_round</span><span class="p">,</span> <span class="n">chaos_present</span><span class="p">,</span> <span class="n">min_rounds</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">max_rounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">learning_round</span><span class="p">,</span> <span class="n">min_rounds</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">max_rounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
              <span class="n">target_unambiguity</span><span class="o">=</span><span class="mf">0.99</span><span class="p">,</span> <span class="n">print_unambiguity</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Decide if learning should terminate.</span>
@@ -1117,7 +1113,6 @@
 <span class="sd">        Args:</span>
 
 <span class="sd">          learning_round: current learning round</span>
-<span class="sd">          chaos_present: True if chaos counterexample existed in current learning round</span>
 <span class="sd">          min_rounds: minimum number of learning rounds (Default value = 5)</span>
 <span class="sd">          max_rounds: maximum number of learning rounds (Default value = None)</span>
 <span class="sd">          target_unambiguity: percentage of rows with unambiguous representatives (Default value = 0.99)</span>
@@ -1131,9 +1126,6 @@
             <span class="k">assert</span> <span class="n">min_rounds</span> <span class="o">&lt;=</span> <span class="n">max_rounds</span>
         <span class="k">if</span> <span class="n">max_rounds</span> <span class="ow">and</span> <span class="n">learning_round</span> <span class="o">==</span> <span class="n">max_rounds</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">True</span>
-
-        <span class="k">if</span> <span class="n">chaos_present</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">False</span>
 
         <span class="n">extended_s</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_extended_s</span><span class="p">())</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">update_compatibility_classes</span><span class="p">()</span>
@@ -1985,7 +1977,6 @@ equivalence no sampling is needed.</p>
             <span class="name">stop</span><span class="signature">(
     self,
     learning_round,
-    chaos_present,
     min_rounds=10,
     max_rounds=None,
     target_unambiguity=0.99,
@@ -1995,7 +1986,7 @@ equivalence no sampling is needed.</p>
 
                 <details>
             <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">learning_round</span><span class="p">,</span> <span class="n">chaos_present</span><span class="p">,</span> <span class="n">min_rounds</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">max_rounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">learning_round</span><span class="p">,</span> <span class="n">min_rounds</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">max_rounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
              <span class="n">target_unambiguity</span><span class="o">=</span><span class="mf">0.99</span><span class="p">,</span> <span class="n">print_unambiguity</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Decide if learning should terminate.</span>
@@ -2003,7 +1994,6 @@ equivalence no sampling is needed.</p>
 <span class="sd">        Args:</span>
 
 <span class="sd">          learning_round: current learning round</span>
-<span class="sd">          chaos_present: True if chaos counterexample existed in current learning round</span>
 <span class="sd">          min_rounds: minimum number of learning rounds (Default value = 5)</span>
 <span class="sd">          max_rounds: maximum number of learning rounds (Default value = None)</span>
 <span class="sd">          target_unambiguity: percentage of rows with unambiguous representatives (Default value = 0.99)</span>
@@ -2017,9 +2007,6 @@ equivalence no sampling is needed.</p>
             <span class="k">assert</span> <span class="n">min_rounds</span> <span class="o">&lt;=</span> <span class="n">max_rounds</span>
         <span class="k">if</span> <span class="n">max_rounds</span> <span class="ow">and</span> <span class="n">learning_round</span> <span class="o">==</span> <span class="n">max_rounds</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">True</span>
-
-        <span class="k">if</span> <span class="n">chaos_present</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">False</span>
 
         <span class="n">extended_s</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_extended_s</span><span class="p">())</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">update_compatibility_classes</span><span class="p">()</span>
@@ -2059,7 +2046,6 @@ equivalence no sampling is needed.</p>
 <p>Args:</p>
 
 <p>learning_round: current learning round
-  chaos_present: True if chaos counterexample existed in current learning round
   min_rounds: minimum number of learning rounds (Default value = 5)
   max_rounds: maximum number of learning rounds (Default value = None)
   target_unambiguity: percentage of rows with unambiguous representatives (Default value = 0.99)

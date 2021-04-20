@@ -28,6 +28,12 @@
                     <h2>API Documentation</h2>
                         <ul class="memberlist">
             <li>
+                    <a class="function" href="#get_properties_file">get_properties_file</a>
+            </li>
+            <li>
+                    <a class="function" href="#get_correct_prop_values">get_correct_prop_values</a>
+            </li>
+            <li>
                     <a class="function" href="#mdp_2_prism_format">mdp_2_prism_format</a>
             </li>
             <li>
@@ -69,19 +75,34 @@
 
 <span class="n">prism_prob_output_regex</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s2">&quot;Result: (\d+\.\d+)&quot;</span><span class="p">)</span>
 
-<span class="n">correct_model_properties</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s1">&#39;first_grid&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;prob1&#39;</span><span class="p">:</span> <span class="mf">0.96217534</span><span class="p">,</span> <span class="s1">&#39;prob2&#39;</span><span class="p">:</span> <span class="mf">0.6499274956800001</span><span class="p">,</span> <span class="s1">&#39;prob3&#39;</span><span class="p">:</span> <span class="mf">0.6911765746880001</span><span class="p">},</span>
-    <span class="s1">&#39;second_grid&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;prob1&#39;</span><span class="p">:</span> <span class="mf">0.93480795088125</span><span class="p">,</span> <span class="s1">&#39;prob2&#39;</span><span class="p">:</span> <span class="mf">0.6711947700000002</span><span class="p">,</span> <span class="s1">&#39;prob3&#39;</span><span class="p">:</span> <span class="mf">0.9742903305241055</span><span class="p">,</span>
-                    <span class="s1">&#39;prob4&#39;</span><span class="p">:</span> <span class="mf">0.14244219329051103</span><span class="p">},</span>
-    <span class="s1">&#39;shared_coin&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;prob1&#39;</span><span class="p">:</span> <span class="mf">0.10694382182657244</span><span class="p">,</span> <span class="s1">&#39;prob2&#39;</span><span class="p">:</span> <span class="mf">0.5555528623795738</span><span class="p">,</span> <span class="s1">&#39;prob3&#39;</span><span class="p">:</span> <span class="mf">0.3333324384052837</span><span class="p">,</span>
-                    <span class="s1">&#39;prob4&#39;</span><span class="p">:</span> <span class="mf">0.42857002816478273</span><span class="p">,</span> <span class="s1">&#39;prob5&#39;</span><span class="p">:</span> <span class="mf">0.001708984375</span><span class="p">,</span> <span class="s1">&#39;prob6&#39;</span><span class="p">:</span> <span class="mf">0.266845703125</span><span class="p">,</span>
-                    <span class="s1">&#39;prob7&#39;</span><span class="p">:</span> <span class="mf">0.244384765625</span><span class="p">,</span> <span class="s1">&#39;prob8&#39;</span><span class="p">:</span> <span class="mf">0.263427734375</span><span class="p">},</span>
-    <span class="s1">&#39;slot_machine&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;prob1&#39;</span><span class="p">:</span> <span class="mf">0.36380049887344645</span><span class="p">,</span> <span class="s1">&#39;prob2&#39;</span><span class="p">:</span> <span class="mf">0.6445910164135946</span><span class="p">,</span> <span class="s1">&#39;prob3&#39;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s1">&#39;prob4&#39;</span><span class="p">:</span> <span class="mf">0.159</span><span class="p">,</span>
-                     <span class="s1">&#39;prob5&#39;</span><span class="p">:</span> <span class="mf">0.28567</span><span class="p">,</span> <span class="s1">&#39;prob6&#39;</span><span class="p">:</span> <span class="mf">0.2500000000000001</span><span class="p">,</span> <span class="s1">&#39;prob7&#39;</span><span class="p">:</span> <span class="mf">0.025445087448668406</span><span class="p">},</span>
-    <span class="s1">&#39;mqtt&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;prob1&#39;</span><span class="p">:</span> <span class="mf">0.9612</span><span class="p">,</span> <span class="s1">&#39;prob2&#39;</span><span class="p">:</span> <span class="mf">0.34390000000000004</span><span class="p">,</span> <span class="s1">&#39;prob3&#39;</span><span class="p">:</span> <span class="mf">0.6513215599000001</span><span class="p">,</span> <span class="s1">&#39;prob4&#39;</span><span class="p">:</span> <span class="mf">0.814697981114816</span><span class="p">,</span>
-             <span class="s1">&#39;prob5&#39;</span><span class="p">:</span> <span class="mf">0.7290000000000001</span><span class="p">},</span>
-    <span class="s1">&#39;tcp&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;prob1&#39;</span><span class="p">:</span> <span class="mf">0.19</span><span class="p">,</span> <span class="s1">&#39;prob2&#39;</span><span class="p">:</span> <span class="mf">0.5695327900000001</span><span class="p">,</span> <span class="s1">&#39;prob3&#39;</span><span class="p">:</span> <span class="mf">0.7712320754503901</span><span class="p">,</span> <span class="s1">&#39;prob4&#39;</span><span class="p">:</span> <span class="mf">0.8784233454094308</span><span class="p">}</span>
-<span class="p">}</span>
+
+<span class="k">def</span> <span class="nf">get_properties_file</span><span class="p">(</span><span class="n">exp_name</span><span class="p">):</span>
+    <span class="n">property_files</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;first_grid&#39;</span><span class="p">:</span> <span class="n">aalpy</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">path_to_properties</span> <span class="o">+</span> <span class="s1">&#39;first_eval.props&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;second_grid&#39;</span><span class="p">:</span> <span class="n">aalpy</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">path_to_properties</span> <span class="o">+</span> <span class="s1">&#39;second_eval.props&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;shared_coin&#39;</span><span class="p">:</span> <span class="n">aalpy</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">path_to_properties</span> <span class="o">+</span> <span class="s1">&#39;shared_coin_eval.props&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;slot_machine&#39;</span><span class="p">:</span> <span class="n">aalpy</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">path_to_properties</span> <span class="o">+</span> <span class="s1">&#39;slot_machine_eval.props&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;mqtt&#39;</span><span class="p">:</span> <span class="n">aalpy</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">path_to_properties</span> <span class="o">+</span> <span class="s1">&#39;emqtt_two_client.props&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;tcp&#39;</span><span class="p">:</span> <span class="n">aalpy</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">path_to_properties</span> <span class="o">+</span> <span class="s1">&#39;tcp_eval.props&#39;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">property_files</span><span class="p">[</span><span class="n">exp_name</span><span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">get_correct_prop_values</span><span class="p">(</span><span class="n">exp_name</span><span class="p">):</span>
+    <span class="n">correct_model_properties</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;first_grid&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;prob1&#39;</span><span class="p">:</span> <span class="mf">0.96217534</span><span class="p">,</span> <span class="s1">&#39;prob2&#39;</span><span class="p">:</span> <span class="mf">0.6499274956800001</span><span class="p">,</span> <span class="s1">&#39;prob3&#39;</span><span class="p">:</span> <span class="mf">0.6911765746880001</span><span class="p">},</span>
+        <span class="s1">&#39;second_grid&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;prob1&#39;</span><span class="p">:</span> <span class="mf">0.93480795088125</span><span class="p">,</span> <span class="s1">&#39;prob2&#39;</span><span class="p">:</span> <span class="mf">0.6711947700000002</span><span class="p">,</span> <span class="s1">&#39;prob3&#39;</span><span class="p">:</span> <span class="mf">0.9742903305241055</span><span class="p">,</span>
+                        <span class="s1">&#39;prob4&#39;</span><span class="p">:</span> <span class="mf">0.14244219329051103</span><span class="p">},</span>
+        <span class="s1">&#39;shared_coin&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;prob1&#39;</span><span class="p">:</span> <span class="mf">0.10694382182657244</span><span class="p">,</span> <span class="s1">&#39;prob2&#39;</span><span class="p">:</span> <span class="mf">0.5555528623795738</span><span class="p">,</span> <span class="s1">&#39;prob3&#39;</span><span class="p">:</span> <span class="mf">0.3333324384052837</span><span class="p">,</span>
+                        <span class="s1">&#39;prob4&#39;</span><span class="p">:</span> <span class="mf">0.42857002816478273</span><span class="p">,</span> <span class="s1">&#39;prob5&#39;</span><span class="p">:</span> <span class="mf">0.001708984375</span><span class="p">,</span> <span class="s1">&#39;prob6&#39;</span><span class="p">:</span> <span class="mf">0.266845703125</span><span class="p">,</span>
+                        <span class="s1">&#39;prob7&#39;</span><span class="p">:</span> <span class="mf">0.244384765625</span><span class="p">,</span> <span class="s1">&#39;prob8&#39;</span><span class="p">:</span> <span class="mf">0.263427734375</span><span class="p">},</span>
+        <span class="s1">&#39;slot_machine&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;prob1&#39;</span><span class="p">:</span> <span class="mf">0.36380049887344645</span><span class="p">,</span> <span class="s1">&#39;prob2&#39;</span><span class="p">:</span> <span class="mf">0.6445910164135946</span><span class="p">,</span> <span class="s1">&#39;prob3&#39;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s1">&#39;prob4&#39;</span><span class="p">:</span> <span class="mf">0.159</span><span class="p">,</span>
+                         <span class="s1">&#39;prob5&#39;</span><span class="p">:</span> <span class="mf">0.28567</span><span class="p">,</span> <span class="s1">&#39;prob6&#39;</span><span class="p">:</span> <span class="mf">0.2500000000000001</span><span class="p">,</span> <span class="s1">&#39;prob7&#39;</span><span class="p">:</span> <span class="mf">0.025445087448668406</span><span class="p">},</span>
+        <span class="s1">&#39;mqtt&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;prob1&#39;</span><span class="p">:</span> <span class="mf">0.9612</span><span class="p">,</span> <span class="s1">&#39;prob2&#39;</span><span class="p">:</span> <span class="mf">0.34390000000000004</span><span class="p">,</span> <span class="s1">&#39;prob3&#39;</span><span class="p">:</span> <span class="mf">0.6513215599000001</span><span class="p">,</span> <span class="s1">&#39;prob4&#39;</span><span class="p">:</span> <span class="mf">0.814697981114816</span><span class="p">,</span>
+                 <span class="s1">&#39;prob5&#39;</span><span class="p">:</span> <span class="mf">0.7290000000000001</span><span class="p">},</span>
+        <span class="s1">&#39;tcp&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;prob1&#39;</span><span class="p">:</span> <span class="mf">0.19</span><span class="p">,</span> <span class="s1">&#39;prob2&#39;</span><span class="p">:</span> <span class="mf">0.5695327900000001</span><span class="p">,</span> <span class="s1">&#39;prob3&#39;</span><span class="p">:</span> <span class="mf">0.7712320754503901</span><span class="p">,</span> <span class="s1">&#39;prob4&#39;</span><span class="p">:</span> <span class="mf">0.8784233454094308</span><span class="p">}</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">correct_model_properties</span><span class="p">[</span><span class="n">exp_name</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
 
 
 <span class="k">def</span> <span class="nf">_target_string</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">orig_id_to_int_id</span><span class="p">):</span>
@@ -177,17 +198,27 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">match</span> <span class="o">=</span> <span class="n">prism_prob_output_regex</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
-                <span class="n">results</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;prob</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+                <span class="n">results</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;prop</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
 
     <span class="k">return</span> <span class="n">results</span>
 
 
-<span class="k">def</span> <span class="nf">model_check_properties</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Mdp</span><span class="p">,</span> <span class="n">exp_name</span><span class="p">,</span> <span class="n">properties</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">model_check_properties</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Mdp</span><span class="p">,</span> <span class="n">properties</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        model: Markov Decision Process that serves as a basis for model checking.</span>
+<span class="sd">        properties: Properties file. It should point to a file under the path_to_properties folder.</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">        results of model checking</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">from</span> <span class="nn">os</span> <span class="kn">import</span> <span class="n">remove</span>
     <span class="kn">from</span> <span class="nn">aalpy.utils</span> <span class="kn">import</span> <span class="n">mdp_2_prism_format</span>
-    <span class="n">mdp_2_prism_format</span><span class="p">(</span><span class="n">mdp</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">exp_name</span><span class="p">,</span> <span class="n">output_path</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">exp_name</span><span class="si">}</span><span class="s1">.prism&#39;</span><span class="p">)</span>
+    <span class="n">mdp_2_prism_format</span><span class="p">(</span><span class="n">mdp</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;mc_exp&#39;</span><span class="p">,</span> <span class="n">output_path</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;mc_exp.prism&#39;</span><span class="p">)</span>
 
-    <span class="n">prism_model_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">exp_name</span><span class="si">}</span><span class="s1">.prism&#39;</span>
+    <span class="n">prism_model_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;mc_exp.prism&#39;</span>
 
     <span class="n">data</span> <span class="o">=</span> <span class="n">evaluate_all_properties</span><span class="p">(</span><span class="n">prism_model_path</span><span class="p">,</span> <span class="n">properties</span><span class="p">)</span>
 
@@ -196,43 +227,64 @@
     <span class="k">return</span> <span class="n">data</span>
 
 
-<span class="k">def</span> <span class="nf">model_check_experiment</span><span class="p">(</span><span class="n">exp_name</span><span class="p">,</span> <span class="n">mdp</span><span class="p">,</span> <span class="n">precision</span><span class="o">=</span><span class="mi">4</span><span class="p">):</span>
-    <span class="k">assert</span> <span class="n">exp_name</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;first_grid&#39;</span><span class="p">,</span> <span class="s1">&#39;second_grid&#39;</span><span class="p">,</span> <span class="s1">&#39;shared_coin&#39;</span><span class="p">,</span> <span class="s1">&#39;slot_machine&#39;</span><span class="p">,</span> <span class="s1">&#39;mqtt&#39;</span><span class="p">,</span> <span class="s1">&#39;tcp&#39;</span><span class="p">]</span>
+<span class="k">def</span> <span class="nf">model_check_experiment</span><span class="p">(</span><span class="n">path_to_properties</span><span class="p">,</span> <span class="n">correct_prop_values</span><span class="p">,</span> <span class="n">mdp</span><span class="p">,</span> <span class="n">precision</span><span class="o">=</span><span class="mi">4</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    For our stochastic experiments you can use this function.</span>
+<span class="sd">    For example, check learn_stochastic_system_and_do_model_checking in Examples.py</span>
 
-    <span class="n">property_files</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s1">&#39;first_grid&#39;</span><span class="p">:</span> <span class="n">aalpy</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">path_to_properties</span> <span class="o">+</span> <span class="s1">&#39;first_eval.props&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;second_grid&#39;</span><span class="p">:</span> <span class="n">aalpy</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">path_to_properties</span> <span class="o">+</span> <span class="s1">&#39;second_eval.props&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;shared_coin&#39;</span><span class="p">:</span> <span class="n">aalpy</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">path_to_properties</span> <span class="o">+</span> <span class="s1">&#39;shared_coin_eval.props&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;slot_machine&#39;</span><span class="p">:</span> <span class="n">aalpy</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">path_to_properties</span> <span class="o">+</span> <span class="s1">&#39;slot_machine_eval.props&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;mqtt&#39;</span><span class="p">:</span> <span class="n">aalpy</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">path_to_properties</span> <span class="o">+</span> <span class="s1">&#39;emqtt_two_client.props&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;tcp&#39;</span><span class="p">:</span> <span class="n">aalpy</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">path_to_properties</span> <span class="o">+</span> <span class="s1">&#39;tcp_eval.props&#39;</span>
-    <span class="p">}</span>
+<span class="sd">    Args:</span>
+<span class="sd">        path_to_properties: path to the properties file</span>
+<span class="sd">        correct_prop_values: correct values of all properties. In list, where property at index i corresponds to the</span>
+<span class="sd">            i-th element of the list.</span>
+<span class="sd">        mdp: MDP</span>
+<span class="sd">        precision: precision to which round up results</span>
 
-    <span class="n">model_checking_results</span> <span class="o">=</span> <span class="n">model_check_properties</span><span class="p">(</span><span class="n">mdp</span><span class="p">,</span> <span class="n">exp_name</span><span class="p">,</span> <span class="n">property_files</span><span class="p">[</span><span class="n">exp_name</span><span class="p">])</span>
+<span class="sd">    Returns:</span>
+
+<span class="sd">        results of model checking and absolute differance to the correct results</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">model_checking_results</span> <span class="o">=</span> <span class="n">model_check_properties</span><span class="p">(</span><span class="n">mdp</span><span class="p">,</span> <span class="n">path_to_properties</span><span class="p">)</span>
 
     <span class="n">diff_2_correct</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">prop</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">model_checking_results</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="n">diff_2_correct</span><span class="p">[</span><span class="n">prop</span><span class="p">]</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">correct_model_properties</span><span class="p">[</span><span class="n">exp_name</span><span class="p">][</span><span class="n">prop</span><span class="p">]</span> <span class="o">-</span> <span class="n">val</span><span class="p">),</span> <span class="n">precision</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">ind</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">model_checking_results</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
+        <span class="n">diff_2_correct</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;prop</span><span class="si">{</span><span class="n">ind</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">correct_prop_values</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">-</span> <span class="n">val</span><span class="p">),</span> <span class="n">precision</span><span class="p">)</span>
 
     <span class="n">results</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">precision</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">model_checking_results</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
     <span class="k">return</span> <span class="n">results</span><span class="p">,</span> <span class="n">diff_2_correct</span>
 
 
-<span class="k">def</span> <span class="nf">stop_based_on_confidence</span><span class="p">(</span><span class="n">error_limit</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">,</span> <span class="n">exp_name</span><span class="p">,</span> <span class="n">print_level</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">stop_based_on_confidence</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">property_based_stopping</span><span class="p">,</span> <span class="n">print_level</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Args:</span>
+
+<span class="sd">        hypothesis: Markov decision process</span>
+<span class="sd">        property_based_stopping: a tuple (path to properties file, list of correct property values, max allowed error)</span>
+<span class="sd">        print_level: 2 or 3 if output of model checking is to be printed during learning</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">        True if absolute error for all properties is smaller then property_based_stopping[2]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">from</span> <span class="nn">aalpy.utils</span> <span class="kn">import</span> <span class="n">smm_to_mdp_conversion</span>
+
+    <span class="n">path_2_prop</span> <span class="o">=</span> <span class="n">property_based_stopping</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">correct_values</span> <span class="o">=</span> <span class="n">property_based_stopping</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">error_bound</span> <span class="o">=</span> <span class="n">property_based_stopping</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
 
     <span class="n">model</span> <span class="o">=</span> <span class="n">hypothesis</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">StochasticMealyMachine</span><span class="p">):</span>
         <span class="n">model</span> <span class="o">=</span> <span class="n">smm_to_mdp_conversion</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
 
-    <span class="n">res</span><span class="p">,</span> <span class="n">diff</span> <span class="o">=</span> <span class="n">model_check_experiment</span><span class="p">(</span><span class="n">exp_name</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+    <span class="n">res</span><span class="p">,</span> <span class="n">diff</span> <span class="o">=</span> <span class="n">model_check_experiment</span><span class="p">(</span><span class="n">path_2_prop</span><span class="p">,</span> <span class="n">correct_values</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">print_level</span> <span class="o">&lt;=</span> <span class="mi">2</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">print_level</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Error for each property:&#39;</span><span class="p">,</span> <span class="p">[</span><span class="nb">round</span><span class="p">(</span><span class="n">d</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">diff</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">diff</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">False</span>
+
     <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">diff</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-        <span class="k">if</span> <span class="n">d</span> <span class="o">&gt;</span> <span class="n">error_limit</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">d</span> <span class="o">&gt;</span> <span class="n">error_bound</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">False</span>
 
     <span class="k">return</span> <span class="kc">True</span>
@@ -241,6 +293,65 @@
         </details>
 
             </section>
+                <section id="get_properties_file">
+                            <div class="attr function"><a class="headerlink" href="#get_properties_file">#&nbsp;&nbsp</a>
+
+        
+            <span class="def">def</span>
+            <span class="name">get_properties_file</span><span class="signature">(exp_name)</span>:
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">get_properties_file</span><span class="p">(</span><span class="n">exp_name</span><span class="p">):</span>
+    <span class="n">property_files</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;first_grid&#39;</span><span class="p">:</span> <span class="n">aalpy</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">path_to_properties</span> <span class="o">+</span> <span class="s1">&#39;first_eval.props&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;second_grid&#39;</span><span class="p">:</span> <span class="n">aalpy</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">path_to_properties</span> <span class="o">+</span> <span class="s1">&#39;second_eval.props&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;shared_coin&#39;</span><span class="p">:</span> <span class="n">aalpy</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">path_to_properties</span> <span class="o">+</span> <span class="s1">&#39;shared_coin_eval.props&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;slot_machine&#39;</span><span class="p">:</span> <span class="n">aalpy</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">path_to_properties</span> <span class="o">+</span> <span class="s1">&#39;slot_machine_eval.props&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;mqtt&#39;</span><span class="p">:</span> <span class="n">aalpy</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">path_to_properties</span> <span class="o">+</span> <span class="s1">&#39;emqtt_two_client.props&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;tcp&#39;</span><span class="p">:</span> <span class="n">aalpy</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">path_to_properties</span> <span class="o">+</span> <span class="s1">&#39;tcp_eval.props&#39;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">property_files</span><span class="p">[</span><span class="n">exp_name</span><span class="p">]</span>
+</pre></div>
+
+        </details>
+
+    
+
+                </section>
+                <section id="get_correct_prop_values">
+                            <div class="attr function"><a class="headerlink" href="#get_correct_prop_values">#&nbsp;&nbsp</a>
+
+        
+            <span class="def">def</span>
+            <span class="name">get_correct_prop_values</span><span class="signature">(exp_name)</span>:
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">get_correct_prop_values</span><span class="p">(</span><span class="n">exp_name</span><span class="p">):</span>
+    <span class="n">correct_model_properties</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;first_grid&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;prob1&#39;</span><span class="p">:</span> <span class="mf">0.96217534</span><span class="p">,</span> <span class="s1">&#39;prob2&#39;</span><span class="p">:</span> <span class="mf">0.6499274956800001</span><span class="p">,</span> <span class="s1">&#39;prob3&#39;</span><span class="p">:</span> <span class="mf">0.6911765746880001</span><span class="p">},</span>
+        <span class="s1">&#39;second_grid&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;prob1&#39;</span><span class="p">:</span> <span class="mf">0.93480795088125</span><span class="p">,</span> <span class="s1">&#39;prob2&#39;</span><span class="p">:</span> <span class="mf">0.6711947700000002</span><span class="p">,</span> <span class="s1">&#39;prob3&#39;</span><span class="p">:</span> <span class="mf">0.9742903305241055</span><span class="p">,</span>
+                        <span class="s1">&#39;prob4&#39;</span><span class="p">:</span> <span class="mf">0.14244219329051103</span><span class="p">},</span>
+        <span class="s1">&#39;shared_coin&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;prob1&#39;</span><span class="p">:</span> <span class="mf">0.10694382182657244</span><span class="p">,</span> <span class="s1">&#39;prob2&#39;</span><span class="p">:</span> <span class="mf">0.5555528623795738</span><span class="p">,</span> <span class="s1">&#39;prob3&#39;</span><span class="p">:</span> <span class="mf">0.3333324384052837</span><span class="p">,</span>
+                        <span class="s1">&#39;prob4&#39;</span><span class="p">:</span> <span class="mf">0.42857002816478273</span><span class="p">,</span> <span class="s1">&#39;prob5&#39;</span><span class="p">:</span> <span class="mf">0.001708984375</span><span class="p">,</span> <span class="s1">&#39;prob6&#39;</span><span class="p">:</span> <span class="mf">0.266845703125</span><span class="p">,</span>
+                        <span class="s1">&#39;prob7&#39;</span><span class="p">:</span> <span class="mf">0.244384765625</span><span class="p">,</span> <span class="s1">&#39;prob8&#39;</span><span class="p">:</span> <span class="mf">0.263427734375</span><span class="p">},</span>
+        <span class="s1">&#39;slot_machine&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;prob1&#39;</span><span class="p">:</span> <span class="mf">0.36380049887344645</span><span class="p">,</span> <span class="s1">&#39;prob2&#39;</span><span class="p">:</span> <span class="mf">0.6445910164135946</span><span class="p">,</span> <span class="s1">&#39;prob3&#39;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s1">&#39;prob4&#39;</span><span class="p">:</span> <span class="mf">0.159</span><span class="p">,</span>
+                         <span class="s1">&#39;prob5&#39;</span><span class="p">:</span> <span class="mf">0.28567</span><span class="p">,</span> <span class="s1">&#39;prob6&#39;</span><span class="p">:</span> <span class="mf">0.2500000000000001</span><span class="p">,</span> <span class="s1">&#39;prob7&#39;</span><span class="p">:</span> <span class="mf">0.025445087448668406</span><span class="p">},</span>
+        <span class="s1">&#39;mqtt&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;prob1&#39;</span><span class="p">:</span> <span class="mf">0.9612</span><span class="p">,</span> <span class="s1">&#39;prob2&#39;</span><span class="p">:</span> <span class="mf">0.34390000000000004</span><span class="p">,</span> <span class="s1">&#39;prob3&#39;</span><span class="p">:</span> <span class="mf">0.6513215599000001</span><span class="p">,</span> <span class="s1">&#39;prob4&#39;</span><span class="p">:</span> <span class="mf">0.814697981114816</span><span class="p">,</span>
+                 <span class="s1">&#39;prob5&#39;</span><span class="p">:</span> <span class="mf">0.7290000000000001</span><span class="p">},</span>
+        <span class="s1">&#39;tcp&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;prob1&#39;</span><span class="p">:</span> <span class="mf">0.19</span><span class="p">,</span> <span class="s1">&#39;prob2&#39;</span><span class="p">:</span> <span class="mf">0.5695327900000001</span><span class="p">,</span> <span class="s1">&#39;prob3&#39;</span><span class="p">:</span> <span class="mf">0.7712320754503901</span><span class="p">,</span> <span class="s1">&#39;prob4&#39;</span><span class="p">:</span> <span class="mf">0.8784233454094308</span><span class="p">}</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">correct_model_properties</span><span class="p">[</span><span class="n">exp_name</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+</pre></div>
+
+        </details>
+
+    
+
+                </section>
                 <section id="mdp_2_prism_format">
                             <div class="attr function"><a class="headerlink" href="#mdp_2_prism_format">#&nbsp;&nbsp</a>
 
@@ -356,7 +467,7 @@ output_path: output file (Default value = None)
         <span class="k">else</span><span class="p">:</span>
             <span class="n">match</span> <span class="o">=</span> <span class="n">prism_prob_output_regex</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
-                <span class="n">results</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;prob</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+                <span class="n">results</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;prop</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
 
     <span class="k">return</span> <span class="n">results</span>
 </pre></div>
@@ -371,17 +482,27 @@ output_path: output file (Default value = None)
 
         
             <span class="def">def</span>
-            <span class="name">model_check_properties</span><span class="signature">(model: <a href="../automata/Mdp.html#Mdp">aalpy.automata.Mdp.Mdp</a>, exp_name, properties: str)</span>:
+            <span class="name">model_check_properties</span><span class="signature">(model: <a href="../automata/Mdp.html#Mdp">aalpy.automata.Mdp.Mdp</a>, properties: str)</span>:
     </div>
 
                 <details>
             <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">model_check_properties</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Mdp</span><span class="p">,</span> <span class="n">exp_name</span><span class="p">,</span> <span class="n">properties</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+            <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">model_check_properties</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Mdp</span><span class="p">,</span> <span class="n">properties</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        model: Markov Decision Process that serves as a basis for model checking.</span>
+<span class="sd">        properties: Properties file. It should point to a file under the path_to_properties folder.</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">        results of model checking</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">from</span> <span class="nn">os</span> <span class="kn">import</span> <span class="n">remove</span>
     <span class="kn">from</span> <span class="nn">aalpy.utils</span> <span class="kn">import</span> <span class="n">mdp_2_prism_format</span>
-    <span class="n">mdp_2_prism_format</span><span class="p">(</span><span class="n">mdp</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">exp_name</span><span class="p">,</span> <span class="n">output_path</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">exp_name</span><span class="si">}</span><span class="s1">.prism&#39;</span><span class="p">)</span>
+    <span class="n">mdp_2_prism_format</span><span class="p">(</span><span class="n">mdp</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;mc_exp&#39;</span><span class="p">,</span> <span class="n">output_path</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;mc_exp.prism&#39;</span><span class="p">)</span>
 
-    <span class="n">prism_model_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">exp_name</span><span class="si">}</span><span class="s1">.prism&#39;</span>
+    <span class="n">prism_model_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;mc_exp.prism&#39;</span>
 
     <span class="n">data</span> <span class="o">=</span> <span class="n">evaluate_all_properties</span><span class="p">(</span><span class="n">prism_model_path</span><span class="p">,</span> <span class="n">properties</span><span class="p">)</span>
 
@@ -392,7 +513,16 @@ output_path: output file (Default value = None)
 
         </details>
 
-    
+            <div class="docstring"><p>Args:
+    model: Markov Decision Process that serves as a basis for model checking.
+    properties: Properties file. It should point to a file under the path_to_properties folder.</p>
+
+<p>Returns:</p>
+
+<pre><code>results of model checking
+</code></pre>
+</div>
+
 
                 </section>
                 <section id="model_check_experiment">
@@ -400,28 +530,32 @@ output_path: output file (Default value = None)
 
         
             <span class="def">def</span>
-            <span class="name">model_check_experiment</span><span class="signature">(exp_name, mdp, precision=4)</span>:
+            <span class="name">model_check_experiment</span><span class="signature">(path_to_properties, correct_prop_values, mdp, precision=4)</span>:
     </div>
 
                 <details>
             <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">model_check_experiment</span><span class="p">(</span><span class="n">exp_name</span><span class="p">,</span> <span class="n">mdp</span><span class="p">,</span> <span class="n">precision</span><span class="o">=</span><span class="mi">4</span><span class="p">):</span>
-    <span class="k">assert</span> <span class="n">exp_name</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;first_grid&#39;</span><span class="p">,</span> <span class="s1">&#39;second_grid&#39;</span><span class="p">,</span> <span class="s1">&#39;shared_coin&#39;</span><span class="p">,</span> <span class="s1">&#39;slot_machine&#39;</span><span class="p">,</span> <span class="s1">&#39;mqtt&#39;</span><span class="p">,</span> <span class="s1">&#39;tcp&#39;</span><span class="p">]</span>
+            <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">model_check_experiment</span><span class="p">(</span><span class="n">path_to_properties</span><span class="p">,</span> <span class="n">correct_prop_values</span><span class="p">,</span> <span class="n">mdp</span><span class="p">,</span> <span class="n">precision</span><span class="o">=</span><span class="mi">4</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    For our stochastic experiments you can use this function.</span>
+<span class="sd">    For example, check learn_stochastic_system_and_do_model_checking in Examples.py</span>
 
-    <span class="n">property_files</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s1">&#39;first_grid&#39;</span><span class="p">:</span> <span class="n">aalpy</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">path_to_properties</span> <span class="o">+</span> <span class="s1">&#39;first_eval.props&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;second_grid&#39;</span><span class="p">:</span> <span class="n">aalpy</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">path_to_properties</span> <span class="o">+</span> <span class="s1">&#39;second_eval.props&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;shared_coin&#39;</span><span class="p">:</span> <span class="n">aalpy</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">path_to_properties</span> <span class="o">+</span> <span class="s1">&#39;shared_coin_eval.props&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;slot_machine&#39;</span><span class="p">:</span> <span class="n">aalpy</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">path_to_properties</span> <span class="o">+</span> <span class="s1">&#39;slot_machine_eval.props&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;mqtt&#39;</span><span class="p">:</span> <span class="n">aalpy</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">path_to_properties</span> <span class="o">+</span> <span class="s1">&#39;emqtt_two_client.props&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;tcp&#39;</span><span class="p">:</span> <span class="n">aalpy</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">path_to_properties</span> <span class="o">+</span> <span class="s1">&#39;tcp_eval.props&#39;</span>
-    <span class="p">}</span>
+<span class="sd">    Args:</span>
+<span class="sd">        path_to_properties: path to the properties file</span>
+<span class="sd">        correct_prop_values: correct values of all properties. In list, where property at index i corresponds to the</span>
+<span class="sd">            i-th element of the list.</span>
+<span class="sd">        mdp: MDP</span>
+<span class="sd">        precision: precision to which round up results</span>
 
-    <span class="n">model_checking_results</span> <span class="o">=</span> <span class="n">model_check_properties</span><span class="p">(</span><span class="n">mdp</span><span class="p">,</span> <span class="n">exp_name</span><span class="p">,</span> <span class="n">property_files</span><span class="p">[</span><span class="n">exp_name</span><span class="p">])</span>
+<span class="sd">    Returns:</span>
+
+<span class="sd">        results of model checking and absolute differance to the correct results</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">model_checking_results</span> <span class="o">=</span> <span class="n">model_check_properties</span><span class="p">(</span><span class="n">mdp</span><span class="p">,</span> <span class="n">path_to_properties</span><span class="p">)</span>
 
     <span class="n">diff_2_correct</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">prop</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">model_checking_results</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="n">diff_2_correct</span><span class="p">[</span><span class="n">prop</span><span class="p">]</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">correct_model_properties</span><span class="p">[</span><span class="n">exp_name</span><span class="p">][</span><span class="n">prop</span><span class="p">]</span> <span class="o">-</span> <span class="n">val</span><span class="p">),</span> <span class="n">precision</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">ind</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">model_checking_results</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
+        <span class="n">diff_2_correct</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;prop</span><span class="si">{</span><span class="n">ind</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">correct_prop_values</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">-</span> <span class="n">val</span><span class="p">),</span> <span class="n">precision</span><span class="p">)</span>
 
     <span class="n">results</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">precision</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">model_checking_results</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
     <span class="k">return</span> <span class="n">results</span><span class="p">,</span> <span class="n">diff_2_correct</span>
@@ -429,7 +563,22 @@ output_path: output file (Default value = None)
 
         </details>
 
-    
+            <div class="docstring"><p>For our stochastic experiments you can use this function.
+For example, check learn_stochastic_system_and_do_model_checking in Examples.py</p>
+
+<p>Args:
+    path_to_properties: path to the properties file
+    correct_prop_values: correct values of all properties. In list, where property at index i corresponds to the
+        i-th element of the list.
+    mdp: MDP
+    precision: precision to which round up results</p>
+
+<p>Returns:</p>
+
+<pre><code>results of model checking and absolute differance to the correct results
+</code></pre>
+</div>
+
 
                 </section>
                 <section id="stop_based_on_confidence">
@@ -437,26 +586,43 @@ output_path: output file (Default value = None)
 
         
             <span class="def">def</span>
-            <span class="name">stop_based_on_confidence</span><span class="signature">(error_limit, hypothesis, exp_name, print_level=2)</span>:
+            <span class="name">stop_based_on_confidence</span><span class="signature">(hypothesis, property_based_stopping, print_level=2)</span>:
     </div>
 
                 <details>
             <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">stop_based_on_confidence</span><span class="p">(</span><span class="n">error_limit</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">,</span> <span class="n">exp_name</span><span class="p">,</span> <span class="n">print_level</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+            <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">stop_based_on_confidence</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">property_based_stopping</span><span class="p">,</span> <span class="n">print_level</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Args:</span>
+
+<span class="sd">        hypothesis: Markov decision process</span>
+<span class="sd">        property_based_stopping: a tuple (path to properties file, list of correct property values, max allowed error)</span>
+<span class="sd">        print_level: 2 or 3 if output of model checking is to be printed during learning</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">        True if absolute error for all properties is smaller then property_based_stopping[2]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">from</span> <span class="nn">aalpy.utils</span> <span class="kn">import</span> <span class="n">smm_to_mdp_conversion</span>
+
+    <span class="n">path_2_prop</span> <span class="o">=</span> <span class="n">property_based_stopping</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">correct_values</span> <span class="o">=</span> <span class="n">property_based_stopping</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">error_bound</span> <span class="o">=</span> <span class="n">property_based_stopping</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
 
     <span class="n">model</span> <span class="o">=</span> <span class="n">hypothesis</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">StochasticMealyMachine</span><span class="p">):</span>
         <span class="n">model</span> <span class="o">=</span> <span class="n">smm_to_mdp_conversion</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
 
-    <span class="n">res</span><span class="p">,</span> <span class="n">diff</span> <span class="o">=</span> <span class="n">model_check_experiment</span><span class="p">(</span><span class="n">exp_name</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+    <span class="n">res</span><span class="p">,</span> <span class="n">diff</span> <span class="o">=</span> <span class="n">model_check_experiment</span><span class="p">(</span><span class="n">path_2_prop</span><span class="p">,</span> <span class="n">correct_values</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">print_level</span> <span class="o">&lt;=</span> <span class="mi">2</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">print_level</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Error for each property:&#39;</span><span class="p">,</span> <span class="p">[</span><span class="nb">round</span><span class="p">(</span><span class="n">d</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">diff</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">diff</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">False</span>
+
     <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">diff</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-        <span class="k">if</span> <span class="n">d</span> <span class="o">&gt;</span> <span class="n">error_limit</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">d</span> <span class="o">&gt;</span> <span class="n">error_bound</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">False</span>
 
     <span class="k">return</span> <span class="kc">True</span>
@@ -464,7 +630,19 @@ output_path: output file (Default value = None)
 
         </details>
 
-    
+            <div class="docstring"><p>Args:</p>
+
+<pre><code>hypothesis: Markov decision process
+property_based_stopping: a tuple (path to properties file, list of correct property values, max allowed error)
+print_level: 2 or 3 if output of model checking is to be printed during learning
+</code></pre>
+
+<p>Returns:</p>
+
+<pre><code>True if absolute error for all properties is smaller then property_based_stopping[2]
+</code></pre>
+</div>
+
 
                 </section>
     </main>
