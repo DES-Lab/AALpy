@@ -1,5 +1,4 @@
 import os
-from collections import defaultdict
 
 from pydot import Dot, Node, Edge, graph_from_dot_file
 
@@ -42,6 +41,7 @@ def save_automaton_to_file(automaton, path="LearnedModel", file_type='dot',
                            display_same_state_trans=True):
     """
     The Standard of the automata strictly follows the syntax found at: https://automata.cs.ru.nl/Syntax/Overview.
+    For non-deterministic and stochastic systems syntax can be found on AALpy's Wiki.
 
     Args:
 
@@ -51,7 +51,8 @@ def save_automaton_to_file(automaton, path="LearnedModel", file_type='dot',
 
         file_type: Can be ['dot', 'png', 'svg', 'pdf'] (Default value = 'dot')
 
-        display_same_state_trans: True, should not be set to false except from the visualization method (Default value = True)
+        display_same_state_trans: True, should not be set to false except from the visualization method
+            (Default value = True)
 
     Returns:
 
@@ -126,6 +127,7 @@ def load_automaton_from_file(path, automaton_type, compute_prefixes=False):
     """
     Loads the automaton from the file.
     Standard of the automatas strictly follows syntax found at: https://automata.cs.ru.nl/Syntax/Overview.
+    For non-deterministic and stochastic systems syntax can be found on AALpy's Wiki.
 
     Args:
 

@@ -26,7 +26,6 @@ class Dfa(Automaton):
         Returns:
 
             True if the reached state is an accepting state, False otherwise
-
         """
         self.current_state = self.current_state.transitions[letter]
         return self.current_state.is_accepting

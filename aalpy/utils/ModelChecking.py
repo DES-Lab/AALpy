@@ -136,6 +136,16 @@ def evaluate_all_properties(prism_file_name, properties_file_name):
 
 
 def model_check_properties(model: Mdp, properties: str):
+    """
+
+    Args:
+        model: Markov Decision Process that serves as a basis for model checking.
+        properties: Properties file. It should point to a file under the path_to_properties folder.
+
+    Returns:
+
+        results of model checking
+    """
     from os import remove
     from aalpy.utils import mdp_2_prism_format
     mdp_2_prism_format(mdp=model, name='mc_exp', output_path=f'mc_exp.prism')
@@ -150,6 +160,21 @@ def model_check_properties(model: Mdp, properties: str):
 
 
 def model_check_experiment(path_to_properties, correct_prop_values, mdp, precision=4):
+    """
+    For our stochastic experiments you can use this function.
+    For example, check learn_stochastic_system_and_do_model_checking in Examples.py
+
+    Args:
+        path_to_properties: path to the properties file
+        correct_prop_values: correct values of all properties. In list, where property at index i corresponds to the
+            i-th element of the list.
+        mdp: MDP
+        precision: precision to which round up results
+
+    Returns:
+
+        results of model checking and absolute differance to the correct results
+    """
     model_checking_results = model_check_properties(mdp, path_to_properties)
 
     diff_2_correct = dict()
@@ -161,6 +186,18 @@ def model_check_experiment(path_to_properties, correct_prop_values, mdp, precisi
 
 
 def stop_based_on_confidence(hypothesis, property_based_stopping, print_level=2):
+    """
+
+    Args:
+
+        hypothesis: Markov decision process
+        property_based_stopping: a tuple (path to properties file, list of correct property values, max allowed error)
+        print_level: 2 or 3 if output of model checking is to be printed during learning
+
+    Returns:
+
+        True if absolute error for all properties is smaller then property_based_stopping[2]
+    """
     from aalpy.utils import smm_to_mdp_conversion
 
     path_2_prop = property_based_stopping[0]

@@ -8,8 +8,7 @@ class UserInputEqOracle(Oracle):
     enter the counterexample step by step.
     The user provides elements of the input alphabet or commands.
     When the element of the input alphabet is entered, the step will be performed in the current hypothesis and output
-    will
-    be printed.
+    will be printed.
 
     Commands offered to the users are:
 

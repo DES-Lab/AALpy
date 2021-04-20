@@ -402,7 +402,7 @@ def multi_client_mqtt_example():
         'CONCLOSED': 'CONCLOSED',
         'CONCLOSED_UNSUB_ALL': 'CONCLOSED',
         'CONCLOSED_ALL': 'CONCLOSED',
-        'UNSUBACK' : 'UNSUBACK',
+        'UNSUBACK': 'UNSUBACK',
         'UNSUBACK_ALL': 'UNSUBACK'
     }
 
@@ -491,7 +491,8 @@ def weird_coffee_machine_mdp_example():
 
 
 def benchmark_stochastic_example(example, automaton_type='smm', n_c=20, n_resample=1000, min_rounds=10, max_rounds=500,
-                                 strategy='normal', cex_processing='longest_prefix', stopping_based_on_prop=None, samples_cex_strategy=None):
+                                 strategy='normal', cex_processing='longest_prefix', stopping_based_on_prop=None,
+                                 samples_cex_strategy=None):
     """
     Learning the stochastic Mealy Machine(SMM) various benchmarking examples
     found in Chapter 7 of Martin's Tappler PhD thesis.
@@ -518,9 +519,9 @@ def benchmark_stochastic_example(example, automaton_type='smm', n_c=20, n_resamp
     input_alphabet = mdp.get_input_alphabet()
 
     sul = StochasticMealySUL(mdp)
-    eq_oracle = UnseenOutputRandomWalkEqOracle(input_alphabet, sul=sul, num_steps=200, reset_prob=0.25,
-                                               reset_after_cex=True)
     eq_oracle = UnseenOutputRandomWordEqOracle(input_alphabet, sul, num_walks=150, min_walk_len=5, max_walk_len=15,
+                                               reset_after_cex=True)
+    eq_oracle = UnseenOutputRandomWalkEqOracle(input_alphabet, sul=sul, num_steps=200, reset_prob=0.25,
                                                reset_after_cex=True)
 
     learned_mdp = run_stochastic_Lstar(input_alphabet=input_alphabet, eq_oracle=eq_oracle, sul=sul, n_c=n_c,
@@ -558,3 +559,29 @@ def custom_smm_example(smm, n_c=20, n_resample=100, min_rounds=10, max_rounds=50
                                          print_level=3)
 
     return learned_model
+
+
+def learn_stochastic_system_and_do_model_checking(example, automaton_type='smm', n_c=20, n_resample=1000, min_rounds=10,
+                                                  max_rounds=500, strategy='normal', cex_processing='longest_prefix',
+                                                  stopping_based_on_prop=None, samples_cex_strategy=None):
+
+    import aalpy.paths
+    from aalpy.automata import StochasticMealyMachine
+    from aalpy.utils import smm_to_mdp_conversion, model_check_experiment, get_properties_file, get_correct_prop_values
+
+    aalpy.paths.path_to_prism = "C:/Program Files/prism-4.6/bin/prism.bat"
+    aalpy.paths.path_to_properties = "Benchmarking/prism_eval_props/"
+
+    learned_model = benchmark_stochastic_example(example, automaton_type, n_c, n_resample, min_rounds, max_rounds,
+                                                 strategy,
+                                                 cex_processing, stopping_based_on_prop, samples_cex_strategy)
+
+    if isinstance(learned_model, StochasticMealyMachine):
+        mdp = smm_to_mdp_conversion(learned_model)
+    else:
+        mdp = learned_model
+
+    values, diff = model_check_experiment(get_properties_file(example), get_correct_prop_values(example), mdp)
+
+    print('Value for each property:', [round(d * 100, 2) for d in values.values()])
+    print('Error for each property:', [round(d * 100, 2) for d in diff.values()])

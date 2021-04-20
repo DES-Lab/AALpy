@@ -1,4 +1,3 @@
-import re
 import string
 from collections import defaultdict
 
@@ -58,7 +57,7 @@ def profile_function(function: callable, sort_key='cumtime'):
       sort_key:  (Default value = 'cumtime')
 
     Returns:
-
+        prints the profiling results
     """
     import cProfile
     pr = cProfile.Profile()
@@ -72,11 +71,13 @@ def random_string_generator(size=10, chars=string.ascii_lowercase + string.digit
     """
 
     Args:
+
       size:  (Default value = 10)
       chars:  (Default value = string.ascii_lowercase + string.digits)
 
     Returns:
 
+        a random string of length size
     """
     import random
     return ''.join(random.choice(chars) for _ in range(size))
@@ -130,6 +131,9 @@ def smm_to_mdp_conversion(smm: StochasticMealyMachine):
 
 
 def print_learning_info(info: dict):
+    """
+    Print learning statistics.
+    """
     print('-----------------------------------')
     print('Learning Finished.')
     print('Learning Rounds:  {}'.format(info['learning_rounds']))
@@ -151,6 +155,7 @@ def print_learning_info(info: dict):
 
 def print_observation_table(ot, table_type):
     """
+    Prints the whole observation table.
 
     Args:
 
@@ -208,11 +213,12 @@ def is_suffix_of(suffix, trace) -> bool:
     """
 
     Args:
-      suffix:
-      trace:
+      suffix: target suffix
+      trace: trace in question
 
     Returns:
 
+        True if suffix is the suffix of trace.
     """
     if len(trace) < len(suffix):
         return False
@@ -222,6 +228,7 @@ def is_suffix_of(suffix, trace) -> bool:
 
 def get_cex_prefixes(cex, automaton_type):
     """
+    Returns all prefixes of the stochastic automaton.
 
     Args:
         cex: counterexample
