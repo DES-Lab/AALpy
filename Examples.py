@@ -513,6 +513,7 @@ def benchmark_stochastic_example(example, automaton_type='smm', n_c=20, n_resamp
     from aalpy.learning_algs import run_stochastic_Lstar
     from aalpy.utils import load_automaton_from_file
 
+    # Specify the path to the dot file containing a MDP
     mdp = load_automaton_from_file(f'./DotModels/MDPs/{example}.dot', automaton_type='mdp')
     input_alphabet = mdp.get_input_alphabet()
 
