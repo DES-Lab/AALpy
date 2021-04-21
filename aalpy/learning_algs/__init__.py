@@ -1,4 +1,4 @@
-# public API for running learning algorithms
+# public API for running automata learning algorithms
 from .deterministic.LStar import run_Lstar
 from .non_deterministic.OnfsmLstar import run_non_det_Lstar
 from .non_deterministic.AbstractedOnfsmLstar import run_abstracted_Lstar_ONFSM

@@ -157,7 +157,7 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_
         else:
             # stop based on number of unambiguous rows
             stop_based_on_unambiguity = observation_table.stop(learning_rounds, target_unambiguity=target_unambiguity,
-                                                               min_rounds=min_rounds,max_rounds=max_rounds,
+                                                               min_rounds=min_rounds, max_rounds=max_rounds,
                                                                print_unambiguity=print_level > 1)
             if stop_based_on_unambiguity:
                 break
