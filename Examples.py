@@ -321,7 +321,7 @@ def multi_client_mqtt_example():
 
     from aalpy.base import SUL
     from aalpy.oracles import UnseenOutputRandomWalkEqOracle
-    from aalpy.learning_algs import run_abstracted_Lstar_ONFSM
+    from aalpy.learning_algs import run_abstracted_ONFSM_Lstar
     from aalpy.SULs import MealySUL
     from aalpy.utils import load_automaton_from_file
 
@@ -406,7 +406,7 @@ def multi_client_mqtt_example():
         'UNSUBACK_ALL': 'UNSUBACK'
     }
 
-    learned_onfsm = run_abstracted_Lstar_ONFSM(alphabet, sul, eq_oracle, abstraction_mapping=abstraction_mapping,
+    learned_onfsm = run_abstracted_ONFSM_Lstar(alphabet, sul, eq_oracle, abstraction_mapping=abstraction_mapping,
                                                n_sampling=200, print_level=3)
 
     return learned_onfsm
@@ -421,7 +421,7 @@ def abstracted_onfsm_example():
     """
     from aalpy.SULs import OnfsmSUL
     from aalpy.oracles import UnseenOutputRandomWalkEqOracle
-    from aalpy.learning_algs import run_abstracted_Lstar_ONFSM
+    from aalpy.learning_algs import run_abstracted_ONFSM_Lstar
     from aalpy.utils import get_ONFSM
 
     onfsm = get_ONFSM()
@@ -433,7 +433,7 @@ def abstracted_onfsm_example():
 
     abstraction_mapping = {0: 0, 'O': 0}
 
-    learned_onfsm = run_abstracted_Lstar_ONFSM(alphabet, sul, eq_oracle=eq_oracle,
+    learned_onfsm = run_abstracted_ONFSM_Lstar(alphabet, sul, eq_oracle=eq_oracle,
                                                abstraction_mapping=abstraction_mapping,
                                                n_sampling=50, print_level=3)
 

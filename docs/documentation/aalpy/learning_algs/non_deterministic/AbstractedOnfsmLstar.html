@@ -28,7 +28,7 @@
                     <h2>API Documentation</h2>
                         <ul class="memberlist">
             <li>
-                    <a class="function" href="#run_abstracted_Lstar_ONFSM">run_abstracted_Lstar_ONFSM</a>
+                    <a class="function" href="#run_abstracted_ONFSM_Lstar">run_abstracted_ONFSM_Lstar</a>
             </li>
     </ul>
 
@@ -58,7 +58,7 @@
 <span class="n">print_options</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
 
 
-<span class="k">def</span> <span class="nf">run_abstracted_Lstar_ONFSM</span><span class="p">(</span><span class="n">alphabet</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">eq_oracle</span><span class="p">:</span> <span class="n">Oracle</span><span class="p">,</span> <span class="n">abstraction_mapping</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">n_sampling</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+<span class="k">def</span> <span class="nf">run_abstracted_ONFSM_Lstar</span><span class="p">(</span><span class="n">alphabet</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">eq_oracle</span><span class="p">:</span> <span class="n">Oracle</span><span class="p">,</span> <span class="n">abstraction_mapping</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">n_sampling</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
                                <span class="n">max_learning_rounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">return_data</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">print_level</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Based on &#39;&#39;Learning Abstracted Non-deterministic Finite State Machines&#39;&#39; from Pferscher and Aichernig.</span>
@@ -197,12 +197,12 @@
         </details>
 
             </section>
-                <section id="run_abstracted_Lstar_ONFSM">
-                            <div class="attr function"><a class="headerlink" href="#run_abstracted_Lstar_ONFSM">#&nbsp;&nbsp</a>
+                <section id="run_abstracted_ONFSM_Lstar">
+                            <div class="attr function"><a class="headerlink" href="#run_abstracted_ONFSM_Lstar">#&nbsp;&nbsp</a>
 
         
             <span class="def">def</span>
-            <span class="name">run_abstracted_Lstar_ONFSM</span><span class="signature">(
+            <span class="name">run_abstracted_ONFSM_Lstar</span><span class="signature">(
     alphabet: list,
     sul: <a href="../../base/SUL.html#SUL">aalpy.base.SUL.SUL</a>,
     eq_oracle: <a href="../../base/Oracle.html#Oracle">aalpy.base.Oracle.Oracle</a>,
@@ -216,7 +216,7 @@
 
                 <details>
             <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">run_abstracted_Lstar_ONFSM</span><span class="p">(</span><span class="n">alphabet</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">eq_oracle</span><span class="p">:</span> <span class="n">Oracle</span><span class="p">,</span> <span class="n">abstraction_mapping</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">n_sampling</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+            <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">run_abstracted_ONFSM_Lstar</span><span class="p">(</span><span class="n">alphabet</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">eq_oracle</span><span class="p">:</span> <span class="n">Oracle</span><span class="p">,</span> <span class="n">abstraction_mapping</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">n_sampling</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
                                <span class="n">max_learning_rounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">return_data</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">print_level</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Based on &#39;&#39;Learning Abstracted Non-deterministic Finite State Machines&#39;&#39; from Pferscher and Aichernig.</span>
