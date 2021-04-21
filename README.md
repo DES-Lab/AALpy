@@ -14,7 +14,7 @@ stochastic behavior, AALpy allows you to learn **observable
 nondeterministic finite-state machines**, **Markov decision processes**, 
 or **stochastic Mealy machines**.
 
-AALpy enables efficient learning by providing a **large array of equivalence oracles**, implementing various **conformance testing** strategies. Learning 
+AALpy enables efficient learning by providing a **large set of equivalence oracles**, implementing various **conformance testing** strategies. Learning 
 is mostly based on Angluin's [L* algorithm](https://people.eecs.berkeley.edu/~dawnsong/teaching/s10/papers/angluin87.pdf), for which AALpy supports a 
 selection of optimizations, including **efficient counterexample processing**.
 Finally, support for learning **abstracted non-deterministic Mealy machines** 
