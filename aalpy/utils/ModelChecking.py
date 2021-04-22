@@ -131,7 +131,7 @@ def evaluate_all_properties(prism_file_name, properties_file_name):
             match = prism_prob_output_regex.match(line)
             if match:
                 results[f'prop{len(results) + 1}'] = float(match.group(1))
-
+    proc.kill()
     return results
 
 
