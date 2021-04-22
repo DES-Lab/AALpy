@@ -167,6 +167,7 @@ def load_automaton_from_file(path, automaton_type, compute_prefixes=False):
             label_output = _process_label(label)
             label = label_output.split('|')[0]
             output = label_output.split('|')[1]
+            output = int(output) if output.isdigit() else output
 
         if automaton_type == 'mdp':
             node_label_dict[node_name] = node(node_name, label)
