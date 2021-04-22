@@ -31,7 +31,8 @@ class DeterministicTest(unittest.TestCase):
         alphabet = learned_automaton.get_input_alphabet()
         sul = suls[learned_automaton.__class__](correct_automaton)
 
-        self.eq_oracle = WMethodEqOracle(alphabet, sul, max_number_of_states=len(correct_automaton.states))
+        # + 2 for good measure
+        self.eq_oracle = WMethodEqOracle(alphabet, sul, max_number_of_states=len(correct_automaton.states) + 2)
 
         cex = self.eq_oracle.find_cex(learned_automaton)
 
