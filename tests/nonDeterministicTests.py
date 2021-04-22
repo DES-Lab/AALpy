@@ -4,6 +4,7 @@ import unittest
 class NonDeterministicTest(unittest.TestCase):
 
     def test_non_det(self):
+
         from aalpy.SULs import OnfsmSUL
         from aalpy.oracles import UnseenOutputRandomWordEqOracle, UnseenOutputRandomWalkEqOracle
         from aalpy.learning_algs import run_non_det_Lstar
