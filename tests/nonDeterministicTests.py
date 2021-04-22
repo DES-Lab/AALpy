@@ -28,4 +28,3 @@ class NonDeterministicTest(unittest.TestCase):
             if cex or len(learned_onfsm.states) != len(onfsm.states):
                 assert False
         assert True
-
