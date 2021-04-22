@@ -507,7 +507,7 @@ def benchmark_stochastic_example(example, automaton_type='smm', n_c=20, n_resamp
     :return: learned SMM
 
     """
-    from aalpy.SULs import StochasticMealySUL
+    from aalpy.SULs import StochasticMealySUL, MdpSUL
     from aalpy.oracles import UnseenOutputRandomWalkEqOracle, UnseenOutputRandomWordEqOracle
     from aalpy.learning_algs import run_stochastic_Lstar
     from aalpy.utils import load_automaton_from_file
@@ -516,7 +516,7 @@ def benchmark_stochastic_example(example, automaton_type='smm', n_c=20, n_resamp
     mdp = load_automaton_from_file(f'./DotModels/MDPs/{example}.dot', automaton_type='mdp')
     input_alphabet = mdp.get_input_alphabet()
 
-    sul = StochasticMealySUL(mdp)
+    sul = StochasticMealySUL(mdp) if automaton_type == 'smm' else MdpSUL(mdp)
     eq_oracle = UnseenOutputRandomWordEqOracle(input_alphabet, sul, num_walks=150, min_walk_len=5, max_walk_len=15,
                                                reset_after_cex=True)
     eq_oracle = UnseenOutputRandomWalkEqOracle(input_alphabet, sul=sul, num_steps=200, reset_prob=0.25,
