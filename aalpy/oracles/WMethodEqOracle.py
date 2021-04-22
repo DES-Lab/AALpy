@@ -33,7 +33,7 @@ class WMethodEqOracle(Oracle):
 
         middle = []
         for i in range(self.m - len(hypothesis.states)):
-            middle.extend(combinations(self.alphabet, i))
+            middle.extend(combinations(self.alphabet, i + 1))
 
         test_set = []
         for seq in product(transition_cover, middle, hypothesis.characterization_set):
