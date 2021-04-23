@@ -199,7 +199,7 @@
             <span class="n">match</span> <span class="o">=</span> <span class="n">prism_prob_output_regex</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
                 <span class="n">results</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;prop</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
-
+    <span class="n">proc</span><span class="o">.</span><span class="n">kill</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">results</span>
 
 
@@ -468,7 +468,7 @@ output_path: output file (Default value = None)
             <span class="n">match</span> <span class="o">=</span> <span class="n">prism_prob_output_regex</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
                 <span class="n">results</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;prop</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
-
+    <span class="n">proc</span><span class="o">.</span><span class="n">kill</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">results</span>
 </pre></div>
 

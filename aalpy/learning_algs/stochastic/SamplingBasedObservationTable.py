@@ -108,7 +108,7 @@ class SamplingBasedObservationTable:
         resample_value = n_resample if self.strategy == 'classic' else max(dynamic // 2, 500)
 
         for i in range(resample_value):
-            self.teacher.refine_query(pta_root)
+            self.teacher.tree_query(pta_root)
         return True
 
     def update_obs_table_with_freq_obs(self, element_of_s=None):

@@ -215,7 +215,7 @@
         <span class="n">resample_value</span> <span class="o">=</span> <span class="n">n_resample</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">==</span> <span class="s1">&#39;classic&#39;</span> <span class="k">else</span> <span class="nb">max</span><span class="p">(</span><span class="n">dynamic</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">500</span><span class="p">)</span>
 
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">resample_value</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">teacher</span><span class="o">.</span><span class="n">refine_query</span><span class="p">(</span><span class="n">pta_root</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">teacher</span><span class="o">.</span><span class="n">tree_query</span><span class="p">(</span><span class="n">pta_root</span><span class="p">)</span>
         <span class="k">return</span> <span class="kc">True</span>
 
     <span class="k">def</span> <span class="nf">update_obs_table_with_freq_obs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element_of_s</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -855,7 +855,7 @@
         <span class="n">resample_value</span> <span class="o">=</span> <span class="n">n_resample</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">==</span> <span class="s1">&#39;classic&#39;</span> <span class="k">else</span> <span class="nb">max</span><span class="p">(</span><span class="n">dynamic</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">500</span><span class="p">)</span>
 
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">resample_value</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">teacher</span><span class="o">.</span><span class="n">refine_query</span><span class="p">(</span><span class="n">pta_root</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">teacher</span><span class="o">.</span><span class="n">tree_query</span><span class="p">(</span><span class="n">pta_root</span><span class="p">)</span>
         <span class="k">return</span> <span class="kc">True</span>
 
     <span class="k">def</span> <span class="nf">update_obs_table_with_freq_obs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element_of_s</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -1525,7 +1525,7 @@
         <span class="n">resample_value</span> <span class="o">=</span> <span class="n">n_resample</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">==</span> <span class="s1">&#39;classic&#39;</span> <span class="k">else</span> <span class="nb">max</span><span class="p">(</span><span class="n">dynamic</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">500</span><span class="p">)</span>
 
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">resample_value</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">teacher</span><span class="o">.</span><span class="n">refine_query</span><span class="p">(</span><span class="n">pta_root</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">teacher</span><span class="o">.</span><span class="n">tree_query</span><span class="p">(</span><span class="n">pta_root</span><span class="p">)</span>
         <span class="k">return</span> <span class="kc">True</span>
 </pre></div>
 
