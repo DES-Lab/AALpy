@@ -77,6 +77,7 @@ class CacheSUL(SUL):
     System under learning that keeps a multiset of all queries in memory.
     This multiset/cache is encoded as a tree.
     """
+
     def __init__(self, sul: SUL):
         super().__init__()
         self.sul = sul
@@ -102,14 +103,14 @@ class CacheSUL(SUL):
             self.num_cached_queries += 1
             return cached_query
 
-        self.pre()
-        out = []
-        # Empty string for DFA
-        if len(word) == 0:
-            return [self.step(None)]
-        for letter in word:
-            out.append(self.step(letter))
-        self.post()
+        # get outputs using default query method
+        out = self.sul.query(word)
+
+        # add input/outputs to tree
+        self.cache.reset()
+        for i, o in zip(word, out):
+            self.cache.step_in_cache(i, o)
+
         self.num_queries += 1
         self.num_steps += len(word)
         return out
