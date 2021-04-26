@@ -138,6 +138,13 @@ class Automaton(ABC):
 
         return list(prev_states)
 
+    def get_state_by_id(self, state_id):
+        for state in self.states:
+            if state.state_id == state_id:
+                return state
+        
+        return None
+
     def is_strongly_connected(self) -> bool:
         """
         Check whether the automaton is strongly connected,
