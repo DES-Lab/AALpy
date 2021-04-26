@@ -109,7 +109,7 @@ def random_onfsm_example(num_states, input_size, output_size, n_sampling):
     from aalpy.SULs import OnfsmSUL
     from aalpy.utils import generate_random_ONFSM
     from aalpy.oracles import UnseenOutputRandomWalkEqOracle, UnseenOutputRandomWordEqOracle
-    from aalpy.learning_algs import run_Lstar_ONFSM
+    from aalpy.learning_algs import run_non_det_Lstar
 
     onfsm = generate_random_ONFSM(num_states=num_states, num_inputs=input_size, num_outputs=output_size)
     alphabet = onfsm.get_input_alphabet()
@@ -118,7 +118,7 @@ def random_onfsm_example(num_states, input_size, output_size, n_sampling):
     eq_oracle = UnseenOutputRandomWordEqOracle(alphabet, sul, num_walks=500, min_walk_len=10, max_walk_len=50)
     eq_oracle = UnseenOutputRandomWalkEqOracle(alphabet, sul, num_steps=5000, reset_prob=0.15, reset_after_cex=True)
 
-    learned_model = run_Lstar_ONFSM(alphabet, sul, eq_oracle=eq_oracle, n_sampling=n_sampling)
+    learned_model = run_non_det_Lstar(alphabet, sul, eq_oracle=eq_oracle, n_sampling=n_sampling)
     return learned_model
 
 
@@ -289,21 +289,19 @@ def onfsm_mealy_paper_example():
     :return: learned ONFSM
     """
 
-    from random import seed
     from aalpy.SULs import OnfsmSUL
     from aalpy.oracles import UnseenOutputRandomWordEqOracle, UnseenOutputRandomWalkEqOracle
-    from aalpy.learning_algs import run_Lstar_ONFSM
+    from aalpy.learning_algs import run_non_det_Lstar
     from aalpy.utils import get_benchmark_ONFSM
-    seed(3)
 
     onfsm = get_benchmark_ONFSM()
     alphabet = onfsm.get_input_alphabet()
 
     sul = OnfsmSUL(onfsm)
-    eq_oracle = UnseenOutputRandomWalkEqOracle(alphabet, sul, num_steps=5000, reset_prob=0.09, reset_after_cex=True)
-    eq_oracle = UnseenOutputRandomWordEqOracle(alphabet, sul, num_walks=500, min_walk_len=4, max_walk_len=10)
+    eq_oracle = UnseenOutputRandomWalkEqOracle(alphabet, sul, num_steps=5000, reset_prob=0.25, reset_after_cex=True)
+    eq_oracle = UnseenOutputRandomWordEqOracle(alphabet, sul, num_walks=500, min_walk_len=2, max_walk_len=5)
 
-    learned_onfsm = run_Lstar_ONFSM(alphabet, sul, eq_oracle, n_sampling=15, print_level=3)
+    learned_onfsm = run_non_det_Lstar(alphabet, sul, eq_oracle, n_sampling=50, print_level=3)
 
     return learned_onfsm
 
@@ -321,7 +319,7 @@ def multi_client_mqtt_example():
 
     from aalpy.base import SUL
     from aalpy.oracles import UnseenOutputRandomWalkEqOracle
-    from aalpy.learning_algs import run_abstracted_Lstar_ONFSM
+    from aalpy.learning_algs import run_abstracted_ONFSM_Lstar
     from aalpy.SULs import MealySUL
     from aalpy.utils import load_automaton_from_file
 
@@ -402,11 +400,11 @@ def multi_client_mqtt_example():
         'CONCLOSED': 'CONCLOSED',
         'CONCLOSED_UNSUB_ALL': 'CONCLOSED',
         'CONCLOSED_ALL': 'CONCLOSED',
-        'UNSUBACK' : 'UNSUBACK',
+        'UNSUBACK': 'UNSUBACK',
         'UNSUBACK_ALL': 'UNSUBACK'
     }
 
-    learned_onfsm = run_abstracted_Lstar_ONFSM(alphabet, sul, eq_oracle, abstraction_mapping=abstraction_mapping,
+    learned_onfsm = run_abstracted_ONFSM_Lstar(alphabet, sul, eq_oracle, abstraction_mapping=abstraction_mapping,
                                                n_sampling=200, print_level=3)
 
     return learned_onfsm
@@ -421,7 +419,7 @@ def abstracted_onfsm_example():
     """
     from aalpy.SULs import OnfsmSUL
     from aalpy.oracles import UnseenOutputRandomWalkEqOracle
-    from aalpy.learning_algs import run_abstracted_Lstar_ONFSM
+    from aalpy.learning_algs import run_abstracted_ONFSM_Lstar
     from aalpy.utils import get_ONFSM
 
     onfsm = get_ONFSM()
@@ -433,7 +431,7 @@ def abstracted_onfsm_example():
 
     abstraction_mapping = {0: 0, 'O': 0}
 
-    learned_onfsm = run_abstracted_Lstar_ONFSM(alphabet, sul, eq_oracle=eq_oracle,
+    learned_onfsm = run_abstracted_ONFSM_Lstar(alphabet, sul, eq_oracle=eq_oracle,
                                                abstraction_mapping=abstraction_mapping,
                                                n_sampling=50, print_level=3)
 
@@ -491,7 +489,8 @@ def weird_coffee_machine_mdp_example():
 
 
 def benchmark_stochastic_example(example, automaton_type='smm', n_c=20, n_resample=1000, min_rounds=10, max_rounds=500,
-                                 strategy='normal', cex_processing=None, error_bound=None, samples_cex_strategy=None):
+                                 strategy='normal', cex_processing='longest_prefix', stopping_based_on_prop=None,
+                                 samples_cex_strategy=None):
     """
     Learning the stochastic Mealy Machine(SMM) various benchmarking examples
     found in Chapter 7 of Martin's Tappler PhD thesis.
@@ -503,28 +502,31 @@ def benchmark_stochastic_example(example, automaton_type='smm', n_c=20, n_resamp
     :param max_rounds: maximum number of learning rounds
     :param strategy: normal, classic or chi2
     :param cex_processing: counterexample processing strategy
+    :stopping_based_on_prop: a tuple (path to properties, correct values, error bound)
     :param samples_cex_strategy: strategy to sample cex in the trace tree
     :return: learned SMM
+
     """
-    from aalpy.SULs import StochasticMealySUL
+    from aalpy.SULs import MdpSUL
     from aalpy.oracles import UnseenOutputRandomWalkEqOracle, UnseenOutputRandomWordEqOracle
     from aalpy.learning_algs import run_stochastic_Lstar
     from aalpy.utils import load_automaton_from_file
 
+    # Specify the path to the dot file containing a MDP
     mdp = load_automaton_from_file(f'./DotModels/MDPs/{example}.dot', automaton_type='mdp')
     input_alphabet = mdp.get_input_alphabet()
 
-    sul = StochasticMealySUL(mdp)
-    eq_oracle = UnseenOutputRandomWalkEqOracle(input_alphabet, sul=sul, num_steps=200, reset_prob=0.25,
-                                               reset_after_cex=True)
+    sul = MdpSUL(mdp)
     eq_oracle = UnseenOutputRandomWordEqOracle(input_alphabet, sul, num_walks=150, min_walk_len=5, max_walk_len=15,
+                                               reset_after_cex=True)
+    eq_oracle = UnseenOutputRandomWalkEqOracle(input_alphabet, sul=sul, num_steps=200, reset_prob=0.25,
                                                reset_after_cex=True)
 
     learned_mdp = run_stochastic_Lstar(input_alphabet=input_alphabet, eq_oracle=eq_oracle, sul=sul, n_c=n_c,
                                        n_resample=n_resample, min_rounds=min_rounds, max_rounds=max_rounds,
                                        automaton_type=automaton_type, strategy=strategy, cex_processing=cex_processing,
                                        samples_cex_strategy=samples_cex_strategy, target_unambiguity=0.99,
-                                       error_bound=error_bound, property_stop_exp_name=example if error_bound else None)
+                                       property_based_stopping=stopping_based_on_prop)
 
     return learned_mdp
 
@@ -555,3 +557,29 @@ def custom_smm_example(smm, n_c=20, n_resample=100, min_rounds=10, max_rounds=50
                                          print_level=3)
 
     return learned_model
+
+
+def learn_stochastic_system_and_do_model_checking(example, automaton_type='smm', n_c=20, n_resample=1000, min_rounds=10,
+                                                  max_rounds=500, strategy='normal', cex_processing='longest_prefix',
+                                                  stopping_based_on_prop=None, samples_cex_strategy=None):
+
+    import aalpy.paths
+    from aalpy.automata import StochasticMealyMachine
+    from aalpy.utils import smm_to_mdp_conversion, model_check_experiment, get_properties_file, get_correct_prop_values
+
+    aalpy.paths.path_to_prism = "C:/Program Files/prism-4.6/bin/prism.bat"
+    aalpy.paths.path_to_properties = "Benchmarking/prism_eval_props/"
+
+    learned_model = benchmark_stochastic_example(example, automaton_type, n_c, n_resample, min_rounds, max_rounds,
+                                                 strategy,
+                                                 cex_processing, stopping_based_on_prop, samples_cex_strategy)
+
+    if isinstance(learned_model, StochasticMealyMachine):
+        mdp = smm_to_mdp_conversion(learned_model)
+    else:
+        mdp = learned_model
+
+    values, diff = model_check_experiment(get_properties_file(example), get_correct_prop_values(example), mdp)
+
+    print('Value for each property:', [round(d * 100, 2) for d in values.values()])
+    print('Error for each property:', [round(d * 100, 2) for d in diff.values()])

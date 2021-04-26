@@ -186,15 +186,9 @@
 
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">Onfsm</span><span class="p">):</span>
                     <span class="k">return</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span>
-                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">Mdp</span><span class="p">):</span>
-                    <span class="c1"># hypothesis is MDP</span>
-                    <span class="n">cex</span> <span class="o">=</span> <span class="p">[</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">initial_state</span><span class="o">.</span><span class="n">output</span><span class="p">]</span>
-                    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">):</span>
-                        <span class="n">cex</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">i</span><span class="p">,</span> <span class="n">o</span><span class="p">])</span>
-                    <span class="k">return</span> <span class="n">cex</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="c1"># stochastic MM</span>
-                    <span class="n">cex</span> <span class="o">=</span> <span class="p">[]</span>
+                    <span class="c1"># hypothesis is MDP or SMM</span>
+                    <span class="n">cex</span> <span class="o">=</span> <span class="p">[</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">initial_state</span><span class="o">.</span><span class="n">output</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">Mdp</span><span class="p">)</span> <span class="k">else</span> <span class="p">[]</span>
                     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">):</span>
                         <span class="n">cex</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">i</span><span class="p">,</span> <span class="n">o</span><span class="p">])</span>
                     <span class="k">return</span> <span class="n">cex</span>
@@ -465,15 +459,9 @@ current hypothesis.</p>
 
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">Onfsm</span><span class="p">):</span>
                     <span class="k">return</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span>
-                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">Mdp</span><span class="p">):</span>
-                    <span class="c1"># hypothesis is MDP</span>
-                    <span class="n">cex</span> <span class="o">=</span> <span class="p">[</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">initial_state</span><span class="o">.</span><span class="n">output</span><span class="p">]</span>
-                    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">):</span>
-                        <span class="n">cex</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">i</span><span class="p">,</span> <span class="n">o</span><span class="p">])</span>
-                    <span class="k">return</span> <span class="n">cex</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="c1"># stochastic MM</span>
-                    <span class="n">cex</span> <span class="o">=</span> <span class="p">[]</span>
+                    <span class="c1"># hypothesis is MDP or SMM</span>
+                    <span class="n">cex</span> <span class="o">=</span> <span class="p">[</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">initial_state</span><span class="o">.</span><span class="n">output</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">Mdp</span><span class="p">)</span> <span class="k">else</span> <span class="p">[]</span>
                     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">):</span>
                         <span class="n">cex</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">i</span><span class="p">,</span> <span class="n">o</span><span class="p">])</span>
                     <span class="k">return</span> <span class="n">cex</span>
@@ -583,15 +571,9 @@ reset_prob: probability that the new query will be asked
 
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">Onfsm</span><span class="p">):</span>
                     <span class="k">return</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span>
-                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">Mdp</span><span class="p">):</span>
-                    <span class="c1"># hypothesis is MDP</span>
-                    <span class="n">cex</span> <span class="o">=</span> <span class="p">[</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">initial_state</span><span class="o">.</span><span class="n">output</span><span class="p">]</span>
-                    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">):</span>
-                        <span class="n">cex</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">i</span><span class="p">,</span> <span class="n">o</span><span class="p">])</span>
-                    <span class="k">return</span> <span class="n">cex</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="c1"># stochastic MM</span>
-                    <span class="n">cex</span> <span class="o">=</span> <span class="p">[]</span>
+                    <span class="c1"># hypothesis is MDP or SMM</span>
+                    <span class="n">cex</span> <span class="o">=</span> <span class="p">[</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">initial_state</span><span class="o">.</span><span class="n">output</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">Mdp</span><span class="p">)</span> <span class="k">else</span> <span class="p">[]</span>
                     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">):</span>
                         <span class="n">cex</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">i</span><span class="p">,</span> <span class="n">o</span><span class="p">])</span>
                     <span class="k">return</span> <span class="n">cex</span>

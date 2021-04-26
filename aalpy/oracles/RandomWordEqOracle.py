@@ -115,15 +115,9 @@ class UnseenOutputRandomWordEqOracle(Oracle):
 
                     if isinstance(hypothesis, Onfsm):
                         return inputs, outputs
-                    elif isinstance(hypothesis, Mdp):
-                        # hypothesis is MDP
-                        cex = [hypothesis.initial_state.output]
-                        for i, o in zip(inputs, outputs):
-                            cex.extend([i, o])
-                        return cex
                     else:
-                        # stochastic MM
-                        cex = []
+                        # hypothesis is MDP or SMM
+                        cex = [hypothesis.initial_state.output] if isinstance(hypothesis, Mdp) else []
                         for i, o in zip(inputs, outputs):
                             cex.extend([i, o])
                         return cex

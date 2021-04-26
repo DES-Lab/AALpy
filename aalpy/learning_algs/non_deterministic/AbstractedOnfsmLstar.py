@@ -8,7 +8,7 @@ from aalpy.utils.HelperFunctions import print_learning_info, print_observation_t
 print_options = [0, 1, 2, 3]
 
 
-def run_abstracted_Lstar_ONFSM(alphabet: list, sul: SUL, eq_oracle: Oracle, abstraction_mapping: dict, n_sampling=100,
+def run_abstracted_ONFSM_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, abstraction_mapping: dict, n_sampling=100,
                                max_learning_rounds=None, return_data=False, print_level=2):
     """
     Based on ''Learning Abstracted Non-deterministic Finite State Machines'' from Pferscher and Aichernig.

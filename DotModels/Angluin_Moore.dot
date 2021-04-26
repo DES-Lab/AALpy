@@ -1,0 +1,16 @@
+digraph Angluin_Moore {
+s0 [label="s0|1", shape=record, style=rounded];
+s1 [label="s1|0", shape=record, style=rounded];
+s2 [label="s2|0", shape=record, style=rounded];
+s3 [label="s3|0", shape=record, style=rounded];
+s0 -> s2  [label=a];
+s0 -> s1  [label=b];
+s1 -> s3  [label=a];
+s1 -> s0  [label=b];
+s2 -> s0  [label=a];
+s2 -> s3  [label=b];
+s3 -> s1  [label=a];
+s3 -> s2  [label=b];
+__start0 [label="", shape=none];
+__start0 -> s0  [label=""];
+}

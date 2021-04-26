@@ -8,8 +8,8 @@ from aalpy.utils.HelperFunctions import extend_set, print_learning_info, print_o
 print_options = [0, 1, 2, 3]
 
 
-def run_Lstar_ONFSM(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=50,
-                    max_learning_rounds=None, return_data=False, print_level=2):
+def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=50,
+                      max_learning_rounds=None, return_data=False, print_level=2):
     """
     Based on ''Learning Finite State Models of Observable Nondeterministic Systems in a Testing Context '' from Fakih
     et al. Relies on the all-weather assumption. (By sampling we will obtain all possible non-deterministic outputs.

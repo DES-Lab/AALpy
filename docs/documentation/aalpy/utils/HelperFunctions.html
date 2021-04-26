@@ -75,8 +75,7 @@
                 
                         <details>
             <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span><span class="kn">import</span> <span class="nn">re</span>
-<span class="kn">import</span> <span class="nn">string</span>
+            <div class="codehilite"><pre><span></span><span class="kn">import</span> <span class="nn">string</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
 
 <span class="kn">from</span> <span class="nn">aalpy.automata</span> <span class="kn">import</span> <span class="n">Mdp</span><span class="p">,</span> <span class="n">StochasticMealyMachine</span><span class="p">,</span> <span class="n">MdpState</span>
@@ -135,7 +134,7 @@
 <span class="sd">      sort_key:  (Default value = &#39;cumtime&#39;)</span>
 
 <span class="sd">    Returns:</span>
-
+<span class="sd">        prints the profiling results</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">import</span> <span class="nn">cProfile</span>
     <span class="n">pr</span> <span class="o">=</span> <span class="n">cProfile</span><span class="o">.</span><span class="n">Profile</span><span class="p">()</span>
@@ -149,11 +148,13 @@
     <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="sd">    Args:</span>
+
 <span class="sd">      size:  (Default value = 10)</span>
 <span class="sd">      chars:  (Default value = string.ascii_lowercase + string.digits)</span>
 
 <span class="sd">    Returns:</span>
 
+<span class="sd">        a random string of length size</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">import</span> <span class="nn">random</span>
     <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">chars</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">size</span><span class="p">))</span>
@@ -207,6 +208,9 @@
 
 
 <span class="k">def</span> <span class="nf">print_learning_info</span><span class="p">(</span><span class="n">info</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Print learning statistics.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;-----------------------------------&#39;</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Learning Finished.&#39;</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Learning Rounds:  </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;learning_rounds&#39;</span><span class="p">]))</span>
@@ -228,6 +232,7 @@
 
 <span class="k">def</span> <span class="nf">print_observation_table</span><span class="p">(</span><span class="n">ot</span><span class="p">,</span> <span class="n">table_type</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Prints the whole observation table.</span>
 
 <span class="sd">    Args:</span>
 
@@ -285,11 +290,12 @@
     <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">      suffix:</span>
-<span class="sd">      trace:</span>
+<span class="sd">      suffix: target suffix</span>
+<span class="sd">      trace: trace in question</span>
 
 <span class="sd">    Returns:</span>
 
+<span class="sd">        True if suffix is the suffix of trace.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">trace</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">suffix</span><span class="p">):</span>
         <span class="k">return</span> <span class="kc">False</span>
@@ -299,6 +305,7 @@
 
 <span class="k">def</span> <span class="nf">get_cex_prefixes</span><span class="p">(</span><span class="n">cex</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns all prefixes of the stochastic automaton.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        cex: counterexample</span>
@@ -449,7 +456,7 @@ They are stored as lists, so with this function set property is maintained.
 <span class="sd">      sort_key:  (Default value = &#39;cumtime&#39;)</span>
 
 <span class="sd">    Returns:</span>
-
+<span class="sd">        prints the profiling results</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">import</span> <span class="nn">cProfile</span>
     <span class="n">pr</span> <span class="o">=</span> <span class="n">cProfile</span><span class="o">.</span><span class="n">Profile</span><span class="p">()</span>
@@ -465,7 +472,8 @@ They are stored as lists, so with this function set property is maintained.
   function: callable: 
   sort_key:  (Default value = 'cumtime')</p>
 
-<p>Returns:</p>
+<p>Returns:
+    prints the profiling results</p>
 </div>
 
 
@@ -484,11 +492,13 @@ They are stored as lists, so with this function set property is maintained.
     <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="sd">    Args:</span>
+
 <span class="sd">      size:  (Default value = 10)</span>
 <span class="sd">      chars:  (Default value = string.ascii_lowercase + string.digits)</span>
 
 <span class="sd">    Returns:</span>
 
+<span class="sd">        a random string of length size</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">import</span> <span class="nn">random</span>
     <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">chars</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">size</span><span class="p">))</span>
@@ -496,11 +506,15 @@ They are stored as lists, so with this function set property is maintained.
 
         </details>
 
-            <div class="docstring"><p>Args:
-  size:  (Default value = 10)
+            <div class="docstring"><p>Args:</p>
+
+<p>size:  (Default value = 10)
   chars:  (Default value = string.ascii_lowercase + string.digits)</p>
 
 <p>Returns:</p>
+
+<pre><code>a random string of length size
+</code></pre>
 </div>
 
 
@@ -588,6 +602,9 @@ They are stored as lists, so with this function set property is maintained.
                 <details>
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">print_learning_info</span><span class="p">(</span><span class="n">info</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Print learning statistics.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;-----------------------------------&#39;</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Learning Finished.&#39;</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Learning Rounds:  </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;learning_rounds&#39;</span><span class="p">]))</span>
@@ -609,7 +626,9 @@ They are stored as lists, so with this function set property is maintained.
 
         </details>
 
-    
+            <div class="docstring"><p>Print learning statistics.</p>
+</div>
+
 
                 </section>
                 <section id="print_observation_table">
@@ -624,6 +643,7 @@ They are stored as lists, so with this function set property is maintained.
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">print_observation_table</span><span class="p">(</span><span class="n">ot</span><span class="p">,</span> <span class="n">table_type</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Prints the whole observation table.</span>
 
 <span class="sd">    Args:</span>
 
@@ -679,7 +699,9 @@ They are stored as lists, so with this function set property is maintained.
 
         </details>
 
-            <div class="docstring"><p>Args:</p>
+            <div class="docstring"><p>Prints the whole observation table.</p>
+
+<p>Args:</p>
 
 <pre><code>ot: observation table
 table_type: 'det', 'non-det', or 'stoc'
@@ -702,11 +724,12 @@ table_type: 'det', 'non-det', or 'stoc'
     <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">      suffix:</span>
-<span class="sd">      trace:</span>
+<span class="sd">      suffix: target suffix</span>
+<span class="sd">      trace: trace in question</span>
 
 <span class="sd">    Returns:</span>
 
+<span class="sd">        True if suffix is the suffix of trace.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">trace</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">suffix</span><span class="p">):</span>
         <span class="k">return</span> <span class="kc">False</span>
@@ -717,10 +740,13 @@ table_type: 'det', 'non-det', or 'stoc'
         </details>
 
             <div class="docstring"><p>Args:
-  suffix:
-  trace:</p>
+  suffix: target suffix
+  trace: trace in question</p>
 
 <p>Returns:</p>
+
+<pre><code>True if suffix is the suffix of trace.
+</code></pre>
 </div>
 
 
@@ -737,6 +763,7 @@ table_type: 'det', 'non-det', or 'stoc'
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">get_cex_prefixes</span><span class="p">(</span><span class="n">cex</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns all prefixes of the stochastic automaton.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        cex: counterexample</span>
@@ -753,7 +780,9 @@ table_type: 'det', 'non-det', or 'stoc'
 
         </details>
 
-            <div class="docstring"><p>Args:
+            <div class="docstring"><p>Returns all prefixes of the stochastic automaton.</p>
+
+<p>Args:
     cex: counterexample
     automaton_type: <code>mdp</code> or <code>smm</code></p>
 

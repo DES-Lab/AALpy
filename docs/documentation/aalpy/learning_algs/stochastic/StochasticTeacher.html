@@ -82,7 +82,7 @@
                                 <a class="function" href="#StochasticTeacher.complete_query">complete_query</a>
                         </li>
                         <li>
-                                <a class="function" href="#StochasticTeacher.refine_query">refine_query</a>
+                                <a class="function" href="#StochasticTeacher.tree_query">tree_query</a>
                         </li>
                         <li>
                                 <a class="function" href="#StochasticTeacher.single_dfs_for_cex">single_dfs_for_cex</a>
@@ -328,7 +328,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">complete_query_cache</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">s</span> <span class="o">+</span> <span class="n">e</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">sum_freq</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_c</span>
 
-    <span class="k">def</span> <span class="nf">refine_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pta_root</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">tree_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pta_root</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Execute a refine query based on input/output trace. If at some point real outputs differ from expected</span>
 <span class="sd">        outputs, trace to that point is added to the tree, otherwise whole trace is executed.</span>
@@ -1006,7 +1006,7 @@ return None.
             <span class="bp">self</span><span class="o">.</span><span class="n">complete_query_cache</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">s</span> <span class="o">+</span> <span class="n">e</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">sum_freq</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_c</span>
 
-    <span class="k">def</span> <span class="nf">refine_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pta_root</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">tree_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pta_root</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Execute a refine query based on input/output trace. If at some point real outputs differ from expected</span>
 <span class="sd">        outputs, trace to that point is added to the tree, otherwise whole trace is executed.</span>
@@ -1440,17 +1440,17 @@ e: sequence from E set
 
 
                             </div>
-                            <div id="StochasticTeacher.refine_query" class="classattr">
-                                        <div class="attr function"><a class="headerlink" href="#StochasticTeacher.refine_query">#&nbsp;&nbsp</a>
+                            <div id="StochasticTeacher.tree_query" class="classattr">
+                                        <div class="attr function"><a class="headerlink" href="#StochasticTeacher.tree_query">#&nbsp;&nbsp</a>
 
         
             <span class="def">def</span>
-            <span class="name">refine_query</span><span class="signature">(self, pta_root)</span>:
+            <span class="name">tree_query</span><span class="signature">(self, pta_root)</span>:
     </div>
 
                 <details>
             <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">refine_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pta_root</span><span class="p">):</span>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">tree_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pta_root</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Execute a refine query based on input/output trace. If at some point real outputs differ from expected</span>
 <span class="sd">        outputs, trace to that point is added to the tree, otherwise whole trace is executed.</span>

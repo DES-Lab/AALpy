@@ -59,7 +59,7 @@ matplotlib.rcParams.update({
 })
 
 # TODO REMOVE WHITESPACES for new benchmarking results
-interesting_fields = [' Learning time', ' Learning Rounds', ' #MQ Learning', ' # Steps Learning',  ' prob1_val','prob1_err','prob2_val','prob2_err','prob3_val','prob3_err','prob4_val','prob4_err','prob5_val','prob5_err']
+interesting_fields = ['Learning time', 'Learning Rounds', '#MQ Learning', '# Steps Learning',  'prob1_val','prob1_err','prob2_val','prob2_err','prob3_val','prob3_err','prob4_val','prob4_err','prob5_val','prob5_err']
 
 
 experiments = list(min_values_dict.keys())
@@ -85,7 +85,7 @@ for e_index in range(0, len(experiments), 2):
         print(f'Avr : {avr_values_dict[experiments[e_index]][i]} vs {avr_values_dict[experiments[e_index + 1]][i]}| SMM efficiency : {avr_eff}')
     print('-------------------------------------------------')
 
-with open('fm_statistics_old.csv', 'w',newline='') as file:
+with open('fm_statistics_2204.csv', 'w',newline='') as file:
     writer = csv.writer(file)
 
     experiments = list(min_values_dict.keys())

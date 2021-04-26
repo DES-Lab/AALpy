@@ -108,7 +108,7 @@ class SamplingBasedObservationTable:
         resample_value = n_resample if self.strategy == 'classic' else max(dynamic // 2, 500)
 
         for i in range(resample_value):
-            self.teacher.refine_query(pta_root)
+            self.teacher.tree_query(pta_root)
         return True
 
     def update_obs_table_with_freq_obs(self, element_of_s=None):
@@ -358,7 +358,7 @@ class SamplingBasedObservationTable:
         else:
             self.update_obs_table_with_freq_obs()
 
-    def stop(self, learning_round, chaos_present, min_rounds=10, max_rounds=None,
+    def stop(self, learning_round, min_rounds=10, max_rounds=None,
              target_unambiguity=0.99, print_unambiguity=False):
         """
         Decide if learning should terminate.
@@ -366,7 +366,6 @@ class SamplingBasedObservationTable:
         Args:
 
           learning_round: current learning round
-          chaos_present: True if chaos counterexample existed in current learning round
           min_rounds: minimum number of learning rounds (Default value = 5)
           max_rounds: maximum number of learning rounds (Default value = None)
           target_unambiguity: percentage of rows with unambiguous representatives (Default value = 0.99)
@@ -380,9 +379,6 @@ class SamplingBasedObservationTable:
             assert min_rounds <= max_rounds
         if max_rounds and learning_round == max_rounds:
             return True
-
-        if chaos_present:
-            return False
 
         extended_s = list(self.get_extended_s())
         self.update_compatibility_classes()

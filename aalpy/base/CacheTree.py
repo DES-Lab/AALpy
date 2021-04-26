@@ -8,8 +8,8 @@ class Node(object):
 class CacheTree:
     """
     Tree in which all membership queries and corresponding outputs/values are stored. Membership queries update the tree
-    and while updating check if determinism is maintained.
-    Root node corresponds to the initial state, and from that point on for every new input/output pair a new child is
+    and while updating, check if determinism is maintained.
+    Root node corresponds to the initial state, and from that point on, for every new input/output pair, a new child is
     created where the output is the value of the child, and the input is the transition leading from the parent to the
     child.
     """

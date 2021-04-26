@@ -5,7 +5,7 @@ import aalpy.paths
 from aalpy.SULs import MdpSUL
 from aalpy.learning_algs import run_stochastic_Lstar
 from aalpy.oracles.RandomWalkEqOracle import UnseenOutputRandomWalkEqOracle
-from aalpy.utils import load_automaton_from_file
+from aalpy.utils import load_automaton_from_file, get_correct_prop_values, get_properties_file
 from aalpy.utils import smm_to_mdp_conversion, model_check_experiment
 
 path_to_dir = '../DotModels/MDPs/'
@@ -82,8 +82,10 @@ for seed in range(1, 4):
 
         smm_2_mdp = smm_to_mdp_conversion(learned_smm)
 
-        mdp_results, mdp_err = model_check_experiment(exp_name, learned_mdp)
-        smm_results, smm_err = model_check_experiment(exp_name, smm_2_mdp)
+        mdp_results, mdp_err = model_check_experiment(get_properties_file(exp_name),
+                                                      get_correct_prop_values(exp_name), learned_mdp)
+        smm_results, smm_err = model_check_experiment(get_properties_file(exp_name),
+                                                      get_correct_prop_values(exp_name), smm_2_mdp)
 
         properties_string_header = ",".join([f'{key}_val,{key}_err' for key in mdp_results.keys()])
 

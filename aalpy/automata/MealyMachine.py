@@ -26,7 +26,6 @@ class MealyMachine(Automaton):
             Returns:
 
                 output corresponding to the input from the current state
-
         """
         output = self.current_state.output_fun[letter]
         self.current_state = self.current_state.transitions[letter]

@@ -14,7 +14,7 @@ stochastic behavior, AALpy allows you to learn **observable
 nondeterministic finite-state machines**, **Markov decision processes**, 
 or **stochastic Mealy machines**.
 
-AALpy enables efficient learning by providing a **large array of equivalence oracles**, implementing various **conformance testing** strategies. Learning 
+AALpy enables efficient learning by providing a **large set of equivalence oracles**, implementing various **conformance testing** strategies. Learning 
 is mostly based on Angluin's [L* algorithm](https://people.eecs.berkeley.edu/~dawnsong/teaching/s10/papers/angluin87.pdf), for which AALpy supports a 
 selection of optimizations, including **efficient counterexample processing**.
 Finally, support for learning **abstracted non-deterministic Mealy machines** 
@@ -170,17 +170,12 @@ To be announced, please contact edi.muskardin@silicon-austria.com in the meantim
 ```
 
 ## Research Contact
-If you have research suggestions or need specific help concerning your research, feel free to contact [edi.muskardin@silicon-austria.com](mailto:edi.muskardin@silicon-austria.com).
+If you have research suggestions or you need specific help concerning your research, feel free to contact [edi.muskardin@silicon-austria.com](mailto:edi.muskardin@silicon-austria.com).
 We are happy to help you and consult you in applying automata learning in various domains.
 
 ## Contributing
 Pull requests are welcome. For significant changes, please open an issue first to discuss what you would like to change.
 In case of any questions or possible bugs, please open issues.
-
-## Contributors
-- Edi Muškardin
-- Martin Tappler
-- Andrea Pferscher
 
 ## License
 [![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://choosealicense.com/licenses/mit/)

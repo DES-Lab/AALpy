@@ -58,7 +58,6 @@ class Mdp(Automaton):
         Returns:
 
             output of the reached state, None otherwise
-
         """
         for new_state in self.current_state.transitions[inp]:
             if new_state[0].output == out:

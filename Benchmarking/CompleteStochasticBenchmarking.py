@@ -6,13 +6,14 @@ import aalpy.paths
 from aalpy.SULs import MdpSUL
 from aalpy.learning_algs import run_stochastic_Lstar
 from aalpy.oracles.RandomWordEqOracle import UnseenOutputRandomWordEqOracle
-from aalpy.utils import load_automaton_from_file
+from aalpy.utils import load_automaton_from_file, get_properties_file, get_correct_prop_values
 from aalpy.utils import smm_to_mdp_conversion, model_check_experiment
 
-seeds = [291334,15354,9430459,92344168,55451679,569315,7776892,3875261,811,51,766603,778438967,9819877,6755560,52903,5257,4635,358,1441,838]
+seeds = [29334,1554,9430459,92344168,55451679,569315,7776892,3875261,811,51,766603,778438967,9819877,6755560,52903,5257,4635,358,1441,838]
 
 path_to_dir = '../DotModels/MDPs/'
-files = ['first_grid.dot', 'second_grid.dot', 'slot_machine.dot', 'mqtt.dot', 'tcp.dot'] # 'slot_machine.dot' ,'shared_coin.dot'
+#files = ['first_grid.dot', 'second_grid.dot', 'slot_machine.dot', 'mqtt.dot', 'tcp.dot'] # 'slot_machine.dot' ,'shared_coin.dot'
+files = ['second_grid.dot', 'mqtt.dot'] # 'slot_machine.dot' ,'shared_coin.dot'
 
 prop_folder = 'prism_eval_props/'
 
@@ -21,23 +22,25 @@ prop_folder = 'prism_eval_props/'
 aalpy.paths.path_to_prism =      "C:/Program Files/prism-4.6/bin/prism.bat"
 aalpy.paths.path_to_properties = "prism_eval_props/"
 
-n_c = 20
+n_c = 10
 n_resample = 1000
-min_rounds = 35
+min_rounds = 25
 max_rounds = 500
-experiment_repetition = 20
+experiment_repetition = 10
 
 uniform_parameters = False
 strategy = ["normal", "chi2"] # chi_square
 cex_sampling = ['bfs',] # random:100:0.15
-cex_processing = ['longest_prefix'] # add a single prefix
+cex_processing = [None, 'longest_prefix'] # add a single prefix
 start = time.time()
+
+model_dict = {m.split('.')[0] : load_automaton_from_file(path_to_dir + m, automaton_type='mdp') for m in files}
 
 for strat in strategy:
     for cex_stat in cex_sampling:
         for cex_proc in cex_processing:
             print(strat, cex_stat, cex_proc)
-            benchmark_dir = f'FM_mdp_smm/benchmark_new2_{strat}/'
+            benchmark_dir = f'FM_mdp_smm/benchmark_22_04_{strat}_{cex_proc}/'
             for seed in range(experiment_repetition):
                 print(seed)
                 random.seed(seeds[seed])
@@ -52,7 +55,7 @@ for strat in strategy:
 
                     exp_name = file.split('.')[0]
 
-                    original_mdp = load_automaton_from_file(path_to_dir + file, automaton_type='mdp')
+                    original_mdp = model_dict[exp_name]
                     input_alphabet = original_mdp.get_input_alphabet()
 
                     mdp_sul = MdpSUL(original_mdp)
@@ -63,7 +66,7 @@ for strat in strategy:
                     learned_mdp, data_mdp = run_stochastic_Lstar(input_alphabet, mdp_sul, eq_oracle, automaton_type='mdp',
                                                                  min_rounds=min_rounds, strategy=strat,
                                                                  max_rounds=max_rounds, return_data=True, samples_cex_strategy=cex_stat,
-                                                                 print_level=1, cex_processing=cex_proc, target_unambiguity=0.995)
+                                                                 print_level=1, cex_processing=cex_proc, target_unambiguity=0.99)
 
                     del mdp_sul
                     del eq_oracle
@@ -76,12 +79,14 @@ for strat in strategy:
                     learned_smm, data_smm = run_stochastic_Lstar(input_alphabet, mdp_sul, eq_oracle, automaton_type='smm',
                                                                  min_rounds=min_rounds, strategy=strat,
                                                                  max_rounds=max_rounds, return_data=True, samples_cex_strategy=cex_stat,
-                                                                 print_level=1, cex_processing=cex_proc, target_unambiguity=0.995)
+                                                                 print_level=1, cex_processing=cex_proc, target_unambiguity=0.99)
 
                     smm_2_mdp = smm_to_mdp_conversion(learned_smm)
 
-                    mdp_results, mdp_err = model_check_experiment(exp_name, learned_mdp)
-                    smm_results, smm_err = model_check_experiment(exp_name, smm_2_mdp)
+                    mdp_results, mdp_err = model_check_experiment(get_properties_file(exp_name),
+                                                                  get_correct_prop_values(exp_name), learned_mdp)
+                    smm_results, smm_err = model_check_experiment(get_properties_file(exp_name),
+                                                                  get_correct_prop_values(exp_name), smm_2_mdp)
 
                     properties_string_header = ",".join([f'{key}_val,{key}_err' for key in mdp_results.keys()])
 

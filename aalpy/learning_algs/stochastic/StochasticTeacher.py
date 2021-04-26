@@ -209,7 +209,7 @@ class StochasticTeacher:
             self.complete_query_cache.add(s + e)
         return sum_freq >= self.n_c
 
-    def refine_query(self, pta_root):
+    def tree_query(self, pta_root):
         """
         Execute a refine query based on input/output trace. If at some point real outputs differ from expected
         outputs, trace to that point is added to the tree, otherwise whole trace is executed.
