@@ -36,9 +36,6 @@ class AutomatonState(ABC):
         all_trans = set(self.transitions.keys())
         return [t for t in all_trans if t not in dst]
 
-    def get_transitions(self) -> list:
-        return [t for t in self.transitions.keys()]
-
 
 class Automaton(ABC):
     """
@@ -124,26 +121,6 @@ class Automaton(ABC):
                 # mark node as explored
                 explored.append(node)
         return ()
-    
-    def get_prev_states(self, target_state: AutomatonState) -> list:
-        if target_state not in self.states:
-            raise SystemExit("State not in the automaton.")
-
-        prev_states = []
-
-        for node in self.states: 
-            for transition, neighbour in node.transitions.items():
-                if neighbour == target_state: 
-                    prev_states.append(tuple((neighbour, transition)))
-
-        return list(prev_states)
-
-    def get_state_by_id(self, state_id):
-        for state in self.states:
-            if state.state_id == state_id:
-                return state
-        
-        return None
 
     def is_strongly_connected(self) -> bool:
         """
