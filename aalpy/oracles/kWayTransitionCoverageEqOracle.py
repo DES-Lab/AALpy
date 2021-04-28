@@ -88,6 +88,7 @@ class KWayTransitionCoverageEqOracle(Oracle):
 
         # Idea: trim the end of an path if it is already covered.
         # Idea: replace the front of an path with the prefix of the first new transition
+        # Idea: remove the path if new coverage is zero
 
         if self.optimize == 'steps':
             result = max(paths, key=lambda p: len(
