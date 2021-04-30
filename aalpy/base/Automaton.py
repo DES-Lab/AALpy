@@ -163,6 +163,13 @@ class Automaton(ABC):
         assert self.is_input_complete()
         return list(self.initial_state.transitions.keys())
 
+    def get_state_by_id(self, state_id) -> AutomatonState:
+        for state in self.states:
+            if state.state_id == state_id:
+                return state
+
+        return None
+                
     def __str__(self):
         """
         :return: A string representation of the automaton

@@ -5,7 +5,7 @@ from random import choices, randint, shuffle
 from aalpy.base import SUL, Automaton, Oracle
 
 KWayTransition = namedtuple("KWayTransition", "start_state end_state steps")
-Path = namedtuple("Path", "start_state end_state steps kWayTransitions")
+Path = namedtuple("Path", "start_state end_state steps kWayTransitions, transitions_log")
 
 
 class KWayTransitionCoverageEqOracle(Oracle):
@@ -14,7 +14,7 @@ class KWayTransitionCoverageEqOracle(Oracle):
     by generating random queries and finding the smallest subset with the highest coverage. 
     """
 
-    def __init__(self, alphabet: list, sul: SUL, k: int = 2, target_coverage: float = 1.0, num_generate_paths: int = 4000, refills: int = 5, max_path_len: int = 50, optimize: str = 'steps'):
+    def __init__(self, alphabet: list, sul: SUL, k: int = 2, target_coverage: float = 0.8, num_generate_paths: int = 20000, refills: int = 5, max_path_len: int = 50, minimize_paths: bool = True, optimize: str = 'steps'):
         """
         Args:
             alphabet: input alphabet
@@ -24,6 +24,7 @@ class KWayTransitionCoverageEqOracle(Oracle):
             num_generate_paths: number of random queries used to find the optimal subset
             refills: number of refills that can happen if the target coverage is not reached
             max_path_len: the maximum step size of a generated path
+            minimize_paths: if true the generated paths will be trimed in front and back if there is no coverage value
             optimize: minimize either the number of  'steps' or 'queries' that are executed
         """
         super().__init__(alphabet, sul)
@@ -36,17 +37,21 @@ class KWayTransitionCoverageEqOracle(Oracle):
         self.num_generate_paths = num_generate_paths
         self.refills = refills
         self.max_path_len = max_path_len
+        self.minimize_paths = minimize_paths
         self.optimize = optimize
+        self.cached_paths = list()
 
     def find_cex(self, hypothesis: Automaton):
         random_paths = self.generate_random_paths(hypothesis)
 
         selected_paths, refilled = self.greedy_set_cover(
-            hypothesis, random_paths, self.refills)
+            hypothesis, random_paths + self.cached_paths, self.refills)
 
         if refilled:
             selected_paths, _ = self.greedy_set_cover(
                 hypothesis, selected_paths, 0)
+
+        self.cached_paths = selected_paths
 
         for path in selected_paths:
             counter_example = self.check_path(hypothesis, path)
@@ -74,6 +79,9 @@ class KWayTransitionCoverageEqOracle(Oracle):
                 paths.remove(path)
                 result.append(path)
 
+            if self.minimize_paths:
+                paths = self.get_minimized_paths(hypothesis, covered, paths)
+
             if path is None or not paths:
                 if refills >= max_refills:
                     break
@@ -85,19 +93,50 @@ class KWayTransitionCoverageEqOracle(Oracle):
 
     def select_optimal_path(self, covered: set, paths: list) -> Path:
         result = None
-
-        # Idea: trim the end of an path if it is already covered.
-        # Idea: replace the front of an path with the prefix of the first new transition
-        # Idea: remove the path if new coverage is zero
-
+       
         if self.optimize == 'steps':
             result = max(paths, key=lambda p: len(
-                p.kWayTransitions-covered)/len(p.steps))
+                p.kWayTransitions - covered) / len(p.steps))
 
         if self.optimize == 'queries':
-            result = max(paths, key=lambda p: len(p.kWayTransitions-covered))
+            result = max(paths, key=lambda p: len(p.kWayTransitions - covered))
 
         return result if len(result.kWayTransitions - covered) != 0 else None
+    
+    def get_minimized_paths(self, hypothesis, covered, paths):
+        result = list()
+
+        for path in paths:
+            if len(path.kWayTransitions - covered):
+                path = self.trim_path_front(hypothesis, covered, path)
+                path = self.trim_path_back(hypothesis, covered, path)
+                result.append(path)
+
+        return result
+    
+    def trim_path_front(self, hypothesis, covered: set, path: Path) -> Path:
+        for i, transition in enumerate(path.transitions_log):
+            if transition in covered:
+                if i == 0:
+                    return path
+
+                prefix = hypothesis.get_state_by_id(transition.start_state).prefix
+                steps = prefix + path.steps[i:]
+                return self.create_path(hypothesis, steps)
+
+        return path
+    
+    def trim_path_back(self, hypothesis, covered: set, path: Path) -> Path:
+        for i, transition in enumerate(reversed(path.transitions_log)):
+            if transition in covered:
+                if i == 0:
+                    return path
+                
+                prefix = hypothesis.get_state_by_id(transition.start_state).prefix
+                steps = prefix + path.steps[:-i]
+                return self.create_path(hypothesis, steps)
+
+        return path
 
     def generate_random_paths(self, hypothesis: Automaton) -> list:
         result = list()
@@ -112,6 +151,7 @@ class KWayTransitionCoverageEqOracle(Oracle):
 
     def create_path(self, hypothesis: Automaton, steps: tuple) -> Path:
         transitions = set()
+        transitions_log = list()
 
         prev_states = list()
         end_states = list()
@@ -128,10 +168,12 @@ class KWayTransitionCoverageEqOracle(Oracle):
             end_state = end_states[i+self.k - 1]
             chunk = tuple(steps[i:i+self.k])
 
-            transitions.add(KWayTransition(
-                prev_state.state_id, end_state.state_id, chunk))
+            transition = KWayTransition(prev_state.state_id, end_state.state_id, chunk)
 
-        return Path(hypothesis.initial_state, end_states[-1], steps, transitions)
+            transitions_log.append(transition)
+            transitions.add(transition)
+
+        return Path(hypothesis.initial_state, end_states[-1], steps, transitions, transitions_log)
 
     def check_path(self, hypothesis: Automaton, path: Path):
         self.reset_hyp_and_sul(hypothesis)
