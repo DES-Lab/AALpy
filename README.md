@@ -124,7 +124,7 @@ from aalpy.oracles import RandomWalkEqOracle
 from aalpy.learning_algs import run_Lstar
 
 # load an automaton
-automaton = load_automaton_from_file('path_to_the_file.dot', automaton_type='dfa')
+# automaton = load_automaton_from_file('path_to_the_file.dot', automaton_type='dfa')
 
 # or randomly generate one
 random_dfa = generate_random_dfa(alphabet=[1,2,3,4,5],num_states=20, num_accepting_states=8)
