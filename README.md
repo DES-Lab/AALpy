@@ -148,7 +148,7 @@ save_automaton_to_file(learned_dfa, path='Learned_Automaton', file_type='dot')
 # visualize automaton
 visualize_automaton(learned_dfa)
 # or just print its DOT representation
-print(automaton)
+print(learned_dfa)
 ```
 
 To make experiments reproducible, define a random seed at the beginning of your program.
