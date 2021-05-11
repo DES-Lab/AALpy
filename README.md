@@ -7,32 +7,15 @@ Whether you work with regular languages or you would like to learn models of
 reactive systems, AALpy supports a wide range of modeling formalisms, including 
 deterministic, non-deterministic, and stochastic automata. 
 
-<table class="tg">
-<thead>
-  <tr>
-    <th class="tg-0lax">Deterministic</th>
-    <th class="tg-0lax">Non-Deterministic<br></th>
-    <th class="tg-0lax">Stochstic</th>
-  </tr>
-</thead>
-<tbody>
-  <tr>
-    <td class="tg-0lax">DFA</td>
-    <td class="tg-buh4">Observable Non-Determinisitic FSM</td>
-    <td class="tg-0lax">Markov Decision Processes</td>
-  </tr>
-  <tr>
-    <td class="tg-0lax">Mealy Machines</td>
-    <td class="tg-buh4">Abstracted Non-Deterministic FSM</td>
-    <td class="tg-0lax">Stochastic Mealy Machines</td>
-  </tr>
-  <tr>
-    <td class="tg-0lax">Moore Machines</td>
-    <td class="tg-buh4"></td>
-    <td class="tg-0lax"></td>
-  </tr>
-</tbody>
-</table>
+<center>
+
+| Type   |      Supported Formalisms      |  Features |
+|----------|:-------------:|------:|
+| Deterministic     |  DFA<br />Mealy Machines<br />Moore Machines | Advanced Counterexample Processing<br />Seamless Caching<br />11 Eq. Oracles |
+| Non-Deterministic |    Observable Non-Deterministic FSM <br /> Abstracted Non-Deterministic FSM|   Size Reduction Trough Abstraction<br />|
+| Stochastic        |  Markov Decision Processes<br />Stochastic Mealy Machines |    Counterexample Processing<br />Multiple Row/Cell Compatability Metrics<br />Model Checking with PRISM|
+
+</center>
 
 <!---
 You can use it to learn **deterministic finite automata**, **Moore machines**, 
