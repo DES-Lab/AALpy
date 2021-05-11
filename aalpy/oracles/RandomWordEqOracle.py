@@ -53,6 +53,7 @@ class RandomWordEqOracle(Oracle):
                     if self.reset_after_cex:
                         self.num_walks_done = 0
 
+                    self.sul.post()
                     return inputs
 
         return None

@@ -53,6 +53,7 @@ class RandomWalkEqOracle(Oracle):
                 if self.reset_after_cex:
                     self.random_steps_done = 0
 
+                self.sul.post()
                 return inputs
 
         return None
@@ -114,12 +115,14 @@ class UnseenOutputRandomWalkEqOracle(Oracle):
                     self.random_steps_done = 0
 
                 if isinstance(hypothesis, Onfsm):
+                    self.sul.post()
                     return inputs, outputs
                 else:
                     # hypothesis is MDP or SMM
                     cex = [hypothesis.initial_state.output] if isinstance(hypothesis, Mdp) else []
                     for i, o in zip(inputs, outputs):
                         cex.extend([i, o])
+                    self.sul.post()
                     return cex
 
         return None
