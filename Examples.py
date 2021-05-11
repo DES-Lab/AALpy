@@ -215,6 +215,59 @@ def regex_example(regex, alphabet):
     return learned_regex
 
 
+def learn_date_validator():
+    from aalpy.base import SUL
+    from aalpy.utils import visualize_automaton, DateValidator
+    from aalpy.oracles import StatePrefixEqOracle
+    from aalpy.learning_algs import run_Lstar
+
+    class DateSUL(SUL):
+        """
+        An example implementation of a system under learning that
+        can be used to learn the behavior of the date validator.
+        """
+
+        def __init__(self):
+            super().__init__()
+            # DateValidator is a black-box class used for date string verification
+            # The ormat of the dates is %d/%m/%Y'
+            # Its method is_date_accepted returns True if date is accepted, False otherwise
+            self.dv = DateValidator()
+            self.string = ""
+
+        def pre(self):
+            # reset the string used for testing
+            self.string = ""
+            pass
+
+        def post(self):
+            pass
+
+        def step(self, letter):
+            # add the input to the current string
+            if letter is not None:
+                self.string += str(letter)
+
+            # test if the current sting is accepted
+            return self.dv.is_date_accepted(self.string)
+
+    # instantiate the SUL
+    sul = DateSUL()
+
+    # define the input alphabet
+    alphabet = list(range(0, 9)) + ['/']
+
+    # define a equivalence oracle
+
+    eq_oracle = StatePrefixEqOracle(alphabet, sul, walks_per_state=500, walk_len=15)
+
+    # run the learning algorithm
+
+    learned_model = run_Lstar(alphabet, sul, eq_oracle, automaton_type='dfa')
+    # visualize the automaton
+    visualize_automaton(learned_model)
+
+
 def learn_python_class():
     """
     Learn a Mealy machine where inputs are methods and arguments of the class that serves as SUL.
@@ -562,7 +615,6 @@ def custom_smm_example(smm, n_c=20, n_resample=100, min_rounds=10, max_rounds=50
 def learn_stochastic_system_and_do_model_checking(example, automaton_type='smm', n_c=20, n_resample=1000, min_rounds=10,
                                                   max_rounds=500, strategy='normal', cex_processing='longest_prefix',
                                                   stopping_based_on_prop=None, samples_cex_strategy=None):
-
     import aalpy.paths
     from aalpy.automata import StochasticMealyMachine
     from aalpy.utils import smm_to_mdp_conversion, model_check_experiment, get_properties_file, get_correct_prop_values
