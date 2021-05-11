@@ -9,7 +9,7 @@ deterministic, non-deterministic, and stochastic automata.
 
 <center>
 
-| Type   |      Supported Formalisms      |  Features |
+| Automata Type   |      Supported Formalisms      |  Features |
 |----------|:-------------:|------:|
 | Deterministic     |  DFA<br />Mealy Machines<br />Moore Machines | Advanced Counterexample Processing<br />Seamless Caching<br />11 Eq. Oracles |
 | Non-Deterministic |    Observable Non-Deterministic FSM <br /> Abstracted Non-Deterministic FSM|   Size Reduction Trough Abstraction<br />|
@@ -131,8 +131,6 @@ If you use AALpy in your research, please cite:
 ```
 To be announced, please contact edi.muskardin@silicon-austria.com in the meantime. 
 ```
-
-## Research Contact
 If you have research suggestions or you need specific help concerning your research, feel free to contact [edi.muskardin@silicon-austria.com](mailto:edi.muskardin@silicon-austria.com).
 We are happy to help you and consult you in applying automata learning in various domains.
 
