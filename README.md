@@ -1,12 +1,49 @@
 # AALpy - An Active Automata Learning Library
 
 AALpy is a light-weight active automata learning library written in pure Python. 
-By implementing a single method and a few lines of 
-configuration, you can start learning automata. 
+You can start learning automata in just a few lines of code. 
 
 Whether you work with regular languages or you would like to learn models of 
 reactive systems, AALpy supports a wide range of modeling formalisms, including 
 deterministic, non-deterministic, and stochastic automata. 
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-color:#ccc;border-spacing:0;}
+.tg td{background-color:#fff;border-color:#ccc;border-style:solid;border-width:1px;color:#333;
+  font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg th{background-color:#f0f0f0;border-color:#ccc;border-style:solid;border-width:1px;color:#333;
+  font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg .tg-buh4{background-color:#f9f9f9;text-align:left;vertical-align:top}
+.tg .tg-0lax{text-align:left;vertical-align:top}
+</style>
+<table class="tg">
+<thead>
+  <tr>
+    <th class="tg-0lax">Deterministic</th>
+    <th class="tg-0lax">Non-Deterministic<br></th>
+    <th class="tg-0lax">Stochstic</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td class="tg-0lax">DFA</td>
+    <td class="tg-buh4">Observable Non-Determinisitic FSM</td>
+    <td class="tg-0lax">Markov Decision Processes</td>
+  </tr>
+  <tr>
+    <td class="tg-0lax">Mealy Machines</td>
+    <td class="tg-buh4">Abstracted Non-Deterministic FSM</td>
+    <td class="tg-0lax">Stochastic Mealy Machines</td>
+  </tr>
+  <tr>
+    <td class="tg-0lax">Moore Machines</td>
+    <td class="tg-buh4"></td>
+    <td class="tg-0lax"></td>
+  </tr>
+</tbody>
+</table>
+
+<!---
 You can use it to learn **deterministic finite automata**, **Moore machines**, 
 and **Mealy machines** of deterministic systems. 
 If the system that you would like to learn shows non-deterministic or
@@ -14,14 +51,14 @@ stochastic behavior, AALpy allows you to learn **observable
 nondeterministic finite-state machines**, **Markov decision processes**, 
 or **stochastic Mealy machines**.
 
-AALpy enables efficient learning by providing a **large set of equivalence oracles**, implementing various **conformance testing** strategies. Learning 
+Finally, support for learning **abstracted non-deterministic Mealy machines** 
+enables efficient learning of system models with large input space.
+--->
+
+AALpy enables efficient learning by providing a **large set of equivalence oracles**, implementing various conformance testing strategies. Learning 
 is mostly based on Angluin's [L* algorithm](https://people.eecs.berkeley.edu/~dawnsong/teaching/s10/papers/angluin87.pdf), for which AALpy supports a 
 selection of optimizations, including **efficient counterexample processing**.
-Finally, support for learning **abstracted non-deterministic Mealy machines** 
-enables efficient learning of system models with large input space. 
-
-If you miss a specific feature in AALpy, you can easily extend it. 
-
+ 
 ## Installation
 
 Use the package manager [pip](https://pip.pypa.io/en/stable/) to install AALpy.
@@ -61,60 +98,13 @@ All automata learning procedures follow this high-level approach:
 - [Choose the equivalence oracle](https://github.com/DES-Lab/AALpy/wiki/Equivalence-Oracles)
 - [Run the learning algorithm](https://github.com/DES-Lab/AALpy/wiki/Setting-Up-Learning)
 
-If you would like to learn a black-box Date Validator's behavior, your AALpy configuration would look something like this:
-```python
-from aalpy.base import SUL
-from aalpy.utils import visualize_automaton, DateValidator
-from aalpy.oracles import StatePrefixEqOracle
-from aalpy.learning_algs import run_Lstar
+For more detailed examples, check out:
+- [How to learn Regex with AALpy](https://github.com/DES-Lab/AALpy/wiki/SUL-Interface%2C-or-How-to-Learn-Your-Systems/_edit#example---regexsul)
+- [How to learn MQTT with AALpy](https://github.com/DES-Lab/AALpy/wiki/SUL-Interface,-or-How-to-Learn-Your-Systems#example---mqtt)
+- [Interactive Examples](https://github.com/DES-Lab/AALpy/tree/master/notebooks)
+- [Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py)
 
-class DateSUL(SUL):
-    """
-    An example implementation of a system under learning that 
-    can be used to learn the behavior of the date validator.
-    """
-
-    def __init__(self):
-        super().__init__()
-        # DateValidator is a black-box class used for date string verification
-        # The ormat of the dates is %d/%m/%Y'
-        # Its method is_date_accepted returns True if date is accepted, False otherwise
-        self.dv = DateValidator()
-        self.string = ""
-
-    def pre(self):
-        # reset the string used for testing
-        self.string = ""
-        pass
-
-    def post(self):
-        pass
-
-    def step(self, letter):
-        # add the input to the current string
-        if letter is not None:
-            self.string += str(letter)
-
-        # test if the current sting is accepted
-        return self.dv.is_date_accepted(self.string)
-
-
-# instantiate the SUL
-sul = DateSUL()
-
-# define the input alphabet
-alphabet = list(range(0, 9)) + ['/']
-
-# define a equivalence oracle
-
-eq_oracle = StatePrefixEqOracle(alphabet, sul, walks_per_state=500, walk_len=15)
-
-# run the learning algorithm
-
-learned_model = run_Lstar(alphabet, sul, eq_oracle, automaton_type='dfa')
-# visualize the automaton
-visualize_automaton(learned_model)
-```
+[Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py) contains examples covering almost the whole AALpy's functionality, and it is a great starting point/reference.
 
 The following snippet demonstrates a short example in which an automaton is either [loaded](https://github.com/DES-Lab/AALpy/wiki/Loading,Saving,-Syntax-and-Visualization-of-Automata) or [randomly generated](https://github.com/DES-Lab/AALpy/wiki/Generation-of-Random-Automata) and then [learned](https://github.com/DES-Lab/AALpy/wiki/Setting-Up-Learning).
 ```python
@@ -157,11 +147,10 @@ from random import seed
 seed(2) # all experiments will be reproducible
 ```
 
-For more detailed examples, check out:
-- [How to learn Regex with AALpy](https://github.com/DES-Lab/AALpy/wiki/SUL-Interface%2C-or-How-to-Learn-Your-Systems/_edit#example---regexsul)
-- [How to learn MQTT with AALpy](https://github.com/DES-Lab/AALpy/wiki/SUL-Interface,-or-How-to-Learn-Your-Systems#example---mqtt)
-- [Interactive Examples](https://github.com/DES-Lab/AALpy/tree/master/notebooks)
-- [Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py)
+## Selected applications of AALpy
+AALpy has been used to:
+- [Learn Bluetooth Low-Energy](https://github.com/apferscher/ble-learning)
+- [Learn Input-Output Behavior of RNNs](https://github.com/DES-Lab/Extracting-FSM-From-RNNs)
 
 ## Cite AALpy
 If you use AALpy in your research, please cite:
@@ -176,6 +165,3 @@ We are happy to help you and consult you in applying automata learning in variou
 ## Contributing
 Pull requests are welcome. For significant changes, please open an issue first to discuss what you would like to change.
 In case of any questions or possible bugs, please open issues.
-
-## License
-[![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://choosealicense.com/licenses/mit/)
