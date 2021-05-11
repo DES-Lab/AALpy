@@ -5,15 +5,15 @@ You can start learning automata in just a few lines of code.
 
 Whether you work with regular languages or you would like to learn models of 
 reactive systems, AALpy supports a wide range of modeling formalisms, including 
-deterministic, non-deterministic, and stochastic automata. 
+**deterministic**, **non-deterministic**, and **stochastic automata**. 
 
 <center>
 
 | Automata Type   |      Supported Formalisms      |  Features |
 |----------|:-------------:|------:|
-| Deterministic     |  DFA<br />Mealy Machines<br />Moore Machines | Advanced Counterexample Processing<br />Seamless Caching<br />11 Eq. Oracles |
+| Deterministic     |  Deterministic Finite Automata<br />Mealy Machines<br />Moore Machines | Counterexample Processing<br />Seamless Caching<br />11 Eq. Oracles |
 | Non-Deterministic |    Observable Non-Deterministic FSM <br /> Abstracted Non-Deterministic FSM|   Size Reduction Trough Abstraction<br />|
-| Stochastic        |  Markov Decision Processes<br />Stochastic Mealy Machines |    Counterexample Processing<br />Multiple Row/Cell Compatability Metrics<br />Model Checking with PRISM|
+| Stochastic        |  Markov Decision Processes<br />Stochastic Mealy Machines |    Counterexample Processing<br />Row/Cell Compatability Metrics<br />Model Checking with PRISM|
 
 </center>
 
@@ -31,7 +31,7 @@ enables efficient learning of system models with large input space.
 
 AALpy enables efficient learning by providing a **large set of equivalence oracles**, implementing various conformance testing strategies. Learning 
 is mostly based on Angluin's [L* algorithm](https://people.eecs.berkeley.edu/~dawnsong/teaching/s10/papers/angluin87.pdf), for which AALpy supports a 
-selection of optimizations, including **efficient counterexample processing**.
+selection of optimizations, including **efficient counterexample processing** and **caching**.
  
 ## Installation
 
@@ -121,12 +121,12 @@ from random import seed
 seed(2) # all experiments will be reproducible
 ```
 
-## Selected applications of AALpy
+## Selected Applications
 AALpy has been used to:
 - [Learn Bluetooth Low-Energy](https://github.com/apferscher/ble-learning)
 - [Learn Input-Output Behavior of RNNs](https://github.com/DES-Lab/Extracting-FSM-From-RNNs)
 
-## Cite AALpy
+## Cite AALpy and Research Contact
 If you use AALpy in your research, please cite:
 ```
 To be announced, please contact edi.muskardin@silicon-austria.com in the meantime. 

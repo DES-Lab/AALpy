@@ -34,7 +34,7 @@ If you would like to interact/change those examples in the browser, click on the
 
 [Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py) contains many examples demonstrating all AALpy functionality are presented. 
 
-## Usage and Examples
+## Usage
 
 All automata learning procedures follow this high-level approach:
 - [Define the input alphabet and system under learning (SUL)](https://github.com/DES-Lab/AALpy/wiki/SUL-Interface,-or-How-to-Learn-Your-Systems)
@@ -47,6 +47,7 @@ For more detailed examples, check out:
 - [Interactive Examples](https://github.com/DES-Lab/AALpy/tree/master/notebooks)
 - [Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py)
 
+# Selected Applications
 AALpy has been used to:
 - [Learn Bluetooth Low-Energy](https://github.com/apferscher/ble-learning)
 - [Learn Input-Output Behavior of RNNs](https://github.com/DES-Lab/Extracting-FSM-From-RNNs)
