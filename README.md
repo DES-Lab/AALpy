@@ -1,4 +1,14 @@
 # AALpy - An Active Automata Learning Library
+[![Python application](https://github.com/DES-Lab/AALpy/actions/workflows/python-app.yml/badge.svg)](https://github.com/DES-Lab/AALpy/actions/workflows/python-app.yml)
+[![CodeQL](https://github.com/DES-Lab/AALpy/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/DES-Lab/AALpy/actions/workflows/codeql-analysis.yml)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/aalpy)
+[![Python 3.6](https://img.shields.io/badge/python-3.6%2B-blue)](https://www.python.org/downloads/release/python-360/)
+![PyPI - Wheel](https://img.shields.io/pypi/wheel/aalpy)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/DES-Lab/AALpy/master)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
+
 
 AALpy is a light-weight active automata learning library written in pure Python. 
 You can start learning automata in just a few lines of code. 
