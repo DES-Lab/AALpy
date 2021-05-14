@@ -75,7 +75,7 @@ If you would like to interact/change those examples in the browser, click on the
 
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/DES-Lab/AALpy/master)
 
-[Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py) contains many examples demonstrating all AALpy functionality are presented. 
+[Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py) contains many examples and it is a great starting point. 
 
 ## Usage
 
