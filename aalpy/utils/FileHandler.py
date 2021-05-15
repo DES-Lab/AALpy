@@ -81,22 +81,34 @@ def save_automaton_to_file(automaton, path="LearnedModel", file_type='dot',
 
     for state in automaton.states:
         for i in state.transitions.keys():
-            new_state = state.transitions[i]
-            if not display_same_state_trans and state.state_id == new_state.state_id:
-                continue
             if isinstance(state, MealyState):
+                new_state = state.transitions[i]
+                if not display_same_state_trans and new_state.state_id == state.state_id:
+                    continue
                 graph.add_edge(Edge(state.state_id, new_state.state_id, label=f'{i}/{state.output_fun[i]}'))
             elif is_mdp:
                 # here we do not have single state, but a list of (State, probability) tuples
+                new_state = state.transitions[i]
                 for s in new_state:
+                    if not display_same_state_trans and s[0].state_id == state.state_id:
+                        continue
                     graph.add_edge(Edge(state.state_id, s[0].state_id, label=f'{i} : {round(s[1], 2)}'))
             elif is_onsfm:
+                new_state = state.transitions[i]
                 for s in new_state:
+                    if not display_same_state_trans and state.state_id == s[1].state_id:
+                        continue
                     graph.add_edge(Edge(state.state_id, s[1].state_id, label=f'{i}/{s[0]}'))
             elif is_smm:
+                new_state = state.transitions[i]
                 for s in new_state:
+                    if not display_same_state_trans and s[0].state_id == state.state_id:
+                        continue
                     graph.add_edge(Edge(state.state_id, s[0].state_id, label=f'{i}/{s[1]}:{round(s[2], 2)}'))
             else:
+                new_state = state.transitions[i]
+                if not display_same_state_trans and new_state.state_id == state.state_id:
+                    continue
                 graph.add_edge(Edge(state.state_id, new_state.state_id, label=f'{i}'))
 
     graph.add_node(Node('__start0', shape='none', label=''))
