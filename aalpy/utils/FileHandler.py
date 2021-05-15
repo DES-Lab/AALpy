@@ -228,6 +228,12 @@ def load_automaton_from_file(path, automaton_type, compute_prefixes=False):
         else:
             source.transitions[int(label) if label.isdigit() else label] = destination
 
+    if initial_node is None:
+        print("No initial state found. \n"
+              "Please follow syntax found at: https://github.com/DES-Lab/AALpy/wiki/"
+              "Loading,Saving,-Syntax-and-Visualization-of-Automata ")
+        assert False
+
     if automaton_type == 'dfa':
         automaton = Dfa(initial_node, list(node_label_dict.values()))
     elif automaton_type == 'moore':
