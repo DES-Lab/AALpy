@@ -11,7 +11,7 @@ class KWayTransitionCoverageEqOracle(Oracle):
     """
     This Equivalence oracle selects test cases based on k-way transitions coverage. It does that
     by generating random queries and finding the smallest subset with the highest coverage. In other words, this oracle
-    finds counter examples by running random paths that cover all pairwise / k-way transitions
+    finds counter examples by running random paths that cover all pairwise / k-way transitions.
     """
 
     def __init__(self, alphabet: list, sul: SUL, k: int = 2, target_coverage: float = 1, num_generate_paths: int = 2000,
