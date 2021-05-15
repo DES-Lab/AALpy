@@ -14,7 +14,7 @@ class KWayTransitionCoverageEqOracle(Oracle):
     by generating random queries and finding the smallest subset with the highest coverage. 
     """
 
-    def __init__(self, alphabet: list, sul: SUL, k: int = 2, target_coverage: float = 0.8, num_generate_paths: int = 20000, refills: int = 5, max_path_len: int = 50, minimize_paths: bool = True, optimize: str = 'steps'):
+    def __init__(self, alphabet: list, sul: SUL, k: int = 2, target_coverage: float = 1, num_generate_paths: int = 2000, refills: int = 5, max_path_len: int = 50, minimize_paths: bool = False, optimize: str = 'steps'):
         """
         Args:
             alphabet: input alphabet
@@ -31,6 +31,8 @@ class KWayTransitionCoverageEqOracle(Oracle):
         assert k >= 2
         assert 0 < target_coverage and target_coverage <= 1
         assert optimize in ['steps', 'queries']
+
+        # note: Think about is_input_complete() -> what happens if the hyppthose it not input complete.
 
         self.k = k
         self.target_coverage = target_coverage
@@ -140,6 +142,9 @@ class KWayTransitionCoverageEqOracle(Oracle):
 
     def generate_random_paths(self, hypothesis: Automaton) -> list:
         result = list()
+
+        # Idea: don't generate total random paths, use the coverd set, and a hashmap or the state
+        # itself to get a the next transition and mix that with random walks.
 
         for _ in range(self.num_generate_paths):
             random_length = randint(self.k, self.max_path_len)
