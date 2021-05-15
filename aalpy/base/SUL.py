@@ -30,12 +30,11 @@ class SUL(ABC):
 
         """
         self.pre()
-        out = []
         # Empty string for DFA
         if len(word) == 0:
-            return [self.step(None)]
-        for letter in word:
-            out.append(self.step(letter))
+            out = [self.step(None)]
+        else:
+            out = [self.step(letter) for letter in word]
         self.post()
         self.num_queries += 1
         self.num_steps += len(word)

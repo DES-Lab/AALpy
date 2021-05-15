@@ -74,6 +74,7 @@ class KWayStateCoverageEqOracle(Oracle):
                 self.num_steps += 1
 
                 if out_sul != out_hyp:
+                    self.sul.post()
                     return path[:i + 1]
 
         return None

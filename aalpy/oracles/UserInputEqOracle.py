@@ -47,6 +47,7 @@ class UserInputEqOracle(Oracle):
                 continue
             if inp == 'cex':
                 if inputs:
+                    self.sul.post()
                     return inputs
             if inp == 'end':
                 return None

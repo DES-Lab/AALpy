@@ -70,6 +70,7 @@ class StatePrefixEqOracle(Oracle):
                 self.num_steps += 1
 
                 if out_sul != out_hyp:
+                    self.sul.post()
                     return prefix + suffix
 
         return None

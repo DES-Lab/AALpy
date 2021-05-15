@@ -1,3 +1,5 @@
+<p></p>
+
 # Dive into Automata Learning with AALpy
 
 Whether you work with regular languages or you would like to learn models of 
@@ -28,11 +30,8 @@ For the **official documentation** of all classes and methods, check out:
 - <https://des-lab.github.io/AALpy/documentation/index.html>
 
 **Interactive examples** can be found in the [notebooks](https://github.com/DES-Lab/AALpy/tree/master/notebooks) folder.
-If you would like to interact/change those examples in the browser, click on the following badge. (Navigate to the _notebooks_ folder and select one notebook)
 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/DES-Lab/AALpy/master)
-
-[Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py) contains many examples demonstrating all AALpy functionality are presented. 
+Many examples covering whole AALpy functionality are in [Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py). 
 
 ## Usage
 
@@ -47,11 +46,7 @@ For more detailed examples, check out:
 - [Interactive Examples](https://github.com/DES-Lab/AALpy/tree/master/notebooks)
 - [Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py)
 
-With AALpy, you can
- - [Load, save and visualize automata](https://github.com/DES-Lab/AALpy/wiki/Loading,Saving,-Syntax-and-Visualization-of-Automata)
- - [Randomly generated automata](https://github.com/DES-Lab/AALpy/wiki/Generation-of-Random-Automata)
-
-
-## Research Contact
-If you have research suggestions or need specific help concerning your research, feel free to contact [edi.muskardin@silicon-austria.com](mailto:edi.muskardin@silicon-austria.com).
-We are happy to help you and consult you in applying automata learning in various domains.
+## Selected Applications
+AALpy has been used to:
+- [Learn Bluetooth Low-Energy](https://github.com/apferscher/ble-learning)
+- [Learn Input-Output Behavior of RNNs](https://github.com/DES-Lab/Extracting-FSM-From-RNNs)

@@ -1,12 +1,35 @@
 # AALpy - An Active Automata Learning Library
+[![Python application](https://github.com/DES-Lab/AALpy/actions/workflows/python-app.yml/badge.svg)](https://github.com/DES-Lab/AALpy/actions/workflows/python-app.yml)
+[![CodeQL](https://github.com/DES-Lab/AALpy/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/DES-Lab/AALpy/actions/workflows/codeql-analysis.yml)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/aalpy)
+[![GitHub issues](https://img.shields.io/github/issues/DES-Lab/AALpy)](https://github.com/DES-Lab/AALpy/issues)
+![GitHub pull requests](https://img.shields.io/github/issues-pr/des-lab/aalpy)
+[![Python 3.6](https://img.shields.io/badge/python-3.6%2B-blue)](https://www.python.org/downloads/release/python-360/)
+![PyPI - Wheel](https://img.shields.io/pypi/wheel/aalpy)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/DES-Lab/AALpy/master)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
+
 
 AALpy is a light-weight active automata learning library written in pure Python. 
-By implementing a single method and a few lines of 
-configuration, you can start learning automata. 
+You can start learning automata in just a few lines of code. 
 
 Whether you work with regular languages or you would like to learn models of 
 reactive systems, AALpy supports a wide range of modeling formalisms, including 
-deterministic, non-deterministic, and stochastic automata. 
+**deterministic**, **non-deterministic**, and **stochastic automata**. 
+
+<center>
+
+| Automata Type   |      Supported Formalisms      |  Features |
+|----------|:-------------:|------:|
+| Deterministic     |  Deterministic Finite Automata<br />Mealy Machines<br />Moore Machines | Counterexample Processing<br />Seamless Caching<br />11 Eq. Oracles |
+| Non-Deterministic |    Observable Non-Deterministic FSM <br /> Abstracted Non-Deterministic FSM|   Size Reduction Trough Abstraction<br />|
+| Stochastic        |  Markov Decision Processes<br />Stochastic Mealy Machines |    Counterexample Processing<br />Row/Cell Compatability Metrics<br />Model Checking with PRISM|
+
+</center>
+
+<!---
 You can use it to learn **deterministic finite automata**, **Moore machines**, 
 and **Mealy machines** of deterministic systems. 
 If the system that you would like to learn shows non-deterministic or
@@ -14,14 +37,14 @@ stochastic behavior, AALpy allows you to learn **observable
 nondeterministic finite-state machines**, **Markov decision processes**, 
 or **stochastic Mealy machines**.
 
-AALpy enables efficient learning by providing a **large set of equivalence oracles**, implementing various **conformance testing** strategies. Learning 
-is mostly based on Angluin's [L* algorithm](https://people.eecs.berkeley.edu/~dawnsong/teaching/s10/papers/angluin87.pdf), for which AALpy supports a 
-selection of optimizations, including **efficient counterexample processing**.
 Finally, support for learning **abstracted non-deterministic Mealy machines** 
-enables efficient learning of system models with large input space. 
+enables efficient learning of system models with large input space.
+--->
 
-If you miss a specific feature in AALpy, you can easily extend it. 
-
+AALpy enables efficient learning by providing a **large set of equivalence oracles**, implementing various conformance testing strategies. Learning 
+is mostly based on Angluin's [L* algorithm](https://people.eecs.berkeley.edu/~dawnsong/teaching/s10/papers/angluin87.pdf), for which AALpy supports a 
+selection of optimizations, including **efficient counterexample processing** and **caching**.
+ 
 ## Installation
 
 Use the package manager [pip](https://pip.pypa.io/en/stable/) to install AALpy.
@@ -52,7 +75,7 @@ If you would like to interact/change those examples in the browser, click on the
 
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/DES-Lab/AALpy/master)
 
-[Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py) contains many examples demonstrating all AALpy functionality are presented. 
+[Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py) contains many examples and it is a great starting point. 
 
 ## Usage
 
@@ -61,60 +84,13 @@ All automata learning procedures follow this high-level approach:
 - [Choose the equivalence oracle](https://github.com/DES-Lab/AALpy/wiki/Equivalence-Oracles)
 - [Run the learning algorithm](https://github.com/DES-Lab/AALpy/wiki/Setting-Up-Learning)
 
-If you would like to learn a black-box Date Validator's behavior, your AALpy configuration would look something like this:
-```python
-from aalpy.base import SUL
-from aalpy.utils import visualize_automaton, DateValidator
-from aalpy.oracles import StatePrefixEqOracle
-from aalpy.learning_algs import run_Lstar
+For more detailed examples, check out:
+- [How to learn Regex with AALpy](https://github.com/DES-Lab/AALpy/wiki/SUL-Interface%2C-or-How-to-Learn-Your-Systems/_edit#example---regexsul)
+- [How to learn MQTT with AALpy](https://github.com/DES-Lab/AALpy/wiki/SUL-Interface,-or-How-to-Learn-Your-Systems#example---mqtt)
+- [Interactive Examples](https://github.com/DES-Lab/AALpy/tree/master/notebooks)
+- [Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py)
 
-class DateSUL(SUL):
-    """
-    An example implementation of a system under learning that 
-    can be used to learn the behavior of the date validator.
-    """
-
-    def __init__(self):
-        super().__init__()
-        # DateValidator is a black-box class used for date string verification
-        # The ormat of the dates is %d/%m/%Y'
-        # Its method is_date_accepted returns True if date is accepted, False otherwise
-        self.dv = DateValidator()
-        self.string = ""
-
-    def pre(self):
-        # reset the string used for testing
-        self.string = ""
-        pass
-
-    def post(self):
-        pass
-
-    def step(self, letter):
-        # add the input to the current string
-        if letter is not None:
-            self.string += str(letter)
-
-        # test if the current sting is accepted
-        return self.dv.is_date_accepted(self.string)
-
-
-# instantiate the SUL
-sul = DateSUL()
-
-# define the input alphabet
-alphabet = list(range(0, 9)) + ['/']
-
-# define a equivalence oracle
-
-eq_oracle = StatePrefixEqOracle(alphabet, sul, walks_per_state=500, walk_len=15)
-
-# run the learning algorithm
-
-learned_model = run_Lstar(alphabet, sul, eq_oracle, automaton_type='dfa')
-# visualize the automaton
-visualize_automaton(learned_model)
-```
+[Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py) contains examples covering almost the whole AALpy's functionality, and it is a great starting point/reference.
 
 The following snippet demonstrates a short example in which an automaton is either [loaded](https://github.com/DES-Lab/AALpy/wiki/Loading,Saving,-Syntax-and-Visualization-of-Automata) or [randomly generated](https://github.com/DES-Lab/AALpy/wiki/Generation-of-Random-Automata) and then [learned](https://github.com/DES-Lab/AALpy/wiki/Setting-Up-Learning).
 ```python
@@ -124,7 +100,7 @@ from aalpy.oracles import RandomWalkEqOracle
 from aalpy.learning_algs import run_Lstar
 
 # load an automaton
-automaton = load_automaton_from_file('path_to_the_file.dot', automaton_type='dfa')
+# automaton = load_automaton_from_file('path_to_the_file.dot', automaton_type='dfa')
 
 # or randomly generate one
 random_dfa = generate_random_dfa(alphabet=[1,2,3,4,5],num_states=20, num_accepting_states=8)
@@ -148,7 +124,7 @@ save_automaton_to_file(learned_dfa, path='Learned_Automaton', file_type='dot')
 # visualize automaton
 visualize_automaton(learned_dfa)
 # or just print its DOT representation
-print(automaton)
+print(learned_dfa)
 ```
 
 To make experiments reproducible, define a random seed at the beginning of your program.
@@ -157,25 +133,19 @@ from random import seed
 seed(2) # all experiments will be reproducible
 ```
 
-For more detailed examples, check out:
-- [How to learn Regex with AALpy](https://github.com/DES-Lab/AALpy/wiki/SUL-Interface%2C-or-How-to-Learn-Your-Systems/_edit#example---regexsul)
-- [How to learn MQTT with AALpy](https://github.com/DES-Lab/AALpy/wiki/SUL-Interface,-or-How-to-Learn-Your-Systems#example---mqtt)
-- [Interactive Examples](https://github.com/DES-Lab/AALpy/tree/master/notebooks)
-- [Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py)
+## Selected Applications
+AALpy has been used to:
+- [Learn Bluetooth Low-Energy](https://github.com/apferscher/ble-learning)
+- [Learn Input-Output Behavior of RNNs](https://github.com/DES-Lab/Extracting-FSM-From-RNNs)
 
-## Cite AALpy
+## Cite AALpy and Research Contact
 If you use AALpy in your research, please cite:
 ```
 To be announced, please contact edi.muskardin@silicon-austria.com in the meantime. 
 ```
-
-## Research Contact
 If you have research suggestions or you need specific help concerning your research, feel free to contact [edi.muskardin@silicon-austria.com](mailto:edi.muskardin@silicon-austria.com).
 We are happy to help you and consult you in applying automata learning in various domains.
 
 ## Contributing
 Pull requests are welcome. For significant changes, please open an issue first to discuss what you would like to change.
 In case of any questions or possible bugs, please open issues.
-
-## License
-[![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://choosealicense.com/licenses/mit/)

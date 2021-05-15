@@ -46,6 +46,7 @@ class BreadthFirstExplorationEqOracle(Oracle):
                     self.num_steps += 1
 
                     if out_hyp != out_sul:
+                        self.sul.post()
                         return seq[:ind + 1]
 
         return None
