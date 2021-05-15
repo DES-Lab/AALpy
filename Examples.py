@@ -65,7 +65,7 @@ def random_dfa_example(alphabet_size, number_of_states, num_accepting_states=1):
     from aalpy.learning_algs import run_Lstar
     from aalpy.oracles import StatePrefixEqOracle, TransitionFocusOracle, WMethodEqOracle, \
         RandomWalkEqOracle, RandomWMethodEqOracle, BreadthFirstExplorationEqOracle, RandomWordEqOracle, \
-        CacheBasedEqOracle, UserInputEqOracle, KWayStateCoverageEqOracle
+        CacheBasedEqOracle, UserInputEqOracle, KWayStateCoverageEqOracle, KWayTransitionCoverageEqOracle
     from aalpy.utils import generate_random_dfa
 
     assert num_accepting_states <= number_of_states
@@ -89,7 +89,8 @@ def random_dfa_example(alphabet_size, number_of_states, num_accepting_states=1):
     cache_based_eq_oracle = CacheBasedEqOracle(alphabet, sul_dfa)
     user_based_eq_oracle = UserInputEqOracle(alphabet, sul_dfa)
     kWayStateCoverageEqOracle = KWayStateCoverageEqOracle(alphabet, sul_dfa)
-    learned_dfa = run_Lstar(alphabet, sul_dfa, random_walk_eq_oracle, automaton_type='dfa',
+    kWayTransitionCoverageEqOracle = KWayTransitionCoverageEqOracle(alphabet, sul_dfa, minimize_paths=True)
+    learned_dfa = run_Lstar(alphabet, sul_dfa, kWayTransitionCoverageEqOracle, automaton_type='dfa',
                             cache_and_non_det_check=True, cex_processing='rs')
 
     # visualize_automaton(learned_dfa)

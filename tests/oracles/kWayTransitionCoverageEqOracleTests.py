@@ -1,7 +1,7 @@
 import unittest
 
 from aalpy.oracles import KWayTransitionCoverageEqOracle
-from baseOracleTests import BaseOracleTests
+from tests.oracles.baseOracleTests import BaseOracleTests
 
 
 class KWayTransitionCoverageEqOracleTests(BaseOracleTests):

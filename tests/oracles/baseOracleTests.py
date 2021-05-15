@@ -7,12 +7,12 @@ from aalpy.utils import generate_random_dfa
 
 
 class BaseOracleTests(unittest.TestCase):
-    '''
+    """
     Abstract class for testing oracles.
-    '''
+    """
 
     def generate_dfa_suls(self, number_of_states=10, alphabet_size=10, num_accepting_states=5):
-        '''
+        """
         Creates a random DFA and creates a learning and validation SUL, both SUL are identical.
 
         Args:
@@ -22,7 +22,7 @@ class BaseOracleTests(unittest.TestCase):
 
         Returns: learning_sul, validation_sul, alphabet
 
-        '''
+        """
         alphabet = [*range(0, alphabet_size)]
 
         dfa = generate_random_dfa(number_of_states, alphabet, num_accepting_states)
@@ -33,7 +33,7 @@ class BaseOracleTests(unittest.TestCase):
         return learning_sul, validation_sul, alphabet
 
     def validate_eq_oracle(self, alphabet, eq_oracle, learning_sul, validation_sul):
-        '''
+        """
         Validates the correctness of the given eq_oracle via WMethodEqOracle.
 
         Args:
@@ -44,7 +44,7 @@ class BaseOracleTests(unittest.TestCase):
 
         Returns:
 
-        '''
+        """
         learned_model = run_Lstar(
             alphabet, learning_sul, eq_oracle, 'dfa', print_level=2)
 

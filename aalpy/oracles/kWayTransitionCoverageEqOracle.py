@@ -18,6 +18,7 @@ class KWayTransitionCoverageEqOracle(Oracle):
                  refills: int = 5, max_path_len: int = 50, minimize_paths: bool = False, optimize: str = 'steps'):
         """
         Args:
+
             alphabet: input alphabet
             sul: system under learning
             k: k value used for K-Way transitions, i.e the number of steps between the start and the end of a transition
@@ -62,7 +63,7 @@ class KWayTransitionCoverageEqOracle(Oracle):
 
         return None
 
-    def greedy_set_cover(self, hypothesis: Automaton, paths: list, max_refills: int) -> list:
+    def greedy_set_cover(self, hypothesis: Automaton, paths: list, max_refills: int) -> tuple[list[Path], bool]:
         result = list()
         covered = set()
 
