@@ -63,7 +63,7 @@ class KWayTransitionCoverageEqOracle(Oracle):
 
         return None
 
-    def greedy_set_cover(self, hypothesis: Automaton, paths: list, max_refills: int) -> tuple[list[Path], bool]:
+    def greedy_set_cover(self, hypothesis: Automaton, paths: list, max_refills: int):
         result = list()
         covered = set()
 
