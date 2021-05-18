@@ -16,7 +16,7 @@ AALpy is a light-weight active automata learning library written in pure Python.
 You can start learning automata in just a few lines of code. 
 
 Whether you work with regular languages or you would like to learn models of 
-reactive systems, AALpy supports a wide range of modeling formalisms, including 
+(black-box) reactive systems, AALpy supports a wide range of modeling formalisms, including 
 **deterministic**, **non-deterministic**, and **stochastic automata**. 
 
 <center>
@@ -109,6 +109,8 @@ big_random_dfa = generate_random_dfa(alphabet=[1,2,3,4,5],num_states=2000, num_a
 # get input alphabet of the automaton
 alphabet = random_dfa.get_input_alphabet()
 
+# loaded or randomly generated automata are considered as BLACK-BOX that is queried
+# learning algorithm has no knowledge about its structure
 # create a SUL instance for the automaton/system under learning
 sul = DfaSUL(random_dfa)
 
