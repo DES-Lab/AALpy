@@ -231,7 +231,7 @@ def learn_date_validator():
         def __init__(self):
             super().__init__()
             # DateValidator is a black-box class used for date string verification
-            # The ormat of the dates is %d/%m/%Y'
+            # The format of the dates is %d/%m/%Y'
             # Its method is_date_accepted returns True if date is accepted, False otherwise
             self.dv = DateValidator()
             self.string = ""
