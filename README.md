@@ -87,11 +87,12 @@ All automata learning procedures follow this high-level approach:
 For more detailed examples, check out:
 - [How to learn Regex with AALpy](https://github.com/DES-Lab/AALpy/wiki/SUL-Interface,-or-How-to-Learn-Your-Systems#example---regexsul)
 - [How to learn MQTT with AALpy](https://github.com/DES-Lab/AALpy/wiki/SUL-Interface,-or-How-to-Learn-Your-Systems#example---mqtt)
+- [Few Simple Examples](https://github.com/DES-Lab/Automata-Learning-Based-Diagnosis)
 - [Interactive Examples](https://github.com/DES-Lab/AALpy/tree/master/notebooks)
 - [Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py)
-- [Learning a Few Simple Reactive Systems](https://github.com/DES-Lab/Automata-Learning-Based-Diagnosis)
 
 [Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py) contains examples covering almost the whole AALpy's functionality, and it is a great starting point/reference.
+[Wiki](https://github.com/DES-Lab/AALpy/wiki) has a step-by-step guide to using AALpy and can help you understand AALpy and automata learning in general. 
 
 The following snippet demonstrates a short example in which an automaton is either [loaded](https://github.com/DES-Lab/AALpy/wiki/Loading,Saving,-Syntax-and-Visualization-of-Automata) or [randomly generated](https://github.com/DES-Lab/AALpy/wiki/Generation-of-Random-Automata) and then [learned](https://github.com/DES-Lab/AALpy/wiki/Setting-Up-Learning).
 ```python
