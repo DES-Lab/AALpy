@@ -133,6 +133,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">num_steps</span> <span class="o">+=</span> <span class="mi">1</span>
 
                 <span class="k">if</span> <span class="n">out_sul</span> <span class="o">!=</span> <span class="n">out_hyp</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
                     <span class="k">return</span> <span class="n">path</span><span class="p">[:</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
 
         <span class="k">return</span> <span class="kc">None</span>
@@ -222,6 +223,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">num_steps</span> <span class="o">+=</span> <span class="mi">1</span>
 
                 <span class="k">if</span> <span class="n">out_sul</span> <span class="o">!=</span> <span class="n">out_hyp</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
                     <span class="k">return</span> <span class="n">path</span><span class="p">[:</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
 
         <span class="k">return</span> <span class="kc">None</span>
@@ -342,6 +344,7 @@ method: either 'combinations' or 'permutations'
                 <span class="bp">self</span><span class="o">.</span><span class="n">num_steps</span> <span class="o">+=</span> <span class="mi">1</span>
 
                 <span class="k">if</span> <span class="n">out_sul</span> <span class="o">!=</span> <span class="n">out_hyp</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
                     <span class="k">return</span> <span class="n">path</span><span class="p">[:</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
 
         <span class="k">return</span> <span class="kc">None</span>

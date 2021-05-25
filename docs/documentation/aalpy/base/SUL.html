@@ -119,12 +119,11 @@
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
-        <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="c1"># Empty string for DFA</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">word</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="kc">None</span><span class="p">)]</span>
-        <span class="k">for</span> <span class="n">letter</span> <span class="ow">in</span> <span class="n">word</span><span class="p">:</span>
-            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">letter</span><span class="p">))</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="kc">None</span><span class="p">)]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">letter</span><span class="p">)</span> <span class="k">for</span> <span class="n">letter</span> <span class="ow">in</span> <span class="n">word</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_queries</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_steps</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
@@ -166,6 +165,7 @@
 <span class="sd">    System under learning that keeps a multiset of all queries in memory.</span>
 <span class="sd">    This multiset/cache is encoded as a tree.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sul</span> <span class="o">=</span> <span class="n">sul</span>
@@ -191,14 +191,14 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">num_cached_queries</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="k">return</span> <span class="n">cached_query</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
-        <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="c1"># Empty string for DFA</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">word</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="kc">None</span><span class="p">)]</span>
-        <span class="k">for</span> <span class="n">letter</span> <span class="ow">in</span> <span class="n">word</span><span class="p">:</span>
-            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">letter</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
+        <span class="c1"># get outputs using default query method</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
+
+        <span class="c1"># add input/outputs to tree</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">word</span><span class="p">,</span> <span class="n">out</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">step_in_cache</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">o</span><span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">num_queries</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_steps</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">out</span>
@@ -272,12 +272,11 @@
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
-        <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="c1"># Empty string for DFA</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">word</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="kc">None</span><span class="p">)]</span>
-        <span class="k">for</span> <span class="n">letter</span> <span class="ow">in</span> <span class="n">word</span><span class="p">:</span>
-            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">letter</span><span class="p">))</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="kc">None</span><span class="p">)]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">letter</span><span class="p">)</span> <span class="k">for</span> <span class="n">letter</span> <span class="ow">in</span> <span class="n">word</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_queries</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_steps</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
@@ -366,12 +365,11 @@ passed to the learning algorithm and the equivalence oracle.</p>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
-        <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="c1"># Empty string for DFA</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">word</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="kc">None</span><span class="p">)]</span>
-        <span class="k">for</span> <span class="n">letter</span> <span class="ow">in</span> <span class="n">word</span><span class="p">:</span>
-            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">letter</span><span class="p">))</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="kc">None</span><span class="p">)]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">letter</span><span class="p">)</span> <span class="k">for</span> <span class="n">letter</span> <span class="ow">in</span> <span class="n">word</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_queries</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_steps</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
@@ -510,6 +508,7 @@ method is called. Each letter in the word (input in the input sequence) is execu
 <span class="sd">    System under learning that keeps a multiset of all queries in memory.</span>
 <span class="sd">    This multiset/cache is encoded as a tree.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sul</span> <span class="o">=</span> <span class="n">sul</span>
@@ -535,14 +534,14 @@ method is called. Each letter in the word (input in the input sequence) is execu
             <span class="bp">self</span><span class="o">.</span><span class="n">num_cached_queries</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="k">return</span> <span class="n">cached_query</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
-        <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="c1"># Empty string for DFA</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">word</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="kc">None</span><span class="p">)]</span>
-        <span class="k">for</span> <span class="n">letter</span> <span class="ow">in</span> <span class="n">word</span><span class="p">:</span>
-            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">letter</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
+        <span class="c1"># get outputs using default query method</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
+
+        <span class="c1"># add input/outputs to tree</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">word</span><span class="p">,</span> <span class="n">out</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">step_in_cache</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">o</span><span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">num_queries</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_steps</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">out</span>
@@ -631,14 +630,14 @@ This multiset/cache is encoded as a tree.</p>
             <span class="bp">self</span><span class="o">.</span><span class="n">num_cached_queries</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="k">return</span> <span class="n">cached_query</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
-        <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="c1"># Empty string for DFA</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">word</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="kc">None</span><span class="p">)]</span>
-        <span class="k">for</span> <span class="n">letter</span> <span class="ow">in</span> <span class="n">word</span><span class="p">:</span>
-            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">letter</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
+        <span class="c1"># get outputs using default query method</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
+
+        <span class="c1"># add input/outputs to tree</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">word</span><span class="p">,</span> <span class="n">out</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">step_in_cache</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">o</span><span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">num_queries</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_steps</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">out</span>

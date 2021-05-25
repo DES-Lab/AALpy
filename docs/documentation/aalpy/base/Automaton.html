@@ -69,6 +69,9 @@
                         <li>
                                 <a class="function" href="#Automaton.get_input_alphabet">get_input_alphabet</a>
                         </li>
+                        <li>
+                                <a class="function" href="#Automaton.get_state_by_id">get_state_by_id</a>
+                        </li>
                 </ul>
 
             </li>
@@ -255,6 +258,13 @@
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_input_complete</span><span class="p">()</span>
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_state</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
 
+    <span class="k">def</span> <span class="nf">get_state_by_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_id</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AutomatonState</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">state_id</span> <span class="o">==</span> <span class="n">state_id</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">state</span>
+
+        <span class="k">return</span> <span class="kc">None</span>
+                
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :return: A string representation of the automaton</span>
@@ -550,6 +560,13 @@ state.</p>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_input_complete</span><span class="p">()</span>
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_state</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
 
+    <span class="k">def</span> <span class="nf">get_state_by_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_id</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AutomatonState</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">state_id</span> <span class="o">==</span> <span class="n">state_id</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">state</span>
+
+        <span class="k">return</span> <span class="kc">None</span>
+                
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :return: A string representation of the automaton</span>
@@ -858,6 +875,29 @@ meaning that every state can be reached from every other state.</p>
             <div class="docstring"><p>Returns the input alphabet</p>
 </div>
 
+
+                            </div>
+                            <div id="Automaton.get_state_by_id" class="classattr">
+                                        <div class="attr function"><a class="headerlink" href="#Automaton.get_state_by_id">#&nbsp;&nbsp</a>
+
+        
+            <span class="def">def</span>
+            <span class="name">get_state_by_id</span><span class="signature">(self, state_id) -&gt; <a href="#AutomatonState">aalpy.base.Automaton.AutomatonState</a></span>:
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">get_state_by_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_id</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AutomatonState</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">state_id</span> <span class="o">==</span> <span class="n">state_id</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">state</span>
+
+        <span class="k">return</span> <span class="kc">None</span>
+</pre></div>
+
+        </details>
+
+    
 
                             </div>
                 </section>

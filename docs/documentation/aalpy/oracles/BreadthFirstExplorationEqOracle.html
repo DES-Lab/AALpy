@@ -105,6 +105,7 @@
                     <span class="bp">self</span><span class="o">.</span><span class="n">num_steps</span> <span class="o">+=</span> <span class="mi">1</span>
 
                     <span class="k">if</span> <span class="n">out_hyp</span> <span class="o">!=</span> <span class="n">out_sul</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
                         <span class="k">return</span> <span class="n">seq</span><span class="p">[:</span><span class="n">ind</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
 
         <span class="k">return</span> <span class="kc">None</span>
@@ -165,6 +166,7 @@
                     <span class="bp">self</span><span class="o">.</span><span class="n">num_steps</span> <span class="o">+=</span> <span class="mi">1</span>
 
                     <span class="k">if</span> <span class="n">out_hyp</span> <span class="o">!=</span> <span class="n">out_sul</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
                         <span class="k">return</span> <span class="n">seq</span><span class="p">[:</span><span class="n">ind</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
 
         <span class="k">return</span> <span class="kc">None</span>
@@ -246,6 +248,7 @@ depth: depth of the tree
                     <span class="bp">self</span><span class="o">.</span><span class="n">num_steps</span> <span class="o">+=</span> <span class="mi">1</span>
 
                     <span class="k">if</span> <span class="n">out_hyp</span> <span class="o">!=</span> <span class="n">out_sul</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
                         <span class="k">return</span> <span class="n">seq</span><span class="p">[:</span><span class="n">ind</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
 
         <span class="k">return</span> <span class="kc">None</span>

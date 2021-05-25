@@ -129,7 +129,7 @@
                 <span class="k">if</span> <span class="n">out_sul</span> <span class="o">!=</span> <span class="n">out_hyp</span><span class="p">:</span>
                     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reset_after_cex</span><span class="p">:</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">num_walks_done</span> <span class="o">=</span> <span class="mi">0</span>
-
+                    <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
                     <span class="k">return</span> <span class="n">inputs</span>
 
         <span class="k">return</span> <span class="kc">None</span>
@@ -236,7 +236,7 @@
                 <span class="k">if</span> <span class="n">out_sul</span> <span class="o">!=</span> <span class="n">out_hyp</span><span class="p">:</span>
                     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reset_after_cex</span><span class="p">:</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">num_walks_done</span> <span class="o">=</span> <span class="mi">0</span>
-
+                    <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
                     <span class="k">return</span> <span class="n">inputs</span>
 
         <span class="k">return</span> <span class="kc">None</span>
@@ -375,7 +375,7 @@ reset_after_cex: if False, total number of queries will equal num_walks, if True
                 <span class="k">if</span> <span class="n">out_sul</span> <span class="o">!=</span> <span class="n">out_hyp</span><span class="p">:</span>
                     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reset_after_cex</span><span class="p">:</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">num_walks_done</span> <span class="o">=</span> <span class="mi">0</span>
-
+                    <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
                     <span class="k">return</span> <span class="n">inputs</span>
 
         <span class="k">return</span> <span class="kc">None</span>
