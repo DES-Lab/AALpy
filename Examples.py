@@ -90,11 +90,56 @@ def random_dfa_example(alphabet_size, number_of_states, num_accepting_states=1):
     user_based_eq_oracle = UserInputEqOracle(alphabet, sul_dfa)
     kWayStateCoverageEqOracle = KWayStateCoverageEqOracle(alphabet, sul_dfa)
     kWayTransitionCoverageEqOracle = KWayTransitionCoverageEqOracle(alphabet, sul_dfa, minimize_paths=True)
-    learned_dfa = run_Lstar(alphabet, sul_dfa, kWayTransitionCoverageEqOracle, automaton_type='dfa',
+    learned_dfa = run_Lstar(alphabet, sul_dfa, random_W_method_eq_oracle, automaton_type='dfa',
                             cache_and_non_det_check=True, cex_processing='rs')
 
     # visualize_automaton(learned_dfa)
     return learned_dfa
+
+
+def big_input_alphabet_example(input_alphabet_size=1000, automaton_depth=4):
+    """
+        Small example where input alphabet can be huge and outputs are just true and false (DFA).
+
+    Args:
+        input_alphabet_size: size of input alphabet
+        automaton_depth: depth of alternating True/False paths in final automaton
+
+    Returns:
+        learned model
+    """
+    from aalpy.base import SUL
+    from aalpy.learning_algs import run_Lstar
+    from aalpy.oracles import RandomWMethodEqOracle
+
+    class alternatingSUL(SUL):
+        def __init__(self):
+            super().__init__()
+            self.counter = 0
+
+        def pre(self):
+            self.counter = 0
+
+        def post(self):
+            pass
+
+        def step(self, letter):
+            if letter is None:
+                return False
+            out = letter % 2
+            self.counter = min(self.counter + 1, automaton_depth)
+            if self.counter % 2 == 1:
+                return not out
+            return out
+
+    input_al = list(range(input_alphabet_size))
+
+    sul = alternatingSUL()
+    eq_oracle = RandomWMethodEqOracle(input_al, sul)
+
+    model = run_Lstar(input_al, sul, eq_oracle, 'dfa', cache_and_non_det_check=False)
+
+    return model
 
 
 def random_onfsm_example(num_states, input_size, output_size, n_sampling):
