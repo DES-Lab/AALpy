@@ -183,9 +183,10 @@ def random_mdp_example(num_states, input_len, num_outputs, n_c=20, n_resample=10
     from aalpy.SULs import MdpSUL
     from aalpy.oracles import UnseenOutputRandomWalkEqOracle
     from aalpy.learning_algs import run_stochastic_Lstar
-    from aalpy.utils import generate_random_mdp
+    from aalpy.utils import generate_random_mdp, visualize_automaton
 
     mdp, input_alphabet = generate_random_mdp(num_states, input_len, num_outputs)
+    visualize_automaton(mdp, path="graphs/original")
     sul = MdpSUL(mdp)
     eq_oracle = UnseenOutputRandomWalkEqOracle(input_alphabet, sul=sul, num_steps=5000, reset_prob=0.11,
                                                reset_after_cex=True)
@@ -193,6 +194,7 @@ def random_mdp_example(num_states, input_len, num_outputs, n_c=20, n_resample=10
     learned_mdp = run_stochastic_Lstar(input_alphabet, sul, eq_oracle, n_c=n_c, n_resample=n_resample,
                                        min_rounds=min_rounds, max_rounds=max_rounds)
 
+    visualize_automaton(learned_mdp, path="graphs/learned")
     return learned_mdp
 
 
@@ -681,3 +683,5 @@ def learn_stochastic_system_and_do_model_checking(example, automaton_type='smm',
 
     print('Value for each property:', [round(d * 100, 2) for d in values.values()])
     print('Error for each property:', [round(d * 100, 2) for d in diff.values()])
+
+random_mdp_example(num_states=10, input_len=4, num_outputs=4)
