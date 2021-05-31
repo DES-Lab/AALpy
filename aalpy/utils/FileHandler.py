@@ -37,7 +37,7 @@ def visualize_automaton(automaton, path="LearnedModel", file_type='pdf', display
     visualization_thread.start()
 
 
-def save_automaton_to_file(automaton, path="graphs/LearnedModel", file_type='dot',
+def save_automaton_to_file(automaton, path="LearnedModel", file_type='dot',
                            display_same_state_trans=True):
     """
     The Standard of the automata strictly follows the syntax found at: https://automata.cs.ru.nl/Syntax/Overview.
