@@ -1,9 +1,11 @@
-import os
 
+import os
+os.environ["PATH"] += os.pathsep + 'C:/Program Files/Graphviz/bin'
 from pydot import Dot, Node, Edge, graph_from_dot_file
 from graphviz import Source
 from aalpy.automata import Dfa, MooreMachine, Mdp, Onfsm, MealyState, DfaState, MooreState, MealyMachine, \
     MdpState, StochasticMealyMachine, StochasticMealyState, OnfsmState
+
 
 file_types = ['dot', 'png', 'svg', 'pdf', 'string']
 automaton_types = ['dfa', 'mealy', 'moore', 'mdp', 'smm', 'onfsm']

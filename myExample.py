@@ -4,57 +4,7 @@ from aalpy.automata import Dfa, DfaState, MdpState, Mdp, MealyMachine, MealyStat
     MooreMachine, MooreState, OnfsmState, Onfsm
 from aalpy.utils.HelperFunctions import random_string_generator
 
-#
-# s1 = State('s1')
-# s2 = State('s2')
-# s3 = State('s3')
-# s4 = State('s4')
-# s5 = State('s5')
-# s6 = State('s6')
-#
-# # a&b - a
-# # a&!b - b
-# # !a&b - c
-# # !a&!b - d
-#
-# # s1 out
-# s1.add_edge('a', s2, 0.2)
-# s1.add_edge('b', s1, 0.35)
-# s1.add_edge('d', s3, 0.35)
-# s1.add_edge('c', s1, 0.1)
-#
-# # s2 out
-# s2.add_edge('a', s4, 0.4)
-# s2.add_edge('b', s5, 0.1)
-# s2.add_edge('c', s6, 0.35)
-# s2.add_edge('d', s1, 0.15)
-#
-# # s3 out
-# s3.add_edge('a', s6, 0.4)
-# s3.add_edge('b', s1, 0.2)
-# s3.add_edge('d', s2, 0.2)
-# s3.add_edge('c', s3, 0.2)
-#
-# # s4 out
-# s4.add_edge('a', s5, 0.25)
-# s4.add_edge('c', s1, 0.25)
-# s4.add_edge('b', s3, 0.5)
-# s4.add_edge('d', s4, 0)
-#
-# # s5 out
-# s5.add_edge('b', s6, 0.2)
-# s5.add_edge('d', s3, 0.8)
-# s5.add_edge('c', s5, 0)
-# s5.add_edge('a', s5, 0)
-#
-# s6.add_edge('a', s6, 0.1)
-# s6.add_edge('b', s6, 0.4)
-# s6.add_edge('c', s6, 0.25)
-# s6.add_edge('d', s6, 0.25)
-#
-# sm = DFA(s1, [s1, s2, s3, s4, s5, s6])
-
-def generate_bb_mdp():
+def get_example_mdp():
     states = []
 
     s1 = MdpState('s1', 's1')
@@ -115,7 +65,7 @@ n_resample=1000
 min_rounds=10
 max_rounds=1000
 
-mdp, input_alphabet = generate_bb_mdp()
+mdp, input_alphabet = get_example_mdp()
 visualize_automaton(mdp, path="graphs/original")
 sul = MdpSUL(mdp)
 eq_oracle = UnseenOutputRandomWalkEqOracle(input_alphabet, sul=sul, num_steps=5000, reset_prob=0.11,
