@@ -145,7 +145,12 @@ AALpy has been used to:
 ## Cite AALpy and Research Contact
 If you use AALpy in your research, please cite:
 ```
-To be announced, please contact edi.muskardin@silicon-austria.com in the meantime. 
+@inproceedings{muskardin_aalpy:_2021,
+  title = {{AALpy}: An Active Automata Learning Library},
+  author = {Edi Mu\v{s}kardin and Bernhard K. Aichernig and Ingo Pill and Andrea Pferscher and Martin Tappler},
+  year = {2021},
+  booktitle = {International Symposium on Automated Technology for Verification and Analysis, ({ATVA})}
+}
 ```
 If you have research suggestions or you need specific help concerning your research, feel free to start a [discussion](https://github.com/DES-Lab/AALpy/discussions) or contact [edi.muskardin@silicon-austria.com](mailto:edi.muskardin@silicon-austria.com).
 We are happy to help you and consult you in applying automata learning in various domains.
