@@ -1,5 +1,6 @@
 from collections import namedtuple
-from random import choices, randint
+from itertools import product
+from random import choices, randint, random
 
 from aalpy.base import SUL, Automaton, Oracle
 
@@ -14,8 +15,9 @@ class KWayTransitionCoverageEqOracle(Oracle):
     finds counter examples by running random paths that cover all pairwise / k-way transitions.
     """
 
-    def __init__(self, alphabet: list, sul: SUL, k: int = 2, target_coverage: float = 1, num_generate_paths: int = 2000,
-                 refills: int = 5, max_path_len: int = 50, minimize_paths: bool = False, optimize: str = 'steps'):
+    def __init__(self, alphabet: list, sul: SUL, k: int = 2, method='random', target_coverage: float = 1,
+                 num_generate_paths: int = 2000, max_path_len: int = 50, minimize_paths: bool = False,
+                 optimize: str = 'steps', random_walk_len=10):
         """
         Args:
 
@@ -24,50 +26,48 @@ class KWayTransitionCoverageEqOracle(Oracle):
             k: k value used for K-Way transitions, i.e the number of steps between the start and the end of a transition
             target_coverage: percent of the minimum coverage that should be achieved  
             num_generate_paths: number of random queries used to find the optimal subset
-            refills: number of refills that can happen if the target coverage is not reached
             max_path_len: the maximum step size of a generated path
             minimize_paths: if true the generated paths will be trimmed in front and back if there is no coverage value
             optimize: minimize either the number of  'steps' or 'queries' that are executed
         """
         super().__init__(alphabet, sul)
         assert k >= 2
+        assert method in ['random', 'prefix']
         assert 0 <= target_coverage <= 1
         assert optimize in ['steps', 'queries']
 
         self.k = k
+        self.method = method
         self.target_coverage = target_coverage
         self.num_generate_paths = num_generate_paths
-        self.refills = refills
         self.max_path_len = max_path_len
         self.minimize_paths = minimize_paths
         self.optimize = optimize
+        self.random_walk_len = random_walk_len
         self.cached_paths = list()
 
     def find_cex(self, hypothesis: Automaton):
-        random_paths = self.generate_random_paths(hypothesis)
+        if self.method == 'random':
+            paths = self.generate_random_paths(hypothesis) + self.cached_paths
+            self.cached_paths = self.greedy_set_cover(hypothesis, paths)
 
-        selected_paths, refilled = self.greedy_set_cover(
-            hypothesis, random_paths + self.cached_paths, self.refills)
+            for path in self.cached_paths:
+                counter_example = self.check_path(hypothesis, path.steps)
 
-        if refilled:
-            selected_paths, _ = self.greedy_set_cover(
-                hypothesis, selected_paths, 0)
+                if counter_example is not None:
+                    return counter_example
 
-        self.cached_paths = selected_paths
+        elif self.method == 'prefix':
+            for steps in self.generate_prefix_steps(hypothesis):
+                counter_example = self.check_path(hypothesis, steps)
 
-        for path in selected_paths:
-            counter_example = self.check_path(hypothesis, path)
-
-            if counter_example is not None:
-                return counter_example
-
+                if counter_example is not None:
+                    return counter_example
         return None
 
-    def greedy_set_cover(self, hypothesis: Automaton, paths: list, max_refills: int):
+    def greedy_set_cover(self, hypothesis: Automaton, paths: list):
         result = list()
         covered = set()
-
-        refills = 0
 
         size_of_universe = len(hypothesis.states) * pow(len(self.alphabet), self.k)
         size_of_target_coverage = int(size_of_universe * self.target_coverage)
@@ -84,13 +84,10 @@ class KWayTransitionCoverageEqOracle(Oracle):
                 paths = self.get_minimized_paths(hypothesis, covered, paths)
 
             if path is None or not paths:
-                if refills >= max_refills:
-                    break
+                print(f'Generate Paths: {size_of_target_coverage:10} ==> {len(covered):10d}')
+                paths = [self.create_path(hypothesis, steps) for steps in self.generate_prefix_steps(hypothesis)]
 
-                refills += 1
-                paths = self.generate_random_paths(hypothesis)
-
-        return result, refills == 0
+        return result
 
     def select_optimal_path(self, covered: set, paths: list) -> Path:
         result = None
@@ -150,6 +147,12 @@ class KWayTransitionCoverageEqOracle(Oracle):
 
         return result
 
+    def generate_prefix_steps(self, hypothesis: Automaton) -> tuple:
+        for state in reversed(hypothesis.states):
+            prefix = state.prefix
+            for steps in sorted(product(self.alphabet, repeat=self.k), key=lambda k: random()):
+                yield prefix + steps + tuple(choices(self.alphabet, k=self.random_walk_len))
+
     def create_path(self, hypothesis: Automaton, steps: tuple) -> Path:
         transitions = set()
         transitions_log = list()
@@ -176,10 +179,10 @@ class KWayTransitionCoverageEqOracle(Oracle):
 
         return Path(hypothesis.initial_state, end_states[-1], steps, transitions, transitions_log)
 
-    def check_path(self, hypothesis: Automaton, path: Path):
+    def check_path(self, hypothesis: Automaton, steps: tuple):
         self.reset_hyp_and_sul(hypothesis)
 
-        for i, s in enumerate(path.steps):
+        for i, s in enumerate(steps):
             out_sul = self.sul.step(s)
             out_hyp = hypothesis.step(s)
 
@@ -187,6 +190,6 @@ class KWayTransitionCoverageEqOracle(Oracle):
 
             if out_sul != out_hyp:
                 self.sul.post()
-                return path.steps[:i + 1]
+                return steps[:i + 1]
 
         return None
