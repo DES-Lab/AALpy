@@ -1,0 +1,60 @@
+digraph {
+6
+0
+1
+2
+3
+4
+5
+6 -> 4 [label="ApplicationData/ConnectionClosed"]
+6 -> 5 [label="ApplicationDataEmpty/Empty"]
+6 -> 4 [label="ChangeCipherSpec/Empty"]
+6 -> 1 [label="ClientHelloRSA/ServerHello & Certificate & ServerHelloDone"]
+6 -> 4 [label="ClientKeyExchange/ConnectionClosed"]
+6 -> 4 [label="EmptyCertificate/ConnectionClosed"]
+6 -> 4 [label="Finished/ConnectionClosed"]
+0 -> 4 [label="ApplicationData/Alert Fatal (Unexpected message) & ConnectionClosed"]
+0 -> 0 [label="ApplicationDataEmpty/Empty"]
+0 -> 4 [label="ChangeCipherSpec/Alert Fatal (Unexpected message) & ConnectionClosed"]
+0 -> 4 [label="ClientHelloRSA/Alert Fatal (Unexpected message) & ConnectionClosed"]
+0 -> 4 [label="ClientKeyExchange/Alert Fatal (Unexpected message) & ConnectionClosed"]
+0 -> 4 [label="EmptyCertificate/Alert Fatal (Unexpected message) & ConnectionClosed"]
+0 -> 3 [label="Finished/ChangeCipherSpec & Finished"]
+1 -> 4 [label="ApplicationData/Alert Fatal (Unexpected message) & ConnectionClosed"]
+1 -> 1 [label="ApplicationDataEmpty/Empty"]
+1 -> 4 [label="ChangeCipherSpec/Alert Fatal (Unexpected message) & ConnectionClosed"]
+1 -> 4 [label="ClientHelloRSA/Alert Fatal (Unexpected message) & ConnectionClosed"]
+1 -> 2 [label="ClientKeyExchange/Empty"]
+1 -> 4 [label="EmptyCertificate/Alert Fatal (Unexpected message) & ConnectionClosed"]
+1 -> 4 [label="Finished/Alert Fatal (Unexpected message) & ConnectionClosed"]
+2 -> 4 [label="ApplicationData/Alert Fatal (Unexpected message) & ConnectionClosed"]
+2 -> 2 [label="ApplicationDataEmpty/Empty"]
+2 -> 0 [label="ChangeCipherSpec/Empty"]
+2 -> 4 [label="ClientHelloRSA/Alert Fatal (Unexpected message) & ConnectionClosed"]
+2 -> 4 [label="ClientKeyExchange/Alert Fatal (Unexpected message) & ConnectionClosed"]
+2 -> 4 [label="EmptyCertificate/Alert Fatal (Unexpected message) & ConnectionClosed"]
+2 -> 4 [label="Finished/Alert Fatal (Unexpected message) & ConnectionClosed"]
+3 -> 4 [label="ApplicationData/ApplicationData & ConnectionClosed"]
+3 -> 3 [label="ApplicationDataEmpty/Empty"]
+3 -> 4 [label="ChangeCipherSpec/Alert Fatal (Unexpected message) & ConnectionClosed"]
+3 -> 4 [label="ClientHelloRSA/Alert Fatal (Handshake failure) & ConnectionClosed"]
+3 -> 4 [label="ClientKeyExchange/Alert Fatal (Unexpected message) & ConnectionClosed"]
+3 -> 4 [label="EmptyCertificate/Alert Fatal (Unexpected message) & ConnectionClosed"]
+3 -> 4 [label="Finished/Alert Fatal (Unexpected message) & ConnectionClosed"]
+4 -> 4 [label="ApplicationData/ConnectionClosed"]
+4 -> 4 [label="ApplicationDataEmpty/ConnectionClosed"]
+4 -> 4 [label="ChangeCipherSpec/ConnectionClosed"]
+4 -> 4 [label="ClientHelloRSA/ConnectionClosed"]
+4 -> 4 [label="ClientKeyExchange/ConnectionClosed"]
+4 -> 4 [label="EmptyCertificate/ConnectionClosed"]
+4 -> 4 [label="Finished/ConnectionClosed"]
+5 -> 4 [label="ApplicationData/ConnectionClosed"]
+5 -> 4 [label="ApplicationDataEmpty/Empty"]
+5 -> 4 [label="ChangeCipherSpec/ConnectionClosed"]
+5 -> 4 [label="ClientHelloRSA/ConnectionClosed"]
+5 -> 4 [label="ClientKeyExchange/ConnectionClosed"]
+5 -> 4 [label="EmptyCertificate/ConnectionClosed"]
+5 -> 4 [label="Finished/ConnectionClosed"]
+__start0 [label="", shape=none];
+__start0 -> 6  [label=""];
+}
