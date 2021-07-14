@@ -15,35 +15,39 @@ class KWayTransitionCoverageEqOracle(Oracle):
     finds counter examples by running random paths that cover all pairwise / k-way transitions.
     """
 
-    def __init__(self, alphabet: list, sul: SUL, k: int = 2, method='random', target_coverage: float = 1,
-                 num_generate_paths: int = 2000, max_path_len: int = 50, minimize_paths: bool = False,
-                 optimize: str = 'steps', random_walk_len=10):
+    def __init__(self, alphabet: list, sul: SUL, k: int = 2, method='random',
+                 num_generate_paths: int = 20000,
+                 max_path_len: int = 50,
+                 max_number_of_steps: int = 0,
+                 optimize: str = 'steps',
+                 random_walk_len=10):
         """
         Args:
 
             alphabet: input alphabet
             sul: system under learning
             k: k value used for K-Way transitions, i.e the number of steps between the start and the end of a transition
-            target_coverage: percent of the minimum coverage that should be achieved  
+            method: defines how the queries are generated 'random' or 'prefix'
             num_generate_paths: number of random queries used to find the optimal subset
             max_path_len: the maximum step size of a generated path
-            minimize_paths: if true the generated paths will be trimmed in front and back if there is no coverage value
+            max_number_of_steps: maximum number of steps that will be executed on the SUL (0 = no limit)
             optimize: minimize either the number of  'steps' or 'queries' that are executed
+            random_walk_len: the number of steps that are added by 'prefix' generated paths
+
         """
         super().__init__(alphabet, sul)
         assert k >= 2
         assert method in ['random', 'prefix']
-        assert 0 <= target_coverage <= 1
         assert optimize in ['steps', 'queries']
 
         self.k = k
         self.method = method
-        self.target_coverage = target_coverage
         self.num_generate_paths = num_generate_paths
         self.max_path_len = max_path_len
-        self.minimize_paths = minimize_paths
+        self.max_number_of_steps = max_number_of_steps
         self.optimize = optimize
         self.random_walk_len = random_walk_len
+
         self.cached_paths = list()
 
     def find_cex(self, hypothesis: Automaton):
@@ -68,24 +72,25 @@ class KWayTransitionCoverageEqOracle(Oracle):
     def greedy_set_cover(self, hypothesis: Automaton, paths: list):
         result = list()
         covered = set()
+        step_count = 0
 
         size_of_universe = len(hypothesis.states) * pow(len(self.alphabet), self.k)
-        size_of_target_coverage = int(size_of_universe * self.target_coverage)
 
-        while size_of_target_coverage > len(covered):
+        while size_of_universe > len(covered):
             path = self.select_optimal_path(covered, paths)
 
             if path is not None:
                 covered = set.union(covered, path.kWayTransitions)
                 paths.remove(path)
                 result.append(path)
-
-            if self.minimize_paths:
-                paths = self.get_minimized_paths(hypothesis, covered, paths)
+                step_count += len(path.steps)
 
             if path is None or not paths:
-                print(f'Generate Paths: {size_of_target_coverage:10} ==> {len(covered):10d}')
                 paths = [self.create_path(hypothesis, steps) for steps in self.generate_prefix_steps(hypothesis)]
+
+            if self.max_number_of_steps != 0 and step_count > self.max_number_of_steps:
+                print("stop")
+                break
 
         return result
 
@@ -100,17 +105,6 @@ class KWayTransitionCoverageEqOracle(Oracle):
             result = max(paths, key=lambda p: len(p.kWayTransitions - covered))
 
         return result if len(result.kWayTransitions - covered) != 0 else None
-
-    def get_minimized_paths(self, hypothesis, covered, paths):
-        result = list()
-
-        for path in paths:
-            if len(path.kWayTransitions - covered):
-                path = self.trim_path_front(hypothesis, covered, path)
-                path = self.trim_path_back(hypothesis, covered, path)
-                result.append(path)
-
-        return result
 
     def trim_path_front(self, hypothesis, covered: set, path: Path) -> Path:
         for i, transition in enumerate(path.transitions_log):
