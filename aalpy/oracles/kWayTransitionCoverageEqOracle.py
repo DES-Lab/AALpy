@@ -106,30 +106,6 @@ class KWayTransitionCoverageEqOracle(Oracle):
 
         return result if len(result.kWayTransitions - covered) != 0 else None
 
-    def trim_path_front(self, hypothesis, covered: set, path: Path) -> Path:
-        for i, transition in enumerate(path.transitions_log):
-            if transition in covered:
-                if i == 0:
-                    return path
-
-                prefix = hypothesis.get_state_by_id(transition.start_state).prefix
-                steps = prefix + path.steps[i:]
-                return self.create_path(hypothesis, steps)
-
-        return path
-
-    def trim_path_back(self, hypothesis, covered: set, path: Path) -> Path:
-        for i, transition in enumerate(reversed(path.transitions_log)):
-            if transition in covered:
-                if i == 0:
-                    return path
-
-                prefix = hypothesis.get_state_by_id(transition.start_state).prefix
-                steps = prefix + path.steps[:-i]
-                return self.create_path(hypothesis, steps)
-
-        return path
-
     def generate_random_paths(self, hypothesis: Automaton) -> list:
         result = list()
 
