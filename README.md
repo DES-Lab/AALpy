@@ -141,7 +141,7 @@ seed(2) # all experiments will be reproducible
 AALpy has been used to:
 - [Learn Bluetooth Low-Energy](https://github.com/apferscher/ble-learning)
 - [Learn Input-Output Behavior of RNNs](https://github.com/DES-Lab/Extracting-FSM-From-RNNs)
-- [Debugger tool for VIM](https://github.com/DES-Lab/AALpy/discussions/13)
+- [Find bugs in VIM text editor](https://github.com/DES-Lab/AALpy/discussions/13)
 
 ## Cite AALpy and Research Contact
 If you use AALpy in your research, please cite:
