@@ -41,7 +41,8 @@ class IotsState(AutomatonState):
         assert input.startswith('?')
 
         if input in self.inputs:
-            self.inputs.update({input: tuple([new_state]) + self.inputs[input]})
+            self.inputs.update(
+                {input: tuple([new_state]) + self.inputs[input]})
         else:
             self.inputs.update({input: tuple([new_state])})
 
@@ -83,21 +84,17 @@ class IotsMachine(Automaton):
     def step(self, input: string):
         """
         Next step is determined based on a uniform distribution over all transitions with the input 'letter'.
-        """
 
-        # TODO
-        # I am not sure if the step() function should also work for outputs given by the caller,
-        # so the user can chose if the automaton steps on an input or output edge. Maybe we trigger
-        # always an output on the destination state, this would works very well if we restrict
-        # the automaton to an strict input-output chain (Martin recommend that for the beginning).
+        TODO
+        I am not sure if the step() function should also work for outputs given by the caller,
+        so the user can chose if the automaton steps on an input or output edge. Maybe we trigger
+        always an output on the destination state, this would works very well if we restrict
+        the automaton to an strict input-output chain (Martin recommend that for the beginning).
+        """
 
         assert input.startswith('?')
         (_, self.current_state) = choice(self.current_state.get_inputs(input))
 
     def step_output(self, output: string == None):
-        """
-        See Note in step function!
-        """
-
-        assert input.startswith('!')
-        (_, self.current_state) = choice(self.current_state.get_outputs(input))
+        assert output.startswith('!')
+        (_, self.current_state) = choice(self.current_state.get_outputs(output))
