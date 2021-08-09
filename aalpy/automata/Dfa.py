@@ -5,9 +5,9 @@ class DfaState(AutomatonState):
     """
     Single state of a deterministic finite automaton.
     """
-    def __init__(self, state_id):
+    def __init__(self, state_id, is_accepting: bool = False):
         super().__init__(state_id)
-        self.is_accepting = False
+        self.is_accepting = is_accepting
 
 
 class Dfa(Automaton):
