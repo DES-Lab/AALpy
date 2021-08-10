@@ -150,7 +150,8 @@ If you use AALpy in your research, please cite:
   title = {{AALpy}: An Active Automata Learning Library},
   author = {Edi Mu\v{s}kardin and Bernhard K. Aichernig and Ingo Pill and Andrea Pferscher and Martin Tappler},
   year = {2021},
-  booktitle = {International Symposium on Automated Technology for Verification and Analysis, ({ATVA}) 2021}
+  booktitle = {Automated Technology for Verification and Analysis - 19th International
+               Symposium, {ATVA} 2021, Gold Coast, Australia, October 18-22, 2021, Proceedings}
   series    = {Lecture Notes in Computer Science},  
   publisher = {Springer},
   year      = {2021},
