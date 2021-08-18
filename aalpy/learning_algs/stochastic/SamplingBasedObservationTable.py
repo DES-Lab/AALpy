@@ -450,7 +450,7 @@ class SamplingBasedObservationTable:
                 return self.compatibility_checker.check_difference(self.T[s1][e], self.T[s2][e])
         else:
             if e in self.T[s1] and e in self.T[s2]:
-                return self.compatibility_checker.check_difference(self.T[s1][e], self.T[s2][e], s1=s1,s2=s2,e=3)
+                return self.compatibility_checker.check_difference(self.T[s1][e], self.T[s2][e], s1=s1,s2=s2,e=e)
         return False
 
     def are_rows_compatible(self, s1, s2, e_ignore=None):
