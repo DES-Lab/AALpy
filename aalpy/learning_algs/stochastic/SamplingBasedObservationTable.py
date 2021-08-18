@@ -358,7 +358,7 @@ class SamplingBasedObservationTable:
         else:
             self.update_obs_table_with_freq_obs()
 
-    def stop(self, learning_round, min_rounds=10, max_rounds=None,
+    def stop(self, learning_round, chaos_cex_present, min_rounds=10, max_rounds=None,
              target_unambiguity=0.99, print_unambiguity=False):
         """
         Decide if learning should terminate.
@@ -366,6 +366,7 @@ class SamplingBasedObservationTable:
         Args:
 
           learning_round: current learning round
+          chaos_cex_present: is chaos counterexample present in the hypothesis
           min_rounds: minimum number of learning rounds (Default value = 5)
           max_rounds: maximum number of learning rounds (Default value = None)
           target_unambiguity: percentage of rows with unambiguous representatives (Default value = 0.99)
@@ -379,6 +380,8 @@ class SamplingBasedObservationTable:
             assert min_rounds <= max_rounds
         if max_rounds and learning_round == max_rounds:
             return True
+        if chaos_cex_present:
+            return False
 
         extended_s = list(self.get_extended_s())
         self.update_compatibility_classes()
