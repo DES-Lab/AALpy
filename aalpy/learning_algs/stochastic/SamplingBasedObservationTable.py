@@ -445,9 +445,12 @@ class SamplingBasedObservationTable:
         if self.strategy == 'classic':
             if self.teacher.complete_query(s1, e) and self.teacher.complete_query(s2, e):
                 return self.compatibility_checker.check_difference(self.T[s1][e], self.T[s2][e])
-        else:
+        elif self.strategy == 'normal' or self.strategy == 'chi2':
             if e in self.T[s1] and e in self.T[s2]:
                 return self.compatibility_checker.check_difference(self.T[s1][e], self.T[s2][e])
+        else:
+            if e in self.T[s1] and e in self.T[s2]:
+                return self.compatibility_checker.check_difference(self.T[s1][e], self.T[s2][e], s1=s1,s2=s2,e=3)
         return False
 
     def are_rows_compatible(self, s1, s2, e_ignore=None):
