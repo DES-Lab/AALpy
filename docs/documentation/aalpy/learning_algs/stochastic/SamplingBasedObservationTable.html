@@ -465,7 +465,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">update_obs_table_with_freq_obs</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">learning_round</span><span class="p">,</span> <span class="n">chaos_cex_present</span><span class="p">,</span> <span class="n">min_rounds</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">max_rounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">learning_round</span><span class="p">,</span> <span class="n">min_rounds</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">max_rounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
              <span class="n">target_unambiguity</span><span class="o">=</span><span class="mf">0.99</span><span class="p">,</span> <span class="n">print_unambiguity</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Decide if learning should terminate.</span>
@@ -473,7 +473,6 @@
 <span class="sd">        Args:</span>
 
 <span class="sd">          learning_round: current learning round</span>
-<span class="sd">          chaos_cex_present: is chaos counterexample present in the hypothesis</span>
 <span class="sd">          min_rounds: minimum number of learning rounds (Default value = 5)</span>
 <span class="sd">          max_rounds: maximum number of learning rounds (Default value = None)</span>
 <span class="sd">          target_unambiguity: percentage of rows with unambiguous representatives (Default value = 0.99)</span>
@@ -487,8 +486,6 @@
             <span class="k">assert</span> <span class="n">min_rounds</span> <span class="o">&lt;=</span> <span class="n">max_rounds</span>
         <span class="k">if</span> <span class="n">max_rounds</span> <span class="ow">and</span> <span class="n">learning_round</span> <span class="o">==</span> <span class="n">max_rounds</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">True</span>
-        <span class="k">if</span> <span class="n">chaos_cex_present</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">False</span>
 
         <span class="n">extended_s</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_extended_s</span><span class="p">())</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">update_compatibility_classes</span><span class="p">()</span>
@@ -552,12 +549,9 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">==</span> <span class="s1">&#39;classic&#39;</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">teacher</span><span class="o">.</span><span class="n">complete_query</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">teacher</span><span class="o">.</span><span class="n">complete_query</span><span class="p">(</span><span class="n">s2</span><span class="p">,</span> <span class="n">e</span><span class="p">):</span>
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">compatibility_checker</span><span class="o">.</span><span class="n">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span><span class="p">][</span><span class="n">e</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s2</span><span class="p">][</span><span class="n">e</span><span class="p">])</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">==</span> <span class="s1">&#39;normal&#39;</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">==</span> <span class="s1">&#39;chi2&#39;</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span><span class="p">]</span> <span class="ow">and</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s2</span><span class="p">]:</span>
-                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">compatibility_checker</span><span class="o">.</span><span class="n">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span><span class="p">][</span><span class="n">e</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s2</span><span class="p">][</span><span class="n">e</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span><span class="p">]</span> <span class="ow">and</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s2</span><span class="p">]:</span>
-                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">compatibility_checker</span><span class="o">.</span><span class="n">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span><span class="p">][</span><span class="n">e</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s2</span><span class="p">][</span><span class="n">e</span><span class="p">],</span> <span class="n">s1</span><span class="o">=</span><span class="n">s1</span><span class="p">,</span><span class="n">s2</span><span class="o">=</span><span class="n">s2</span><span class="p">,</span><span class="n">e</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">compatibility_checker</span><span class="o">.</span><span class="n">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span><span class="p">][</span><span class="n">e</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s2</span><span class="p">][</span><span class="n">e</span><span class="p">])</span>
         <span class="k">return</span> <span class="kc">False</span>
 
     <span class="k">def</span> <span class="nf">are_rows_compatible</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s1</span><span class="p">,</span> <span class="n">s2</span><span class="p">,</span> <span class="n">e_ignore</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -1111,7 +1105,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">update_obs_table_with_freq_obs</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">learning_round</span><span class="p">,</span> <span class="n">chaos_cex_present</span><span class="p">,</span> <span class="n">min_rounds</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">max_rounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">learning_round</span><span class="p">,</span> <span class="n">min_rounds</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">max_rounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
              <span class="n">target_unambiguity</span><span class="o">=</span><span class="mf">0.99</span><span class="p">,</span> <span class="n">print_unambiguity</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Decide if learning should terminate.</span>
@@ -1119,7 +1113,6 @@
 <span class="sd">        Args:</span>
 
 <span class="sd">          learning_round: current learning round</span>
-<span class="sd">          chaos_cex_present: is chaos counterexample present in the hypothesis</span>
 <span class="sd">          min_rounds: minimum number of learning rounds (Default value = 5)</span>
 <span class="sd">          max_rounds: maximum number of learning rounds (Default value = None)</span>
 <span class="sd">          target_unambiguity: percentage of rows with unambiguous representatives (Default value = 0.99)</span>
@@ -1133,8 +1126,6 @@
             <span class="k">assert</span> <span class="n">min_rounds</span> <span class="o">&lt;=</span> <span class="n">max_rounds</span>
         <span class="k">if</span> <span class="n">max_rounds</span> <span class="ow">and</span> <span class="n">learning_round</span> <span class="o">==</span> <span class="n">max_rounds</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">True</span>
-        <span class="k">if</span> <span class="n">chaos_cex_present</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">False</span>
 
         <span class="n">extended_s</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_extended_s</span><span class="p">())</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">update_compatibility_classes</span><span class="p">()</span>
@@ -1198,12 +1189,9 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">==</span> <span class="s1">&#39;classic&#39;</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">teacher</span><span class="o">.</span><span class="n">complete_query</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">teacher</span><span class="o">.</span><span class="n">complete_query</span><span class="p">(</span><span class="n">s2</span><span class="p">,</span> <span class="n">e</span><span class="p">):</span>
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">compatibility_checker</span><span class="o">.</span><span class="n">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span><span class="p">][</span><span class="n">e</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s2</span><span class="p">][</span><span class="n">e</span><span class="p">])</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">==</span> <span class="s1">&#39;normal&#39;</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">==</span> <span class="s1">&#39;chi2&#39;</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span><span class="p">]</span> <span class="ow">and</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s2</span><span class="p">]:</span>
-                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">compatibility_checker</span><span class="o">.</span><span class="n">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span><span class="p">][</span><span class="n">e</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s2</span><span class="p">][</span><span class="n">e</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span><span class="p">]</span> <span class="ow">and</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s2</span><span class="p">]:</span>
-                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">compatibility_checker</span><span class="o">.</span><span class="n">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span><span class="p">][</span><span class="n">e</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s2</span><span class="p">][</span><span class="n">e</span><span class="p">],</span> <span class="n">s1</span><span class="o">=</span><span class="n">s1</span><span class="p">,</span><span class="n">s2</span><span class="o">=</span><span class="n">s2</span><span class="p">,</span><span class="n">e</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">compatibility_checker</span><span class="o">.</span><span class="n">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span><span class="p">][</span><span class="n">e</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s2</span><span class="p">][</span><span class="n">e</span><span class="p">])</span>
         <span class="k">return</span> <span class="kc">False</span>
 
     <span class="k">def</span> <span class="nf">are_rows_compatible</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s1</span><span class="p">,</span> <span class="n">s2</span><span class="p">,</span> <span class="n">e_ignore</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -1989,7 +1977,6 @@ equivalence no sampling is needed.</p>
             <span class="name">stop</span><span class="signature">(
     self,
     learning_round,
-    chaos_cex_present,
     min_rounds=10,
     max_rounds=None,
     target_unambiguity=0.99,
@@ -1999,7 +1986,7 @@ equivalence no sampling is needed.</p>
 
                 <details>
             <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">learning_round</span><span class="p">,</span> <span class="n">chaos_cex_present</span><span class="p">,</span> <span class="n">min_rounds</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">max_rounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">learning_round</span><span class="p">,</span> <span class="n">min_rounds</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">max_rounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
              <span class="n">target_unambiguity</span><span class="o">=</span><span class="mf">0.99</span><span class="p">,</span> <span class="n">print_unambiguity</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Decide if learning should terminate.</span>
@@ -2007,7 +1994,6 @@ equivalence no sampling is needed.</p>
 <span class="sd">        Args:</span>
 
 <span class="sd">          learning_round: current learning round</span>
-<span class="sd">          chaos_cex_present: is chaos counterexample present in the hypothesis</span>
 <span class="sd">          min_rounds: minimum number of learning rounds (Default value = 5)</span>
 <span class="sd">          max_rounds: maximum number of learning rounds (Default value = None)</span>
 <span class="sd">          target_unambiguity: percentage of rows with unambiguous representatives (Default value = 0.99)</span>
@@ -2021,8 +2007,6 @@ equivalence no sampling is needed.</p>
             <span class="k">assert</span> <span class="n">min_rounds</span> <span class="o">&lt;=</span> <span class="n">max_rounds</span>
         <span class="k">if</span> <span class="n">max_rounds</span> <span class="ow">and</span> <span class="n">learning_round</span> <span class="o">==</span> <span class="n">max_rounds</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">True</span>
-        <span class="k">if</span> <span class="n">chaos_cex_present</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">False</span>
 
         <span class="n">extended_s</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_extended_s</span><span class="p">())</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">update_compatibility_classes</span><span class="p">()</span>
@@ -2062,7 +2046,6 @@ equivalence no sampling is needed.</p>
 <p>Args:</p>
 
 <p>learning_round: current learning round
-  chaos_cex_present: is chaos counterexample present in the hypothesis
   min_rounds: minimum number of learning rounds (Default value = 5)
   max_rounds: maximum number of learning rounds (Default value = None)
   target_unambiguity: percentage of rows with unambiguous representatives (Default value = 0.99)
@@ -2133,12 +2116,9 @@ equivalence no sampling is needed.</p>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">==</span> <span class="s1">&#39;classic&#39;</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">teacher</span><span class="o">.</span><span class="n">complete_query</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">teacher</span><span class="o">.</span><span class="n">complete_query</span><span class="p">(</span><span class="n">s2</span><span class="p">,</span> <span class="n">e</span><span class="p">):</span>
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">compatibility_checker</span><span class="o">.</span><span class="n">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span><span class="p">][</span><span class="n">e</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s2</span><span class="p">][</span><span class="n">e</span><span class="p">])</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">==</span> <span class="s1">&#39;normal&#39;</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">==</span> <span class="s1">&#39;chi2&#39;</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span><span class="p">]</span> <span class="ow">and</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s2</span><span class="p">]:</span>
-                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">compatibility_checker</span><span class="o">.</span><span class="n">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span><span class="p">][</span><span class="n">e</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s2</span><span class="p">][</span><span class="n">e</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span><span class="p">]</span> <span class="ow">and</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s2</span><span class="p">]:</span>
-                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">compatibility_checker</span><span class="o">.</span><span class="n">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span><span class="p">][</span><span class="n">e</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s2</span><span class="p">][</span><span class="n">e</span><span class="p">],</span> <span class="n">s1</span><span class="o">=</span><span class="n">s1</span><span class="p">,</span><span class="n">s2</span><span class="o">=</span><span class="n">s2</span><span class="p">,</span><span class="n">e</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">compatibility_checker</span><span class="o">.</span><span class="n">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s1</span><span class="p">][</span><span class="n">e</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">s2</span><span class="p">][</span><span class="n">e</span><span class="p">])</span>
         <span class="k">return</span> <span class="kc">False</span>
 </pre></div>
 

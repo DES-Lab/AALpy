@@ -616,9 +616,9 @@ def benchmark_stochastic_example(example, automaton_type='smm', n_c=20, n_resamp
     input_alphabet = mdp.get_input_alphabet()
 
     sul = MdpSUL(mdp)
-    eq_oracle = UnseenOutputRandomWalkEqOracle(input_alphabet, sul=sul, num_steps=200, reset_prob=0.25,
+    eq_oracle = UnseenOutputRandomWordEqOracle(input_alphabet, sul, num_walks=150, min_walk_len=5, max_walk_len=15,
                                                reset_after_cex=True)
-    eq_oracle = UnseenOutputRandomWordEqOracle(input_alphabet, sul, num_walks=100, min_walk_len=5, max_walk_len=15,
+    eq_oracle = UnseenOutputRandomWalkEqOracle(input_alphabet, sul=sul, num_steps=200, reset_prob=0.25,
                                                reset_after_cex=True)
 
     learned_mdp = run_stochastic_Lstar(input_alphabet=input_alphabet, eq_oracle=eq_oracle, sul=sul, n_c=n_c,

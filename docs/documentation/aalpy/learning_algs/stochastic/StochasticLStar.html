@@ -52,7 +52,7 @@
 
 <span class="kn">from</span> <span class="nn">aalpy.base</span> <span class="kn">import</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">Oracle</span>
 <span class="kn">from</span> <span class="nn">aalpy.learning_algs.stochastic.DifferenceChecker</span> <span class="kn">import</span> <span class="n">AdvancedHoeffdingChecker</span><span class="p">,</span> <span class="n">HoeffdingChecker</span><span class="p">,</span> \
-    <span class="n">ChiSquareChecker</span><span class="p">,</span> <span class="n">DifferenceChecker</span>
+    <span class="n">ChiSquareChecker</span>
 <span class="kn">from</span> <span class="nn">aalpy.learning_algs.stochastic.SamplingBasedObservationTable</span> <span class="kn">import</span> <span class="n">SamplingBasedObservationTable</span>
 <span class="kn">from</span> <span class="nn">aalpy.learning_algs.stochastic.StochasticCexProcessing</span> <span class="kn">import</span> <span class="n">stochastic_longest_prefix</span><span class="p">,</span> <span class="n">stochastic_rs</span>
 <span class="kn">from</span> <span class="nn">aalpy.learning_algs.stochastic.StochasticTeacher</span> <span class="kn">import</span> <span class="n">StochasticTeacher</span>
@@ -63,9 +63,6 @@
 <span class="n">cex_sampling_options</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;bfs&#39;</span><span class="p">]</span>
 <span class="n">cex_processing_options</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;longest_prefix&#39;</span><span class="p">,</span> <span class="s1">&#39;rs&#39;</span><span class="p">]</span>
 <span class="n">print_options</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
-<span class="n">diff_checker_options</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;classic&#39;</span><span class="p">:</span> <span class="n">HoeffdingChecker</span><span class="p">(),</span>
-                        <span class="s1">&#39;chi2&#39;</span><span class="p">:</span> <span class="n">ChiSquareChecker</span><span class="p">(),</span>
-                        <span class="s1">&#39;normal&#39;</span><span class="p">:</span> <span class="n">AdvancedHoeffdingChecker</span><span class="p">()}</span>
 
 
 <span class="k">def</span> <span class="nf">run_stochastic_Lstar</span><span class="p">(</span><span class="n">input_alphabet</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">eq_oracle</span><span class="p">:</span> <span class="n">Oracle</span><span class="p">,</span> <span class="n">n_c</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">n_resample</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">target_unambiguity</span><span class="o">=</span><span class="mf">0.99</span><span class="p">,</span>
@@ -95,8 +92,7 @@
 
 <span class="sd">        automaton_type: either &#39;mdp&#39; or &#39;smm&#39; (Default value = &#39;mdp&#39;)</span>
 
-<span class="sd">        strategy: either one of [&#39;classic&#39;, &#39;normal&#39;, &#39;chi2&#39;] or a object implementing DifferenceChecker class,</span>
-<span class="sd">            default value is &#39;normal&#39;. Classic strategy is the one presented</span>
+<span class="sd">        strategy: one of [&#39;classic&#39;, &#39;normal&#39;, &#39;chi2&#39;], default value is &#39;normal&#39;. Classic strategy is the one presented</span>
 <span class="sd">            in the seed paper, &#39;normal&#39; is the updated version and chi2 is based on chi squared.</span>
 
 <span class="sd">        cex_processing: cex processing strategy, None , &#39;longest_prefix&#39; or &#39;rs&#39; (rs is experimental)</span>
@@ -119,16 +115,14 @@
 <span class="sd">      learned MDP/SMM</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="k">assert</span> <span class="n">strategy</span> <span class="ow">in</span> <span class="n">strategies</span>
     <span class="k">assert</span> <span class="n">samples_cex_strategy</span> <span class="ow">in</span> <span class="n">cex_sampling_options</span> <span class="ow">or</span> <span class="n">samples_cex_strategy</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;random&#39;</span><span class="p">)</span>
     <span class="k">assert</span> <span class="n">cex_processing</span> <span class="ow">in</span> <span class="n">cex_processing_options</span>
     <span class="k">if</span> <span class="n">property_based_stopping</span><span class="p">:</span>
         <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">property_based_stopping</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span>
 
-    <span class="k">if</span> <span class="n">strategy</span> <span class="ow">in</span> <span class="n">diff_checker_options</span><span class="p">:</span>
-        <span class="n">compatibility_checker</span> <span class="o">=</span> <span class="n">diff_checker_options</span><span class="p">[</span><span class="n">strategy</span><span class="p">]</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">strategy</span><span class="p">,</span> <span class="n">DifferenceChecker</span><span class="p">)</span>
-        <span class="n">compatibility_checker</span> <span class="o">=</span> <span class="n">strategy</span>
+    <span class="n">compatibility_checker</span> <span class="o">=</span> <span class="n">ChiSquareChecker</span><span class="p">()</span> <span class="k">if</span> <span class="n">strategy</span> <span class="o">==</span> <span class="s2">&quot;chi2&quot;</span> <span class="k">else</span> \
+        <span class="n">AdvancedHoeffdingChecker</span><span class="p">()</span> <span class="k">if</span> <span class="n">strategy</span> <span class="o">!=</span> <span class="s2">&quot;classic&quot;</span> <span class="k">else</span> <span class="n">HoeffdingChecker</span><span class="p">()</span>
 
     <span class="n">stochastic_teacher</span> <span class="o">=</span> <span class="n">StochasticTeacher</span><span class="p">(</span><span class="n">sul</span><span class="p">,</span> <span class="n">n_c</span><span class="p">,</span> <span class="n">eq_oracle</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">,</span> <span class="n">compatibility_checker</span><span class="p">,</span>
                                            <span class="n">samples_cex_strategy</span><span class="o">=</span><span class="n">samples_cex_strategy</span><span class="p">)</span>
@@ -202,14 +196,17 @@
         <span class="n">refined</span> <span class="o">=</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">refine_not_completed_cells</span><span class="p">(</span><span class="n">n_resample</span><span class="p">)</span>
         <span class="n">observation_table</span><span class="o">.</span><span class="n">update_obs_table_with_freq_obs</span><span class="p">()</span>
 
+        <span class="c1"># If chaos state is still present, continue learning</span>
+        <span class="k">if</span> <span class="n">chaos_cex_present</span><span class="p">:</span>
+            <span class="k">continue</span>
+
         <span class="k">if</span> <span class="n">property_based_stopping</span> <span class="ow">and</span> <span class="n">learning_rounds</span> <span class="o">&gt;=</span> <span class="n">min_rounds</span><span class="p">:</span>
             <span class="c1"># stop based on maximum allowed error</span>
             <span class="k">if</span> <span class="n">stop_based_on_confidence</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">property_based_stopping</span><span class="p">,</span> <span class="n">print_level</span><span class="p">):</span>
                 <span class="k">break</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># stop based on number of unambiguous rows</span>
-            <span class="n">stop_based_on_unambiguity</span> <span class="o">=</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">learning_rounds</span><span class="p">,</span> <span class="n">chaos_cex_present</span><span class="p">,</span>
-                                                               <span class="n">target_unambiguity</span><span class="o">=</span><span class="n">target_unambiguity</span><span class="p">,</span>
+            <span class="n">stop_based_on_unambiguity</span> <span class="o">=</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">learning_rounds</span><span class="p">,</span> <span class="n">target_unambiguity</span><span class="o">=</span><span class="n">target_unambiguity</span><span class="p">,</span>
                                                                <span class="n">min_rounds</span><span class="o">=</span><span class="n">min_rounds</span><span class="p">,</span> <span class="n">max_rounds</span><span class="o">=</span><span class="n">max_rounds</span><span class="p">,</span>
                                                                <span class="n">print_unambiguity</span><span class="o">=</span><span class="n">print_level</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">stop_based_on_unambiguity</span><span class="p">:</span>
@@ -299,8 +296,7 @@
 
 <span class="sd">        automaton_type: either &#39;mdp&#39; or &#39;smm&#39; (Default value = &#39;mdp&#39;)</span>
 
-<span class="sd">        strategy: either one of [&#39;classic&#39;, &#39;normal&#39;, &#39;chi2&#39;] or a object implementing DifferenceChecker class,</span>
-<span class="sd">            default value is &#39;normal&#39;. Classic strategy is the one presented</span>
+<span class="sd">        strategy: one of [&#39;classic&#39;, &#39;normal&#39;, &#39;chi2&#39;], default value is &#39;normal&#39;. Classic strategy is the one presented</span>
 <span class="sd">            in the seed paper, &#39;normal&#39; is the updated version and chi2 is based on chi squared.</span>
 
 <span class="sd">        cex_processing: cex processing strategy, None , &#39;longest_prefix&#39; or &#39;rs&#39; (rs is experimental)</span>
@@ -323,16 +319,14 @@
 <span class="sd">      learned MDP/SMM</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="k">assert</span> <span class="n">strategy</span> <span class="ow">in</span> <span class="n">strategies</span>
     <span class="k">assert</span> <span class="n">samples_cex_strategy</span> <span class="ow">in</span> <span class="n">cex_sampling_options</span> <span class="ow">or</span> <span class="n">samples_cex_strategy</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;random&#39;</span><span class="p">)</span>
     <span class="k">assert</span> <span class="n">cex_processing</span> <span class="ow">in</span> <span class="n">cex_processing_options</span>
     <span class="k">if</span> <span class="n">property_based_stopping</span><span class="p">:</span>
         <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">property_based_stopping</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span>
 
-    <span class="k">if</span> <span class="n">strategy</span> <span class="ow">in</span> <span class="n">diff_checker_options</span><span class="p">:</span>
-        <span class="n">compatibility_checker</span> <span class="o">=</span> <span class="n">diff_checker_options</span><span class="p">[</span><span class="n">strategy</span><span class="p">]</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">strategy</span><span class="p">,</span> <span class="n">DifferenceChecker</span><span class="p">)</span>
-        <span class="n">compatibility_checker</span> <span class="o">=</span> <span class="n">strategy</span>
+    <span class="n">compatibility_checker</span> <span class="o">=</span> <span class="n">ChiSquareChecker</span><span class="p">()</span> <span class="k">if</span> <span class="n">strategy</span> <span class="o">==</span> <span class="s2">&quot;chi2&quot;</span> <span class="k">else</span> \
+        <span class="n">AdvancedHoeffdingChecker</span><span class="p">()</span> <span class="k">if</span> <span class="n">strategy</span> <span class="o">!=</span> <span class="s2">&quot;classic&quot;</span> <span class="k">else</span> <span class="n">HoeffdingChecker</span><span class="p">()</span>
 
     <span class="n">stochastic_teacher</span> <span class="o">=</span> <span class="n">StochasticTeacher</span><span class="p">(</span><span class="n">sul</span><span class="p">,</span> <span class="n">n_c</span><span class="p">,</span> <span class="n">eq_oracle</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">,</span> <span class="n">compatibility_checker</span><span class="p">,</span>
                                            <span class="n">samples_cex_strategy</span><span class="o">=</span><span class="n">samples_cex_strategy</span><span class="p">)</span>
@@ -406,14 +400,17 @@
         <span class="n">refined</span> <span class="o">=</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">refine_not_completed_cells</span><span class="p">(</span><span class="n">n_resample</span><span class="p">)</span>
         <span class="n">observation_table</span><span class="o">.</span><span class="n">update_obs_table_with_freq_obs</span><span class="p">()</span>
 
+        <span class="c1"># If chaos state is still present, continue learning</span>
+        <span class="k">if</span> <span class="n">chaos_cex_present</span><span class="p">:</span>
+            <span class="k">continue</span>
+
         <span class="k">if</span> <span class="n">property_based_stopping</span> <span class="ow">and</span> <span class="n">learning_rounds</span> <span class="o">&gt;=</span> <span class="n">min_rounds</span><span class="p">:</span>
             <span class="c1"># stop based on maximum allowed error</span>
             <span class="k">if</span> <span class="n">stop_based_on_confidence</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">property_based_stopping</span><span class="p">,</span> <span class="n">print_level</span><span class="p">):</span>
                 <span class="k">break</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># stop based on number of unambiguous rows</span>
-            <span class="n">stop_based_on_unambiguity</span> <span class="o">=</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">learning_rounds</span><span class="p">,</span> <span class="n">chaos_cex_present</span><span class="p">,</span>
-                                                               <span class="n">target_unambiguity</span><span class="o">=</span><span class="n">target_unambiguity</span><span class="p">,</span>
+            <span class="n">stop_based_on_unambiguity</span> <span class="o">=</span> <span class="n">observation_table</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">learning_rounds</span><span class="p">,</span> <span class="n">target_unambiguity</span><span class="o">=</span><span class="n">target_unambiguity</span><span class="p">,</span>
                                                                <span class="n">min_rounds</span><span class="o">=</span><span class="n">min_rounds</span><span class="p">,</span> <span class="n">max_rounds</span><span class="o">=</span><span class="n">max_rounds</span><span class="p">,</span>
                                                                <span class="n">print_unambiguity</span><span class="o">=</span><span class="n">print_level</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">stop_based_on_unambiguity</span><span class="p">:</span>
@@ -471,8 +468,7 @@ max_rounds: if learning_rounds &gt;= max_rounds, learning will stop (Default val
 
 automaton_type: either 'mdp' or 'smm' (Default value = 'mdp')
 
-strategy: either one of ['classic', 'normal', 'chi2'] or a object implementing DifferenceChecker class,
-    default value is 'normal'. Classic strategy is the one presented
+strategy: one of ['classic', 'normal', 'chi2'], default value is 'normal'. Classic strategy is the one presented
     in the seed paper, 'normal' is the updated version and chi2 is based on chi squared.
 
 cex_processing: cex processing strategy, None , 'longest_prefix' or 'rs' (rs is experimental)

@@ -2,7 +2,7 @@ import time
 
 from aalpy.base import SUL, Oracle
 from aalpy.learning_algs.stochastic.DifferenceChecker import AdvancedHoeffdingChecker, HoeffdingChecker, \
-    ChiSquareChecker, DifferenceChecker
+    ChiSquareChecker
 from aalpy.learning_algs.stochastic.SamplingBasedObservationTable import SamplingBasedObservationTable
 from aalpy.learning_algs.stochastic.StochasticCexProcessing import stochastic_longest_prefix, stochastic_rs
 from aalpy.learning_algs.stochastic.StochasticTeacher import StochasticTeacher
@@ -13,9 +13,6 @@ strategies = ['classic', 'normal', 'chi2']
 cex_sampling_options = [None, 'bfs']
 cex_processing_options = [None, 'longest_prefix', 'rs']
 print_options = [0, 1, 2, 3]
-diff_checker_options = {'classic': HoeffdingChecker(),
-                        'chi2': ChiSquareChecker(),
-                        'normal': AdvancedHoeffdingChecker()}
 
 
 def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_resample=100, target_unambiguity=0.99,
@@ -45,8 +42,7 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_
 
         automaton_type: either 'mdp' or 'smm' (Default value = 'mdp')
 
-        strategy: either one of ['classic', 'normal', 'chi2'] or a object implementing DifferenceChecker class,
-            default value is 'normal'. Classic strategy is the one presented
+        strategy: one of ['classic', 'normal', 'chi2'], default value is 'normal'. Classic strategy is the one presented
             in the seed paper, 'normal' is the updated version and chi2 is based on chi squared.
 
         cex_processing: cex processing strategy, None , 'longest_prefix' or 'rs' (rs is experimental)
@@ -69,16 +65,14 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_
       learned MDP/SMM
     """
 
+    assert strategy in strategies
     assert samples_cex_strategy in cex_sampling_options or samples_cex_strategy.startswith('random')
     assert cex_processing in cex_processing_options
     if property_based_stopping:
         assert len(property_based_stopping) == 3
 
-    if strategy in diff_checker_options:
-        compatibility_checker = diff_checker_options[strategy]
-    else:
-        assert isinstance(strategy, DifferenceChecker)
-        compatibility_checker = strategy
+    compatibility_checker = ChiSquareChecker() if strategy == "chi2" else \
+        AdvancedHoeffdingChecker() if strategy != "classic" else HoeffdingChecker()
 
     stochastic_teacher = StochasticTeacher(sul, n_c, eq_oracle, automaton_type, compatibility_checker,
                                            samples_cex_strategy=samples_cex_strategy)
@@ -152,14 +146,17 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_
         refined = observation_table.refine_not_completed_cells(n_resample)
         observation_table.update_obs_table_with_freq_obs()
 
+        # If chaos state is still present, continue learning
+        if chaos_cex_present:
+            continue
+
         if property_based_stopping and learning_rounds >= min_rounds:
             # stop based on maximum allowed error
             if stop_based_on_confidence(hypothesis, property_based_stopping, print_level):
                 break
         else:
             # stop based on number of unambiguous rows
-            stop_based_on_unambiguity = observation_table.stop(learning_rounds, chaos_cex_present,
-                                                               target_unambiguity=target_unambiguity,
+            stop_based_on_unambiguity = observation_table.stop(learning_rounds, target_unambiguity=target_unambiguity,
                                                                min_rounds=min_rounds, max_rounds=max_rounds,
                                                                print_unambiguity=print_level > 1)
             if stop_based_on_unambiguity:

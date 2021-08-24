@@ -126,7 +126,3 @@ class UnseenOutputRandomWalkEqOracle(Oracle):
                     return cex
 
         return None
-
-    def reset_counter(self):
-        if self.reset_after_cex:
-            self.random_steps_done = 0

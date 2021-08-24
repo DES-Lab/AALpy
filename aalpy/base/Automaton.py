@@ -134,7 +134,7 @@ class Automaton(ABC):
         """
         import itertools
 
-        state_comb_list = itertools.permutations(self.states, 2)
+        state_comb_list = itertools.combinations(self.states, 2)
         for state_comb in state_comb_list:
             if not self.get_shortest_path(state_comb[0], state_comb[1]):
                 return False

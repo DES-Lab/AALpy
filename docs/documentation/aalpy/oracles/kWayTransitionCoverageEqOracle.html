@@ -79,10 +79,16 @@
                                 <a class="function" href="#KWayTransitionCoverageEqOracle.select_optimal_path">select_optimal_path</a>
                         </li>
                         <li>
-                                <a class="function" href="#KWayTransitionCoverageEqOracle.generate_random_paths">generate_random_paths</a>
+                                <a class="function" href="#KWayTransitionCoverageEqOracle.get_minimized_paths">get_minimized_paths</a>
                         </li>
                         <li>
-                                <a class="function" href="#KWayTransitionCoverageEqOracle.generate_prefix_steps">generate_prefix_steps</a>
+                                <a class="function" href="#KWayTransitionCoverageEqOracle.trim_path_front">trim_path_front</a>
+                        </li>
+                        <li>
+                                <a class="function" href="#KWayTransitionCoverageEqOracle.trim_path_back">trim_path_back</a>
+                        </li>
+                        <li>
+                                <a class="function" href="#KWayTransitionCoverageEqOracle.generate_random_paths">generate_random_paths</a>
                         </li>
                         <li>
                                 <a class="function" href="#KWayTransitionCoverageEqOracle.create_path">create_path</a>
@@ -112,8 +118,7 @@
                         <details>
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">namedtuple</span>
-<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">product</span>
-<span class="kn">from</span> <span class="nn">random</span> <span class="kn">import</span> <span class="n">choices</span><span class="p">,</span> <span class="n">randint</span><span class="p">,</span> <span class="n">random</span>
+<span class="kn">from</span> <span class="nn">random</span> <span class="kn">import</span> <span class="n">choices</span><span class="p">,</span> <span class="n">randint</span>
 
 <span class="kn">from</span> <span class="nn">aalpy.base</span> <span class="kn">import</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">Automaton</span><span class="p">,</span> <span class="n">Oracle</span>
 
@@ -128,84 +133,83 @@
 <span class="sd">    finds counter examples by running random paths that cover all pairwise / k-way transitions.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alphabet</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;random&#39;</span><span class="p">,</span>
-                 <span class="n">num_generate_paths</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20000</span><span class="p">,</span>
-                 <span class="n">max_path_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
-                 <span class="n">max_number_of_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-                 <span class="n">optimize</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;steps&#39;</span><span class="p">,</span>
-                 <span class="n">random_walk_len</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alphabet</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">target_coverage</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">num_generate_paths</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2000</span><span class="p">,</span>
+                 <span class="n">refills</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="n">max_path_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">minimize_paths</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">optimize</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;steps&#39;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Args:</span>
 
 <span class="sd">            alphabet: input alphabet</span>
 <span class="sd">            sul: system under learning</span>
 <span class="sd">            k: k value used for K-Way transitions, i.e the number of steps between the start and the end of a transition</span>
-<span class="sd">            method: defines how the queries are generated &#39;random&#39; or &#39;prefix&#39;</span>
+<span class="sd">            target_coverage: percent of the minimum coverage that should be achieved  </span>
 <span class="sd">            num_generate_paths: number of random queries used to find the optimal subset</span>
+<span class="sd">            refills: number of refills that can happen if the target coverage is not reached</span>
 <span class="sd">            max_path_len: the maximum step size of a generated path</span>
-<span class="sd">            max_number_of_steps: maximum number of steps that will be executed on the SUL (0 = no limit)</span>
+<span class="sd">            minimize_paths: if true the generated paths will be trimmed in front and back if there is no coverage value</span>
 <span class="sd">            optimize: minimize either the number of  &#39;steps&#39; or &#39;queries&#39; that are executed</span>
-<span class="sd">            random_walk_len: the number of steps that are added by &#39;prefix&#39; generated paths</span>
-
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">sul</span><span class="p">)</span>
         <span class="k">assert</span> <span class="n">k</span> <span class="o">&gt;=</span> <span class="mi">2</span>
-        <span class="k">assert</span> <span class="n">method</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;random&#39;</span><span class="p">,</span> <span class="s1">&#39;prefix&#39;</span><span class="p">]</span>
+        <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">target_coverage</span> <span class="o">&lt;=</span> <span class="mi">1</span>
         <span class="k">assert</span> <span class="n">optimize</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;steps&#39;</span><span class="p">,</span> <span class="s1">&#39;queries&#39;</span><span class="p">]</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">k</span> <span class="o">=</span> <span class="n">k</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="n">method</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target_coverage</span> <span class="o">=</span> <span class="n">target_coverage</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_generate_paths</span> <span class="o">=</span> <span class="n">num_generate_paths</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">refills</span> <span class="o">=</span> <span class="n">refills</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">max_path_len</span> <span class="o">=</span> <span class="n">max_path_len</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">max_number_of_steps</span> <span class="o">=</span> <span class="n">max_number_of_steps</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">minimize_paths</span> <span class="o">=</span> <span class="n">minimize_paths</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">optimize</span> <span class="o">=</span> <span class="n">optimize</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">random_walk_len</span> <span class="o">=</span> <span class="n">random_walk_len</span>
-
         <span class="bp">self</span><span class="o">.</span><span class="n">cached_paths</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">find_cex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">:</span> <span class="n">Automaton</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;random&#39;</span><span class="p">:</span>
-            <span class="n">paths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_random_paths</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">cached_paths</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">cached_paths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">greedy_set_cover</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">paths</span><span class="p">)</span>
+        <span class="n">random_paths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_random_paths</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
 
-            <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cached_paths</span><span class="p">:</span>
-                <span class="n">counter_example</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_path</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">path</span><span class="o">.</span><span class="n">steps</span><span class="p">)</span>
+        <span class="n">selected_paths</span><span class="p">,</span> <span class="n">refilled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">greedy_set_cover</span><span class="p">(</span>
+            <span class="n">hypothesis</span><span class="p">,</span> <span class="n">random_paths</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">cached_paths</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">refills</span><span class="p">)</span>
 
-                <span class="k">if</span> <span class="n">counter_example</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="n">counter_example</span>
+        <span class="k">if</span> <span class="n">refilled</span><span class="p">:</span>
+            <span class="n">selected_paths</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">greedy_set_cover</span><span class="p">(</span>
+                <span class="n">hypothesis</span><span class="p">,</span> <span class="n">selected_paths</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
 
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;prefix&#39;</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">steps</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_prefix_steps</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">):</span>
-                <span class="n">counter_example</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_path</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">steps</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cached_paths</span> <span class="o">=</span> <span class="n">selected_paths</span>
 
-                <span class="k">if</span> <span class="n">counter_example</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="n">counter_example</span>
+        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">selected_paths</span><span class="p">:</span>
+            <span class="n">counter_example</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_path</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">counter_example</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">counter_example</span>
+
         <span class="k">return</span> <span class="kc">None</span>
 
-    <span class="k">def</span> <span class="nf">greedy_set_cover</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">:</span> <span class="n">Automaton</span><span class="p">,</span> <span class="n">paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">greedy_set_cover</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">:</span> <span class="n">Automaton</span><span class="p">,</span> <span class="n">paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">max_refills</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
         <span class="n">result</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
         <span class="n">covered</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-        <span class="n">step_count</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="n">refills</span> <span class="o">=</span> <span class="mi">0</span>
 
         <span class="n">size_of_universe</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">)</span> <span class="o">*</span> <span class="nb">pow</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">k</span><span class="p">)</span>
+        <span class="n">size_of_target_coverage</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">size_of_universe</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_coverage</span><span class="p">)</span>
 
-        <span class="k">while</span> <span class="n">size_of_universe</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">covered</span><span class="p">):</span>
+        <span class="k">while</span> <span class="n">size_of_target_coverage</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">covered</span><span class="p">):</span>
             <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">select_optimal_path</span><span class="p">(</span><span class="n">covered</span><span class="p">,</span> <span class="n">paths</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">covered</span> <span class="o">=</span> <span class="nb">set</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="n">covered</span><span class="p">,</span> <span class="n">path</span><span class="o">.</span><span class="n">kWayTransitions</span><span class="p">)</span>
                 <span class="n">paths</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
                 <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-                <span class="n">step_count</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">steps</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">minimize_paths</span><span class="p">:</span>
+                <span class="n">paths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_minimized_paths</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">covered</span><span class="p">,</span> <span class="n">paths</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">paths</span><span class="p">:</span>
-                <span class="n">paths</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">create_path</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">steps</span><span class="p">)</span> <span class="k">for</span> <span class="n">steps</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_prefix_steps</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)]</span>
+                <span class="k">if</span> <span class="n">refills</span> <span class="o">&gt;=</span> <span class="n">max_refills</span><span class="p">:</span>
+                    <span class="k">break</span>
 
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_number_of_steps</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">step_count</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_number_of_steps</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;stop&quot;</span><span class="p">)</span>
-                <span class="k">break</span>
+                <span class="n">refills</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">paths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_random_paths</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">result</span>
+        <span class="k">return</span> <span class="n">result</span><span class="p">,</span> <span class="n">refills</span> <span class="o">==</span> <span class="mi">0</span>
 
     <span class="k">def</span> <span class="nf">select_optimal_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">covered</span><span class="p">:</span> <span class="nb">set</span><span class="p">,</span> <span class="n">paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
         <span class="n">result</span> <span class="o">=</span> <span class="kc">None</span>
@@ -219,6 +223,41 @@
 
         <span class="k">return</span> <span class="n">result</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">kWayTransitions</span> <span class="o">-</span> <span class="n">covered</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
 
+    <span class="k">def</span> <span class="nf">get_minimized_paths</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">,</span> <span class="n">covered</span><span class="p">,</span> <span class="n">paths</span><span class="p">):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">kWayTransitions</span> <span class="o">-</span> <span class="n">covered</span><span class="p">):</span>
+                <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">trim_path_front</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">covered</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+                <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">trim_path_back</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">covered</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">def</span> <span class="nf">trim_path_front</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">,</span> <span class="n">covered</span><span class="p">:</span> <span class="nb">set</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">transition</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">transitions_log</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">transition</span> <span class="ow">in</span> <span class="n">covered</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">path</span>
+
+                <span class="n">prefix</span> <span class="o">=</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">get_state_by_id</span><span class="p">(</span><span class="n">transition</span><span class="o">.</span><span class="n">start_state</span><span class="p">)</span><span class="o">.</span><span class="n">prefix</span>
+                <span class="n">steps</span> <span class="o">=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="n">path</span><span class="o">.</span><span class="n">steps</span><span class="p">[</span><span class="n">i</span><span class="p">:]</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_path</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">steps</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">path</span>
+
+    <span class="k">def</span> <span class="nf">trim_path_back</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">,</span> <span class="n">covered</span><span class="p">:</span> <span class="nb">set</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">transition</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">transitions_log</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">transition</span> <span class="ow">in</span> <span class="n">covered</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">path</span>
+
+                <span class="n">prefix</span> <span class="o">=</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">get_state_by_id</span><span class="p">(</span><span class="n">transition</span><span class="o">.</span><span class="n">start_state</span><span class="p">)</span><span class="o">.</span><span class="n">prefix</span>
+                <span class="n">steps</span> <span class="o">=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="n">path</span><span class="o">.</span><span class="n">steps</span><span class="p">[:</span><span class="o">-</span><span class="n">i</span><span class="p">]</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_path</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">steps</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">path</span>
+
     <span class="k">def</span> <span class="nf">generate_random_paths</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">:</span> <span class="n">Automaton</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
         <span class="n">result</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
 
@@ -229,12 +268,6 @@
             <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">result</span>
-
-    <span class="k">def</span> <span class="nf">generate_prefix_steps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">:</span> <span class="n">Automaton</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">):</span>
-            <span class="n">prefix</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">prefix</span>
-            <span class="k">for</span> <span class="n">steps</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">product</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">repeat</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">k</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">k</span><span class="p">:</span> <span class="n">random</span><span class="p">()):</span>
-                <span class="k">yield</span> <span class="n">prefix</span> <span class="o">+</span> <span class="n">steps</span> <span class="o">+</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">choices</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">random_walk_len</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">create_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">:</span> <span class="n">Automaton</span><span class="p">,</span> <span class="n">steps</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
         <span class="n">transitions</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
@@ -262,10 +295,10 @@
 
         <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">initial_state</span><span class="p">,</span> <span class="n">end_states</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">steps</span><span class="p">,</span> <span class="n">transitions</span><span class="p">,</span> <span class="n">transitions_log</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">check_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">:</span> <span class="n">Automaton</span><span class="p">,</span> <span class="n">steps</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">check_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">:</span> <span class="n">Automaton</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">reset_hyp_and_sul</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
 
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">steps</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">steps</span><span class="p">):</span>
             <span class="n">out_sul</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
             <span class="n">out_hyp</span> <span class="o">=</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
 
@@ -273,7 +306,7 @@
 
             <span class="k">if</span> <span class="n">out_sul</span> <span class="o">!=</span> <span class="n">out_hyp</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
-                <span class="k">return</span> <span class="n">steps</span><span class="p">[:</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+                <span class="k">return</span> <span class="n">path</span><span class="o">.</span><span class="n">steps</span><span class="p">[:</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
 
         <span class="k">return</span> <span class="kc">None</span>
 </pre></div>
@@ -437,84 +470,83 @@
 <span class="sd">    finds counter examples by running random paths that cover all pairwise / k-way transitions.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alphabet</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;random&#39;</span><span class="p">,</span>
-                 <span class="n">num_generate_paths</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20000</span><span class="p">,</span>
-                 <span class="n">max_path_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
-                 <span class="n">max_number_of_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-                 <span class="n">optimize</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;steps&#39;</span><span class="p">,</span>
-                 <span class="n">random_walk_len</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alphabet</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">target_coverage</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">num_generate_paths</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2000</span><span class="p">,</span>
+                 <span class="n">refills</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="n">max_path_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">minimize_paths</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">optimize</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;steps&#39;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Args:</span>
 
 <span class="sd">            alphabet: input alphabet</span>
 <span class="sd">            sul: system under learning</span>
 <span class="sd">            k: k value used for K-Way transitions, i.e the number of steps between the start and the end of a transition</span>
-<span class="sd">            method: defines how the queries are generated &#39;random&#39; or &#39;prefix&#39;</span>
+<span class="sd">            target_coverage: percent of the minimum coverage that should be achieved  </span>
 <span class="sd">            num_generate_paths: number of random queries used to find the optimal subset</span>
+<span class="sd">            refills: number of refills that can happen if the target coverage is not reached</span>
 <span class="sd">            max_path_len: the maximum step size of a generated path</span>
-<span class="sd">            max_number_of_steps: maximum number of steps that will be executed on the SUL (0 = no limit)</span>
+<span class="sd">            minimize_paths: if true the generated paths will be trimmed in front and back if there is no coverage value</span>
 <span class="sd">            optimize: minimize either the number of  &#39;steps&#39; or &#39;queries&#39; that are executed</span>
-<span class="sd">            random_walk_len: the number of steps that are added by &#39;prefix&#39; generated paths</span>
-
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">sul</span><span class="p">)</span>
         <span class="k">assert</span> <span class="n">k</span> <span class="o">&gt;=</span> <span class="mi">2</span>
-        <span class="k">assert</span> <span class="n">method</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;random&#39;</span><span class="p">,</span> <span class="s1">&#39;prefix&#39;</span><span class="p">]</span>
+        <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">target_coverage</span> <span class="o">&lt;=</span> <span class="mi">1</span>
         <span class="k">assert</span> <span class="n">optimize</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;steps&#39;</span><span class="p">,</span> <span class="s1">&#39;queries&#39;</span><span class="p">]</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">k</span> <span class="o">=</span> <span class="n">k</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="n">method</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target_coverage</span> <span class="o">=</span> <span class="n">target_coverage</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_generate_paths</span> <span class="o">=</span> <span class="n">num_generate_paths</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">refills</span> <span class="o">=</span> <span class="n">refills</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">max_path_len</span> <span class="o">=</span> <span class="n">max_path_len</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">max_number_of_steps</span> <span class="o">=</span> <span class="n">max_number_of_steps</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">minimize_paths</span> <span class="o">=</span> <span class="n">minimize_paths</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">optimize</span> <span class="o">=</span> <span class="n">optimize</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">random_walk_len</span> <span class="o">=</span> <span class="n">random_walk_len</span>
-
         <span class="bp">self</span><span class="o">.</span><span class="n">cached_paths</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">find_cex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">:</span> <span class="n">Automaton</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;random&#39;</span><span class="p">:</span>
-            <span class="n">paths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_random_paths</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">cached_paths</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">cached_paths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">greedy_set_cover</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">paths</span><span class="p">)</span>
+        <span class="n">random_paths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_random_paths</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
 
-            <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cached_paths</span><span class="p">:</span>
-                <span class="n">counter_example</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_path</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">path</span><span class="o">.</span><span class="n">steps</span><span class="p">)</span>
+        <span class="n">selected_paths</span><span class="p">,</span> <span class="n">refilled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">greedy_set_cover</span><span class="p">(</span>
+            <span class="n">hypothesis</span><span class="p">,</span> <span class="n">random_paths</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">cached_paths</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">refills</span><span class="p">)</span>
 
-                <span class="k">if</span> <span class="n">counter_example</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="n">counter_example</span>
+        <span class="k">if</span> <span class="n">refilled</span><span class="p">:</span>
+            <span class="n">selected_paths</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">greedy_set_cover</span><span class="p">(</span>
+                <span class="n">hypothesis</span><span class="p">,</span> <span class="n">selected_paths</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
 
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;prefix&#39;</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">steps</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_prefix_steps</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">):</span>
-                <span class="n">counter_example</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_path</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">steps</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cached_paths</span> <span class="o">=</span> <span class="n">selected_paths</span>
 
-                <span class="k">if</span> <span class="n">counter_example</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="n">counter_example</span>
+        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">selected_paths</span><span class="p">:</span>
+            <span class="n">counter_example</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_path</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">counter_example</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">counter_example</span>
+
         <span class="k">return</span> <span class="kc">None</span>
 
-    <span class="k">def</span> <span class="nf">greedy_set_cover</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">:</span> <span class="n">Automaton</span><span class="p">,</span> <span class="n">paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">greedy_set_cover</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">:</span> <span class="n">Automaton</span><span class="p">,</span> <span class="n">paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">max_refills</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
         <span class="n">result</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
         <span class="n">covered</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-        <span class="n">step_count</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="n">refills</span> <span class="o">=</span> <span class="mi">0</span>
 
         <span class="n">size_of_universe</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">)</span> <span class="o">*</span> <span class="nb">pow</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">k</span><span class="p">)</span>
+        <span class="n">size_of_target_coverage</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">size_of_universe</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_coverage</span><span class="p">)</span>
 
-        <span class="k">while</span> <span class="n">size_of_universe</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">covered</span><span class="p">):</span>
+        <span class="k">while</span> <span class="n">size_of_target_coverage</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">covered</span><span class="p">):</span>
             <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">select_optimal_path</span><span class="p">(</span><span class="n">covered</span><span class="p">,</span> <span class="n">paths</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">covered</span> <span class="o">=</span> <span class="nb">set</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="n">covered</span><span class="p">,</span> <span class="n">path</span><span class="o">.</span><span class="n">kWayTransitions</span><span class="p">)</span>
                 <span class="n">paths</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
                 <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-                <span class="n">step_count</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">steps</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">minimize_paths</span><span class="p">:</span>
+                <span class="n">paths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_minimized_paths</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">covered</span><span class="p">,</span> <span class="n">paths</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">paths</span><span class="p">:</span>
-                <span class="n">paths</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">create_path</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">steps</span><span class="p">)</span> <span class="k">for</span> <span class="n">steps</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_prefix_steps</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)]</span>
+                <span class="k">if</span> <span class="n">refills</span> <span class="o">&gt;=</span> <span class="n">max_refills</span><span class="p">:</span>
+                    <span class="k">break</span>
 
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_number_of_steps</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">step_count</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_number_of_steps</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;stop&quot;</span><span class="p">)</span>
-                <span class="k">break</span>
+                <span class="n">refills</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">paths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_random_paths</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">result</span>
+        <span class="k">return</span> <span class="n">result</span><span class="p">,</span> <span class="n">refills</span> <span class="o">==</span> <span class="mi">0</span>
 
     <span class="k">def</span> <span class="nf">select_optimal_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">covered</span><span class="p">:</span> <span class="nb">set</span><span class="p">,</span> <span class="n">paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
         <span class="n">result</span> <span class="o">=</span> <span class="kc">None</span>
@@ -528,6 +560,41 @@
 
         <span class="k">return</span> <span class="n">result</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">kWayTransitions</span> <span class="o">-</span> <span class="n">covered</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
 
+    <span class="k">def</span> <span class="nf">get_minimized_paths</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">,</span> <span class="n">covered</span><span class="p">,</span> <span class="n">paths</span><span class="p">):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">kWayTransitions</span> <span class="o">-</span> <span class="n">covered</span><span class="p">):</span>
+                <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">trim_path_front</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">covered</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+                <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">trim_path_back</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">covered</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">def</span> <span class="nf">trim_path_front</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">,</span> <span class="n">covered</span><span class="p">:</span> <span class="nb">set</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">transition</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">transitions_log</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">transition</span> <span class="ow">in</span> <span class="n">covered</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">path</span>
+
+                <span class="n">prefix</span> <span class="o">=</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">get_state_by_id</span><span class="p">(</span><span class="n">transition</span><span class="o">.</span><span class="n">start_state</span><span class="p">)</span><span class="o">.</span><span class="n">prefix</span>
+                <span class="n">steps</span> <span class="o">=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="n">path</span><span class="o">.</span><span class="n">steps</span><span class="p">[</span><span class="n">i</span><span class="p">:]</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_path</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">steps</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">path</span>
+
+    <span class="k">def</span> <span class="nf">trim_path_back</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">,</span> <span class="n">covered</span><span class="p">:</span> <span class="nb">set</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">transition</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">transitions_log</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">transition</span> <span class="ow">in</span> <span class="n">covered</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">path</span>
+
+                <span class="n">prefix</span> <span class="o">=</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">get_state_by_id</span><span class="p">(</span><span class="n">transition</span><span class="o">.</span><span class="n">start_state</span><span class="p">)</span><span class="o">.</span><span class="n">prefix</span>
+                <span class="n">steps</span> <span class="o">=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="n">path</span><span class="o">.</span><span class="n">steps</span><span class="p">[:</span><span class="o">-</span><span class="n">i</span><span class="p">]</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_path</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">steps</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">path</span>
+
     <span class="k">def</span> <span class="nf">generate_random_paths</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">:</span> <span class="n">Automaton</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
         <span class="n">result</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
 
@@ -538,12 +605,6 @@
             <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">result</span>
-
-    <span class="k">def</span> <span class="nf">generate_prefix_steps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">:</span> <span class="n">Automaton</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">):</span>
-            <span class="n">prefix</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">prefix</span>
-            <span class="k">for</span> <span class="n">steps</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">product</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">repeat</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">k</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">k</span><span class="p">:</span> <span class="n">random</span><span class="p">()):</span>
-                <span class="k">yield</span> <span class="n">prefix</span> <span class="o">+</span> <span class="n">steps</span> <span class="o">+</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">choices</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">random_walk_len</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">create_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">:</span> <span class="n">Automaton</span><span class="p">,</span> <span class="n">steps</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
         <span class="n">transitions</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
@@ -571,10 +632,10 @@
 
         <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">initial_state</span><span class="p">,</span> <span class="n">end_states</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">steps</span><span class="p">,</span> <span class="n">transitions</span><span class="p">,</span> <span class="n">transitions_log</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">check_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">:</span> <span class="n">Automaton</span><span class="p">,</span> <span class="n">steps</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">check_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">:</span> <span class="n">Automaton</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">reset_hyp_and_sul</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
 
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">steps</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">steps</span><span class="p">):</span>
             <span class="n">out_sul</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
             <span class="n">out_hyp</span> <span class="o">=</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
 
@@ -582,7 +643,7 @@
 
             <span class="k">if</span> <span class="n">out_sul</span> <span class="o">!=</span> <span class="n">out_hyp</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
-                <span class="k">return</span> <span class="n">steps</span><span class="p">[:</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+                <span class="k">return</span> <span class="n">path</span><span class="o">.</span><span class="n">steps</span><span class="p">[:</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
 
         <span class="k">return</span> <span class="kc">None</span>
 </pre></div>
@@ -604,49 +665,43 @@ finds counter examples by running random paths that cover all pairwise / k-way t
     alphabet: list,
     sul: <a href="../base/SUL.html#SUL">aalpy.base.SUL.SUL</a>,
     k: int = 2,
-    method=&#39;random&#39;,
-    num_generate_paths: int = 20000,
+    target_coverage: float = 1,
+    num_generate_paths: int = 2000,
+    refills: int = 5,
     max_path_len: int = 50,
-    max_number_of_steps: int = 0,
-    optimize: str = &#39;steps&#39;,
-    random_walk_len=10
+    minimize_paths: bool = False,
+    optimize: str = &#39;steps&#39;
 )</span>    </div>
 
                 <details>
             <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alphabet</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;random&#39;</span><span class="p">,</span>
-                 <span class="n">num_generate_paths</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20000</span><span class="p">,</span>
-                 <span class="n">max_path_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
-                 <span class="n">max_number_of_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-                 <span class="n">optimize</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;steps&#39;</span><span class="p">,</span>
-                 <span class="n">random_walk_len</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alphabet</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">target_coverage</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">num_generate_paths</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2000</span><span class="p">,</span>
+                 <span class="n">refills</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="n">max_path_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">minimize_paths</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">optimize</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;steps&#39;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Args:</span>
 
 <span class="sd">            alphabet: input alphabet</span>
 <span class="sd">            sul: system under learning</span>
 <span class="sd">            k: k value used for K-Way transitions, i.e the number of steps between the start and the end of a transition</span>
-<span class="sd">            method: defines how the queries are generated &#39;random&#39; or &#39;prefix&#39;</span>
+<span class="sd">            target_coverage: percent of the minimum coverage that should be achieved  </span>
 <span class="sd">            num_generate_paths: number of random queries used to find the optimal subset</span>
+<span class="sd">            refills: number of refills that can happen if the target coverage is not reached</span>
 <span class="sd">            max_path_len: the maximum step size of a generated path</span>
-<span class="sd">            max_number_of_steps: maximum number of steps that will be executed on the SUL (0 = no limit)</span>
+<span class="sd">            minimize_paths: if true the generated paths will be trimmed in front and back if there is no coverage value</span>
 <span class="sd">            optimize: minimize either the number of  &#39;steps&#39; or &#39;queries&#39; that are executed</span>
-<span class="sd">            random_walk_len: the number of steps that are added by &#39;prefix&#39; generated paths</span>
-
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">sul</span><span class="p">)</span>
         <span class="k">assert</span> <span class="n">k</span> <span class="o">&gt;=</span> <span class="mi">2</span>
-        <span class="k">assert</span> <span class="n">method</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;random&#39;</span><span class="p">,</span> <span class="s1">&#39;prefix&#39;</span><span class="p">]</span>
+        <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">target_coverage</span> <span class="o">&lt;=</span> <span class="mi">1</span>
         <span class="k">assert</span> <span class="n">optimize</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;steps&#39;</span><span class="p">,</span> <span class="s1">&#39;queries&#39;</span><span class="p">]</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">k</span> <span class="o">=</span> <span class="n">k</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="n">method</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target_coverage</span> <span class="o">=</span> <span class="n">target_coverage</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_generate_paths</span> <span class="o">=</span> <span class="n">num_generate_paths</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">refills</span> <span class="o">=</span> <span class="n">refills</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">max_path_len</span> <span class="o">=</span> <span class="n">max_path_len</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">max_number_of_steps</span> <span class="o">=</span> <span class="n">max_number_of_steps</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">minimize_paths</span> <span class="o">=</span> <span class="n">minimize_paths</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">optimize</span> <span class="o">=</span> <span class="n">optimize</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">random_walk_len</span> <span class="o">=</span> <span class="n">random_walk_len</span>
-
         <span class="bp">self</span><span class="o">.</span><span class="n">cached_paths</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
 </pre></div>
 
@@ -657,12 +712,12 @@ finds counter examples by running random paths that cover all pairwise / k-way t
 <pre><code>alphabet: input alphabet
 sul: system under learning
 k: k value used for K-Way transitions, i.e the number of steps between the start and the end of a transition
-method: defines how the queries are generated 'random' or 'prefix'
+target_coverage: percent of the minimum coverage that should be achieved  
 num_generate_paths: number of random queries used to find the optimal subset
+refills: number of refills that can happen if the target coverage is not reached
 max_path_len: the maximum step size of a generated path
-max_number_of_steps: maximum number of steps that will be executed on the SUL (0 = no limit)
+minimize_paths: if true the generated paths will be trimmed in front and back if there is no coverage value
 optimize: minimize either the number of  'steps' or 'queries' that are executed
-random_walk_len: the number of steps that are added by 'prefix' generated paths
 </code></pre>
 </div>
 
@@ -679,22 +734,23 @@ random_walk_len: the number of steps that are added by 'prefix' generated paths
                 <details>
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">find_cex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">:</span> <span class="n">Automaton</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;random&#39;</span><span class="p">:</span>
-            <span class="n">paths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_random_paths</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">cached_paths</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">cached_paths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">greedy_set_cover</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">paths</span><span class="p">)</span>
+        <span class="n">random_paths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_random_paths</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
 
-            <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cached_paths</span><span class="p">:</span>
-                <span class="n">counter_example</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_path</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">path</span><span class="o">.</span><span class="n">steps</span><span class="p">)</span>
+        <span class="n">selected_paths</span><span class="p">,</span> <span class="n">refilled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">greedy_set_cover</span><span class="p">(</span>
+            <span class="n">hypothesis</span><span class="p">,</span> <span class="n">random_paths</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">cached_paths</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">refills</span><span class="p">)</span>
 
-                <span class="k">if</span> <span class="n">counter_example</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="n">counter_example</span>
+        <span class="k">if</span> <span class="n">refilled</span><span class="p">:</span>
+            <span class="n">selected_paths</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">greedy_set_cover</span><span class="p">(</span>
+                <span class="n">hypothesis</span><span class="p">,</span> <span class="n">selected_paths</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
 
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;prefix&#39;</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">steps</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_prefix_steps</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">):</span>
-                <span class="n">counter_example</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_path</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">steps</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cached_paths</span> <span class="o">=</span> <span class="n">selected_paths</span>
 
-                <span class="k">if</span> <span class="n">counter_example</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="n">counter_example</span>
+        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">selected_paths</span><span class="p">:</span>
+            <span class="n">counter_example</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_path</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">counter_example</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">counter_example</span>
+
         <span class="k">return</span> <span class="kc">None</span>
 </pre></div>
 
@@ -720,35 +776,44 @@ current hypothesis.</p>
 
         
             <span class="def">def</span>
-            <span class="name">greedy_set_cover</span><span class="signature">(self, hypothesis: <a href="../base/Automaton.html#Automaton">aalpy.base.Automaton.Automaton</a>, paths: list)</span>:
+            <span class="name">greedy_set_cover</span><span class="signature">(
+    self,
+    hypothesis: <a href="../base/Automaton.html#Automaton">aalpy.base.Automaton.Automaton</a>,
+    paths: list,
+    max_refills: int
+)</span>:
     </div>
 
                 <details>
             <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">greedy_set_cover</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">:</span> <span class="n">Automaton</span><span class="p">,</span> <span class="n">paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">):</span>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">greedy_set_cover</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">:</span> <span class="n">Automaton</span><span class="p">,</span> <span class="n">paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">max_refills</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
         <span class="n">result</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
         <span class="n">covered</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-        <span class="n">step_count</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="n">refills</span> <span class="o">=</span> <span class="mi">0</span>
 
         <span class="n">size_of_universe</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">)</span> <span class="o">*</span> <span class="nb">pow</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">k</span><span class="p">)</span>
+        <span class="n">size_of_target_coverage</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">size_of_universe</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_coverage</span><span class="p">)</span>
 
-        <span class="k">while</span> <span class="n">size_of_universe</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">covered</span><span class="p">):</span>
+        <span class="k">while</span> <span class="n">size_of_target_coverage</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">covered</span><span class="p">):</span>
             <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">select_optimal_path</span><span class="p">(</span><span class="n">covered</span><span class="p">,</span> <span class="n">paths</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">covered</span> <span class="o">=</span> <span class="nb">set</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="n">covered</span><span class="p">,</span> <span class="n">path</span><span class="o">.</span><span class="n">kWayTransitions</span><span class="p">)</span>
                 <span class="n">paths</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
                 <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-                <span class="n">step_count</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">steps</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">minimize_paths</span><span class="p">:</span>
+                <span class="n">paths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_minimized_paths</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">covered</span><span class="p">,</span> <span class="n">paths</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">paths</span><span class="p">:</span>
-                <span class="n">paths</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">create_path</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">steps</span><span class="p">)</span> <span class="k">for</span> <span class="n">steps</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_prefix_steps</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)]</span>
+                <span class="k">if</span> <span class="n">refills</span> <span class="o">&gt;=</span> <span class="n">max_refills</span><span class="p">:</span>
+                    <span class="k">break</span>
 
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_number_of_steps</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">step_count</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_number_of_steps</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;stop&quot;</span><span class="p">)</span>
-                <span class="k">break</span>
+                <span class="n">refills</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">paths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_random_paths</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">result</span>
+        <span class="k">return</span> <span class="n">result</span><span class="p">,</span> <span class="n">refills</span> <span class="o">==</span> <span class="mi">0</span>
 </pre></div>
 
         </details>
@@ -788,6 +853,99 @@ current hypothesis.</p>
     
 
                             </div>
+                            <div id="KWayTransitionCoverageEqOracle.get_minimized_paths" class="classattr">
+                                        <div class="attr function"><a class="headerlink" href="#KWayTransitionCoverageEqOracle.get_minimized_paths">#&nbsp;&nbsp</a>
+
+        
+            <span class="def">def</span>
+            <span class="name">get_minimized_paths</span><span class="signature">(self, hypothesis, covered, paths)</span>:
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">get_minimized_paths</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">,</span> <span class="n">covered</span><span class="p">,</span> <span class="n">paths</span><span class="p">):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">kWayTransitions</span> <span class="o">-</span> <span class="n">covered</span><span class="p">):</span>
+                <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">trim_path_front</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">covered</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+                <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">trim_path_back</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">covered</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+</pre></div>
+
+        </details>
+
+    
+
+                            </div>
+                            <div id="KWayTransitionCoverageEqOracle.trim_path_front" class="classattr">
+                                        <div class="attr function"><a class="headerlink" href="#KWayTransitionCoverageEqOracle.trim_path_front">#&nbsp;&nbsp</a>
+
+        
+            <span class="def">def</span>
+            <span class="name">trim_path_front</span><span class="signature">(
+    self,
+    hypothesis,
+    covered: set,
+    path: <a href="#Path">aalpy.oracles.kWayTransitionCoverageEqOracle.Path</a>
+) -&gt; <a href="#Path">aalpy.oracles.kWayTransitionCoverageEqOracle.Path</a></span>:
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">trim_path_front</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">,</span> <span class="n">covered</span><span class="p">:</span> <span class="nb">set</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">transition</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">transitions_log</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">transition</span> <span class="ow">in</span> <span class="n">covered</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">path</span>
+
+                <span class="n">prefix</span> <span class="o">=</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">get_state_by_id</span><span class="p">(</span><span class="n">transition</span><span class="o">.</span><span class="n">start_state</span><span class="p">)</span><span class="o">.</span><span class="n">prefix</span>
+                <span class="n">steps</span> <span class="o">=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="n">path</span><span class="o">.</span><span class="n">steps</span><span class="p">[</span><span class="n">i</span><span class="p">:]</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_path</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">steps</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">path</span>
+</pre></div>
+
+        </details>
+
+    
+
+                            </div>
+                            <div id="KWayTransitionCoverageEqOracle.trim_path_back" class="classattr">
+                                        <div class="attr function"><a class="headerlink" href="#KWayTransitionCoverageEqOracle.trim_path_back">#&nbsp;&nbsp</a>
+
+        
+            <span class="def">def</span>
+            <span class="name">trim_path_back</span><span class="signature">(
+    self,
+    hypothesis,
+    covered: set,
+    path: <a href="#Path">aalpy.oracles.kWayTransitionCoverageEqOracle.Path</a>
+) -&gt; <a href="#Path">aalpy.oracles.kWayTransitionCoverageEqOracle.Path</a></span>:
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">trim_path_back</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">,</span> <span class="n">covered</span><span class="p">:</span> <span class="nb">set</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">transition</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">transitions_log</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">transition</span> <span class="ow">in</span> <span class="n">covered</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">path</span>
+
+                <span class="n">prefix</span> <span class="o">=</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">get_state_by_id</span><span class="p">(</span><span class="n">transition</span><span class="o">.</span><span class="n">start_state</span><span class="p">)</span><span class="o">.</span><span class="n">prefix</span>
+                <span class="n">steps</span> <span class="o">=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="n">path</span><span class="o">.</span><span class="n">steps</span><span class="p">[:</span><span class="o">-</span><span class="n">i</span><span class="p">]</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_path</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">,</span> <span class="n">steps</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">path</span>
+</pre></div>
+
+        </details>
+
+    
+
+                            </div>
                             <div id="KWayTransitionCoverageEqOracle.generate_random_paths" class="classattr">
                                         <div class="attr function"><a class="headerlink" href="#KWayTransitionCoverageEqOracle.generate_random_paths">#&nbsp;&nbsp</a>
 
@@ -808,28 +966,6 @@ current hypothesis.</p>
             <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">result</span>
-</pre></div>
-
-        </details>
-
-    
-
-                            </div>
-                            <div id="KWayTransitionCoverageEqOracle.generate_prefix_steps" class="classattr">
-                                        <div class="attr function"><a class="headerlink" href="#KWayTransitionCoverageEqOracle.generate_prefix_steps">#&nbsp;&nbsp</a>
-
-        
-            <span class="def">def</span>
-            <span class="name">generate_prefix_steps</span><span class="signature">(self, hypothesis: <a href="../base/Automaton.html#Automaton">aalpy.base.Automaton.Automaton</a>) -&gt; tuple</span>:
-    </div>
-
-                <details>
-            <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">generate_prefix_steps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">:</span> <span class="n">Automaton</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">):</span>
-            <span class="n">prefix</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">prefix</span>
-            <span class="k">for</span> <span class="n">steps</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">product</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">repeat</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">k</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">k</span><span class="p">:</span> <span class="n">random</span><span class="p">()):</span>
-                <span class="k">yield</span> <span class="n">prefix</span> <span class="o">+</span> <span class="n">steps</span> <span class="o">+</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">choices</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">random_walk_len</span><span class="p">))</span>
 </pre></div>
 
         </details>
@@ -888,15 +1024,19 @@ current hypothesis.</p>
 
         
             <span class="def">def</span>
-            <span class="name">check_path</span><span class="signature">(self, hypothesis: <a href="../base/Automaton.html#Automaton">aalpy.base.Automaton.Automaton</a>, steps: tuple)</span>:
+            <span class="name">check_path</span><span class="signature">(
+    self,
+    hypothesis: <a href="../base/Automaton.html#Automaton">aalpy.base.Automaton.Automaton</a>,
+    path: <a href="#Path">aalpy.oracles.kWayTransitionCoverageEqOracle.Path</a>
+)</span>:
     </div>
 
                 <details>
             <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">check_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">:</span> <span class="n">Automaton</span><span class="p">,</span> <span class="n">steps</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">):</span>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">check_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">:</span> <span class="n">Automaton</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">reset_hyp_and_sul</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
 
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">steps</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">steps</span><span class="p">):</span>
             <span class="n">out_sul</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
             <span class="n">out_hyp</span> <span class="o">=</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
 
@@ -904,7 +1044,7 @@ current hypothesis.</p>
 
             <span class="k">if</span> <span class="n">out_sul</span> <span class="o">!=</span> <span class="n">out_hyp</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
-                <span class="k">return</span> <span class="n">steps</span><span class="p">[:</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+                <span class="k">return</span> <span class="n">path</span><span class="o">.</span><span class="n">steps</span><span class="p">[:</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
 
         <span class="k">return</span> <span class="kc">None</span>
 </pre></div>
