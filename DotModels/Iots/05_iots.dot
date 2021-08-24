@@ -1,0 +1,25 @@
+digraph learnedModel {
+s1 [label=s1];
+s2 [label=s2];
+s3 [label=s3];
+s4 [label=s4];
+s5 [label=s5];
+s6 [label=s6];
+
+
+s1 -> s2  [label="?E"];
+s1 -> s3  [label="?E"];
+
+s2 -> s2  [label="?E"];
+s2 -> s4  [label="!tea"];
+s4 -> s4  [label="?E"];
+
+s3 -> s5  [label="?E"];
+s5 -> s6  [label="!coffe"];
+s5 -> s5  [label="?E"];
+
+s6 -> s6  [label="?E"];
+
+__start0 [label="", shape=none];
+__start0 -> s1  [label=""];
+}

@@ -2,10 +2,12 @@ digraph learnedModel {
 s0 [label=s0];
 s1 [label=s1];
 s2 [label=s2];
-
-s0 -> s1  [label="?A"];
-s1 -> s2  [label="!1"];
-
+s3 [label=s3];
+s4 [label=s4];
+s0 -> s2  [label="?a"];
+s0 -> s1  [label="?b"];
+s1 -> s3  [label="?c"];
+s3 -> s4  [label="!y"];
 __start0 [label="", shape=none];
 __start0 -> s0  [label=""];
 }
