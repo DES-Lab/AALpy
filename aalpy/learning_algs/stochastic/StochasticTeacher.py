@@ -355,7 +355,6 @@ class StochasticTeacher:
             counterexample
 
         """
-
         if self.samples_cex_strategy:
             cex = None
             if self.samples_cex_strategy == 'bfs':
@@ -370,21 +369,21 @@ class StochasticTeacher:
                     print("Problem in random DFS for cex in samples:", e)
             if cex:
                 self.last_tree_cex = cex
+                self.eq_oracle.reset_counter()
                 return cex
 
         # Repeat same cex if it did not lead to state size increase
-        if self.last_cex and len(hypothesis.states) == self.last_hyp_size:
-            if random() <= 0.33:
-                cex = self.eq_oracle.find_cex(hypothesis)
-                if cex and len(cex) < len(self.last_cex):
-                    self.last_cex = cex[:-1]
-            return self.last_cex
+        # if self.last_cex and len(hypothesis.states) == self.last_hyp_size:
+        #     if random() <= 0.33:
+        #         cex = self.eq_oracle.find_cex(hypothesis)
+        #         if cex and len(cex) < len(self.last_cex):
+        #             self.last_cex = cex[:-1]
+        #     return self.last_cex
 
         self.last_hyp_size = len(hypothesis.states)
 
         cex = self.eq_oracle.find_cex(hypothesis)
         if cex:  # remove last output
             cex = cex[:-1]
-
         self.last_cex = cex
         return cex

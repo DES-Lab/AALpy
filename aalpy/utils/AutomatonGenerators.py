@@ -1,3 +1,5 @@
+import string
+from aalpy.automata.IotsMachine import IotsMachine, IotsState
 import random
 
 from aalpy.automata import Dfa, DfaState, MdpState, Mdp, MealyMachine, MealyState, \
@@ -191,3 +193,50 @@ def generate_random_ONFSM(num_states, num_inputs, num_outputs, multiple_out_prob
                 state.transitions[i].append((random_out[index], random.choice(states)))
 
     return Onfsm(states[0], states)
+
+def generate_random_iots(num_states, num_inputs, num_outputs, max_num_inputs_per_state=1, max_num_output_per_state = 1, deterministic=True) -> IotsMachine:
+    """
+    Randomly generate an input-output-tansition-system machine.
+
+    The automaton may not be connected.
+
+    Args:
+
+      num_states: number of states
+      num_inputs: number of inputs
+      num_outputs: number of outputs
+      max_num_inputs_per_state: maximal number of inputs per state (Default value = 1)
+      max_num_outputs_per_state: maximal number of outputs per state (Default value = 1)
+     
+    Returns:
+
+        randomly generated Iots
+
+    """
+    inputs = ['?' + string.ascii_uppercase[i] for i in range(num_inputs)]
+    outputs = ['!' + string.ascii_lowercase[::-1][i] for i in range(num_outputs)]
+    states = [IotsState(f's{i}') for i in range(num_states)]
+
+    for state in states:
+            while True:
+                num_state_inputs = random.randint(0, max_num_inputs_per_state)
+                num_state_outputs = random.randint(0, max_num_output_per_state)
+
+                if num_state_inputs <= 1:
+                    break
+
+                if num_state_outputs != 0:
+                    break
+
+            if deterministic:
+                for input in random.sample(inputs, num_state_inputs):
+                    state.add_input(input, random.choice(states))
+            
+                for output in random.sample(outputs, num_state_outputs):
+                    state.add_output(output, random.choice(states))
+            else:
+                raise "Not implemented yet"
+
+            
+
+    return IotsMachine(states[0], states)

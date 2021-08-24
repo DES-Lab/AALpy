@@ -29,7 +29,7 @@ class WMethodEqOracle(Oracle):
         assert hypothesis.characterization_set is not None
 
         # covers every transition of the specification at least once.
-        transition_cover = {state.prefix + (letter,) for state in hypothesis.states for letter in self.alphabet}
+        transition_cover = [state.prefix + (letter,) for state in hypothesis.states for letter in self.alphabet]
 
         middle = []
         for i in range(self.m - len(hypothesis.states)):

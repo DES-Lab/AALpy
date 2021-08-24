@@ -146,7 +146,7 @@
 <span class="k">class</span> <span class="nc">DifferenceChecker</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
 
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c1</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">c2</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c1</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">c2</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">pass</span>
 
     <span class="k">def</span> <span class="nf">difference_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c1</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">c2</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
@@ -161,7 +161,7 @@
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.05</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha</span>
 
-    <span class="k">def</span> <span class="nf">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c1</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">c2</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c1</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">c2</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">c1</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="o">!=</span> <span class="n">c2</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
             <span class="k">return</span> <span class="kc">True</span>
 
@@ -186,7 +186,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">use_diff</span> <span class="o">=</span> <span class="n">use_diff</span>
 
-    <span class="k">def</span> <span class="nf">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c1</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">c2</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c1</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">c2</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="n">n1</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c1</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
         <span class="n">n2</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c2</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
 
@@ -237,7 +237,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">chi2_values</span> <span class="o">=</span> <span class="n">chi2_table</span><span class="p">[</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">use_diff</span> <span class="o">=</span> <span class="n">use_diff_value</span>
 
-    <span class="k">def</span> <span class="nf">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c1_out_freq</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">c2_out_freq</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c1_out_freq</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">c2_out_freq</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="c1"># chi square test for homogeneity (see, for instance: https://online.stat.psu.edu/stat415/lesson/17/17.1)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">c1_out_freq</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">c2_out_freq</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">False</span>
@@ -313,7 +313,7 @@
             <div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">DifferenceChecker</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
 
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c1</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">c2</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c1</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">c2</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">pass</span>
 
     <span class="k">def</span> <span class="nf">difference_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c1</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">c2</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
@@ -346,13 +346,13 @@ inheritance.</p>
                 <div class="decorator">@abstractmethod</div>
 
             <span class="def">def</span>
-            <span class="name">check_difference</span><span class="signature">(self, c1: dict, c2: dict) -&gt; bool</span>:
+            <span class="name">check_difference</span><span class="signature">(self, c1: dict, c2: dict, **kwargs) -&gt; bool</span>:
     </div>
 
                 <details>
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span>    <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c1</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">c2</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c1</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">c2</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">pass</span>
 </pre></div>
 
@@ -416,7 +416,7 @@ inheritance.</p>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.05</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha</span>
 
-    <span class="k">def</span> <span class="nf">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c1</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">c2</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c1</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">c2</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">c1</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="o">!=</span> <span class="n">c2</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
             <span class="k">return</span> <span class="kc">True</span>
 
@@ -460,12 +460,12 @@ inheritance.</p>
 
         
             <span class="def">def</span>
-            <span class="name">check_difference</span><span class="signature">(self, c1: dict, c2: dict) -&gt; bool</span>:
+            <span class="name">check_difference</span><span class="signature">(self, c1: dict, c2: dict, **kwargs) -&gt; bool</span>:
     </div>
 
                 <details>
             <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c1</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">c2</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c1</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">c2</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">c1</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="o">!=</span> <span class="n">c2</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
             <span class="k">return</span> <span class="kc">True</span>
 
@@ -532,7 +532,7 @@ inheritance.</p>
         <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">use_diff</span> <span class="o">=</span> <span class="n">use_diff</span>
 
-    <span class="k">def</span> <span class="nf">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c1</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">c2</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c1</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">c2</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="n">n1</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c1</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
         <span class="n">n2</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c2</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
 
@@ -603,12 +603,12 @@ inheritance.</p>
 
         
             <span class="def">def</span>
-            <span class="name">check_difference</span><span class="signature">(self, c1: dict, c2: dict) -&gt; bool</span>:
+            <span class="name">check_difference</span><span class="signature">(self, c1: dict, c2: dict, **kwargs) -&gt; bool</span>:
     </div>
 
                 <details>
             <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c1</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">c2</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c1</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">c2</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="n">n1</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c1</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
         <span class="n">n2</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c2</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
 
@@ -708,7 +708,7 @@ inheritance.</p>
         <span class="bp">self</span><span class="o">.</span><span class="n">chi2_values</span> <span class="o">=</span> <span class="n">chi2_table</span><span class="p">[</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">use_diff</span> <span class="o">=</span> <span class="n">use_diff_value</span>
 
-    <span class="k">def</span> <span class="nf">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c1_out_freq</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">c2_out_freq</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c1_out_freq</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">c2_out_freq</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="c1"># chi square test for homogeneity (see, for instance: https://online.stat.psu.edu/stat415/lesson/17/17.1)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">c1_out_freq</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">c2_out_freq</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">False</span>
@@ -801,12 +801,12 @@ inheritance.</p>
 
         
             <span class="def">def</span>
-            <span class="name">check_difference</span><span class="signature">(self, c1_out_freq: dict, c2_out_freq: dict) -&gt; bool</span>:
+            <span class="name">check_difference</span><span class="signature">(self, c1_out_freq: dict, c2_out_freq: dict, **kwargs) -&gt; bool</span>:
     </div>
 
                 <details>
             <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c1_out_freq</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">c2_out_freq</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">check_difference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c1_out_freq</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">c2_out_freq</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="c1"># chi square test for homogeneity (see, for instance: https://online.stat.psu.edu/stat415/lesson/17/17.1)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">c1_out_freq</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">c2_out_freq</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">False</span>

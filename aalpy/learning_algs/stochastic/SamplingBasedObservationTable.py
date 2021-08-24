@@ -358,7 +358,7 @@ class SamplingBasedObservationTable:
         else:
             self.update_obs_table_with_freq_obs()
 
-    def stop(self, learning_round, min_rounds=10, max_rounds=None,
+    def stop(self, learning_round, chaos_cex_present, min_rounds=10, max_rounds=None,
              target_unambiguity=0.99, print_unambiguity=False):
         """
         Decide if learning should terminate.
@@ -366,6 +366,7 @@ class SamplingBasedObservationTable:
         Args:
 
           learning_round: current learning round
+          chaos_cex_present: is chaos counterexample present in the hypothesis
           min_rounds: minimum number of learning rounds (Default value = 5)
           max_rounds: maximum number of learning rounds (Default value = None)
           target_unambiguity: percentage of rows with unambiguous representatives (Default value = 0.99)
@@ -379,6 +380,8 @@ class SamplingBasedObservationTable:
             assert min_rounds <= max_rounds
         if max_rounds and learning_round == max_rounds:
             return True
+        if chaos_cex_present:
+            return False
 
         extended_s = list(self.get_extended_s())
         self.update_compatibility_classes()
@@ -442,9 +445,12 @@ class SamplingBasedObservationTable:
         if self.strategy == 'classic':
             if self.teacher.complete_query(s1, e) and self.teacher.complete_query(s2, e):
                 return self.compatibility_checker.check_difference(self.T[s1][e], self.T[s2][e])
-        else:
+        elif self.strategy == 'normal' or self.strategy == 'chi2':
             if e in self.T[s1] and e in self.T[s2]:
                 return self.compatibility_checker.check_difference(self.T[s1][e], self.T[s2][e])
+        else:
+            if e in self.T[s1] and e in self.T[s2]:
+                return self.compatibility_checker.check_difference(self.T[s1][e], self.T[s2][e], s1=s1,s2=s2,e=e)
         return False
 
     def are_rows_compatible(self, s1, s2, e_ignore=None):
