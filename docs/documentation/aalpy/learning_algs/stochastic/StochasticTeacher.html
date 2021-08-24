@@ -474,7 +474,6 @@
 <span class="sd">            counterexample</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">samples_cex_strategy</span><span class="p">:</span>
             <span class="n">cex</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">samples_cex_strategy</span> <span class="o">==</span> <span class="s1">&#39;bfs&#39;</span><span class="p">:</span>
@@ -489,22 +488,22 @@
                     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Problem in random DFS for cex in samples:&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">cex</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">last_tree_cex</span> <span class="o">=</span> <span class="n">cex</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">eq_oracle</span><span class="o">.</span><span class="n">reset_counter</span><span class="p">()</span>
                 <span class="k">return</span> <span class="n">cex</span>
 
         <span class="c1"># Repeat same cex if it did not lead to state size increase</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_cex</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_hyp_size</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">random</span><span class="p">()</span> <span class="o">&lt;=</span> <span class="mf">0.33</span><span class="p">:</span>
-                <span class="n">cex</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eq_oracle</span><span class="o">.</span><span class="n">find_cex</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">cex</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">cex</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">last_cex</span><span class="p">):</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">last_cex</span> <span class="o">=</span> <span class="n">cex</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_cex</span>
+        <span class="c1"># if self.last_cex and len(hypothesis.states) == self.last_hyp_size:</span>
+        <span class="c1">#     if random() &lt;= 0.33:</span>
+        <span class="c1">#         cex = self.eq_oracle.find_cex(hypothesis)</span>
+        <span class="c1">#         if cex and len(cex) &lt; len(self.last_cex):</span>
+        <span class="c1">#             self.last_cex = cex[:-1]</span>
+        <span class="c1">#     return self.last_cex</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">last_hyp_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">)</span>
 
         <span class="n">cex</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eq_oracle</span><span class="o">.</span><span class="n">find_cex</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">cex</span><span class="p">:</span>  <span class="c1"># remove last output</span>
             <span class="n">cex</span> <span class="o">=</span> <span class="n">cex</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-
         <span class="bp">self</span><span class="o">.</span><span class="n">last_cex</span> <span class="o">=</span> <span class="n">cex</span>
         <span class="k">return</span> <span class="n">cex</span>
 </pre></div>
@@ -1152,7 +1151,6 @@ return None.
 <span class="sd">            counterexample</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">samples_cex_strategy</span><span class="p">:</span>
             <span class="n">cex</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">samples_cex_strategy</span> <span class="o">==</span> <span class="s1">&#39;bfs&#39;</span><span class="p">:</span>
@@ -1167,22 +1165,22 @@ return None.
                     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Problem in random DFS for cex in samples:&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">cex</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">last_tree_cex</span> <span class="o">=</span> <span class="n">cex</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">eq_oracle</span><span class="o">.</span><span class="n">reset_counter</span><span class="p">()</span>
                 <span class="k">return</span> <span class="n">cex</span>
 
         <span class="c1"># Repeat same cex if it did not lead to state size increase</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_cex</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_hyp_size</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">random</span><span class="p">()</span> <span class="o">&lt;=</span> <span class="mf">0.33</span><span class="p">:</span>
-                <span class="n">cex</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eq_oracle</span><span class="o">.</span><span class="n">find_cex</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">cex</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">cex</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">last_cex</span><span class="p">):</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">last_cex</span> <span class="o">=</span> <span class="n">cex</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_cex</span>
+        <span class="c1"># if self.last_cex and len(hypothesis.states) == self.last_hyp_size:</span>
+        <span class="c1">#     if random() &lt;= 0.33:</span>
+        <span class="c1">#         cex = self.eq_oracle.find_cex(hypothesis)</span>
+        <span class="c1">#         if cex and len(cex) &lt; len(self.last_cex):</span>
+        <span class="c1">#             self.last_cex = cex[:-1]</span>
+        <span class="c1">#     return self.last_cex</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">last_hyp_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">)</span>
 
         <span class="n">cex</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eq_oracle</span><span class="o">.</span><span class="n">find_cex</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">cex</span><span class="p">:</span>  <span class="c1"># remove last output</span>
             <span class="n">cex</span> <span class="o">=</span> <span class="n">cex</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-
         <span class="bp">self</span><span class="o">.</span><span class="n">last_cex</span> <span class="o">=</span> <span class="n">cex</span>
         <span class="k">return</span> <span class="n">cex</span>
 </pre></div>
@@ -1673,7 +1671,6 @@ outputs, trace to that point is added to the tree, otherwise whole trace is exec
 <span class="sd">            counterexample</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">samples_cex_strategy</span><span class="p">:</span>
             <span class="n">cex</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">samples_cex_strategy</span> <span class="o">==</span> <span class="s1">&#39;bfs&#39;</span><span class="p">:</span>
@@ -1688,22 +1685,22 @@ outputs, trace to that point is added to the tree, otherwise whole trace is exec
                     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Problem in random DFS for cex in samples:&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">cex</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">last_tree_cex</span> <span class="o">=</span> <span class="n">cex</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">eq_oracle</span><span class="o">.</span><span class="n">reset_counter</span><span class="p">()</span>
                 <span class="k">return</span> <span class="n">cex</span>
 
         <span class="c1"># Repeat same cex if it did not lead to state size increase</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_cex</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_hyp_size</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">random</span><span class="p">()</span> <span class="o">&lt;=</span> <span class="mf">0.33</span><span class="p">:</span>
-                <span class="n">cex</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eq_oracle</span><span class="o">.</span><span class="n">find_cex</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">cex</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">cex</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">last_cex</span><span class="p">):</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">last_cex</span> <span class="o">=</span> <span class="n">cex</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_cex</span>
+        <span class="c1"># if self.last_cex and len(hypothesis.states) == self.last_hyp_size:</span>
+        <span class="c1">#     if random() &lt;= 0.33:</span>
+        <span class="c1">#         cex = self.eq_oracle.find_cex(hypothesis)</span>
+        <span class="c1">#         if cex and len(cex) &lt; len(self.last_cex):</span>
+        <span class="c1">#             self.last_cex = cex[:-1]</span>
+        <span class="c1">#     return self.last_cex</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">last_hyp_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">hypothesis</span><span class="o">.</span><span class="n">states</span><span class="p">)</span>
 
         <span class="n">cex</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eq_oracle</span><span class="o">.</span><span class="n">find_cex</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">cex</span><span class="p">:</span>  <span class="c1"># remove last output</span>
             <span class="n">cex</span> <span class="o">=</span> <span class="n">cex</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-
         <span class="bp">self</span><span class="o">.</span><span class="n">last_cex</span> <span class="o">=</span> <span class="n">cex</span>
         <span class="k">return</span> <span class="n">cex</span>
 </pre></div>

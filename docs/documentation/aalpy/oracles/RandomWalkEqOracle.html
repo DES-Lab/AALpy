@@ -48,6 +48,9 @@
                         <li>
                                 <a class="function" href="#UnseenOutputRandomWalkEqOracle.find_cex">find_cex</a>
                         </li>
+                        <li>
+                                <a class="function" href="#UnseenOutputRandomWalkEqOracle.reset_counter">reset_counter</a>
+                        </li>
                 </ul>
 
             </li>
@@ -197,6 +200,10 @@
                     <span class="k">return</span> <span class="n">cex</span>
 
         <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">reset_counter</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reset_after_cex</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">random_steps_done</span> <span class="o">=</span> <span class="mi">0</span>
 </pre></div>
 
         </details>
@@ -474,6 +481,10 @@ current hypothesis.</p>
                     <span class="k">return</span> <span class="n">cex</span>
 
         <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">reset_counter</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reset_after_cex</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">random_steps_done</span> <span class="o">=</span> <span class="mi">0</span>
 </pre></div>
 
         </details>
@@ -605,6 +616,26 @@ current hypothesis.</p>
 </code></pre>
 </div>
 
+
+                            </div>
+                            <div id="UnseenOutputRandomWalkEqOracle.reset_counter" class="classattr">
+                                        <div class="attr function"><a class="headerlink" href="#UnseenOutputRandomWalkEqOracle.reset_counter">#&nbsp;&nbsp</a>
+
+        
+            <span class="def">def</span>
+            <span class="name">reset_counter</span><span class="signature">(self)</span>:
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">reset_counter</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reset_after_cex</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">random_steps_done</span> <span class="o">=</span> <span class="mi">0</span>
+</pre></div>
+
+        </details>
+
+    
 
                             </div>
                             <div class="inherited">

@@ -1,4 +1,7 @@
-# AALpy - An Active Automata Learning Library
+<div align="center">
+    <h1 align="center">AALpy</h1>
+    <p align="center">An Active Automata Learning Library</p>
+
 [![Python application](https://github.com/DES-Lab/AALpy/actions/workflows/python-app.yml/badge.svg)](https://github.com/DES-Lab/AALpy/actions/workflows/python-app.yml)
 [![CodeQL](https://github.com/DES-Lab/AALpy/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/DES-Lab/AALpy/actions/workflows/codeql-analysis.yml)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/aalpy)
@@ -9,8 +12,8 @@
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/DES-Lab/AALpy/master)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-
-
+</div>
+<hr />
 
 AALpy is a light-weight active automata learning library written in pure Python. 
 You can start learning automata in just a few lines of code. 
@@ -146,14 +149,14 @@ AALpy has been used to:
 ## Cite AALpy and Research Contact
 If you use AALpy in your research, please cite:
 ```
-@inproceedings{muskardin_aalpy:_2021,
-  title = {{AALpy}: An Active Automata Learning Library},
-  author = {Edi Mu\v{s}kardin and Bernhard K. Aichernig and Ingo Pill and Andrea Pferscher and Martin Tappler},
-  year = {2021},
-  booktitle = {International Symposium on Automated Technology for Verification and Analysis, ({ATVA}) 2021}
-  series    = {Lecture Notes in Computer Science},  
-  publisher = {Springer},
-  year      = {2021},
+@inproceedings{aalpy,
+	title = {{AALpy}: An Active Automata Learning Library},
+	author = {Edi Mu\v{s}kardin and Bernhard K. Aichernig and Ingo Pill and Andrea Pferscher and Martin Tappler},
+	booktitle = {Automated Technology for Verification and Analysis - 19th International
+	Symposium, {ATVA} 2021, Gold Coast, Australia, October 18-22, 2021, Proceedings},
+	series    = {Lecture Notes in Computer Science},  
+	publisher = {Springer},
+	year      = {2021},
 }
 ```
 If you have research suggestions or you need specific help concerning your research, feel free to start a [discussion](https://github.com/DES-Lab/AALpy/discussions) or contact [edi.muskardin@silicon-austria.com](mailto:edi.muskardin@silicon-austria.com).
