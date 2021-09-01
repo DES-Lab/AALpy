@@ -82,7 +82,7 @@ def merge(a, t, q_r, q_b):
     q_r_a, q_r_b = a, t
     for i in q_r.prefix:
         q_r_a = q_r_a.children[i]
-    prefix_to_b = None
+    prefix_to_b = t
     for i in q_b.prefix[:-1]:
         prefix_to_b = q_r_b.children[i]
 
@@ -111,7 +111,7 @@ def run_alergia(data, eps):
 
     t, a = get_fptas()
 
-    red = {t}  # representative nodes and will be included in the final output model
+    red = {t}  # representative nodes and will be included in the final output model # TODO FIX
     blue = set()  # scheduled for testing
     for c in t.children.values():
         blue.add(c)
@@ -125,17 +125,23 @@ def run_alergia(data, eps):
 
         for q_r in red_sorted:
             if compatibility_test(q_r, lex_min_blue, eps):
-                print(q_r.prefix, lex_min_blue.prefix)
-                print('COMPATIBLE')
+                print('Compatible', q_r.prefix, lex_min_blue.prefix)
                 merge(a, t, q_r, lex_min_blue)
                 merged = True
-                red.add(lex_min_blue)
+                # break?
 
-        blue.remove(lex_min_blue)
         if not merged:
-            for child in lex_min_blue.children.values():
-                blue.add(child)
+            red.add(lex_min_blue)
 
+        blue.clear()
+        for r in red:
+            for child in r.children.values():
+                if child.prefix not in [c.prefix for c in red]:
+                    blue.add(child)
+
+    print(len(red))
+    for r in red:
+        print(r.prefix)
     return a
 
 
@@ -211,7 +217,7 @@ def get_fptas():
 
 if __name__ == '__main__':
     data = [[1, 2, 3, 4], [1, 1, 3, 4], [1, 2, 3, 2]]
-    model = run_alergia(data, 0.05)
+    model = run_alergia(data, 0.5)
 
 
     exit(1)
