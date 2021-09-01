@@ -14,7 +14,7 @@ class StochasticSUL(SUL):
     def pre(self):
         self.num_queries += 1
         self.teacher.back_to_root()
-        self.sul.pre()
+        return self.sul.pre()
 
     def post(self):
         self.sul.post()

@@ -20,7 +20,7 @@ diff_checker_options = {'classic': HoeffdingChecker(),
 
 def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_resample=100, target_unambiguity=0.99,
                          min_rounds=10, max_rounds=200, automaton_type='mdp', strategy='normal',
-                         cex_processing='longest_prefix', samples_cex_strategy='bfs', return_data=False,
+                         cex_processing='longest_prefix', samples_cex_strategy=None, return_data=False,
                          property_based_stopping=None, print_level=2):
     """
     Learning of Markov Decision Processes based on 'L*-Based Learning of Markov Decision Processes' by Tappler et al.
