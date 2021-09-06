@@ -1,4 +1,7 @@
+import os
 from math import sqrt, log
+
+from pydot import Dot, Node, Edge
 
 
 def get_fptas():
@@ -78,16 +81,19 @@ class FptaNode:
         self.frequency = 0
         self.children = dict()
         self.prefix = []
+        # for visualization
+        self.state_id = None
+        self.children_prob = dict()
 
     def succs(self):
-        queue  = list(self.children.values())
-        succs = []
-        while queue:
-            node = queue.pop()
-            succs.append(node)
-            for child in node.children.values():
-                queue.append(child)
-        return succs
+        return list(self.children.values())
+        # succs = []
+        # while queue:
+        #     node = queue.pop()
+        #     succs.append(node)
+        #     for child in node.children.values():
+        #         queue.append(child)
+        # return succs
 
     def get_child(self, prefix):
         child = None
@@ -113,12 +119,13 @@ def HoeffdingCompatibility(a: FptaNode, b: FptaNode, eps):
 
 
 class Alergia:
-    def __init__(self, data, eps=0.05):
+    def __init__(self, data, eps=0.05, round_to=2):
         assert 0 < eps <= 2
 
         # self.t, self.a = self.create_fpta(data)
         self.t, self.a = get_fptas()
         self.eps = eps
+        self.round_to = round_to
 
     def create_fpta(self, data):
         root_node = FptaNode(data[0][0])
@@ -159,7 +166,7 @@ class Alergia:
     def merge(self, q_r, q_b):
         t_q_b = self.get_blue_node(q_b)
         prefix_leading_to_state = q_b.prefix[:-1]
-        to_update = q_r
+        to_update = self.a
         for p in prefix_leading_to_state:
             to_update = to_update.children[p]
 
@@ -175,7 +182,6 @@ class Alergia:
                 state_in_t = state_in_t.children[p]
                 state_in_a = state_in_a.children[p]
                 state_in_a.frequency += state_in_t.frequency
-        print('MERGE ENDED')
 
     def get_leaf_nodes(self, origin):
         leaves = []
@@ -192,8 +198,8 @@ class Alergia:
 
     def run(self):
 
-        red = {self.a}  # representative nodes and will be included in the final output model
-        blue = self.a.succs()  # scheduled for testing
+        red = {self.a}         # representative nodes and will be included in the final output model
+        blue = self.a.succs()  # intermediate successors scheduled for testing
 
         while blue:
             lex_min_blue = min(list(blue), key=lambda x: len(x.prefix))
@@ -204,27 +210,28 @@ class Alergia:
 
             for q_r in red_sorted:
                 if self.compatibility_test(self.get_blue_node(q_r), self.get_blue_node(lex_min_blue)):
-                    print('Compatible', q_r.prefix, lex_min_blue.prefix)
                     self.merge(q_r, lex_min_blue)
                     merged = True
-                    # break?
+                    break
 
             if not merged:
                 red.add(lex_min_blue)
 
             blue.clear()
-            all_succs = set()
+            prefixes_in_red = [s.prefix for s in red]
             for r in red:
-                all_succs.update(r.succs())
-            print('REEEEEEEEEEEEEEEEEEEEEEEEEEE')
-            blue = list({el for el in all_succs if el.prefix not in [r.prefix for r in red]})
-            print('BLUE CREATION ENDED')
+                for s in r.succs():
+                    if s.prefix not in prefixes_in_red:
+                        blue.append(s)
 
+        return self.a, red
 
-        print(len(red))
-        for r in red:
-            print(r.prefix)
-        return self.a
+    def normalize(self, red):
+        red_sorted = sorted(list(red), key=lambda x: len(x.prefix))
+        for r in red_sorted:
+            total_output = sum([c.frequency for c in r.children.values()])
+            for i, c in r.children.items():
+                r.children_prob[i] = round(c.frequency / total_output, self.round_to)
 
     def get_blue_node(self, red_node):
         blue = self.t
@@ -232,13 +239,43 @@ class Alergia:
             blue = blue.children[p]
         return blue
 
+
+def visualize_fpta(red, path="LearnedModel"):
+    red_sorted = sorted(list(red), key=lambda x: len(x.prefix))
+    graph = Dot('fpta', graph_type='digraph')
+
+    for i, r in enumerate(red_sorted):
+        r.state_id = f'q{i}'
+        graph.add_node(Node(r.state_id, label=r.output))
+
+    for r in red_sorted:
+        for i, c in r.children.items():
+            graph.add_edge(Edge(r.state_id, c.state_id, label=f'{r.children_prob[i]}'))
+
+    graph.add_node(Node('__start0', shape='none', label=''))
+    graph.add_edge(Edge('__start0', red_sorted[0].state_id, label=''))
+
+    graph.write(path=f'{path}.pdf', format='pdf')
+
+    try:
+        import webbrowser
+        abs_path = os.path.abspath(f'{path}.pdf')
+        path = f'file:///{abs_path}'
+        webbrowser.open(path)
+    except:
+        print('Err')
+
 def run_Alergia(data, eps):
     alergia = Alergia(data, eps)
-    return alergia.run()
+    root, states = alergia.run()
+    alergia.normalize(states)
+    return root, states
 
 
 if __name__ == '__main__':
     data = [[1, 2, 3, 4], [1, 1, 3, 4], [1, 2, 3, 2]]
-    model = run_Alergia(data, 0.5)
+    model, states = run_Alergia(data, 0.5)
+
+    visualize_fpta(states)
 
     exit(1)

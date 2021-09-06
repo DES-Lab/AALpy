@@ -261,3 +261,21 @@ def _process_label(label: str) -> str:
         label = label[1:-1]
     label = label.replace(" ", "")
     return label
+
+
+def visualize_fpta(red):
+    red_sorted = sorted(list(red), key=lambda x: len(x.prefix))
+    graph = Dot('fpta', graph_type='digraph')
+
+    for i, r in enumerate(red_sorted):
+        r.state_id = f'q{i}'
+        graph.add_node(Node(r.state_id, label=r.state_id))
+
+    for r in red_sorted:
+        for i, c in r.children.items():
+            graph.add_edge(Edge(r.state_id, c.state_id, label=i))
+
+    graph.add_node(Node('__start0', shape='none', label=''))
+    graph.add_edge(Edge('__start0', red_sorted[0].state_id, label=''))
+
+    return graph
