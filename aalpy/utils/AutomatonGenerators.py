@@ -114,7 +114,7 @@ def generate_random_dfa(num_states, alphabet, num_accepting_states=1, compute_pr
     return dfa
 
 
-def generate_random_mdp(num_states, len_input, num_unique_outputs=None):
+def generate_random_mdp(num_states, len_input, custom_outputs=None, num_unique_outputs=None):
     """
     Generates random MDP.
 
@@ -122,6 +122,7 @@ def generate_random_mdp(num_states, len_input, num_unique_outputs=None):
 
         num_states: number of states
         len_input: number of inputs
+        custom_outputs: user predefined outputs
         num_unique_outputs: number of outputs
 
     Returns:
@@ -131,6 +132,7 @@ def generate_random_mdp(num_states, len_input, num_unique_outputs=None):
     """
     num_unique_outputs = num_states if not num_unique_outputs else num_unique_outputs
     outputs = [random_string_generator(random.randint(3, 7)) for _ in range(num_unique_outputs)]
+    outputs = custom_outputs if custom_outputs else  outputs
 
     while len(outputs) < num_states:
         outputs.append(random.choice(outputs))

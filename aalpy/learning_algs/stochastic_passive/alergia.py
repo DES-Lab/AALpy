@@ -1,7 +1,10 @@
 import os
+from copy import deepcopy
 from math import sqrt, log
 
 from pydot import Dot, Node, Edge
+
+from aalpy.learning_algs.stochastic_passive.DataHandler import IODelimiterTokenizer
 
 
 def get_fptas():
@@ -73,7 +76,6 @@ def get_fptas():
 
     return root, root1
 
-
 class FptaNode:
 
     def __init__(self, output):
@@ -87,13 +89,6 @@ class FptaNode:
 
     def succs(self):
         return list(self.children.values())
-        # succs = []
-        # while queue:
-        #     node = queue.pop()
-        #     succs.append(node)
-        #     for child in node.children.values():
-        #         queue.append(child)
-        # return succs
 
     def get_child(self, prefix):
         child = None
@@ -118,34 +113,41 @@ def HoeffdingCompatibility(a: FptaNode, b: FptaNode, eps):
     return True
 
 
+def create_fpta(data, is_iofpta):
+    root_node = FptaNode(data[0][0])
+    for seq in data:
+        if seq[0] != root_node.output:
+            print('All strings should have the same initial output')
+            assert False
+        curr_node = root_node
+
+        for el in seq[1:]:
+            input = el if not is_iofpta else (el[0], el[1])
+
+            if input not in curr_node.children.keys():
+                node = FptaNode(el if not is_iofpta else el[1])
+                node.prefix = list(curr_node.prefix)
+                node.prefix.append(input)
+                curr_node.children[input] = node
+
+            curr_node = curr_node.children[input]
+            curr_node.frequency += 1
+
+    return root_node, deepcopy(root_node)
+
+
 class Alergia:
-    def __init__(self, data, eps=0.05, round_to=2):
+    def __init__(self, data, is_iofpta=False, eps=0.05, round_to=2):
         assert 0 < eps <= 2
 
-        # self.t, self.a = self.create_fpta(data)
-        self.t, self.a = get_fptas()
+        self.t, self.a = create_fpta(data, is_iofpta)
+
+        # self.t, self.a = get_fptas()
+        # self.is_iofpta = False
+
         self.eps = eps
+        self.is_iofpta = is_iofpta
         self.round_to = round_to
-
-    def create_fpta(self, data):
-        root_node = FptaNode(data[0][0])
-        for seq in data:
-            if seq[0] != root_node.output:
-                print('All strings should have the same initial output')
-                assert False
-            curr_node = root_node
-
-            for el in seq[1:]:
-                if el not in curr_node.children.keys():
-                    node = FptaNode(el)
-                    node.prefix = list(curr_node.prefix)
-                    node.prefix.append(el)
-                    curr_node.children[el] = node
-
-                curr_node = curr_node.children[el]
-                curr_node.frequency += 1
-
-        return root_node
 
     def compatibility_test(self, a: FptaNode, b: FptaNode):
         if a.output != b.output:
@@ -198,10 +200,13 @@ class Alergia:
 
     def run(self):
 
-        red = {self.a}         # representative nodes and will be included in the final output model
+        red = {self.a}  # representative nodes and will be included in the final output model
         blue = self.a.succs()  # intermediate successors scheduled for testing
 
+        i = 1
         while blue:
+            print(i)
+            i += 1
             lex_min_blue = min(list(blue), key=lambda x: len(x.prefix))
 
             red_sorted = sorted(list(red), key=lambda x: len(x.prefix))
@@ -212,6 +217,7 @@ class Alergia:
                 if self.compatibility_test(self.get_blue_node(q_r), self.get_blue_node(lex_min_blue)):
                     self.merge(q_r, lex_min_blue)
                     merged = True
+                    print("MERGED")
                     break
 
             if not merged:
@@ -224,6 +230,7 @@ class Alergia:
                     if s.prefix not in prefixes_in_red:
                         blue.append(s)
 
+        print(len(red))
         return self.a, red
 
     def normalize(self, red):
@@ -231,6 +238,8 @@ class Alergia:
         for r in red_sorted:
             total_output = sum([c.frequency for c in r.children.values()])
             for i, c in r.children.items():
+                if total_output == 0:
+                    print('REEEEEE')
                 r.children_prob[i] = round(c.frequency / total_output, self.round_to)
 
     def get_blue_node(self, red_node):
@@ -240,7 +249,7 @@ class Alergia:
         return blue
 
 
-def visualize_fpta(red, path="LearnedModel"):
+def visualize_fpta(red, path="LearnedModel", is_iofpta=False):
     red_sorted = sorted(list(red), key=lambda x: len(x.prefix))
     graph = Dot('fpta', graph_type='digraph')
 
@@ -250,11 +259,14 @@ def visualize_fpta(red, path="LearnedModel"):
 
     for r in red_sorted:
         for i, c in r.children.items():
-            graph.add_edge(Edge(r.state_id, c.state_id, label=f'{r.children_prob[i]}'))
+            graph.add_edge(Edge(r.state_id, c.state_id, label=f'{i[0]}:{r.children_prob[i]}' if is_iofpta else
+                                f'{r.children_prob[i]}'))
 
     graph.add_node(Node('__start0', shape='none', label=''))
     graph.add_edge(Edge('__start0', red_sorted[0].state_id, label=''))
 
+    # graph.write(path=f'{path}.dot', format='raw')
+    # exit()
     graph.write(path=f'{path}.pdf', format='pdf')
 
     try:
@@ -265,17 +277,20 @@ def visualize_fpta(red, path="LearnedModel"):
     except:
         print('Err')
 
-def run_Alergia(data, eps):
-    alergia = Alergia(data, eps)
+
+def run_Alergia(data, eps=0.05, is_iofpta=False, round_to=2):
+    alergia = Alergia(data, eps=eps, is_iofpta=is_iofpta, round_to=round_to)
     root, states = alergia.run()
     alergia.normalize(states)
     return root, states
 
 
 if __name__ == '__main__':
-    data = [[1, 2, 3, 4], [1, 1, 3, 4], [1, 2, 3, 2]]
-    model, states = run_Alergia(data, 0.5)
+    #data = [[1, 2, 3, 4], [1, 1, 3, 4], [1, 2, 3, 2]]
+    tokenizer = IODelimiterTokenizer()
+    data = tokenizer.tokenize_data('mdpData.txt')
+    model, states = run_Alergia(data, eps=0.005, is_iofpta=True, round_to=5)
 
-    visualize_fpta(states)
+    visualize_fpta(states, is_iofpta=True)
 
     exit(1)
