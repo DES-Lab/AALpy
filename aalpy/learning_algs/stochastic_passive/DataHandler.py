@@ -59,7 +59,7 @@ if __name__ == '__main__':
     inputs = mdp.get_input_alphabet()
 
     data = []
-    for _ in range(50000):
+    for _ in range(1000):
         str_len = 6
         seq = [sul.pre()]
         for _ in range(str_len):

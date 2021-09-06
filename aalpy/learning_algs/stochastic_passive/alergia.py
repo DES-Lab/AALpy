@@ -99,16 +99,19 @@ class FptaNode:
 
 
 def HoeffdingCompatibility(a: FptaNode, b: FptaNode, eps):
-    if a.children.keys() != b.children.keys():
-        return False
 
     n1 = sum([child.frequency for child in a.children.values()])
     n2 = sum([child.frequency for child in b.children.values()])
 
+    # for non existing keys set freq to 0
+    outs = set(a.children.keys()).union(b.children.keys())
+
     if n1 > 0 and n2 > 0:
-        for o in a.children.keys():
-            if abs(a.children[o].frequency / n1 - b.children[o].frequency / n2) > \
-                    ((sqrt(1 / n1) + sqrt(1 / n2)) * sqrt(0.5 * log(2 / eps))):
+        for o in outs:
+            a_freq = a.children[o].frequency if o in a.children.keys() else 0
+            b_freq = b.children[o].frequency if o in b.children.keys() else 0
+
+            if abs(a_freq / n1 - b_freq / n2) > ((sqrt(1 / n1) + sqrt(1 / n2)) * sqrt(0.5 * log(2 / eps))):
                 return False
     return True
 
