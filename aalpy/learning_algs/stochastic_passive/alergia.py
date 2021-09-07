@@ -1,4 +1,5 @@
 import os
+from collections import defaultdict
 from copy import deepcopy
 from math import sqrt, log
 
@@ -162,7 +163,7 @@ class Alergia:
         if not HoeffdingCompatibility(a, b, self.eps):
             return False
 
-        for el in a.children.keys():
+        for el in set(a.children.keys()).intersection(b.children.keys()):
             if not self.compatibility_test(a.children[el], b.children[el]):
                 return False
 
@@ -177,29 +178,15 @@ class Alergia:
 
         to_update.children[q_b.prefix[-1]] = q_r
 
-        paths = [p.prefix for p in self.get_leaf_nodes(t_q_b)]
-        paths = [p[len(t_q_b.prefix):] for p in paths]
+        self.fold(q_r, t_q_b)
 
-        for path in paths:
-            state_in_a = q_r
-            state_in_t = t_q_b
-            for p in path:
-                state_in_t = state_in_t.children[p]
-                state_in_a = state_in_a.children[p]
-                state_in_a.frequency += state_in_t.frequency
-
-    def get_leaf_nodes(self, origin):
-        leaves = []
-
-        def _get_leaf_nodes(origin):
-            if origin is not None:
-                if not origin.children:
-                    leaves.append(origin)
-                for n in origin.children.values():
-                    _get_leaf_nodes(n)
-
-        _get_leaf_nodes(origin)
-        return leaves
+    def fold(self, q_r, q_b):
+        for i, c in q_b.children.items():
+            if i in q_r.children.keys():
+                q_r.children[i].frequency += c.frequency
+                self.fold(q_r.children[i], c)
+            else:
+                q_r.children[i] = c
 
     def run(self):
 
@@ -239,11 +226,16 @@ class Alergia:
     def normalize(self, red):
         red_sorted = sorted(list(red), key=lambda x: len(x.prefix))
         for r in red_sorted:
-            total_output = sum([c.frequency for c in r.children.values()])
-            for i, c in r.children.items():
-                if total_output == 0:
-                    print('REEEEEE')
-                r.children_prob[i] = round(c.frequency / total_output, self.round_to)
+            if not self.is_iofpta:
+                total_output = sum([c.frequency for c in r.children.values()])
+                for i, c in r.children.items():
+                    r.children_prob[i] = round(c.frequency / total_output, self.round_to)
+            else:
+                outputs_per_input = defaultdict(int)
+                for io, c in r.children.items():
+                    outputs_per_input[io[0]] += c.frequency
+                for io, c in r.children.items():
+                    r.children_prob[io] = round(c.frequency / outputs_per_input[io[0]], self.round_to)
 
     def get_blue_node(self, red_node):
         blue = self.t

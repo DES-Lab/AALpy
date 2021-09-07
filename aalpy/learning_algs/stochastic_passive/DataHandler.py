@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 from aalpy.SULs import MdpSUL
 from aalpy.utils import generate_random_mdp, visualize_automaton
-from random import seed, choice, random
+from random import seed, choice, random, randint
 
 
 class DataHandler(ABC):
@@ -59,8 +59,8 @@ if __name__ == '__main__':
     inputs = mdp.get_input_alphabet()
 
     data = []
-    for _ in range(1000):
-        str_len = 6
+    for _ in range(10000):
+        str_len = randint(5,12)
         seq = [sul.pre()]
         for _ in range(str_len):
             i = choice(inputs)
