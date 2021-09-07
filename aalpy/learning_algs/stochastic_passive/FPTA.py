@@ -21,6 +21,9 @@ class AlergiaPtaNode:
     def __le__(self, other):
         return len(self.prefix) <= len(other.prefix)
 
+    def __eq__(self, other):
+        return self.prefix == other.prefix
+
 
 def create_fpta(data, is_iofpta):
     root_node = AlergiaPtaNode(data[0][0])
