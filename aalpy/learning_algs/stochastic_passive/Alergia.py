@@ -4,7 +4,7 @@ from bisect import insort
 
 from aalpy.automata import MarkovChain, MdpState, Mdp, McState
 from aalpy.learning_algs.stochastic_passive.CompatibilityChecker import HoeffdingCompatibility
-from aalpy.learning_algs.stochastic_passive.DataHandler import create_fpta
+from aalpy.learning_algs.stochastic_passive.FPTA import create_fpta
 
 
 class Alergia:

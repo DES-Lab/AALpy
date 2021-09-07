@@ -218,9 +218,3 @@ def generate_random_markov_chain(num_states):
             state.transitions[rand_state.output].append((rand_state, round(1 - prob, 2)))
 
     return MarkovChain(states[0], states)
-
-if __name__ == '__main__':
-    from aalpy.utils.FileHandler import visualize_automaton
-
-    model = generate_random_markov_chain(7)
-    visualize_automaton(model)

@@ -689,7 +689,7 @@ def alergia_mdp_example():
     from random import randint, choice
     from aalpy.learning_algs import run_Alergia
     from aalpy.utils import visualize_automaton, generate_random_mdp
-    from aalpy.learning_algs.stochastic_passive.DataHandler import IODelimiterTokenizer
+    from aalpy.utils import IODelimiterTokenizer
 
     mdp, inps = generate_random_mdp(5, 2, custom_outputs=['A', 'B', 'C', 'D'])
     # visualize_automaton(mdp, path='Original')
@@ -731,10 +731,10 @@ def alergia_mdp_example():
 def alergia_mc_example():
     from os import remove
     from aalpy.SULs import McSUL
-    from random import randint, choice
+    from random import randint
     from aalpy.learning_algs import run_Alergia
     from aalpy.utils import visualize_automaton, generate_random_markov_chain
-    from aalpy.learning_algs.stochastic_passive.DataHandler import CharacterTokenizer
+    from aalpy.utils import CharacterTokenizer
 
     mc = generate_random_markov_chain(5)
     # visualize_automaton(mc, path='Original')
@@ -767,7 +767,3 @@ def alergia_mc_example():
 
     visualize_automaton(model)
     remove('mcData.txt')
-
-
-if __name__ == '__main__':
-    alergia_mc_example()
