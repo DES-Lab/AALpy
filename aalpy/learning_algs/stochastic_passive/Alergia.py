@@ -8,17 +8,21 @@ from aalpy.learning_algs.stochastic_passive.FPTA import create_fpta
 
 
 class Alergia:
-    def __init__(self, data, is_iofpta=False, eps=0.05, compatibility_checker=None, print_info=False):
+    def __init__(self, data, is_mdp=False, eps=0.005, compatibility_checker=None, print_info=False):
         assert 0 < eps <= 2
-        self.is_iofpta = is_iofpta
-        self.diff_checker = HoeffdingCompatibility(eps) if not compatibility_checker else compatibility_checker
+
+        self.is_mdp = is_mdp
         self.print_info = print_info
 
+        self.diff_checker = HoeffdingCompatibility(eps) if not compatibility_checker else compatibility_checker
+
         pta_start = time.time()
-        self.t, self.a = create_fpta(data, is_iofpta)
+
+        self.t, self.a = create_fpta(data, is_mdp)
+
         pta_time = round(time.time() - pta_start, 2)
         if self.print_info:
-            print(f'PTA Constuction Time:  {pta_time}')
+            print(f'PTA Construction Time:  {pta_time}')
 
     def compatibility_test(self, a, b):
         if a.output != b.output:
@@ -96,7 +100,7 @@ class Alergia:
     def normalize(self, red):
         red_sorted = sorted(list(red), key=lambda x: len(x.prefix))
         for r in red_sorted:
-            if not self.is_iofpta:
+            if not self.is_mdp:
                 total_output = sum([c.frequency for c in r.children.values()])
                 for i, c in r.children.items():
                     r.children_prob[i] = c.frequency / total_output
@@ -114,8 +118,8 @@ class Alergia:
         return blue
 
     def to_automaton(self, red):
-        s_c = MdpState if self.is_iofpta else McState
-        a_c = Mdp if self.is_iofpta else MarkovChain
+        s_c = MdpState if self.is_mdp else McState
+        a_c = Mdp if self.is_mdp else MarkovChain
 
         states = []
         initial_state = None
@@ -133,13 +137,13 @@ class Alergia:
             red_eq = red_mdp_map[s.state_id]
             for io, c in red_eq.children.items():
                 destination = red_mdp_map[tuple(c.prefix)]
-                i = io[0] if self.is_iofpta else io
+                i = io[0] if self.is_mdp else io
                 s.transitions[i].append((destination, red_eq.children_prob[io]))
 
         return a_c(initial_state, states)
 
 
-def run_Alergia(data, eps=0.05, is_iofpta=False, print_info=False):
-    alergia = Alergia(data, eps=eps, is_iofpta=is_iofpta, print_info=print_info)
+def run_Alergia(data, eps=0.005, is_iofpta=False, print_info=False):
+    alergia = Alergia(data, eps=eps, is_mdp=is_iofpta, print_info=print_info)
     model = alergia.run()
     return model
