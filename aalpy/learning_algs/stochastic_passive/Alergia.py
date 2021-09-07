@@ -1,4 +1,6 @@
+import time
 from collections import defaultdict
+from bisect import insort
 
 from aalpy.automata import MarkovChain, MdpState, Mdp, McState
 from aalpy.learning_algs.stochastic_passive.CompatibilityChecker import HoeffdingCompatibility
@@ -6,11 +8,17 @@ from aalpy.learning_algs.stochastic_passive.DataHandler import create_fpta
 
 
 class Alergia:
-    def __init__(self, data, is_iofpta=False, eps=0.05, compatibility_checker=None):
+    def __init__(self, data, is_iofpta=False, eps=0.05, compatibility_checker=None, print_info=False):
         assert 0 < eps <= 2
-        self.t, self.a = create_fpta(data, is_iofpta)
         self.is_iofpta = is_iofpta
         self.diff_checker = HoeffdingCompatibility(eps) if not compatibility_checker else compatibility_checker
+        self.print_info = print_info
+
+        pta_start = time.time()
+        self.t, self.a = create_fpta(data, is_iofpta)
+        pta_time = round(time.time() - pta_start, 2)
+        if self.print_info:
+            print(f'PTA Constuction Time:  {pta_time}')
 
     def compatibility_test(self, a, b):
         if a.output != b.output:
@@ -48,26 +56,23 @@ class Alergia:
                 q_r.children[i] = c
 
     def run(self):
+        start_time = time.time()
 
-        red = {self.a}  # representative nodes and will be included in the final output model
+        red = [self.a]  # representative nodes and will be included in the final output model
         blue = self.a.succs()  # intermediate successors scheduled for testing
 
         while blue:
-
             lex_min_blue = min(list(blue), key=lambda x: len(x.prefix))
-
-            red_sorted = sorted(list(red), key=lambda x: len(x.prefix))
-
             merged = False
 
-            for q_r in red_sorted:
+            for q_r in red:
                 if self.compatibility_test(self.get_blue_node(q_r), self.get_blue_node(lex_min_blue)):
                     self.merge(q_r, lex_min_blue)
                     merged = True
                     break
 
             if not merged:
-                red.add(lex_min_blue)
+                insort(red, lex_min_blue)
 
             blue.clear()
             prefixes_in_red = [s.prefix for s in red]
@@ -76,13 +81,15 @@ class Alergia:
                     if s.prefix not in prefixes_in_red:
                         blue.append(s)
 
-        red = sorted(list(red), key=lambda x: len(x.prefix))
+        assert sorted(red, key=lambda x: len(x.prefix)) == red
 
         self.normalize(red)
 
         for i, r in enumerate(red):
             r.state_id = f'q{i}'
 
+        if self.print_info:
+            print(f'Alergia Learning Time: {round(time.time() - start_time, 2)}')
         return self.to_automaton(red)
 
     def normalize(self, red):
@@ -131,7 +138,7 @@ class Alergia:
         return a_c(initial_state, states)
 
 
-def run_Alergia(data, eps=0.05, is_iofpta=False):
-    alergia = Alergia(data, eps=eps, is_iofpta=is_iofpta)
+def run_Alergia(data, eps=0.05, is_iofpta=False, print_info=False):
+    alergia = Alergia(data, eps=eps, is_iofpta=is_iofpta, print_info=print_info)
     model = alergia.run()
     return model

@@ -16,6 +16,12 @@ class AlergiaPtaNode:
     def succs(self):
         return list(self.children.values())
 
+    def __lt__(self, other):
+        return len(self.prefix) < len(other.prefix)
+
+    def __le__(self, other):
+        return len(self.prefix) <= len(other.prefix)
+
 
 def create_fpta(data, is_iofpta):
     root_node = AlergiaPtaNode(data[0][0])

@@ -722,7 +722,7 @@ def alergia_mdp_example():
     # parse data
     data = tokenizer.tokenize_data('mdpData.txt')
     # run alergia with the data and set is_iofpta flag to True to learn a MDP
-    model = run_Alergia(data, eps=0.005, is_iofpta=True)
+    model = run_Alergia(data, eps=0.005, is_iofpta=True, print_info=True)
 
     visualize_automaton(model)
     remove('mdpData.txt')
@@ -761,7 +761,9 @@ def alergia_mc_example():
     # parse data
     data = tokenizer.tokenize_data('mcData.txt')
     # run alergia with the data and set is_iofpta flag to False to learn a Markov Chain
-    model = run_Alergia(data, eps=0.005, is_iofpta=False)
+    model = run_Alergia(data, eps=0.005, is_iofpta=False, print_info=True)
+
+    print(model)
 
     visualize_automaton(model)
     remove('mcData.txt')
