@@ -1,5 +1,5 @@
 from aalpy.base import SUL
-from aalpy.automata import Dfa, MealyMachine, MooreMachine, Onfsm, Mdp, StochasticMealyMachine
+from aalpy.automata import Dfa, MealyMachine, MooreMachine, Onfsm, Mdp, StochasticMealyMachine, MarkovChain
 
 
 class DfaSUL(SUL):
@@ -60,6 +60,30 @@ class MdpSUL(SUL):
 
     def step(self, letter):
         return self.mdp.step(letter)
+
+
+class McSUL(SUL):
+    def __init__(self, mdp: MarkovChain):
+        super().__init__()
+        self.mc = mdp
+
+    def query(self, word: tuple) -> list:
+        initial_output = self.pre()
+        out = [initial_output]
+        for letter in word:
+            out.append(self.step(letter))
+        self.post()
+        return out
+
+    def pre(self):
+        self.mc.reset_to_initial()
+        return self.mc.current_state.output
+
+    def post(self):
+        pass
+
+    def step(self, letter=None):
+        return self.mc.step()
 
 
 class MealySUL(SUL):

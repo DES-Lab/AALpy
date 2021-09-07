@@ -3,7 +3,7 @@ import os
 from pydot import Dot, Node, Edge, graph_from_dot_file
 
 from aalpy.automata import Dfa, MooreMachine, Mdp, Onfsm, MealyState, DfaState, MooreState, MealyMachine, \
-    MdpState, StochasticMealyMachine, StochasticMealyState, OnfsmState
+    MdpState, StochasticMealyMachine, StochasticMealyState, OnfsmState, MarkovChain
 
 file_types = ['dot', 'png', 'svg', 'pdf', 'string']
 automaton_types = ['dfa', 'mealy', 'moore', 'mdp', 'smm', 'onfsm']
@@ -66,6 +66,7 @@ def save_automaton_to_file(automaton, path="LearnedModel", file_type='dot',
     is_mdp = isinstance(automaton, Mdp)
     is_onsfm = isinstance(automaton, Onfsm)
     is_smm = isinstance(automaton, StochasticMealyMachine)
+    is_mc = isinstance(automaton, MarkovChain)
 
     graph = Dot(path, graph_type='digraph')
     for state in automaton.states:
@@ -74,7 +75,7 @@ def save_automaton_to_file(automaton, path="LearnedModel", file_type='dot',
         elif is_moore:
             graph.add_node(Node(state.state_id, label=f'{state.state_id}|{state.output}',
                                 shape='record', style='rounded'))
-        elif is_mdp:
+        elif is_mdp or is_mc:
             graph.add_node(Node(state.state_id, label=f'{state.output}'))
         else:
             graph.add_node(Node(state.state_id, label=state.state_id))
@@ -86,13 +87,14 @@ def save_automaton_to_file(automaton, path="LearnedModel", file_type='dot',
                 if not display_same_state_trans and new_state.state_id == state.state_id:
                     continue
                 graph.add_edge(Edge(state.state_id, new_state.state_id, label=f'{i}/{state.output_fun[i]}'))
-            elif is_mdp:
+            elif is_mdp or is_mc:
                 # here we do not have single state, but a list of (State, probability) tuples
                 new_state = state.transitions[i]
                 for s in new_state:
                     if not display_same_state_trans and s[0].state_id == state.state_id:
                         continue
-                    graph.add_edge(Edge(state.state_id, s[0].state_id, label=f'{i} : {round(s[1], 2)}'))
+                    label = f'{i} : {round(s[1], 2)}' if is_mdp else f'{round(s[1], 2)}'
+                    graph.add_edge(Edge(state.state_id, s[0].state_id, label=label))
             elif is_onsfm:
                 new_state = state.transitions[i]
                 for s in new_state:

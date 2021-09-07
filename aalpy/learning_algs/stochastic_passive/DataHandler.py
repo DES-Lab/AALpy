@@ -1,8 +1,43 @@
 from abc import ABC, abstractmethod
+from copy import deepcopy
 
-from aalpy.SULs import MdpSUL
-from aalpy.utils import generate_random_mdp, visualize_automaton
-from random import seed, choice, random, randint
+
+class AlergiaPtaNode:
+
+    def __init__(self, output):
+        self.output = output
+        self.frequency = 0
+        self.children = dict()
+        self.prefix = []
+        # for visualization
+        self.state_id = None
+        self.children_prob = dict()
+
+    def succs(self):
+        return list(self.children.values())
+
+
+def create_fpta(data, is_iofpta):
+    root_node = AlergiaPtaNode(data[0][0])
+    for seq in data:
+        if seq[0] != root_node.output:
+            print('All strings should have the same initial output')
+            assert False
+        curr_node = root_node
+
+        for el in seq[1:]:
+            input = el if not is_iofpta else (el[0], el[1])
+
+            if input not in curr_node.children.keys():
+                node = AlergiaPtaNode(el if not is_iofpta else el[1])
+                node.prefix = list(curr_node.prefix)
+                node.prefix.append(input)
+                curr_node.children[input] = node
+
+            curr_node = curr_node.children[input]
+            curr_node.frequency += 1
+
+    return root_node, deepcopy(root_node)
 
 
 class DataHandler(ABC):
@@ -49,32 +84,3 @@ class IODelimiterTokenizer(DataHandler):
                 seq.append(tuple([i_o[0], i_o[1]]))
             data.append(seq)
         return data
-
-
-if __name__ == '__main__':
-    seed(4)
-    mdp, inps = generate_random_mdp(4, 2, custom_outputs=['A','B','C','D'])
-    visualize_automaton(mdp, path='Original')
-    sul = MdpSUL(mdp)
-    inputs = mdp.get_input_alphabet()
-
-    data = []
-    for _ in range(10000):
-        str_len = randint(5,12)
-        seq = [sul.pre()]
-        for _ in range(str_len):
-            i = choice(inputs)
-            o = sul.step(i)
-            seq.append((i, o))
-        sul.post()
-        data.append(seq)
-
-    with open('mdpData.txt', 'w') as file:
-        for seq in data:
-            sting = f'{seq[0]},'
-            for io in seq[1:]:
-                sting += f'{io[0]}/{io[1]},'
-
-            file.write(f'{sting[:-1]}\n')
-
-    file.close()

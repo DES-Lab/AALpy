@@ -1,7 +1,7 @@
 import random
 
 from aalpy.automata import Dfa, DfaState, MdpState, Mdp, MealyMachine, MealyState, \
-    MooreMachine, MooreState, OnfsmState, Onfsm
+    MooreMachine, MooreState, OnfsmState, Onfsm, MarkovChain, McState
 from aalpy.utils.HelperFunctions import random_string_generator
 
 
@@ -132,7 +132,7 @@ def generate_random_mdp(num_states, len_input, custom_outputs=None, num_unique_o
     """
     num_unique_outputs = num_states if not num_unique_outputs else num_unique_outputs
     outputs = [random_string_generator(random.randint(3, 7)) for _ in range(num_unique_outputs)]
-    outputs = custom_outputs if custom_outputs else  outputs
+    outputs = custom_outputs if custom_outputs else outputs
 
     while len(outputs) < num_states:
         outputs.append(random.choice(outputs))
@@ -193,3 +193,34 @@ def generate_random_ONFSM(num_states, num_inputs, num_outputs, multiple_out_prob
                 state.transitions[i].append((random_out[index], random.choice(states)))
 
     return Onfsm(states[0], states)
+
+
+def generate_random_markov_chain(num_states):
+    assert num_states >= 3
+    possible_probabilities = [1.0, 1.0, 0.8, 0.5, 0.9]
+    states = []
+
+    for i in range(num_states):
+        states.append(McState(f'q{i}', i))
+
+    for index, state in enumerate(states[:-1]):
+        prob = random.choice(possible_probabilities)
+        if prob == 1.:
+            new_state = states[index + 1]
+            state.transitions[new_state.output].append((new_state, prob))
+        else:
+            next_state = states[index + 1]
+            up_states = list(states)
+            up_states.remove(next_state)
+            rand_state = random.choice(up_states)
+
+            state.transitions[next_state.output].append((next_state, prob))
+            state.transitions[rand_state.output].append((rand_state, round(1 - prob, 2)))
+
+    return MarkovChain(states[0], states)
+
+if __name__ == '__main__':
+    from aalpy.utils.FileHandler import visualize_automaton
+
+    model = generate_random_markov_chain(7)
+    visualize_automaton(model)
