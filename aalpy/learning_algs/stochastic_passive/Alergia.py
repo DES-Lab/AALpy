@@ -90,6 +90,7 @@ class Alergia:
 
         if self.print_info:
             print(f'Alergia Learning Time: {round(time.time() - start_time, 2)}')
+            print(f'Alergia Learned {len(red)} state automaton.')
         return self.to_automaton(red)
 
     def normalize(self, red):
