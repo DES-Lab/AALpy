@@ -152,9 +152,9 @@ def run_Alergia(data, automaton_type, eps=0.005, compatibility_checker=None, pri
 
     Args:
 
-        data: data either in a form [[I,I,I],[I,I,I],...] if learning Markov Chains or [[O,I,O,I,O...],[O,I,O,...],..,]
-            if learning MDPs (I represents input, O output). Note that in whole data first symbol of each entry should
-            be the same (Initial output of the MDP/MC).
+        data: data either in a form [[I,I,I],[I,I,I],...] if learning Markov Chains or [[O,(I,O),(I,O)...],
+        [O,(I,O_,...],..,] if learning MDPs (I represents input, O output).
+        Note that in whole data first symbol of each entry should be the same (Initial output of the MDP/MC).
 
         eps: epsilon value if you are using default HoeffdingCompatibility
 

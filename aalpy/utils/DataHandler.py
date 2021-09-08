@@ -47,7 +47,7 @@ class IODelimiterTokenizer(DataHandler):
     Used for Markov Decision Process data parsing.
     Processes data where each input/output is separated by the io_delimiter, and i/o pairs are separated
     by word delimiter.
-    Each output(input/output)* sequence is in the separate line.
+    Each [output, tuple(input,output)*] sequence is in the separate line.
     """
 
     def tokenize_data(self, path, io_delimiter='/', word_delimiter=','):
