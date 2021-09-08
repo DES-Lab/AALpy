@@ -28,7 +28,7 @@ Whether you work with regular languages or you would like to learn models of
 |----------|:-------------:|------:|
 | Deterministic     |  Deterministic Finite Automata<br />Mealy Machines<br />Moore Machines | Counterexample Processing<br />Seamless Caching<br />11 Eq. Oracles |
 | Non-Deterministic |    Observable Non-Deterministic FSM <br /> Abstracted Non-Deterministic FSM|   Size Reduction Trough Abstraction<br />|
-| Stochastic        |  Markov Decision Processes<br />Stochastic Mealy Machines |    Counterexample Processing<br />Row/Cell Compatability Metrics<br />Model Checking with PRISM|
+| Stochastic        |  Markov Decision Processes<br />Stochastic Mealy Machines<br />Markov Chains |    Counterexample Processing<br />Row/Cell Compatability Metrics<br />Model Checking with PRISM<br />[Alergia Passive Learning]((https://link.springer.com/article/10.1007/s10994-016-5565-9))|
 
 </center>
 
