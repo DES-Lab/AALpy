@@ -146,7 +146,7 @@ class Alergia:
         return a_c(initial_state, states)
 
 
-def run_Alergia(data, eps=0.005, is_mdp=False, compatibility_checker=None, print_info=False):
+def run_Alergia(data, automaton_type, eps=0.005, compatibility_checker=None, print_info=False):
     """
     Run Alergia or IOAlergia on provided data.
 
@@ -158,7 +158,7 @@ def run_Alergia(data, eps=0.005, is_mdp=False, compatibility_checker=None, print
 
         eps: epsilon value if you are using default HoeffdingCompatibility
 
-        is_mdp: True if Alergia should learn MDP, else it will learn Markov Chain
+        automaton_type: either 'mdp' if you wish to learn an MDP, else 'mc' if you want to learn Markov Chain
 
         compatibility_checker: impl. of class CompatibilityChecker, HoeffdingCompatibility with eps value by default
 
@@ -169,6 +169,8 @@ def run_Alergia(data, eps=0.005, is_mdp=False, compatibility_checker=None, print
 
         mdp or markov chain
     """
-    alergia = Alergia(data, eps=eps, is_mdp=is_mdp, compatibility_checker=compatibility_checker, print_info=print_info)
+    assert automaton_type in {'mdp', 'mc'}
+    alergia = Alergia(data, eps=eps, is_mdp=True if automaton_type == 'mdp' else False,
+                      compatibility_checker=compatibility_checker, print_info=print_info)
     model = alergia.run()
     return model

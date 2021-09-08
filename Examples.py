@@ -724,8 +724,8 @@ def alergia_mdp_example():
     tokenizer = IODelimiterTokenizer()
     # parse data
     data = tokenizer.tokenize_data('mdpData.txt')
-    # run alergia with the data and set is_iofpta flag to True to learn a MDP
-    model = run_Alergia(data, eps=0.005, is_mdp=True, print_info=True)
+    # run alergia with the data and automaton_type set to 'mdp' to True to learn a MDP
+    model = run_Alergia(data, automaton_type='mdp', eps=0.005, print_info=True)
 
     visualize_automaton(model)
     remove('mdpData.txt')
@@ -764,8 +764,8 @@ def alergia_mc_example():
     tokenizer = CharacterTokenizer()
     # parse data
     data = tokenizer.tokenize_data('mcData.txt')
-    # run alergia with the data and set is_iofpta flag to False to learn a Markov Chain
-    model = run_Alergia(data, eps=0.005, is_mdp=False, print_info=True)
+    # run alergia with the data and automaton_type set to 'mc' to learn a Markov Chain
+    model = run_Alergia(data, automaton_type='mc', eps=0.005, print_info=True)
 
     print(model)
 
