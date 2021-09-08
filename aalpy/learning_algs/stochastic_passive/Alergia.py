@@ -155,9 +155,13 @@ def run_Alergia(data, eps=0.005, is_mdp=False, compatibility_checker=None, print
         data: data either in a form [[I,I,I],[I,I,I],...] if learning Markov Chains or [[O,I,O,I,O...],[O,I,O,...],..,]
             if learning MDPs (I represents input, O output). Note that in whole data first symbol of each entry should
             be the same (Initial output of the MDP/MC).
+
         eps: epsilon value if you are using default HoeffdingCompatibility
+
         is_mdp: True if Alergia should learn MDP, else it will learn Markov Chain
+
         compatibility_checker: impl. of class CompatibilityChecker, HoeffdingCompatibility with eps value by default
+
         (note: not interchangeable, depends on data)
         print_info:
 
