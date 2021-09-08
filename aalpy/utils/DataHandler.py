@@ -62,6 +62,12 @@ class IODelimiterTokenizer(DataHandler):
                     print('Data formatting error. io_delimiter should split words into <input> <delim> <output>'
                           'where <delim> is values of param \"io_delimiter\'"')
                     exit(-1)
-                seq.append(tuple([i_o[0], i_o[1]]))
+                seq.append(tuple([try_int(i_o[0]), try_int(i_o[1])]))
             data.append(seq)
         return data
+
+
+def try_int(x):
+    if str.isdigit(x):
+        return int(x)
+    return x

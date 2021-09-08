@@ -772,3 +772,50 @@ def alergia_mc_example():
     visualize_automaton(model)
     remove('mcData.txt')
     return model
+
+def active_alergia_example():
+    from os import remove
+    from aalpy.SULs import MdpSUL
+    from random import randint, choice
+    from aalpy.learning_algs.stochastic_passive.ActiveAleriga import RandomWordSampler
+    from aalpy.learning_algs.stochastic_passive.ActiveAleriga import run_active_Alergia
+    from aalpy.utils import visualize_automaton, generate_random_mdp
+    from aalpy.utils import IODelimiterTokenizer
+
+    mdp, inps = generate_random_mdp(5, 2, custom_outputs=['A', 'B', 'C', 'D'])
+
+    sul = MdpSUL(mdp)
+    inputs = mdp.get_input_alphabet()
+
+    data = []
+    for _ in range(5000):
+        str_len = randint(5, 12)
+        seq = [sul.pre()]
+        for _ in range(str_len):
+            i = choice(inputs)
+            o = sul.step(i)
+            seq.append((i, o))
+        sul.post()
+        data.append(seq)
+
+    with open('mdpData.txt', 'w') as file:
+        for seq in data:
+            sting = f'{seq[0]},'
+            for io in seq[1:]:
+                sting += f'{io[0]}/{io[1]},'
+
+            file.write(f'{sting[:-1]}\n')
+
+    file.close()
+
+    # create tokenizer
+    tokenizer = IODelimiterTokenizer()
+    # parse data
+    data = tokenizer.tokenize_data('mdpData.txt')
+    # run alergia with the data and automaton_type set to 'mdp' to True to learn a MDP
+
+    sampler = RandomWordSampler(num_walks=1000, min_walk_len=5, max_walk_len=12)
+    model = run_active_Alergia(data, sul, sampler, n_iter=10)
+
+    visualize_automaton(model)
+    remove('mdpData.txt')
