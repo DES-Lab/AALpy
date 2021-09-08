@@ -106,6 +106,7 @@
         <a href="aalpy/SULs/TomitaSUL.html">aalpy.SULs.TomitaSUL</a>
         <a href="aalpy/automata.html">aalpy.automata</a>
         <a href="aalpy/automata/Dfa.html">aalpy.automata.Dfa</a>
+        <a href="aalpy/automata/MarkovChain.html">aalpy.automata.MarkovChain</a>
         <a href="aalpy/automata/Mdp.html">aalpy.automata.Mdp</a>
         <a href="aalpy/automata/MealyMachine.html">aalpy.automata.MealyMachine</a>
         <a href="aalpy/automata/MooreMachine.html">aalpy.automata.MooreMachine</a>
@@ -133,6 +134,10 @@
         <a href="aalpy/learning_algs/stochastic/StochasticCexProcessing.html">aalpy.learning_algs.stochastic.StochasticCexProcessing</a>
         <a href="aalpy/learning_algs/stochastic/StochasticLStar.html">aalpy.learning_algs.stochastic.StochasticLStar</a>
         <a href="aalpy/learning_algs/stochastic/StochasticTeacher.html">aalpy.learning_algs.stochastic.StochasticTeacher</a>
+        <a href="aalpy/learning_algs/stochastic_passive.html">aalpy.learning_algs.stochastic_passive</a>
+        <a href="aalpy/learning_algs/stochastic_passive/Alergia.html">aalpy.learning_algs.stochastic_passive.Alergia</a>
+        <a href="aalpy/learning_algs/stochastic_passive/CompatibilityChecker.html">aalpy.learning_algs.stochastic_passive.CompatibilityChecker</a>
+        <a href="aalpy/learning_algs/stochastic_passive/FPTA.html">aalpy.learning_algs.stochastic_passive.FPTA</a>
         <a href="aalpy/oracles.html">aalpy.oracles</a>
         <a href="aalpy/oracles/BreadthFirstExplorationEqOracle.html">aalpy.oracles.BreadthFirstExplorationEqOracle</a>
         <a href="aalpy/oracles/CacheBasedEqOracle.html">aalpy.oracles.CacheBasedEqOracle</a>
@@ -148,12 +153,13 @@
         <a href="aalpy/utils.html">aalpy.utils</a>
         <a href="aalpy/utils/AutomatonGenerators.html">aalpy.utils.AutomatonGenerators</a>
         <a href="aalpy/utils/BenchmarkSULs.html">aalpy.utils.BenchmarkSULs</a>
+        <a href="aalpy/utils/DataHandler.html">aalpy.utils.DataHandler</a>
         <a href="aalpy/utils/FileHandler.html">aalpy.utils.FileHandler</a>
         <a href="aalpy/utils/HelperFunctions.html">aalpy.utils.HelperFunctions</a>
         <a href="aalpy/utils/ModelChecking.html">aalpy.utils.ModelChecking</a>
     </div>
     <script>
-        const modules = ["aalpy", "aalpy.SULs", "aalpy.SULs.AutomataSUL", "aalpy.SULs.PyMethodSUL", "aalpy.SULs.RegexSUL", "aalpy.SULs.TomitaSUL", "aalpy.automata", "aalpy.automata.Dfa", "aalpy.automata.Mdp", "aalpy.automata.MealyMachine", "aalpy.automata.MooreMachine", "aalpy.automata.Onfsm", "aalpy.automata.StochasticMealyMachine", "aalpy.base", "aalpy.base.Automaton", "aalpy.base.CacheTree", "aalpy.base.Oracle", "aalpy.base.SUL", "aalpy.learning_algs", "aalpy.learning_algs.deterministic", "aalpy.learning_algs.deterministic.CounterExampleProcessing", "aalpy.learning_algs.deterministic.LStar", "aalpy.learning_algs.deterministic.ObservationTable", "aalpy.learning_algs.non_deterministic", "aalpy.learning_algs.non_deterministic.AbstractedOnfsmLstar", "aalpy.learning_algs.non_deterministic.AbstractedOnfsmObservationTable", "aalpy.learning_algs.non_deterministic.OnfsmLstar", "aalpy.learning_algs.non_deterministic.OnfsmObservationTable", "aalpy.learning_algs.non_deterministic.TraceTree", "aalpy.learning_algs.stochastic", "aalpy.learning_algs.stochastic.DifferenceChecker", "aalpy.learning_algs.stochastic.SamplingBasedObservationTable", "aalpy.learning_algs.stochastic.StochasticCexProcessing", "aalpy.learning_algs.stochastic.StochasticLStar", "aalpy.learning_algs.stochastic.StochasticTeacher", "aalpy.oracles", "aalpy.oracles.BreadthFirstExplorationEqOracle", "aalpy.oracles.CacheBasedEqOracle", "aalpy.oracles.RandomWalkEqOracle", "aalpy.oracles.RandomWordEqOracle", "aalpy.oracles.StatePrefixEqOracle", "aalpy.oracles.TransitionFocusOracle", "aalpy.oracles.UserInputEqOracle", "aalpy.oracles.WMethodEqOracle", "aalpy.oracles.kWayStateCoverageEqOracle", "aalpy.oracles.kWayTransitionCoverageEqOracle", "aalpy.paths", "aalpy.utils", "aalpy.utils.AutomatonGenerators", "aalpy.utils.BenchmarkSULs", "aalpy.utils.FileHandler", "aalpy.utils.HelperFunctions", "aalpy.utils.ModelChecking"];
+        const modules = ["aalpy", "aalpy.SULs", "aalpy.SULs.AutomataSUL", "aalpy.SULs.PyMethodSUL", "aalpy.SULs.RegexSUL", "aalpy.SULs.TomitaSUL", "aalpy.automata", "aalpy.automata.Dfa", "aalpy.automata.MarkovChain", "aalpy.automata.Mdp", "aalpy.automata.MealyMachine", "aalpy.automata.MooreMachine", "aalpy.automata.Onfsm", "aalpy.automata.StochasticMealyMachine", "aalpy.base", "aalpy.base.Automaton", "aalpy.base.CacheTree", "aalpy.base.Oracle", "aalpy.base.SUL", "aalpy.learning_algs", "aalpy.learning_algs.deterministic", "aalpy.learning_algs.deterministic.CounterExampleProcessing", "aalpy.learning_algs.deterministic.LStar", "aalpy.learning_algs.deterministic.ObservationTable", "aalpy.learning_algs.non_deterministic", "aalpy.learning_algs.non_deterministic.AbstractedOnfsmLstar", "aalpy.learning_algs.non_deterministic.AbstractedOnfsmObservationTable", "aalpy.learning_algs.non_deterministic.OnfsmLstar", "aalpy.learning_algs.non_deterministic.OnfsmObservationTable", "aalpy.learning_algs.non_deterministic.TraceTree", "aalpy.learning_algs.stochastic", "aalpy.learning_algs.stochastic.DifferenceChecker", "aalpy.learning_algs.stochastic.SamplingBasedObservationTable", "aalpy.learning_algs.stochastic.StochasticCexProcessing", "aalpy.learning_algs.stochastic.StochasticLStar", "aalpy.learning_algs.stochastic.StochasticTeacher", "aalpy.learning_algs.stochastic_passive", "aalpy.learning_algs.stochastic_passive.Alergia", "aalpy.learning_algs.stochastic_passive.CompatibilityChecker", "aalpy.learning_algs.stochastic_passive.FPTA", "aalpy.oracles", "aalpy.oracles.BreadthFirstExplorationEqOracle", "aalpy.oracles.CacheBasedEqOracle", "aalpy.oracles.RandomWalkEqOracle", "aalpy.oracles.RandomWordEqOracle", "aalpy.oracles.StatePrefixEqOracle", "aalpy.oracles.TransitionFocusOracle", "aalpy.oracles.UserInputEqOracle", "aalpy.oracles.WMethodEqOracle", "aalpy.oracles.kWayStateCoverageEqOracle", "aalpy.oracles.kWayTransitionCoverageEqOracle", "aalpy.paths", "aalpy.utils", "aalpy.utils.AutomatonGenerators", "aalpy.utils.BenchmarkSULs", "aalpy.utils.DataHandler", "aalpy.utils.FileHandler", "aalpy.utils.HelperFunctions", "aalpy.utils.ModelChecking"];
         const module_list = document.getElementById("pdoc-modules");
         const searchbox = document.getElementById("pdoc-search")
 

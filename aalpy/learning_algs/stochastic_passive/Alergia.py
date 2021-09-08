@@ -146,7 +146,7 @@ class Alergia:
         return a_c(initial_state, states)
 
 
-def run_Alergia(data, eps=0.005, is_mdp=False, compatibility_checker=HoeffdingCompatibility, print_info=False):
+def run_Alergia(data, eps=0.005, is_mdp=False, compatibility_checker=None, print_info=False):
     """
     Run Alergia or IOAlergia on provided data.
 

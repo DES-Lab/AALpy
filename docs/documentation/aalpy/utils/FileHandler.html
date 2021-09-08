@@ -36,6 +36,9 @@
             <li>
                     <a class="function" href="#load_automaton_from_file">load_automaton_from_file</a>
             </li>
+            <li>
+                    <a class="function" href="#visualize_fpta">visualize_fpta</a>
+            </li>
     </ul>
 
 
@@ -59,10 +62,10 @@
 <span class="kn">from</span> <span class="nn">pydot</span> <span class="kn">import</span> <span class="n">Dot</span><span class="p">,</span> <span class="n">Node</span><span class="p">,</span> <span class="n">Edge</span><span class="p">,</span> <span class="n">graph_from_dot_file</span>
 
 <span class="kn">from</span> <span class="nn">aalpy.automata</span> <span class="kn">import</span> <span class="n">Dfa</span><span class="p">,</span> <span class="n">MooreMachine</span><span class="p">,</span> <span class="n">Mdp</span><span class="p">,</span> <span class="n">Onfsm</span><span class="p">,</span> <span class="n">MealyState</span><span class="p">,</span> <span class="n">DfaState</span><span class="p">,</span> <span class="n">MooreState</span><span class="p">,</span> <span class="n">MealyMachine</span><span class="p">,</span> \
-    <span class="n">MdpState</span><span class="p">,</span> <span class="n">StochasticMealyMachine</span><span class="p">,</span> <span class="n">StochasticMealyState</span><span class="p">,</span> <span class="n">OnfsmState</span>
+    <span class="n">MdpState</span><span class="p">,</span> <span class="n">StochasticMealyMachine</span><span class="p">,</span> <span class="n">StochasticMealyState</span><span class="p">,</span> <span class="n">OnfsmState</span><span class="p">,</span> <span class="n">MarkovChain</span><span class="p">,</span> <span class="n">McState</span>
 
 <span class="n">file_types</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;dot&#39;</span><span class="p">,</span> <span class="s1">&#39;png&#39;</span><span class="p">,</span> <span class="s1">&#39;svg&#39;</span><span class="p">,</span> <span class="s1">&#39;pdf&#39;</span><span class="p">,</span> <span class="s1">&#39;string&#39;</span><span class="p">]</span>
-<span class="n">automaton_types</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;dfa&#39;</span><span class="p">,</span> <span class="s1">&#39;mealy&#39;</span><span class="p">,</span> <span class="s1">&#39;moore&#39;</span><span class="p">,</span> <span class="s1">&#39;mdp&#39;</span><span class="p">,</span> <span class="s1">&#39;smm&#39;</span><span class="p">,</span> <span class="s1">&#39;onfsm&#39;</span><span class="p">]</span>
+<span class="n">automaton_types</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;dfa&#39;</span><span class="p">,</span> <span class="s1">&#39;mealy&#39;</span><span class="p">,</span> <span class="s1">&#39;moore&#39;</span><span class="p">,</span> <span class="s1">&#39;mdp&#39;</span><span class="p">,</span> <span class="s1">&#39;smm&#39;</span><span class="p">,</span> <span class="s1">&#39;onfsm&#39;</span><span class="p">,</span> <span class="s1">&#39;mc&#39;</span><span class="p">]</span>
 
 
 <span class="k">def</span> <span class="nf">visualize_automaton</span><span class="p">(</span><span class="n">automaton</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s2">&quot;LearnedModel&quot;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;pdf&#39;</span><span class="p">,</span> <span class="n">display_same_state_trans</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
@@ -122,6 +125,7 @@
     <span class="n">is_mdp</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">automaton</span><span class="p">,</span> <span class="n">Mdp</span><span class="p">)</span>
     <span class="n">is_onsfm</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">automaton</span><span class="p">,</span> <span class="n">Onfsm</span><span class="p">)</span>
     <span class="n">is_smm</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">automaton</span><span class="p">,</span> <span class="n">StochasticMealyMachine</span><span class="p">)</span>
+    <span class="n">is_mc</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">automaton</span><span class="p">,</span> <span class="n">MarkovChain</span><span class="p">)</span>
 
     <span class="n">graph</span> <span class="o">=</span> <span class="n">Dot</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">graph_type</span><span class="o">=</span><span class="s1">&#39;digraph&#39;</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">automaton</span><span class="o">.</span><span class="n">states</span><span class="p">:</span>
@@ -130,12 +134,16 @@
         <span class="k">elif</span> <span class="n">is_moore</span><span class="p">:</span>
             <span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">Node</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">state_id</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">state</span><span class="o">.</span><span class="n">state_id</span><span class="si">}</span><span class="s1">|</span><span class="si">{</span><span class="n">state</span><span class="o">.</span><span class="n">output</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
                                 <span class="n">shape</span><span class="o">=</span><span class="s1">&#39;record&#39;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s1">&#39;rounded&#39;</span><span class="p">))</span>
-        <span class="k">elif</span> <span class="n">is_mdp</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">is_mdp</span> <span class="ow">or</span> <span class="n">is_mc</span><span class="p">:</span>
             <span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">Node</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">state_id</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">state</span><span class="o">.</span><span class="n">output</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">Node</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">state_id</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">state_id</span><span class="p">))</span>
 
     <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">automaton</span><span class="o">.</span><span class="n">states</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">is_mc</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">prob</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="p">:</span>
+                <span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">Edge</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">state_id</span><span class="p">,</span> <span class="n">new_state</span><span class="o">.</span><span class="n">state_id</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">prob</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">))</span>
+            <span class="k">continue</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">MealyState</span><span class="p">):</span>
                 <span class="n">new_state</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
@@ -202,7 +210,7 @@
 <span class="sd">        path: path to the file</span>
 
 <span class="sd">        automaton_type: type of the automaton, if not specified it will be automatically determined according,</span>
-<span class="sd">            one of [&#39;dfa&#39;, &#39;mealy&#39;, &#39;moore&#39;, &#39;mdp&#39;, &#39;smm&#39;, &#39;onfsm&#39;]</span>
+<span class="sd">            one of [&#39;dfa&#39;, &#39;mealy&#39;, &#39;moore&#39;, &#39;mdp&#39;, &#39;smm&#39;, &#39;onfsm&#39;, &#39;mc&#39;]</span>
 
 <span class="sd">        compute_prefixes: it True, shortest path to reach every state will be computed and saved in the prefix of</span>
 <span class="sd">            the state. Useful when loading the model to use them as a equivalence oracle. (Default value = False)</span>
@@ -215,10 +223,11 @@
 
     <span class="k">assert</span> <span class="n">automaton_type</span> <span class="ow">in</span> <span class="n">automaton_types</span>
 
-    <span class="n">node</span> <span class="o">=</span> <span class="n">MealyState</span> <span class="k">if</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mealy&#39;</span> <span class="k">else</span> <span class="n">DfaState</span> <span class="k">if</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;dfa&#39;</span> <span class="k">else</span> <span class="n">MooreState</span>
-    <span class="n">node</span> <span class="o">=</span> <span class="n">MdpState</span> <span class="k">if</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span> <span class="k">else</span> <span class="n">StochasticMealyState</span> <span class="k">if</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;smm&#39;</span> <span class="k">else</span> <span class="n">node</span>
-    <span class="n">node</span> <span class="o">=</span> <span class="n">OnfsmState</span> <span class="k">if</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;onfsm&#39;</span> <span class="k">else</span> <span class="n">node</span>
-    <span class="k">assert</span> <span class="n">node</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="n">id_node_aut_map</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;dfa&#39;</span> <span class="p">:</span> <span class="p">(</span><span class="n">DfaState</span><span class="p">,</span> <span class="n">Dfa</span><span class="p">),</span> <span class="s1">&#39;mealy&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">MealyState</span><span class="p">,</span> <span class="n">MealyMachine</span><span class="p">),</span> <span class="s1">&#39;moore&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">MooreState</span><span class="p">,</span> <span class="n">MooreMachine</span><span class="p">),</span>
+                       <span class="s1">&#39;onfsm&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">OnfsmState</span><span class="p">,</span> <span class="n">Onfsm</span><span class="p">),</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">MdpState</span><span class="p">,</span> <span class="n">Mdp</span><span class="p">),</span> <span class="s1">&#39;mc&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">McState</span><span class="p">,</span> <span class="n">MarkovChain</span><span class="p">),</span>
+                       <span class="s1">&#39;smm&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">StochasticMealyState</span><span class="p">,</span> <span class="n">StochasticMealyMachine</span><span class="p">)}</span>
+
+    <span class="n">node</span><span class="p">,</span> <span class="n">aut_type</span> <span class="o">=</span> <span class="n">id_node_aut_map</span><span class="p">[</span><span class="n">automaton_type</span><span class="p">]</span>
 
     <span class="n">node_label_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">get_node_list</span><span class="p">():</span>
@@ -237,7 +246,7 @@
             <span class="n">output</span> <span class="o">=</span> <span class="n">label_output</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;|&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
             <span class="n">output</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">output</span><span class="p">)</span> <span class="k">if</span> <span class="n">output</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()</span> <span class="k">else</span> <span class="n">output</span>
 
-        <span class="k">if</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span> <span class="ow">or</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mc&#39;</span><span class="p">:</span>
             <span class="n">node_label_dict</span><span class="p">[</span><span class="n">node_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">node</span><span class="p">(</span><span class="n">node_name</span><span class="p">,</span> <span class="n">label</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">node_label_dict</span><span class="p">[</span><span class="n">node_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">node</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span> <span class="k">if</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;moore&#39;</span> <span class="k">else</span> <span class="n">node</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
@@ -281,7 +290,10 @@
             <span class="n">inp</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">inp</span><span class="p">)</span> <span class="k">if</span> <span class="n">inp</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()</span> <span class="k">else</span> <span class="n">inp</span>
             <span class="n">prob</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">prob</span><span class="p">)</span>
             <span class="n">source</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">inp</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">destination</span><span class="p">,</span> <span class="n">prob</span><span class="p">))</span>
-        <span class="k">else</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mc&#39;</span><span class="p">:</span>
+            <span class="n">prob</span> <span class="o">=</span> <span class="n">label</span>
+            <span class="n">source</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">destination</span><span class="p">,</span><span class="nb">float</span><span class="p">(</span><span class="n">prob</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span> <span class="c1"># moore or dfa</span>
             <span class="n">source</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">label</span><span class="p">)</span> <span class="k">if</span> <span class="n">label</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()</span> <span class="k">else</span> <span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">destination</span>
 
     <span class="k">if</span> <span class="n">initial_node</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -290,20 +302,10 @@
               <span class="s2">&quot;Loading,Saving,-Syntax-and-Visualization-of-Automata &quot;</span><span class="p">)</span>
         <span class="k">assert</span> <span class="kc">False</span>
 
-    <span class="k">if</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;dfa&#39;</span><span class="p">:</span>
-        <span class="n">automaton</span> <span class="o">=</span> <span class="n">Dfa</span><span class="p">(</span><span class="n">initial_node</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">node_label_dict</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
-    <span class="k">elif</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;moore&#39;</span><span class="p">:</span>
-        <span class="n">automaton</span> <span class="o">=</span> <span class="n">MooreMachine</span><span class="p">(</span><span class="n">initial_node</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">node_label_dict</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
-    <span class="k">elif</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
-        <span class="n">automaton</span> <span class="o">=</span> <span class="n">Mdp</span><span class="p">(</span><span class="n">initial_node</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">node_label_dict</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
-    <span class="k">elif</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;smm&#39;</span><span class="p">:</span>
-        <span class="n">automaton</span> <span class="o">=</span> <span class="n">StochasticMealyMachine</span><span class="p">(</span><span class="n">initial_node</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">node_label_dict</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
-    <span class="k">elif</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;onfsm&#39;</span><span class="p">:</span>
-        <span class="n">automaton</span> <span class="o">=</span> <span class="n">Onfsm</span><span class="p">(</span><span class="n">initial_node</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">node_label_dict</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">automaton</span> <span class="o">=</span> <span class="n">MealyMachine</span><span class="p">(</span><span class="n">initial_node</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">node_label_dict</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
-    <span class="k">assert</span> <span class="n">automaton</span><span class="o">.</span><span class="n">is_input_complete</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">compute_prefixes</span><span class="p">:</span>
+    <span class="n">automaton</span> <span class="o">=</span> <span class="n">aut_type</span><span class="p">(</span><span class="n">initial_node</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">node_label_dict</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+    <span class="k">if</span> <span class="n">automaton_type</span> <span class="o">!=</span> <span class="s1">&#39;mc&#39;</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">automaton</span><span class="o">.</span><span class="n">is_input_complete</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">compute_prefixes</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mc&#39;</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">automaton</span><span class="o">.</span><span class="n">states</span><span class="p">:</span>
             <span class="n">state</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="n">automaton</span><span class="o">.</span><span class="n">get_shortest_path</span><span class="p">(</span><span class="n">automaton</span><span class="o">.</span><span class="n">initial_state</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">automaton</span>
@@ -317,6 +319,24 @@
         <span class="n">label</span> <span class="o">=</span> <span class="n">label</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
     <span class="n">label</span> <span class="o">=</span> <span class="n">label</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">label</span>
+
+
+<span class="k">def</span> <span class="nf">visualize_fpta</span><span class="p">(</span><span class="n">red</span><span class="p">):</span>
+    <span class="n">red_sorted</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">red</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">prefix</span><span class="p">))</span>
+    <span class="n">graph</span> <span class="o">=</span> <span class="n">Dot</span><span class="p">(</span><span class="s1">&#39;fpta&#39;</span><span class="p">,</span> <span class="n">graph_type</span><span class="o">=</span><span class="s1">&#39;digraph&#39;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">red_sorted</span><span class="p">):</span>
+        <span class="n">r</span><span class="o">.</span><span class="n">state_id</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;q</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">Node</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">state_id</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">r</span><span class="o">.</span><span class="n">state_id</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">red_sorted</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">r</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">Edge</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">state_id</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">state_id</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">i</span><span class="p">))</span>
+
+    <span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">Node</span><span class="p">(</span><span class="s1">&#39;__start0&#39;</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">))</span>
+    <span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">Edge</span><span class="p">(</span><span class="s1">&#39;__start0&#39;</span><span class="p">,</span> <span class="n">red_sorted</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">state_id</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">graph</span>
 </pre></div>
 
         </details>
@@ -429,6 +449,7 @@ display_same_state_trans: if True, same state transitions will be displayed (Def
     <span class="n">is_mdp</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">automaton</span><span class="p">,</span> <span class="n">Mdp</span><span class="p">)</span>
     <span class="n">is_onsfm</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">automaton</span><span class="p">,</span> <span class="n">Onfsm</span><span class="p">)</span>
     <span class="n">is_smm</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">automaton</span><span class="p">,</span> <span class="n">StochasticMealyMachine</span><span class="p">)</span>
+    <span class="n">is_mc</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">automaton</span><span class="p">,</span> <span class="n">MarkovChain</span><span class="p">)</span>
 
     <span class="n">graph</span> <span class="o">=</span> <span class="n">Dot</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">graph_type</span><span class="o">=</span><span class="s1">&#39;digraph&#39;</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">automaton</span><span class="o">.</span><span class="n">states</span><span class="p">:</span>
@@ -437,12 +458,16 @@ display_same_state_trans: if True, same state transitions will be displayed (Def
         <span class="k">elif</span> <span class="n">is_moore</span><span class="p">:</span>
             <span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">Node</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">state_id</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">state</span><span class="o">.</span><span class="n">state_id</span><span class="si">}</span><span class="s1">|</span><span class="si">{</span><span class="n">state</span><span class="o">.</span><span class="n">output</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
                                 <span class="n">shape</span><span class="o">=</span><span class="s1">&#39;record&#39;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s1">&#39;rounded&#39;</span><span class="p">))</span>
-        <span class="k">elif</span> <span class="n">is_mdp</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">is_mdp</span> <span class="ow">or</span> <span class="n">is_mc</span><span class="p">:</span>
             <span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">Node</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">state_id</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">state</span><span class="o">.</span><span class="n">output</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">Node</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">state_id</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">state_id</span><span class="p">))</span>
 
     <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">automaton</span><span class="o">.</span><span class="n">states</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">is_mc</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">prob</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="p">:</span>
+                <span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">Edge</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">state_id</span><span class="p">,</span> <span class="n">new_state</span><span class="o">.</span><span class="n">state_id</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">prob</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">))</span>
+            <span class="k">continue</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">MealyState</span><span class="p">):</span>
                 <span class="n">new_state</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
@@ -541,7 +566,7 @@ display_same_state_trans: True, should not be set to false except from the visua
 <span class="sd">        path: path to the file</span>
 
 <span class="sd">        automaton_type: type of the automaton, if not specified it will be automatically determined according,</span>
-<span class="sd">            one of [&#39;dfa&#39;, &#39;mealy&#39;, &#39;moore&#39;, &#39;mdp&#39;, &#39;smm&#39;, &#39;onfsm&#39;]</span>
+<span class="sd">            one of [&#39;dfa&#39;, &#39;mealy&#39;, &#39;moore&#39;, &#39;mdp&#39;, &#39;smm&#39;, &#39;onfsm&#39;, &#39;mc&#39;]</span>
 
 <span class="sd">        compute_prefixes: it True, shortest path to reach every state will be computed and saved in the prefix of</span>
 <span class="sd">            the state. Useful when loading the model to use them as a equivalence oracle. (Default value = False)</span>
@@ -554,10 +579,11 @@ display_same_state_trans: True, should not be set to false except from the visua
 
     <span class="k">assert</span> <span class="n">automaton_type</span> <span class="ow">in</span> <span class="n">automaton_types</span>
 
-    <span class="n">node</span> <span class="o">=</span> <span class="n">MealyState</span> <span class="k">if</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mealy&#39;</span> <span class="k">else</span> <span class="n">DfaState</span> <span class="k">if</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;dfa&#39;</span> <span class="k">else</span> <span class="n">MooreState</span>
-    <span class="n">node</span> <span class="o">=</span> <span class="n">MdpState</span> <span class="k">if</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span> <span class="k">else</span> <span class="n">StochasticMealyState</span> <span class="k">if</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;smm&#39;</span> <span class="k">else</span> <span class="n">node</span>
-    <span class="n">node</span> <span class="o">=</span> <span class="n">OnfsmState</span> <span class="k">if</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;onfsm&#39;</span> <span class="k">else</span> <span class="n">node</span>
-    <span class="k">assert</span> <span class="n">node</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="n">id_node_aut_map</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;dfa&#39;</span> <span class="p">:</span> <span class="p">(</span><span class="n">DfaState</span><span class="p">,</span> <span class="n">Dfa</span><span class="p">),</span> <span class="s1">&#39;mealy&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">MealyState</span><span class="p">,</span> <span class="n">MealyMachine</span><span class="p">),</span> <span class="s1">&#39;moore&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">MooreState</span><span class="p">,</span> <span class="n">MooreMachine</span><span class="p">),</span>
+                       <span class="s1">&#39;onfsm&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">OnfsmState</span><span class="p">,</span> <span class="n">Onfsm</span><span class="p">),</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">MdpState</span><span class="p">,</span> <span class="n">Mdp</span><span class="p">),</span> <span class="s1">&#39;mc&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">McState</span><span class="p">,</span> <span class="n">MarkovChain</span><span class="p">),</span>
+                       <span class="s1">&#39;smm&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">StochasticMealyState</span><span class="p">,</span> <span class="n">StochasticMealyMachine</span><span class="p">)}</span>
+
+    <span class="n">node</span><span class="p">,</span> <span class="n">aut_type</span> <span class="o">=</span> <span class="n">id_node_aut_map</span><span class="p">[</span><span class="n">automaton_type</span><span class="p">]</span>
 
     <span class="n">node_label_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">get_node_list</span><span class="p">():</span>
@@ -576,7 +602,7 @@ display_same_state_trans: True, should not be set to false except from the visua
             <span class="n">output</span> <span class="o">=</span> <span class="n">label_output</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;|&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
             <span class="n">output</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">output</span><span class="p">)</span> <span class="k">if</span> <span class="n">output</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()</span> <span class="k">else</span> <span class="n">output</span>
 
-        <span class="k">if</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span> <span class="ow">or</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mc&#39;</span><span class="p">:</span>
             <span class="n">node_label_dict</span><span class="p">[</span><span class="n">node_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">node</span><span class="p">(</span><span class="n">node_name</span><span class="p">,</span> <span class="n">label</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">node_label_dict</span><span class="p">[</span><span class="n">node_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">node</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span> <span class="k">if</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;moore&#39;</span> <span class="k">else</span> <span class="n">node</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
@@ -620,7 +646,10 @@ display_same_state_trans: True, should not be set to false except from the visua
             <span class="n">inp</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">inp</span><span class="p">)</span> <span class="k">if</span> <span class="n">inp</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()</span> <span class="k">else</span> <span class="n">inp</span>
             <span class="n">prob</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">prob</span><span class="p">)</span>
             <span class="n">source</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">inp</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">destination</span><span class="p">,</span> <span class="n">prob</span><span class="p">))</span>
-        <span class="k">else</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mc&#39;</span><span class="p">:</span>
+            <span class="n">prob</span> <span class="o">=</span> <span class="n">label</span>
+            <span class="n">source</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">destination</span><span class="p">,</span><span class="nb">float</span><span class="p">(</span><span class="n">prob</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span> <span class="c1"># moore or dfa</span>
             <span class="n">source</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">label</span><span class="p">)</span> <span class="k">if</span> <span class="n">label</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()</span> <span class="k">else</span> <span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">destination</span>
 
     <span class="k">if</span> <span class="n">initial_node</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -629,20 +658,10 @@ display_same_state_trans: True, should not be set to false except from the visua
               <span class="s2">&quot;Loading,Saving,-Syntax-and-Visualization-of-Automata &quot;</span><span class="p">)</span>
         <span class="k">assert</span> <span class="kc">False</span>
 
-    <span class="k">if</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;dfa&#39;</span><span class="p">:</span>
-        <span class="n">automaton</span> <span class="o">=</span> <span class="n">Dfa</span><span class="p">(</span><span class="n">initial_node</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">node_label_dict</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
-    <span class="k">elif</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;moore&#39;</span><span class="p">:</span>
-        <span class="n">automaton</span> <span class="o">=</span> <span class="n">MooreMachine</span><span class="p">(</span><span class="n">initial_node</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">node_label_dict</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
-    <span class="k">elif</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
-        <span class="n">automaton</span> <span class="o">=</span> <span class="n">Mdp</span><span class="p">(</span><span class="n">initial_node</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">node_label_dict</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
-    <span class="k">elif</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;smm&#39;</span><span class="p">:</span>
-        <span class="n">automaton</span> <span class="o">=</span> <span class="n">StochasticMealyMachine</span><span class="p">(</span><span class="n">initial_node</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">node_label_dict</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
-    <span class="k">elif</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;onfsm&#39;</span><span class="p">:</span>
-        <span class="n">automaton</span> <span class="o">=</span> <span class="n">Onfsm</span><span class="p">(</span><span class="n">initial_node</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">node_label_dict</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">automaton</span> <span class="o">=</span> <span class="n">MealyMachine</span><span class="p">(</span><span class="n">initial_node</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">node_label_dict</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
-    <span class="k">assert</span> <span class="n">automaton</span><span class="o">.</span><span class="n">is_input_complete</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">compute_prefixes</span><span class="p">:</span>
+    <span class="n">automaton</span> <span class="o">=</span> <span class="n">aut_type</span><span class="p">(</span><span class="n">initial_node</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">node_label_dict</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+    <span class="k">if</span> <span class="n">automaton_type</span> <span class="o">!=</span> <span class="s1">&#39;mc&#39;</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">automaton</span><span class="o">.</span><span class="n">is_input_complete</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">compute_prefixes</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mc&#39;</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">automaton</span><span class="o">.</span><span class="n">states</span><span class="p">:</span>
             <span class="n">state</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="n">automaton</span><span class="o">.</span><span class="n">get_shortest_path</span><span class="p">(</span><span class="n">automaton</span><span class="o">.</span><span class="n">initial_state</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">automaton</span>
@@ -659,7 +678,7 @@ For non-deterministic and stochastic systems syntax can be found on AALpy's Wiki
 <pre><code>path: path to the file
 
 automaton_type: type of the automaton, if not specified it will be automatically determined according,
-    one of ['dfa', 'mealy', 'moore', 'mdp', 'smm', 'onfsm']
+    one of ['dfa', 'mealy', 'moore', 'mdp', 'smm', 'onfsm', 'mc']
 
 compute_prefixes: it True, shortest path to reach every state will be computed and saved in the prefix of
     the state. Useful when loading the model to use them as a equivalence oracle. (Default value = False)
@@ -669,6 +688,39 @@ compute_prefixes: it True, shortest path to reach every state will be computed a
   automaton</p>
 </div>
 
+
+                </section>
+                <section id="visualize_fpta">
+                            <div class="attr function"><a class="headerlink" href="#visualize_fpta">#&nbsp;&nbsp</a>
+
+        
+            <span class="def">def</span>
+            <span class="name">visualize_fpta</span><span class="signature">(red)</span>:
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">visualize_fpta</span><span class="p">(</span><span class="n">red</span><span class="p">):</span>
+    <span class="n">red_sorted</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">red</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">prefix</span><span class="p">))</span>
+    <span class="n">graph</span> <span class="o">=</span> <span class="n">Dot</span><span class="p">(</span><span class="s1">&#39;fpta&#39;</span><span class="p">,</span> <span class="n">graph_type</span><span class="o">=</span><span class="s1">&#39;digraph&#39;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">red_sorted</span><span class="p">):</span>
+        <span class="n">r</span><span class="o">.</span><span class="n">state_id</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;q</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">Node</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">state_id</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">r</span><span class="o">.</span><span class="n">state_id</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">red_sorted</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">r</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">Edge</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">state_id</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">state_id</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">i</span><span class="p">))</span>
+
+    <span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">Node</span><span class="p">(</span><span class="s1">&#39;__start0&#39;</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">))</span>
+    <span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">Edge</span><span class="p">(</span><span class="s1">&#39;__start0&#39;</span><span class="p">,</span> <span class="n">red_sorted</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">state_id</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">graph</span>
+</pre></div>
+
+        </details>
+
+    
 
                 </section>
     </main>
