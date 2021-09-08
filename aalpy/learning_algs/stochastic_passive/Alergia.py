@@ -146,7 +146,25 @@ class Alergia:
         return a_c(initial_state, states)
 
 
-def run_Alergia(data, eps=0.005, is_iofpta=False, print_info=False):
-    alergia = Alergia(data, eps=eps, is_mdp=is_iofpta, print_info=print_info)
+def run_Alergia(data, eps=0.005, is_mdp=False, compatibility_checker=HoeffdingCompatibility, print_info=False):
+    """
+    Run Alergia or IOAlergia on provided data.
+
+    Args:
+
+        data: data either in a form [[I,I,I],[I,I,I],...] if learning Markov Chains or [[O,I,O,I,O...],[O,I,O,...],..,]
+            if learning MDPs (I represents input, O output). Note that in whole data first symbol of each entry should
+            be the same (Initial output of the MDP/MC).
+        eps: epsilon value if you are using default HoeffdingCompatibility
+        is_mdp: True if Alergia should learn MDP, else it will learn Markov Chain
+        compatibility_checker: impl. of class CompatibilityChecker, HoeffdingCompatibility with eps value by default
+        (note: not interchangeable, depends on data)
+        print_info:
+
+    Returns:
+
+        mdp or markov chain
+    """
+    alergia = Alergia(data, eps=eps, is_mdp=is_mdp, compatibility_checker=compatibility_checker, print_info=print_info)
     model = alergia.run()
     return model

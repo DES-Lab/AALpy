@@ -2,6 +2,10 @@ from abc import ABC, abstractmethod
 
 
 class DataHandler(ABC):
+    """
+    Abstract class used for data loading for Alergia algorithm. Usage of class is not needed, but recommended for
+    consistency.
+    """
 
     @abstractmethod
     def tokenize_data(self, path):
@@ -9,6 +13,11 @@ class DataHandler(ABC):
 
 
 class CharacterTokenizer(DataHandler):
+    """
+    Used for Markov Chain data parsing.
+    Processes data where each input is a single character.
+    Each input sequence is in the separate line.
+    """
 
     def tokenize_data(self, path):
         data = []
@@ -19,6 +28,11 @@ class CharacterTokenizer(DataHandler):
 
 
 class DelimiterTokenizer(DataHandler):
+    """
+    Used for Markov Chain data parsing.
+    Processes data where each input is separated by the delimiter.
+    Each input sequence is in the separate line.
+    """
 
     def tokenize_data(self, path, delimiter=','):
         data = []
@@ -29,6 +43,12 @@ class DelimiterTokenizer(DataHandler):
 
 
 class IODelimiterTokenizer(DataHandler):
+    """
+    Used for Markov Decision Process data parsing.
+    Processes data where each input/output is separated by the io_delimiter, and i/o pairs are separated
+    by word delimiter.
+    Each output(input/output)* sequence is in the separate line.
+    """
 
     def tokenize_data(self, path, io_delimiter='/', word_delimiter=','):
         data = []

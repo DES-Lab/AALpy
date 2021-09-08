@@ -1,11 +1,13 @@
 from abc import ABC, abstractmethod
 from math import sqrt, log
 
+from aalpy.learning_algs.stochastic_passive.FPTA import AlergiaPtaNode
+
 
 class CompatibilityChecker(ABC):
 
     @abstractmethod
-    def check_difference(self, a, b, **kwargs) -> bool:
+    def check_difference(self, a: AlergiaPtaNode, b: AlergiaPtaNode, **kwargs) -> bool:
         pass
 
 
@@ -13,7 +15,7 @@ class HoeffdingCompatibility(CompatibilityChecker):
     def __init__(self, eps):
         self.eps = eps
 
-    def check_difference(self, a, b, **kwargs):
+    def check_difference(self, a: AlergiaPtaNode, b: AlergiaPtaNode, **kwargs):
         n1 = sum([child.frequency for child in a.children.values()])
         n2 = sum([child.frequency for child in b.children.values()])
 
