@@ -207,14 +207,14 @@ def generate_random_markov_chain(num_states):
         prob = random.choice(possible_probabilities)
         if prob == 1.:
             new_state = states[index + 1]
-            state.transitions[new_state.output].append((new_state, prob))
+            state.transitions.append((new_state, prob))
         else:
             next_state = states[index + 1]
             up_states = list(states)
             up_states.remove(next_state)
             rand_state = random.choice(up_states)
 
-            state.transitions[next_state.output].append((next_state, prob))
-            state.transitions[rand_state.output].append((rand_state, round(1 - prob, 2)))
+            state.transitions.append((next_state, prob))
+            state.transitions.append((rand_state, round(1 - prob, 2)))
 
     return MarkovChain(states[0], states)

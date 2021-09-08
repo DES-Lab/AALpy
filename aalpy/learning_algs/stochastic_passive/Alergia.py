@@ -138,7 +138,10 @@ class Alergia:
             for io, c in red_eq.children.items():
                 destination = red_mdp_map[tuple(c.prefix)]
                 i = io[0] if self.is_mdp else io
-                s.transitions[i].append((destination, red_eq.children_prob[io]))
+                if self.is_mdp:
+                    s.transitions[i].append((destination, red_eq.children_prob[io]))
+                else:
+                    s.transitions.append((destination, red_eq.children_prob[io]))
 
         return a_c(initial_state, states)
 

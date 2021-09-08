@@ -1,3 +1,6 @@
+from aalpy.utils import save_automaton_to_file, load_automaton_from_file
+
+
 def random_mealy_example(alphabet_size, number_of_states, output_size=8):
     """
     Generate a random Mealy machine and learn it.
@@ -726,7 +729,7 @@ def alergia_mdp_example():
 
     visualize_automaton(model)
     remove('mdpData.txt')
-
+    return model
 
 def alergia_mc_example():
     from os import remove
@@ -767,3 +770,4 @@ def alergia_mc_example():
 
     visualize_automaton(model)
     remove('mcData.txt')
+    return model

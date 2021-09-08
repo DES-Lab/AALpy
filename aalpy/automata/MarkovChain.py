@@ -1,5 +1,4 @@
 import random
-from collections import defaultdict
 
 from aalpy.base import Automaton, AutomatonState
 
@@ -8,8 +7,8 @@ class McState(AutomatonState):
     def __init__(self, state_id, output):
         super().__init__(state_id)
         self.output = output
-        # each child is a tuple (Node(output), probability)
-        self.transitions = defaultdict(list)
+        # transitions is a list of tuples (Node(output), probability)
+        self.transitions = list()
 
 
 class MarkovChain(Automaton):
@@ -35,8 +34,8 @@ class MarkovChain(Automaton):
 
         prob = random.random()
 
-        probability_distributions = [j[1] for i in self.current_state.transitions.values() for j in i]
-        states = [j[0] for i in self.current_state.transitions.values() for j in i]
+        probability_distributions = [i[1] for i in self.current_state.transitions]
+        states = [i[0] for i in self.current_state.transitions]
 
         if not states:
             return self.current_state.output
@@ -62,7 +61,8 @@ class MarkovChain(Automaton):
 
             output of the reached state, None otherwise
         """
-        if input in self.current_state.transitions.keys():
-            self.current_state = self.current_state.transitions[input]
-            return self.current_state.output
+        for s in self.current_state.transitions:
+            if s[0].output == input:
+                self.current_state = s[0]
+                return self.current_state.output
         return None
