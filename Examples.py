@@ -1,6 +1,3 @@
-from aalpy.utils import save_automaton_to_file, load_automaton_from_file
-
-
 def random_mealy_example(alphabet_size, number_of_states, output_size=8):
     """
     Generate a random Mealy machine and learn it.
