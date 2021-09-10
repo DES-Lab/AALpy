@@ -695,7 +695,7 @@ def alergia_mdp_example():
     from aalpy.utils import IODelimiterTokenizer
 
     mdp, inps = generate_random_mdp(5, 2, custom_outputs=['A', 'B', 'C', 'D'])
-    # visualize_automaton(mdp, path='Original')
+    visualize_automaton(mdp, path='Original')
     sul = MdpSUL(mdp)
     inputs = mdp.get_input_alphabet()
 
@@ -741,12 +741,13 @@ def alergia_mc_example():
     from aalpy.utils import CharacterTokenizer
 
     mc = generate_random_markov_chain(5)
-    # visualize_automaton(mc, path='Original')
+    visualize_automaton(mc, path='Original')
+
     sul = McSUL(mc)
 
     data = []
-    for _ in range(50000):
-        str_len = randint(5, 25)
+    for _ in range(100000):
+        str_len = randint(4, 12)
         seq = [f'{sul.pre()}']
         for _ in range(str_len):
             o = sul.step()
@@ -765,7 +766,7 @@ def alergia_mc_example():
     # parse data
     data = tokenizer.tokenize_data('mcData.txt')
     # run alergia with the data and automaton_type set to 'mc' to learn a Markov Chain
-    model = run_Alergia(data, automaton_type='mc', eps='auto', print_info=True)
+    model = run_Alergia(data, automaton_type='mc', eps=0.005, print_info=True)
 
     print(model)
 
@@ -819,3 +820,6 @@ def active_alergia_example():
 
     visualize_automaton(model)
     remove('mdpData.txt')
+
+if __name__ == '__main__':
+    alergia_mdp_example()

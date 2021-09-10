@@ -32,22 +32,15 @@ class MarkovChain(Automaton):
             output of the current state
         """
 
-        prob = random.random()
+        if not self.current_state.transitions:
+            return self.current_state.output
 
         probability_distributions = [i[1] for i in self.current_state.transitions]
         states = [i[0] for i in self.current_state.transitions]
 
-        if not states:
-            return self.current_state.output
+        new_state = random.choices(states, probability_distributions, k=1)[0]
 
-        index = 0
-        for i, p in enumerate(probability_distributions):
-            prob -= p
-            if prob <= 0:
-                index = i
-                break
-
-        self.current_state = states[index]
+        self.current_state = new_state
         return self.current_state.output
 
     def step_to(self, input):

@@ -15,7 +15,7 @@ class Alergia:
         self.print_info = print_info
 
         if eps == 'auto':
-            eps = 10 / sum(len(d)-1 for d in data) # len - 1 to ignore initial output
+            eps = 10 / sum(len(d)-1 for d in data)  # len - 1 to ignore initial output
 
         self.diff_checker = HoeffdingCompatibility(eps) if not compatibility_checker else compatibility_checker
 
@@ -57,10 +57,10 @@ class Alergia:
     def fold(self, q_r, q_b):
         for i, c in q_b.children.items():
             if i in q_r.children.keys():
-                q_r.children[i].frequency += c.frequency
+                q_r.input_frequency[i] += c.input_frequency[i]
                 self.fold(q_r.children[i], c)
             else:
-                q_r.children[i] = c
+                q_r.children[i] = c.copy()
 
     def run(self):
         start_time = time.time()
@@ -88,7 +88,7 @@ class Alergia:
                     if s.prefix not in prefixes_in_red:
                         blue.append(s)
 
-        assert sorted(red, key=lambda x: str(x.prefix)) == red
+        assert sorted(red, key=lambda x: len(x.prefix)) == red
 
         self.normalize(red)
 
@@ -104,15 +104,15 @@ class Alergia:
         red_sorted = sorted(list(red), key=lambda x: len(x.prefix))
         for r in red_sorted:
             if not self.is_mdp:
-                total_output = sum([c.frequency for c in r.children.values()])
-                for i, c in r.children.items():
-                    r.children_prob[i] = c.frequency / total_output
+                total_output = sum(r.input_frequency.values())
+                for i in r.input_frequency.keys():
+                    r.children_prob[i] = r.input_frequency[i] / total_output
             else:
                 outputs_per_input = defaultdict(int)
-                for io, c in r.children.items():
-                    outputs_per_input[io[0]] += c.frequency
-                for io, c in r.children.items():
-                    r.children_prob[io] = c.frequency / outputs_per_input[io[0]]
+                for io, freq in r.input_frequency.items():
+                    outputs_per_input[io[0]] += freq
+                for io in r.input_frequency.keys():
+                    r.children_prob[io] = r.input_frequency[io] / outputs_per_input[io[0]]
 
     def get_blue_node(self, red_node):
         blue = self.t
