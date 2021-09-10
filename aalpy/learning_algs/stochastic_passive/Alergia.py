@@ -88,7 +88,7 @@ class Alergia:
                     if s.prefix not in prefixes_in_red:
                         blue.append(s)
 
-        assert sorted(red, key=lambda x: len(x.prefix)) == red
+        assert sorted(red, key=lambda x: str(x.prefix)) == red
 
         self.normalize(red)
 
