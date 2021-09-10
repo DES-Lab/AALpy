@@ -61,6 +61,8 @@ class Alergia:
                 self.fold(q_r.children[i], c)
             else:
                 q_r.children[i] = c.copy()
+                q_r.input_frequency[i] = q_b.input_frequency[i] # Todo, Martin please examine if this is correct,
+                # without it you would get an error later on as child would exist without associated input freq
 
     def run(self):
         start_time = time.time()
@@ -142,9 +144,11 @@ class Alergia:
                 destination = red_mdp_map[tuple(c.prefix)]
                 i = io[0] if self.is_mdp else io
                 if self.is_mdp:
-                    s.transitions[i].append((destination, red_eq.children_prob[io]))
+                    s.transitions[i].append((destination, red_eq.children_prob[i]))
                 else:
-                    s.transitions.append((destination, red_eq.children_prob[io]))
+                    if i not in red_eq.children_prob.keys():
+                        print('')
+                    s.transitions.append((destination, red_eq.children_prob[i]))
 
         return a_c(initial_state, states)
 
