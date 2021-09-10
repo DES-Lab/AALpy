@@ -765,7 +765,7 @@ def alergia_mc_example():
     # parse data
     data = tokenizer.tokenize_data('mcData.txt')
     # run alergia with the data and automaton_type set to 'mc' to learn a Markov Chain
-    model = run_Alergia(data, automaton_type='mc', eps=0.005, print_info=True)
+    model = run_Alergia(data, automaton_type='mc', eps='auto', print_info=True)
 
     print(model)
 

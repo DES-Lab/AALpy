@@ -9,10 +9,13 @@ from aalpy.learning_algs.stochastic_passive.FPTA import create_fpta
 
 class Alergia:
     def __init__(self, data, is_mdp=False, eps=0.005, compatibility_checker=None, print_info=False):
-        assert 0 < eps <= 2
+        assert eps == 'auto' or 0 < eps <= 2
 
         self.is_mdp = is_mdp
         self.print_info = print_info
+
+        if eps == 'auto':
+            eps = 10 / sum(len(d)-1 for d in data) # len - 1 to ignore initial output
 
         self.diff_checker = HoeffdingCompatibility(eps) if not compatibility_checker else compatibility_checker
 
@@ -156,7 +159,8 @@ def run_Alergia(data, automaton_type, eps=0.005, compatibility_checker=None, pri
         [O,(I,O_,...],..,] if learning MDPs (I represents input, O output).
         Note that in whole data first symbol of each entry should be the same (Initial output of the MDP/MC).
 
-        eps: epsilon value if you are using default HoeffdingCompatibility
+        eps: epsilon value if you are using default HoeffdingCompatibility. If it is set to 'auto' it will be computed
+        as 10/(all steps in the data)
 
         automaton_type: either 'mdp' if you wish to learn an MDP, else 'mc' if you want to learn Markov Chain
 
