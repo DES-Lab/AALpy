@@ -774,6 +774,7 @@ def alergia_mc_example():
     remove('mcData.txt')
     return model
 
+
 def active_alergia_example():
     from os import remove
     from aalpy.SULs import MdpSUL
@@ -821,5 +822,3 @@ def active_alergia_example():
     visualize_automaton(model)
     remove('mdpData.txt')
 
-if __name__ == '__main__':
-    alergia_mdp_example()
