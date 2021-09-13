@@ -144,7 +144,7 @@ class Alergia:
                 destination = red_mdp_map[tuple(c.prefix)]
                 i = io[0] if self.is_mdp else io
                 if self.is_mdp:
-                    s.transitions[i].append((destination, red_eq.children_prob[i]))
+                    s.transitions[i].append((destination, red_eq.children_prob[io]))
                 else:
                     if i not in red_eq.children_prob.keys():
                         print('')
