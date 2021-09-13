@@ -42,6 +42,9 @@
             <li>
                     <a class="function" href="#generate_random_ONFSM">generate_random_ONFSM</a>
             </li>
+            <li>
+                    <a class="function" href="#generate_random_markov_chain">generate_random_markov_chain</a>
+            </li>
     </ul>
 
 
@@ -63,7 +66,7 @@
             <div class="codehilite"><pre><span></span><span class="kn">import</span> <span class="nn">random</span>
 
 <span class="kn">from</span> <span class="nn">aalpy.automata</span> <span class="kn">import</span> <span class="n">Dfa</span><span class="p">,</span> <span class="n">DfaState</span><span class="p">,</span> <span class="n">MdpState</span><span class="p">,</span> <span class="n">Mdp</span><span class="p">,</span> <span class="n">MealyMachine</span><span class="p">,</span> <span class="n">MealyState</span><span class="p">,</span> \
-    <span class="n">MooreMachine</span><span class="p">,</span> <span class="n">MooreState</span><span class="p">,</span> <span class="n">OnfsmState</span><span class="p">,</span> <span class="n">Onfsm</span>
+    <span class="n">MooreMachine</span><span class="p">,</span> <span class="n">MooreState</span><span class="p">,</span> <span class="n">OnfsmState</span><span class="p">,</span> <span class="n">Onfsm</span><span class="p">,</span> <span class="n">MarkovChain</span><span class="p">,</span> <span class="n">McState</span>
 <span class="kn">from</span> <span class="nn">aalpy.utils.HelperFunctions</span> <span class="kn">import</span> <span class="n">random_string_generator</span>
 
 
@@ -176,7 +179,7 @@
     <span class="k">return</span> <span class="n">dfa</span>
 
 
-<span class="k">def</span> <span class="nf">generate_random_mdp</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">len_input</span><span class="p">,</span> <span class="n">num_unique_outputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">generate_random_mdp</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">len_input</span><span class="p">,</span> <span class="n">custom_outputs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">num_unique_outputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Generates random MDP.</span>
 
@@ -184,6 +187,7 @@
 
 <span class="sd">        num_states: number of states</span>
 <span class="sd">        len_input: number of inputs</span>
+<span class="sd">        custom_outputs: user predefined outputs</span>
 <span class="sd">        num_unique_outputs: number of outputs</span>
 
 <span class="sd">    Returns:</span>
@@ -193,6 +197,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">num_unique_outputs</span> <span class="o">=</span> <span class="n">num_states</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">num_unique_outputs</span> <span class="k">else</span> <span class="n">num_unique_outputs</span>
     <span class="n">outputs</span> <span class="o">=</span> <span class="p">[</span><span class="n">random_string_generator</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">7</span><span class="p">))</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_unique_outputs</span><span class="p">)]</span>
+    <span class="n">outputs</span> <span class="o">=</span> <span class="n">custom_outputs</span> <span class="k">if</span> <span class="n">custom_outputs</span> <span class="k">else</span> <span class="n">outputs</span>
 
     <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">outputs</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">num_states</span><span class="p">:</span>
         <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">outputs</span><span class="p">))</span>
@@ -253,6 +258,31 @@
                 <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">random_out</span><span class="p">[</span><span class="n">index</span><span class="p">],</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">states</span><span class="p">)))</span>
 
     <span class="k">return</span> <span class="n">Onfsm</span><span class="p">(</span><span class="n">states</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">states</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">generate_random_markov_chain</span><span class="p">(</span><span class="n">num_states</span><span class="p">):</span>
+    <span class="k">assert</span> <span class="n">num_states</span> <span class="o">&gt;=</span> <span class="mi">3</span>
+    <span class="n">possible_probabilities</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">]</span>
+    <span class="n">states</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_states</span><span class="p">):</span>
+        <span class="n">states</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">McState</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;q</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">i</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">state</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">states</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
+        <span class="n">prob</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">possible_probabilities</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">prob</span> <span class="o">==</span> <span class="mf">1.</span><span class="p">:</span>
+            <span class="n">new_state</span> <span class="o">=</span> <span class="n">states</span><span class="p">[</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">new_state</span><span class="p">,</span> <span class="n">prob</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">next_state</span> <span class="o">=</span> <span class="n">states</span><span class="p">[</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">up_states</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">states</span><span class="p">)</span>
+            <span class="n">up_states</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">next_state</span><span class="p">)</span>
+            <span class="n">rand_state</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">up_states</span><span class="p">)</span>
+
+            <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">next_state</span><span class="p">,</span> <span class="n">prob</span><span class="p">))</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">rand_state</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">prob</span><span class="p">,</span> <span class="mi">2</span><span class="p">)))</span>
+
+    <span class="k">return</span> <span class="n">MarkovChain</span><span class="p">(</span><span class="n">states</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">states</span><span class="p">)</span>
 </pre></div>
 
         </details>
@@ -475,12 +505,12 @@ compute_prefixes: if true, shortest path to reach each state will be computed (D
 
         
             <span class="def">def</span>
-            <span class="name">generate_random_mdp</span><span class="signature">(num_states, len_input, num_unique_outputs=None)</span>:
+            <span class="name">generate_random_mdp</span><span class="signature">(num_states, len_input, custom_outputs=None, num_unique_outputs=None)</span>:
     </div>
 
                 <details>
             <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">generate_random_mdp</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">len_input</span><span class="p">,</span> <span class="n">num_unique_outputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+            <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">generate_random_mdp</span><span class="p">(</span><span class="n">num_states</span><span class="p">,</span> <span class="n">len_input</span><span class="p">,</span> <span class="n">custom_outputs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">num_unique_outputs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Generates random MDP.</span>
 
@@ -488,6 +518,7 @@ compute_prefixes: if true, shortest path to reach each state will be computed (D
 
 <span class="sd">        num_states: number of states</span>
 <span class="sd">        len_input: number of inputs</span>
+<span class="sd">        custom_outputs: user predefined outputs</span>
 <span class="sd">        num_unique_outputs: number of outputs</span>
 
 <span class="sd">    Returns:</span>
@@ -497,6 +528,7 @@ compute_prefixes: if true, shortest path to reach each state will be computed (D
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">num_unique_outputs</span> <span class="o">=</span> <span class="n">num_states</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">num_unique_outputs</span> <span class="k">else</span> <span class="n">num_unique_outputs</span>
     <span class="n">outputs</span> <span class="o">=</span> <span class="p">[</span><span class="n">random_string_generator</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">7</span><span class="p">))</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_unique_outputs</span><span class="p">)]</span>
+    <span class="n">outputs</span> <span class="o">=</span> <span class="n">custom_outputs</span> <span class="k">if</span> <span class="n">custom_outputs</span> <span class="k">else</span> <span class="n">outputs</span>
 
     <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">outputs</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">num_states</span><span class="p">:</span>
         <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">outputs</span><span class="p">))</span>
@@ -530,6 +562,7 @@ compute_prefixes: if true, shortest path to reach each state will be computed (D
 
 <pre><code>num_states: number of states
 len_input: number of inputs
+custom_outputs: user predefined outputs
 num_unique_outputs: number of outputs
 </code></pre>
 
@@ -605,6 +638,46 @@ num_unique_outputs: number of outputs
 </code></pre>
 </div>
 
+
+                </section>
+                <section id="generate_random_markov_chain">
+                            <div class="attr function"><a class="headerlink" href="#generate_random_markov_chain">#&nbsp;&nbsp</a>
+
+        
+            <span class="def">def</span>
+            <span class="name">generate_random_markov_chain</span><span class="signature">(num_states)</span>:
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">generate_random_markov_chain</span><span class="p">(</span><span class="n">num_states</span><span class="p">):</span>
+    <span class="k">assert</span> <span class="n">num_states</span> <span class="o">&gt;=</span> <span class="mi">3</span>
+    <span class="n">possible_probabilities</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">]</span>
+    <span class="n">states</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_states</span><span class="p">):</span>
+        <span class="n">states</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">McState</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;q</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">i</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">state</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">states</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
+        <span class="n">prob</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">possible_probabilities</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">prob</span> <span class="o">==</span> <span class="mf">1.</span><span class="p">:</span>
+            <span class="n">new_state</span> <span class="o">=</span> <span class="n">states</span><span class="p">[</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">new_state</span><span class="p">,</span> <span class="n">prob</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">next_state</span> <span class="o">=</span> <span class="n">states</span><span class="p">[</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">up_states</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">states</span><span class="p">)</span>
+            <span class="n">up_states</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">next_state</span><span class="p">)</span>
+            <span class="n">rand_state</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">up_states</span><span class="p">)</span>
+
+            <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">next_state</span><span class="p">,</span> <span class="n">prob</span><span class="p">))</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">rand_state</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">prob</span><span class="p">,</span> <span class="mi">2</span><span class="p">)))</span>
+
+    <span class="k">return</span> <span class="n">MarkovChain</span><span class="p">(</span><span class="n">states</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">states</span><span class="p">)</span>
+</pre></div>
+
+        </details>
+
+    
 
                 </section>
     </main>
