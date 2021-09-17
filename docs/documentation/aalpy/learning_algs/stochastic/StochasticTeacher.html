@@ -133,7 +133,7 @@
     <span class="k">def</span> <span class="nf">pre</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_queries</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">teacher</span><span class="o">.</span><span class="n">back_to_root</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
@@ -531,7 +531,7 @@
     <span class="k">def</span> <span class="nf">pre</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_queries</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">teacher</span><span class="o">.</span><span class="n">back_to_root</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
@@ -583,7 +583,7 @@ passed to the learning algorithm and the equivalence oracle.</p>
             <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">pre</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_queries</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">teacher</span><span class="o">.</span><span class="n">back_to_root</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
 </pre></div>
 
         </details>

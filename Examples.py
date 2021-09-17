@@ -681,3 +681,120 @@ def learn_stochastic_system_and_do_model_checking(example, automaton_type='smm',
 
     print('Value for each property:', [round(d * 100, 2) for d in values.values()])
     print('Error for each property:', [round(d * 100, 2) for d in diff.values()])
+
+
+def alergia_mdp_example():
+    from os import remove
+    from aalpy.SULs import MdpSUL
+    from random import randint, choice
+    from aalpy.learning_algs import run_Alergia
+    from aalpy.utils import visualize_automaton, generate_random_mdp
+    from aalpy.utils import IODelimiterTokenizer
+
+    mdp, inps = generate_random_mdp(5, 2, custom_outputs=['A', 'B', 'C', 'D'])
+    visualize_automaton(mdp, path='Original')
+    sul = MdpSUL(mdp)
+    inputs = mdp.get_input_alphabet()
+
+    data = []
+    for _ in range(100000):
+        str_len = randint(5, 12)
+        seq = [sul.pre()]
+        for _ in range(str_len):
+            i = choice(inputs)
+            o = sul.step(i)
+            seq.append((i, o))
+        sul.post()
+        data.append(seq)
+
+    with open('mdpData.txt', 'w') as file:
+        for seq in data:
+            sting = f'{seq[0]},'
+            for io in seq[1:]:
+                sting += f'{io[0]}/{io[1]},'
+
+            file.write(f'{sting[:-1]}\n')
+
+    file.close()
+
+    # create tokenizer
+    tokenizer = IODelimiterTokenizer()
+    # parse data
+    data = tokenizer.tokenize_data('mdpData.txt')
+    # run alergia with the data and automaton_type set to 'mdp' to True to learn a MDP
+    model = run_Alergia(data, automaton_type='mdp', eps=0.005, print_info=True)
+
+    visualize_automaton(model)
+    remove('mdpData.txt')
+    return model
+
+
+def alergia_mc_example():
+    from os import remove
+    from aalpy.SULs import McSUL
+    from random import randint
+    from aalpy.learning_algs import run_Alergia
+    from aalpy.utils import visualize_automaton, generate_random_markov_chain
+    from aalpy.utils import CharacterTokenizer
+
+    mc = generate_random_markov_chain(5)
+    visualize_automaton(mc, path='Original')
+
+    sul = McSUL(mc)
+
+    data = []
+    for _ in range(100000):
+        str_len = randint(4, 12)
+        seq = [f'{sul.pre()}']
+        for _ in range(str_len):
+            o = sul.step()
+            seq.append(f'{o}')
+        sul.post()
+        data.append(''.join(seq))
+
+    with open('mcData.txt', 'w') as file:
+        for seq in data:
+            file.write(f'{seq}\n')
+
+    file.close()
+
+    # create tokenizer
+    tokenizer = CharacterTokenizer()
+    # parse data
+    data = tokenizer.tokenize_data('mcData.txt')
+    # run alergia with the data and automaton_type set to 'mc' to learn a Markov Chain
+    model = run_Alergia(data, automaton_type='mc', eps=0.005, print_info=True)
+
+    print(model)
+
+    visualize_automaton(model)
+    remove('mcData.txt')
+    return model
+
+
+def active_alergia_example(example='first_grid'):
+    from random import choice, randint
+    from aalpy.SULs import MdpSUL
+    from aalpy.utils import load_automaton_from_file
+    from aalpy.learning_algs import run_active_Alergia
+    from aalpy.learning_algs.stochastic_passive.ActiveAleriga import RandomWordSampler
+
+    mdp = load_automaton_from_file(f'./DotModels/MDPs/{example}.dot', automaton_type='mdp')
+    input_alphabet = mdp.get_input_alphabet()
+
+    sul = MdpSUL(mdp)
+
+    data = []
+    for _ in range(50000):
+        input_query = tuple(choice(input_alphabet) for _ in range(randint(6,14)))
+        outputs = sul.query(input_query)
+        # format data in [O, (I, O), (I, O)...]
+        formatted_io = [outputs.pop(0)]
+        for i,o in zip(input_query, outputs):
+            formatted_io.append((i,o))
+        data.append(formatted_io)
+
+    sampler = RandomWordSampler(num_walks=1000, min_walk_len=8, max_walk_len=20)
+    model = run_active_Alergia(data, sul, sampler, n_iter=10)
+
+    print(model)

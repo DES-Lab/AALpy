@@ -67,6 +67,27 @@
 
             </li>
             <li>
+                    <a class="class" href="#McSUL">McSUL</a>
+                            <ul class="memberlist">
+                        <li>
+                                <a class="function" href="#McSUL.__init__">McSUL</a>
+                        </li>
+                        <li>
+                                <a class="function" href="#McSUL.query">query</a>
+                        </li>
+                        <li>
+                                <a class="function" href="#McSUL.pre">pre</a>
+                        </li>
+                        <li>
+                                <a class="function" href="#McSUL.post">post</a>
+                        </li>
+                        <li>
+                                <a class="function" href="#McSUL.step">step</a>
+                        </li>
+                </ul>
+
+            </li>
+            <li>
                     <a class="class" href="#MealySUL">MealySUL</a>
                             <ul class="memberlist">
                         <li>
@@ -157,7 +178,7 @@
                         <details>
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">aalpy.base</span> <span class="kn">import</span> <span class="n">SUL</span>
-<span class="kn">from</span> <span class="nn">aalpy.automata</span> <span class="kn">import</span> <span class="n">Dfa</span><span class="p">,</span> <span class="n">MealyMachine</span><span class="p">,</span> <span class="n">MooreMachine</span><span class="p">,</span> <span class="n">Onfsm</span><span class="p">,</span> <span class="n">Mdp</span><span class="p">,</span> <span class="n">StochasticMealyMachine</span>
+<span class="kn">from</span> <span class="nn">aalpy.automata</span> <span class="kn">import</span> <span class="n">Dfa</span><span class="p">,</span> <span class="n">MealyMachine</span><span class="p">,</span> <span class="n">MooreMachine</span><span class="p">,</span> <span class="n">Onfsm</span><span class="p">,</span> <span class="n">Mdp</span><span class="p">,</span> <span class="n">StochasticMealyMachine</span><span class="p">,</span> <span class="n">MarkovChain</span>
 
 
 <span class="k">class</span> <span class="nc">DfaSUL</span><span class="p">(</span><span class="n">SUL</span><span class="p">):</span>
@@ -218,6 +239,30 @@
 
     <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">letter</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mdp</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">letter</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">McSUL</span><span class="p">(</span><span class="n">SUL</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mdp</span><span class="p">:</span> <span class="n">MarkovChain</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mc</span> <span class="o">=</span> <span class="n">mdp</span>
+
+    <span class="k">def</span> <span class="nf">query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">word</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+        <span class="n">initial_output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="p">[</span><span class="n">initial_output</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">letter</span> <span class="ow">in</span> <span class="n">word</span><span class="p">:</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">letter</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">out</span>
+
+    <span class="k">def</span> <span class="nf">pre</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mc</span><span class="o">.</span><span class="n">reset_to_initial</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mc</span><span class="o">.</span><span class="n">current_state</span><span class="o">.</span><span class="n">output</span>
+
+    <span class="k">def</span> <span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">letter</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mc</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
 
 
 <span class="k">class</span> <span class="nc">MealySUL</span><span class="p">(</span><span class="n">SUL</span><span class="p">):</span>
@@ -631,6 +676,179 @@ method is called. Each letter in the word (input in the input sequence) is execu
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">letter</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mdp</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">letter</span><span class="p">)</span>
+</pre></div>
+
+        </details>
+
+            <div class="docstring"><p>Executes an action on the system under learning and returns its result.</p>
+
+<p>Args:</p>
+
+<pre><code>letter: Single input that is executed on the SUL.
+</code></pre>
+
+<p>Returns:</p>
+
+<pre><code>Output received after executing the input.
+</code></pre>
+</div>
+
+
+                            </div>
+                </section>
+                <section id="McSUL">
+                                <div class="attr class">
+        <a class="headerlink" href="#McSUL">#&nbsp;&nbsp</a>
+
+        
+        <span class="def">class</span>
+        <span class="name">McSUL</span>(<span class="base"><a href="../base/SUL.html#SUL">aalpy.base.SUL.SUL</a></span>):
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">McSUL</span><span class="p">(</span><span class="n">SUL</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mdp</span><span class="p">:</span> <span class="n">MarkovChain</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mc</span> <span class="o">=</span> <span class="n">mdp</span>
+
+    <span class="k">def</span> <span class="nf">query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">word</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+        <span class="n">initial_output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="p">[</span><span class="n">initial_output</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">letter</span> <span class="ow">in</span> <span class="n">word</span><span class="p">:</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">letter</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">out</span>
+
+    <span class="k">def</span> <span class="nf">pre</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mc</span><span class="o">.</span><span class="n">reset_to_initial</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mc</span><span class="o">.</span><span class="n">current_state</span><span class="o">.</span><span class="n">output</span>
+
+    <span class="k">def</span> <span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">letter</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mc</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+</pre></div>
+
+        </details>
+
+            <div class="docstring"><p>System Under Learning (SUL) abstract class. Defines the interaction between the learning algorithm and the system
+under learning. All systems under learning have to implement this class, as it is
+passed to the learning algorithm and the equivalence oracle.</p>
+</div>
+
+
+                            <div id="McSUL.__init__" class="classattr">
+                                        <div class="attr function"><a class="headerlink" href="#McSUL.__init__">#&nbsp;&nbsp</a>
+
+        
+            <span class="name">McSUL</span><span class="signature">(mdp: <a href="../automata/MarkovChain.html#MarkovChain">aalpy.automata.MarkovChain.MarkovChain</a>)</span>    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mdp</span><span class="p">:</span> <span class="n">MarkovChain</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mc</span> <span class="o">=</span> <span class="n">mdp</span>
+</pre></div>
+
+        </details>
+
+    
+
+                            </div>
+                            <div id="McSUL.query" class="classattr">
+                                        <div class="attr function"><a class="headerlink" href="#McSUL.query">#&nbsp;&nbsp</a>
+
+        
+            <span class="def">def</span>
+            <span class="name">query</span><span class="signature">(self, word: tuple) -&gt; list</span>:
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">word</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+        <span class="n">initial_output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="p">[</span><span class="n">initial_output</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">letter</span> <span class="ow">in</span> <span class="n">word</span><span class="p">:</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">letter</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">out</span>
+</pre></div>
+
+        </details>
+
+            <div class="docstring"><p>Performs a membership query on the SUL. Before the query, pre() method is called and after the query post()
+method is called. Each letter in the word (input in the input sequence) is executed using the step method.</p>
+
+<p>Args:</p>
+
+<pre><code>word: membership query (word consisting of letters/inputs)
+</code></pre>
+
+<p>Returns:</p>
+
+<pre><code>list of outputs, where the i-th output corresponds to the output of the system after the i-th input
+</code></pre>
+</div>
+
+
+                            </div>
+                            <div id="McSUL.pre" class="classattr">
+                                        <div class="attr function"><a class="headerlink" href="#McSUL.pre">#&nbsp;&nbsp</a>
+
+        
+            <span class="def">def</span>
+            <span class="name">pre</span><span class="signature">(self)</span>:
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">pre</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mc</span><span class="o">.</span><span class="n">reset_to_initial</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mc</span><span class="o">.</span><span class="n">current_state</span><span class="o">.</span><span class="n">output</span>
+</pre></div>
+
+        </details>
+
+            <div class="docstring"><p>Resets the system. Called after post method in the equivalence query.</p>
+</div>
+
+
+                            </div>
+                            <div id="McSUL.post" class="classattr">
+                                        <div class="attr function"><a class="headerlink" href="#McSUL.post">#&nbsp;&nbsp</a>
+
+        
+            <span class="def">def</span>
+            <span class="name">post</span><span class="signature">(self)</span>:
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+</pre></div>
+
+        </details>
+
+            <div class="docstring"><p>Performs additional cleanup on the system in necessary. Called before pre method in the equivalence query.</p>
+</div>
+
+
+                            </div>
+                            <div id="McSUL.step" class="classattr">
+                                        <div class="attr function"><a class="headerlink" href="#McSUL.step">#&nbsp;&nbsp</a>
+
+        
+            <span class="def">def</span>
+            <span class="name">step</span><span class="signature">(self, letter=None)</span>:
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">letter</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mc</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
 </pre></div>
 
         </details>
