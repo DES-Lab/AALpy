@@ -1,5 +1,13 @@
 from aalpy.base import SUL
-from aalpy.automata import Dfa, MealyMachine, MooreMachine, Onfsm, Mdp, StochasticMealyMachine, MarkovChain
+from aalpy.automata import (
+    Dfa,
+    MealyMachine,
+    MooreMachine,
+    Onfsm,
+    Mdp,
+    StochasticMealyMachine,
+    MarkovChain,
+)
 
 
 class DfaSUL(SUL):

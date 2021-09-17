@@ -7,10 +7,16 @@ from ...utils.HelperFunctions import is_suffix_of
 
 
 class SamplingBasedObservationTable:
-    def __init__(self, input_alphabet: list, automaton_type, teacher: StochasticTeacher,
-                 compatibility_checker: DifferenceChecker,
-                 alpha=0.05, strategy='normal',
-                 cex_processing=None):
+    def __init__(
+        self,
+        input_alphabet: list,
+        automaton_type,
+        teacher: StochasticTeacher,
+        compatibility_checker: DifferenceChecker,
+        alpha=0.05,
+        strategy="normal",
+        cex_processing=None,
+    ):
         """Constructor of the observation table. Initial queries are asked in the constructor.
 
         Args:
@@ -37,7 +43,7 @@ class SamplingBasedObservationTable:
         self.cex_processing = cex_processing
 
         # initial output
-        if automaton_type == 'mdp':
+        if automaton_type == "mdp":
             self.initial_output = tuple(teacher.initial_value)
             self.S.append(self.initial_output)
         else:
@@ -64,13 +70,13 @@ class SamplingBasedObservationTable:
 
             False if no cells are to be refined, True if refining happened
         """
-        if self.automaton_type == 'mdp':
+        if self.automaton_type == "mdp":
             pta_root = Node(self.initial_output[0])
         else:
             pta_root = Node(None)
 
         dynamic = 0
-        if self.strategy == 'classic':
+        if self.strategy == "classic":
             to_refine = []
             for s in self.S + list(self.get_extended_s()):
                 for e in self.E:
@@ -105,7 +111,9 @@ class SamplingBasedObservationTable:
                         dynamic += uncertainty_value
                         self.add_to_PTA(pta_root, s + e, uncertainty_value)
 
-        resample_value = n_resample if self.strategy == 'classic' else max(dynamic // 2, 500)
+        resample_value = (
+            n_resample if self.strategy == "classic" else max(dynamic // 2, 500)
+        )
 
         for i in range(resample_value):
             self.teacher.tree_query(pta_root)
@@ -216,9 +224,13 @@ class SamplingBasedObservationTable:
             return None
 
         for ind, s1 in enumerate(self.S):
-            for s2 in self.S[ind + 1:]:
+            for s2 in self.S[ind + 1 :]:
                 if self.are_rows_compatible(s1, s2, ignore):
-                    i_o_pairs = [(i, tuple([o])) for i in self.input_alphabet for o in self.T[s1][i].keys()]
+                    i_o_pairs = [
+                        (i, tuple([o]))
+                        for i in self.input_alphabet
+                        for o in self.T[s1][i].keys()
+                    ]
                     for i, o in i_o_pairs:
                         s1_keys = self.T[s1 + i + o].keys()
                         s2_keys = self.T[s2 + i + o].keys()
@@ -256,8 +268,9 @@ class SamplingBasedObservationTable:
                 row_target = self.T[target]
                 row_r = self.T[r]
                 for e in self.E:
-                    diff_value += self.compatibility_checker.difference_value(row_r.get(e, None),
-                                                                              row_target.get(e, None))
+                    diff_value += self.compatibility_checker.difference_value(
+                        row_r.get(e, None), row_target.get(e, None)
+                    )
                 if diff_value < smallest_diff_value:
                     # if smallest_diff_value != 2**32:
                     #    print("Found a better rep")
@@ -296,7 +309,9 @@ class SamplingBasedObservationTable:
             elif self.get_consistency_violation(e):
                 to_keep.append(e)
             else:
-                self.E.remove(e)  # need to remove here for get_consistency_violation to work
+                self.E.remove(
+                    e
+                )  # need to remove here for get_consistency_violation to work
                 to_remove.append(e)
 
         for e in to_remove:
@@ -309,7 +324,7 @@ class SamplingBasedObservationTable:
         Removes unnecessary rows from the observation table.
 
         Args:
-          hypothesis: 
+          hypothesis:
 
         """
 
@@ -321,13 +336,19 @@ class SamplingBasedObservationTable:
                 continue
 
             rep = self.get_representative(s)
-            if self.automaton_type == 'mdp':
-                if 'chaos' in {t[0].output for transitions in prefix_to_state_dict[rep].transitions.values()
-                               for t in transitions}:
+            if self.automaton_type == "mdp":
+                if "chaos" in {
+                    t[0].output
+                    for transitions in prefix_to_state_dict[rep].transitions.values()
+                    for t in transitions
+                }:
                     continue
             else:
-                if 'chaos' in {t[1] for transitions in prefix_to_state_dict[rep].transitions.values()
-                               for t in transitions}:
+                if "chaos" in {
+                    t[1]
+                    for transitions in prefix_to_state_dict[rep].transitions.values()
+                    for t in transitions
+                }:
                     continue
 
             num_compatible_repr = 0
@@ -335,7 +356,7 @@ class SamplingBasedObservationTable:
             for r in self.compatibility_classes_representatives:
                 if self.are_rows_compatible(r, s):
                     num_compatible_repr += 1
-                if len(s) < len(r) and s == r[:len(s)]:
+                if len(s) < len(r) and s == r[: len(s)]:
                     row_is_prefix = True
                     continue
             if num_compatible_repr != 1 or row_is_prefix:
@@ -343,7 +364,7 @@ class SamplingBasedObservationTable:
 
             to_remove.append(s)
             for otherS in self.S:
-                if s == otherS[:len(s)] and otherS not in to_remove:
+                if s == otherS[: len(s)] and otherS not in to_remove:
                     to_remove.append(otherS)
 
         for s in to_remove:
@@ -358,8 +379,15 @@ class SamplingBasedObservationTable:
         else:
             self.update_obs_table_with_freq_obs()
 
-    def stop(self, learning_round, chaos_cex_present, min_rounds=10, max_rounds=None,
-             target_unambiguity=0.99, print_unambiguity=False):
+    def stop(
+        self,
+        learning_round,
+        chaos_cex_present,
+        min_rounds=10,
+        max_rounds=None,
+        target_unambiguity=0.99,
+        print_unambiguity=False,
+    ):
         """
         Decide if learning should terminate.
 
@@ -396,7 +424,7 @@ class SamplingBasedObservationTable:
         unambiguous_rows_percentage = numerator / len(self.S + extended_s)
 
         self.unambiguity_values.append(unambiguous_rows_percentage)
-        if self.strategy != 'classic' and learning_round >= min_rounds:
+        if self.strategy != "classic" and learning_round >= min_rounds:
             # keys are number of last unambiguity values and value is maximum differance allowed between them
             stopping_dict = {12: 0.001, 18: 0.002, 25: 0.005, 30: 0.01, 35: 0.02}
 
@@ -406,9 +434,14 @@ class SamplingBasedObservationTable:
                     return True
 
         if print_unambiguity and learning_round % 5 == 0:
-            print(f'Unambiguous rows: {round(unambiguous_rows_percentage * 100, 2)}%;'
-                  f' {numerator} out of {len(self.S + extended_s)}')
-        if learning_round >= min_rounds and unambiguous_rows_percentage >= target_unambiguity:
+            print(
+                f"Unambiguous rows: {round(unambiguous_rows_percentage * 100, 2)}%;"
+                f" {numerator} out of {len(self.S + extended_s)}"
+            )
+        if (
+            learning_round >= min_rounds
+            and unambiguous_rows_percentage >= target_unambiguity
+        ):
             return True
 
         return False
@@ -442,15 +475,23 @@ class SamplingBasedObservationTable:
           True if cells are different, false otherwise
 
         """
-        if self.strategy == 'classic':
-            if self.teacher.complete_query(s1, e) and self.teacher.complete_query(s2, e):
-                return self.compatibility_checker.check_difference(self.T[s1][e], self.T[s2][e])
-        elif self.strategy == 'normal' or self.strategy == 'chi2':
+        if self.strategy == "classic":
+            if self.teacher.complete_query(s1, e) and self.teacher.complete_query(
+                s2, e
+            ):
+                return self.compatibility_checker.check_difference(
+                    self.T[s1][e], self.T[s2][e]
+                )
+        elif self.strategy == "normal" or self.strategy == "chi2":
             if e in self.T[s1] and e in self.T[s2]:
-                return self.compatibility_checker.check_difference(self.T[s1][e], self.T[s2][e])
+                return self.compatibility_checker.check_difference(
+                    self.T[s1][e], self.T[s2][e]
+                )
         else:
             if e in self.T[s1] and e in self.T[s2]:
-                return self.compatibility_checker.check_difference(self.T[s1][e], self.T[s2][e], s1=s1,s2=s2,e=e)
+                return self.compatibility_checker.check_difference(
+                    self.T[s1][e], self.T[s2][e], s1=s1, s2=s2, e=e
+                )
         return False
 
     def are_rows_compatible(self, s1, s2, e_ignore=None):
@@ -468,7 +509,7 @@ class SamplingBasedObservationTable:
           True if rows are compatible, False otherwise
 
         """
-        if self.automaton_type == 'mdp' and s1[-1] != s2[-1]:
+        if self.automaton_type == "mdp" and s1[-1] != s2[-1]:
             return False
 
         for e in self.E:
@@ -517,7 +558,7 @@ class SamplingBasedObservationTable:
         self.compatibility_classes_representatives = representatives
 
     def chaos_counterexample(self, hypothesis):
-        """ Check whether the chaos state is reachable.
+        """Check whether the chaos state is reachable.
 
         Args:
           hypothesis: current hypothesis
@@ -527,20 +568,24 @@ class SamplingBasedObservationTable:
 
         """
         for state in hypothesis.states:
-            if self.automaton_type == "mdp" and state.output == "chaos" \
-                    or self.automaton_type == "smm" and state.state_id == "chaos":
+            if (
+                self.automaton_type == "mdp"
+                and state.output == "chaos"
+                or self.automaton_type == "smm"
+                and state.state_id == "chaos"
+            ):
                 # we are not interested in chaos state, but in prefix to chaos
                 continue
             for i in self.input_alphabet:
                 output_states = state.transitions[i[0]]
-                if self.automaton_type == 'mdp':
+                if self.automaton_type == "mdp":
                     for (s, _) in output_states:
-                        if s.output == 'chaos':
+                        if s.output == "chaos":
                             return True
                             # return state.prefix + i
                 else:
                     for (_, o, _) in output_states:
-                        if o == 'chaos':
+                        if o == "chaos":
                             return True
                             # return state.prefix
         return False
@@ -559,7 +604,7 @@ class SamplingBasedObservationTable:
 
         """
         curr_node = pta_root
-        start = 1 if self.automaton_type == 'mdp' else 0
+        start = 1 if self.automaton_type == "mdp" else 0
         for index in range(start, len(trace), 2):
             inp = trace[index]
             if uncertainty_value:
@@ -587,21 +632,27 @@ class SamplingBasedObservationTable:
         r_state_map = dict()
         state_counter = 0
         for r in self.compatibility_classes_representatives:
-            if self.automaton_type == 'mdp':
-                r_state_map[r] = MdpState(state_id=f's{state_counter}', output=r[-1])
+            if self.automaton_type == "mdp":
+                r_state_map[r] = MdpState(state_id=f"s{state_counter}", output=r[-1])
             else:
-                r_state_map[r] = StochasticMealyState(state_id=f's{state_counter}')
+                r_state_map[r] = StochasticMealyState(state_id=f"s{state_counter}")
             r_state_map[r].prefix = r
 
             state_counter += 1
-        if self.automaton_type == 'mdp':
-            r_state_map['chaos'] = MdpState(state_id=f's{state_counter}', output='chaos')
+        if self.automaton_type == "mdp":
+            r_state_map["chaos"] = MdpState(
+                state_id=f"s{state_counter}", output="chaos"
+            )
             for i in self.input_alphabet:
-                r_state_map['chaos'].transitions[i[0]].append((r_state_map['chaos'], 1.))
+                r_state_map["chaos"].transitions[i[0]].append(
+                    (r_state_map["chaos"], 1.0)
+                )
         else:
-            r_state_map['chaos'] = StochasticMealyState(state_id=f'chaos')
+            r_state_map["chaos"] = StochasticMealyState(state_id=f"chaos")
             for i in self.input_alphabet:
-                r_state_map['chaos'].transitions[i[0]].append((r_state_map['chaos'], 'chaos', 1.))
+                r_state_map["chaos"].transitions[i[0]].append(
+                    (r_state_map["chaos"], "chaos", 1.0)
+                )
 
         for s in self.compatibility_classes_representatives:
             for i in self.input_alphabet:
@@ -610,29 +661,52 @@ class SamplingBasedObservationTable:
                 total_sum = sum(freq_dict.values())
 
                 origin_state = s
-                if self.strategy == 'classic' and not self.teacher.complete_query(s, i) \
-                        or self.strategy != 'classic' and i not in self.T[s]:
-                    if self.automaton_type == 'mdp':
-                        r_state_map[origin_state].transitions[i[0]].append((r_state_map['chaos'], 1.))
+                if (
+                    self.strategy == "classic"
+                    and not self.teacher.complete_query(s, i)
+                    or self.strategy != "classic"
+                    and i not in self.T[s]
+                ):
+                    if self.automaton_type == "mdp":
+                        r_state_map[origin_state].transitions[i[0]].append(
+                            (r_state_map["chaos"], 1.0)
+                        )
                     else:
-                        r_state_map[origin_state].transitions[i[0]].append((r_state_map['chaos'], 'chaos', 1.))
+                        r_state_map[origin_state].transitions[i[0]].append(
+                            (r_state_map["chaos"], "chaos", 1.0)
+                        )
                 else:
                     if len(freq_dict.items()) == 0:
-                        if self.automaton_type == 'mdp':
-                            r_state_map[origin_state].transitions[i[0]].append((r_state_map['chaos'], 1.))
+                        if self.automaton_type == "mdp":
+                            r_state_map[origin_state].transitions[i[0]].append(
+                                (r_state_map["chaos"], 1.0)
+                            )
                         else:
-                            r_state_map[origin_state].transitions[i[0]].append((r_state_map['chaos'], 'chaos', 1.))
+                            r_state_map[origin_state].transitions[i[0]].append(
+                                (r_state_map["chaos"], "chaos", 1.0)
+                            )
                     else:
                         for output, frequency in freq_dict.items():
                             new_state = self.get_representative(s + i + tuple([output]))
-                            if self.automaton_type == 'mdp':
+                            if self.automaton_type == "mdp":
                                 r_state_map[origin_state].transitions[i[0]].append(
-                                    (r_state_map[new_state], frequency / total_sum))
+                                    (r_state_map[new_state], frequency / total_sum)
+                                )
                             else:
                                 r_state_map[origin_state].transitions[i[0]].append(
-                                    (r_state_map[new_state], output, frequency / total_sum))
+                                    (
+                                        r_state_map[new_state],
+                                        output,
+                                        frequency / total_sum,
+                                    )
+                                )
 
-        if self.automaton_type == 'mdp':
-            return Mdp(r_state_map[self.get_representative(self.initial_output)], list(r_state_map.values()))
+        if self.automaton_type == "mdp":
+            return Mdp(
+                r_state_map[self.get_representative(self.initial_output)],
+                list(r_state_map.values()),
+            )
         else:
-            return StochasticMealyMachine(r_state_map[tuple()], list(r_state_map.values()))
+            return StochasticMealyMachine(
+                r_state_map[tuple()], list(r_state_map.values())
+            )

@@ -11,7 +11,9 @@ class BaseOracleTests(unittest.TestCase):
     Abstract class for testing oracles.
     """
 
-    def generate_dfa_suls(self, number_of_states=10, alphabet_size=10, num_accepting_states=5):
+    def generate_dfa_suls(
+        self, number_of_states=10, alphabet_size=10, num_accepting_states=5
+    ):
         """
         Creates a random DFA and creates a learning and validation SUL, both SUL are identical.
 
@@ -46,9 +48,13 @@ class BaseOracleTests(unittest.TestCase):
 
         """
         learned_model = run_Lstar(
-            alphabet, learning_sul, eq_oracle, 'dfa', print_level=2)
+            alphabet, learning_sul, eq_oracle, "dfa", print_level=2
+        )
 
         validation_eq_oracle = WMethodEqOracle(
-            alphabet, validation_sul, max_number_of_states=len(learned_model.states) + 2)
-        self.assertIsNone(validation_eq_oracle.find_cex(
-            learned_model), "Counterexample found by WMethodEqOracle")
+            alphabet, validation_sul, max_number_of_states=len(learned_model.states) + 2
+        )
+        self.assertIsNone(
+            validation_eq_oracle.find_cex(learned_model),
+            "Counterexample found by WMethodEqOracle",
+        )

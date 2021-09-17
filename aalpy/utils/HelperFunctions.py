@@ -32,7 +32,7 @@ def all_prefixes(li):
       list of all prefixes
 
     """
-    return [tuple(li[:i + 1]) for i in range(len(li))]
+    return [tuple(li[: i + 1]) for i in range(len(li))]
 
 
 def all_suffixes(li):
@@ -46,20 +46,21 @@ def all_suffixes(li):
       list of all suffixes
 
     """
-    return [tuple(li[len(li) - i - 1:]) for i in range(len(li))]
+    return [tuple(li[len(li) - i - 1 :]) for i in range(len(li))]
 
 
-def profile_function(function: callable, sort_key='cumtime'):
+def profile_function(function: callable, sort_key="cumtime"):
     """
 
     Args:
-      function: callable: 
+      function: callable:
       sort_key:  (Default value = 'cumtime')
 
     Returns:
         prints the profiling results
     """
     import cProfile
+
     pr = cProfile.Profile()
     pr.enable()
     function()
@@ -80,7 +81,8 @@ def random_string_generator(size=10, chars=string.ascii_lowercase + string.digit
         a random string of length size
     """
     import random
-    return ''.join(random.choice(chars) for _ in range(size))
+
+    return "".join(random.choice(chars) for _ in range(size))
 
 
 def smm_to_mdp_conversion(smm: StochasticMealyMachine):
@@ -116,13 +118,19 @@ def smm_to_mdp_conversion(smm: StochasticMealyMachine):
             smm_state_to_mdp_state[(s.state_id, o)] = new_state
 
     for s in smm.states:
-        mdp_states_for_s = {mdp_state for (s_id, o), mdp_state in smm_state_to_mdp_state.items() if s_id == s.state_id}
+        mdp_states_for_s = {
+            mdp_state
+            for (s_id, o), mdp_state in smm_state_to_mdp_state.items()
+            if s_id == s.state_id
+        }
         for i in inputs:
             for outgoing_t in s.transitions[i]:
                 target_smm_state = outgoing_t[0]
                 output = outgoing_t[1]
                 prob = outgoing_t[2]
-                target_mdp_state = smm_state_to_mdp_state[(target_smm_state.state_id, output)]
+                target_mdp_state = smm_state_to_mdp_state[
+                    (target_smm_state.state_id, output)
+                ]
                 for mdp_state in mdp_states_for_s:
                     mdp_state.transitions[i].append((target_mdp_state, prob))
                 if s == smm.initial_state:
@@ -134,23 +142,23 @@ def print_learning_info(info: dict):
     """
     Print learning statistics.
     """
-    print('-----------------------------------')
-    print('Learning Finished.')
-    print('Learning Rounds:  {}'.format(info['learning_rounds']))
-    print('Number of states: {}'.format(info['automaton_size']))
-    print('Time (in seconds)')
-    print('  Total                : {}'.format(info['total_time']))
-    print('  Learning algorithm   : {}'.format(info['learning_time']))
-    print('  Conformance checking : {}'.format(info['eq_oracle_time']))
-    print('Learning Algorithm')
-    print(' # Membership Queries  : {}'.format(info['queries_learning']))
-    if 'cache_saved' in info.keys():
-        print(' # MQ Saved by Caching : {}'.format(info['cache_saved']))
-    print(' # Steps               : {}'.format(info['steps_learning']))
-    print('Equivalence Query')
-    print(' # Membership Queries  : {}'.format(info['queries_eq_oracle']))
-    print(' # Steps               : {}'.format(info['steps_eq_oracle']))
-    print('-----------------------------------')
+    print("-----------------------------------")
+    print("Learning Finished.")
+    print("Learning Rounds:  {}".format(info["learning_rounds"]))
+    print("Number of states: {}".format(info["automaton_size"]))
+    print("Time (in seconds)")
+    print("  Total                : {}".format(info["total_time"]))
+    print("  Learning algorithm   : {}".format(info["learning_time"]))
+    print("  Conformance checking : {}".format(info["eq_oracle_time"]))
+    print("Learning Algorithm")
+    print(" # Membership Queries  : {}".format(info["queries_learning"]))
+    if "cache_saved" in info.keys():
+        print(" # MQ Saved by Caching : {}".format(info["cache_saved"]))
+    print(" # Steps               : {}".format(info["steps_learning"]))
+    print("Equivalence Query")
+    print(" # Membership Queries  : {}".format(info["queries_eq_oracle"]))
+    print(" # Steps               : {}".format(info["steps_eq_oracle"]))
+    print("-----------------------------------")
 
 
 def print_observation_table(ot, table_type):
@@ -163,9 +171,9 @@ def print_observation_table(ot, table_type):
         table_type: 'det', 'non-det', or 'stoc'
 
     """
-    if table_type == 'det':
+    if table_type == "det":
         s_set, extended_s, e_set, table = ot.S, ot.s_dot_a(), ot.E, ot.T
-    elif table_type == 'non-det':
+    elif table_type == "non-det":
         s_set, extended_s, e_set, table = ot.S, ot.S_dot_A, ot.E, ot.T
     else:
         s_set, extended_s, e_set, table = ot.S, ot.get_extended_s(), ot.E, ot.T
@@ -173,17 +181,17 @@ def print_observation_table(ot, table_type):
     headers = [str(e) for e in e_set]
     s_rows = []
     extended_rows = []
-    headers.insert(0, 'Prefixes / E set')
+    headers.insert(0, "Prefixes / E set")
     for s in s_set:
         row = [str(s)]
-        if table_type == 'det':
+        if table_type == "det":
             row.extend(str(e) for e in table[s])
         else:
             row.extend(str(table[s][e]) for e in e_set)
         s_rows.append(row)
     for s in extended_s:
         row = [str(s)]
-        if table_type == 'det':
+        if table_type == "det":
             row.extend(str(e) for e in table[s])
         else:
             row.extend(str(table[s][e]) for e in e_set)
@@ -197,16 +205,20 @@ def print_observation_table(ot, table_type):
 
     row_len = 0
     for row in table:
-        row = "|".join(element.ljust(columns[ind] + 1) for ind, element in enumerate(row))
+        row = "|".join(
+            element.ljust(columns[ind] + 1) for ind, element in enumerate(row)
+        )
         print("-" * len(row))
         row_len = len(row)
         print(row)
-    print('=' * row_len)
+    print("=" * row_len)
     for row in extended_rows:
-        row = "|".join(element.ljust(columns[ind] + 1) for ind, element in enumerate(row))
+        row = "|".join(
+            element.ljust(columns[ind] + 1) for ind, element in enumerate(row)
+        )
         print("-" * len(row))
         print(row)
-    print('-' * row_len)
+    print("-" * row_len)
 
 
 def is_suffix_of(suffix, trace) -> bool:
@@ -223,7 +235,7 @@ def is_suffix_of(suffix, trace) -> bool:
     if len(trace) < len(suffix):
         return False
     else:
-        return trace[-len(suffix):] == suffix
+        return trace[-len(suffix) :] == suffix
 
 
 def get_cex_prefixes(cex, automaton_type):
@@ -238,6 +250,6 @@ def get_cex_prefixes(cex, automaton_type):
 
         all prefixes of the counterexample based on the `automaton_type`
     """
-    if automaton_type == 'mdp':
-        return [tuple(cex[:i + 1]) for i in range(0, len(cex), 2)]
+    if automaton_type == "mdp":
+        return [tuple(cex[: i + 1]) for i in range(0, len(cex), 2)]
     return [tuple(cex[:i]) for i in range(0, len(cex) + 1, 2)]

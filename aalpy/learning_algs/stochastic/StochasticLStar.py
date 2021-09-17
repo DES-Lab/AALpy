@@ -1,27 +1,55 @@
 import time
 
 from aalpy.base import SUL, Oracle
-from aalpy.learning_algs.stochastic.DifferenceChecker import AdvancedHoeffdingChecker, HoeffdingChecker, \
-    ChiSquareChecker, DifferenceChecker
-from aalpy.learning_algs.stochastic.SamplingBasedObservationTable import SamplingBasedObservationTable
-from aalpy.learning_algs.stochastic.StochasticCexProcessing import stochastic_longest_prefix, stochastic_rs
+from aalpy.learning_algs.stochastic.DifferenceChecker import (
+    AdvancedHoeffdingChecker,
+    HoeffdingChecker,
+    ChiSquareChecker,
+    DifferenceChecker,
+)
+from aalpy.learning_algs.stochastic.SamplingBasedObservationTable import (
+    SamplingBasedObservationTable,
+)
+from aalpy.learning_algs.stochastic.StochasticCexProcessing import (
+    stochastic_longest_prefix,
+    stochastic_rs,
+)
 from aalpy.learning_algs.stochastic.StochasticTeacher import StochasticTeacher
-from aalpy.utils.HelperFunctions import print_learning_info, print_observation_table, get_cex_prefixes
+from aalpy.utils.HelperFunctions import (
+    print_learning_info,
+    print_observation_table,
+    get_cex_prefixes,
+)
 from aalpy.utils.ModelChecking import stop_based_on_confidence
 
-strategies = ['classic', 'normal', 'chi2']
-cex_sampling_options = [None, 'bfs']
-cex_processing_options = [None, 'longest_prefix', 'rs']
+strategies = ["classic", "normal", "chi2"]
+cex_sampling_options = [None, "bfs"]
+cex_processing_options = [None, "longest_prefix", "rs"]
 print_options = [0, 1, 2, 3]
-diff_checker_options = {'classic': HoeffdingChecker(),
-                        'chi2': ChiSquareChecker(),
-                        'normal': AdvancedHoeffdingChecker()}
+diff_checker_options = {
+    "classic": HoeffdingChecker(),
+    "chi2": ChiSquareChecker(),
+    "normal": AdvancedHoeffdingChecker(),
+}
 
 
-def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_resample=100, target_unambiguity=0.99,
-                         min_rounds=10, max_rounds=200, automaton_type='mdp', strategy='normal',
-                         cex_processing='longest_prefix', samples_cex_strategy=None, return_data=False,
-                         property_based_stopping=None, print_level=2):
+def run_stochastic_Lstar(
+    input_alphabet,
+    sul: SUL,
+    eq_oracle: Oracle,
+    n_c=20,
+    n_resample=100,
+    target_unambiguity=0.99,
+    min_rounds=10,
+    max_rounds=200,
+    automaton_type="mdp",
+    strategy="normal",
+    cex_processing="longest_prefix",
+    samples_cex_strategy=None,
+    return_data=False,
+    property_based_stopping=None,
+    print_level=2,
+):
     """
     Learning of Markov Decision Processes based on 'L*-Based Learning of Markov Decision Processes' by Tappler et al.
 
@@ -69,7 +97,10 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_
       learned MDP/SMM
     """
 
-    assert samples_cex_strategy in cex_sampling_options or samples_cex_strategy.startswith('random')
+    assert (
+        samples_cex_strategy in cex_sampling_options
+        or samples_cex_strategy.startswith("random")
+    )
     assert cex_processing in cex_processing_options
     if property_based_stopping:
         assert len(property_based_stopping) == 3
@@ -80,16 +111,26 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_
         assert isinstance(strategy, DifferenceChecker)
         compatibility_checker = strategy
 
-    stochastic_teacher = StochasticTeacher(sul, n_c, eq_oracle, automaton_type, compatibility_checker,
-                                           samples_cex_strategy=samples_cex_strategy)
+    stochastic_teacher = StochasticTeacher(
+        sul,
+        n_c,
+        eq_oracle,
+        automaton_type,
+        compatibility_checker,
+        samples_cex_strategy=samples_cex_strategy,
+    )
 
     # This way all steps from eq. oracle will be added to the tree
     eq_oracle.sul = stochastic_teacher.sul
 
-    observation_table = SamplingBasedObservationTable(input_alphabet, automaton_type,
-                                                      stochastic_teacher, compatibility_checker=compatibility_checker,
-                                                      strategy=strategy,
-                                                      cex_processing=cex_processing)
+    observation_table = SamplingBasedObservationTable(
+        input_alphabet,
+        automaton_type,
+        stochastic_teacher,
+        compatibility_checker=compatibility_checker,
+        strategy=strategy,
+        cex_processing=cex_processing,
+    )
 
     start_time = time.time()
     eq_query_time = 0
@@ -112,16 +153,26 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_
         chaos_cex_present = observation_table.chaos_counterexample(hypothesis)
 
         if not chaos_cex_present:
-            if automaton_type == 'mdp':
-                hypothesis.states.remove(next(state for state in hypothesis.states if state.output == 'chaos'))
+            if automaton_type == "mdp":
+                hypothesis.states.remove(
+                    next(
+                        state for state in hypothesis.states if state.output == "chaos"
+                    )
+                )
             else:
-                hypothesis.states.remove(next(state for state in hypothesis.states if state.state_id == 'chaos'))
+                hypothesis.states.remove(
+                    next(
+                        state
+                        for state in hypothesis.states
+                        if state.state_id == "chaos"
+                    )
+                )
 
         if print_level > 1:
-            print(f'Hypothesis: {learning_rounds}: {len(hypothesis.states)} states.')
+            print(f"Hypothesis: {learning_rounds}: {len(hypothesis.states)} states.")
 
         if print_level == 3:
-            print_observation_table(observation_table, 'stochastic')
+            print_observation_table(observation_table, "stochastic")
 
         cex = None
         if not chaos_cex_present:
@@ -131,7 +182,7 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_
 
         if cex:
             if print_level == 3:
-                print('Counterexample', cex)
+                print("Counterexample", cex)
             # get all prefixes and add them to the S set
             if cex_processing is None:
                 for pre in get_cex_prefixes(cex, automaton_type):
@@ -139,10 +190,12 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_
                         observation_table.S.append(pre)
             else:
                 suffixes = None
-                if cex_processing == 'longest_prefix':
-                    prefixes = observation_table.S + list(observation_table.get_extended_s())
+                if cex_processing == "longest_prefix":
+                    prefixes = observation_table.S + list(
+                        observation_table.get_extended_s()
+                    )
                     suffixes = stochastic_longest_prefix(cex, prefixes)
-                elif cex_processing == 'rs':
+                elif cex_processing == "rs":
                     suffixes = stochastic_rs(sul, cex, hypothesis)
                 for suf in suffixes:
                     if suf not in observation_table.E:
@@ -154,14 +207,20 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_
 
         if property_based_stopping and learning_rounds >= min_rounds:
             # stop based on maximum allowed error
-            if stop_based_on_confidence(hypothesis, property_based_stopping, print_level):
+            if stop_based_on_confidence(
+                hypothesis, property_based_stopping, print_level
+            ):
                 break
         else:
             # stop based on number of unambiguous rows
-            stop_based_on_unambiguity = observation_table.stop(learning_rounds, chaos_cex_present,
-                                                               target_unambiguity=target_unambiguity,
-                                                               min_rounds=min_rounds, max_rounds=max_rounds,
-                                                               print_unambiguity=print_level > 1)
+            stop_based_on_unambiguity = observation_table.stop(
+                learning_rounds,
+                chaos_cex_present,
+                target_unambiguity=target_unambiguity,
+                min_rounds=min_rounds,
+                max_rounds=max_rounds,
+                print_unambiguity=print_level > 1,
+            )
             if stop_based_on_unambiguity:
                 break
 
@@ -173,15 +232,15 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_
     learning_time = round(total_time - eq_query_time, 2)
 
     info = {
-        'learning_rounds': learning_rounds,
-        'automaton_size': len(hypothesis.states),
-        'queries_learning': stochastic_teacher.sul.num_queries - eq_oracle.num_queries,
-        'steps_learning': stochastic_teacher.sul.num_steps - eq_oracle.num_queries,
-        'queries_eq_oracle': eq_oracle.num_queries,
-        'steps_eq_oracle': eq_oracle.num_steps,
-        'learning_time': learning_time,
-        'eq_oracle_time': eq_query_time,
-        'total_time': total_time
+        "learning_rounds": learning_rounds,
+        "automaton_size": len(hypothesis.states),
+        "queries_learning": stochastic_teacher.sul.num_queries - eq_oracle.num_queries,
+        "steps_learning": stochastic_teacher.sul.num_steps - eq_oracle.num_queries,
+        "queries_eq_oracle": eq_oracle.num_queries,
+        "steps_eq_oracle": eq_oracle.num_steps,
+        "learning_time": learning_time,
+        "eq_oracle_time": eq_query_time,
+        "total_time": total_time,
     }
 
     if print_level > 0:

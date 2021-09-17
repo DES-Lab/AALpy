@@ -5,13 +5,13 @@ class MealyState(AutomatonState):
     """
     Single state of a Mealy machine. Each state has an output_fun dictionary that maps inputs to outputs.
     """
+
     def __init__(self, state_id):
         super().__init__(state_id)
         self.output_fun = dict()
 
 
 class MealyMachine(Automaton):
-
     def __init__(self, initial_state: MealyState, states):
         super().__init__(initial_state, states)
 

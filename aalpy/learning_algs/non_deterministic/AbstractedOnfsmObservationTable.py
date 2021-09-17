@@ -2,12 +2,16 @@ from collections import defaultdict
 
 from aalpy.automata import Onfsm, OnfsmState
 from aalpy.base import SUL
-from aalpy.learning_algs.non_deterministic.OnfsmObservationTable import NonDetObservationTable
+from aalpy.learning_algs.non_deterministic.OnfsmObservationTable import (
+    NonDetObservationTable,
+)
 from aalpy.utils.HelperFunctions import extend_set
 
 
 class AbstractedNonDetObservationTable:
-    def __init__(self, alphabet: list, sul: SUL, abstraction_mapping: dict, n_sampling=100):
+    def __init__(
+        self, alphabet: list, sul: SUL, abstraction_mapping: dict, n_sampling=100
+    ):
         """
         Construction of the abstracted non-deterministic observation table.
 
@@ -152,11 +156,19 @@ class AbstractedNonDetObservationTable:
                     output_difference = t_row_outputs.difference(complete_outputs)
                     if len(output_difference) > 0:
                         for o in output_difference:
-                            extension = (similar_s_dot_a_row[0] + a, similar_s_dot_a_row[1] + tuple([o]))
-                            if extension not in self.S and extension not in self.S_dot_A:
+                            extension = (
+                                similar_s_dot_a_row[0] + a,
+                                similar_s_dot_a_row[1] + tuple([o]),
+                            )
+                            if (
+                                extension not in self.S
+                                and extension not in self.S_dot_A
+                            ):
                                 return extension
                             else:
-                                complete_outputs = complete_outputs.union(output_difference)
+                                complete_outputs = complete_outputs.union(
+                                    output_difference
+                                )
 
         return None
 
@@ -178,20 +190,32 @@ class AbstractedNonDetObservationTable:
 
             similar_s_dot_a_rows.sort(key=lambda row: len(row[0]))
 
-            for a in self.A:  
+            for a in self.A:
                 outputs = self.observation_table.T[s_row[0]][a]
                 for o in outputs:
                     extended_s_sequence = (s_row[0][0] + a, s_row[0][1] + tuple([o]))
                     if extended_s_sequence in unified_S:
-                        extended_s_sequence_row = self.row_to_hashable(extended_s_sequence)
+                        extended_s_sequence_row = self.row_to_hashable(
+                            extended_s_sequence
+                        )
                         for similar_s_dot_a_row in similar_s_dot_a_rows:
                             extended_s_dot_a_sequence = (
-                                similar_s_dot_a_row[0] + a, similar_s_dot_a_row[1] + tuple([o]))
+                                similar_s_dot_a_row[0] + a,
+                                similar_s_dot_a_row[1] + tuple([o]),
+                            )
                             if extended_s_dot_a_sequence in unified_S:
-                                extended_s_dot_a_sequence_row = self.row_to_hashable(extended_s_dot_a_sequence)
-                                if extended_s_sequence_row is not extended_s_dot_a_sequence_row:
-                                    return self.get_distinctive_input_sequence(extended_s_sequence,
-                                                                               extended_s_dot_a_sequence, a)
+                                extended_s_dot_a_sequence_row = self.row_to_hashable(
+                                    extended_s_dot_a_sequence
+                                )
+                                if (
+                                    extended_s_sequence_row
+                                    is not extended_s_dot_a_sequence_row
+                                ):
+                                    return self.get_distinctive_input_sequence(
+                                        extended_s_sequence,
+                                        extended_s_dot_a_sequence,
+                                        a,
+                                    )
 
         return None
 
@@ -203,7 +227,7 @@ class AbstractedNonDetObservationTable:
 
             first_row: row to be compared
             second_row: row to be compared
-            inp: appended input to first_row and second_row that leads to different state 
+            inp: appended input to first_row and second_row that leads to different state
 
         Returns:
 
@@ -273,7 +297,7 @@ class AbstractedNonDetObservationTable:
 
         stateCounter = 0
         for prefix in self.S:
-            state_id = f's{stateCounter}'
+            state_id = f"s{stateCounter}"
             states_dict[prefix] = OnfsmState(state_id)
 
             states_dict[prefix].prefix = prefix
@@ -292,10 +316,16 @@ class AbstractedNonDetObservationTable:
                 for a in self.A:
                     for t in self.observation_table.T[row][a]:
                         if (row[0] + a, row[1] + tuple([t])) in unified_S:
-                            state_in_S = state_distinguish[self.row_to_hashable((row[0] + a, row[1] + tuple([t])))]
+                            state_in_S = state_distinguish[
+                                self.row_to_hashable((row[0] + a, row[1] + tuple([t])))
+                            ]
 
-                            if (t, state_in_S) not in states_dict[prefix].transitions[a[0]]:
-                                states_dict[prefix].transitions[a[0]].append((t, state_in_S))
+                            if (t, state_in_S) not in states_dict[prefix].transitions[
+                                a[0]
+                            ]:
+                                states_dict[prefix].transitions[a[0]].append(
+                                    (t, state_in_S)
+                                )
 
         assert initial
         automaton = Onfsm(initial, [s for s in states_dict.values()])
@@ -334,11 +364,15 @@ class AbstractedNonDetObservationTable:
 
             abstracted output or output itself
         """
-        return self.abstraction_mapping[out] if out in self.abstraction_mapping.keys() else out
+        return (
+            self.abstraction_mapping[out]
+            if out in self.abstraction_mapping.keys()
+            else out
+        )
 
     def cex_processing(self, cex: tuple, hypothesis: Onfsm):
         """
-        Add counterexample to the observation table. If the counterexample leads to a state where an output of the same equivalence class already exists, the prefixes of the counterexample are added to S.A. Otherwise, the postfixes of counterexample are added to E. 
+        Add counterexample to the observation table. If the counterexample leads to a state where an output of the same equivalence class already exists, the prefixes of the counterexample are added to S.A. Otherwise, the postfixes of counterexample are added to E.
 
 
         Args:
@@ -366,7 +400,10 @@ class AbstractedNonDetObservationTable:
 
         if equivalent_output:
             # add prefixes of cex to S_dot_A
-            cex_prefixes = [(tuple(cex[0][0:i + 1]), tuple(cex[1][0:i + 1])) for i in range(0, len(cex[0]))]
+            cex_prefixes = [
+                (tuple(cex[0][0 : i + 1]), tuple(cex[1][0 : i + 1]))
+                for i in range(0, len(cex[0]))
+            ]
             prefixes_to_extend = self.extend_S_dot_A(cex_prefixes)
             self.observation_table.S_dot_A.extend(prefixes_to_extend)
             self.update_obs_table(s_set=prefixes_to_extend)

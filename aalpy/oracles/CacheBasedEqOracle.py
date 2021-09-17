@@ -11,7 +11,14 @@ class CacheBasedEqOracle(Oracle):
     of length (max_tree_depth + 'depth_increase') - len(prefix), where prefix is a path to the leaf.
     """
 
-    def __init__(self, alphabet: list, sul: SUL, num_walks=100, depth_increase=5, reset_after_cex=True):
+    def __init__(
+        self,
+        alphabet: list,
+        sul: SUL,
+        num_walks=100,
+        depth_increase=5,
+        reset_after_cex=True,
+    ):
         """
 
         Args:
@@ -76,7 +83,7 @@ class CacheBasedEqOracle(Oracle):
         """
 
         Args:
-          t: 
+          t:
           paths:  (Default value = None)
           current_path:  (Default value = None)
 

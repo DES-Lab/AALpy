@@ -75,7 +75,10 @@ class Node:
         """
         if input_letter not in self.children.keys():
             return dict()
-        return {child.output: child.frequency for child in self.children[input_letter].values()}
+        return {
+            child.output: child.frequency
+            for child in self.children[input_letter].values()
+        }
 
 
 class StochasticTeacher:
@@ -84,10 +87,17 @@ class StochasticTeacher:
     Whenever new traces are sampled in the course of learning, they are added to S.
     """
 
-    def __init__(self, sul: SUL, n_c, eq_oracle, automaton_type, compatibility_checker: DifferenceChecker,
-                 samples_cex_strategy=None):
+    def __init__(
+        self,
+        sul: SUL,
+        n_c,
+        eq_oracle,
+        automaton_type,
+        compatibility_checker: DifferenceChecker,
+        samples_cex_strategy=None,
+    ):
         self.automaton_type = automaton_type
-        if automaton_type == 'mdp':
+        if automaton_type == "mdp":
             self.initial_value = sul.query(tuple())
             self.root_node = Node(self.initial_value[-1])
         else:
@@ -124,7 +134,10 @@ class StochasticTeacher:
 
         """
         self.curr_node.input_frequencies[inp] += 1
-        if inp not in self.curr_node.children.keys() or out not in self.curr_node.children[inp].keys():
+        if (
+            inp not in self.curr_node.children.keys()
+            or out not in self.curr_node.children[inp].keys()
+        ):
             node = Node(out)
             self.curr_node.children[inp][out] = node
 
@@ -145,7 +158,7 @@ class StochasticTeacher:
             sum of output frequencies
 
         """
-        if self.automaton_type == 'mdp':
+        if self.automaton_type == "mdp":
             s = s[1:]
 
         input_seq = list(s[0::2] + e[0::2])
@@ -184,7 +197,7 @@ class StochasticTeacher:
         if s + e in self.complete_query_cache:
             return True
 
-        if self.automaton_type == 'mdp':
+        if self.automaton_type == "mdp":
             s = s[1:]
 
         input_seq = list(s[0::2] + e[0::2])
@@ -279,7 +292,9 @@ class StochasticTeacher:
                 for i in curr_node.children.keys():
                     freq_in_tree = self.frequency_query(trace, (i,))
                     freq_in_hyp = self.frequency_query(rep_trace, (i,))
-                    if self.compatibility_checker.check_difference(freq_in_tree, freq_in_hyp):
+                    if self.compatibility_checker.check_difference(
+                        freq_in_tree, freq_in_hyp
+                    ):
                         return trace + (i,)
             # choose next node randomly and return None if there is no next node
             if not curr_node.children:
@@ -289,12 +304,24 @@ class StochasticTeacher:
                 return None
             c = choice(list(curr_node.children[i].values()))
             o = c.output
-            if self.automaton_type == 'mdp':
+            if self.automaton_type == "mdp":
                 next_state = next(
-                    (out_state[0] for out_state in curr_state.transitions[i] if out_state[0].output == o), None)
+                    (
+                        out_state[0]
+                        for out_state in curr_state.transitions[i]
+                        if out_state[0].output == o
+                    ),
+                    None,
+                )
             else:
-                next_state = next((out_state[0] for out_state in curr_state.transitions[i] if out_state[1] == o),
-                                  None)
+                next_state = next(
+                    (
+                        out_state[0]
+                        for out_state in curr_state.transitions[i]
+                        if out_state[1] == o
+                    ),
+                    None,
+                )
             if not next_state:
                 return trace + (i,)
             if random() <= stop_prob:
@@ -314,7 +341,9 @@ class StochasticTeacher:
     def bfs_for_cex_in_tree(self, hypothesis):
         # BFS for cex
         if self.automaton_type == "mdp":
-            to_check = [(self.root_node, hypothesis.initial_state, tuple(self.initial_value))]
+            to_check = [
+                (self.root_node, hypothesis.initial_state, tuple(self.initial_value))
+            ]
         else:
             to_check = [(self.root_node, hypothesis.initial_state, ())]
 
@@ -325,17 +354,31 @@ class StochasticTeacher:
                 for i in curr_node.children.keys():
                     freq_in_tree = self.frequency_query(trace, (i,))
                     freq_in_hyp = self.frequency_query(rep_trace, (i,))
-                    if self.compatibility_checker.check_difference(freq_in_tree, freq_in_hyp):
+                    if self.compatibility_checker.check_difference(
+                        freq_in_tree, freq_in_hyp
+                    ):
                         return trace + (i,)
             for i in curr_node.children.keys():
                 for c in curr_node.children[i].values():
                     o = c.output
-                    if self.automaton_type == 'mdp':
-                        next_state = next((out_state[0] for out_state in curr_state.transitions[i]
-                                           if out_state[0].output == o), None)
+                    if self.automaton_type == "mdp":
+                        next_state = next(
+                            (
+                                out_state[0]
+                                for out_state in curr_state.transitions[i]
+                                if out_state[0].output == o
+                            ),
+                            None,
+                        )
                     else:
-                        next_state = next((out_state[0] for out_state in curr_state.transitions[i]
-                                           if out_state[1] == o), None)
+                        next_state = next(
+                            (
+                                out_state[0]
+                                for out_state in curr_state.transitions[i]
+                                if out_state[1] == o
+                            ),
+                            None,
+                        )
                     if not next_state:
                         return trace + (i,)
                     new_trace = trace + (i,) + (o,)
@@ -357,9 +400,9 @@ class StochasticTeacher:
         """
         if self.samples_cex_strategy:
             cex = None
-            if self.samples_cex_strategy == 'bfs':
+            if self.samples_cex_strategy == "bfs":
                 cex = self.bfs_for_cex_in_tree(hypothesis)
-            elif self.samples_cex_strategy.startswith('random'):
+            elif self.samples_cex_strategy.startswith("random"):
                 split_strategy = self.samples_cex_strategy.split(":")
                 try:
                     nr_traces = int(split_strategy[1])

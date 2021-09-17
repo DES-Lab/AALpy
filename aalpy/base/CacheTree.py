@@ -1,4 +1,3 @@
-
 class Node(object):
     def __init__(self, value=None):
         self.value = value
@@ -49,11 +48,13 @@ class CacheTree:
             if node.value != out:
                 expected_seq = list(self.outputs[:-1])
                 expected_seq.append(node.value)
-                msg = f'Non-determinism detected.\n' \
-                      f'Error inserting: {self.inputs}\n' \
-                      f'Conflict detected: {node.value} vs {out}\n' \
-                      f'Expected Output: {expected_seq}\n' \
-                      f'Received output: {self.outputs}'
+                msg = (
+                    f"Non-determinism detected.\n"
+                    f"Error inserting: {self.inputs}\n"
+                    f"Conflict detected: {node.value} vs {out}\n"
+                    f"Expected Output: {expected_seq}\n"
+                    f"Received output: {self.outputs}"
+                )
                 raise SystemExit(msg)
         self.curr_node = node
 

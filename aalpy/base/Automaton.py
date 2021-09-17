@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 
 
 class AutomatonState(ABC):
-
     def __init__(self, state_id):
         """
         Single state of an automaton. Each state consists of a state id, a dictionary of transitions, where the keys are
@@ -77,7 +76,9 @@ class Automaton(ABC):
         """
         pass
 
-    def get_shortest_path(self, origin_state: AutomatonState, target_state: AutomatonState) -> tuple:
+    def get_shortest_path(
+        self, origin_state: AutomatonState, target_state: AutomatonState
+    ) -> tuple:
         """
         Breath First Search over the automaton
 
@@ -114,8 +115,13 @@ class Automaton(ABC):
                         acc_seq = new_path[:-1]
                         inputs = []
                         for ind, state in enumerate(acc_seq):
-                            inputs.append(next(key for key, value in state.transitions.items()
-                                               if value == new_path[ind + 1]))
+                            inputs.append(
+                                next(
+                                    key
+                                    for key, value in state.transitions.items()
+                                    if value == new_path[ind + 1]
+                                )
+                            )
                         return tuple(inputs)
 
                 # mark node as explored
@@ -169,10 +175,11 @@ class Automaton(ABC):
                 return state
 
         return None
-                
+
     def __str__(self):
         """
         :return: A string representation of the automaton
         """
         from aalpy.utils import save_automaton_to_file
-        return save_automaton_to_file(self, path='learnedModel', file_type='string')
+
+        return save_automaton_to_file(self, path="learnedModel", file_type="string")

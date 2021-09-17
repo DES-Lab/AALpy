@@ -23,7 +23,7 @@ class FunctionDecorator:
 
     def __repr__(self):
         if self.args:
-            return f'{self.function.__name__}{self.args}'
+            return f"{self.function.__name__}{self.args}"
         return self.function.__name__
 
 
@@ -31,6 +31,7 @@ class PyClassSUL(SUL):
     """
     System under learning for inferring python classes.
     """
+
     def __init__(self, python_class):
         """
         Args:

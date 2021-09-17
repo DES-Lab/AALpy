@@ -9,7 +9,15 @@ class RandomWalkEqOracle(Oracle):
     Equivalence oracle where queries contain random inputs. After every step, 'reset_prob' determines the probability
     that the system will reset and a new query asked.
     """
-    def __init__(self, alphabet: list, sul: SUL, num_steps=5000, reset_after_cex=True, reset_prob=0.09):
+
+    def __init__(
+        self,
+        alphabet: list,
+        sul: SUL,
+        num_steps=5000,
+        reset_after_cex=True,
+        reset_prob=0.09,
+    ):
         """
 
         Args:
@@ -67,7 +75,9 @@ class UnseenOutputRandomWalkEqOracle(Oracle):
     counterexample is returned.
     """
 
-    def __init__(self, alphabet: list, sul: SUL, num_steps, reset_after_cex=True, reset_prob=0.09):
+    def __init__(
+        self, alphabet: list, sul: SUL, num_steps, reset_after_cex=True, reset_prob=0.09
+    ):
         """
 
         Args:
@@ -119,7 +129,11 @@ class UnseenOutputRandomWalkEqOracle(Oracle):
                     return inputs, outputs
                 else:
                     # hypothesis is MDP or SMM
-                    cex = [hypothesis.initial_state.output] if isinstance(hypothesis, Mdp) else []
+                    cex = (
+                        [hypothesis.initial_state.output]
+                        if isinstance(hypothesis, Mdp)
+                        else []
+                    )
                     for i, o in zip(inputs, outputs):
                         cex.extend([i, o])
                     self.sul.post()

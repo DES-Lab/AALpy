@@ -10,7 +10,9 @@ class KWayStateCoverageEqOracle(Oracle):
     random walk at the end.
     """
 
-    def __init__(self, alphabet: list, sul: SUL, k=2, random_walk_len=100, method='combinations'):
+    def __init__(
+        self, alphabet: list, sul: SUL, k=2, random_walk_len=100, method="combinations"
+    ):
         """
 
         Args:
@@ -26,10 +28,10 @@ class KWayStateCoverageEqOracle(Oracle):
             method: either 'combinations' or 'permutations'
         """
         super().__init__(alphabet, sul)
-        assert k > 1 and method in ['combinations', 'permutations']
+        assert k > 1 and method in ["combinations", "permutations"]
         self.k = k
         self.cache = set()
-        self.fun = combinations if method == 'combinations' else permutations
+        self.fun = combinations if method == "combinations" else permutations
         self.random_walk_len = random_walk_len
 
     def find_cex(self, hypothesis):
@@ -46,7 +48,7 @@ class KWayStateCoverageEqOracle(Oracle):
                     self.num_steps += 1
 
                     if out_sul != out_hyp:
-                        return path[:i + 1]
+                        return path[: i + 1]
 
         states = hypothesis.states
         shuffle(states)
@@ -75,6 +77,6 @@ class KWayStateCoverageEqOracle(Oracle):
 
                 if out_sul != out_hyp:
                     self.sul.post()
-                    return path[:i + 1]
+                    return path[: i + 1]
 
         return None

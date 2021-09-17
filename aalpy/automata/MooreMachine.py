@@ -12,7 +12,6 @@ class MooreState(AutomatonState):
 
 
 class MooreMachine(Automaton):
-
     def __init__(self, initial_state: AutomatonState, states: list):
         super().__init__(initial_state, states)
 

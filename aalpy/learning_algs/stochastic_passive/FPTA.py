@@ -3,7 +3,6 @@ from copy import deepcopy
 
 
 class AlergiaPtaNode:
-
     def __init__(self, output):
         self.output = output
         self.input_frequency = defaultdict(int)
@@ -33,7 +32,7 @@ def create_fpta(data, is_iofpta):
     root_node = AlergiaPtaNode(data[0][0])
     for seq in data:
         if seq[0] != root_node.output:
-            print('All strings should have the same initial output')
+            print("All strings should have the same initial output")
             assert False
         curr_node = root_node
 

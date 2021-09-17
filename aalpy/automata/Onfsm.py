@@ -6,6 +6,7 @@ from aalpy.base import Automaton, AutomatonState
 
 class OnfsmState(AutomatonState):
     """ """
+
     def __init__(self, state_id):
         super().__init__(state_id)
         # key/input maps to the list of tuples of possible output/new state [(output1, state1), (output2, state2)]
@@ -15,9 +16,9 @@ class OnfsmState(AutomatonState):
         """
 
         Args:
-          inp: 
-          out: 
-          new_state: 
+          inp:
+          out:
+          new_state:
 
         Returns:
 
@@ -28,7 +29,7 @@ class OnfsmState(AutomatonState):
         """
 
         Args:
-          input: 
+          input:
           output:  (Default value = None)
 
         Returns:
@@ -45,6 +46,7 @@ class Onfsm(Automaton):
     """
     Observable non-deterministic finite state automaton.
     """
+
     def __init__(self, initial_state: OnfsmState, states: list):
         super().__init__(initial_state, states)
 

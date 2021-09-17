@@ -12,7 +12,15 @@ class StatePrefixEqOracle(Oracle):
     rand_walk_len exactly walk_per_state times during learning. Therefore excessive testing of initial states is
     avoided.
     """
-    def __init__(self, alphabet: list, sul: SUL, walks_per_state=10, walk_len=30, depth_first=False):
+
+    def __init__(
+        self,
+        alphabet: list,
+        sul: SUL,
+        walks_per_state=10,
+        walk_len=30,
+        depth_first=False,
+    ):
         """
         Args:
 
@@ -41,7 +49,9 @@ class StatePrefixEqOracle(Oracle):
             if state.prefix not in self.freq_dict.keys():
                 self.freq_dict[state.prefix] = 0
 
-            states_to_cover.extend([state] * (self.walks_per_state - self.freq_dict[state.prefix]))
+            states_to_cover.extend(
+                [state] * (self.walks_per_state - self.freq_dict[state.prefix])
+            )
 
         if self.depth_first:
             # reverse sort the states by length of their access sequences

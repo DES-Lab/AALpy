@@ -14,6 +14,7 @@ class MdpState(AutomatonState):
 
 class Mdp(Automaton):
     """Markov Decision Process."""
+
     def __init__(self, initial_state: MdpState, states: list):
         super().__init__(initial_state, states)
 
@@ -35,7 +36,9 @@ class Mdp(Automaton):
             return self.current_state.output
         prob = random.random()
 
-        probability_distributions = [i[1] for i in self.current_state.transitions[letter]]
+        probability_distributions = [
+            i[1] for i in self.current_state.transitions[letter]
+        ]
         states = [i[0] for i in self.current_state.transitions[letter]]
 
         new_state = random.choices(states, probability_distributions, k=1)[0]

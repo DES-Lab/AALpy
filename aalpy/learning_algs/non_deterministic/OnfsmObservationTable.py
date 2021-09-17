@@ -6,7 +6,6 @@ from aalpy.utils.HelperFunctions import all_suffixes
 
 
 class NonDetObservationTable:
-
     def __init__(self, alphabet: list, sul: SUL, n_sampling=100):
         """
         Construction of the non-deterministic observation table.
@@ -102,9 +101,9 @@ class NonDetObservationTable:
                         output = tuple(self.sul.query(s[0] + e))
                         # Here I basically say... add just the last element of the output if it e is element of alphabet
                         # else add last len(e) outputs
-                        o = output[-1] if len(e) == 1 else tuple(output[-len(e):])
-                        self.add_to_T((s[0], output[:len(s[1])]), e, o)
-                        if output[:len(s[1])] == s[1]:
+                        o = output[-1] if len(e) == 1 else tuple(output[-len(e) :])
+                        self.add_to_T((s[0], output[: len(s[1])]), e, o)
+                        if output[: len(s[1])] == s[1]:
                             num_s_e_sampled += 1
 
     def gen_hypothesis(self) -> Automaton:
@@ -122,7 +121,7 @@ class NonDetObservationTable:
 
         stateCounter = 0
         for prefix in self.S:
-            state_id = f's{stateCounter}'
+            state_id = f"s{stateCounter}"
             states_dict[prefix] = OnfsmState(state_id)
 
             states_dict[prefix].prefix = prefix
@@ -135,7 +134,9 @@ class NonDetObservationTable:
         for prefix in self.S:
             for a in self.A:
                 for t in self.T[prefix][a]:
-                    state_in_S = state_distinguish[self.row_to_hashable((prefix[0] + a, prefix[1] + tuple([t])))]
+                    state_in_S = state_distinguish[
+                        self.row_to_hashable((prefix[0] + a, prefix[1] + tuple([t])))
+                    ]
                     assert state_in_S
                     states_dict[prefix].transitions[a[0]].append((t, state_in_S))
 
@@ -161,7 +162,7 @@ class NonDetObservationTable:
         """
         row_repr = tuple()
         for e in self.E:
-            #if e in self.T[row_prefix].keys():
+            # if e in self.T[row_prefix].keys():
             row_repr += (frozenset(self.T[row_prefix][e]),)
         return row_repr
 
@@ -203,8 +204,8 @@ class NonDetObservationTable:
         cex = tuple(cex[0])  # cex[0] are inputs, cex[1] are outputs
         for p in prefixes:
             prefix_inputs = p[0]
-            if prefix_inputs == tuple(cex[:len(prefix_inputs)]):
-                trimmed_suffix = cex[len(prefix_inputs):]
+            if prefix_inputs == tuple(cex[: len(prefix_inputs)]):
+                trimmed_suffix = cex[len(prefix_inputs) :]
                 break
 
         if trimmed_suffix:

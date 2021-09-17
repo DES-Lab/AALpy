@@ -8,8 +8,15 @@ class RandomWordEqOracle(Oracle):
     Equivalence oracle where queries are of random length in a predefined range.
     """
 
-    def __init__(self, alphabet: list, sul: SUL, num_walks=100, min_walk_len=10, max_walk_len=100,
-                 reset_after_cex=True):
+    def __init__(
+        self,
+        alphabet: list,
+        sul: SUL,
+        num_walks=100,
+        min_walk_len=10,
+        max_walk_len=100,
+        reset_after_cex=True,
+    ):
         """
         Args:
             alphabet: input alphabet
@@ -67,8 +74,15 @@ class UnseenOutputRandomWordEqOracle(Oracle):
     a counterexample is returned.
     """
 
-    def __init__(self, alphabet: list, sul: SUL, num_walks=100, min_walk_len=10, max_walk_len=100,
-                 reset_after_cex=True):
+    def __init__(
+        self,
+        alphabet: list,
+        sul: SUL,
+        num_walks=100,
+        min_walk_len=10,
+        max_walk_len=100,
+        reset_after_cex=True,
+    ):
         """
         Args:
             alphabet: input alphabet
@@ -118,7 +132,11 @@ class UnseenOutputRandomWordEqOracle(Oracle):
                         return inputs, outputs
                     else:
                         # hypothesis is MDP or SMM
-                        cex = [hypothesis.initial_state.output] if isinstance(hypothesis, Mdp) else []
+                        cex = (
+                            [hypothesis.initial_state.output]
+                            if isinstance(hypothesis, Mdp)
+                            else []
+                        )
                         for i, o in zip(inputs, outputs):
                             cex.extend([i, o])
                         return cex

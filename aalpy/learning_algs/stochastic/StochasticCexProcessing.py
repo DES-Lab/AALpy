@@ -20,8 +20,8 @@ def stochastic_longest_prefix(cex, prefixes):
     trimmed_cex = None
     trimmed = False
     for p in prefixes:
-        if p[1::2] == cex[:len(p)][1::2]:
-            trimmed_cex = cex[len(p):]
+        if p[1::2] == cex[: len(p)][1::2]:
+            trimmed_cex = cex[len(p) :]
             trimmed = True
             break
 
@@ -32,7 +32,10 @@ def stochastic_longest_prefix(cex, prefixes):
         return ()
 
     # get all suffixes and return
-    suffixes = [tuple(trimmed_cex[len(trimmed_cex) - i - 1:]) for i in range(0, len(trimmed_cex), 2)]
+    suffixes = [
+        tuple(trimmed_cex[len(trimmed_cex) - i - 1 :])
+        for i in range(0, len(trimmed_cex), 2)
+    ]
 
     # prefixes
     # need to pop 0 for MDP, for SMM remove the line
@@ -82,7 +85,9 @@ def stochastic_rs(sul: SUL, cex: tuple, hypothesis):
 
         # prefix in hyp is reached
 
-        prefix_inputs = s_bracket[1::2] if isinstance(hypothesis, Mdp) else s_bracket[::2]
+        prefix_inputs = (
+            s_bracket[1::2] if isinstance(hypothesis, Mdp) else s_bracket[::2]
+        )
         # prefix_outputs = s_bracket[0::2] if isinstance(hypothesis, Mdp) else s_bracket[1::2]
 
         not_same = False
@@ -116,15 +121,15 @@ def stochastic_rs(sul: SUL, cex: tuple, hypothesis):
         if not not_same:
             lower = mid + 1
             if upper < lower:
-                suffix = cex[(mid + 1) * 2:]
+                suffix = cex[(mid + 1) * 2 :]
                 break
         else:
             upper = mid - 1
             if upper < lower:
-                suffix = cex[mid * 2:]
+                suffix = cex[mid * 2 :]
                 break
 
-    suffixes = [tuple(suffix[len(suffix) - i - 1:]) for i in range(0, len(suffix), 2)]
+    suffixes = [tuple(suffix[len(suffix) - i - 1 :]) for i in range(0, len(suffix), 2)]
 
     # suffixes = [suffixes[-1]]
     # print(len(cex), len(suffixes[-1]))

@@ -7,9 +7,10 @@ class RegexSUL(SUL):
     An example implementation of a system under learning that can be used to learn any regex expression.
     Note that the $ is added to the expression as in this SUL only exact matches are learned.
     """
+
     def __init__(self, regex: str):
         super().__init__()
-        self.regex = regex if regex[-1] == '$' else regex + '$'
+        self.regex = regex if regex[-1] == "$" else regex + "$"
         self.string = ""
 
     def pre(self):

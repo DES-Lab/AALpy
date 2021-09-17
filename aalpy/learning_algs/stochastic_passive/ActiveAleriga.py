@@ -72,11 +72,10 @@ def run_active_Alergia(data, sul, sampler, n_iter):
     """
     model = None
     for i in range(n_iter):
-        print(f'Active Alergia Iteration: {i}')
-        model = run_Alergia(data, automaton_type='mdp')
+        print(f"Active Alergia Iteration: {i}")
+        model = run_Alergia(data, automaton_type="mdp")
 
         new_samples = sampler.sample(sul, model)
         data.extend(new_samples)
 
     return model
-

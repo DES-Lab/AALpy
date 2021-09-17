@@ -5,7 +5,9 @@ from random import choices, randint, random
 from aalpy.base import SUL, Automaton, Oracle
 
 KWayTransition = namedtuple("KWayTransition", "start_state end_state steps")
-Path = namedtuple("Path", "start_state end_state steps kWayTransitions, transitions_log")
+Path = namedtuple(
+    "Path", "start_state end_state steps kWayTransitions, transitions_log"
+)
 
 
 class KWayTransitionCoverageEqOracle(Oracle):
@@ -15,12 +17,18 @@ class KWayTransitionCoverageEqOracle(Oracle):
     finds counter examples by running random paths that cover all pairwise / k-way transitions.
     """
 
-    def __init__(self, alphabet: list, sul: SUL, k: int = 2, method='random',
-                 num_generate_paths: int = 20000,
-                 max_path_len: int = 50,
-                 max_number_of_steps: int = 0,
-                 optimize: str = 'steps',
-                 random_walk_len=10):
+    def __init__(
+        self,
+        alphabet: list,
+        sul: SUL,
+        k: int = 2,
+        method="random",
+        num_generate_paths: int = 20000,
+        max_path_len: int = 50,
+        max_number_of_steps: int = 0,
+        optimize: str = "steps",
+        random_walk_len=10,
+    ):
         """
         Args:
 
@@ -37,8 +45,8 @@ class KWayTransitionCoverageEqOracle(Oracle):
         """
         super().__init__(alphabet, sul)
         assert k >= 2
-        assert method in ['random', 'prefix']
-        assert optimize in ['steps', 'queries']
+        assert method in ["random", "prefix"]
+        assert optimize in ["steps", "queries"]
 
         self.k = k
         self.method = method
@@ -51,7 +59,7 @@ class KWayTransitionCoverageEqOracle(Oracle):
         self.cached_paths = list()
 
     def find_cex(self, hypothesis: Automaton):
-        if self.method == 'random':
+        if self.method == "random":
             paths = self.generate_random_paths(hypothesis) + self.cached_paths
             self.cached_paths = self.greedy_set_cover(hypothesis, paths)
 
@@ -61,7 +69,7 @@ class KWayTransitionCoverageEqOracle(Oracle):
                 if counter_example is not None:
                     return counter_example
 
-        elif self.method == 'prefix':
+        elif self.method == "prefix":
             for steps in self.generate_prefix_steps(hypothesis):
                 counter_example = self.check_path(hypothesis, steps)
 
@@ -86,7 +94,10 @@ class KWayTransitionCoverageEqOracle(Oracle):
                 step_count += len(path.steps)
 
             if path is None or not paths:
-                paths = [self.create_path(hypothesis, steps) for steps in self.generate_prefix_steps(hypothesis)]
+                paths = [
+                    self.create_path(hypothesis, steps)
+                    for steps in self.generate_prefix_steps(hypothesis)
+                ]
 
             if self.max_number_of_steps != 0 and step_count > self.max_number_of_steps:
                 print("stop")
@@ -97,11 +108,12 @@ class KWayTransitionCoverageEqOracle(Oracle):
     def select_optimal_path(self, covered: set, paths: list) -> Path:
         result = None
 
-        if self.optimize == 'steps':
-            result = max(paths, key=lambda p: len(
-                p.kWayTransitions - covered) / len(p.steps))
+        if self.optimize == "steps":
+            result = max(
+                paths, key=lambda p: len(p.kWayTransitions - covered) / len(p.steps)
+            )
 
-        if self.optimize == 'queries':
+        if self.optimize == "queries":
             result = max(paths, key=lambda p: len(p.kWayTransitions - covered))
 
         return result if len(result.kWayTransitions - covered) != 0 else None
@@ -120,8 +132,12 @@ class KWayTransitionCoverageEqOracle(Oracle):
     def generate_prefix_steps(self, hypothesis: Automaton) -> tuple:
         for state in reversed(hypothesis.states):
             prefix = state.prefix
-            for steps in sorted(product(self.alphabet, repeat=self.k), key=lambda k: random()):
-                yield prefix + steps + tuple(choices(self.alphabet, k=self.random_walk_len))
+            for steps in sorted(
+                product(self.alphabet, repeat=self.k), key=lambda k: random()
+            ):
+                yield prefix + steps + tuple(
+                    choices(self.alphabet, k=self.random_walk_len)
+                )
 
     def create_path(self, hypothesis: Automaton, steps: tuple) -> Path:
         transitions = set()
@@ -140,14 +156,20 @@ class KWayTransitionCoverageEqOracle(Oracle):
         for i in range(len(steps) - self.k + 1):
             prev_state = prev_states[i]
             end_state = end_states[i + self.k - 1]
-            chunk = tuple(steps[i:i + self.k])
+            chunk = tuple(steps[i : i + self.k])
 
             transition = KWayTransition(prev_state.state_id, end_state.state_id, chunk)
 
             transitions_log.append(transition)
             transitions.add(transition)
 
-        return Path(hypothesis.initial_state, end_states[-1], steps, transitions, transitions_log)
+        return Path(
+            hypothesis.initial_state,
+            end_states[-1],
+            steps,
+            transitions,
+            transitions_log,
+        )
 
     def check_path(self, hypothesis: Automaton, steps: tuple):
         self.reset_hyp_and_sul(hypothesis)
@@ -160,6 +182,6 @@ class KWayTransitionCoverageEqOracle(Oracle):
 
             if out_sul != out_hyp:
                 self.sul.post()
-                return steps[:i + 1]
+                return steps[: i + 1]
 
         return None

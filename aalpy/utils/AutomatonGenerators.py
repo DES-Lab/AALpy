@@ -1,11 +1,25 @@
 import random
 
-from aalpy.automata import Dfa, DfaState, MdpState, Mdp, MealyMachine, MealyState, \
-    MooreMachine, MooreState, OnfsmState, Onfsm, MarkovChain, McState
+from aalpy.automata import (
+    Dfa,
+    DfaState,
+    MdpState,
+    Mdp,
+    MealyMachine,
+    MealyState,
+    MooreMachine,
+    MooreState,
+    OnfsmState,
+    Onfsm,
+    MarkovChain,
+    McState,
+)
 from aalpy.utils.HelperFunctions import random_string_generator
 
 
-def generate_random_mealy_machine(num_states, input_alphabet, output_alphabet, compute_prefixes=False) -> MealyMachine:
+def generate_random_mealy_machine(
+    num_states, input_alphabet, output_alphabet, compute_prefixes=False
+) -> MealyMachine:
     """
     Generates a random Mealy machine.
 
@@ -38,7 +52,9 @@ def generate_random_mealy_machine(num_states, input_alphabet, output_alphabet, c
     return mm
 
 
-def generate_random_moore_machine(num_states, input_alphabet, output_alphabet, compute_prefixes=False) -> MooreMachine:
+def generate_random_moore_machine(
+    num_states, input_alphabet, output_alphabet, compute_prefixes=False
+) -> MooreMachine:
     """
     Generates a random Moore machine.
 
@@ -71,7 +87,9 @@ def generate_random_moore_machine(num_states, input_alphabet, output_alphabet, c
     return mm
 
 
-def generate_random_dfa(num_states, alphabet, num_accepting_states=1, compute_prefixes=False) -> Dfa:
+def generate_random_dfa(
+    num_states, alphabet, num_accepting_states=1, compute_prefixes=False
+) -> Dfa:
     """
     Generates a random DFA.
 
@@ -114,7 +132,9 @@ def generate_random_dfa(num_states, alphabet, num_accepting_states=1, compute_pr
     return dfa
 
 
-def generate_random_mdp(num_states, len_input, custom_outputs=None, num_unique_outputs=None):
+def generate_random_mdp(
+    num_states, len_input, custom_outputs=None, num_unique_outputs=None
+):
     """
     Generates random MDP.
 
@@ -131,7 +151,9 @@ def generate_random_mdp(num_states, len_input, custom_outputs=None, num_unique_o
 
     """
     num_unique_outputs = num_states if not num_unique_outputs else num_unique_outputs
-    outputs = [random_string_generator(random.randint(3, 7)) for _ in range(num_unique_outputs)]
+    outputs = [
+        random_string_generator(random.randint(3, 7)) for _ in range(num_unique_outputs)
+    ]
     outputs = custom_outputs if custom_outputs else outputs
 
     while len(outputs) < num_states:
@@ -140,12 +162,12 @@ def generate_random_mdp(num_states, len_input, custom_outputs=None, num_unique_o
     possible_probabilities = [1.0, 1.0, 1.0, 1.0, 0.8, 0.5, 0.9]
     states = []
     for i in range(num_states):
-        states.append(MdpState(f'q{i}', outputs.pop()))
+        states.append(MdpState(f"q{i}", outputs.pop()))
 
     for state in states:
         for i in range(len_input):
             prob = random.choice(possible_probabilities)
-            if prob == 1.:
+            if prob == 1.0:
                 state.transitions[i].append((random.choice(states), prob))
             else:
                 new_states = list(states)
@@ -153,7 +175,9 @@ def generate_random_mdp(num_states, len_input, custom_outputs=None, num_unique_o
                 new_states.remove(s1)
 
                 state.transitions[i].append((s1, prob))
-                state.transitions[i].append((random.choice(new_states), round(1 - prob, 2)))
+                state.transitions[i].append(
+                    (random.choice(new_states), round(1 - prob, 2))
+                )
 
     return Mdp(states[0], states), list(range(len_input))
 
@@ -175,11 +199,13 @@ def generate_random_ONFSM(num_states, num_inputs, num_outputs, multiple_out_prob
 
     """
     inputs = [random_string_generator(random.randint(1, 3)) for _ in range(num_inputs)]
-    outputs = [random_string_generator(random.randint(3, 7)) for _ in range(num_outputs)]
+    outputs = [
+        random_string_generator(random.randint(3, 7)) for _ in range(num_outputs)
+    ]
 
     states = []
     for i in range(num_states):
-        state = OnfsmState(f's{i}')
+        state = OnfsmState(f"s{i}")
         states.append(state)
 
     for state in states:
@@ -201,11 +227,11 @@ def generate_random_markov_chain(num_states):
     states = []
 
     for i in range(num_states):
-        states.append(McState(f'q{i}', i))
+        states.append(McState(f"q{i}", i))
 
     for index, state in enumerate(states[:-1]):
         prob = random.choice(possible_probabilities)
-        if prob == 1.:
+        if prob == 1.0:
             new_state = states[index + 1]
             state.transitions.append((new_state, prob))
         else:

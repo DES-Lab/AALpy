@@ -11,8 +11,16 @@ class TomitaSUL(SUL):
 
     def __init__(self, tomita_level_fun):
         super().__init__()
-        num_fun_map = {1: tomita_1, 2: tomita_2, 3: tomita_3, 4: tomita_4, 5: tomita_5, 6: tomita_6, 7: tomita_7,
-                       -3: not_tomita_3}
+        num_fun_map = {
+            1: tomita_1,
+            2: tomita_2,
+            3: tomita_3,
+            4: tomita_4,
+            5: tomita_5,
+            6: tomita_6,
+            7: tomita_7,
+            -3: not_tomita_3,
+        }
         assert tomita_level_fun in num_fun_map.keys()
         self.string = ""
         self.tomita_level = num_fun_map[tomita_level_fun]

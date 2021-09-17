@@ -1,15 +1,28 @@
 import time
 
 from aalpy.base import SUL, Oracle
-from aalpy.learning_algs.non_deterministic.OnfsmObservationTable import NonDetObservationTable
+from aalpy.learning_algs.non_deterministic.OnfsmObservationTable import (
+    NonDetObservationTable,
+)
 from aalpy.learning_algs.non_deterministic.TraceTree import SULWrapper
-from aalpy.utils.HelperFunctions import extend_set, print_learning_info, print_observation_table
+from aalpy.utils.HelperFunctions import (
+    extend_set,
+    print_learning_info,
+    print_observation_table,
+)
 
 print_options = [0, 1, 2, 3]
 
 
-def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=50,
-                      max_learning_rounds=None, return_data=False, print_level=2):
+def run_non_det_Lstar(
+    alphabet: list,
+    sul: SUL,
+    eq_oracle: Oracle,
+    n_sampling=50,
+    max_learning_rounds=None,
+    return_data=False,
+    print_level=2,
+):
     """
     Based on ''Learning Finite State Models of Observable Nondeterministic Systems in a Testing Context '' from Fakih
     et al. Relies on the all-weather assumption. (By sampling we will obtain all possible non-deterministic outputs.
@@ -42,8 +55,10 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=50
 
     """
     # Print warning
-    print('Starting learning with an all-weather assumption.\n'
-          'See run_Lstar_ONFSM documentation for more details about possible non-convergence.')
+    print(
+        "Starting learning with an all-weather assumption.\n"
+        "See run_Lstar_ONFSM documentation for more details about possible non-convergence."
+    )
 
     start_time = time.time()
     eq_query_time = 0
@@ -80,10 +95,10 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=50
         hypothesis = observation_table.gen_hypothesis()
 
         if print_level > 1:
-            print(f'Hypothesis {learning_rounds}: {len(hypothesis.states)} states.')
+            print(f"Hypothesis {learning_rounds}: {len(hypothesis.states)} states.")
 
         if print_level == 3:
-            print_observation_table(observation_table, 'non-det')
+            print_observation_table(observation_table, "non-det")
 
         # Find counterexample
         eq_query_start = time.time()
@@ -95,7 +110,7 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=50
             break
 
         if print_level == 3:
-            print('Counterexample', cex)
+            print("Counterexample", cex)
 
         # Process counterexample -> Extract suffix to be added to E set
         cex_suffixes = observation_table.cex_processing(cex)
@@ -108,15 +123,15 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=50
     learning_time = round(total_time - eq_query_time, 2)
 
     info = {
-        'learning_rounds': learning_rounds,
-        'automaton_size': len(hypothesis.states),
-        'queries_learning': sul.num_queries,
-        'steps_learning': sul.num_steps,
-        'queries_eq_oracle': eq_oracle.num_queries,
-        'steps_eq_oracle': eq_oracle.num_steps,
-        'learning_time': learning_time,
-        'eq_oracle_time': eq_query_time,
-        'total_time': total_time
+        "learning_rounds": learning_rounds,
+        "automaton_size": len(hypothesis.states),
+        "queries_learning": sul.num_queries,
+        "steps_learning": sul.num_steps,
+        "queries_eq_oracle": eq_oracle.num_queries,
+        "steps_eq_oracle": eq_oracle.num_steps,
+        "learning_time": learning_time,
+        "eq_oracle_time": eq_query_time,
+        "total_time": total_time,
     }
 
     if print_level > 0:

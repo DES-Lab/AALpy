@@ -1,10 +1,17 @@
 from collections import defaultdict
 
 from aalpy.base import Automaton, SUL
-from aalpy.automata import Dfa, DfaState, MealyState, MealyMachine, MooreMachine, MooreState
+from aalpy.automata import (
+    Dfa,
+    DfaState,
+    MealyState,
+    MealyMachine,
+    MooreMachine,
+    MooreState,
+)
 
-aut_type = ['dfa', 'mealy', 'moore']
-closing_options = ['shortest_first', 'longest_first', 'single']
+aut_type = ["dfa", "mealy", "moore"]
+closing_options = ["shortest_first", "longest_first", "single"]
 
 
 class ObservationTable:
@@ -28,7 +35,7 @@ class ObservationTable:
         self.A = [tuple([a]) for a in alphabet]
         self.S = list()  # prefixes of S
         # DFA's can also take whole alphabet in E, this convention follows Angluin's paper
-        self.E = [] if self.automaton_type == 'dfa' else [tuple([a]) for a in alphabet]
+        self.E = [] if self.automaton_type == "dfa" else [tuple([a]) for a in alphabet]
         # For performance reasons, the T function maps S to a tuple where element at index i is the element of the E
         # set of index i. Therefore it is important to keep E set ordered and ask membership queries only when needed
         # and in correct order. It would make more sense to implement it as a defaultdict(dict) where you can access
@@ -40,10 +47,10 @@ class ObservationTable:
         self.S.append(empty_word)
 
         # DFAs and Moore machines use empty word for identification of accepting states/state outputs
-        if self.automaton_type == 'dfa' or self.automaton_type == 'moore':
+        if self.automaton_type == "dfa" or self.automaton_type == "moore":
             self.E.insert(0, empty_word)
 
-    def get_rows_to_close(self, closing_strategy='longest_first'):
+    def get_rows_to_close(self, closing_strategy="longest_first"):
         """
         Get rows for that need to be closed. Row selection is done according to closing_strategy.
         The length of the row is defined by the length of the prefix corresponding to the row in the S set.
@@ -72,13 +79,13 @@ class ObservationTable:
                 rows_to_close.append(t)
                 row_values.add(row_t)
 
-                if closing_strategy == 'single':
+                if closing_strategy == "single":
                     return rows_to_close
 
         if not rows_to_close:
             return None
 
-        if closing_strategy == 'longest_first':
+        if closing_strategy == "longest_first":
             rows_to_close.reverse()
 
         return rows_to_close
@@ -96,7 +103,7 @@ class ObservationTable:
         """
         causes_of_inconsistency = set()
         for i, s1 in enumerate(self.S):
-            for s2 in self.S[i + 1:]:
+            for s2 in self.S[i + 1 :]:
                 if self.T[s1] == self.T[s2]:
                     for a in self.A:
                         if self.T[s1 + a] != self.T[s2 + a]:
@@ -161,7 +168,7 @@ class ObservationTable:
         state_distinguish = dict()
         states_dict = dict()
         initial_state = None
-        automaton_class = {'dfa': Dfa, 'mealy': MealyMachine, 'moore': MooreMachine}
+        automaton_class = {"dfa": Dfa, "mealy": MealyMachine, "moore": MooreMachine}
 
         # delete duplicate rows, only possible if no counterexample processing is present
         # counterexample processing removes the need for consistency check, as it ensures
@@ -169,7 +176,7 @@ class ObservationTable:
         if check_for_duplicate_rows:
             rows_to_delete = set()
             for i, s1 in enumerate(self.S):
-                for s2 in self.S[i + 1:]:
+                for s2 in self.S[i + 1 :]:
                     if self.T[s1] == self.T[s2]:
                         rows_to_delete.add(s2)
 
@@ -179,12 +186,12 @@ class ObservationTable:
         # create states based on S set
         stateCounter = 0
         for prefix in self.S:
-            state_id = f's{stateCounter}'
+            state_id = f"s{stateCounter}"
 
-            if self.automaton_type == 'dfa':
+            if self.automaton_type == "dfa":
                 states_dict[prefix] = DfaState(state_id)
                 states_dict[prefix].is_accepting = self.T[prefix][0]
-            elif self.automaton_type == 'moore':
+            elif self.automaton_type == "moore":
                 states_dict[prefix] = MooreState(state_id, output=self.T[prefix][0])
             else:
                 states_dict[prefix] = MealyState(state_id)
@@ -201,10 +208,14 @@ class ObservationTable:
             for a in self.A:
                 state_in_S = state_distinguish[self.T[prefix + a]]
                 states_dict[prefix].transitions[a[0]] = state_in_S
-                if self.automaton_type == 'mealy':
-                    states_dict[prefix].output_fun[a[0]] = self.T[prefix][self.E.index(a)]
+                if self.automaton_type == "mealy":
+                    states_dict[prefix].output_fun[a[0]] = self.T[prefix][
+                        self.E.index(a)
+                    ]
 
-        automaton = automaton_class[self.automaton_type](initial_state, list(states_dict.values()))
+        automaton = automaton_class[self.automaton_type](
+            initial_state, list(states_dict.values())
+        )
         automaton.characterization_set = self.E
 
         return automaton

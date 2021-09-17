@@ -34,7 +34,7 @@ class DelimiterTokenizer(DataHandler):
     Each input sequence is in the separate line.
     """
 
-    def tokenize_data(self, path, delimiter=','):
+    def tokenize_data(self, path, delimiter=","):
         data = []
         lines = open(path).read().splitlines()
         for l in lines:
@@ -50,7 +50,7 @@ class IODelimiterTokenizer(DataHandler):
     Each [output, tuple(input,output)*] sequence is in the separate line.
     """
 
-    def tokenize_data(self, path, io_delimiter='/', word_delimiter=','):
+    def tokenize_data(self, path, io_delimiter="/", word_delimiter=","):
         data = []
         lines = open(path).read().splitlines()
         for l in lines:
@@ -59,8 +59,10 @@ class IODelimiterTokenizer(DataHandler):
             for w in words[1:]:
                 i_o = w.split(io_delimiter)
                 if len(i_o) != 2:
-                    print('Data formatting error. io_delimiter should split words into <input> <delim> <output>'
-                          'where <delim> is values of param \"io_delimiter\'"')
+                    print(
+                        "Data formatting error. io_delimiter should split words into <input> <delim> <output>"
+                        'where <delim> is values of param "io_delimiter\'"'
+                    )
                     exit(-1)
                 seq.append(tuple([try_int(i_o[0]), try_int(i_o[1])]))
             data.append(seq)

@@ -1,19 +1,35 @@
 import time
 
 from aalpy.base import Oracle, SUL
-from aalpy.utils.HelperFunctions import extend_set, print_learning_info, print_observation_table, all_prefixes
+from aalpy.utils.HelperFunctions import (
+    extend_set,
+    print_learning_info,
+    print_observation_table,
+    all_prefixes,
+)
 from .CounterExampleProcessing import longest_prefix_cex_processing, rs_cex_processing
 from .ObservationTable import ObservationTable
 from ...base.SUL import CacheSUL
 
-counterexample_processing_strategy = [None, 'rs', 'longest_prefix']
-closedness_options = ['prefix', 'suffix']
+counterexample_processing_strategy = [None, "rs", "longest_prefix"]
+closedness_options = ["prefix", "suffix"]
 print_options = [0, 1, 2, 3]
 
 
-def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type,
-              closing_strategy='longest_first', cex_processing='rs', suffix_closedness=True, closedness_type='suffix',
-              max_learning_rounds=None, cache_and_non_det_check=True, return_data=False, print_level=2):
+def run_Lstar(
+    alphabet: list,
+    sul: SUL,
+    eq_oracle: Oracle,
+    automaton_type,
+    closing_strategy="longest_first",
+    cex_processing="rs",
+    suffix_closedness=True,
+    closedness_type="suffix",
+    max_learning_rounds=None,
+    cache_and_non_det_check=True,
+    return_data=False,
+    print_level=2,
+):
     """Executes L* algorithm with Riverst-Schapire counter example processing.
 
     Args:
@@ -96,13 +112,15 @@ def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type,
             rows_to_close = observation_table.get_rows_to_close(closing_strategy)
 
         # Generate hypothesis
-        hypothesis = observation_table.gen_hypothesis(check_for_duplicate_rows=cex_processing is None)
+        hypothesis = observation_table.gen_hypothesis(
+            check_for_duplicate_rows=cex_processing is None
+        )
 
         if print_level > 1:
-            print(f'Hypothesis {learning_rounds}: {len(hypothesis.states)} states.')
+            print(f"Hypothesis {learning_rounds}: {len(hypothesis.states)} states.")
 
         if print_level == 3:
-            print_observation_table(observation_table, 'det')
+            print_observation_table(observation_table, "det")
 
         # Find counterexample
         eq_query_start = time.time()
@@ -114,7 +132,7 @@ def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type,
             break
 
         if print_level == 3:
-            print('Counterexample', cex)
+            print("Counterexample", cex)
 
         # Process counterexample and ask membership queries
         if not cex_processing:
@@ -126,11 +144,16 @@ def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type,
 
             observation_table.update_obs_table(s_set=s_to_update)
             continue
-        elif cex_processing == 'longest_prefix':
-            cex_suffixes = longest_prefix_cex_processing(observation_table.S + list(observation_table.s_dot_a()),
-                                                         cex, closedness_type)
+        elif cex_processing == "longest_prefix":
+            cex_suffixes = longest_prefix_cex_processing(
+                observation_table.S + list(observation_table.s_dot_a()),
+                cex,
+                closedness_type,
+            )
         else:
-            cex_suffixes = rs_cex_processing(sul, cex, hypothesis, suffix_closedness, closedness_type)
+            cex_suffixes = rs_cex_processing(
+                sul, cex, hypothesis, suffix_closedness, closedness_type
+            )
 
         added_suffixes = extend_set(observation_table.E, cex_suffixes)
         observation_table.update_obs_table(e_set=added_suffixes)
@@ -140,19 +163,19 @@ def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type,
     learning_time = round(total_time - eq_query_time, 2)
 
     info = {
-        'learning_rounds': learning_rounds,
-        'automaton_size': len(hypothesis.states),
-        'queries_learning': sul.num_queries,
-        'steps_learning': sul.num_steps,
-        'queries_eq_oracle': eq_oracle.num_queries,
-        'steps_eq_oracle': eq_oracle.num_steps,
-        'learning_time': learning_time,
-        'eq_oracle_time': eq_query_time,
-        'total_time': total_time,
-        'characterization set': observation_table.E
+        "learning_rounds": learning_rounds,
+        "automaton_size": len(hypothesis.states),
+        "queries_learning": sul.num_queries,
+        "steps_learning": sul.num_steps,
+        "queries_eq_oracle": eq_oracle.num_queries,
+        "steps_eq_oracle": eq_oracle.num_steps,
+        "learning_time": learning_time,
+        "eq_oracle_time": eq_query_time,
+        "total_time": total_time,
+        "characterization set": observation_table.E,
     }
     if cache_and_non_det_check:
-        info['cache_saved'] = sul.num_cached_queries
+        info["cache_saved"] = sul.num_cached_queries
 
     if print_level > 0:
         print_learning_info(info)

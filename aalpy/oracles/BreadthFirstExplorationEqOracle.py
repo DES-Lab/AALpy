@@ -10,6 +10,7 @@ class BreadthFirstExplorationEqOracle(Oracle):
     Breadth-First Exploration of all possible input combinations up to a certain depth.
     Extremely inefficient equivalence oracle and should only be used for demonstrations.
     """
+
     def __init__(self, alphabet, sul: SUL, depth=5):
         """
         Args:
@@ -47,6 +48,6 @@ class BreadthFirstExplorationEqOracle(Oracle):
 
                     if out_hyp != out_sul:
                         self.sul.post()
-                        return seq[:ind + 1]
+                        return seq[: ind + 1]
 
         return None

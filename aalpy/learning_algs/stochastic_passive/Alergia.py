@@ -3,21 +3,34 @@ from collections import defaultdict
 from bisect import insort
 
 from aalpy.automata import MarkovChain, MdpState, Mdp, McState
-from aalpy.learning_algs.stochastic_passive.CompatibilityChecker import HoeffdingCompatibility
+from aalpy.learning_algs.stochastic_passive.CompatibilityChecker import (
+    HoeffdingCompatibility,
+)
 from aalpy.learning_algs.stochastic_passive.FPTA import create_fpta
 
 
 class Alergia:
-    def __init__(self, data, is_mdp=False, eps=0.005, compatibility_checker=None, print_info=False):
-        assert eps == 'auto' or 0 < eps <= 2
+    def __init__(
+        self,
+        data,
+        is_mdp=False,
+        eps=0.005,
+        compatibility_checker=None,
+        print_info=False,
+    ):
+        assert eps == "auto" or 0 < eps <= 2
 
         self.is_mdp = is_mdp
         self.print_info = print_info
 
-        if eps == 'auto':
-            eps = 10 / sum(len(d)-1 for d in data)  # len - 1 to ignore initial output
+        if eps == "auto":
+            eps = 10 / sum(len(d) - 1 for d in data)  # len - 1 to ignore initial output
 
-        self.diff_checker = HoeffdingCompatibility(eps) if not compatibility_checker else compatibility_checker
+        self.diff_checker = (
+            HoeffdingCompatibility(eps)
+            if not compatibility_checker
+            else compatibility_checker
+        )
 
         pta_start = time.time()
 
@@ -25,7 +38,7 @@ class Alergia:
 
         pta_time = round(time.time() - pta_start, 2)
         if self.print_info:
-            print(f'PTA Construction Time:  {pta_time}')
+            print(f"PTA Construction Time:  {pta_time}")
 
     def compatibility_test(self, a, b):
         if a.output != b.output:
@@ -61,13 +74,17 @@ class Alergia:
                 self.fold(q_r.children[i], c)
             else:
                 q_r.children[i] = c.copy()
-                q_r.input_frequency[i] = q_b.input_frequency[i] # Todo, Martin please examine if this is correct,
+                q_r.input_frequency[i] = q_b.input_frequency[
+                    i
+                ]  # Todo, Martin please examine if this is correct,
                 # without it you would get an error later on as child would exist without associated input freq
 
     def run(self):
         start_time = time.time()
 
-        red = [self.a]  # representative nodes and will be included in the final output model
+        red = [
+            self.a
+        ]  # representative nodes and will be included in the final output model
         blue = self.a.succs()  # intermediate successors scheduled for testing
 
         while blue:
@@ -75,7 +92,9 @@ class Alergia:
             merged = False
 
             for q_r in red:
-                if self.compatibility_test(self.get_blue_node(q_r), self.get_blue_node(lex_min_blue)):
+                if self.compatibility_test(
+                    self.get_blue_node(q_r), self.get_blue_node(lex_min_blue)
+                ):
                     self.merge(q_r, lex_min_blue)
                     merged = True
                     break
@@ -95,11 +114,11 @@ class Alergia:
         self.normalize(red)
 
         for i, r in enumerate(red):
-            r.state_id = f'q{i}'
+            r.state_id = f"q{i}"
 
         if self.print_info:
-            print(f'Alergia Learning Time: {round(time.time() - start_time, 2)}')
-            print(f'Alergia Learned {len(red)} state automaton.')
+            print(f"Alergia Learning Time: {round(time.time() - start_time, 2)}")
+            print(f"Alergia Learned {len(red)} state automaton.")
         return self.to_automaton(red)
 
     def normalize(self, red):
@@ -114,7 +133,9 @@ class Alergia:
                 for io, freq in r.input_frequency.items():
                     outputs_per_input[io[0]] += freq
                 for io in r.input_frequency.keys():
-                    r.children_prob[io] = r.input_frequency[io] / outputs_per_input[io[0]]
+                    r.children_prob[io] = (
+                        r.input_frequency[io] / outputs_per_input[io[0]]
+                    )
 
     def get_blue_node(self, red_node):
         blue = self.t
@@ -147,13 +168,15 @@ class Alergia:
                     s.transitions[i].append((destination, red_eq.children_prob[io]))
                 else:
                     if i not in red_eq.children_prob.keys():
-                        print('')
+                        print("")
                     s.transitions.append((destination, red_eq.children_prob[i]))
 
         return a_c(initial_state, states)
 
 
-def run_Alergia(data, automaton_type, eps=0.005, compatibility_checker=None, print_info=False):
+def run_Alergia(
+    data, automaton_type, eps=0.005, compatibility_checker=None, print_info=False
+):
     """
     Run Alergia or IOAlergia on provided data.
 
@@ -177,8 +200,13 @@ def run_Alergia(data, automaton_type, eps=0.005, compatibility_checker=None, pri
 
         mdp or markov chain
     """
-    assert automaton_type in {'mdp', 'mc'}
-    alergia = Alergia(data, eps=eps, is_mdp=True if automaton_type == 'mdp' else False,
-                      compatibility_checker=compatibility_checker, print_info=print_info)
+    assert automaton_type in {"mdp", "mc"}
+    alergia = Alergia(
+        data,
+        eps=eps,
+        is_mdp=True if automaton_type == "mdp" else False,
+        compatibility_checker=compatibility_checker,
+        print_info=print_info,
+    )
     model = alergia.run()
     return model

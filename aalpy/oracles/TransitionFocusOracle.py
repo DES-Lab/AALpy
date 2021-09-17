@@ -11,7 +11,15 @@ class TransitionFocusOracle(Oracle):
     all interesting behavior occurs on the transitions between states and potential bugs can be found only by
     focusing on transitions.
     """
-    def __init__(self, alphabet, sul: SUL, num_random_walks=1000, walk_len=20, same_state_prob=0.2):
+
+    def __init__(
+        self,
+        alphabet,
+        sul: SUL,
+        num_random_walks=1000,
+        walk_len=20,
+        same_state_prob=0.2,
+    ):
         """
         Args:
             alphabet: input alphabet
@@ -39,7 +47,11 @@ class TransitionFocusOracle(Oracle):
                 else:
                     possible_inputs = curr_state.get_diff_state_transitions()
 
-                act = random.choice(possible_inputs) if possible_inputs else random.choice(self.alphabet)
+                act = (
+                    random.choice(possible_inputs)
+                    if possible_inputs
+                    else random.choice(self.alphabet)
+                )
                 inputs.append(act)
 
                 out_sul = self.sul.step(inputs[-1])

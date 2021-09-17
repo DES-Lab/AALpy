@@ -5,6 +5,7 @@ class DfaState(AutomatonState):
     """
     Single state of a deterministic finite automaton.
     """
+
     def __init__(self, state_id):
         super().__init__(state_id)
         self.is_accepting = False
@@ -14,6 +15,7 @@ class Dfa(Automaton):
     """
     Deterministic finite automaton.
     """
+
     def __init__(self, initial_state: DfaState, states):
         super().__init__(initial_state, states)
 

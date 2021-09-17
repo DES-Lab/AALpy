@@ -5,6 +5,7 @@ from aalpy.base import SUL
 
 class SULWrapper(SUL):
     """ """
+
     def __init__(self, sul: SUL):
         super().__init__()
         self.sul = sul
@@ -23,7 +24,7 @@ class SULWrapper(SUL):
         """
 
         Args:
-          letter: 
+          letter:
 
         Returns:
 
@@ -35,6 +36,7 @@ class SULWrapper(SUL):
 
 class Node:
     """ """
+
     def __init__(self, output):
         self.output = output
         self.children = defaultdict(list)
@@ -43,17 +45,20 @@ class Node:
         """
 
         Args:
-          inp: 
-          out: 
+          inp:
+          out:
 
         Returns:
 
         """
-        return next((child for child in self.children[inp] if child.output == out), None)
+        return next(
+            (child for child in self.children[inp] if child.output == out), None
+        )
 
 
 class TraceTree:
     """ """
+
     def __init__(self):
         self.root_node = Node(None)
         self.curr_node = None
@@ -66,13 +71,15 @@ class TraceTree:
         """
 
         Args:
-          inp: 
-          out: 
+          inp:
+          out:
 
         Returns:
 
         """
-        if inp not in self.curr_node.children.keys() or out not in [child.output for child in self.curr_node.children[inp]]:
+        if inp not in self.curr_node.children.keys() or out not in [
+            child.output for child in self.curr_node.children[inp]
+        ]:
             node = Node(out)
             self.curr_node.children[inp].append(node)
         else:
@@ -82,9 +89,9 @@ class TraceTree:
         """
 
         Args:
-          inputs: 
-          outputs: 
-          e: 
+          inputs:
+          outputs:
+          e:
 
         Returns:
 

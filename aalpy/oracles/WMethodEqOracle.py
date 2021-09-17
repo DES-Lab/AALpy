@@ -9,7 +9,10 @@ class WMethodEqOracle(Oracle):
     Equivalence oracle based on characterization set/ W-set. From 'Tsun S. Chow.   Testing software design modeled by
     finite-state machines'.
     """
-    def __init__(self, alphabet: list, sul: SUL, max_number_of_states, shuffle_test_set=True):
+
+    def __init__(
+        self, alphabet: list, sul: SUL, max_number_of_states, shuffle_test_set=True
+    ):
         """
         Args:
 
@@ -29,7 +32,11 @@ class WMethodEqOracle(Oracle):
         assert hypothesis.characterization_set is not None
 
         # covers every transition of the specification at least once.
-        transition_cover = [state.prefix + (letter,) for state in hypothesis.states for letter in self.alphabet]
+        transition_cover = [
+            state.prefix + (letter,)
+            for state in hypothesis.states
+            for letter in self.alphabet
+        ]
 
         middle = []
         for i in range(self.m - len(hypothesis.states)):
@@ -58,7 +65,7 @@ class WMethodEqOracle(Oracle):
                 outputs.append(out_sul)
                 if out_hyp != out_sul:
                     self.sul.post()
-                    return seq[:ind + 1]
+                    return seq[: ind + 1]
             self.cache.add(seq)
 
         return None
@@ -70,6 +77,7 @@ class RandomWMethodEqOracle(Oracle):
     Random walks stem from fixed prefix (path to the state). At the end of the random
     walk an element from the characterization set is added to the test case.
     """
+
     def __init__(self, alphabet: list, sul: SUL, walks_per_state=10, walk_len=20):
         """
         Args:
@@ -95,7 +103,9 @@ class RandomWMethodEqOracle(Oracle):
             if state.prefix not in self.freq_dict.keys():
                 self.freq_dict[state.prefix] = 0
 
-            states_to_cover.extend([state] * (self.walks_per_state - self.freq_dict[state.prefix]))
+            states_to_cover.extend(
+                [state] * (self.walks_per_state - self.freq_dict[state.prefix])
+            )
 
         shuffle(states_to_cover)
 
@@ -105,7 +115,9 @@ class RandomWMethodEqOracle(Oracle):
             self.reset_hyp_and_sul(hypothesis)
 
             prefix = state.prefix
-            random_walk = tuple(choice(self.alphabet) for _ in range(randint(1, self.random_walk_len)))
+            random_walk = tuple(
+                choice(self.alphabet) for _ in range(randint(1, self.random_walk_len))
+            )
 
             test_case = prefix + random_walk + choice(hypothesis.characterization_set)
 
@@ -116,6 +128,6 @@ class RandomWMethodEqOracle(Oracle):
 
                 if output_sul != output_hyp:
                     self.sul.post()
-                    return test_case[:ind + 1]
+                    return test_case[: ind + 1]
 
         return None

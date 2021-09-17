@@ -5,7 +5,6 @@ from aalpy.learning_algs.stochastic_passive.FPTA import AlergiaPtaNode
 
 
 class CompatibilityChecker(ABC):
-
     @abstractmethod
     def check_difference(self, a: AlergiaPtaNode, b: AlergiaPtaNode, **kwargs) -> bool:
         pass
@@ -27,6 +26,8 @@ class HoeffdingCompatibility(CompatibilityChecker):
                 a_freq = a.input_frequency[o] if o in a.children.keys() else 0
                 b_freq = b.input_frequency[o] if o in b.children.keys() else 0
 
-                if abs(a_freq / n1 - b_freq / n2) > ((sqrt(1 / n1) + sqrt(1 / n2)) * sqrt(0.5 * log(2 / self.eps))):
+                if abs(a_freq / n1 - b_freq / n2) > (
+                    (sqrt(1 / n1) + sqrt(1 / n2)) * sqrt(0.5 * log(2 / self.eps))
+                ):
                     return False
         return True
