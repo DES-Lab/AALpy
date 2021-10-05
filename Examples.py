@@ -232,7 +232,7 @@ def tomita_example(tomita_number):
 
     tomita_sul = TomitaSUL(tomita_number)
     alphabet = [0, 1]
-    state_origin_eq_oracle = StatePrefixEqOracle(alphabet, tomita_sul, walks_per_state=20, walk_len=10)
+    state_origin_eq_oracle = StatePrefixEqOracle(alphabet, tomita_sul, walks_per_state=50, walk_len=10)
 
     learned_dfa = run_Lstar(alphabet, tomita_sul, state_origin_eq_oracle, automaton_type='dfa',
                             cache_and_non_det_check=True)
@@ -253,8 +253,8 @@ def regex_example(regex, alphabet):
 
     regex_sul = RegexSUL(regex)
 
-    eq_oracle = StatePrefixEqOracle(alphabet, regex_sul, walks_per_state=20,
-                                    walk_len=10)
+    eq_oracle = StatePrefixEqOracle(alphabet, regex_sul, walks_per_state=2000,
+                                    walk_len=15)
 
     learned_regex = run_Lstar(alphabet, regex_sul, eq_oracle, automaton_type='dfa')
 
