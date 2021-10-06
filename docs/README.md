@@ -13,6 +13,9 @@ selection of optimizations, including **efficient counterexample processing** an
 Finally, support for learning **abstracted nondeterministic Mealy machines** 
 enables efficient learning of system models with large input space. 
 
+AALpy also has an efficient implementation of the [Alergia](https://link.springer.com/article/10.1007/s10994-016-5565-9) algorithm, 
+suited for passive learning of Markov Chains and Markov Decision processes.
+
 ## Installation
 
 Use the package manager [pip](https://pip.pypa.io/en/stable/) to install AALpy.
