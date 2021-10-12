@@ -2,26 +2,28 @@ import time
 from collections import defaultdict
 from bisect import insort
 
-from aalpy.automata import MarkovChain, MdpState, Mdp, McState
+from aalpy.automata import MarkovChain, MdpState, Mdp, McState, MooreMachine, MooreState
 from aalpy.learning_algs.stochastic_passive.CompatibilityChecker import HoeffdingCompatibility
 from aalpy.learning_algs.stochastic_passive.FPTA import create_fpta
 
+state_automaton_map = {'mc': (McState, MarkovChain), 'mdp': (MdpState, Mdp), 'moore': (MooreState, MooreMachine)}
+
 
 class Alergia:
-    def __init__(self, data, is_mdp=False, eps=0.005, compatibility_checker=None, print_info=False):
+    def __init__(self, data, automaton_type, eps=0.005, compatibility_checker=None, print_info=False):
         assert eps == 'auto' or 0 < eps <= 2
 
-        self.is_mdp = is_mdp
+        self.automaton_type = automaton_type
         self.print_info = print_info
 
         if eps == 'auto':
-            eps = 10 / sum(len(d)-1 for d in data)  # len - 1 to ignore initial output
+            eps = 10 / sum(len(d) - 1 for d in data)  # len - 1 to ignore initial output
 
         self.diff_checker = HoeffdingCompatibility(eps) if not compatibility_checker else compatibility_checker
 
         pta_start = time.time()
 
-        self.t, self.a = create_fpta(data, is_mdp)
+        self.t, self.a = create_fpta(data, automaton_type)
 
         pta_time = round(time.time() - pta_start, 2)
         if self.print_info:
@@ -34,7 +36,7 @@ class Alergia:
         if not a.children.values() or not b.children.values():
             return True
 
-        if not self.diff_checker.check_difference(a, b):
+        if self.automaton_type != 'moore' and not self.diff_checker.check_difference(a, b):
             return False
 
         for el in set(a.children.keys()).intersection(b.children.keys()):
@@ -61,8 +63,7 @@ class Alergia:
                 self.fold(q_r.children[i], c)
             else:
                 q_r.children[i] = c.copy()
-                q_r.input_frequency[i] = q_b.input_frequency[i] # Todo, Martin please examine if this is correct,
-                # without it you would get an error later on as child would exist without associated input freq
+                q_r.input_frequency[i] = q_b.input_frequency[i]
 
     def run(self):
         start_time = time.time()
@@ -92,7 +93,8 @@ class Alergia:
 
         assert sorted(red, key=lambda x: len(x.prefix)) == red
 
-        self.normalize(red)
+        if self.automaton_type != 'moore':
+            self.normalize(red)
 
         for i, r in enumerate(red):
             r.state_id = f'q{i}'
@@ -105,7 +107,7 @@ class Alergia:
     def normalize(self, red):
         red_sorted = sorted(list(red), key=lambda x: len(x.prefix))
         for r in red_sorted:
-            if not self.is_mdp:
+            if self.automaton_type == 'mc':
                 total_output = sum(r.input_frequency.values())
                 for i in r.input_frequency.keys():
                     r.children_prob[i] = r.input_frequency[i] / total_output
@@ -123,8 +125,8 @@ class Alergia:
         return blue
 
     def to_automaton(self, red):
-        s_c = MdpState if self.is_mdp else McState
-        a_c = Mdp if self.is_mdp else MarkovChain
+        s_c = state_automaton_map[self.automaton_type][0]
+        a_c = state_automaton_map[self.automaton_type][1]
 
         states = []
         initial_state = None
@@ -142,13 +144,13 @@ class Alergia:
             red_eq = red_mdp_map[s.state_id]
             for io, c in red_eq.children.items():
                 destination = red_mdp_map[tuple(c.prefix)]
-                i = io[0] if self.is_mdp else io
-                if self.is_mdp:
+                i = io if self.automaton_type == 'mc' else io[0]
+                if self.automaton_type == 'mdp':
                     s.transitions[i].append((destination, red_eq.children_prob[io]))
-                else:
-                    if i not in red_eq.children_prob.keys():
-                        print('')
+                elif self.automaton_type == 'mc':
                     s.transitions.append((destination, red_eq.children_prob[i]))
+                else:
+                    s.transitions[i] = destination
 
         return a_c(initial_state, states)
 
@@ -166,7 +168,8 @@ def run_Alergia(data, automaton_type, eps=0.005, compatibility_checker=None, pri
         eps: epsilon value if you are using default HoeffdingCompatibility. If it is set to 'auto' it will be computed
         as 10/(all steps in the data)
 
-        automaton_type: either 'mdp' if you wish to learn an MDP, else 'mc' if you want to learn Markov Chain
+        automaton_type: either 'mdp' if you wish to learn an MDP, 'mc' if you want to learn Markov Chain, and 'moore'
+                        if you want to learn Moore Machine (underlying structure is deterministic)
 
         compatibility_checker: impl. of class CompatibilityChecker, HoeffdingCompatibility with eps value by default
 
@@ -177,8 +180,8 @@ def run_Alergia(data, automaton_type, eps=0.005, compatibility_checker=None, pri
 
         mdp or markov chain
     """
-    assert automaton_type in {'mdp', 'mc'}
-    alergia = Alergia(data, eps=eps, is_mdp=True if automaton_type == 'mdp' else False,
+    assert automaton_type in {'mdp', 'mc', 'moore'}
+    alergia = Alergia(data, eps=eps, automaton_type=automaton_type,
                       compatibility_checker=compatibility_checker, print_info=print_info)
     model = alergia.run()
     return model

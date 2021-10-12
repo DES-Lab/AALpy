@@ -29,7 +29,8 @@ class AlergiaPtaNode:
         return deepcopy(self)
 
 
-def create_fpta(data, is_iofpta):
+def create_fpta(data, automaton_type):
+    is_iofpta = True if automaton_type != 'mc' else False
     root_node = AlergiaPtaNode(data[0][0])
     for seq in data:
         if seq[0] != root_node.output:
