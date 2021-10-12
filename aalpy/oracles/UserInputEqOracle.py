@@ -66,4 +66,4 @@ class UserInputEqOracle(Oracle):
             print('Hypothesis Output :', out_hyp)
             print('SUL Output        :', out_sul)
             if out_hyp != out_sul:
-                print('Counterexample found.\nIf you want to return it, type \'end\'.')
+                print('Counterexample found.\nIf you want to return it, type \'cex\'.')
