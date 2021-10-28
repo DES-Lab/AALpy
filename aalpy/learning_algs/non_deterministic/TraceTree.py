@@ -4,7 +4,9 @@ from aalpy.base import SUL
 
 
 class SULWrapper(SUL):
-    """ """
+    """
+    Wrapper for non-deterministic SUL. After every step, input/output pair is added to the tree containing all traces.
+    """
     def __init__(self, sul: SUL):
         super().__init__()
         self.sul = sul
@@ -80,6 +82,12 @@ class TraceTree:
 
     def get_all_outputs(self, inputs, outputs, e):
         """
+        It should basically do this.
+        Get to the node that you reach when following input and outputs.
+        Than, from that node on, with input values in e, record ALL possible paths that follow it.
+        Edi 2 Konstantin:
+            In case of any questions about this, let me know.
+
 
         Args:
           inputs: 
@@ -97,9 +105,12 @@ class TraceTree:
                 return None
             curr_node = node
 
+
         # from this point all record all possible outputs
         nodes_to_process = [curr_node]
         # TODO RETURN WHOLE TRACES NOT JUST SINGLE OUTPUTS
+        # below this line it is faulty (but general idea is there, it is just wrong)
+        # also you can change stuff above it
         while True:
             if not e:
                 return tuple(node.output for node in nodes_to_process if node.output)
