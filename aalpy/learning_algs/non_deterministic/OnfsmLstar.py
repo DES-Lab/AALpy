@@ -3,13 +3,15 @@ import time
 from aalpy.base import SUL, Oracle
 from aalpy.learning_algs.non_deterministic.OnfsmObservationTable import NonDetObservationTable
 from aalpy.learning_algs.non_deterministic.TraceTree import SULWrapper
-from aalpy.utils.HelperFunctions import extend_set, print_learning_info, print_observation_table
+from aalpy.utils.HelperFunctions import extend_set, print_learning_info, print_observation_table, \
+    get_available_oracles_and_err_msg, cast_oracle
 
 print_options = [0, 1, 2, 3]
+available_oracles, available_oracles_error_msg = get_available_oracles_and_err_msg()
 
 
 def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=50,
-                      max_learning_rounds=None, return_data=False, print_level=2):
+                      max_learning_rounds=None, return_data=False, custom_oracle=False, print_level=2):
     """
     Based on ''Learning Finite State Models of Observable Nondeterministic Systems in a Testing Context '' from Fakih
     et al. Relies on the all-weather assumption. (By sampling we will obtain all possible non-deterministic outputs.
@@ -34,6 +36,8 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=50
         return_data: if True, map containing all information like number of queries... will be returned
             (Default value = False)
 
+        custom_oracle: if True, warning about oracle type will be removed and custom oracle can be used
+
         print_level: 0 - None, 1 - just results, 2 - current round and hypothesis size, 3 - educational/debug
             (Default value = 2)
 
@@ -42,6 +46,11 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=50
 
     """
     # Print warning
+    if not custom_oracle and type(eq_oracle) not in available_oracles:
+        raise SystemExit(available_oracles_error_msg)
+    if not custom_oracle:
+        eq_oracle = cast_oracle(eq_oracle)
+
     print('Starting learning with an all-weather assumption.\n'
           'See run_Lstar_ONFSM documentation for more details about possible non-convergence.')
 

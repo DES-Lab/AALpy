@@ -241,3 +241,26 @@ def get_cex_prefixes(cex, automaton_type):
     if automaton_type == 'mdp':
         return [tuple(cex[:i + 1]) for i in range(0, len(cex), 2)]
     return [tuple(cex[:i]) for i in range(0, len(cex) + 1, 2)]
+
+
+def get_available_oracles_and_err_msg():
+    from aalpy.oracles import RandomWalkEqOracle
+    from aalpy.oracles import RandomWordEqOracle
+    available_oracles = {RandomWalkEqOracle, RandomWordEqOracle}
+
+    available_oracles_msg = 'Warning! Only Random Walk and Random Word oracles are supported for non-deterministic and ' \
+                            'stochastic learning. If you have implemented the custom oracle, set the custom_oracle flag ' \
+                            'to True. '
+
+    return available_oracles, available_oracles_msg
+
+
+def cast_oracle(eq_oracle):
+    from aalpy.oracles import RandomWordEqOracle, UnseenOutputRandomWordEqOracle, \
+        RandomWalkEqOracle, UnseenOutputRandomWalkEqOracle
+    if isinstance(eq_oracle, RandomWordEqOracle):
+        return UnseenOutputRandomWordEqOracle(eq_oracle.alphabet, eq_oracle.sul, eq_oracle.num_walks,
+                                              eq_oracle.min_walk_len, eq_oracle.max_walk_len, eq_oracle.reset_after_cex)
+    elif isinstance(eq_oracle, RandomWalkEqOracle):
+        return UnseenOutputRandomWalkEqOracle(eq_oracle.alphabet, eq_oracle.sul, eq_oracle.step_limit,
+                                              eq_oracle.reset_after_cex, eq_oracle.reset_prob)
