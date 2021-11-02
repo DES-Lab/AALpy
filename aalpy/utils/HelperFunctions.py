@@ -253,25 +253,3 @@ def get_available_oracles_and_err_msg():
                             'to True. '
 
     return available_oracles, available_oracles_msg
-
-
-def cast_oracle_to_unseen_output(eq_oracle):
-    """
-    Non-deterministic and stochastic learning supports only UnseenOutput oracles. User can however just past standard
-    implementations of random walk and random work oracles, and they will be casted to their unseen output variant.
-
-    Args:
-        eq_oracle: original eq oracle
-
-    Returns:
-
-        augmented version of the eq oracle, used for non-det and stochastic systems
-    """
-    from aalpy.oracles import RandomWordEqOracle, UnseenOutputRandomWordEqOracle, \
-        RandomWalkEqOracle, UnseenOutputRandomWalkEqOracle
-    if isinstance(eq_oracle, RandomWordEqOracle):
-        return UnseenOutputRandomWordEqOracle(eq_oracle.alphabet, eq_oracle.sul, eq_oracle.num_walks,
-                                              eq_oracle.min_walk_len, eq_oracle.max_walk_len, eq_oracle.reset_after_cex)
-    elif isinstance(eq_oracle, RandomWalkEqOracle):
-        return UnseenOutputRandomWalkEqOracle(eq_oracle.alphabet, eq_oracle.sul, eq_oracle.step_limit,
-                                              eq_oracle.reset_after_cex, eq_oracle.reset_prob)
