@@ -4,7 +4,7 @@ from aalpy.base import SUL, Oracle
 from aalpy.learning_algs.non_deterministic.AbstractedOnfsmObservationTable import AbstractedNonDetObservationTable
 from aalpy.learning_algs.non_deterministic.TraceTree import SULWrapper
 from aalpy.utils.HelperFunctions import print_learning_info, print_observation_table, get_available_oracles_and_err_msg, \
-    cast_oracle
+    cast_oracle_to_unseen_output
 
 print_options = [0, 1, 2, 3]
 available_oracles, available_oracles_error_msg = get_available_oracles_and_err_msg()
@@ -51,7 +51,7 @@ def run_abstracted_ONFSM_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, abst
     if not custom_oracle and type(eq_oracle) not in available_oracles:
         raise SystemExit(available_oracles_error_msg)
     if not custom_oracle:
-        eq_oracle = cast_oracle(eq_oracle)
+        eq_oracle = cast_oracle_to_unseen_output(eq_oracle)
 
     start_time = time.time()
     eq_query_time = 0

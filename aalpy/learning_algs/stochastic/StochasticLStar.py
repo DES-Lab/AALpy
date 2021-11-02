@@ -7,7 +7,7 @@ from aalpy.learning_algs.stochastic.SamplingBasedObservationTable import Samplin
 from aalpy.learning_algs.stochastic.StochasticCexProcessing import stochastic_longest_prefix, stochastic_rs
 from aalpy.learning_algs.stochastic.StochasticTeacher import StochasticTeacher
 from aalpy.utils.HelperFunctions import print_learning_info, print_observation_table, get_cex_prefixes, \
-    get_available_oracles_and_err_msg, cast_oracle
+    get_available_oracles_and_err_msg, cast_oracle_to_unseen_output
 
 from aalpy.utils.ModelChecking import stop_based_on_confidence
 
@@ -88,7 +88,7 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_
     if not custom_oracle and type(eq_oracle) not in available_oracles:
         raise SystemExit(available_oracles_error_msg)
     if not custom_oracle:
-        eq_oracle = cast_oracle(eq_oracle)
+        eq_oracle = cast_oracle_to_unseen_output(eq_oracle)
 
     stochastic_teacher = StochasticTeacher(sul, n_c, eq_oracle, automaton_type, compatibility_checker,
                                            samples_cex_strategy=samples_cex_strategy)
