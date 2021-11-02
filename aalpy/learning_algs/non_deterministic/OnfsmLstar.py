@@ -11,7 +11,7 @@ available_oracles, available_oracles_error_msg = get_available_oracles_and_err_m
 
 
 def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=50,
-                      max_learning_rounds=None, return_data=False, custom_oracle=False, print_level=2):
+                      max_learning_rounds=None, custom_oracle=False, return_data=False, print_level=2):
     """
     Based on ''Learning Finite State Models of Observable Nondeterministic Systems in a Testing Context '' from Fakih
     et al. Relies on the all-weather assumption. (By sampling we will obtain all possible non-deterministic outputs.
@@ -33,10 +33,10 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=50
 
         max_learning_rounds: if max_learning_rounds is reached, learning will stop (Default value = None)
 
+        custom_oracle: if True, warning about oracle type will be removed and custom oracle can be used
+
         return_data: if True, map containing all information like number of queries... will be returned
             (Default value = False)
-
-        custom_oracle: if True, warning about oracle type will be removed and custom oracle can be used
 
         print_level: 0 - None, 1 - just results, 2 - current round and hypothesis size, 3 - educational/debug
             (Default value = 2)
