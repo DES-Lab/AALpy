@@ -172,7 +172,7 @@ def load_automaton_from_file(path, automaton_type, compute_prefixes=False):
 
     node_label_dict = dict()
     for n in graph.get_node_list():
-        if n.get_name() == '__start0' or n.get_name() == '':
+        if n.get_name() == '__start0' or n.get_name() == '' or n.get_name() == '\\n':
             continue
         label = None
         if 'label' in n.get_attributes().keys():
