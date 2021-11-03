@@ -49,8 +49,8 @@ AALpy enables efficient learning by providing a **large set of equivalence oracl
 is mostly based on Angluin's [L* algorithm](https://people.eecs.berkeley.edu/~dawnsong/teaching/s10/papers/angluin87.pdf), for which AALpy supports a 
 selection of optimizations, including **efficient counterexample processing** and **caching**.
 
-AALpy also has an efficient implementation of the [Alergia](https://link.springer.com/article/10.1007/s10994-016-5565-9) algorithm, 
-suited for passive learning of Markov Chains and Markov Decision processes. With Alergia, one can also passively learn deterministic Moore machines.
+AALpy also has an efficient implementation of the [ALERGIA](https://link.springer.com/article/10.1007/s10994-016-5565-9) algorithm, 
+suited for passive learning of Markov Chains and Markov Decision processes. With ALERGIA, one can also passively learn deterministic Moore machines.
  
 ## Installation
 
