@@ -1,4 +1,6 @@
 import os
+import sys
+import traceback
 
 from pydot import Dot, Node, Edge, graph_from_dot_file
 
@@ -27,18 +29,18 @@ def visualize_automaton(automaton, path="LearnedModel", file_type='pdf', display
 
     """
     print('Visualization started in the background thread.')
+
     if len(automaton.states) >= 25:
         print(f'Visualizing {len(automaton.states)} state automaton could take some time.')
 
     import threading
     visualization_thread = threading.Thread(target=save_automaton_to_file, name="Visualization",
-                                            args={automaton: automaton, path: path, file_type: file_type,
-                                                  display_same_state_trans: display_same_state_trans})
+                                            args=(automaton, path, file_type, display_same_state_trans, True))
     visualization_thread.start()
 
 
 def save_automaton_to_file(automaton, path="LearnedModel", file_type='dot',
-                           display_same_state_trans=True):
+                           display_same_state_trans=True, visualize=False):
     """
     The Standard of the automata strictly follows the syntax found at: https://automata.cs.ru.nl/Syntax/Overview.
     For non-deterministic and stochastic systems syntax can be found on AALpy's Wiki.
@@ -53,6 +55,8 @@ def save_automaton_to_file(automaton, path="LearnedModel", file_type='dot',
 
         display_same_state_trans: True, should not be set to false except from the visualization method
             (Default value = True)
+
+        visualize: visualize the automaton
 
     Returns:
 
@@ -121,23 +125,23 @@ def save_automaton_to_file(automaton, path="LearnedModel", file_type='dot',
 
     if file_type == 'string':
         return graph.to_string()
-    elif file_type == 'dot':
-        graph.write(path=f'{path}.dot', format='raw')
     else:
         try:
-            graph.write(path=f'{path}.{file_type}', format=file_type)
-            print(f'Visualized model saved to {path}.{file_type}.')
+            graph.write(path=f'{path}.{file_type}', format=file_type if file_type != 'dot' else 'raw')
+            print(f'Model saved to {path}.{file_type}.')
 
-            try:
-                import webbrowser
-                abs_path = os.path.abspath(f'{path}.{file_type}')
-                path = f'file:///{abs_path}'
-                webbrowser.open(path)
-            except OSError:
-                pass
+            if visualize and file_type in {'pdf', 'png', 'svg'}:
+                try:
+                    import webbrowser
+                    abs_path = os.path.abspath(f'{path}.{file_type}')
+                    path = f'file:///{abs_path}'
+                    webbrowser.open(path)
+                except OSError:
+                    traceback.print_exc()
+                    print(f'Could not open the file {path}.{file_type}.', file=sys.stderr)
         except OSError:
-            print(f'Could not write to file {path}.{file_type} (Permission denied).'
-                  f'If the file is open, close it and retry.')
+            traceback.print_exc()
+            print(f'Could not write to the file {path}.{file_type}.', file=sys.stderr)
 
 
 def load_automaton_from_file(path, automaton_type, compute_prefixes=False):
@@ -164,7 +168,7 @@ def load_automaton_from_file(path, automaton_type, compute_prefixes=False):
 
     assert automaton_type in automaton_types
 
-    id_node_aut_map = {'dfa' : (DfaState, Dfa), 'mealy': (MealyState, MealyMachine), 'moore': (MooreState, MooreMachine),
+    id_node_aut_map = {'dfa': (DfaState, Dfa), 'mealy': (MealyState, MealyMachine), 'moore': (MooreState, MooreMachine),
                        'onfsm': (OnfsmState, Onfsm), 'mdp': (MdpState, Mdp), 'mc': (McState, MarkovChain),
                        'smm': (StochasticMealyState, StochasticMealyMachine)}
 
@@ -233,8 +237,8 @@ def load_automaton_from_file(path, automaton_type, compute_prefixes=False):
             source.transitions[inp].append((destination, prob))
         elif automaton_type == 'mc':
             prob = label
-            source.transitions.append((destination,float(prob)))
-        else: # moore or dfa
+            source.transitions.append((destination, float(prob)))
+        else:  # moore or dfa
             source.transitions[int(label) if label.isdigit() else label] = destination
 
     if initial_node is None:
