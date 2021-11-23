@@ -169,10 +169,43 @@ class Automaton(ABC):
                 return state
 
         return None
-                
+
     def __str__(self):
         """
         :return: A string representation of the automaton
         """
         from aalpy.utils import save_automaton_to_file
         return save_automaton_to_file(self, path='learnedModel', file_type='string')
+
+    def compute_characterization_set(self):
+        'Naive way of computing the characterization set. Distinguishing sequences are computed with BFS.'
+        from itertools import combinations, permutations
+        input_al = self.initial_state.transitions.keys()
+
+        e_set = list((s,) for s in input_al)
+        for s1, s2 in combinations(self.states, 2):
+            state_differentiated = False
+            for suffix in e_set:
+                if self.execute_sequence(s1, suffix) != self.execute_sequence(s2, suffix):
+                    state_differentiated = True
+                    break
+            if state_differentiated:
+                continue
+
+            dist_seq_found = False
+            for i in range(len(self.states) - 1, 2, -1): # TODO OPTIMIZE BY REVERSING??
+                for suffix in permutations(input_al, i):
+                    if self.execute_sequence(s1, suffix) != self.execute_sequence(s2, suffix):
+                        e_set.append(suffix)
+                        dist_seq_found = True
+                        break
+
+                if dist_seq_found:
+                    continue
+
+        e_set.sort(key=len)
+        return e_set
+
+    def execute_sequence(self, origin_state, seq):
+        self.current_state = origin_state
+        return [self.step(s) for s in seq]
