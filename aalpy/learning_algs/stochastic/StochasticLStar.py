@@ -23,7 +23,7 @@ available_oracles, available_oracles_error_msg = get_available_oracles_and_err_m
 
 def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_resample=100, target_unambiguity=0.99,
                          min_rounds=10, max_rounds=200, automaton_type='mdp', strategy='normal',
-                         cex_processing='longest_prefix', samples_cex_strategy=None, custom_oracle=False,
+                         cex_processing=None, samples_cex_strategy=None, custom_oracle=False,
                          return_data=False, property_based_stopping=None, print_level=2):
     """
     Learning of Markov Decision Processes based on 'L*-Based Learning of Markov Decision Processes' by Tappler et al.
@@ -76,6 +76,7 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_
 
     assert samples_cex_strategy in cex_sampling_options or samples_cex_strategy.startswith('random')
     assert cex_processing in cex_processing_options
+    assert automaton_type in {'mdp', 'smm'}
     if property_based_stopping:
         assert len(property_based_stopping) == 3
 
