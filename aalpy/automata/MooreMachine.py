@@ -1,4 +1,4 @@
-from aalpy.base import Automaton, AutomatonState
+from aalpy.base import AutomatonState, DeterministicAutomaton
 
 
 class MooreState(AutomatonState):
@@ -11,7 +11,7 @@ class MooreState(AutomatonState):
         self.output = output
 
 
-class MooreMachine(Automaton):
+class MooreMachine(DeterministicAutomaton):
 
     def __init__(self, initial_state: AutomatonState, states: list):
         super().__init__(initial_state, states)

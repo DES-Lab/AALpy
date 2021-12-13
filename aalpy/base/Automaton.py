@@ -54,6 +54,7 @@ class Automaton(ABC):
         self.states = states
         self.characterization_set: list
         self.current_state = initial_state
+        self.size = len(self.states)
 
     def reset_to_initial(self):
         """
@@ -75,6 +76,54 @@ class Automaton(ABC):
             Output produced when executing the input letter from the current state
 
         """
+        pass
+
+    def is_input_complete(self) -> bool:
+        """
+        Check whether all states have defined transition for all inputs
+        :return: true if automaton is input complete
+
+        Returns:
+
+            True if input complete, False otherwise
+
+        """
+        alphabet = set(self.initial_state.transitions.keys())
+        for state in self.states:
+            if state.transitions.keys() != alphabet:
+                return False
+        return True
+
+    def get_input_alphabet(self) -> list:
+        """
+        Returns the input alphabet
+        """
+        assert self.is_input_complete()
+        return list(self.initial_state.transitions.keys())
+
+    def get_state_by_id(self, state_id) -> AutomatonState:
+        for state in self.states:
+            if state.state_id == state_id:
+                return state
+
+        return None
+
+    def __str__(self):
+        """
+        :return: A string representation of the automaton
+        """
+        from aalpy.utils import save_automaton_to_file
+        return save_automaton_to_file(self, path='learnedModel', file_type='string')
+
+    def execute_sequence(self, origin_state, seq):
+        self.current_state = origin_state
+        return [self.step(s) for s in seq]
+
+
+class DeterministicAutomaton(Automaton):
+
+    @abstractmethod
+    def step(self, letter):
         pass
 
     def get_shortest_path(self, origin_state: AutomatonState, target_state: AutomatonState) -> tuple:
@@ -122,6 +171,35 @@ class Automaton(ABC):
                 explored.append(node)
         return ()
 
+    def compute_characterization_set(self):
+        'Naive way of computing the characterization set. Distinguishing sequences are computed with BFS.'
+        from itertools import combinations, permutations
+        input_al = self.initial_state.transitions.keys()
+
+        e_set = list((s,) for s in input_al)
+        for s1, s2 in combinations(self.states, 2):
+            state_differentiated = False
+            for suffix in e_set:
+                if self.execute_sequence(s1, suffix) != self.execute_sequence(s2, suffix):
+                    state_differentiated = True
+                    break
+            if state_differentiated:
+                continue
+
+            dist_seq_found = False
+            for i in range(2, len(self.states) - 1):  # TODO OPTIMIZE BY REVERSING??
+                for suffix in permutations(input_al, i):
+                    if self.execute_sequence(s1, suffix) != self.execute_sequence(s2, suffix):
+                        e_set.append(suffix)
+                        dist_seq_found = True
+                        break
+
+                if dist_seq_found:
+                    continue
+
+        e_set.sort(key=len)
+        return e_set
+
     def is_strongly_connected(self) -> bool:
         """
         Check whether the automaton is strongly connected,
@@ -139,73 +217,3 @@ class Automaton(ABC):
             if not self.get_shortest_path(state_comb[0], state_comb[1]):
                 return False
         return True
-
-    def is_input_complete(self) -> bool:
-        """
-        Check whether all states have defined transition for all inputs
-        :return: true if automaton is input complete
-
-        Returns:
-
-            True if input complete, False otherwise
-
-        """
-        alphabet = set(self.initial_state.transitions.keys())
-        for state in self.states:
-            if state.transitions.keys() != alphabet:
-                return False
-        return True
-
-    def get_input_alphabet(self) -> list:
-        """
-        Returns the input alphabet
-        """
-        assert self.is_input_complete()
-        return list(self.initial_state.transitions.keys())
-
-    def get_state_by_id(self, state_id) -> AutomatonState:
-        for state in self.states:
-            if state.state_id == state_id:
-                return state
-
-        return None
-
-    def __str__(self):
-        """
-        :return: A string representation of the automaton
-        """
-        from aalpy.utils import save_automaton_to_file
-        return save_automaton_to_file(self, path='learnedModel', file_type='string')
-
-    def compute_characterization_set(self):
-        'Naive way of computing the characterization set. Distinguishing sequences are computed with BFS.'
-        from itertools import combinations, permutations
-        input_al = self.initial_state.transitions.keys()
-
-        e_set = list((s,) for s in input_al)
-        for s1, s2 in combinations(self.states, 2):
-            state_differentiated = False
-            for suffix in e_set:
-                if self.execute_sequence(s1, suffix) != self.execute_sequence(s2, suffix):
-                    state_differentiated = True
-                    break
-            if state_differentiated:
-                continue
-
-            dist_seq_found = False
-            for i in range(len(self.states) - 1, 2, -1): # TODO OPTIMIZE BY REVERSING??
-                for suffix in permutations(input_al, i):
-                    if self.execute_sequence(s1, suffix) != self.execute_sequence(s2, suffix):
-                        e_set.append(suffix)
-                        dist_seq_found = True
-                        break
-
-                if dist_seq_found:
-                    continue
-
-        e_set.sort(key=len)
-        return e_set
-
-    def execute_sequence(self, origin_state, seq):
-        self.current_state = origin_state
-        return [self.step(s) for s in seq]

@@ -1,4 +1,4 @@
-from aalpy.base import Automaton, AutomatonState
+from aalpy.base import AutomatonState, DeterministicAutomaton
 
 
 class MealyState(AutomatonState):
@@ -10,7 +10,7 @@ class MealyState(AutomatonState):
         self.output_fun = dict()
 
 
-class MealyMachine(Automaton):
+class MealyMachine(DeterministicAutomaton):
 
     def __init__(self, initial_state: MealyState, states):
         super().__init__(initial_state, states)
