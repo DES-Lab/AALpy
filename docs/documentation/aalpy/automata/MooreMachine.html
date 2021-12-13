@@ -66,7 +66,7 @@
                 
                         <details>
             <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">aalpy.base</span> <span class="kn">import</span> <span class="n">Automaton</span><span class="p">,</span> <span class="n">AutomatonState</span>
+            <div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">aalpy.base</span> <span class="kn">import</span> <span class="n">AutomatonState</span><span class="p">,</span> <span class="n">DeterministicAutomaton</span>
 
 
 <span class="k">class</span> <span class="nc">MooreState</span><span class="p">(</span><span class="n">AutomatonState</span><span class="p">):</span>
@@ -79,7 +79,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">output</span>
 
 
-<span class="k">class</span> <span class="nc">MooreMachine</span><span class="p">(</span><span class="n">Automaton</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">MooreMachine</span><span class="p">(</span><span class="n">DeterministicAutomaton</span><span class="p">):</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">:</span> <span class="n">AutomatonState</span><span class="p">,</span> <span class="n">states</span><span class="p">:</span> <span class="nb">list</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">initial_state</span><span class="p">,</span> <span class="n">states</span><span class="p">)</span>
@@ -175,12 +175,12 @@ state.</p>
 
         
         <span class="def">class</span>
-        <span class="name">MooreMachine</span>(<span class="base"><a href="../base/Automaton.html#Automaton">aalpy.base.Automaton.Automaton</a></span>):
+        <span class="name">MooreMachine</span>(<span class="base"><a href="../base/Automaton.html#DeterministicAutomaton">aalpy.base.Automaton.DeterministicAutomaton</a></span>):
     </div>
 
                 <details>
             <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">MooreMachine</span><span class="p">(</span><span class="n">Automaton</span><span class="p">):</span>
+            <div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">MooreMachine</span><span class="p">(</span><span class="n">DeterministicAutomaton</span><span class="p">):</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">:</span> <span class="n">AutomatonState</span><span class="p">,</span> <span class="n">states</span><span class="p">:</span> <span class="nb">list</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">initial_state</span><span class="p">,</span> <span class="n">states</span><span class="p">)</span>
@@ -282,14 +282,19 @@ states (list) : list containing all states of the automaton
                             <div class="inherited">
                                 <h5>Inherited Members</h5>
                                 <dl>
-                                    <div><dt><a href="../base/Automaton.html#Automaton">aalpy.base.Automaton.Automaton</a></dt>
+                                    <div><dt><a href="../base/Automaton.html#DeterministicAutomaton">aalpy.base.Automaton.DeterministicAutomaton</a></dt>
+                                <dd id="MooreMachine.get_shortest_path" class="function"><a href="../base/Automaton.html#DeterministicAutomaton.get_shortest_path">get_shortest_path</a></dd>
+                <dd id="MooreMachine.compute_characterization_set" class="function"><a href="../base/Automaton.html#DeterministicAutomaton.compute_characterization_set">compute_characterization_set</a></dd>
+                <dd id="MooreMachine.is_strongly_connected" class="function"><a href="../base/Automaton.html#DeterministicAutomaton.is_strongly_connected">is_strongly_connected</a></dd>
+
+            </div>
+            <div><dt><a href="../base/Automaton.html#Automaton">aalpy.base.Automaton.Automaton</a></dt>
                                 <dd id="MooreMachine.characterization_set" class="variable"><a href="../base/Automaton.html#Automaton.characterization_set">characterization_set</a></dd>
                 <dd id="MooreMachine.reset_to_initial" class="function"><a href="../base/Automaton.html#Automaton.reset_to_initial">reset_to_initial</a></dd>
-                <dd id="MooreMachine.get_shortest_path" class="function"><a href="../base/Automaton.html#Automaton.get_shortest_path">get_shortest_path</a></dd>
-                <dd id="MooreMachine.is_strongly_connected" class="function"><a href="../base/Automaton.html#Automaton.is_strongly_connected">is_strongly_connected</a></dd>
                 <dd id="MooreMachine.is_input_complete" class="function"><a href="../base/Automaton.html#Automaton.is_input_complete">is_input_complete</a></dd>
                 <dd id="MooreMachine.get_input_alphabet" class="function"><a href="../base/Automaton.html#Automaton.get_input_alphabet">get_input_alphabet</a></dd>
                 <dd id="MooreMachine.get_state_by_id" class="function"><a href="../base/Automaton.html#Automaton.get_state_by_id">get_state_by_id</a></dd>
+                <dd id="MooreMachine.execute_sequence" class="function"><a href="../base/Automaton.html#Automaton.execute_sequence">execute_sequence</a></dd>
 
             </div>
                                 </dl>

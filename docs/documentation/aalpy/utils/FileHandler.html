@@ -58,6 +58,8 @@
                         <details>
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
 
 <span class="kn">from</span> <span class="nn">pydot</span> <span class="kn">import</span> <span class="n">Dot</span><span class="p">,</span> <span class="n">Node</span><span class="p">,</span> <span class="n">Edge</span><span class="p">,</span> <span class="n">graph_from_dot_file</span>
 
@@ -86,18 +88,18 @@
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Visualization started in the background thread.&#39;</span><span class="p">)</span>
+
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">automaton</span><span class="o">.</span><span class="n">states</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">25</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Visualizing </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">automaton</span><span class="o">.</span><span class="n">states</span><span class="p">)</span><span class="si">}</span><span class="s1"> state automaton could take some time.&#39;</span><span class="p">)</span>
 
     <span class="kn">import</span> <span class="nn">threading</span>
     <span class="n">visualization_thread</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">save_automaton_to_file</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Visualization&quot;</span><span class="p">,</span>
-                                            <span class="n">args</span><span class="o">=</span><span class="p">{</span><span class="n">automaton</span><span class="p">:</span> <span class="n">automaton</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">path</span><span class="p">,</span> <span class="n">file_type</span><span class="p">:</span> <span class="n">file_type</span><span class="p">,</span>
-                                                  <span class="n">display_same_state_trans</span><span class="p">:</span> <span class="n">display_same_state_trans</span><span class="p">})</span>
+                                            <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">automaton</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">file_type</span><span class="p">,</span> <span class="n">display_same_state_trans</span><span class="p">,</span> <span class="kc">True</span><span class="p">))</span>
     <span class="n">visualization_thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 
 
 <span class="k">def</span> <span class="nf">save_automaton_to_file</span><span class="p">(</span><span class="n">automaton</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s2">&quot;LearnedModel&quot;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;dot&#39;</span><span class="p">,</span>
-                           <span class="n">display_same_state_trans</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+                           <span class="n">display_same_state_trans</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">visualize</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    The Standard of the automata strictly follows the syntax found at: https://automata.cs.ru.nl/Syntax/Overview.</span>
 <span class="sd">    For non-deterministic and stochastic systems syntax can be found on AALpy&#39;s Wiki.</span>
@@ -112,6 +114,8 @@
 
 <span class="sd">        display_same_state_trans: True, should not be set to false except from the visualization method</span>
 <span class="sd">            (Default value = True)</span>
+
+<span class="sd">        visualize: visualize the automaton</span>
 
 <span class="sd">    Returns:</span>
 
@@ -180,23 +184,23 @@
 
     <span class="k">if</span> <span class="n">file_type</span> <span class="o">==</span> <span class="s1">&#39;string&#39;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">graph</span><span class="o">.</span><span class="n">to_string</span><span class="p">()</span>
-    <span class="k">elif</span> <span class="n">file_type</span> <span class="o">==</span> <span class="s1">&#39;dot&#39;</span><span class="p">:</span>
-        <span class="n">graph</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1">.dot&#39;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;raw&#39;</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">graph</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">file_type</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="n">file_type</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Visualized model saved to </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">file_type</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">)</span>
+            <span class="n">graph</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">file_type</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="n">file_type</span> <span class="k">if</span> <span class="n">file_type</span> <span class="o">!=</span> <span class="s1">&#39;dot&#39;</span> <span class="k">else</span> <span class="s1">&#39;raw&#39;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Model saved to </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">file_type</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">)</span>
 
-            <span class="k">try</span><span class="p">:</span>
-                <span class="kn">import</span> <span class="nn">webbrowser</span>
-                <span class="n">abs_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">file_type</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-                <span class="n">path</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;file:///</span><span class="si">{</span><span class="n">abs_path</span><span class="si">}</span><span class="s1">&#39;</span>
-                <span class="n">webbrowser</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-            <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
-                <span class="k">pass</span>
+            <span class="k">if</span> <span class="n">visualize</span> <span class="ow">and</span> <span class="n">file_type</span> <span class="ow">in</span> <span class="p">{</span><span class="s1">&#39;pdf&#39;</span><span class="p">,</span> <span class="s1">&#39;png&#39;</span><span class="p">,</span> <span class="s1">&#39;svg&#39;</span><span class="p">}:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="kn">import</span> <span class="nn">webbrowser</span>
+                    <span class="n">abs_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">file_type</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                    <span class="n">path</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;file:///</span><span class="si">{</span><span class="n">abs_path</span><span class="si">}</span><span class="s1">&#39;</span>
+                    <span class="n">webbrowser</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+                    <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">()</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Could not open the file </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">file_type</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Could not write to file </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">file_type</span><span class="si">}</span><span class="s1"> (Permission denied).&#39;</span>
-                  <span class="sa">f</span><span class="s1">&#39;If the file is open, close it and retry.&#39;</span><span class="p">)</span>
+            <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">()</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Could not write to the file </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">file_type</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">load_automaton_from_file</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">,</span> <span class="n">compute_prefixes</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
@@ -223,7 +227,7 @@
 
     <span class="k">assert</span> <span class="n">automaton_type</span> <span class="ow">in</span> <span class="n">automaton_types</span>
 
-    <span class="n">id_node_aut_map</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;dfa&#39;</span> <span class="p">:</span> <span class="p">(</span><span class="n">DfaState</span><span class="p">,</span> <span class="n">Dfa</span><span class="p">),</span> <span class="s1">&#39;mealy&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">MealyState</span><span class="p">,</span> <span class="n">MealyMachine</span><span class="p">),</span> <span class="s1">&#39;moore&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">MooreState</span><span class="p">,</span> <span class="n">MooreMachine</span><span class="p">),</span>
+    <span class="n">id_node_aut_map</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;dfa&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">DfaState</span><span class="p">,</span> <span class="n">Dfa</span><span class="p">),</span> <span class="s1">&#39;mealy&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">MealyState</span><span class="p">,</span> <span class="n">MealyMachine</span><span class="p">),</span> <span class="s1">&#39;moore&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">MooreState</span><span class="p">,</span> <span class="n">MooreMachine</span><span class="p">),</span>
                        <span class="s1">&#39;onfsm&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">OnfsmState</span><span class="p">,</span> <span class="n">Onfsm</span><span class="p">),</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">MdpState</span><span class="p">,</span> <span class="n">Mdp</span><span class="p">),</span> <span class="s1">&#39;mc&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">McState</span><span class="p">,</span> <span class="n">MarkovChain</span><span class="p">),</span>
                        <span class="s1">&#39;smm&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">StochasticMealyState</span><span class="p">,</span> <span class="n">StochasticMealyMachine</span><span class="p">)}</span>
 
@@ -292,8 +296,8 @@
             <span class="n">source</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">inp</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">destination</span><span class="p">,</span> <span class="n">prob</span><span class="p">))</span>
         <span class="k">elif</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mc&#39;</span><span class="p">:</span>
             <span class="n">prob</span> <span class="o">=</span> <span class="n">label</span>
-            <span class="n">source</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">destination</span><span class="p">,</span><span class="nb">float</span><span class="p">(</span><span class="n">prob</span><span class="p">)))</span>
-        <span class="k">else</span><span class="p">:</span> <span class="c1"># moore or dfa</span>
+            <span class="n">source</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">destination</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">prob</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># moore or dfa</span>
             <span class="n">source</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">label</span><span class="p">)</span> <span class="k">if</span> <span class="n">label</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()</span> <span class="k">else</span> <span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">destination</span>
 
     <span class="k">if</span> <span class="n">initial_node</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -375,13 +379,13 @@
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Visualization started in the background thread.&#39;</span><span class="p">)</span>
+
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">automaton</span><span class="o">.</span><span class="n">states</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">25</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Visualizing </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">automaton</span><span class="o">.</span><span class="n">states</span><span class="p">)</span><span class="si">}</span><span class="s1"> state automaton could take some time.&#39;</span><span class="p">)</span>
 
     <span class="kn">import</span> <span class="nn">threading</span>
     <span class="n">visualization_thread</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">save_automaton_to_file</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Visualization&quot;</span><span class="p">,</span>
-                                            <span class="n">args</span><span class="o">=</span><span class="p">{</span><span class="n">automaton</span><span class="p">:</span> <span class="n">automaton</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">path</span><span class="p">,</span> <span class="n">file_type</span><span class="p">:</span> <span class="n">file_type</span><span class="p">,</span>
-                                                  <span class="n">display_same_state_trans</span><span class="p">:</span> <span class="n">display_same_state_trans</span><span class="p">})</span>
+                                            <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">automaton</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">file_type</span><span class="p">,</span> <span class="n">display_same_state_trans</span><span class="p">,</span> <span class="kc">True</span><span class="p">))</span>
     <span class="n">visualization_thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 </pre></div>
 
@@ -414,14 +418,15 @@ display_same_state_trans: if True, same state transitions will be displayed (Def
     automaton,
     path=&#39;LearnedModel&#39;,
     file_type=&#39;dot&#39;,
-    display_same_state_trans=True
+    display_same_state_trans=True,
+    visualize=False
 )</span>:
     </div>
 
                 <details>
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">save_automaton_to_file</span><span class="p">(</span><span class="n">automaton</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s2">&quot;LearnedModel&quot;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;dot&#39;</span><span class="p">,</span>
-                           <span class="n">display_same_state_trans</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+                           <span class="n">display_same_state_trans</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">visualize</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    The Standard of the automata strictly follows the syntax found at: https://automata.cs.ru.nl/Syntax/Overview.</span>
 <span class="sd">    For non-deterministic and stochastic systems syntax can be found on AALpy&#39;s Wiki.</span>
@@ -436,6 +441,8 @@ display_same_state_trans: if True, same state transitions will be displayed (Def
 
 <span class="sd">        display_same_state_trans: True, should not be set to false except from the visualization method</span>
 <span class="sd">            (Default value = True)</span>
+
+<span class="sd">        visualize: visualize the automaton</span>
 
 <span class="sd">    Returns:</span>
 
@@ -504,23 +511,23 @@ display_same_state_trans: if True, same state transitions will be displayed (Def
 
     <span class="k">if</span> <span class="n">file_type</span> <span class="o">==</span> <span class="s1">&#39;string&#39;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">graph</span><span class="o">.</span><span class="n">to_string</span><span class="p">()</span>
-    <span class="k">elif</span> <span class="n">file_type</span> <span class="o">==</span> <span class="s1">&#39;dot&#39;</span><span class="p">:</span>
-        <span class="n">graph</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1">.dot&#39;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;raw&#39;</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">graph</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">file_type</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="n">file_type</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Visualized model saved to </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">file_type</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">)</span>
+            <span class="n">graph</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">file_type</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="n">file_type</span> <span class="k">if</span> <span class="n">file_type</span> <span class="o">!=</span> <span class="s1">&#39;dot&#39;</span> <span class="k">else</span> <span class="s1">&#39;raw&#39;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Model saved to </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">file_type</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">)</span>
 
-            <span class="k">try</span><span class="p">:</span>
-                <span class="kn">import</span> <span class="nn">webbrowser</span>
-                <span class="n">abs_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">file_type</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-                <span class="n">path</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;file:///</span><span class="si">{</span><span class="n">abs_path</span><span class="si">}</span><span class="s1">&#39;</span>
-                <span class="n">webbrowser</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-            <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
-                <span class="k">pass</span>
+            <span class="k">if</span> <span class="n">visualize</span> <span class="ow">and</span> <span class="n">file_type</span> <span class="ow">in</span> <span class="p">{</span><span class="s1">&#39;pdf&#39;</span><span class="p">,</span> <span class="s1">&#39;png&#39;</span><span class="p">,</span> <span class="s1">&#39;svg&#39;</span><span class="p">}:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="kn">import</span> <span class="nn">webbrowser</span>
+                    <span class="n">abs_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">file_type</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                    <span class="n">path</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;file:///</span><span class="si">{</span><span class="n">abs_path</span><span class="si">}</span><span class="s1">&#39;</span>
+                    <span class="n">webbrowser</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+                    <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">()</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Could not open the file </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">file_type</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Could not write to file </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">file_type</span><span class="si">}</span><span class="s1"> (Permission denied).&#39;</span>
-                  <span class="sa">f</span><span class="s1">&#39;If the file is open, close it and retry.&#39;</span><span class="p">)</span>
+            <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">()</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Could not write to the file </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">file_type</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
 </pre></div>
 
         </details>
@@ -538,6 +545,8 @@ file_type: Can be ['dot', 'png', 'svg', 'pdf'] (Default value = 'dot')
 
 display_same_state_trans: True, should not be set to false except from the visualization method
     (Default value = True)
+
+visualize: visualize the automaton
 </code></pre>
 
 <p>Returns:</p>
@@ -579,7 +588,7 @@ display_same_state_trans: True, should not be set to false except from the visua
 
     <span class="k">assert</span> <span class="n">automaton_type</span> <span class="ow">in</span> <span class="n">automaton_types</span>
 
-    <span class="n">id_node_aut_map</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;dfa&#39;</span> <span class="p">:</span> <span class="p">(</span><span class="n">DfaState</span><span class="p">,</span> <span class="n">Dfa</span><span class="p">),</span> <span class="s1">&#39;mealy&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">MealyState</span><span class="p">,</span> <span class="n">MealyMachine</span><span class="p">),</span> <span class="s1">&#39;moore&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">MooreState</span><span class="p">,</span> <span class="n">MooreMachine</span><span class="p">),</span>
+    <span class="n">id_node_aut_map</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;dfa&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">DfaState</span><span class="p">,</span> <span class="n">Dfa</span><span class="p">),</span> <span class="s1">&#39;mealy&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">MealyState</span><span class="p">,</span> <span class="n">MealyMachine</span><span class="p">),</span> <span class="s1">&#39;moore&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">MooreState</span><span class="p">,</span> <span class="n">MooreMachine</span><span class="p">),</span>
                        <span class="s1">&#39;onfsm&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">OnfsmState</span><span class="p">,</span> <span class="n">Onfsm</span><span class="p">),</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">MdpState</span><span class="p">,</span> <span class="n">Mdp</span><span class="p">),</span> <span class="s1">&#39;mc&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">McState</span><span class="p">,</span> <span class="n">MarkovChain</span><span class="p">),</span>
                        <span class="s1">&#39;smm&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">StochasticMealyState</span><span class="p">,</span> <span class="n">StochasticMealyMachine</span><span class="p">)}</span>
 
@@ -648,8 +657,8 @@ display_same_state_trans: True, should not be set to false except from the visua
             <span class="n">source</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">inp</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">destination</span><span class="p">,</span> <span class="n">prob</span><span class="p">))</span>
         <span class="k">elif</span> <span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mc&#39;</span><span class="p">:</span>
             <span class="n">prob</span> <span class="o">=</span> <span class="n">label</span>
-            <span class="n">source</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">destination</span><span class="p">,</span><span class="nb">float</span><span class="p">(</span><span class="n">prob</span><span class="p">)))</span>
-        <span class="k">else</span><span class="p">:</span> <span class="c1"># moore or dfa</span>
+            <span class="n">source</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">destination</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">prob</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># moore or dfa</span>
             <span class="n">source</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">label</span><span class="p">)</span> <span class="k">if</span> <span class="n">label</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()</span> <span class="k">else</span> <span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">destination</span>
 
     <span class="k">if</span> <span class="n">initial_node</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>

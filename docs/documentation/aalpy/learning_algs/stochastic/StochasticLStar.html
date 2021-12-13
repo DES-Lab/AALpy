@@ -73,7 +73,7 @@
 
 <span class="k">def</span> <span class="nf">run_stochastic_Lstar</span><span class="p">(</span><span class="n">input_alphabet</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">eq_oracle</span><span class="p">:</span> <span class="n">Oracle</span><span class="p">,</span> <span class="n">n_c</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">n_resample</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">target_unambiguity</span><span class="o">=</span><span class="mf">0.99</span><span class="p">,</span>
                          <span class="n">min_rounds</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">max_rounds</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">automaton_type</span><span class="o">=</span><span class="s1">&#39;mdp&#39;</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="s1">&#39;normal&#39;</span><span class="p">,</span>
-                         <span class="n">cex_processing</span><span class="o">=</span><span class="s1">&#39;longest_prefix&#39;</span><span class="p">,</span> <span class="n">samples_cex_strategy</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">custom_oracle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                         <span class="n">cex_processing</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">samples_cex_strategy</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">custom_oracle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                          <span class="n">return_data</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">property_based_stopping</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">print_level</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Learning of Markov Decision Processes based on &#39;L*-Based Learning of Markov Decision Processes&#39; by Tappler et al.</span>
@@ -126,6 +126,7 @@
 
     <span class="k">assert</span> <span class="n">samples_cex_strategy</span> <span class="ow">in</span> <span class="n">cex_sampling_options</span> <span class="ow">or</span> <span class="n">samples_cex_strategy</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;random&#39;</span><span class="p">)</span>
     <span class="k">assert</span> <span class="n">cex_processing</span> <span class="ow">in</span> <span class="n">cex_processing_options</span>
+    <span class="k">assert</span> <span class="n">automaton_type</span> <span class="ow">in</span> <span class="p">{</span><span class="s1">&#39;mdp&#39;</span><span class="p">,</span> <span class="s1">&#39;smm&#39;</span><span class="p">}</span>
     <span class="k">if</span> <span class="n">property_based_stopping</span><span class="p">:</span>
         <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">property_based_stopping</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span>
 
@@ -270,7 +271,7 @@
     max_rounds=200,
     automaton_type=&#39;mdp&#39;,
     strategy=&#39;normal&#39;,
-    cex_processing=&#39;longest_prefix&#39;,
+    cex_processing=None,
     samples_cex_strategy=None,
     custom_oracle=False,
     return_data=False,
@@ -283,7 +284,7 @@
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">run_stochastic_Lstar</span><span class="p">(</span><span class="n">input_alphabet</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">eq_oracle</span><span class="p">:</span> <span class="n">Oracle</span><span class="p">,</span> <span class="n">n_c</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">n_resample</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">target_unambiguity</span><span class="o">=</span><span class="mf">0.99</span><span class="p">,</span>
                          <span class="n">min_rounds</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">max_rounds</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">automaton_type</span><span class="o">=</span><span class="s1">&#39;mdp&#39;</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="s1">&#39;normal&#39;</span><span class="p">,</span>
-                         <span class="n">cex_processing</span><span class="o">=</span><span class="s1">&#39;longest_prefix&#39;</span><span class="p">,</span> <span class="n">samples_cex_strategy</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">custom_oracle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                         <span class="n">cex_processing</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">samples_cex_strategy</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">custom_oracle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                          <span class="n">return_data</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">property_based_stopping</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">print_level</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Learning of Markov Decision Processes based on &#39;L*-Based Learning of Markov Decision Processes&#39; by Tappler et al.</span>
@@ -336,6 +337,7 @@
 
     <span class="k">assert</span> <span class="n">samples_cex_strategy</span> <span class="ow">in</span> <span class="n">cex_sampling_options</span> <span class="ow">or</span> <span class="n">samples_cex_strategy</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;random&#39;</span><span class="p">)</span>
     <span class="k">assert</span> <span class="n">cex_processing</span> <span class="ow">in</span> <span class="n">cex_processing_options</span>
+    <span class="k">assert</span> <span class="n">automaton_type</span> <span class="ow">in</span> <span class="p">{</span><span class="s1">&#39;mdp&#39;</span><span class="p">,</span> <span class="s1">&#39;smm&#39;</span><span class="p">}</span>
     <span class="k">if</span> <span class="n">property_based_stopping</span><span class="p">:</span>
         <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">property_based_stopping</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span>
 

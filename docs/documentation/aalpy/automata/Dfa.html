@@ -66,7 +66,7 @@
                 
                         <details>
             <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">aalpy.base</span> <span class="kn">import</span> <span class="n">AutomatonState</span><span class="p">,</span> <span class="n">Automaton</span>
+            <div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">aalpy.base</span> <span class="kn">import</span> <span class="n">AutomatonState</span><span class="p">,</span> <span class="n">Automaton</span><span class="p">,</span> <span class="n">DeterministicAutomaton</span>
 
 
 <span class="k">class</span> <span class="nc">DfaState</span><span class="p">(</span><span class="n">AutomatonState</span><span class="p">):</span>
@@ -78,7 +78,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">is_accepting</span> <span class="o">=</span> <span class="kc">False</span>
 
 
-<span class="k">class</span> <span class="nc">Dfa</span><span class="p">(</span><span class="n">Automaton</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">Dfa</span><span class="p">(</span><span class="n">DeterministicAutomaton</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Deterministic finite automaton.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -172,12 +172,12 @@ state.</p>
 
         
         <span class="def">class</span>
-        <span class="name">Dfa</span>(<span class="base"><a href="../base/Automaton.html#Automaton">aalpy.base.Automaton.Automaton</a></span>):
+        <span class="name">Dfa</span>(<span class="base"><a href="../base/Automaton.html#DeterministicAutomaton">aalpy.base.Automaton.DeterministicAutomaton</a></span>):
     </div>
 
                 <details>
             <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">Dfa</span><span class="p">(</span><span class="n">Automaton</span><span class="p">):</span>
+            <div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">Dfa</span><span class="p">(</span><span class="n">DeterministicAutomaton</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Deterministic finite automaton.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -269,14 +269,19 @@ states (list) : list containing all states of the automaton
                             <div class="inherited">
                                 <h5>Inherited Members</h5>
                                 <dl>
-                                    <div><dt><a href="../base/Automaton.html#Automaton">aalpy.base.Automaton.Automaton</a></dt>
+                                    <div><dt><a href="../base/Automaton.html#DeterministicAutomaton">aalpy.base.Automaton.DeterministicAutomaton</a></dt>
+                                <dd id="Dfa.get_shortest_path" class="function"><a href="../base/Automaton.html#DeterministicAutomaton.get_shortest_path">get_shortest_path</a></dd>
+                <dd id="Dfa.compute_characterization_set" class="function"><a href="../base/Automaton.html#DeterministicAutomaton.compute_characterization_set">compute_characterization_set</a></dd>
+                <dd id="Dfa.is_strongly_connected" class="function"><a href="../base/Automaton.html#DeterministicAutomaton.is_strongly_connected">is_strongly_connected</a></dd>
+
+            </div>
+            <div><dt><a href="../base/Automaton.html#Automaton">aalpy.base.Automaton.Automaton</a></dt>
                                 <dd id="Dfa.characterization_set" class="variable"><a href="../base/Automaton.html#Automaton.characterization_set">characterization_set</a></dd>
                 <dd id="Dfa.reset_to_initial" class="function"><a href="../base/Automaton.html#Automaton.reset_to_initial">reset_to_initial</a></dd>
-                <dd id="Dfa.get_shortest_path" class="function"><a href="../base/Automaton.html#Automaton.get_shortest_path">get_shortest_path</a></dd>
-                <dd id="Dfa.is_strongly_connected" class="function"><a href="../base/Automaton.html#Automaton.is_strongly_connected">is_strongly_connected</a></dd>
                 <dd id="Dfa.is_input_complete" class="function"><a href="../base/Automaton.html#Automaton.is_input_complete">is_input_complete</a></dd>
                 <dd id="Dfa.get_input_alphabet" class="function"><a href="../base/Automaton.html#Automaton.get_input_alphabet">get_input_alphabet</a></dd>
                 <dd id="Dfa.get_state_by_id" class="function"><a href="../base/Automaton.html#Automaton.get_state_by_id">get_state_by_id</a></dd>
+                <dd id="Dfa.execute_sequence" class="function"><a href="../base/Automaton.html#Automaton.execute_sequence">execute_sequence</a></dd>
 
             </div>
                                 </dl>
