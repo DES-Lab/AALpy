@@ -241,16 +241,22 @@ def compare_automata(aut_1: DeterministicAutomaton, aut_2: DeterministicAutomato
             state.prefix = test_automaton.get_shortest_path(test_automaton.initial_state, state)
 
     # setup  the eq oracle
-    eq_oracle = RandomWMethodEqOracle(input_al, base_sul, walks_per_state=100, walk_len=10)
+    eq_oracle = RandomWMethodEqOracle(input_al, base_sul, walks_per_state=min(100, len(input_al) * 10), walk_len=10)
 
     found_cex = []
-    while len(found_cex) < num_cex:
+    # to avoid near "infinite" loops due to while loop and set requirement
+    # that is, if you can only find 1 cex and all other cexs are suffixes of that cex, first while condition will never
+    # be reached
+    failsafe_counter = 0
+    failsafe_stopping = num_cex * 100
+    while len(found_cex) < num_cex or failsafe_counter == failsafe_stopping:
         cex = eq_oracle.find_cex(test_automaton)
         # if no counterexample can be found terminate the loop
         if cex is None:
             break
         if cex not in found_cex:
             found_cex.append(cex)
+        failsafe_counter += 1
 
     found_cex.sort(key=len)
 
