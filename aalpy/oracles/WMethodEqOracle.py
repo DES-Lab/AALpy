@@ -26,7 +26,7 @@ class WMethodEqOracle(Oracle):
 
     def find_cex(self, hypothesis):
 
-        if hypothesis.characterization_set is None:
+        if not hypothesis.characterization_set:
             hypothesis.characterization_set = hypothesis.compute_characterization_set()
 
         # covers every transition of the specification at least once.
@@ -91,7 +91,7 @@ class RandomWMethodEqOracle(Oracle):
 
     def find_cex(self, hypothesis):
 
-        if hypothesis.characterization_set is None:
+        if not hypothesis.characterization_set:
             hypothesis.characterization_set = hypothesis.compute_characterization_set()
 
         states_to_cover = []

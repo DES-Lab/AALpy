@@ -52,7 +52,7 @@ class Automaton(ABC):
         """
         self.initial_state = initial_state
         self.states = states
-        self.characterization_set: list
+        self.characterization_set: list = []
         self.current_state = initial_state
         self.size = len(self.states)
 
