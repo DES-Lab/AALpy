@@ -1,20 +1,5 @@
-import copy
 from abc import ABC, abstractmethod
 from collections import defaultdict
-
-def find_non_singleton(blocks):
-    """
-    Given a partition (of states), this function returns a block with at least two elements.
-    Args:
-        blocks: a partition of a set
-
-    Returns: a set with at least two elements
-
-    """
-    try:
-        return next(filter(lambda b: len(b) > 1, blocks))
-    except StopIteration:
-        return None
 
 
 class AutomatonState(ABC):
@@ -52,13 +37,6 @@ class AutomatonState(ABC):
         all_trans = set(self.transitions.keys())
         return [t for t in all_trans if t not in dst]
 
-
-def remove_duplicates(seq_list):
-    seq_set = []
-    for s in seq_list:
-        if s not in seq_set:
-            seq_set.append(s)
-    return seq_set
 
 class Automaton(ABC):
     """
@@ -212,7 +190,7 @@ class DeterministicAutomaton(Automaton):
                 return False
         return True
 
-    def output(self, state, letter):
+    def output_step(self, state, letter):
         """
             Given an input letter, compute the output response from a given state.
             Args:
@@ -245,18 +223,18 @@ class DeterministicAutomaton(Automaton):
         alphabet = self.get_input_alphabet()
         while to_explore:
             (curr_s1, curr_s2, prefix) = to_explore.pop(0)
-            visited.add((curr_s1,curr_s2))
+            visited.add((curr_s1, curr_s2))
             for i in alphabet:
-                o1 = self.output(curr_s1,i)
-                o2 = self.output(curr_s2,i)
+                o1 = self.output_step(curr_s1, i)
+                o2 = self.output_step(curr_s2, i)
                 new_prefix = prefix + [i]
                 if o1 != o2:
                     return new_prefix
                 else:
                     next_s1 = curr_s1.transitions[i]
                     next_s2 = curr_s2.transitions[i]
-                    if (next_s1,next_s2) not in visited:
-                        to_explore.append((next_s1,next_s2,new_prefix))
+                    if (next_s1, next_s2) not in visited:
+                        to_explore.append((next_s1, next_s2, new_prefix))
         # this should never be reached, unless we have non-canonical automata
         return None
 
@@ -271,7 +249,7 @@ class DeterministicAutomaton(Automaton):
 
         """
         state_save = self.current_state
-        output = self.execute_sequence(state,sequence)
+        output = self.execute_sequence(state, sequence)
         self.current_state = state_save
         return output
 
@@ -297,27 +275,35 @@ class DeterministicAutomaton(Automaton):
         Returns: a characterization set
 
         """
+        from copy import copy
+
         blocks = list()
-        blocks.append(copy.deepcopy(self.states))
+        blocks.append(copy(self.states))
         char_set = [] if not char_set_init else char_set_init
         if char_set_init:
             for seq in char_set_init:
                 blocks = self.split_blocks(blocks, seq)
 
         while True:
-            block_to_split = find_non_singleton(blocks)
+            # Given a partition (of states), this function returns a block with at least two elements.
+            try:
+                block_to_split = next(filter(lambda b: len(b) > 1, blocks))
+            except StopIteration:
+                block_to_split = None
+
             if not block_to_split:
                 break
             split_state1 = block_to_split[0]
             split_state2 = block_to_split[1]
             dist_seq = self.find_distinguishing_seq(split_state1, split_state2)
             assert ((not split_all_blocks) or (dist_seq not in char_set))
-            dist_seq_closure = [dist_seq]
 
             # in L*-based learning, we use suffix-closed column labels, so it makes sense to use a suffix-closed
             # char set in this context
             if online_suffix_closure:
                 dist_seq_closure = [tuple(dist_seq[len(dist_seq) - i - 1:]) for i in range(len(dist_seq))]
+            else:
+                dist_seq_closure = [tuple(dist_seq)]
 
             # the standard approach described by Gill, computes a sequence that splits one block and really only splits
             # one block, that is, it is only applied to the states in said block
@@ -335,11 +321,12 @@ class DeterministicAutomaton(Automaton):
                 new_blocks = [block_to_split]
                 for seq in dist_seq_closure:
                     char_set.append(seq)
-                    new_blocks = self.split_blocks(new_blocks,seq)
+                    new_blocks = self.split_blocks(new_blocks, seq)
                 for new_block in new_blocks:
                     blocks.append(new_block)
 
-        return remove_duplicates(char_set)
+        char_set = list(set(char_set))
+        return char_set
 
     def split_blocks(self, blocks, seq):
         """
