@@ -707,25 +707,10 @@ def alergia_mdp_example():
         sul.post()
         data.append(seq)
 
-    with open('mdpData.txt', 'w') as file:
-        for seq in data:
-            sting = f'{seq[0]},'
-            for io in seq[1:]:
-                sting += f'{io[0]}/{io[1]},'
-
-            file.write(f'{sting[:-1]}\n')
-
-    file.close()
-
-    # create tokenizer
-    tokenizer = IODelimiterTokenizer()
-    # parse data
-    data = tokenizer.tokenize_data('mdpData.txt')
     # run alergia with the data and automaton_type set to 'mdp' to True to learn a MDP
     model = run_Alergia(data, automaton_type='mdp', eps=0.005, print_info=True)
 
     visualize_automaton(model)
-    remove('mdpData.txt')
     return model
 
 
@@ -742,6 +727,8 @@ def alergia_mc_example():
 
     sul = McSUL(mc)
 
+    # note that this example shows writing to file just to show how tokenizer is used...
+    # this step can ofc be skipped and lists passed to alergia
     data = []
     for _ in range(100000):
         str_len = randint(4, 12)
