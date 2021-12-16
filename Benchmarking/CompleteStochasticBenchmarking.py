@@ -7,7 +7,8 @@ from aalpy.SULs import MdpSUL
 from aalpy.learning_algs import run_stochastic_Lstar
 from aalpy.oracles.RandomWordEqOracle import UnseenOutputRandomWordEqOracle
 from aalpy.utils import load_automaton_from_file, get_properties_file, get_correct_prop_values
-from aalpy.utils import smm_to_mdp_conversion, model_check_experiment
+from aalpy.utils import model_check_experiment
+from aalpy.automata.StochasticMealyMachine import smm_to_mdp_conversion
 
 seeds = [29334,1554,9430459,92344168,55451679,569315,7776892,3875261,811,51,766603,778438967,9819877,6755560,52903,5257,4635,358,1441,838]
 

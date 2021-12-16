@@ -6,7 +6,8 @@ from aalpy.SULs import MdpSUL
 from aalpy.learning_algs import run_stochastic_Lstar
 from aalpy.oracles.RandomWalkEqOracle import UnseenOutputRandomWalkEqOracle
 from aalpy.utils import load_automaton_from_file, get_correct_prop_values, get_properties_file
-from aalpy.utils import smm_to_mdp_conversion, model_check_experiment
+from aalpy.utils import model_check_experiment
+from aalpy.automata.StochasticMealyMachine import smm_to_mdp_conversion
 
 path_to_dir = '../DotModels/MDPs/'
 files = ['first_grid.dot', 'second_grid.dot',

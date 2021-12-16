@@ -1,8 +1,6 @@
 import string
 from collections import defaultdict
 
-from aalpy.automata import Mdp, StochasticMealyMachine, MdpState
-
 
 def extend_set(list_to_extend: list, new_elements: list) -> list:
     """
@@ -81,53 +79,6 @@ def random_string_generator(size=10, chars=string.ascii_lowercase + string.digit
     """
     import random
     return ''.join(random.choice(chars) for _ in range(size))
-
-
-def smm_to_mdp_conversion(smm: StochasticMealyMachine):
-    """
-    Convert SMM to MDP.
-
-    Args:
-      smm: StochasticMealyMachine: SMM to convert
-
-    Returns:
-
-        equivalent MDP
-
-    """
-    inputs = smm.get_input_alphabet()
-    mdp_states = []
-    smm_state_to_mdp_state = dict()
-    init_state = MdpState("0", "___start___")
-    mdp_states.append(init_state)
-    for s in smm.states:
-        incoming_edges = defaultdict(list)
-        incoming_outputs = set()
-        for pre_s in smm.states:
-            for i in inputs:
-                incoming_edges[i] += filter(lambda t: t[0] == s, pre_s.transitions[i])
-                incoming_outputs.update(map(lambda t: t[1], incoming_edges[i]))
-        state_id = 0
-        for o in incoming_outputs:
-            new_state_id = s.state_id + str(state_id)
-            state_id += 1
-            new_state = MdpState(new_state_id, o)
-            mdp_states.append(new_state)
-            smm_state_to_mdp_state[(s.state_id, o)] = new_state
-
-    for s in smm.states:
-        mdp_states_for_s = {mdp_state for (s_id, o), mdp_state in smm_state_to_mdp_state.items() if s_id == s.state_id}
-        for i in inputs:
-            for outgoing_t in s.transitions[i]:
-                target_smm_state = outgoing_t[0]
-                output = outgoing_t[1]
-                prob = outgoing_t[2]
-                target_mdp_state = smm_state_to_mdp_state[(target_smm_state.state_id, output)]
-                for mdp_state in mdp_states_for_s:
-                    mdp_state.transitions[i].append((target_mdp_state, prob))
-                if s == smm.initial_state:
-                    init_state.transitions[i].append((target_mdp_state, prob))
-    return Mdp(init_state, mdp_states)
 
 
 def print_learning_info(info: dict):

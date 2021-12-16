@@ -201,7 +201,7 @@ def stop_based_on_confidence(hypothesis, property_based_stopping, print_level=2)
 
         True if absolute error for all properties is smaller then property_based_stopping[2]
     """
-    from aalpy.utils import smm_to_mdp_conversion
+    from aalpy.automata.StochasticMealyMachine import smm_to_mdp_conversion
 
     path_2_prop = property_based_stopping[0]
     correct_values = property_based_stopping[1]

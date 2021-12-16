@@ -18,8 +18,9 @@ class StochasticTest(unittest.TestCase):
         max_rounds = 500
 
         from aalpy.automata import StochasticMealyMachine
-        from aalpy.utils import smm_to_mdp_conversion, model_check_experiment, get_properties_file, \
+        from aalpy.utils import model_check_experiment, get_properties_file, \
             get_correct_prop_values
+        from aalpy.automata.StochasticMealyMachine import smm_to_mdp_conversion
 
         aalpy.paths.path_to_prism = "C:/Program Files/prism-4.6/bin/prism.bat"
         aalpy.paths.path_to_properties = "../Benchmarking/prism_eval_props/"
