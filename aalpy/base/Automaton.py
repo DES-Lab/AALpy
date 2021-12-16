@@ -282,7 +282,7 @@ class DeterministicAutomaton(Automaton):
         char_set = [] if not char_set_init else char_set_init
         if char_set_init:
             for seq in char_set_init:
-                blocks = self.split_blocks(blocks, seq)
+                blocks = self._split_blocks(blocks, seq)
 
         while True:
             # Given a partition (of states), this function returns a block with at least two elements.
@@ -315,20 +315,20 @@ class DeterministicAutomaton(Automaton):
                     if seq in char_set:
                         continue
                     char_set.append(seq)
-                    blocks = self.split_blocks(blocks, seq)
+                    blocks = self._split_blocks(blocks, seq)
             else:
                 blocks.remove(block_to_split)
                 new_blocks = [block_to_split]
                 for seq in dist_seq_closure:
                     char_set.append(seq)
-                    new_blocks = self.split_blocks(new_blocks, seq)
+                    new_blocks = self._split_blocks(new_blocks, seq)
                 for new_block in new_blocks:
                     blocks.append(new_block)
 
         char_set = list(set(char_set))
         return char_set
 
-    def split_blocks(self, blocks, seq):
+    def _split_blocks(self, blocks, seq):
         """
         Refines a partition of states (blocks) using the output response to a given input sequence seq.
         Args:
