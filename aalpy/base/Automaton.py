@@ -235,8 +235,8 @@ class DeterministicAutomaton(Automaton):
                     next_s2 = curr_s2.transitions[i]
                     if (next_s1, next_s2) not in visited:
                         to_explore.append((next_s1, next_s2, new_prefix))
-        # this should never be reached, unless we have non-canonical automata
-        return None
+
+        raise SystemExit('Distinguishing sequence could not be computed (Non-canonical automaton).')
 
     def compute_output_seq(self, state, sequence):
         """
