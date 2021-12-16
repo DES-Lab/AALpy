@@ -1,8 +1,6 @@
 import copy
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from aalpy.utils.HelperFunctions import all_suffixes
-
 
 def find_non_singleton(blocks):
     """
@@ -214,43 +212,6 @@ class DeterministicAutomaton(Automaton):
                 return False
         return True
 
-    def is_input_complete(self) -> bool:
-        """
-        Check whether all states have defined transition for all inputs
-        :return: true if automaton is input complete
-
-        Returns:
-
-            True if input complete, False otherwise
-
-        """
-        alphabet = set(self.initial_state.transitions.keys())
-        for state in self.states:
-            if state.transitions.keys() != alphabet:
-                return False
-        return True
-
-    def get_input_alphabet(self) -> list:
-        """
-        Returns the input alphabet
-        """
-        assert self.is_input_complete()
-        return list(self.initial_state.transitions.keys())
-
-    def get_state_by_id(self, state_id) -> AutomatonState:
-        for state in self.states:
-            if state.state_id == state_id:
-                return state
-
-        return None
-
-    def __str__(self):
-        """
-        :return: A string representation of the automaton
-        """
-        from aalpy.utils import save_automaton_to_file
-        return save_automaton_to_file(self, path='learnedModel', file_type='string')
-
     def output(self, state, letter):
         """
             Given an input letter, compute the output response from a given state.
@@ -310,10 +271,7 @@ class DeterministicAutomaton(Automaton):
 
         """
         state_save = self.current_state
-        self.current_state = state
-        output = []
-        for l in sequence:
-            output.append(self.step(l))
+        output = self.execute_sequence(state,sequence)
         self.current_state = state_save
         return output
 
@@ -352,14 +310,14 @@ class DeterministicAutomaton(Automaton):
                 break
             split_state1 = block_to_split[0]
             split_state2 = block_to_split[1]
-            dist_sequence = self.find_distinguishing_seq(split_state1, split_state2)
-            assert ((not split_all_blocks) or (dist_sequence not in char_set))
-            dist_seq_closure = [dist_sequence]
+            dist_seq = self.find_distinguishing_seq(split_state1, split_state2)
+            assert ((not split_all_blocks) or (dist_seq not in char_set))
+            dist_seq_closure = [dist_seq]
 
             # in L*-based learning, we use suffix-closed column labels, so it makes sense to use a suffix-closed
             # char set in this context
             if online_suffix_closure:
-                dist_seq_closure = all_suffixes(dist_sequence)
+                dist_seq_closure = [tuple(dist_seq[len(dist_seq) - i - 1:]) for i in range(len(dist_seq))]
 
             # the standard approach described by Gill, computes a sequence that splits one block and really only splits
             # one block, that is, it is only applied to the states in said block

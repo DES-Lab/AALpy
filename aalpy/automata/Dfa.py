@@ -1,4 +1,4 @@
-from aalpy.base import AutomatonState, Automaton, DeterministicAutomaton
+from aalpy.base import AutomatonState, DeterministicAutomaton
 
 
 class DfaState(AutomatonState):
