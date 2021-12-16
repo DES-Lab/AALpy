@@ -62,7 +62,7 @@ class Alergia:
                 q_r.input_frequency[i] += c.input_frequency[i]
                 self.fold(q_r.children[i], c)
             else:
-                q_r.children[i] = c.copy()
+                q_r.children[i] = c  # was c.copy()
                 q_r.input_frequency[i] = q_b.input_frequency[i]
 
     def run(self):

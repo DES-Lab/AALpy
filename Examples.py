@@ -722,7 +722,7 @@ def alergia_mc_example():
     from aalpy.utils import visualize_automaton, generate_random_markov_chain
     from aalpy.utils import CharacterTokenizer
 
-    mc = generate_random_markov_chain(5)
+    mc = generate_random_markov_chain(10)
     visualize_automaton(mc, path='Original')
 
     sul = McSUL(mc)
@@ -730,7 +730,7 @@ def alergia_mc_example():
     # note that this example shows writing to file just to show how tokenizer is used...
     # this step can ofc be skipped and lists passed to alergia
     data = []
-    for _ in range(100000):
+    for _ in range(20000):
         str_len = randint(4, 12)
         seq = [f'{sul.pre()}']
         for _ in range(str_len):
@@ -751,8 +751,7 @@ def alergia_mc_example():
     data = tokenizer.tokenize_data('mcData.txt')
     # run alergia with the data and automaton_type set to 'mc' to learn a Markov Chain
     model = run_Alergia(data, automaton_type='mc', eps=0.005, print_info=True)
-
-    print(model)
+    # print(model)
 
     visualize_automaton(model)
     remove('mcData.txt')

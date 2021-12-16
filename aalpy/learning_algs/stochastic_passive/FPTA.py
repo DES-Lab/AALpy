@@ -1,5 +1,4 @@
 from collections import defaultdict
-from copy import deepcopy
 
 
 class AlergiaPtaNode:
@@ -25,9 +24,6 @@ class AlergiaPtaNode:
     def __eq__(self, other):
         return self.prefix == other.prefix
 
-    def copy(self):
-        return deepcopy(self)
-
 
 def create_fpta(data, automaton_type):
     is_iofpta = True if automaton_type != 'mc' else False
@@ -43,7 +39,8 @@ def create_fpta(data, automaton_type):
             inp_out = el if not is_iofpta else (el[0], el[1])
 
             if inp_out not in curr_node.children.keys():
-                node, node_copy = AlergiaPtaNode(el if not is_iofpta else el[1]), AlergiaPtaNode(el if not is_iofpta else el[1])
+                node, node_copy = AlergiaPtaNode(el if not is_iofpta else el[1]), AlergiaPtaNode(
+                    el if not is_iofpta else el[1])
                 node.prefix, node_copy.prefix = list(curr_node.prefix), list(curr_node.prefix)
 
                 node.prefix.append(inp_out)
