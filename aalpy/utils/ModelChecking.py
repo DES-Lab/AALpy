@@ -226,6 +226,24 @@ def stop_based_on_confidence(hypothesis, property_based_stopping, print_level=2)
 
 
 def compare_automata(aut_1: DeterministicAutomaton, aut_2: DeterministicAutomaton, num_cex=10):
+    """
+    Finds cases of non-conformance between first and second automaton. This is done by performing RandomW equivalence
+    check. It is possible that number of found counterexamples is smaller than num_cex, as no counterexample will be a
+    suffix of a previously found counterexample.
+
+    Args:
+
+        aut_1: first automaton
+
+        aut_2: second automaton
+
+        num_cex: max. number of searches for counterexamples
+
+    Returns:
+
+        A list of input sequences that revel different behaviour on both automata. Counterexamples are sorted by length.
+    """
+    #
     type_map = {MooreMachine: MooreSUL, Dfa: DfaSUL, MealyMachine: MealySUL}
     assert set(aut_1.get_input_alphabet()) == set(aut_2.get_input_alphabet())
 
