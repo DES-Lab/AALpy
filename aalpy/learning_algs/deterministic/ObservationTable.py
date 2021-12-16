@@ -211,20 +211,21 @@ class ObservationTable:
 
     def shrink(self, hypothesis):
         'WIP'
-        e_set = hypothesis.compute_characterization_set()
-        ordered_e_set = list(self.A)
-        ordered_e_set.extend([el for el in e_set if el not in self.A])
+        init_set = [tuple()] if self.automaton_type != 'mealy' else []
+        init_set.extend(self.A)
+        e_set = hypothesis.compute_characterization_set(char_set_init=init_set)
+        ordered_e_set = list(init_set)
+        ordered_e_set.extend([el for el in e_set if el not in init_set])
+
         self.T.clear()
-
         self.E = ordered_e_set
-
-        if self.automaton_type == 'dfa' or self.automaton_type == 'moore':
-            self.E.insert(0, tuple())
 
         for s in list(self.S) + list(self.s_dot_a()):
             for e in self.E:
                 out = hypothesis.execute_sequence(hypothesis.initial_state, s + e)
                 self.T[s] += (out[-1],)
 
-        e = self.get_causes_of_inconsistency()
-        print(e)
+        incons = self.get_causes_of_inconsistency()
+        print("INCONSISTENCY",incons)
+        clos = self.get_rows_to_close()
+        print("CLOSEDNESS",clos)
