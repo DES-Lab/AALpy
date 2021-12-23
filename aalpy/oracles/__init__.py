@@ -8,3 +8,4 @@ from .StatePrefixEqOracle import StatePrefixEqOracle
 from .TransitionFocusOracle import TransitionFocusOracle
 from .UserInputEqOracle import UserInputEqOracle
 from .WMethodEqOracle import RandomWMethodEqOracle, WMethodEqOracle
+from .PacOracle import PacOracle

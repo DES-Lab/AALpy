@@ -65,7 +65,7 @@ def random_dfa_example(alphabet_size, number_of_states, num_accepting_states=1):
     from aalpy.learning_algs import run_Lstar
     from aalpy.oracles import StatePrefixEqOracle, TransitionFocusOracle, WMethodEqOracle, \
         RandomWalkEqOracle, RandomWMethodEqOracle, BreadthFirstExplorationEqOracle, RandomWordEqOracle, \
-        CacheBasedEqOracle, UserInputEqOracle, KWayStateCoverageEqOracle, KWayTransitionCoverageEqOracle
+        CacheBasedEqOracle, UserInputEqOracle, KWayStateCoverageEqOracle, KWayTransitionCoverageEqOracle, PacOracle
     from aalpy.utils import generate_random_dfa
 
     assert num_accepting_states <= number_of_states
@@ -83,6 +83,7 @@ def random_dfa_example(alphabet_size, number_of_states, num_accepting_states=1):
     tran_cov_eq_oracle = TransitionFocusOracle(alphabet, sul_dfa, num_random_walks=200, walk_len=30,
                                                same_state_prob=0.3)
     w_method_eq_oracle = WMethodEqOracle(alphabet, sul_dfa, max_number_of_states=number_of_states)
+    pac_oracle = PacOracle(alphabet, sul_dfa)
     random_W_method_eq_oracle = RandomWMethodEqOracle(alphabet, sul_dfa, walks_per_state=10, walk_len=50)
     bf_exploration_eq_oracle = BreadthFirstExplorationEqOracle(alphabet, sul_dfa, 5)
     random_word_eq_oracle = RandomWordEqOracle(alphabet, sul_dfa)
@@ -90,7 +91,7 @@ def random_dfa_example(alphabet_size, number_of_states, num_accepting_states=1):
     user_based_eq_oracle = UserInputEqOracle(alphabet, sul_dfa)
     kWayStateCoverageEqOracle = KWayStateCoverageEqOracle(alphabet, sul_dfa)
     kWayTransitionCoverageEqOracle = KWayTransitionCoverageEqOracle(alphabet, sul_dfa)
-    learned_dfa = run_Lstar(alphabet, sul_dfa, random_W_method_eq_oracle, automaton_type='dfa',
+    learned_dfa = run_Lstar(alphabet, sul_dfa, random_walk_eq_oracle, automaton_type='dfa',
                             cache_and_non_det_check=True, cex_processing='rs')
 
     # visualize_automaton(learned_dfa)
