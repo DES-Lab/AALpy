@@ -32,7 +32,7 @@ class BaseOracleTests(unittest.TestCase):
 
         return learning_sul, validation_sul, alphabet
 
-    def validate_eq_oracle(self, alphabet, eq_oracle, learning_sul, validation_sul):
+    def test_validate_eq_oracle(self, alphabet, eq_oracle, learning_sul, validation_sul):
         """
         Validates the correctness of the given eq_oracle via WMethodEqOracle.
 

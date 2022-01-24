@@ -4,7 +4,7 @@ from aalpy.utils import get_Angluin_dfa, load_automaton_from_file
 from aalpy.utils.HelperFunctions import all_suffixes
 
 
-class CharSetTest(unittest.TestCase):
+class TestCharSet(unittest.TestCase):
 
     def get_test_automata(self):
         return {"angluin_dfa": get_Angluin_dfa(),
