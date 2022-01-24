@@ -3,7 +3,7 @@ import unittest
 import aalpy.paths
 from aalpy.SULs import StochasticMealySUL, MdpSUL
 from aalpy.learning_algs import run_stochastic_Lstar
-from aalpy.oracles import UnseenOutputRandomWalkEqOracle
+from aalpy.oracles import RandomWalkEqOracle
 from aalpy.utils import load_automaton_from_file
 
 
@@ -41,7 +41,7 @@ class StochasticTest(unittest.TestCase):
 
                         sul = StochasticMealySUL(mdp) if aut_type == 'smm' else MdpSUL(mdp)
 
-                        eq_oracle = UnseenOutputRandomWalkEqOracle(input_alphabet, sul=sul, num_steps=200,
+                        eq_oracle = RandomWalkEqOracle(input_alphabet, sul=sul, num_steps=200,
                                                                    reset_prob=0.25,
                                                                    reset_after_cex=True)
 
