@@ -5,7 +5,7 @@ from collections import defaultdict
 import aalpy.paths
 from aalpy.SULs import MealySUL, DfaSUL, MooreSUL
 from aalpy.automata import Mdp, StochasticMealyMachine, MealyMachine, Dfa, MooreMachine
-from aalpy.base import DeterministicAutomaton
+from aalpy.base import DeterministicAutomaton, SUL
 
 prism_prob_output_regex = re.compile("Result: (\d+\.\d+)")
 
@@ -280,3 +280,57 @@ def compare_automata(aut_1: DeterministicAutomaton, aut_2: DeterministicAutomato
     found_cex.sort(key=len)
 
     return found_cex
+
+
+class TestCaseWrapperSUL(SUL):
+    def __init__(self, sul):
+        super().__init__()
+        self.sul = sul
+        self.test_cases = []
+        self.test_case_inputs = None
+        self.test_case_outputs = None
+
+    def pre(self):
+        self.test_case_inputs = []
+        self.test_case_outputs = []
+        return self.sul.pre()
+
+    def post(self):
+        if self.test_case_inputs and self.test_case_outputs:
+            self.test_cases.append((tuple(self.test_case_inputs), tuple(self.test_case_outputs)))
+        return self.sul.post()
+
+    def step(self, letter):
+        output = self.sul.step(letter)
+        self.test_case_inputs.append(letter)
+        self.test_case_outputs.append(output)
+        return output
+
+
+def generate_test_cases(automaton: DeterministicAutomaton, oracle):
+    """
+    Uses parametrized eq. oracle to construct test cases on the automaton.
+    If automaton are big (200+ states), increase recursion depth if necessary (eg. sys.setrecursionlimit(10000)).
+
+    Args:
+
+        automaton: deterministic automaton that serves as a basis for test case generation
+        oracle: oracle that will construct test-cases and record inputs and outputs
+
+    Returns:
+
+        List of test cases, where each testcase is a tuple containing two elements, and input and an output sequance.
+    """
+    from copy import deepcopy
+
+    type_map = {MooreMachine: MooreSUL, Dfa: DfaSUL, MealyMachine: MealySUL}
+
+    automaton_copy = deepcopy(automaton)
+    base_sul = type_map[type(automaton_copy)](automaton_copy)
+
+    wrapped_sul = TestCaseWrapperSUL(base_sul)
+    oracle.sul = wrapped_sul
+    # no counterexamples can be found
+    cex = oracle.find_cex(automaton)
+    assert cex is None
+    return wrapped_sul.test_cases

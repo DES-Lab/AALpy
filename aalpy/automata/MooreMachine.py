@@ -29,5 +29,6 @@ class MooreMachine(DeterministicAutomaton):
             the output of the reached state
 
         """
-        self.current_state = self.current_state.transitions[letter]
+        if letter is not None:
+            self.current_state = self.current_state.transitions[letter]
         return self.current_state.output

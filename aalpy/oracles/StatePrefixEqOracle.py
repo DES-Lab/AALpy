@@ -38,6 +38,8 @@ class StatePrefixEqOracle(Oracle):
 
         states_to_cover = []
         for state in hypothesis.states:
+            if state.prefix is None:
+                state.prefix = hypothesis.get_shortest_path(hypothesis.initial_state, state)
             if state.prefix not in self.freq_dict.keys():
                 self.freq_dict[state.prefix] = 0
 
