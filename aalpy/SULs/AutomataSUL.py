@@ -33,8 +33,6 @@ class DfaSUL(SUL):
             output of the dfa.step method (whether the next state is accepted or not)
 
         """
-        if letter is None:
-            return self.dfa.initial_state.is_accepting
         return self.dfa.step(letter)
 
 
@@ -135,8 +133,6 @@ class MooreSUL(SUL):
         pass
 
     def step(self, letter):
-        if letter is None:
-            return self.mm.initial_state.output
         return self.mm.step(letter)
 
 
