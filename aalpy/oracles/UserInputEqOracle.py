@@ -1,5 +1,5 @@
 from aalpy.base import Oracle, SUL
-from aalpy.utils import visualize_automaton
+from aalpy.utils.FileHandler import visualize_automaton
 
 
 class UserInputEqOracle(Oracle):
