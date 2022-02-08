@@ -7,6 +7,7 @@ __pycache__/
 *.so
 
 main.py
+LearnedModel.pdf
 
 # Distribution / packaging
 .Python
