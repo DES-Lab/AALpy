@@ -360,14 +360,14 @@ def get_small_pomdp():
     q4 = MdpState("q4", "tea")
 
     q0.transitions['but'].append((q0, 1))
-    q0.transitions['coin'].append((q1, 0.9))
-    q0.transitions['coin'].append((q2, 0.1))
+    q0.transitions['coin'].append((q1, 0.8))
+    q0.transitions['coin'].append((q2, 0.2))
 
     q1.transitions['coin'].append((q1, 1))
     q1.transitions['but'].append((q3, 1))
 
-    q2.transitions['coin'].append((q2, 0.1))
-    q2.transitions['coin'].append((q1, 0.9))
+    q2.transitions['coin'].append((q2, 0.3))
+    q2.transitions['coin'].append((q1, 0.7))
     q2.transitions['but'].append((q4, 1))
 
     q3.transitions['coin'].append((q3, 1))
