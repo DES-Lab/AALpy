@@ -263,8 +263,8 @@ class DeterministicAutomaton(Automaton):
         The function only works for minimal automata.
         Args:
             char_set_init: a list of sequence that will be included in the characterization set, e.g., the input
-                        alphabet
-                        add the empty to this list when using automata with state labels (DFA and Moore)
+                        alphabet. A empty sequance is added to this list when using automata with state labels
+                        (DFA and Moore)
             online_suffix_closure: if true, ensures suffix closedness of the characterization set at every computation
                                 step
             split_all_blocks: if false, the computation follows the original tree-based strategy, where newly computed
