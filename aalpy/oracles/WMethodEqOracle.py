@@ -1,7 +1,8 @@
+from itertools import product
+from random import shuffle, choice, randint
+
 from aalpy.base.Oracle import Oracle
 from aalpy.base.SUL import SUL
-from itertools import combinations, product
-from random import shuffle, choice, randint
 
 
 class WMethodEqOracle(Oracle):
