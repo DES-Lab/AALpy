@@ -89,9 +89,9 @@ class Automaton(ABC):
             True if input complete, False otherwise
 
         """
-        alphabet = set(self.initial_state.transitions.keys())
+        alphabet = set(self.get_input_alphabet())
         for state in self.states:
-            if state.transitions.keys() != alphabet:
+            if set(state.transitions.keys()) != alphabet:
                 return False
         return True
 
@@ -99,8 +99,11 @@ class Automaton(ABC):
         """
         Returns the input alphabet
         """
-        assert self.is_input_complete()
-        return list(self.initial_state.transitions.keys())
+        alphabet = set()
+        for s in self.states:
+            alphabet.update(list(s.transitions.keys()))
+        assert alphabet
+        return list(alphabet)
 
     def get_state_by_id(self, state_id) -> AutomatonState:
         for state in self.states:
