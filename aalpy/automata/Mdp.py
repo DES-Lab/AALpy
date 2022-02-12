@@ -33,7 +33,6 @@ class Mdp(Automaton):
         """
         if letter is None:
             return self.current_state.output
-        prob = random.random()
 
         probability_distributions = [i[1] for i in self.current_state.transitions[letter]]
         states = [i[0] for i in self.current_state.transitions[letter]]
