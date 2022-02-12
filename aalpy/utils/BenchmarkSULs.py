@@ -3,8 +3,7 @@ from aalpy.automata import StochasticMealyMachine, StochasticMealyState, Mdp, Md
 
 
 def get_Angluin_dfa():
-    q0 = DfaState('q0')
-    q0.is_accepting = True
+    q0 = DfaState('q0', True)
     q1 = DfaState('q1')
     q2 = DfaState('q2')
     q3 = DfaState('q3')
