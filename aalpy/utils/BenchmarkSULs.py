@@ -1,23 +1,17 @@
-from aalpy.automata import StochasticMealyMachine, StochasticMealyState, Mdp, MdpState, Onfsm, OnfsmState, \
-    DfaState, Dfa
+from aalpy.automata import StochasticMealyMachine, StochasticMealyState, Mdp, MdpState, Onfsm, OnfsmState
+
+from aalpy.utils.AutomatonGenerators import dfa_from_state_setup
 
 
 def get_Angluin_dfa():
-    q0 = DfaState('q0', True)
-    q1 = DfaState('q1')
-    q2 = DfaState('q2')
-    q3 = DfaState('q3')
+    anguin_dfa = {
+        'q0': (True, {'a': 'q1', 'b': 'q2'}),
+        'q1': (False, {'a': 'q0', 'b': 'q3'}),
+        'q2': (False, {'a': 'q3', 'b': 'q0'}),
+        'q3': (False, {'a': 'q2', 'b': 'q1'})
+    }
 
-    q0.transitions['a'] = q1
-    q0.transitions['b'] = q2
-    q1.transitions['a'] = q0
-    q1.transitions['b'] = q3
-    q2.transitions['a'] = q3
-    q2.transitions['b'] = q0
-    q3.transitions['a'] = q2
-    q3.transitions['b'] = q1
-
-    return Dfa(q0, [q0, q1, q2, q3])
+    return dfa_from_state_setup(anguin_dfa)
 
 
 def get_benchmark_ONFSM():
