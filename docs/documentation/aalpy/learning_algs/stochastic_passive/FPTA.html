@@ -37,7 +37,28 @@
                                 <a class="function" href="#AlergiaPtaNode.__init__">AlergiaPtaNode</a>
                         </li>
                         <li>
+                                <a class="variable" href="#AlergiaPtaNode.output">output</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#AlergiaPtaNode.input_frequency">input_frequency</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#AlergiaPtaNode.children">children</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#AlergiaPtaNode.prefix">prefix</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#AlergiaPtaNode.state_id">state_id</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#AlergiaPtaNode.children_prob">children_prob</a>
+                        </li>
+                        <li>
                                 <a class="function" href="#AlergiaPtaNode.succs">succs</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#AlergiaPtaNode.children_keys">children_keys</a>
                         </li>
                 </ul>
 
@@ -68,15 +89,16 @@
 
 
 <span class="k">class</span> <span class="nc">AlergiaPtaNode</span><span class="p">:</span>
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">,</span> <span class="s1">&#39;input_frequency&#39;</span><span class="p">,</span> <span class="s1">&#39;children&#39;</span><span class="p">,</span> <span class="s1">&#39;prefix&#39;</span><span class="p">,</span> <span class="s1">&#39;state_id&#39;</span><span class="p">,</span> <span class="s1">&#39;children_prob&#39;</span><span class="p">,</span> <span class="s1">&#39;children_keys&#39;</span><span class="p">]</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">output</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">input_frequency</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">children</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="c1"># for visualization</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="p">()</span>
+        <span class="c1"># # for visualization</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">state_id</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">children_prob</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">children_prob</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="k">def</span> <span class="nf">succs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
@@ -103,14 +125,13 @@
 
         <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">seq</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
             <span class="n">inp_out</span> <span class="o">=</span> <span class="n">el</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">is_iofpta</span> <span class="k">else</span> <span class="p">(</span><span class="n">el</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">el</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-
+            <span class="n">out</span> <span class="o">=</span> <span class="n">el</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">is_iofpta</span> <span class="k">else</span> <span class="n">el</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
             <span class="k">if</span> <span class="n">inp_out</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-                <span class="n">node</span><span class="p">,</span> <span class="n">node_copy</span> <span class="o">=</span> <span class="n">AlergiaPtaNode</span><span class="p">(</span><span class="n">el</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">is_iofpta</span> <span class="k">else</span> <span class="n">el</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">AlergiaPtaNode</span><span class="p">(</span>
-                    <span class="n">el</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">is_iofpta</span> <span class="k">else</span> <span class="n">el</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-                <span class="n">node</span><span class="o">.</span><span class="n">prefix</span><span class="p">,</span> <span class="n">node_copy</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">curr_node</span><span class="o">.</span><span class="n">prefix</span><span class="p">),</span> <span class="nb">list</span><span class="p">(</span><span class="n">curr_node</span><span class="o">.</span><span class="n">prefix</span><span class="p">)</span>
+                <span class="n">node</span><span class="p">,</span> <span class="n">node_copy</span> <span class="o">=</span> <span class="n">AlergiaPtaNode</span><span class="p">(</span><span class="n">out</span><span class="p">),</span> <span class="n">AlergiaPtaNode</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
 
-                <span class="n">node</span><span class="o">.</span><span class="n">prefix</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">inp_out</span><span class="p">)</span>
-                <span class="n">node_copy</span><span class="o">.</span><span class="n">prefix</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">inp_out</span><span class="p">)</span>
+                <span class="n">node</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">curr_node</span><span class="o">.</span><span class="n">prefix</span><span class="p">)</span>
+                <span class="n">node</span><span class="o">.</span><span class="n">prefix</span> <span class="o">+=</span> <span class="p">(</span><span class="n">inp_out</span><span class="p">,)</span>
+                <span class="n">node_copy</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">prefix</span>
 
                 <span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">inp_out</span><span class="p">]</span> <span class="o">=</span> <span class="n">node</span>
                 <span class="n">curr_copy</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">inp_out</span><span class="p">]</span> <span class="o">=</span> <span class="n">node_copy</span>
@@ -139,15 +160,16 @@
                 <details>
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">AlergiaPtaNode</span><span class="p">:</span>
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">,</span> <span class="s1">&#39;input_frequency&#39;</span><span class="p">,</span> <span class="s1">&#39;children&#39;</span><span class="p">,</span> <span class="s1">&#39;prefix&#39;</span><span class="p">,</span> <span class="s1">&#39;state_id&#39;</span><span class="p">,</span> <span class="s1">&#39;children_prob&#39;</span><span class="p">,</span> <span class="s1">&#39;children_keys&#39;</span><span class="p">]</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">output</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">input_frequency</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">children</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="c1"># for visualization</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="p">()</span>
+        <span class="c1"># # for visualization</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">state_id</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">children_prob</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">children_prob</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="k">def</span> <span class="nf">succs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
@@ -179,13 +201,67 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">output</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">input_frequency</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">children</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="c1"># for visualization</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="p">()</span>
+        <span class="c1"># # for visualization</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">state_id</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">children_prob</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">children_prob</span> <span class="o">=</span> <span class="kc">None</span>
 </pre></div>
 
         </details>
+
+    
+
+                            </div>
+                            <div id="AlergiaPtaNode.output" class="classattr">
+                                            <div class="attr variable"><a class="headerlink" href="#AlergiaPtaNode.output">#&nbsp;&nbsp</a>
+
+        <span class="name">output</span>
+    </div>
+
+    
+
+                            </div>
+                            <div id="AlergiaPtaNode.input_frequency" class="classattr">
+                                            <div class="attr variable"><a class="headerlink" href="#AlergiaPtaNode.input_frequency">#&nbsp;&nbsp</a>
+
+        <span class="name">input_frequency</span>
+    </div>
+
+    
+
+                            </div>
+                            <div id="AlergiaPtaNode.children" class="classattr">
+                                            <div class="attr variable"><a class="headerlink" href="#AlergiaPtaNode.children">#&nbsp;&nbsp</a>
+
+        <span class="name">children</span>
+    </div>
+
+    
+
+                            </div>
+                            <div id="AlergiaPtaNode.prefix" class="classattr">
+                                            <div class="attr variable"><a class="headerlink" href="#AlergiaPtaNode.prefix">#&nbsp;&nbsp</a>
+
+        <span class="name">prefix</span>
+    </div>
+
+    
+
+                            </div>
+                            <div id="AlergiaPtaNode.state_id" class="classattr">
+                                            <div class="attr variable"><a class="headerlink" href="#AlergiaPtaNode.state_id">#&nbsp;&nbsp</a>
+
+        <span class="name">state_id</span>
+    </div>
+
+    
+
+                            </div>
+                            <div id="AlergiaPtaNode.children_prob" class="classattr">
+                                            <div class="attr variable"><a class="headerlink" href="#AlergiaPtaNode.children_prob">#&nbsp;&nbsp</a>
+
+        <span class="name">children_prob</span>
+    </div>
 
     
 
@@ -205,6 +281,15 @@
 </pre></div>
 
         </details>
+
+    
+
+                            </div>
+                            <div id="AlergiaPtaNode.children_keys" class="classattr">
+                                            <div class="attr variable"><a class="headerlink" href="#AlergiaPtaNode.children_keys">#&nbsp;&nbsp</a>
+
+        <span class="name">children_keys</span>
+    </div>
 
     
 
@@ -232,14 +317,13 @@
 
         <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">seq</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
             <span class="n">inp_out</span> <span class="o">=</span> <span class="n">el</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">is_iofpta</span> <span class="k">else</span> <span class="p">(</span><span class="n">el</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">el</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-
+            <span class="n">out</span> <span class="o">=</span> <span class="n">el</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">is_iofpta</span> <span class="k">else</span> <span class="n">el</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
             <span class="k">if</span> <span class="n">inp_out</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-                <span class="n">node</span><span class="p">,</span> <span class="n">node_copy</span> <span class="o">=</span> <span class="n">AlergiaPtaNode</span><span class="p">(</span><span class="n">el</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">is_iofpta</span> <span class="k">else</span> <span class="n">el</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">AlergiaPtaNode</span><span class="p">(</span>
-                    <span class="n">el</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">is_iofpta</span> <span class="k">else</span> <span class="n">el</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-                <span class="n">node</span><span class="o">.</span><span class="n">prefix</span><span class="p">,</span> <span class="n">node_copy</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">curr_node</span><span class="o">.</span><span class="n">prefix</span><span class="p">),</span> <span class="nb">list</span><span class="p">(</span><span class="n">curr_node</span><span class="o">.</span><span class="n">prefix</span><span class="p">)</span>
+                <span class="n">node</span><span class="p">,</span> <span class="n">node_copy</span> <span class="o">=</span> <span class="n">AlergiaPtaNode</span><span class="p">(</span><span class="n">out</span><span class="p">),</span> <span class="n">AlergiaPtaNode</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
 
-                <span class="n">node</span><span class="o">.</span><span class="n">prefix</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">inp_out</span><span class="p">)</span>
-                <span class="n">node_copy</span><span class="o">.</span><span class="n">prefix</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">inp_out</span><span class="p">)</span>
+                <span class="n">node</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">curr_node</span><span class="o">.</span><span class="n">prefix</span><span class="p">)</span>
+                <span class="n">node</span><span class="o">.</span><span class="n">prefix</span> <span class="o">+=</span> <span class="p">(</span><span class="n">inp_out</span><span class="p">,)</span>
+                <span class="n">node_copy</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">prefix</span>
 
                 <span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">inp_out</span><span class="p">]</span> <span class="o">=</span> <span class="n">node</span>
                 <span class="n">curr_copy</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">inp_out</span><span class="p">]</span> <span class="o">=</span> <span class="n">node_copy</span>

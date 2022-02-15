@@ -216,8 +216,6 @@
 <span class="sd">            output of the dfa.step method (whether the next state is accepted or not)</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">letter</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dfa</span><span class="o">.</span><span class="n">initial_state</span><span class="o">.</span><span class="n">is_accepting</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dfa</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">letter</span><span class="p">)</span>
 
 
@@ -318,8 +316,6 @@
         <span class="k">pass</span>
 
     <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">letter</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">letter</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mm</span><span class="o">.</span><span class="n">initial_state</span><span class="o">.</span><span class="n">output</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mm</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">letter</span><span class="p">)</span>
 
 
@@ -398,8 +394,6 @@
 <span class="sd">            output of the dfa.step method (whether the next state is accepted or not)</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">letter</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dfa</span><span class="o">.</span><span class="n">initial_state</span><span class="o">.</span><span class="n">is_accepting</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dfa</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">letter</span><span class="p">)</span>
 </pre></div>
 
@@ -496,8 +490,6 @@
 <span class="sd">            output of the dfa.step method (whether the next state is accepted or not)</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">letter</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dfa</span><span class="o">.</span><span class="n">initial_state</span><span class="o">.</span><span class="n">is_accepting</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dfa</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">letter</span><span class="p">)</span>
 </pre></div>
 
@@ -1061,8 +1053,6 @@ method is called. Each letter in the word (input in the input sequence) is execu
         <span class="k">pass</span>
 
     <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">letter</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">letter</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mm</span><span class="o">.</span><span class="n">initial_state</span><span class="o">.</span><span class="n">output</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mm</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">letter</span><span class="p">)</span>
 </pre></div>
 
@@ -1142,8 +1132,6 @@ method is called. Each letter in the word (input in the input sequence) is execu
                 <details>
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">letter</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">letter</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mm</span><span class="o">.</span><span class="n">initial_state</span><span class="o">.</span><span class="n">output</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mm</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">letter</span><span class="p">)</span>
 </pre></div>
 

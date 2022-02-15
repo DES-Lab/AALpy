@@ -127,7 +127,7 @@
         <span class="k">return</span> <span class="n">samples</span>
 
 
-<span class="k">def</span> <span class="nf">run_active_Alergia</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">sul</span><span class="p">,</span> <span class="n">sampler</span><span class="p">,</span> <span class="n">n_iter</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">run_active_Alergia</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">sul</span><span class="p">,</span> <span class="n">sampler</span><span class="p">,</span> <span class="n">n_iter</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">0.005</span><span class="p">,</span> <span class="n">compatibility_checker</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">print_info</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Active version of IOAlergia algorithm. Based on intermediate hypothesis sampling on the system is performed.</span>
 <span class="sd">    Sampled data is added to the learning data and more accurate model is learned.</span>
@@ -139,6 +139,9 @@
 <span class="sd">        sul: system under learning which is basis for sampling</span>
 <span class="sd">        sampler: instance of Sampler class</span>
 <span class="sd">        n_iter: number of iterations of active learning</span>
+<span class="sd">        eps: epsilon value if the default checker is used. Look in run_Alergia for description</span>
+<span class="sd">        compatibility_checker: passed to run_Alergia, check there for description</span>
+<span class="sd">        print_info: print current learning iteration</span>
 
 <span class="sd">    Returns:</span>
 
@@ -147,8 +150,9 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">model</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_iter</span><span class="p">):</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Active Alergia Iteration: </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-        <span class="n">model</span> <span class="o">=</span> <span class="n">run_Alergia</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">automaton_type</span><span class="o">=</span><span class="s1">&#39;mdp&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">print_info</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Active Alergia Iteration: </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">run_Alergia</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">automaton_type</span><span class="o">=</span><span class="s1">&#39;mdp&#39;</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="n">eps</span><span class="p">,</span> <span class="n">compatibility_checker</span><span class="o">=</span><span class="n">compatibility_checker</span><span class="p">)</span>
 
         <span class="n">new_samples</span> <span class="o">=</span> <span class="n">sampler</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">sul</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
         <span class="n">data</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">new_samples</span><span class="p">)</span>
@@ -362,12 +366,20 @@ model: current learned model
 
         
             <span class="def">def</span>
-            <span class="name">run_active_Alergia</span><span class="signature">(data, sul, sampler, n_iter)</span>:
+            <span class="name">run_active_Alergia</span><span class="signature">(
+    data,
+    sul,
+    sampler,
+    n_iter,
+    eps=0.005,
+    compatibility_checker=None,
+    print_info=True
+)</span>:
     </div>
 
                 <details>
             <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">run_active_Alergia</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">sul</span><span class="p">,</span> <span class="n">sampler</span><span class="p">,</span> <span class="n">n_iter</span><span class="p">):</span>
+            <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">run_active_Alergia</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">sul</span><span class="p">,</span> <span class="n">sampler</span><span class="p">,</span> <span class="n">n_iter</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">0.005</span><span class="p">,</span> <span class="n">compatibility_checker</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">print_info</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Active version of IOAlergia algorithm. Based on intermediate hypothesis sampling on the system is performed.</span>
 <span class="sd">    Sampled data is added to the learning data and more accurate model is learned.</span>
@@ -379,6 +391,9 @@ model: current learned model
 <span class="sd">        sul: system under learning which is basis for sampling</span>
 <span class="sd">        sampler: instance of Sampler class</span>
 <span class="sd">        n_iter: number of iterations of active learning</span>
+<span class="sd">        eps: epsilon value if the default checker is used. Look in run_Alergia for description</span>
+<span class="sd">        compatibility_checker: passed to run_Alergia, check there for description</span>
+<span class="sd">        print_info: print current learning iteration</span>
 
 <span class="sd">    Returns:</span>
 
@@ -387,8 +402,9 @@ model: current learned model
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">model</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_iter</span><span class="p">):</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Active Alergia Iteration: </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-        <span class="n">model</span> <span class="o">=</span> <span class="n">run_Alergia</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">automaton_type</span><span class="o">=</span><span class="s1">&#39;mdp&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">print_info</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Active Alergia Iteration: </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">run_Alergia</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">automaton_type</span><span class="o">=</span><span class="s1">&#39;mdp&#39;</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="n">eps</span><span class="p">,</span> <span class="n">compatibility_checker</span><span class="o">=</span><span class="n">compatibility_checker</span><span class="p">)</span>
 
         <span class="n">new_samples</span> <span class="o">=</span> <span class="n">sampler</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">sul</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
         <span class="n">data</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">new_samples</span><span class="p">)</span>
@@ -408,6 +424,9 @@ Proposed in "Aichernig and Tappler, Probabilistic Black-Box Reachability Checkin
 sul: system under learning which is basis for sampling
 sampler: instance of Sampler class
 n_iter: number of iterations of active learning
+eps: epsilon value if the default checker is used. Look in run_Alergia for description
+compatibility_checker: passed to run_Alergia, check there for description
+print_info: print current learning iteration
 </code></pre>
 
 <p>Returns:</p>
