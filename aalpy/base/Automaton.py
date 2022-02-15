@@ -117,7 +117,7 @@ class Automaton(ABC):
         :return: A string representation of the automaton
         """
         from aalpy.utils import save_automaton_to_file
-        return save_automaton_to_file(self, path='learnedModel', file_type='string')
+        return save_automaton_to_file(self, path='learnedModel', file_type='string', round_floats=2)
 
     def execute_sequence(self, origin_state, seq):
         self.current_state = origin_state
