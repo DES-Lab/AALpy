@@ -107,6 +107,7 @@ class Alergia:
     def normalize(self, red):
         red_sorted = sorted(list(red), key=lambda x: len(x.prefix))
         for r in red_sorted:
+            r.children_prob = dict()  # Initializing in here saves many unnecessary initializations
             if self.automaton_type == 'mc':
                 total_output = sum(r.input_frequency.values())
                 for i in r.input_frequency.keys():

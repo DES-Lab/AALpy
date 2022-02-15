@@ -2,15 +2,16 @@ from collections import defaultdict
 
 
 class AlergiaPtaNode:
+    __slots__ = ['output', 'input_frequency', 'children', 'prefix', 'state_id', 'children_prob', 'children_keys']
 
     def __init__(self, output):
         self.output = output
         self.input_frequency = defaultdict(int)
         self.children = dict()
-        self.prefix = []
-        # for visualization
+        self.prefix = ()
+        # # for visualization
         self.state_id = None
-        self.children_prob = dict()
+        self.children_prob = None
 
     def succs(self):
         return list(self.children.values())
@@ -37,14 +38,13 @@ def create_fpta(data, automaton_type):
 
         for el in seq[1:]:
             inp_out = el if not is_iofpta else (el[0], el[1])
-
+            out = el if not is_iofpta else el[1]
             if inp_out not in curr_node.children.keys():
-                node, node_copy = AlergiaPtaNode(el if not is_iofpta else el[1]), AlergiaPtaNode(
-                    el if not is_iofpta else el[1])
-                node.prefix, node_copy.prefix = list(curr_node.prefix), list(curr_node.prefix)
+                node, node_copy = AlergiaPtaNode(out), AlergiaPtaNode(out)
 
-                node.prefix.append(inp_out)
-                node_copy.prefix.append(inp_out)
+                node.prefix = tuple(curr_node.prefix)
+                node.prefix += (inp_out,)
+                node_copy.prefix = node.prefix
 
                 curr_node.children[inp_out] = node
                 curr_copy.children[inp_out] = node_copy
