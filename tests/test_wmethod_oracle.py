@@ -77,8 +77,8 @@ class TestWMethodOracle(unittest.TestCase):
         hyp = self.generate_hypothesis()
         # visualize_automaton(real)
         # visualize_automaton(hyp)
-        assert real.get_input_alphabet() == ["x", "y"]
-        assert hyp.get_input_alphabet() == ["x", "y"]
+        assert set(real.get_input_alphabet()) == {"x", "y"}
+        assert set(hyp.get_input_alphabet()) == {"x", "y"}
         assert len(real.states) == 6
         assert len(hyp.states) == 2
         alphabet = real.get_input_alphabet()
