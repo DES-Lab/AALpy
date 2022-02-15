@@ -21,12 +21,13 @@ diff_checker_options = {'classic': HoeffdingChecker(),
 available_oracles, available_oracles_error_msg = get_available_oracles_and_err_msg()
 
 
-def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_resample=100, target_unambiguity=0.99,
+def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, target_unambiguity=0.99,
                          min_rounds=10, max_rounds=200, automaton_type='mdp', strategy='normal',
                          cex_processing=None, samples_cex_strategy=None, custom_oracle=False,
-                         return_data=False, property_based_stopping=None, print_level=2):
+                         return_data=False, property_based_stopping=None, n_c=20, n_resample=100, print_level=2):
     """
-    Learning of Markov Decision Processes based on 'L*-Based Learning of Markov Decision Processes' by Tappler et al.
+    Learning of Markov Decision Processes based on 'L*-Based Learning of Markov Decision Processes'
+    and 'Active Model Learning of Stochastic Reactive Systems' by Tappler et al.
 
     Args:
 
@@ -35,10 +36,6 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_
         sul: system under learning
 
         eq_oracle: equivalence oracle
-
-        n_c: cutoff for a cell to be considered complete (Default value = 20)
-
-        n_resample: resampling size (Default value = 100)
 
         target_unambiguity: target unambiguity value (default 0.99)
 
@@ -64,6 +61,10 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, n_c=20, n_
 
         return_data: if True, map containing all information like number of queries... will be returned
             (Default value = False)
+
+        n_c: cutoff for a cell to be considered complete (Default value = 20), only used with 'classic' strategy
+
+        n_resample: resampling size (Default value = 100), only used with 'classic' strategy
 
         print_level: 0 - None, 1 - just results, 2 - current round and hypothesis size, 3 - educational/debug
             (Default value = 2)
