@@ -2,7 +2,7 @@ from collections import defaultdict
 
 
 class AlergiaPtaNode:
-    __slots__ = ['output', 'input_frequency', 'children', 'prefix', 'state_id', 'children_prob', 'children_keys']
+    __slots__ = ['output', 'input_frequency', 'children', 'prefix', 'state_id', 'children_prob']
 
     def __init__(self, output):
         self.output = output
