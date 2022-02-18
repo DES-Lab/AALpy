@@ -253,8 +253,8 @@ def load_automaton_from_file(path, automaton_type, compute_prefixes=False):
         assert False
 
     automaton = aut_type(initial_node, list(node_label_dict.values()))
-    if automaton_type != 'mc':
-        assert automaton.is_input_complete()
+    if automaton_type != 'mc' and not automaton.is_input_complete():
+        print('Warning: Loaded automaton is not input complete.')
     if compute_prefixes and not automaton_type == 'mc':
         for state in automaton.states:
             state.prefix = automaton.get_shortest_path(automaton.initial_state, state)
