@@ -185,4 +185,5 @@ def run_Alergia(data, automaton_type, eps=0.005, compatibility_checker=None, pri
     alergia = Alergia(data, eps=eps, automaton_type=automaton_type,
                       compatibility_checker=compatibility_checker, print_info=print_info)
     model = alergia.run()
+    del alergia.a, alergia.t, alergia
     return model
