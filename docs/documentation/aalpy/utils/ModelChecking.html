@@ -54,6 +54,27 @@
             <li>
                     <a class="function" href="#compare_automata">compare_automata</a>
             </li>
+            <li>
+                    <a class="class" href="#TestCaseWrapperSUL">TestCaseWrapperSUL</a>
+                            <ul class="memberlist">
+                        <li>
+                                <a class="function" href="#TestCaseWrapperSUL.__init__">TestCaseWrapperSUL</a>
+                        </li>
+                        <li>
+                                <a class="function" href="#TestCaseWrapperSUL.pre">pre</a>
+                        </li>
+                        <li>
+                                <a class="function" href="#TestCaseWrapperSUL.post">post</a>
+                        </li>
+                        <li>
+                                <a class="function" href="#TestCaseWrapperSUL.step">step</a>
+                        </li>
+                </ul>
+
+            </li>
+            <li>
+                    <a class="function" href="#generate_test_cases">generate_test_cases</a>
+            </li>
     </ul>
 
 
@@ -80,8 +101,7 @@
 <span class="kn">import</span> <span class="nn">aalpy.paths</span>
 <span class="kn">from</span> <span class="nn">aalpy.SULs</span> <span class="kn">import</span> <span class="n">MealySUL</span><span class="p">,</span> <span class="n">DfaSUL</span><span class="p">,</span> <span class="n">MooreSUL</span>
 <span class="kn">from</span> <span class="nn">aalpy.automata</span> <span class="kn">import</span> <span class="n">Mdp</span><span class="p">,</span> <span class="n">StochasticMealyMachine</span><span class="p">,</span> <span class="n">MealyMachine</span><span class="p">,</span> <span class="n">Dfa</span><span class="p">,</span> <span class="n">MooreMachine</span>
-<span class="kn">from</span> <span class="nn">aalpy.base</span> <span class="kn">import</span> <span class="n">DeterministicAutomaton</span>
-<span class="kn">from</span> <span class="nn">aalpy.oracles</span> <span class="kn">import</span> <span class="n">RandomWMethodEqOracle</span>
+<span class="kn">from</span> <span class="nn">aalpy.base</span> <span class="kn">import</span> <span class="n">DeterministicAutomaton</span><span class="p">,</span> <span class="n">SUL</span>
 
 <span class="n">prism_prob_output_regex</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s2">&quot;Result: (\d+\.\d+)&quot;</span><span class="p">)</span>
 
@@ -319,6 +339,8 @@
 <span class="sd">        A list of input sequences that revel different behaviour on both automata. Counterexamples are sorted by length.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1">#</span>
+    <span class="kn">from</span> <span class="nn">aalpy.oracles</span> <span class="kn">import</span> <span class="n">RandomWMethodEqOracle</span>
+
     <span class="n">type_map</span> <span class="o">=</span> <span class="p">{</span><span class="n">MooreMachine</span><span class="p">:</span> <span class="n">MooreSUL</span><span class="p">,</span> <span class="n">Dfa</span><span class="p">:</span> <span class="n">DfaSUL</span><span class="p">,</span> <span class="n">MealyMachine</span><span class="p">:</span> <span class="n">MealySUL</span><span class="p">}</span>
     <span class="k">assert</span> <span class="nb">set</span><span class="p">(</span><span class="n">aut_1</span><span class="o">.</span><span class="n">get_input_alphabet</span><span class="p">())</span> <span class="o">==</span> <span class="nb">set</span><span class="p">(</span><span class="n">aut_2</span><span class="o">.</span><span class="n">get_input_alphabet</span><span class="p">())</span>
 
@@ -354,6 +376,60 @@
     <span class="n">found_cex</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="nb">len</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">found_cex</span>
+
+
+<span class="k">class</span> <span class="nc">TestCaseWrapperSUL</span><span class="p">(</span><span class="n">SUL</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sul</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sul</span> <span class="o">=</span> <span class="n">sul</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_cases</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_case_inputs</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_case_outputs</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">pre</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_case_inputs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_case_outputs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_case_inputs</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_case_outputs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">test_cases</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test_case_inputs</span><span class="p">),</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test_case_outputs</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">letter</span><span class="p">):</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">letter</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_case_inputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">letter</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_case_outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">output</span>
+
+
+<span class="k">def</span> <span class="nf">generate_test_cases</span><span class="p">(</span><span class="n">automaton</span><span class="p">:</span> <span class="n">DeterministicAutomaton</span><span class="p">,</span> <span class="n">oracle</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Uses parametrized eq. oracle to construct test cases on the automaton.</span>
+<span class="sd">    If automaton are big (200+ states), increase recursion depth if necessary (eg. sys.setrecursionlimit(10000)).</span>
+
+<span class="sd">    Args:</span>
+
+<span class="sd">        automaton: deterministic automaton that serves as a basis for test case generation</span>
+<span class="sd">        oracle: oracle that will construct test-cases and record inputs and outputs</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">        List of test cases, where each testcase is a tuple containing two elements, and input and an output sequance.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+
+    <span class="n">type_map</span> <span class="o">=</span> <span class="p">{</span><span class="n">MooreMachine</span><span class="p">:</span> <span class="n">MooreSUL</span><span class="p">,</span> <span class="n">Dfa</span><span class="p">:</span> <span class="n">DfaSUL</span><span class="p">,</span> <span class="n">MealyMachine</span><span class="p">:</span> <span class="n">MealySUL</span><span class="p">}</span>
+
+    <span class="n">automaton_copy</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">automaton</span><span class="p">)</span>
+    <span class="n">base_sul</span> <span class="o">=</span> <span class="n">type_map</span><span class="p">[</span><span class="nb">type</span><span class="p">(</span><span class="n">automaton_copy</span><span class="p">)](</span><span class="n">automaton_copy</span><span class="p">)</span>
+
+    <span class="n">wrapped_sul</span> <span class="o">=</span> <span class="n">TestCaseWrapperSUL</span><span class="p">(</span><span class="n">base_sul</span><span class="p">)</span>
+    <span class="n">oracle</span><span class="o">.</span><span class="n">sul</span> <span class="o">=</span> <span class="n">wrapped_sul</span>
+    <span class="c1"># no counterexamples can be found</span>
+    <span class="n">cex</span> <span class="o">=</span> <span class="n">oracle</span><span class="o">.</span><span class="n">find_cex</span><span class="p">(</span><span class="n">automaton</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">cex</span> <span class="ow">is</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">wrapped_sul</span><span class="o">.</span><span class="n">test_cases</span>
 </pre></div>
 
         </details>
@@ -744,6 +820,8 @@ print_level: 2 or 3 if output of model checking is to be printed during learning
 <span class="sd">        A list of input sequences that revel different behaviour on both automata. Counterexamples are sorted by length.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1">#</span>
+    <span class="kn">from</span> <span class="nn">aalpy.oracles</span> <span class="kn">import</span> <span class="n">RandomWMethodEqOracle</span>
+
     <span class="n">type_map</span> <span class="o">=</span> <span class="p">{</span><span class="n">MooreMachine</span><span class="p">:</span> <span class="n">MooreSUL</span><span class="p">,</span> <span class="n">Dfa</span><span class="p">:</span> <span class="n">DfaSUL</span><span class="p">,</span> <span class="n">MealyMachine</span><span class="p">:</span> <span class="n">MealySUL</span><span class="p">}</span>
     <span class="k">assert</span> <span class="nb">set</span><span class="p">(</span><span class="n">aut_1</span><span class="o">.</span><span class="n">get_input_alphabet</span><span class="p">())</span> <span class="o">==</span> <span class="nb">set</span><span class="p">(</span><span class="n">aut_2</span><span class="o">.</span><span class="n">get_input_alphabet</span><span class="p">())</span>
 
@@ -799,6 +877,220 @@ num_cex: max. number of searches for counterexamples
 <p>Returns:</p>
 
 <pre><code>A list of input sequences that revel different behaviour on both automata. Counterexamples are sorted by length.
+</code></pre>
+</div>
+
+
+                </section>
+                <section id="TestCaseWrapperSUL">
+                                <div class="attr class">
+        <a class="headerlink" href="#TestCaseWrapperSUL">#&nbsp;&nbsp</a>
+
+        
+        <span class="def">class</span>
+        <span class="name">TestCaseWrapperSUL</span><wbr>(<span class="base"><a href="../base/SUL.html#SUL">aalpy.base.SUL.SUL</a></span>):
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">TestCaseWrapperSUL</span><span class="p">(</span><span class="n">SUL</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sul</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sul</span> <span class="o">=</span> <span class="n">sul</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_cases</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_case_inputs</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_case_outputs</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">pre</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_case_inputs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_case_outputs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_case_inputs</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_case_outputs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">test_cases</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test_case_inputs</span><span class="p">),</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test_case_outputs</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">letter</span><span class="p">):</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">letter</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_case_inputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">letter</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_case_outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">output</span>
+</pre></div>
+
+        </details>
+
+            <div class="docstring"><p>System Under Learning (SUL) abstract class. Defines the interaction between the learning algorithm and the system
+under learning. All systems under learning have to implement this class, as it is
+passed to the learning algorithm and the equivalence oracle.</p>
+</div>
+
+
+                            <div id="TestCaseWrapperSUL.__init__" class="classattr">
+                                        <div class="attr function"><a class="headerlink" href="#TestCaseWrapperSUL.__init__">#&nbsp;&nbsp</a>
+
+        
+            <span class="name">TestCaseWrapperSUL</span><span class="signature">(sul)</span>
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sul</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sul</span> <span class="o">=</span> <span class="n">sul</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_cases</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_case_inputs</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_case_outputs</span> <span class="o">=</span> <span class="kc">None</span>
+</pre></div>
+
+        </details>
+
+    
+
+                            </div>
+                            <div id="TestCaseWrapperSUL.pre" class="classattr">
+                                        <div class="attr function"><a class="headerlink" href="#TestCaseWrapperSUL.pre">#&nbsp;&nbsp</a>
+
+        
+            <span class="def">def</span>
+            <span class="name">pre</span><span class="signature">(self)</span>:
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">pre</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_case_inputs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_case_outputs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">pre</span><span class="p">()</span>
+</pre></div>
+
+        </details>
+
+            <div class="docstring"><p>Resets the system. Called after post method in the equivalence query.</p>
+</div>
+
+
+                            </div>
+                            <div id="TestCaseWrapperSUL.post" class="classattr">
+                                        <div class="attr function"><a class="headerlink" href="#TestCaseWrapperSUL.post">#&nbsp;&nbsp</a>
+
+        
+            <span class="def">def</span>
+            <span class="name">post</span><span class="signature">(self)</span>:
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_case_inputs</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_case_outputs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">test_cases</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test_case_inputs</span><span class="p">),</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">test_case_outputs</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
+</pre></div>
+
+        </details>
+
+            <div class="docstring"><p>Performs additional cleanup on the system in necessary. Called before pre method in the equivalence query.</p>
+</div>
+
+
+                            </div>
+                            <div id="TestCaseWrapperSUL.step" class="classattr">
+                                        <div class="attr function"><a class="headerlink" href="#TestCaseWrapperSUL.step">#&nbsp;&nbsp</a>
+
+        
+            <span class="def">def</span>
+            <span class="name">step</span><span class="signature">(self, letter)</span>:
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">letter</span><span class="p">):</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">letter</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_case_inputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">letter</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_case_outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">output</span>
+</pre></div>
+
+        </details>
+
+            <div class="docstring"><p>Executes an action on the system under learning and returns its result.</p>
+
+<p>Args:</p>
+
+<pre><code>letter: Single input that is executed on the SUL.
+</code></pre>
+
+<p>Returns:</p>
+
+<pre><code>Output received after executing the input.
+</code></pre>
+</div>
+
+
+                            </div>
+                            <div class="inherited">
+                                <h5>Inherited Members</h5>
+                                <dl>
+                                    <div><dt><a href="../base/SUL.html#SUL">aalpy.base.SUL.SUL</a></dt>
+                                <dd id="TestCaseWrapperSUL.query" class="function"><a href="../base/SUL.html#SUL.query">query</a></dd>
+
+            </div>
+                                </dl>
+                            </div>
+                </section>
+                <section id="generate_test_cases">
+                            <div class="attr function"><a class="headerlink" href="#generate_test_cases">#&nbsp;&nbsp</a>
+
+        
+            <span class="def">def</span>
+            <span class="name">generate_test_cases</span><span class="signature">(automaton: <a href="../base/Automaton.html#DeterministicAutomaton">aalpy.base.Automaton.DeterministicAutomaton</a>, oracle)</span>:
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">generate_test_cases</span><span class="p">(</span><span class="n">automaton</span><span class="p">:</span> <span class="n">DeterministicAutomaton</span><span class="p">,</span> <span class="n">oracle</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Uses parametrized eq. oracle to construct test cases on the automaton.</span>
+<span class="sd">    If automaton are big (200+ states), increase recursion depth if necessary (eg. sys.setrecursionlimit(10000)).</span>
+
+<span class="sd">    Args:</span>
+
+<span class="sd">        automaton: deterministic automaton that serves as a basis for test case generation</span>
+<span class="sd">        oracle: oracle that will construct test-cases and record inputs and outputs</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">        List of test cases, where each testcase is a tuple containing two elements, and input and an output sequance.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+
+    <span class="n">type_map</span> <span class="o">=</span> <span class="p">{</span><span class="n">MooreMachine</span><span class="p">:</span> <span class="n">MooreSUL</span><span class="p">,</span> <span class="n">Dfa</span><span class="p">:</span> <span class="n">DfaSUL</span><span class="p">,</span> <span class="n">MealyMachine</span><span class="p">:</span> <span class="n">MealySUL</span><span class="p">}</span>
+
+    <span class="n">automaton_copy</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">automaton</span><span class="p">)</span>
+    <span class="n">base_sul</span> <span class="o">=</span> <span class="n">type_map</span><span class="p">[</span><span class="nb">type</span><span class="p">(</span><span class="n">automaton_copy</span><span class="p">)](</span><span class="n">automaton_copy</span><span class="p">)</span>
+
+    <span class="n">wrapped_sul</span> <span class="o">=</span> <span class="n">TestCaseWrapperSUL</span><span class="p">(</span><span class="n">base_sul</span><span class="p">)</span>
+    <span class="n">oracle</span><span class="o">.</span><span class="n">sul</span> <span class="o">=</span> <span class="n">wrapped_sul</span>
+    <span class="c1"># no counterexamples can be found</span>
+    <span class="n">cex</span> <span class="o">=</span> <span class="n">oracle</span><span class="o">.</span><span class="n">find_cex</span><span class="p">(</span><span class="n">automaton</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">cex</span> <span class="ow">is</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">wrapped_sul</span><span class="o">.</span><span class="n">test_cases</span>
+</pre></div>
+
+        </details>
+
+            <div class="docstring"><p>Uses parametrized eq. oracle to construct test cases on the automaton.
+If automaton are big (200+ states), increase recursion depth if necessary (eg. sys.setrecursionlimit(10000)).</p>
+
+<p>Args:</p>
+
+<pre><code>automaton: deterministic automaton that serves as a basis for test case generation
+oracle: oracle that will construct test-cases and record inputs and outputs
+</code></pre>
+
+<p>Returns:</p>
+
+<pre><code>List of test cases, where each testcase is a tuple containing two elements, and input and an output sequance.
 </code></pre>
 </div>
 

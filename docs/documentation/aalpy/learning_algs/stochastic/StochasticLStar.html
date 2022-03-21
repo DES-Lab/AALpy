@@ -75,12 +75,13 @@
 <span class="n">available_oracles</span><span class="p">,</span> <span class="n">available_oracles_error_msg</span> <span class="o">=</span> <span class="n">get_available_oracles_and_err_msg</span><span class="p">()</span>
 
 
-<span class="k">def</span> <span class="nf">run_stochastic_Lstar</span><span class="p">(</span><span class="n">input_alphabet</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">eq_oracle</span><span class="p">:</span> <span class="n">Oracle</span><span class="p">,</span> <span class="n">n_c</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">n_resample</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">target_unambiguity</span><span class="o">=</span><span class="mf">0.99</span><span class="p">,</span>
+<span class="k">def</span> <span class="nf">run_stochastic_Lstar</span><span class="p">(</span><span class="n">input_alphabet</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">eq_oracle</span><span class="p">:</span> <span class="n">Oracle</span><span class="p">,</span> <span class="n">target_unambiguity</span><span class="o">=</span><span class="mf">0.99</span><span class="p">,</span>
                          <span class="n">min_rounds</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">max_rounds</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">automaton_type</span><span class="o">=</span><span class="s1">&#39;mdp&#39;</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="s1">&#39;normal&#39;</span><span class="p">,</span>
                          <span class="n">cex_processing</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">samples_cex_strategy</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">custom_oracle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                         <span class="n">return_data</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">property_based_stopping</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">print_level</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+                         <span class="n">return_data</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">property_based_stopping</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_c</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">n_resample</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">print_level</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Learning of Markov Decision Processes based on &#39;L*-Based Learning of Markov Decision Processes&#39; by Tappler et al.</span>
+<span class="sd">    Learning of Markov Decision Processes based on &#39;L*-Based Learning of Markov Decision Processes&#39;</span>
+<span class="sd">    and &#39;Active Model Learning of Stochastic Reactive Systems&#39; by Tappler et al.</span>
 
 <span class="sd">    Args:</span>
 
@@ -89,10 +90,6 @@
 <span class="sd">        sul: system under learning</span>
 
 <span class="sd">        eq_oracle: equivalence oracle</span>
-
-<span class="sd">        n_c: cutoff for a cell to be considered complete (Default value = 20)</span>
-
-<span class="sd">        n_resample: resampling size (Default value = 100)</span>
 
 <span class="sd">        target_unambiguity: target unambiguity value (default 0.99)</span>
 
@@ -118,6 +115,10 @@
 
 <span class="sd">        return_data: if True, map containing all information like number of queries... will be returned</span>
 <span class="sd">            (Default value = False)</span>
+
+<span class="sd">        n_c: cutoff for a cell to be considered complete (Default value = 20), only used with &#39;classic&#39; strategy</span>
+
+<span class="sd">        n_resample: resampling size (Default value = 100), only used with &#39;classic&#39; strategy</span>
 
 <span class="sd">        print_level: 0 - None, 1 - just results, 2 - current round and hypothesis size, 3 - educational/debug</span>
 <span class="sd">            (Default value = 2)</span>
@@ -268,8 +269,6 @@
     input_alphabet,
     sul: <a href="../../base/SUL.html#SUL">aalpy.base.SUL.SUL</a>,
     eq_oracle: <a href="../../base/Oracle.html#Oracle">aalpy.base.Oracle.Oracle</a>,
-    n_c=20,
-    n_resample=100,
     target_unambiguity=0.99,
     min_rounds=10,
     max_rounds=200,
@@ -280,18 +279,21 @@
     custom_oracle=False,
     return_data=False,
     property_based_stopping=None,
+    n_c=20,
+    n_resample=100,
     print_level=2
 )</span>:
     </div>
 
                 <details>
             <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">run_stochastic_Lstar</span><span class="p">(</span><span class="n">input_alphabet</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">eq_oracle</span><span class="p">:</span> <span class="n">Oracle</span><span class="p">,</span> <span class="n">n_c</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">n_resample</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">target_unambiguity</span><span class="o">=</span><span class="mf">0.99</span><span class="p">,</span>
+            <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">run_stochastic_Lstar</span><span class="p">(</span><span class="n">input_alphabet</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">eq_oracle</span><span class="p">:</span> <span class="n">Oracle</span><span class="p">,</span> <span class="n">target_unambiguity</span><span class="o">=</span><span class="mf">0.99</span><span class="p">,</span>
                          <span class="n">min_rounds</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">max_rounds</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">automaton_type</span><span class="o">=</span><span class="s1">&#39;mdp&#39;</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="s1">&#39;normal&#39;</span><span class="p">,</span>
                          <span class="n">cex_processing</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">samples_cex_strategy</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">custom_oracle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                         <span class="n">return_data</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">property_based_stopping</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">print_level</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+                         <span class="n">return_data</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">property_based_stopping</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_c</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">n_resample</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">print_level</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Learning of Markov Decision Processes based on &#39;L*-Based Learning of Markov Decision Processes&#39; by Tappler et al.</span>
+<span class="sd">    Learning of Markov Decision Processes based on &#39;L*-Based Learning of Markov Decision Processes&#39;</span>
+<span class="sd">    and &#39;Active Model Learning of Stochastic Reactive Systems&#39; by Tappler et al.</span>
 
 <span class="sd">    Args:</span>
 
@@ -300,10 +302,6 @@
 <span class="sd">        sul: system under learning</span>
 
 <span class="sd">        eq_oracle: equivalence oracle</span>
-
-<span class="sd">        n_c: cutoff for a cell to be considered complete (Default value = 20)</span>
-
-<span class="sd">        n_resample: resampling size (Default value = 100)</span>
 
 <span class="sd">        target_unambiguity: target unambiguity value (default 0.99)</span>
 
@@ -329,6 +327,10 @@
 
 <span class="sd">        return_data: if True, map containing all information like number of queries... will be returned</span>
 <span class="sd">            (Default value = False)</span>
+
+<span class="sd">        n_c: cutoff for a cell to be considered complete (Default value = 20), only used with &#39;classic&#39; strategy</span>
+
+<span class="sd">        n_resample: resampling size (Default value = 100), only used with &#39;classic&#39; strategy</span>
 
 <span class="sd">        print_level: 0 - None, 1 - just results, 2 - current round and hypothesis size, 3 - educational/debug</span>
 <span class="sd">            (Default value = 2)</span>
@@ -469,7 +471,8 @@
 
         </details>
 
-            <div class="docstring"><p>Learning of Markov Decision Processes based on 'L*-Based Learning of Markov Decision Processes' by Tappler et al.</p>
+            <div class="docstring"><p>Learning of Markov Decision Processes based on 'L*-Based Learning of Markov Decision Processes'
+and 'Active Model Learning of Stochastic Reactive Systems' by Tappler et al.</p>
 
 <p>Args:</p>
 
@@ -478,10 +481,6 @@
 sul: system under learning
 
 eq_oracle: equivalence oracle
-
-n_c: cutoff for a cell to be considered complete (Default value = 20)
-
-n_resample: resampling size (Default value = 100)
 
 target_unambiguity: target unambiguity value (default 0.99)
 
@@ -507,6 +506,10 @@ custom_oracle: if True, warning about oracle type will be removed and custom ora
 
 return_data: if True, map containing all information like number of queries... will be returned
     (Default value = False)
+
+n_c: cutoff for a cell to be considered complete (Default value = 20), only used with 'classic' strategy
+
+n_resample: resampling size (Default value = 100), only used with 'classic' strategy
 
 print_level: 0 - None, 1 - just results, 2 - current round and hypothesis size, 3 - educational/debug
     (Default value = 2)

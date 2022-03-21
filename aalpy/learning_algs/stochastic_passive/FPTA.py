@@ -1,11 +1,12 @@
+from collections import defaultdict
 
 
 class AlergiaPtaNode:
-    __slots__ = ['output', 'frequency', 'children', 'prefix', 'state_id', 'children_prob']
+    __slots__ = ['output', 'input_frequency', 'children', 'prefix', 'state_id', 'children_prob']
 
     def __init__(self, output):
         self.output = output
-        self.frequency = 0
+        self.input_frequency = defaultdict(int)
         self.children = dict()
         self.prefix = ()
         # # for visualization
@@ -48,12 +49,10 @@ def create_fpta(data, automaton_type):
                 curr_node.children[inp_out] = node
                 curr_copy.children[inp_out] = node_copy
 
-            # curr_node.input_frequency[inp_out] += 1
+            curr_node.input_frequency[inp_out] += 1
             curr_node = curr_node.children[inp_out]
-            curr_node.frequency += 1
 
-            # curr_copy.input_frequency[inp_out] += 1
+            curr_copy.input_frequency[inp_out] += 1
             curr_copy = curr_copy.children[inp_out]
-            curr_copy.frequency += 1
 
     return root_node, root_copy

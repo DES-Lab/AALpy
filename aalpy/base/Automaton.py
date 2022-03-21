@@ -99,10 +99,11 @@ class Automaton(ABC):
         """
         Returns the input alphabet
         """
-        alphabet = set()
+        alphabet = list()
         for s in self.states:
-            alphabet.update(list(s.transitions.keys()))
-        assert alphabet
+            for i in s.transitions.keys():
+                if i not in alphabet:
+                    alphabet.append(i)
         return list(alphabet)
 
     def get_state_by_id(self, state_id) -> AutomatonState:

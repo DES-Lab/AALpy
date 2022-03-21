@@ -59,11 +59,11 @@ class Alergia:
     def fold(self, q_r, q_b):
         for i, c in q_b.children.items():
             if i in q_r.children.keys():
-                q_r.children[i].frequency += c.frequency
+                q_r.input_frequency[i] += q_b.input_frequency[i]
                 self.fold(q_r.children[i], c)
             else:
                 q_r.children[i] = c  # was c.copy()
-                q_r.children[i].frequency = c.frequency
+                q_r.input_frequency[i] = q_b.input_frequency[i]
 
     def run(self):
         start_time = time.time()
@@ -109,15 +109,15 @@ class Alergia:
         for r in red_sorted:
             r.children_prob = dict()  # Initializing in here saves many unnecessary initializations
             if self.automaton_type == 'mc':
-                total_output = sum([c.frequency for c in r.children.values()])
-                for i in r.children.keys():
-                    r.children_prob[i] = r.children[i].frequency / total_output
+                total_output = sum(r.input_frequency.values())
+                for i in r.input_frequency.keys():
+                    r.children_prob[i] = r.input_frequency[i] / total_output
             else:
                 outputs_per_input = defaultdict(int)
-                for io, child in r.children.items():
-                    outputs_per_input[io[0]] += child.frequency
-                for io in r.children.keys():
-                    r.children_prob[io] = r.children[io].frequency / outputs_per_input[io[0]]
+                for io, freq in r.input_frequency.items():
+                    outputs_per_input[io[0]] += freq
+                for io in r.input_frequency.keys():
+                    r.children_prob[io] = r.input_frequency[io] / outputs_per_input[io[0]]
 
     def get_blue_node(self, red_node):
         blue = self.t
@@ -185,4 +185,5 @@ def run_Alergia(data, automaton_type, eps=0.005, compatibility_checker=None, pri
     alergia = Alergia(data, eps=eps, automaton_type=automaton_type,
                       compatibility_checker=compatibility_checker, print_info=print_info)
     model = alergia.run()
+    del alergia.a, alergia.t, alergia
     return model

@@ -48,6 +48,9 @@
                         <li>
                                 <a class="function" href="#Dfa.step">step</a>
                         </li>
+                        <li>
+                                <a class="function" href="#Dfa.compute_characterization_set">compute_characterization_set</a>
+                        </li>
                 </ul>
 
             </li>
@@ -77,15 +80,17 @@
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Single state of a deterministic finite automaton.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_id</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_id</span><span class="p">,</span> <span class="n">is_accepting</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">state_id</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">is_accepting</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_accepting</span> <span class="o">=</span> <span class="n">is_accepting</span>
 
 
 <span class="k">class</span> <span class="nc">Dfa</span><span class="p">(</span><span class="n">DeterministicAutomaton</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Deterministic finite automaton.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">:</span> <span class="n">DfaState</span><span class="p">,</span> <span class="n">states</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">initial_state</span><span class="p">,</span> <span class="n">states</span><span class="p">)</span>
 
@@ -99,8 +104,14 @@
 
 <span class="sd">            True if the reached state is an accepting state, False otherwise</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">current_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">letter</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">letter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">current_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">letter</span><span class="p">]</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_state</span><span class="o">.</span><span class="n">is_accepting</span>
+
+    <span class="k">def</span> <span class="nf">compute_characterization_set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">char_set_init</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">online_suffix_closure</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">split_all_blocks</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">Dfa</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">compute_characterization_set</span><span class="p">(</span><span class="n">char_set_init</span> <span class="k">if</span> <span class="n">char_set_init</span> <span class="k">else</span> <span class="p">[()],</span>
+                                                             <span class="n">online_suffix_closure</span><span class="p">,</span>
+                                                             <span class="n">split_all_blocks</span><span class="p">)</span>
 </pre></div>
 
         </details>
@@ -121,9 +132,10 @@
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Single state of a deterministic finite automaton.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_id</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_id</span><span class="p">,</span> <span class="n">is_accepting</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">state_id</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">is_accepting</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_accepting</span> <span class="o">=</span> <span class="n">is_accepting</span>
 </pre></div>
 
         </details>
@@ -136,14 +148,14 @@
                                         <div class="attr function"><a class="headerlink" href="#DfaState.__init__">#&nbsp;&nbsp</a>
 
         
-            <span class="name">DfaState</span><span class="signature">(state_id)</span>
+            <span class="name">DfaState</span><span class="signature">(state_id, is_accepting=False)</span>
     </div>
 
                 <details>
             <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_id</span><span class="p">):</span>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_id</span><span class="p">,</span> <span class="n">is_accepting</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">state_id</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">is_accepting</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_accepting</span> <span class="o">=</span> <span class="n">is_accepting</span>
 </pre></div>
 
         </details>
@@ -186,6 +198,7 @@ state.</p>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Deterministic finite automaton.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">:</span> <span class="n">DfaState</span><span class="p">,</span> <span class="n">states</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">initial_state</span><span class="p">,</span> <span class="n">states</span><span class="p">)</span>
 
@@ -199,8 +212,14 @@ state.</p>
 
 <span class="sd">            True if the reached state is an accepting state, False otherwise</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">current_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">letter</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">letter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">current_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">letter</span><span class="p">]</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_state</span><span class="o">.</span><span class="n">is_accepting</span>
+
+    <span class="k">def</span> <span class="nf">compute_characterization_set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">char_set_init</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">online_suffix_closure</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">split_all_blocks</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">Dfa</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">compute_characterization_set</span><span class="p">(</span><span class="n">char_set_init</span> <span class="k">if</span> <span class="n">char_set_init</span> <span class="k">else</span> <span class="p">[()],</span>
+                                                             <span class="n">online_suffix_closure</span><span class="p">,</span>
+                                                             <span class="n">split_all_blocks</span><span class="p">)</span>
 </pre></div>
 
         </details>
@@ -253,7 +272,8 @@ states (list) : list containing all states of the automaton
 
 <span class="sd">            True if the reached state is an accepting state, False otherwise</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">current_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">letter</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">letter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">current_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">letter</span><span class="p">]</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_state</span><span class="o">.</span><span class="n">is_accepting</span>
 </pre></div>
 
@@ -272,6 +292,51 @@ states (list) : list containing all states of the automaton
 
 
                             </div>
+                            <div id="Dfa.compute_characterization_set" class="classattr">
+                                        <div class="attr function"><a class="headerlink" href="#Dfa.compute_characterization_set">#&nbsp;&nbsp</a>
+
+        
+            <span class="def">def</span>
+            <span class="name">compute_characterization_set</span><span class="signature">(
+    self,
+    char_set_init=None,
+    online_suffix_closure=True,
+    split_all_blocks=True
+)</span>:
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">compute_characterization_set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">char_set_init</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">online_suffix_closure</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">split_all_blocks</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">Dfa</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">compute_characterization_set</span><span class="p">(</span><span class="n">char_set_init</span> <span class="k">if</span> <span class="n">char_set_init</span> <span class="k">else</span> <span class="p">[()],</span>
+                                                             <span class="n">online_suffix_closure</span><span class="p">,</span>
+                                                             <span class="n">split_all_blocks</span><span class="p">)</span>
+</pre></div>
+
+        </details>
+
+            <div class="docstring"><p>Computation of a characterization set, that is, a set of sequences that can distinguish all states in the
+automation. The implementation follows the approach for finding multiple preset diagnosing experiments described
+by Arthur Gill in "Introduction to the Theory of Finite State Machines".
+Some optional parameterized adaptations, e.g., for computing suffix-closed sets target the application in
+L*-based learning and conformance testing.
+The function only works for minimal automata.
+Args:
+    char_set_init: a list of sequence that will be included in the characterization set, e.g., the input
+                alphabet. A empty sequance is added to this list when using automata with state labels
+                (DFA and Moore)
+    online_suffix_closure: if true, ensures suffix closedness of the characterization set at every computation
+                        step
+    split_all_blocks: if false, the computation follows the original tree-based strategy, where newly computed
+                sequences are only checked on a subset of the states to be distinguished
+                if true, sequences are used to distinguish all states, yielding a potentially smaller set, which
+                is useful for conformance testing and learning</p>
+
+<p>Returns: a characterization set</p>
+</div>
+
+
+                            </div>
                             <div class="inherited">
                                 <h5>Inherited Members</h5>
                                 <dl>
@@ -281,7 +346,6 @@ states (list) : list containing all states of the automaton
                 <dd id="Dfa.output_step" class="function"><a href="../base/Automaton.html#DeterministicAutomaton.output_step">output_step</a></dd>
                 <dd id="Dfa.find_distinguishing_seq" class="function"><a href="../base/Automaton.html#DeterministicAutomaton.find_distinguishing_seq">find_distinguishing_seq</a></dd>
                 <dd id="Dfa.compute_output_seq" class="function"><a href="../base/Automaton.html#DeterministicAutomaton.compute_output_seq">compute_output_seq</a></dd>
-                <dd id="Dfa.compute_characterization_set" class="function"><a href="../base/Automaton.html#DeterministicAutomaton.compute_characterization_set">compute_characterization_set</a></dd>
 
             </div>
             <div><dt><a href="../base/Automaton.html#Automaton">aalpy.base.Automaton.Automaton</a></dt>
