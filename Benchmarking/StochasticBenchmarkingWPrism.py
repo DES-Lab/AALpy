@@ -4,7 +4,7 @@ import aalpy.paths
 
 from aalpy.SULs import MdpSUL
 from aalpy.learning_algs import run_stochastic_Lstar
-from aalpy.oracles.RandomWalkEqOracle import UnseenOutputRandomWalkEqOracle
+from aalpy.oracles.RandomWalkEqOracle import RandomWalkEqOracle
 from aalpy.utils import load_automaton_from_file, get_correct_prop_values, get_properties_file
 from aalpy.utils import model_check_experiment
 from aalpy.automata.StochasticMealyMachine import smm_to_mdp_conversion
@@ -67,7 +67,7 @@ for seed in range(1, 4):
 
         mdp_sul = MdpSUL(original_mdp)
 
-        eq_oracle = UnseenOutputRandomWalkEqOracle(input_alphabet, mdp_sul, num_steps=n_resample * (1 / 0.25),
+        eq_oracle = RandomWalkEqOracle(input_alphabet, mdp_sul, num_steps=n_resample * (1 / 0.25),
                                                    reset_after_cex=True, reset_prob=0.25)
 
         learned_mdp, data_mdp = run_stochastic_Lstar(input_alphabet, mdp_sul, eq_oracle, automaton_type='mdp',
