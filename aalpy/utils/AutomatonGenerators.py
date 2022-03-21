@@ -1,7 +1,7 @@
 import random
 
 from aalpy.automata import Dfa, DfaState, MdpState, Mdp, MealyMachine, MealyState, \
-    MooreMachine, MooreState, OnfsmState, Onfsm, MarkovChain, McState
+    MooreMachine, MooreState, OnfsmState, Onfsm, MarkovChain, McState, StochasticMealyState, StochasticMealyMachine
 from aalpy.utils.HelperFunctions import random_string_generator
 
 
@@ -156,6 +156,49 @@ def generate_random_mdp(num_states, len_input, custom_outputs=None, num_unique_o
                 state.transitions[i].append((random.choice(new_states), round(1 - prob, 2)))
 
     return Mdp(states[0], states), list(range(len_input))
+
+
+def generate_random_smm(num_states, num_inputs, num_output):
+    """
+    Generates random MDP.
+
+    Args:
+
+        num_states: number of states
+        num_inputs: number of inputs
+        num_output: number of outputs
+
+    Returns:
+
+        random SMM
+
+    """
+    import string
+    inputs = list(range(num_inputs))
+    outputs = list(string.ascii_uppercase)[:num_output]
+
+    possible_probabilities = [1.0, 1.0, 1.0, 1.0, 0.75, 0.5, 0.9]
+
+    states = []
+    for i in range(num_states):
+        states.append(StochasticMealyState(f'q{i}'))
+
+    for state in states:
+        for i in range(num_inputs):
+            prob = random.choice(possible_probabilities)
+            if prob == 1.:
+                state.transitions[i].append((random.choice(states), random.choice(outputs), prob))
+            else:
+                new_states, new_outputs = list(states), list(outputs)
+                s1 = random.choice(new_states)
+                o1 = random.choice(new_outputs)
+                new_states.remove(s1)
+                new_outputs.remove(o1)
+
+                state.transitions[i].append((s1, o1, prob))
+                state.transitions[i].append((random.choice(new_states), random.choice(outputs), round(1 - prob, 2)))
+
+    return StochasticMealyMachine(states[0], states)
 
 
 def generate_random_ONFSM(num_states, num_inputs, num_outputs, multiple_out_prob=0.1):

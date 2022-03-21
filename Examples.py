@@ -399,7 +399,7 @@ def onfsm_mealy_paper_example():
 
     sul = OnfsmSUL(onfsm)
     eq_oracle = RandomWalkEqOracle(alphabet, sul, num_steps=5000, reset_prob=0.25, reset_after_cex=True)
-    #eq_oracle = RandomWordEqOracle(alphabet, sul, num_walks=500, min_walk_len=2, max_walk_len=5)
+    # eq_oracle = RandomWordEqOracle(alphabet, sul, num_walks=500, min_walk_len=2, max_walk_len=5)
 
     learned_onfsm = run_non_det_Lstar(alphabet, sul, eq_oracle, n_sampling=50, print_level=3)
 
@@ -709,6 +709,36 @@ def alergia_mdp_example():
 
     # run alergia with the data and automaton_type set to 'mdp' to True to learn a MDP
     model = run_Alergia(data, automaton_type='mdp', eps=0.005, print_info=True)
+
+    visualize_automaton(model)
+    return model
+
+
+def alergia_smm_example():
+    from aalpy.SULs import StochasticMealySUL
+    from random import randint, choice
+    from aalpy.learning_algs import run_Alergia
+    from aalpy.utils import visualize_automaton, generate_random_smm
+
+    smm = generate_random_smm(5, 2, 5)
+    visualize_automaton(smm, path='Original')
+    sul = StochasticMealySUL(smm)
+    inputs = smm.get_input_alphabet()
+
+    data = []
+    for _ in range(100000):
+        str_len = randint(5, 15)
+        sul.pre()
+        seq = []
+        for _ in range(str_len):
+            i = choice(inputs)
+            o = sul.step(i)
+            seq.append((i, o))
+        sul.post()
+        data.append(seq)
+
+    # run alergia with the data and automaton_type set to 'mdp' to True to learn a MDP
+    model = run_Alergia(data, automaton_type='smm', eps=0.005, print_info=True)
 
     visualize_automaton(model)
     return model

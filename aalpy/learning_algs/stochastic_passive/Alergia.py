@@ -2,11 +2,13 @@ import time
 from collections import defaultdict
 from bisect import insort
 
-from aalpy.automata import MarkovChain, MdpState, Mdp, McState, MooreMachine, MooreState
+from aalpy.automata import MarkovChain, MdpState, Mdp, McState, MooreMachine, MooreState, StochasticMealyState, \
+    StochasticMealyMachine
 from aalpy.learning_algs.stochastic_passive.CompatibilityChecker import HoeffdingCompatibility
 from aalpy.learning_algs.stochastic_passive.FPTA import create_fpta
 
-state_automaton_map = {'mc': (McState, MarkovChain), 'mdp': (MdpState, Mdp), 'moore': (MooreState, MooreMachine)}
+state_automaton_map = {'mc': (McState, MarkovChain), 'mdp': (MdpState, Mdp),
+                       'moore': (MooreState, MooreMachine), 'smm': (StochasticMealyState, StochasticMealyMachine)}
 
 
 class Alergia:
@@ -30,7 +32,7 @@ class Alergia:
             print(f'PTA Construction Time:  {pta_time}')
 
     def compatibility_test(self, a, b):
-        if a.output != b.output:
+        if self.automaton_type != 'smm' and a.output != b.output:
             return False
 
         if not a.children.values() or not b.children.values():
@@ -133,7 +135,11 @@ class Alergia:
         initial_state = None
         red_mdp_map = dict()
         for s in red:
-            automaton_state = s_c(s.state_id, output=s.output)
+            if self.automaton_type != 'smm':
+                automaton_state = s_c(s.state_id, output=s.output)
+            else:
+                automaton_state = s_c(s.state_id)
+
             automaton_state.prefix = s.prefix
             states.append(automaton_state)
             red_mdp_map[tuple(s.prefix)] = automaton_state
@@ -150,6 +156,8 @@ class Alergia:
                     s.transitions[i].append((destination, red_eq.children_prob[io]))
                 elif self.automaton_type == 'mc':
                     s.transitions.append((destination, red_eq.children_prob[i]))
+                elif self.automaton_type == 'smm':
+                    s.transitions[i].append((destination, io[1], red_eq.children_prob[io]))
                 else:
                     s.transitions[i] = destination
 
@@ -181,7 +189,7 @@ def run_Alergia(data, automaton_type, eps=0.005, compatibility_checker=None, pri
 
         mdp or markov chain
     """
-    assert automaton_type in {'mdp', 'mc', 'moore'}
+    assert automaton_type in {'mdp', 'mc', 'moore', 'smm'}
     alergia = Alergia(data, eps=eps, automaton_type=automaton_type,
                       compatibility_checker=compatibility_checker, print_info=print_info)
     model = alergia.run()

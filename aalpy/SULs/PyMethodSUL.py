@@ -19,7 +19,7 @@ class FunctionDecorator:
         self.function = function
         self.args = None
         if args:
-            self.args = [args] if not isinstance(args, list) else args
+            self.args = [args] if not isinstance(args, (list, tuple)) else args
 
     def __repr__(self):
         if self.args:
