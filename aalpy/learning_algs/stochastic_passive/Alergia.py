@@ -177,8 +177,9 @@ def run_Alergia(data, automaton_type, eps=0.005, compatibility_checker=None, pri
         eps: epsilon value if you are using default HoeffdingCompatibility. If it is set to 'auto' it will be computed
         as 10/(all steps in the data)
 
-        automaton_type: either 'mdp' if you wish to learn an MDP, 'mc' if you want to learn Markov Chain, and 'moore'
-                        if you want to learn Moore Machine (underlying structure is deterministic)
+        automaton_type: either 'mdp' if you wish to learn an MDP, 'mc' if you want to learn Markov Chain, 'moore'
+                        if you want to learn Moore Machine (underlying structure is deterministic), or 'smm' if you
+                        want to learn stochastic Mealy machine
 
         compatibility_checker: impl. of class CompatibilityChecker, HoeffdingCompatibility with eps value by default
 

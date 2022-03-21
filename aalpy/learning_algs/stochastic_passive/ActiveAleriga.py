@@ -52,7 +52,8 @@ class RandomWordSampler(Sampler):
         return samples
 
 
-def run_active_Alergia(data, sul, sampler, n_iter, eps=0.005, compatibility_checker=None, print_info=True):
+def run_active_Alergia(data, sul, sampler, n_iter, eps=0.005, compatibility_checker=None, automaton_type='mdp',
+                       print_info=True):
     """
     Active version of IOAlergia algorithm. Based on intermediate hypothesis sampling on the system is performed.
     Sampled data is added to the learning data and more accurate model is learned.
@@ -66,6 +67,7 @@ def run_active_Alergia(data, sul, sampler, n_iter, eps=0.005, compatibility_chec
         n_iter: number of iterations of active learning
         eps: epsilon value if the default checker is used. Look in run_Alergia for description
         compatibility_checker: passed to run_Alergia, check there for description
+        automaton_type: either 'mdp' or 'smm' (Markov decision process or Stochastic Mealy Machine)
         print_info: print current learning iteration
 
     Returns:
