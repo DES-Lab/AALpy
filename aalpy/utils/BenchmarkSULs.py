@@ -18,7 +18,11 @@ def get_Angluin_dfa():
     q3.transitions['a'] = q2
     q3.transitions['b'] = q1
 
-    return Dfa(q0, [q0, q1, q2, q3])
+    model = Dfa(q0, [q0, q1, q2, q3])
+    for s in model.states:
+        s.prefix = model.get_shortest_path(model.initial_state, s)
+
+    return model
 
 
 def get_benchmark_ONFSM():
