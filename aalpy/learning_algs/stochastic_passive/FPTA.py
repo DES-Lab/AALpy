@@ -29,27 +29,26 @@ class AlergiaPtaNode:
 def create_fpta(data, automaton_type):
     is_iofpta = True if automaton_type != 'mc' else False
     seq_iter_index = 0 if automaton_type == 'smm' else 1
+    not_smm = automaton_type != 'smm'
     # NOTE: This approach with _copy is not optimal, but a big time save from doing deep copy at the end
-    node_counter = 0
     if automaton_type != 'smm':
         root_node, root_copy = AlergiaPtaNode(data[0][0]), AlergiaPtaNode(data[0][0])
     else:
-        root_node, root_copy = AlergiaPtaNode(node_counter), AlergiaPtaNode(node_counter)
+        root_node, root_copy = AlergiaPtaNode(None), AlergiaPtaNode(None)
 
     for seq in data:
-        if automaton_type != 'smm' and seq[0] != root_node.output:
+        if not_smm and seq[0] != root_node.output:
             print('All strings should have the same initial output')
             assert False
         curr_node, curr_copy = root_node, root_copy
 
         for el in seq[seq_iter_index:]:
             if el not in curr_node.children.keys():
-                if automaton_type != 'smm':
+                if not_smm:
                     out = el if not is_iofpta else el[1]
                     node, node_copy = AlergiaPtaNode(out), AlergiaPtaNode(out)
                 else:
-                    node, node_copy = AlergiaPtaNode(node_counter), AlergiaPtaNode(node_counter)
-                    node_counter += 1
+                    node, node_copy = AlergiaPtaNode(None), AlergiaPtaNode(None)
 
                 node.prefix = tuple(curr_node.prefix)
                 node.prefix += (el,)
