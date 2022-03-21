@@ -686,12 +686,10 @@ def learn_stochastic_system_and_do_model_checking(example, automaton_type='smm',
 
 
 def alergia_mdp_example():
-    from os import remove
     from aalpy.SULs import MdpSUL
     from random import randint, choice
     from aalpy.learning_algs import run_Alergia
     from aalpy.utils import visualize_automaton, generate_random_mdp
-    from aalpy.utils import IODelimiterTokenizer
 
     mdp, inps = generate_random_mdp(5, 2, custom_outputs=['A', 'B', 'C', 'D'])
     visualize_automaton(mdp, path='Original')

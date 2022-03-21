@@ -93,6 +93,9 @@
                 </ul>
 
             </li>
+            <li>
+                    <a class="function" href="#get_small_pomdp">get_small_pomdp</a>
+            </li>
     </ul>
 
 
@@ -112,27 +115,20 @@
                 
                         <details>
             <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">aalpy.automata</span> <span class="kn">import</span> <span class="n">StochasticMealyMachine</span><span class="p">,</span> <span class="n">StochasticMealyState</span><span class="p">,</span> <span class="n">Mdp</span><span class="p">,</span> <span class="n">MdpState</span><span class="p">,</span> <span class="n">Onfsm</span><span class="p">,</span> <span class="n">OnfsmState</span><span class="p">,</span> \
-    <span class="n">DfaState</span><span class="p">,</span> <span class="n">Dfa</span>
+            <div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">aalpy.automata</span> <span class="kn">import</span> <span class="n">StochasticMealyMachine</span><span class="p">,</span> <span class="n">StochasticMealyState</span><span class="p">,</span> <span class="n">Mdp</span><span class="p">,</span> <span class="n">MdpState</span><span class="p">,</span> <span class="n">Onfsm</span><span class="p">,</span> <span class="n">OnfsmState</span>
+
+<span class="kn">from</span> <span class="nn">aalpy.utils.AutomatonGenerators</span> <span class="kn">import</span> <span class="n">dfa_from_state_setup</span>
 
 
 <span class="k">def</span> <span class="nf">get_Angluin_dfa</span><span class="p">():</span>
-    <span class="n">q0</span> <span class="o">=</span> <span class="n">DfaState</span><span class="p">(</span><span class="s1">&#39;q0&#39;</span><span class="p">)</span>
-    <span class="n">q0</span><span class="o">.</span><span class="n">is_accepting</span> <span class="o">=</span> <span class="kc">True</span>
-    <span class="n">q1</span> <span class="o">=</span> <span class="n">DfaState</span><span class="p">(</span><span class="s1">&#39;q1&#39;</span><span class="p">)</span>
-    <span class="n">q2</span> <span class="o">=</span> <span class="n">DfaState</span><span class="p">(</span><span class="s1">&#39;q2&#39;</span><span class="p">)</span>
-    <span class="n">q3</span> <span class="o">=</span> <span class="n">DfaState</span><span class="p">(</span><span class="s1">&#39;q3&#39;</span><span class="p">)</span>
+    <span class="n">anguin_dfa</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;q0&#39;</span><span class="p">:</span> <span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="s1">&#39;q1&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="s1">&#39;q2&#39;</span><span class="p">}),</span>
+        <span class="s1">&#39;q1&#39;</span><span class="p">:</span> <span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="s1">&#39;q0&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="s1">&#39;q3&#39;</span><span class="p">}),</span>
+        <span class="s1">&#39;q2&#39;</span><span class="p">:</span> <span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="s1">&#39;q3&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="s1">&#39;q0&#39;</span><span class="p">}),</span>
+        <span class="s1">&#39;q3&#39;</span><span class="p">:</span> <span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="s1">&#39;q2&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="s1">&#39;q1&#39;</span><span class="p">})</span>
+    <span class="p">}</span>
 
-    <span class="n">q0</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">q1</span>
-    <span class="n">q0</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">q2</span>
-    <span class="n">q1</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">q0</span>
-    <span class="n">q1</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">q3</span>
-    <span class="n">q2</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">q3</span>
-    <span class="n">q2</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">q0</span>
-    <span class="n">q3</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">q2</span>
-    <span class="n">q3</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">q1</span>
-
-    <span class="k">return</span> <span class="n">Dfa</span><span class="p">(</span><span class="n">q0</span><span class="p">,</span> <span class="p">[</span><span class="n">q0</span><span class="p">,</span> <span class="n">q1</span><span class="p">,</span> <span class="n">q2</span><span class="p">,</span> <span class="n">q3</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">dfa_from_state_setup</span><span class="p">(</span><span class="n">anguin_dfa</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">get_benchmark_ONFSM</span><span class="p">():</span>
@@ -464,6 +460,33 @@
             <span class="k">return</span> <span class="kc">False</span>
 
         <span class="k">return</span> <span class="kc">True</span>
+
+
+<span class="k">def</span> <span class="nf">get_small_pomdp</span><span class="p">():</span>
+    <span class="n">q0</span> <span class="o">=</span> <span class="n">MdpState</span><span class="p">(</span><span class="s2">&quot;q0&quot;</span><span class="p">,</span> <span class="s2">&quot;init&quot;</span><span class="p">)</span>
+    <span class="n">q1</span> <span class="o">=</span> <span class="n">MdpState</span><span class="p">(</span><span class="s2">&quot;q1&quot;</span><span class="p">,</span> <span class="s2">&quot;beep&quot;</span><span class="p">)</span>
+    <span class="n">q2</span> <span class="o">=</span> <span class="n">MdpState</span><span class="p">(</span><span class="s2">&quot;q2&quot;</span><span class="p">,</span> <span class="s2">&quot;beep&quot;</span><span class="p">)</span>
+    <span class="n">q3</span> <span class="o">=</span> <span class="n">MdpState</span><span class="p">(</span><span class="s2">&quot;q3&quot;</span><span class="p">,</span> <span class="s2">&quot;coffee&quot;</span><span class="p">)</span>
+    <span class="n">q4</span> <span class="o">=</span> <span class="n">MdpState</span><span class="p">(</span><span class="s2">&quot;q4&quot;</span><span class="p">,</span> <span class="s2">&quot;tea&quot;</span><span class="p">)</span>
+
+    <span class="n">q0</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;but&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">q0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">q0</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;coin&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">q1</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">))</span>
+    <span class="n">q0</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;coin&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">q2</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">))</span>
+
+    <span class="n">q1</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;coin&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">q1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">q1</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;but&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">q3</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+
+    <span class="n">q2</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;coin&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">q2</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">))</span>
+    <span class="n">q2</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;coin&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">q1</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">))</span>
+    <span class="n">q2</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;but&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">q4</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+
+    <span class="n">q3</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;coin&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">q3</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">q3</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;but&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">q3</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+
+    <span class="n">q4</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;coin&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">q4</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">q4</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;but&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">q4</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">Mdp</span><span class="p">(</span><span class="n">q0</span><span class="p">,</span> <span class="p">[</span><span class="n">q0</span><span class="p">,</span> <span class="n">q1</span><span class="p">,</span> <span class="n">q2</span><span class="p">,</span> <span class="n">q3</span><span class="p">,</span> <span class="n">q4</span><span class="p">])</span>
 </pre></div>
 
         </details>
@@ -480,22 +503,14 @@
                 <details>
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">get_Angluin_dfa</span><span class="p">():</span>
-    <span class="n">q0</span> <span class="o">=</span> <span class="n">DfaState</span><span class="p">(</span><span class="s1">&#39;q0&#39;</span><span class="p">)</span>
-    <span class="n">q0</span><span class="o">.</span><span class="n">is_accepting</span> <span class="o">=</span> <span class="kc">True</span>
-    <span class="n">q1</span> <span class="o">=</span> <span class="n">DfaState</span><span class="p">(</span><span class="s1">&#39;q1&#39;</span><span class="p">)</span>
-    <span class="n">q2</span> <span class="o">=</span> <span class="n">DfaState</span><span class="p">(</span><span class="s1">&#39;q2&#39;</span><span class="p">)</span>
-    <span class="n">q3</span> <span class="o">=</span> <span class="n">DfaState</span><span class="p">(</span><span class="s1">&#39;q3&#39;</span><span class="p">)</span>
+    <span class="n">anguin_dfa</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;q0&#39;</span><span class="p">:</span> <span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="s1">&#39;q1&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="s1">&#39;q2&#39;</span><span class="p">}),</span>
+        <span class="s1">&#39;q1&#39;</span><span class="p">:</span> <span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="s1">&#39;q0&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="s1">&#39;q3&#39;</span><span class="p">}),</span>
+        <span class="s1">&#39;q2&#39;</span><span class="p">:</span> <span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="s1">&#39;q3&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="s1">&#39;q0&#39;</span><span class="p">}),</span>
+        <span class="s1">&#39;q3&#39;</span><span class="p">:</span> <span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="s1">&#39;q2&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="s1">&#39;q1&#39;</span><span class="p">})</span>
+    <span class="p">}</span>
 
-    <span class="n">q0</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">q1</span>
-    <span class="n">q0</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">q2</span>
-    <span class="n">q1</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">q0</span>
-    <span class="n">q1</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">q3</span>
-    <span class="n">q2</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">q3</span>
-    <span class="n">q2</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">q0</span>
-    <span class="n">q3</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">q2</span>
-    <span class="n">q3</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">q1</span>
-
-    <span class="k">return</span> <span class="n">Dfa</span><span class="p">(</span><span class="n">q0</span><span class="p">,</span> <span class="p">[</span><span class="n">q0</span><span class="p">,</span> <span class="n">q1</span><span class="p">,</span> <span class="n">q2</span><span class="p">,</span> <span class="n">q3</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">dfa_from_state_setup</span><span class="p">(</span><span class="n">anguin_dfa</span><span class="p">)</span>
 </pre></div>
 
         </details>
@@ -1190,6 +1205,48 @@ The format of the dates is %d/%m/%Y'</p>
     
 
                             </div>
+                </section>
+                <section id="get_small_pomdp">
+                            <div class="attr function"><a class="headerlink" href="#get_small_pomdp">#&nbsp;&nbsp</a>
+
+        
+            <span class="def">def</span>
+            <span class="name">get_small_pomdp</span><span class="signature">()</span>:
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">get_small_pomdp</span><span class="p">():</span>
+    <span class="n">q0</span> <span class="o">=</span> <span class="n">MdpState</span><span class="p">(</span><span class="s2">&quot;q0&quot;</span><span class="p">,</span> <span class="s2">&quot;init&quot;</span><span class="p">)</span>
+    <span class="n">q1</span> <span class="o">=</span> <span class="n">MdpState</span><span class="p">(</span><span class="s2">&quot;q1&quot;</span><span class="p">,</span> <span class="s2">&quot;beep&quot;</span><span class="p">)</span>
+    <span class="n">q2</span> <span class="o">=</span> <span class="n">MdpState</span><span class="p">(</span><span class="s2">&quot;q2&quot;</span><span class="p">,</span> <span class="s2">&quot;beep&quot;</span><span class="p">)</span>
+    <span class="n">q3</span> <span class="o">=</span> <span class="n">MdpState</span><span class="p">(</span><span class="s2">&quot;q3&quot;</span><span class="p">,</span> <span class="s2">&quot;coffee&quot;</span><span class="p">)</span>
+    <span class="n">q4</span> <span class="o">=</span> <span class="n">MdpState</span><span class="p">(</span><span class="s2">&quot;q4&quot;</span><span class="p">,</span> <span class="s2">&quot;tea&quot;</span><span class="p">)</span>
+
+    <span class="n">q0</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;but&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">q0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">q0</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;coin&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">q1</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">))</span>
+    <span class="n">q0</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;coin&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">q2</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">))</span>
+
+    <span class="n">q1</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;coin&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">q1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">q1</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;but&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">q3</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+
+    <span class="n">q2</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;coin&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">q2</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">))</span>
+    <span class="n">q2</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;coin&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">q1</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">))</span>
+    <span class="n">q2</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;but&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">q4</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+
+    <span class="n">q3</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;coin&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">q3</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">q3</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;but&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">q3</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+
+    <span class="n">q4</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;coin&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">q4</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">q4</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s1">&#39;but&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">q4</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">Mdp</span><span class="p">(</span><span class="n">q0</span><span class="p">,</span> <span class="p">[</span><span class="n">q0</span><span class="p">,</span> <span class="n">q1</span><span class="p">,</span> <span class="n">q2</span><span class="p">,</span> <span class="n">q3</span><span class="p">,</span> <span class="n">q4</span><span class="p">])</span>
+</pre></div>
+
+        </details>
+
+    
+
                 </section>
     </main>
 <script>

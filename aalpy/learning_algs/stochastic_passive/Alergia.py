@@ -59,7 +59,7 @@ class Alergia:
     def fold(self, q_r, q_b):
         for i, c in q_b.children.items():
             if i in q_r.children.keys():
-                q_r.input_frequency[i] += c.input_frequency[i]
+                q_r.input_frequency[i] += q_b.input_frequency[i]
                 self.fold(q_r.children[i], c)
             else:
                 q_r.children[i] = c  # was c.copy()
@@ -107,6 +107,7 @@ class Alergia:
     def normalize(self, red):
         red_sorted = sorted(list(red), key=lambda x: len(x.prefix))
         for r in red_sorted:
+            r.children_prob = dict()  # Initializing in here saves many unnecessary initializations
             if self.automaton_type == 'mc':
                 total_output = sum(r.input_frequency.values())
                 for i in r.input_frequency.keys():
@@ -184,4 +185,5 @@ def run_Alergia(data, automaton_type, eps=0.005, compatibility_checker=None, pri
     alergia = Alergia(data, eps=eps, automaton_type=automaton_type,
                       compatibility_checker=compatibility_checker, print_info=print_info)
     model = alergia.run()
+    del alergia.a, alergia.t, alergia
     return model

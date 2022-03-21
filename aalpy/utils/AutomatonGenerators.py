@@ -218,3 +218,134 @@ def generate_random_markov_chain(num_states):
             state.transitions.append((rand_state, round(1 - prob, 2)))
 
     return MarkovChain(states[0], states)
+
+
+def dfa_from_state_setup(state_setup) -> Dfa:
+    """
+        First state in the state setup is the initial state.
+        Example state setup:
+        state_setup = {
+                "a": (True, {"x": "b1", "y": "a"}),
+                "b1": (False, {"x": "b2", "y": "a"}),
+                "b2": (True, {"x": "b3", "y": "a"}),
+                "b3": (False, {"x": "b4", "y": "a"}),
+                "b4": (False, {"x": "c", "y": "a"}),
+                "c": (True, {"x": "a", "y": "a"}),
+            }
+
+        Args:
+
+            state_setup: map from state_id to tuple(output and transitions_dict)
+
+        Returns:
+
+            DFA
+        """
+    # state_setup should map from state_id to tuple(is_accepting and transitions_dict)
+
+    # build states with state_id and output
+    states = {key: DfaState(key, val[0]) for key, val in state_setup.items()}
+
+    # add transitions to states
+    for state_id, state in states.items():
+        for _input, target_state_id in state_setup[state_id][1].items():
+            state.transitions[_input] = states[target_state_id]
+
+    # states to list
+    states = [state for state in states.values()]
+
+    # build moore machine with first state as starting state
+    dfa = Dfa(states[0], states)
+
+    for state in states:
+        state.prefix = dfa.get_shortest_path(dfa.initial_state, state)
+
+    return dfa
+
+
+def moore_from_state_setup(state_setup) -> MooreMachine:
+    """
+    First state in the state setup is the initial state.
+    Example state setup:
+    state_setup = {
+            "a": ("a", {"x": "b1", "y": "a"}),
+            "b1": ("b", {"x": "b2", "y": "a"}),
+            "b2": ("b", {"x": "b3", "y": "a"}),
+            "b3": ("b", {"x": "b4", "y": "a"}),
+            "b4": ("b", {"x": "c", "y": "a"}),
+            "c": ("c", {"x": "a", "y": "a"}),
+        }
+
+    Args:
+
+        state_setup: map from state_id to tuple(output and transitions_dict)
+
+    Returns:
+
+        Moore machine
+    """
+
+    # build states with state_id and output
+    states = {key: MooreState(key, val[0]) for key, val in state_setup.items()}
+
+    # add transitions to states
+    for state_id, state in states.items():
+        for _input, target_state_id in state_setup[state_id][1].items():
+            state.transitions[_input] = states[target_state_id]
+
+    # states to list
+    states = [state for state in states.values()]
+
+    # build moore machine with first state as starting state
+    mm = MooreMachine(states[0], states)
+
+    for state in states:
+        state.prefix = mm.get_shortest_path(mm.initial_state, state)
+
+    return mm
+
+
+def mealy_from_state_setup(state_setup) -> MealyMachine:
+    """
+        First state in the state setup is the initial state.
+        state_setup = {
+            "a": {"x": ("o1", "b1"), "y": ("o2", "a")},
+            "b1": {"x": ("o3", "b2"), "y": ("o1", "a")},
+            "b2": {"x": ("o1", "b3"), "y": ("o2", "a")},
+            "b3": {"x": ("o3", "b4"), "y": ("o1", "a")},
+            "b4": {"x": ("o1", "c"), "y": ("o4", "a")},
+            "c": {"x": ("o3", "a"), "y": ("o5", "a")},
+        }
+
+
+    Args:
+
+        state_setup:
+            state_setup should map from state_id to tuple(transitions_dict).
+
+    Returns:
+
+        Mealy Machine
+    """
+    # state_setup should map from state_id to tuple(transitions_dict).
+    # Each entry in transition dict is <input> : <output, new_state_id>
+
+    # build states with state_id and output
+    states = {key: MealyState(key) for key, _ in state_setup.items()}
+
+    # add transitions to states
+    for state_id, state in states.items():
+        for _input, (output, new_state) in state_setup[state_id].items():
+            state.transitions[_input] = states[new_state]
+            state.output_fun[_input] = output
+
+    # states to list
+    states = [state for state in states.values()]
+
+    # build moore machine with first state as starting state
+    mm = MealyMachine(states[0], states)
+
+    for state in states:
+        state.prefix = mm.get_shortest_path(mm.initial_state, state)
+
+    return mm

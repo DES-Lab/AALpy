@@ -209,9 +209,9 @@
 <span class="sd">            True if input complete, False otherwise</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">alphabet</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_state</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">alphabet</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_input_alphabet</span><span class="p">())</span>
         <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="o">!=</span> <span class="n">alphabet</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">!=</span> <span class="n">alphabet</span><span class="p">:</span>
                 <span class="k">return</span> <span class="kc">False</span>
         <span class="k">return</span> <span class="kc">True</span>
 
@@ -219,8 +219,11 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns the input alphabet</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_input_complete</span><span class="p">()</span>
-        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_state</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">alphabet</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="p">:</span>
+            <span class="n">alphabet</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+        <span class="k">assert</span> <span class="n">alphabet</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">alphabet</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">get_state_by_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_id</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AutomatonState</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="p">:</span>
@@ -234,7 +237,7 @@
 <span class="sd">        :return: A string representation of the automaton</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span> <span class="nn">aalpy.utils</span> <span class="kn">import</span> <span class="n">save_automaton_to_file</span>
-        <span class="k">return</span> <span class="n">save_automaton_to_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s1">&#39;learnedModel&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;string&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">save_automaton_to_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s1">&#39;learnedModel&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;string&#39;</span><span class="p">,</span> <span class="n">round_floats</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">execute_sequence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">origin_state</span><span class="p">,</span> <span class="n">seq</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">current_state</span> <span class="o">=</span> <span class="n">origin_state</span>
@@ -383,8 +386,8 @@
 <span class="sd">        The function only works for minimal automata.</span>
 <span class="sd">        Args:</span>
 <span class="sd">            char_set_init: a list of sequence that will be included in the characterization set, e.g., the input</span>
-<span class="sd">                        alphabet</span>
-<span class="sd">                        add the empty to this list when using automata with state labels (DFA and Moore)</span>
+<span class="sd">                        alphabet. A empty sequance is added to this list when using automata with state labels</span>
+<span class="sd">                        (DFA and Moore)</span>
 <span class="sd">            online_suffix_closure: if true, ensures suffix closedness of the characterization set at every computation</span>
 <span class="sd">                                step</span>
 <span class="sd">            split_all_blocks: if false, the computation follows the original tree-based strategy, where newly computed</span>
@@ -682,9 +685,9 @@ state.</p>
 <span class="sd">            True if input complete, False otherwise</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">alphabet</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_state</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">alphabet</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_input_alphabet</span><span class="p">())</span>
         <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="o">!=</span> <span class="n">alphabet</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">!=</span> <span class="n">alphabet</span><span class="p">:</span>
                 <span class="k">return</span> <span class="kc">False</span>
         <span class="k">return</span> <span class="kc">True</span>
 
@@ -692,8 +695,11 @@ state.</p>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns the input alphabet</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_input_complete</span><span class="p">()</span>
-        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_state</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">alphabet</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="p">:</span>
+            <span class="n">alphabet</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+        <span class="k">assert</span> <span class="n">alphabet</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">alphabet</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">get_state_by_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_id</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AutomatonState</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="p">:</span>
@@ -707,7 +713,7 @@ state.</p>
 <span class="sd">        :return: A string representation of the automaton</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span> <span class="nn">aalpy.utils</span> <span class="kn">import</span> <span class="n">save_automaton_to_file</span>
-        <span class="k">return</span> <span class="n">save_automaton_to_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s1">&#39;learnedModel&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;string&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">save_automaton_to_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s1">&#39;learnedModel&#39;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s1">&#39;string&#39;</span><span class="p">,</span> <span class="n">round_floats</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">execute_sequence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">origin_state</span><span class="p">,</span> <span class="n">seq</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">current_state</span> <span class="o">=</span> <span class="n">origin_state</span>
@@ -844,9 +850,9 @@ states (list) : list containing all states of the automaton
 <span class="sd">            True if input complete, False otherwise</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">alphabet</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_state</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">alphabet</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_input_alphabet</span><span class="p">())</span>
         <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="o">!=</span> <span class="n">alphabet</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">!=</span> <span class="n">alphabet</span><span class="p">:</span>
                 <span class="k">return</span> <span class="kc">False</span>
         <span class="k">return</span> <span class="kc">True</span>
 </pre></div>
@@ -878,8 +884,11 @@ states (list) : list containing all states of the automaton
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns the input alphabet</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_input_complete</span><span class="p">()</span>
-        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_state</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">alphabet</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">states</span><span class="p">:</span>
+            <span class="n">alphabet</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+        <span class="k">assert</span> <span class="n">alphabet</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">alphabet</span><span class="p">)</span>
 </pre></div>
 
         </details>
@@ -1086,8 +1095,8 @@ states (list) : list containing all states of the automaton
 <span class="sd">        The function only works for minimal automata.</span>
 <span class="sd">        Args:</span>
 <span class="sd">            char_set_init: a list of sequence that will be included in the characterization set, e.g., the input</span>
-<span class="sd">                        alphabet</span>
-<span class="sd">                        add the empty to this list when using automata with state labels (DFA and Moore)</span>
+<span class="sd">                        alphabet. A empty sequance is added to this list when using automata with state labels</span>
+<span class="sd">                        (DFA and Moore)</span>
 <span class="sd">            online_suffix_closure: if true, ensures suffix closedness of the characterization set at every computation</span>
 <span class="sd">                                step</span>
 <span class="sd">            split_all_blocks: if false, the computation follows the original tree-based strategy, where newly computed</span>
@@ -1490,8 +1499,8 @@ Args:
 <span class="sd">        The function only works for minimal automata.</span>
 <span class="sd">        Args:</span>
 <span class="sd">            char_set_init: a list of sequence that will be included in the characterization set, e.g., the input</span>
-<span class="sd">                        alphabet</span>
-<span class="sd">                        add the empty to this list when using automata with state labels (DFA and Moore)</span>
+<span class="sd">                        alphabet. A empty sequance is added to this list when using automata with state labels</span>
+<span class="sd">                        (DFA and Moore)</span>
 <span class="sd">            online_suffix_closure: if true, ensures suffix closedness of the characterization set at every computation</span>
 <span class="sd">                                step</span>
 <span class="sd">            split_all_blocks: if false, the computation follows the original tree-based strategy, where newly computed</span>
@@ -1566,8 +1575,8 @@ L*-based learning and conformance testing.
 The function only works for minimal automata.
 Args:
     char_set_init: a list of sequence that will be included in the characterization set, e.g., the input
-                alphabet
-                add the empty to this list when using automata with state labels (DFA and Moore)
+                alphabet. A empty sequance is added to this list when using automata with state labels
+                (DFA and Moore)
     online_suffix_closure: if true, ensures suffix closedness of the characterization set at every computation
                         step
     split_all_blocks: if false, the computation follows the original tree-based strategy, where newly computed

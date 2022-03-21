@@ -89,9 +89,9 @@ class Automaton(ABC):
             True if input complete, False otherwise
 
         """
-        alphabet = set(self.initial_state.transitions.keys())
+        alphabet = set(self.get_input_alphabet())
         for state in self.states:
-            if state.transitions.keys() != alphabet:
+            if set(state.transitions.keys()) != alphabet:
                 return False
         return True
 
@@ -99,8 +99,12 @@ class Automaton(ABC):
         """
         Returns the input alphabet
         """
-        assert self.is_input_complete()
-        return list(self.initial_state.transitions.keys())
+        alphabet = list()
+        for s in self.states:
+            for i in s.transitions.keys():
+                if i not in alphabet:
+                    alphabet.append(i)
+        return list(alphabet)
 
     def get_state_by_id(self, state_id) -> AutomatonState:
         for state in self.states:
@@ -114,7 +118,7 @@ class Automaton(ABC):
         :return: A string representation of the automaton
         """
         from aalpy.utils import save_automaton_to_file
-        return save_automaton_to_file(self, path='learnedModel', file_type='string')
+        return save_automaton_to_file(self, path='learnedModel', file_type='string', round_floats=2)
 
     def execute_sequence(self, origin_state, seq):
         self.current_state = origin_state
@@ -263,8 +267,8 @@ class DeterministicAutomaton(Automaton):
         The function only works for minimal automata.
         Args:
             char_set_init: a list of sequence that will be included in the characterization set, e.g., the input
-                        alphabet
-                        add the empty to this list when using automata with state labels (DFA and Moore)
+                        alphabet. A empty sequance is added to this list when using automata with state labels
+                        (DFA and Moore)
             online_suffix_closure: if true, ensures suffix closedness of the characterization set at every computation
                                 step
             split_all_blocks: if false, the computation follows the original tree-based strategy, where newly computed

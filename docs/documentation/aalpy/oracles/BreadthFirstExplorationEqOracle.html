@@ -73,6 +73,7 @@
 <span class="sd">    Breadth-First Exploration of all possible input combinations up to a certain depth.</span>
 <span class="sd">    Extremely inefficient equivalence oracle and should only be used for demonstrations.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alphabet</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Args:</span>
@@ -86,31 +87,29 @@
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">sul</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">depth</span> <span class="o">=</span> <span class="n">depth</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">queue</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">cache</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">queue</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># generate all test-cases</span>
+        <span class="k">for</span> <span class="n">seq</span> <span class="ow">in</span> <span class="n">product</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">repeat</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">depth</span><span class="p">):</span>
+            <span class="n">input_seq</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">([</span><span class="n">i</span> <span class="k">for</span> <span class="n">sub</span> <span class="ow">in</span> <span class="n">seq</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">sub</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">input_seq</span><span class="p">)</span>
+
+        <span class="n">shuffle</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">find_cex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">):</span>
 
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">depth</span><span class="p">):</span>
-            <span class="n">tmp</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">seq</span> <span class="ow">in</span> <span class="n">product</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="p">):</span>
-                <span class="n">input_seq</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">([</span><span class="n">i</span> <span class="k">for</span> <span class="n">sub</span> <span class="ow">in</span> <span class="n">seq</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">sub</span><span class="p">])</span>
-                <span class="n">tmp</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">input_seq</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">queue</span> <span class="o">=</span> <span class="n">tmp</span>
+        <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="p">:</span>
+            <span class="n">test_case</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reset_hyp_and_sul</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
 
-            <span class="n">shuffle</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">ind</span><span class="p">,</span> <span class="n">letter</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">test_case</span><span class="p">):</span>
+                <span class="n">out_hyp</span> <span class="o">=</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">letter</span><span class="p">)</span>
+                <span class="n">out_sul</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">letter</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">num_steps</span> <span class="o">+=</span> <span class="mi">1</span>
 
-            <span class="k">for</span> <span class="n">seq</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">reset_hyp_and_sul</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
-
-                <span class="k">for</span> <span class="n">ind</span><span class="p">,</span> <span class="n">letter</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">seq</span><span class="p">):</span>
-                    <span class="n">out_hyp</span> <span class="o">=</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">letter</span><span class="p">)</span>
-                    <span class="n">out_sul</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">letter</span><span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">num_steps</span> <span class="o">+=</span> <span class="mi">1</span>
-
-                    <span class="k">if</span> <span class="n">out_hyp</span> <span class="o">!=</span> <span class="n">out_sul</span><span class="p">:</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
-                        <span class="k">return</span> <span class="n">seq</span><span class="p">[:</span><span class="n">ind</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">out_hyp</span> <span class="o">!=</span> <span class="n">out_sul</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
+                    <span class="k">return</span> <span class="n">test_case</span><span class="p">[:</span><span class="n">ind</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
 
         <span class="k">return</span> <span class="kc">None</span>
 </pre></div>
@@ -134,6 +133,7 @@
 <span class="sd">    Breadth-First Exploration of all possible input combinations up to a certain depth.</span>
 <span class="sd">    Extremely inefficient equivalence oracle and should only be used for demonstrations.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alphabet</span><span class="p">,</span> <span class="n">sul</span><span class="p">:</span> <span class="n">SUL</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Args:</span>
@@ -147,31 +147,29 @@
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">sul</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">depth</span> <span class="o">=</span> <span class="n">depth</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">queue</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">cache</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">queue</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># generate all test-cases</span>
+        <span class="k">for</span> <span class="n">seq</span> <span class="ow">in</span> <span class="n">product</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">repeat</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">depth</span><span class="p">):</span>
+            <span class="n">input_seq</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">([</span><span class="n">i</span> <span class="k">for</span> <span class="n">sub</span> <span class="ow">in</span> <span class="n">seq</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">sub</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">input_seq</span><span class="p">)</span>
+
+        <span class="n">shuffle</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">find_cex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">):</span>
 
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">depth</span><span class="p">):</span>
-            <span class="n">tmp</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">seq</span> <span class="ow">in</span> <span class="n">product</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="p">):</span>
-                <span class="n">input_seq</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">([</span><span class="n">i</span> <span class="k">for</span> <span class="n">sub</span> <span class="ow">in</span> <span class="n">seq</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">sub</span><span class="p">])</span>
-                <span class="n">tmp</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">input_seq</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">queue</span> <span class="o">=</span> <span class="n">tmp</span>
+        <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="p">:</span>
+            <span class="n">test_case</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reset_hyp_and_sul</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
 
-            <span class="n">shuffle</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">ind</span><span class="p">,</span> <span class="n">letter</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">test_case</span><span class="p">):</span>
+                <span class="n">out_hyp</span> <span class="o">=</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">letter</span><span class="p">)</span>
+                <span class="n">out_sul</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">letter</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">num_steps</span> <span class="o">+=</span> <span class="mi">1</span>
 
-            <span class="k">for</span> <span class="n">seq</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">reset_hyp_and_sul</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
-
-                <span class="k">for</span> <span class="n">ind</span><span class="p">,</span> <span class="n">letter</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">seq</span><span class="p">):</span>
-                    <span class="n">out_hyp</span> <span class="o">=</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">letter</span><span class="p">)</span>
-                    <span class="n">out_sul</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">letter</span><span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">num_steps</span> <span class="o">+=</span> <span class="mi">1</span>
-
-                    <span class="k">if</span> <span class="n">out_hyp</span> <span class="o">!=</span> <span class="n">out_sul</span><span class="p">:</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
-                        <span class="k">return</span> <span class="n">seq</span><span class="p">[:</span><span class="n">ind</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">out_hyp</span> <span class="o">!=</span> <span class="n">out_sul</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
+                    <span class="k">return</span> <span class="n">test_case</span><span class="p">[:</span><span class="n">ind</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
 
         <span class="k">return</span> <span class="kc">None</span>
 </pre></div>
@@ -205,8 +203,14 @@ Extremely inefficient equivalence oracle and should only be used for demonstrati
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">sul</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">depth</span> <span class="o">=</span> <span class="n">depth</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">queue</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">cache</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">queue</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># generate all test-cases</span>
+        <span class="k">for</span> <span class="n">seq</span> <span class="ow">in</span> <span class="n">product</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">,</span> <span class="n">repeat</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">depth</span><span class="p">):</span>
+            <span class="n">input_seq</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">([</span><span class="n">i</span> <span class="k">for</span> <span class="n">sub</span> <span class="ow">in</span> <span class="n">seq</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">sub</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">input_seq</span><span class="p">)</span>
+
+        <span class="n">shuffle</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="p">)</span>
 </pre></div>
 
         </details>
@@ -235,26 +239,18 @@ depth: depth of the tree
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">find_cex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">):</span>
 
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">depth</span><span class="p">):</span>
-            <span class="n">tmp</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">seq</span> <span class="ow">in</span> <span class="n">product</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alphabet</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="p">):</span>
-                <span class="n">input_seq</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">([</span><span class="n">i</span> <span class="k">for</span> <span class="n">sub</span> <span class="ow">in</span> <span class="n">seq</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">sub</span><span class="p">])</span>
-                <span class="n">tmp</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">input_seq</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">queue</span> <span class="o">=</span> <span class="n">tmp</span>
+        <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="p">:</span>
+            <span class="n">test_case</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reset_hyp_and_sul</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
 
-            <span class="n">shuffle</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">ind</span><span class="p">,</span> <span class="n">letter</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">test_case</span><span class="p">):</span>
+                <span class="n">out_hyp</span> <span class="o">=</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">letter</span><span class="p">)</span>
+                <span class="n">out_sul</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">letter</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">num_steps</span> <span class="o">+=</span> <span class="mi">1</span>
 
-            <span class="k">for</span> <span class="n">seq</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">reset_hyp_and_sul</span><span class="p">(</span><span class="n">hypothesis</span><span class="p">)</span>
-
-                <span class="k">for</span> <span class="n">ind</span><span class="p">,</span> <span class="n">letter</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">seq</span><span class="p">):</span>
-                    <span class="n">out_hyp</span> <span class="o">=</span> <span class="n">hypothesis</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">letter</span><span class="p">)</span>
-                    <span class="n">out_sul</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">letter</span><span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">num_steps</span> <span class="o">+=</span> <span class="mi">1</span>
-
-                    <span class="k">if</span> <span class="n">out_hyp</span> <span class="o">!=</span> <span class="n">out_sul</span><span class="p">:</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
-                        <span class="k">return</span> <span class="n">seq</span><span class="p">[:</span><span class="n">ind</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">out_hyp</span> <span class="o">!=</span> <span class="n">out_sul</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">sul</span><span class="o">.</span><span class="n">post</span><span class="p">()</span>
+                    <span class="k">return</span> <span class="n">test_case</span><span class="p">[:</span><span class="n">ind</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
 
         <span class="k">return</span> <span class="kc">None</span>
 </pre></div>

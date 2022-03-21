@@ -48,6 +48,15 @@
             <li>
                     <a class="function" href="#generate_random_markov_chain">generate_random_markov_chain</a>
             </li>
+            <li>
+                    <a class="function" href="#dfa_from_state_setup">dfa_from_state_setup</a>
+            </li>
+            <li>
+                    <a class="function" href="#moore_from_state_setup">moore_from_state_setup</a>
+            </li>
+            <li>
+                    <a class="function" href="#mealy_from_state_setup">mealy_from_state_setup</a>
+            </li>
     </ul>
 
 
@@ -287,6 +296,137 @@
             <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">rand_state</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">prob</span><span class="p">,</span> <span class="mi">2</span><span class="p">)))</span>
 
     <span class="k">return</span> <span class="n">MarkovChain</span><span class="p">(</span><span class="n">states</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">states</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">dfa_from_state_setup</span><span class="p">(</span><span class="n">state_setup</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dfa</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        First state in the state setup is the initial state.</span>
+<span class="sd">        Example state setup:</span>
+<span class="sd">        state_setup = {</span>
+<span class="sd">                &quot;a&quot;: (True, {&quot;x&quot;: &quot;b1&quot;, &quot;y&quot;: &quot;a&quot;}),</span>
+<span class="sd">                &quot;b1&quot;: (False, {&quot;x&quot;: &quot;b2&quot;, &quot;y&quot;: &quot;a&quot;}),</span>
+<span class="sd">                &quot;b2&quot;: (True, {&quot;x&quot;: &quot;b3&quot;, &quot;y&quot;: &quot;a&quot;}),</span>
+<span class="sd">                &quot;b3&quot;: (False, {&quot;x&quot;: &quot;b4&quot;, &quot;y&quot;: &quot;a&quot;}),</span>
+<span class="sd">                &quot;b4&quot;: (False, {&quot;x&quot;: &quot;c&quot;, &quot;y&quot;: &quot;a&quot;}),</span>
+<span class="sd">                &quot;c&quot;: (True, {&quot;x&quot;: &quot;a&quot;, &quot;y&quot;: &quot;a&quot;}),</span>
+<span class="sd">            }</span>
+
+<span class="sd">        Args:</span>
+
+<span class="sd">            state_setup: map from state_id to tuple(output and transitions_dict)</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">            DFA</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+    <span class="c1"># state_setup should map from state_id to tuple(is_accepting and transitions_dict)</span>
+
+    <span class="c1"># build states with state_id and output</span>
+    <span class="n">states</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">DfaState</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">state_setup</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+    <span class="c1"># add transitions to states</span>
+    <span class="k">for</span> <span class="n">state_id</span><span class="p">,</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">states</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">_input</span><span class="p">,</span> <span class="n">target_state_id</span> <span class="ow">in</span> <span class="n">state_setup</span><span class="p">[</span><span class="n">state_id</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">_input</span><span class="p">]</span> <span class="o">=</span> <span class="n">states</span><span class="p">[</span><span class="n">target_state_id</span><span class="p">]</span>
+
+    <span class="c1"># states to list</span>
+    <span class="n">states</span> <span class="o">=</span> <span class="p">[</span><span class="n">state</span> <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">states</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+
+    <span class="c1"># build moore machine with first state as starting state</span>
+    <span class="n">dfa</span> <span class="o">=</span> <span class="n">Dfa</span><span class="p">(</span><span class="n">states</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">states</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">states</span><span class="p">:</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="n">dfa</span><span class="o">.</span><span class="n">get_shortest_path</span><span class="p">(</span><span class="n">dfa</span><span class="o">.</span><span class="n">initial_state</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">dfa</span>
+
+
+<span class="k">def</span> <span class="nf">moore_from_state_setup</span><span class="p">(</span><span class="n">state_setup</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MooreMachine</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    First state in the state setup is the initial state.</span>
+<span class="sd">    Example state setup:</span>
+<span class="sd">    state_setup = {</span>
+<span class="sd">            &quot;a&quot;: (&quot;a&quot;, {&quot;x&quot;: &quot;b1&quot;, &quot;y&quot;: &quot;a&quot;}),</span>
+<span class="sd">            &quot;b1&quot;: (&quot;b&quot;, {&quot;x&quot;: &quot;b2&quot;, &quot;y&quot;: &quot;a&quot;}),</span>
+<span class="sd">            &quot;b2&quot;: (&quot;b&quot;, {&quot;x&quot;: &quot;b3&quot;, &quot;y&quot;: &quot;a&quot;}),</span>
+<span class="sd">            &quot;b3&quot;: (&quot;b&quot;, {&quot;x&quot;: &quot;b4&quot;, &quot;y&quot;: &quot;a&quot;}),</span>
+<span class="sd">            &quot;b4&quot;: (&quot;b&quot;, {&quot;x&quot;: &quot;c&quot;, &quot;y&quot;: &quot;a&quot;}),</span>
+<span class="sd">            &quot;c&quot;: (&quot;c&quot;, {&quot;x&quot;: &quot;a&quot;, &quot;y&quot;: &quot;a&quot;}),</span>
+<span class="sd">        }</span>
+
+<span class="sd">    Args:</span>
+
+<span class="sd">        state_setup: map from state_id to tuple(output and transitions_dict)</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">        Moore machine</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># build states with state_id and output</span>
+    <span class="n">states</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">MooreState</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">state_setup</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+    <span class="c1"># add transitions to states</span>
+    <span class="k">for</span> <span class="n">state_id</span><span class="p">,</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">states</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">_input</span><span class="p">,</span> <span class="n">target_state_id</span> <span class="ow">in</span> <span class="n">state_setup</span><span class="p">[</span><span class="n">state_id</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">_input</span><span class="p">]</span> <span class="o">=</span> <span class="n">states</span><span class="p">[</span><span class="n">target_state_id</span><span class="p">]</span>
+
+    <span class="c1"># states to list</span>
+    <span class="n">states</span> <span class="o">=</span> <span class="p">[</span><span class="n">state</span> <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">states</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+
+    <span class="c1"># build moore machine with first state as starting state</span>
+    <span class="n">mm</span> <span class="o">=</span> <span class="n">MooreMachine</span><span class="p">(</span><span class="n">states</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">states</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">states</span><span class="p">:</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="n">mm</span><span class="o">.</span><span class="n">get_shortest_path</span><span class="p">(</span><span class="n">mm</span><span class="o">.</span><span class="n">initial_state</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">mm</span>
+
+
+<span class="k">def</span> <span class="nf">mealy_from_state_setup</span><span class="p">(</span><span class="n">state_setup</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MealyMachine</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        First state in the state setup is the initial state.</span>
+<span class="sd">        state_setup = {</span>
+<span class="sd">            &quot;a&quot;: {&quot;x&quot;: (&quot;o1&quot;, &quot;b1&quot;), &quot;y&quot;: (&quot;o2&quot;, &quot;a&quot;)},</span>
+<span class="sd">            &quot;b1&quot;: {&quot;x&quot;: (&quot;o3&quot;, &quot;b2&quot;), &quot;y&quot;: (&quot;o1&quot;, &quot;a&quot;)},</span>
+<span class="sd">            &quot;b2&quot;: {&quot;x&quot;: (&quot;o1&quot;, &quot;b3&quot;), &quot;y&quot;: (&quot;o2&quot;, &quot;a&quot;)},</span>
+<span class="sd">            &quot;b3&quot;: {&quot;x&quot;: (&quot;o3&quot;, &quot;b4&quot;), &quot;y&quot;: (&quot;o1&quot;, &quot;a&quot;)},</span>
+<span class="sd">            &quot;b4&quot;: {&quot;x&quot;: (&quot;o1&quot;, &quot;c&quot;), &quot;y&quot;: (&quot;o4&quot;, &quot;a&quot;)},</span>
+<span class="sd">            &quot;c&quot;: {&quot;x&quot;: (&quot;o3&quot;, &quot;a&quot;), &quot;y&quot;: (&quot;o5&quot;, &quot;a&quot;)},</span>
+<span class="sd">        }</span>
+
+
+<span class="sd">    Args:</span>
+
+<span class="sd">        state_setup:</span>
+<span class="sd">            state_setup should map from state_id to tuple(transitions_dict).</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">        Mealy Machine</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># state_setup should map from state_id to tuple(transitions_dict).</span>
+    <span class="c1"># Each entry in transition dict is &lt;input&gt; : &lt;output, new_state_id&gt;</span>
+
+    <span class="c1"># build states with state_id and output</span>
+    <span class="n">states</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">MealyState</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">state_setup</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+    <span class="c1"># add transitions to states</span>
+    <span class="k">for</span> <span class="n">state_id</span><span class="p">,</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">states</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">_input</span><span class="p">,</span> <span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">new_state</span><span class="p">)</span> <span class="ow">in</span> <span class="n">state_setup</span><span class="p">[</span><span class="n">state_id</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">_input</span><span class="p">]</span> <span class="o">=</span> <span class="n">states</span><span class="p">[</span><span class="n">new_state</span><span class="p">]</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">output_fun</span><span class="p">[</span><span class="n">_input</span><span class="p">]</span> <span class="o">=</span> <span class="n">output</span>
+
+    <span class="c1"># states to list</span>
+    <span class="n">states</span> <span class="o">=</span> <span class="p">[</span><span class="n">state</span> <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">states</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+
+    <span class="c1"># build moore machine with first state as starting state</span>
+    <span class="n">mm</span> <span class="o">=</span> <span class="n">MealyMachine</span><span class="p">(</span><span class="n">states</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">states</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">states</span><span class="p">:</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="n">mm</span><span class="o">.</span><span class="n">get_shortest_path</span><span class="p">(</span><span class="n">mm</span><span class="o">.</span><span class="n">initial_state</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">mm</span>
 </pre></div>
 
         </details>
@@ -682,6 +822,245 @@ num_unique_outputs: number of outputs
         </details>
 
     
+
+                </section>
+                <section id="dfa_from_state_setup">
+                            <div class="attr function"><a class="headerlink" href="#dfa_from_state_setup">#&nbsp;&nbsp</a>
+
+        
+            <span class="def">def</span>
+            <span class="name">dfa_from_state_setup</span><span class="signature">(state_setup) -&gt; <a href="../automata/Dfa.html#Dfa">aalpy.automata.Dfa.Dfa</a></span>:
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">dfa_from_state_setup</span><span class="p">(</span><span class="n">state_setup</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dfa</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        First state in the state setup is the initial state.</span>
+<span class="sd">        Example state setup:</span>
+<span class="sd">        state_setup = {</span>
+<span class="sd">                &quot;a&quot;: (True, {&quot;x&quot;: &quot;b1&quot;, &quot;y&quot;: &quot;a&quot;}),</span>
+<span class="sd">                &quot;b1&quot;: (False, {&quot;x&quot;: &quot;b2&quot;, &quot;y&quot;: &quot;a&quot;}),</span>
+<span class="sd">                &quot;b2&quot;: (True, {&quot;x&quot;: &quot;b3&quot;, &quot;y&quot;: &quot;a&quot;}),</span>
+<span class="sd">                &quot;b3&quot;: (False, {&quot;x&quot;: &quot;b4&quot;, &quot;y&quot;: &quot;a&quot;}),</span>
+<span class="sd">                &quot;b4&quot;: (False, {&quot;x&quot;: &quot;c&quot;, &quot;y&quot;: &quot;a&quot;}),</span>
+<span class="sd">                &quot;c&quot;: (True, {&quot;x&quot;: &quot;a&quot;, &quot;y&quot;: &quot;a&quot;}),</span>
+<span class="sd">            }</span>
+
+<span class="sd">        Args:</span>
+
+<span class="sd">            state_setup: map from state_id to tuple(output and transitions_dict)</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">            DFA</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+    <span class="c1"># state_setup should map from state_id to tuple(is_accepting and transitions_dict)</span>
+
+    <span class="c1"># build states with state_id and output</span>
+    <span class="n">states</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">DfaState</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">state_setup</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+    <span class="c1"># add transitions to states</span>
+    <span class="k">for</span> <span class="n">state_id</span><span class="p">,</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">states</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">_input</span><span class="p">,</span> <span class="n">target_state_id</span> <span class="ow">in</span> <span class="n">state_setup</span><span class="p">[</span><span class="n">state_id</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">_input</span><span class="p">]</span> <span class="o">=</span> <span class="n">states</span><span class="p">[</span><span class="n">target_state_id</span><span class="p">]</span>
+
+    <span class="c1"># states to list</span>
+    <span class="n">states</span> <span class="o">=</span> <span class="p">[</span><span class="n">state</span> <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">states</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+
+    <span class="c1"># build moore machine with first state as starting state</span>
+    <span class="n">dfa</span> <span class="o">=</span> <span class="n">Dfa</span><span class="p">(</span><span class="n">states</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">states</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">states</span><span class="p">:</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="n">dfa</span><span class="o">.</span><span class="n">get_shortest_path</span><span class="p">(</span><span class="n">dfa</span><span class="o">.</span><span class="n">initial_state</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">dfa</span>
+</pre></div>
+
+        </details>
+
+            <div class="docstring"><p>First state in the state setup is the initial state.
+Example state setup:
+state_setup = {
+        "a": (True, {"x": "b1", "y": "a"}),
+        "b1": (False, {"x": "b2", "y": "a"}),
+        "b2": (True, {"x": "b3", "y": "a"}),
+        "b3": (False, {"x": "b4", "y": "a"}),
+        "b4": (False, {"x": "c", "y": "a"}),
+        "c": (True, {"x": "a", "y": "a"}),
+    }</p>
+
+<p>Args:</p>
+
+<pre><code>state_setup: map from state_id to tuple(output and transitions_dict)
+</code></pre>
+
+<p>Returns:</p>
+
+<pre><code>DFA
+</code></pre>
+</div>
+
+
+                </section>
+                <section id="moore_from_state_setup">
+                            <div class="attr function"><a class="headerlink" href="#moore_from_state_setup">#&nbsp;&nbsp</a>
+
+        
+            <span class="def">def</span>
+            <span class="name">moore_from_state_setup</span><span class="signature">(state_setup) -&gt; <a href="../automata/MooreMachine.html#MooreMachine">aalpy.automata.MooreMachine.MooreMachine</a></span>:
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">moore_from_state_setup</span><span class="p">(</span><span class="n">state_setup</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MooreMachine</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    First state in the state setup is the initial state.</span>
+<span class="sd">    Example state setup:</span>
+<span class="sd">    state_setup = {</span>
+<span class="sd">            &quot;a&quot;: (&quot;a&quot;, {&quot;x&quot;: &quot;b1&quot;, &quot;y&quot;: &quot;a&quot;}),</span>
+<span class="sd">            &quot;b1&quot;: (&quot;b&quot;, {&quot;x&quot;: &quot;b2&quot;, &quot;y&quot;: &quot;a&quot;}),</span>
+<span class="sd">            &quot;b2&quot;: (&quot;b&quot;, {&quot;x&quot;: &quot;b3&quot;, &quot;y&quot;: &quot;a&quot;}),</span>
+<span class="sd">            &quot;b3&quot;: (&quot;b&quot;, {&quot;x&quot;: &quot;b4&quot;, &quot;y&quot;: &quot;a&quot;}),</span>
+<span class="sd">            &quot;b4&quot;: (&quot;b&quot;, {&quot;x&quot;: &quot;c&quot;, &quot;y&quot;: &quot;a&quot;}),</span>
+<span class="sd">            &quot;c&quot;: (&quot;c&quot;, {&quot;x&quot;: &quot;a&quot;, &quot;y&quot;: &quot;a&quot;}),</span>
+<span class="sd">        }</span>
+
+<span class="sd">    Args:</span>
+
+<span class="sd">        state_setup: map from state_id to tuple(output and transitions_dict)</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">        Moore machine</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># build states with state_id and output</span>
+    <span class="n">states</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">MooreState</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">state_setup</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+    <span class="c1"># add transitions to states</span>
+    <span class="k">for</span> <span class="n">state_id</span><span class="p">,</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">states</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">_input</span><span class="p">,</span> <span class="n">target_state_id</span> <span class="ow">in</span> <span class="n">state_setup</span><span class="p">[</span><span class="n">state_id</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">_input</span><span class="p">]</span> <span class="o">=</span> <span class="n">states</span><span class="p">[</span><span class="n">target_state_id</span><span class="p">]</span>
+
+    <span class="c1"># states to list</span>
+    <span class="n">states</span> <span class="o">=</span> <span class="p">[</span><span class="n">state</span> <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">states</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+
+    <span class="c1"># build moore machine with first state as starting state</span>
+    <span class="n">mm</span> <span class="o">=</span> <span class="n">MooreMachine</span><span class="p">(</span><span class="n">states</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">states</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">states</span><span class="p">:</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="n">mm</span><span class="o">.</span><span class="n">get_shortest_path</span><span class="p">(</span><span class="n">mm</span><span class="o">.</span><span class="n">initial_state</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">mm</span>
+</pre></div>
+
+        </details>
+
+            <div class="docstring"><p>First state in the state setup is the initial state.
+Example state setup:
+state_setup = {
+        "a": ("a", {"x": "b1", "y": "a"}),
+        "b1": ("b", {"x": "b2", "y": "a"}),
+        "b2": ("b", {"x": "b3", "y": "a"}),
+        "b3": ("b", {"x": "b4", "y": "a"}),
+        "b4": ("b", {"x": "c", "y": "a"}),
+        "c": ("c", {"x": "a", "y": "a"}),
+    }</p>
+
+<p>Args:</p>
+
+<pre><code>state_setup: map from state_id to tuple(output and transitions_dict)
+</code></pre>
+
+<p>Returns:</p>
+
+<pre><code>Moore machine
+</code></pre>
+</div>
+
+
+                </section>
+                <section id="mealy_from_state_setup">
+                            <div class="attr function"><a class="headerlink" href="#mealy_from_state_setup">#&nbsp;&nbsp</a>
+
+        
+            <span class="def">def</span>
+            <span class="name">mealy_from_state_setup</span><span class="signature">(state_setup) -&gt; <a href="../automata/MealyMachine.html#MealyMachine">aalpy.automata.MealyMachine.MealyMachine</a></span>:
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">mealy_from_state_setup</span><span class="p">(</span><span class="n">state_setup</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MealyMachine</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        First state in the state setup is the initial state.</span>
+<span class="sd">        state_setup = {</span>
+<span class="sd">            &quot;a&quot;: {&quot;x&quot;: (&quot;o1&quot;, &quot;b1&quot;), &quot;y&quot;: (&quot;o2&quot;, &quot;a&quot;)},</span>
+<span class="sd">            &quot;b1&quot;: {&quot;x&quot;: (&quot;o3&quot;, &quot;b2&quot;), &quot;y&quot;: (&quot;o1&quot;, &quot;a&quot;)},</span>
+<span class="sd">            &quot;b2&quot;: {&quot;x&quot;: (&quot;o1&quot;, &quot;b3&quot;), &quot;y&quot;: (&quot;o2&quot;, &quot;a&quot;)},</span>
+<span class="sd">            &quot;b3&quot;: {&quot;x&quot;: (&quot;o3&quot;, &quot;b4&quot;), &quot;y&quot;: (&quot;o1&quot;, &quot;a&quot;)},</span>
+<span class="sd">            &quot;b4&quot;: {&quot;x&quot;: (&quot;o1&quot;, &quot;c&quot;), &quot;y&quot;: (&quot;o4&quot;, &quot;a&quot;)},</span>
+<span class="sd">            &quot;c&quot;: {&quot;x&quot;: (&quot;o3&quot;, &quot;a&quot;), &quot;y&quot;: (&quot;o5&quot;, &quot;a&quot;)},</span>
+<span class="sd">        }</span>
+
+
+<span class="sd">    Args:</span>
+
+<span class="sd">        state_setup:</span>
+<span class="sd">            state_setup should map from state_id to tuple(transitions_dict).</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">        Mealy Machine</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># state_setup should map from state_id to tuple(transitions_dict).</span>
+    <span class="c1"># Each entry in transition dict is &lt;input&gt; : &lt;output, new_state_id&gt;</span>
+
+    <span class="c1"># build states with state_id and output</span>
+    <span class="n">states</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">MealyState</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">state_setup</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+    <span class="c1"># add transitions to states</span>
+    <span class="k">for</span> <span class="n">state_id</span><span class="p">,</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">states</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">_input</span><span class="p">,</span> <span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">new_state</span><span class="p">)</span> <span class="ow">in</span> <span class="n">state_setup</span><span class="p">[</span><span class="n">state_id</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">_input</span><span class="p">]</span> <span class="o">=</span> <span class="n">states</span><span class="p">[</span><span class="n">new_state</span><span class="p">]</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">output_fun</span><span class="p">[</span><span class="n">_input</span><span class="p">]</span> <span class="o">=</span> <span class="n">output</span>
+
+    <span class="c1"># states to list</span>
+    <span class="n">states</span> <span class="o">=</span> <span class="p">[</span><span class="n">state</span> <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">states</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+
+    <span class="c1"># build moore machine with first state as starting state</span>
+    <span class="n">mm</span> <span class="o">=</span> <span class="n">MealyMachine</span><span class="p">(</span><span class="n">states</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">states</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">states</span><span class="p">:</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="n">mm</span><span class="o">.</span><span class="n">get_shortest_path</span><span class="p">(</span><span class="n">mm</span><span class="o">.</span><span class="n">initial_state</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">mm</span>
+</pre></div>
+
+        </details>
+
+            <div class="docstring"><p>First state in the state setup is the initial state.
+    state_setup = {
+        "a": {"x": ("o1", "b1"), "y": ("o2", "a")},
+        "b1": {"x": ("o3", "b2"), "y": ("o1", "a")},
+        "b2": {"x": ("o1", "b3"), "y": ("o2", "a")},
+        "b3": {"x": ("o3", "b4"), "y": ("o1", "a")},
+        "b4": {"x": ("o1", "c"), "y": ("o4", "a")},
+        "c": {"x": ("o3", "a"), "y": ("o5", "a")},
+    }</p>
+
+<p>Args:</p>
+
+<pre><code>state_setup:
+    state_setup should map from state_id to tuple(transitions_dict).
+</code></pre>
+
+<p>Returns:</p>
+
+<pre><code>Mealy Machine
+</code></pre>
+</div>
+
 
                 </section>
     </main>

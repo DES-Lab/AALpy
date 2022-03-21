@@ -10,6 +10,7 @@ class BreadthFirstExplorationEqOracle(Oracle):
     Breadth-First Exploration of all possible input combinations up to a certain depth.
     Extremely inefficient equivalence oracle and should only be used for demonstrations.
     """
+
     def __init__(self, alphabet, sul: SUL, depth=5):
         """
         Args:
@@ -23,30 +24,28 @@ class BreadthFirstExplorationEqOracle(Oracle):
 
         super().__init__(alphabet, sul)
         self.depth = depth
-        self.queue = list(self.alphabet)
-        self.cache = set()
+        self.queue = []
+
+        # generate all test-cases
+        for seq in product(self.alphabet, repeat=self.depth):
+            input_seq = tuple([i for sub in seq for i in sub])
+            self.queue.append(input_seq)
+
+        shuffle(self.queue)
 
     def find_cex(self, hypothesis):
 
-        for i in range(self.depth):
-            tmp = []
-            for seq in product(self.alphabet, self.queue):
-                input_seq = tuple([i for sub in seq for i in sub])
-                tmp.append(input_seq)
-            self.queue = tmp
+        while self.queue:
+            test_case = self.queue.pop()
+            self.reset_hyp_and_sul(hypothesis)
 
-            shuffle(self.queue)
+            for ind, letter in enumerate(test_case):
+                out_hyp = hypothesis.step(letter)
+                out_sul = self.sul.step(letter)
+                self.num_steps += 1
 
-            for seq in self.queue:
-                self.reset_hyp_and_sul(hypothesis)
-
-                for ind, letter in enumerate(seq):
-                    out_hyp = hypothesis.step(letter)
-                    out_sul = self.sul.step(letter)
-                    self.num_steps += 1
-
-                    if out_hyp != out_sul:
-                        self.sul.post()
-                        return seq[:ind + 1]
+                if out_hyp != out_sul:
+                    self.sul.post()
+                    return test_case[:ind + 1]
 
         return None

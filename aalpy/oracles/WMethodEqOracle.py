@@ -1,7 +1,8 @@
+from itertools import product
+from random import shuffle, choice, randint
+
 from aalpy.base.Oracle import Oracle
 from aalpy.base.SUL import SUL
-from itertools import combinations, product
-from random import shuffle, choice, randint
 
 
 class WMethodEqOracle(Oracle):
@@ -34,7 +35,7 @@ class WMethodEqOracle(Oracle):
 
         middle = []
         for i in range(self.m - len(hypothesis.states)):
-            middle.extend(combinations(self.alphabet, i + 1))
+            middle.extend(list(product(self.alphabet, repeat=i)))
 
         test_set = []
         for seq in product(transition_cover, middle, hypothesis.characterization_set):

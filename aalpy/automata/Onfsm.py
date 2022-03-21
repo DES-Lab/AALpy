@@ -74,7 +74,7 @@ class Onfsm(Automaton):
 
         Returns:
 
-            list of observeable outputs
+            list of observable outputs
 
         """
         return [trans[0] for trans in self.current_state.transitions[letter]]

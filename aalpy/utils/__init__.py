@@ -1,5 +1,5 @@
 from .AutomatonGenerators import generate_random_dfa, generate_random_mealy_machine, generate_random_moore_machine, \
-    generate_random_markov_chain
+    generate_random_markov_chain, dfa_from_state_setup, mealy_from_state_setup, moore_from_state_setup
 from .AutomatonGenerators import generate_random_mdp, generate_random_ONFSM
 from .BenchmarkSULs import *
 from .DataHandler import *

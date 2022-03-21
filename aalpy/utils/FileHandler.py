@@ -35,12 +35,12 @@ def visualize_automaton(automaton, path="LearnedModel", file_type='pdf', display
 
     import threading
     visualization_thread = threading.Thread(target=save_automaton_to_file, name="Visualization",
-                                            args=(automaton, path, file_type, display_same_state_trans, True))
+                                            args=(automaton, path, file_type, display_same_state_trans, True, 2))
     visualization_thread.start()
 
 
 def save_automaton_to_file(automaton, path="LearnedModel", file_type='dot',
-                           display_same_state_trans=True, visualize=False):
+                           display_same_state_trans=True, visualize=False, round_floats=None):
     """
     The Standard of the automata strictly follows the syntax found at: https://automata.cs.ru.nl/Syntax/Overview.
     For non-deterministic and stochastic systems syntax can be found on AALpy's Wiki.
@@ -57,6 +57,8 @@ def save_automaton_to_file(automaton, path="LearnedModel", file_type='dot',
             (Default value = True)
 
         visualize: visualize the automaton
+
+        round_floats: for stochastic automata, round the floating point numbers to defined number of decimal places
 
     Returns:
 
@@ -87,7 +89,8 @@ def save_automaton_to_file(automaton, path="LearnedModel", file_type='dot',
     for state in automaton.states:
         if is_mc:
             for new_state, prob in state.transitions:
-                graph.add_edge(Edge(state.state_id, new_state.state_id, label=f'{round(prob, 2)}'))
+                prob = round(prob, round_floats) if round_floats else prob
+                graph.add_edge(Edge(state.state_id, new_state.state_id, label=f'{prob}'))
             continue
         for i in state.transitions.keys():
             if isinstance(state, MealyState):
@@ -101,7 +104,8 @@ def save_automaton_to_file(automaton, path="LearnedModel", file_type='dot',
                 for s in new_state:
                     if not display_same_state_trans and s[0].state_id == state.state_id:
                         continue
-                    graph.add_edge(Edge(state.state_id, s[0].state_id, label=f'{i} : {round(s[1], 2)}'))
+                    prob = round(s[1], round_floats) if round_floats else s[1]
+                    graph.add_edge(Edge(state.state_id, s[0].state_id, label=f'{i}:{prob}'))
             elif is_onsfm:
                 new_state = state.transitions[i]
                 for s in new_state:
@@ -113,7 +117,8 @@ def save_automaton_to_file(automaton, path="LearnedModel", file_type='dot',
                 for s in new_state:
                     if not display_same_state_trans and s[0].state_id == state.state_id:
                         continue
-                    graph.add_edge(Edge(state.state_id, s[0].state_id, label=f'{i}/{s[1]}:{round(s[2], 2)}'))
+                    prob = round(s[2], round_floats) if round_floats else s[2]
+                    graph.add_edge(Edge(state.state_id, s[0].state_id, label=f'{i}/{s[1]}:{prob}'))
             else:
                 new_state = state.transitions[i]
                 if not display_same_state_trans and new_state.state_id == state.state_id:
@@ -248,8 +253,8 @@ def load_automaton_from_file(path, automaton_type, compute_prefixes=False):
         assert False
 
     automaton = aut_type(initial_node, list(node_label_dict.values()))
-    if automaton_type != 'mc':
-        assert automaton.is_input_complete()
+    if automaton_type != 'mc' and not automaton.is_input_complete():
+        print('Warning: Loaded automaton is not input complete.')
     if compute_prefixes and not automaton_type == 'mc':
         for state in automaton.states:
             state.prefix = automaton.get_shortest_path(automaton.initial_state, state)
