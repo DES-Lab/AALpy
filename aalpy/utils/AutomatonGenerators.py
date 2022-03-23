@@ -25,9 +25,15 @@ def generate_random_mealy_machine(num_states, input_alphabet, output_alphabet, c
     for i in range(num_states):
         states.append(MealyState(i))
 
+    state_buffer = list(states)
     for state in states:
         for a in input_alphabet:
-            state.transitions[a] = random.choice(states)
+            if state_buffer:
+                new_state = random.choice(state_buffer)
+                state_buffer.remove(new_state)
+            else:
+                new_state = random.choice(states)
+            state.transitions[a] = new_state
             state.output_fun[a] = random.choice(output_alphabet)
 
     mm = MealyMachine(states[0], states)
@@ -59,9 +65,15 @@ def generate_random_moore_machine(num_states, input_alphabet, output_alphabet, c
     for i in range(num_states):
         states.append(MooreState(i, random.choice(output_alphabet)))
 
+    state_buffer = list(states)
     for state in states:
         for a in input_alphabet:
-            state.transitions[a] = random.choice(states)
+            if state_buffer:
+                new_state = random.choice(state_buffer)
+                state_buffer.remove(new_state)
+            else:
+                new_state = random.choice(states)
+            state.transitions[a] = new_state
 
     mm = MooreMachine(states[0], states)
     if compute_prefixes:
@@ -142,14 +154,21 @@ def generate_random_mdp(num_states, len_input, custom_outputs=None, num_unique_o
     for i in range(num_states):
         states.append(MdpState(f'q{i}', outputs.pop()))
 
+    state_buffer = list(states)
     for state in states:
         for i in range(len_input):
             prob = random.choice(possible_probabilities)
+            if state_buffer:
+                new_state = random.choice(state_buffer)
+                state_buffer.remove(new_state)
+            else:
+                new_state = random.choice(states)
+
             if prob == 1.:
-                state.transitions[i].append((random.choice(states), prob))
+                state.transitions[i].append((new_state, prob))
             else:
                 new_states = list(states)
-                s1 = random.choice(new_states)
+                s1 = new_state
                 new_states.remove(s1)
 
                 state.transitions[i].append((s1, prob))
@@ -183,14 +202,21 @@ def generate_random_smm(num_states, num_inputs, num_output):
     for i in range(num_states):
         states.append(StochasticMealyState(f'q{i}'))
 
+    state_buffer = list(states)
     for state in states:
         for i in range(num_inputs):
+            if state_buffer:
+                new_state = random.choice(state_buffer)
+                state_buffer.remove(new_state)
+            else:
+                new_state = random.choice(states)
+
             prob = random.choice(possible_probabilities)
             if prob == 1.:
-                state.transitions[i].append((random.choice(states), random.choice(outputs), prob))
+                state.transitions[i].append((new_state, random.choice(outputs), prob))
             else:
                 new_states, new_outputs = list(states), list(outputs)
-                s1 = random.choice(new_states)
+                s1 = new_state
                 o1 = random.choice(new_outputs)
                 new_states.remove(s1)
                 new_outputs.remove(o1)
