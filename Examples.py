@@ -697,21 +697,15 @@ def alergia_mdp_example():
     inputs = mdp.get_input_alphabet()
 
     data = []
-    for _ in range(1000000):
-        str_len = randint(20, 50)
+    for _ in range(100000):
+        str_len = randint(5, 12)
         seq = [sul.pre()]
         for _ in range(str_len):
             i = choice(inputs)
             o = sul.step(i)
-            seq.append(i)
-            seq.append(o)
+            seq.append((i, o))
         sul.post()
         data.append(seq)
-
-    with open('mdpData.txt', 'w') as file:
-        for seq in data:
-            file.write(f'{",".join([str(s) for s in seq])}\n')
-    exit()
 
     # run alergia with the data and automaton_type set to 'mdp' to True to learn a MDP
     model = run_Alergia(data, automaton_type='mdp', eps=0.005, print_info=True)
@@ -732,22 +726,17 @@ def alergia_smm_example():
     inputs = smm.get_input_alphabet()
 
     data = []
-    for _ in range(1000000):
+    for _ in range(100000):
         str_len = randint(5, 15)
         sul.pre()
         seq = []
         for _ in range(str_len):
             i = choice(inputs)
             o = sul.step(i)
-            seq.append(i)
-            seq.append(o)
+            seq.append((i, o))
         sul.post()
         data.append(seq)
 
-    with open('smmData.txt', 'w') as file:
-        for seq in data:
-            file.write(f'{",".join([str(s) for s in seq])}\n')
-    exit()
     # run alergia with the data and automaton_type set to 'mdp' to True to learn a MDP
     model = run_Alergia(data, automaton_type='smm', eps=0.005, print_info=True)
 
@@ -771,21 +760,21 @@ def alergia_mc_example():
     # note that this example shows writing to file just to show how tokenizer is used...
     # this step can ofc be skipped and lists passed to alergia
     data = []
-    for _ in range(200000):
+    for _ in range(20000):
         str_len = randint(4, 12)
         seq = [f'{sul.pre()}']
         for _ in range(str_len):
             o = sul.step()
             seq.append(f'{o}')
         sul.post()
-        data.append(seq)
+        data.append(''.join(seq))
 
     with open('mcData.txt', 'w') as file:
         for seq in data:
-            file.write(f'{",".join([str(s) for s in seq])}\n')
+            file.write(f'{seq}\n')
 
     file.close()
-    exit()
+
     # create tokenizer
     tokenizer = CharacterTokenizer()
     # parse data
@@ -797,6 +786,17 @@ def alergia_mc_example():
     visualize_automaton(model)
     remove('mcData.txt')
     return model
+
+
+def jAlergiaExample():
+    from aalpy.learning_algs import run_JAlergia
+    from aalpy.utils import visualize_automaton
+
+    # if you need more heapreplace check
+    model = run_JAlergia(path_to_data_file='jAlergia/exampleMdpData.txt', automaton_type='mdp', eps=0.005,
+                         path_to_jAlergia_jar='jAlergia/alergia.jar')
+
+    visualize_automaton(model)
 
 
 def active_alergia_example(example='first_grid'):

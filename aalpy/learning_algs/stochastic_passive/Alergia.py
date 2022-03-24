@@ -198,7 +198,7 @@ def run_Alergia(data, automaton_type, eps=0.005, compatibility_checker=None, pri
     return model
 
 
-def run_JAlergia(path_to_file, automaton_type, path_to_jAlergia_jar, eps=0.005, heap_memory='-Xmx2048M'):
+def run_JAlergia(path_to_data_file, automaton_type, path_to_jAlergia_jar, eps=0.005, heap_memory='-Xmx2048M'):
     assert automaton_type in {'mdp', 'smm', 'mc'}
     """
     Run Alergia or IOAlergia on provided data.
@@ -211,6 +211,8 @@ def run_JAlergia(path_to_file, automaton_type, path_to_jAlergia_jar, eps=0.005, 
         Note that in whole data first symbol of each entry should be the same (Initial output of the MDP/MC).
 
         eps: epsilon value
+        
+        heap_memory: java heap memory flag, increase if heap is full
 
         automaton_type: either 'mdp' if you wish to learn an MDP, 'mc' if you want to learn Markov Chain,
          or 'smm' if you
@@ -236,8 +238,8 @@ def run_JAlergia(path_to_file, automaton_type, path_to_jAlergia_jar, eps=0.005, 
         print(f'JAlergia jar not found at {path_to_jAlergia_jar}.')
         return
 
-    if os.path.exists(path_to_file):
-        abs_path = os.path.abspath(path_to_file)
+    if os.path.exists(path_to_data_file):
+        abs_path = os.path.abspath(path_to_data_file)
     else:
         print('Input file not found.')
         return
