@@ -207,8 +207,10 @@ def run_Alergia(data, automaton_type, eps=0.005, compatibility_checker=None, opt
     return model
 
 
-def run_JAlergia(path_to_data_file, automaton_type, path_to_jAlergia_jar, eps=0.005, heap_memory='-Xmx2048M'):
+def run_JAlergia(path_to_data_file, automaton_type, path_to_jAlergia_jar, eps=0.005,
+                 heap_memory='-Xmx2048M', optimize_for='accuracy'):
     assert automaton_type in {'mdp', 'smm', 'mc'}
+    assert optimize_for in {'memory', 'accuracy'}
     """
     Run Alergia or IOAlergia on provided data.
 
@@ -222,6 +224,8 @@ def run_JAlergia(path_to_data_file, automaton_type, path_to_jAlergia_jar, eps=0.
         eps: epsilon value
         
         heap_memory: java heap memory flag, increase if heap is full
+        
+        optimize_for: either 'memory' or 'accuracy'. memory will use 50% less memory, but will be more inaccurate.
 
         automaton_type: either 'mdp' if you wish to learn an MDP, 'mc' if you want to learn Markov Chain,
          or 'smm' if you
@@ -253,8 +257,10 @@ def run_JAlergia(path_to_data_file, automaton_type, path_to_jAlergia_jar, eps=0.
         print('Input file not found.')
         return
 
+    optimize_for = optimize_for[:3]
+
     subprocess.call(['java', heap_memory, '-jar', path_to_jAlergia_jar, '-path', abs_path, '-eps', str(eps), '-type',
-                     automaton_type])
+                     automaton_type, '-optim', optimize_for])
 
     if not os.path.exists(save_file):
         print("JAlergia error occurred.")

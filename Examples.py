@@ -794,7 +794,7 @@ def jAlergiaExample():
 
     # if you need more heapreplace check
     model = run_JAlergia(path_to_data_file='jAlergia/exampleMdpData.txt', automaton_type='mdp', eps=0.005,
-                         path_to_jAlergia_jar='jAlergia/alergia.jar')
+                         path_to_jAlergia_jar='jAlergia/alergia.jar', optimize_for='memory')
 
     visualize_automaton(model)
 
