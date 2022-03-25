@@ -60,6 +60,9 @@
             <li>
                     <a class="function" href="#run_Alergia">run_Alergia</a>
             </li>
+            <li>
+                    <a class="function" href="#run_JAlergia">run_JAlergia</a>
+            </li>
     </ul>
 
 
@@ -92,11 +95,15 @@
 
 
 <span class="k">class</span> <span class="nc">Alergia</span><span class="p">:</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">0.005</span><span class="p">,</span> <span class="n">compatibility_checker</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">print_info</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">0.005</span><span class="p">,</span> <span class="n">compatibility_checker</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">optimize_for</span><span class="o">=</span><span class="s1">&#39;accuracy&#39;</span><span class="p">,</span>
+                 <span class="n">print_info</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="k">assert</span> <span class="n">eps</span> <span class="o">==</span> <span class="s1">&#39;auto&#39;</span> <span class="ow">or</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">eps</span> <span class="o">&lt;=</span> <span class="mi">2</span>
+        <span class="k">assert</span> <span class="n">optimize_for</span> <span class="ow">in</span> <span class="p">{</span><span class="s1">&#39;memory&#39;</span><span class="p">,</span> <span class="s1">&#39;accuracy&#39;</span><span class="p">}</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">=</span> <span class="n">automaton_type</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">print_info</span> <span class="o">=</span> <span class="n">print_info</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">optimize_for</span> <span class="o">=</span> <span class="n">optimize_for</span>
+        <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">optimize_for</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">eps</span> <span class="o">==</span> <span class="s1">&#39;auto&#39;</span><span class="p">:</span>
             <span class="n">eps</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">/</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">data</span><span class="p">)</span>  <span class="c1"># len - 1 to ignore initial output</span>
@@ -105,7 +112,7 @@
 
         <span class="n">pta_start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">t</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">create_fpta</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">t</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">create_fpta</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">,</span> <span class="n">optimize_for</span><span class="p">)</span>
 
         <span class="n">pta_time</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">pta_start</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">print_info</span><span class="p">:</span>
@@ -129,23 +136,23 @@
 
     <span class="k">def</span> <span class="nf">merge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q_r</span><span class="p">,</span> <span class="n">q_b</span><span class="p">):</span>
         <span class="n">t_q_b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_blue_node</span><span class="p">(</span><span class="n">q_b</span><span class="p">)</span>
-        <span class="n">prefix_leading_to_state</span> <span class="o">=</span> <span class="n">q_b</span><span class="o">.</span><span class="n">prefix</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">b_prefix</span> <span class="o">=</span> <span class="n">q_b</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">()</span>
         <span class="n">to_update</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span>
-        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">prefix_leading_to_state</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">b_prefix</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
             <span class="n">to_update</span> <span class="o">=</span> <span class="n">to_update</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">p</span><span class="p">]</span>
 
-        <span class="n">to_update</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">q_b</span><span class="o">.</span><span class="n">prefix</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">q_r</span>
+        <span class="n">to_update</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">b_prefix</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">q_r</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">fold</span><span class="p">(</span><span class="n">q_r</span><span class="p">,</span> <span class="n">t_q_b</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fold</span><span class="p">(</span><span class="n">q_r</span><span class="p">,</span> <span class="n">q_b</span><span class="p">,</span> <span class="n">t_q_b</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">fold</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q_r</span><span class="p">,</span> <span class="n">q_b</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">q_b</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="k">def</span> <span class="nf">fold</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q_r</span><span class="p">,</span> <span class="n">q_b</span><span class="p">,</span> <span class="n">t_q_b</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">t_q_b</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">q_r</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-                <span class="n">q_r</span><span class="o">.</span><span class="n">input_frequency</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="n">q_b</span><span class="o">.</span><span class="n">input_frequency</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">fold</span><span class="p">(</span><span class="n">q_r</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">c</span><span class="p">)</span>
+                <span class="n">q_r</span><span class="o">.</span><span class="n">input_frequency</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="n">t_q_b</span><span class="o">.</span><span class="n">input_frequency</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">fold</span><span class="p">(</span><span class="n">q_r</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">q_b</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">c</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">q_r</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span>  <span class="c1"># was c.copy()</span>
-                <span class="n">q_r</span><span class="o">.</span><span class="n">input_frequency</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">q_b</span><span class="o">.</span><span class="n">input_frequency</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="n">q_r</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">q_b</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="n">q_r</span><span class="o">.</span><span class="n">input_frequency</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">t_q_b</span><span class="o">.</span><span class="n">input_frequency</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
 
     <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
@@ -154,7 +161,7 @@
         <span class="n">blue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="o">.</span><span class="n">succs</span><span class="p">()</span>  <span class="c1"># intermediate successors scheduled for testing</span>
 
         <span class="k">while</span> <span class="n">blue</span><span class="p">:</span>
-            <span class="n">lex_min_blue</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">blue</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">prefix</span><span class="p">))</span>
+            <span class="n">lex_min_blue</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">blue</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">()))</span>
             <span class="n">merged</span> <span class="o">=</span> <span class="kc">False</span>
 
             <span class="k">for</span> <span class="n">q_r</span> <span class="ow">in</span> <span class="n">red</span><span class="p">:</span>
@@ -167,13 +174,13 @@
                 <span class="n">insort</span><span class="p">(</span><span class="n">red</span><span class="p">,</span> <span class="n">lex_min_blue</span><span class="p">)</span>
 
             <span class="n">blue</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-            <span class="n">prefixes_in_red</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">prefix</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">red</span><span class="p">]</span>
+            <span class="n">prefixes_in_red</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">()</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">red</span><span class="p">]</span>
             <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">red</span><span class="p">:</span>
                 <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">r</span><span class="o">.</span><span class="n">succs</span><span class="p">():</span>
-                    <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">prefix</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">prefixes_in_red</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">prefixes_in_red</span><span class="p">:</span>
                         <span class="n">blue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
 
-        <span class="k">assert</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">red</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">prefix</span><span class="p">))</span> <span class="o">==</span> <span class="n">red</span>
+        <span class="k">assert</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">red</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">()))</span> <span class="o">==</span> <span class="n">red</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">!=</span> <span class="s1">&#39;moore&#39;</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="n">red</span><span class="p">)</span>
@@ -184,10 +191,11 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">print_info</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Alergia Learning Time: </span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Alergia Learned </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">red</span><span class="p">)</span><span class="si">}</span><span class="s1"> state automaton.&#39;</span><span class="p">)</span>
+
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_automaton</span><span class="p">(</span><span class="n">red</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">red</span><span class="p">):</span>
-        <span class="n">red_sorted</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">red</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">prefix</span><span class="p">))</span>
+        <span class="n">red_sorted</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">red</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">()))</span>
         <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">red_sorted</span><span class="p">:</span>
             <span class="n">r</span><span class="o">.</span><span class="n">children_prob</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>  <span class="c1"># Initializing in here saves many unnecessary initializations</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mc&#39;</span><span class="p">:</span>
@@ -202,8 +210,10 @@
                     <span class="n">r</span><span class="o">.</span><span class="n">children_prob</span><span class="p">[</span><span class="n">io</span><span class="p">]</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">input_frequency</span><span class="p">[</span><span class="n">io</span><span class="p">]</span> <span class="o">/</span> <span class="n">outputs_per_input</span><span class="p">[</span><span class="n">io</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
 
     <span class="k">def</span> <span class="nf">get_blue_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">red_node</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimize_for</span> <span class="o">==</span> <span class="s1">&#39;memory&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">red_node</span>
         <span class="n">blue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">t</span>
-        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">red_node</span><span class="o">.</span><span class="n">prefix</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">red_node</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">():</span>
             <span class="n">blue</span> <span class="o">=</span> <span class="n">blue</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">p</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">blue</span>
 
@@ -220,17 +230,17 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">automaton_state</span> <span class="o">=</span> <span class="n">s_c</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">state_id</span><span class="p">)</span>
 
-            <span class="n">automaton_state</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">prefix</span>
+            <span class="n">automaton_state</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">()</span>
             <span class="n">states</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">automaton_state</span><span class="p">)</span>
-            <span class="n">red_mdp_map</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">prefix</span><span class="p">)]</span> <span class="o">=</span> <span class="n">automaton_state</span>
+            <span class="n">red_mdp_map</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">())]</span> <span class="o">=</span> <span class="n">automaton_state</span>
             <span class="n">red_mdp_map</span><span class="p">[</span><span class="n">automaton_state</span><span class="o">.</span><span class="n">state_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">s</span><span class="o">.</span><span class="n">prefix</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">s</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">():</span>
                 <span class="n">initial_state</span> <span class="o">=</span> <span class="n">automaton_state</span>
 
         <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">states</span><span class="p">:</span>
             <span class="n">red_eq</span> <span class="o">=</span> <span class="n">red_mdp_map</span><span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">state_id</span><span class="p">]</span>
             <span class="k">for</span> <span class="n">io</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">red_eq</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="n">destination</span> <span class="o">=</span> <span class="n">red_mdp_map</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">prefix</span><span class="p">)]</span>
+                <span class="n">destination</span> <span class="o">=</span> <span class="n">red_mdp_map</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">())]</span>
                 <span class="n">i</span> <span class="o">=</span> <span class="n">io</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mc&#39;</span> <span class="k">else</span> <span class="n">io</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
                     <span class="n">s</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">destination</span><span class="p">,</span> <span class="n">red_eq</span><span class="o">.</span><span class="n">children_prob</span><span class="p">[</span><span class="n">io</span><span class="p">]))</span>
@@ -244,7 +254,7 @@
         <span class="k">return</span> <span class="n">a_c</span><span class="p">(</span><span class="n">initial_state</span><span class="p">,</span> <span class="n">states</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">run_Alergia</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">0.005</span><span class="p">,</span> <span class="n">compatibility_checker</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">print_info</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">run_Alergia</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">0.005</span><span class="p">,</span> <span class="n">compatibility_checker</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">optimize_for</span><span class="o">=</span><span class="s1">&#39;accuracy&#39;</span><span class="p">,</span> <span class="n">print_info</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Run Alergia or IOAlergia on provided data.</span>
 
@@ -261,6 +271,8 @@
 <span class="sd">                        if you want to learn Moore Machine (underlying structure is deterministic), or &#39;smm&#39; if you</span>
 <span class="sd">                        want to learn stochastic Mealy machine</span>
 
+<span class="sd">        optimize_for: either &#39;memory&#39; or &#39;accuracy&#39;. memory will use 50% less memory, but will be more inaccurate.</span>
+
 <span class="sd">        compatibility_checker: impl. of class CompatibilityChecker, HoeffdingCompatibility with eps value by default</span>
 
 <span class="sd">        (note: not interchangeable, depends on data)</span>
@@ -271,10 +283,74 @@
 <span class="sd">        mdp or markov chain</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">assert</span> <span class="n">automaton_type</span> <span class="ow">in</span> <span class="p">{</span><span class="s1">&#39;mdp&#39;</span><span class="p">,</span> <span class="s1">&#39;mc&#39;</span><span class="p">,</span> <span class="s1">&#39;moore&#39;</span><span class="p">,</span> <span class="s1">&#39;smm&#39;</span><span class="p">}</span>
-    <span class="n">alergia</span> <span class="o">=</span> <span class="n">Alergia</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="n">eps</span><span class="p">,</span> <span class="n">automaton_type</span><span class="o">=</span><span class="n">automaton_type</span><span class="p">,</span>
+    <span class="n">alergia</span> <span class="o">=</span> <span class="n">Alergia</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="n">eps</span><span class="p">,</span> <span class="n">automaton_type</span><span class="o">=</span><span class="n">automaton_type</span><span class="p">,</span> <span class="n">optimize_for</span><span class="o">=</span><span class="n">optimize_for</span><span class="p">,</span>
                       <span class="n">compatibility_checker</span><span class="o">=</span><span class="n">compatibility_checker</span><span class="p">,</span> <span class="n">print_info</span><span class="o">=</span><span class="n">print_info</span><span class="p">)</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">alergia</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
     <span class="k">del</span> <span class="n">alergia</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="n">alergia</span><span class="o">.</span><span class="n">t</span><span class="p">,</span> <span class="n">alergia</span>
+    <span class="k">return</span> <span class="n">model</span>
+
+
+<span class="k">def</span> <span class="nf">run_JAlergia</span><span class="p">(</span><span class="n">path_to_data_file</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">,</span> <span class="n">path_to_jAlergia_jar</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">0.005</span><span class="p">,</span>
+                 <span class="n">heap_memory</span><span class="o">=</span><span class="s1">&#39;-Xmx2048M&#39;</span><span class="p">,</span> <span class="n">optimize_for</span><span class="o">=</span><span class="s1">&#39;accuracy&#39;</span><span class="p">):</span>
+    <span class="k">assert</span> <span class="n">automaton_type</span> <span class="ow">in</span> <span class="p">{</span><span class="s1">&#39;mdp&#39;</span><span class="p">,</span> <span class="s1">&#39;smm&#39;</span><span class="p">,</span> <span class="s1">&#39;mc&#39;</span><span class="p">}</span>
+    <span class="k">assert</span> <span class="n">optimize_for</span> <span class="ow">in</span> <span class="p">{</span><span class="s1">&#39;memory&#39;</span><span class="p">,</span> <span class="s1">&#39;accuracy&#39;</span><span class="p">}</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Run Alergia or IOAlergia on provided data.</span>
+
+<span class="sd">    Args:</span>
+
+<span class="sd">        data: path to file containin fata either in a form [[I,I,I],[I,I,I],...] if learning Markov Chains or</span>
+<span class="sd">        [[O,(I,O),(I,O)...],</span>
+<span class="sd">        [O,(I,O_,...],..,] if learning MDPs (I represents input, O output).</span>
+<span class="sd">        Note that in whole data first symbol of each entry should be the same (Initial output of the MDP/MC).</span>
+
+<span class="sd">        eps: epsilon value</span>
+<span class="sd">        </span>
+<span class="sd">        heap_memory: java heap memory flag, increase if heap is full</span>
+<span class="sd">        </span>
+<span class="sd">        optimize_for: either &#39;memory&#39; or &#39;accuracy&#39;. memory will use 50% less memory, but will be more inaccurate.</span>
+
+<span class="sd">        automaton_type: either &#39;mdp&#39; if you wish to learn an MDP, &#39;mc&#39; if you want to learn Markov Chain,</span>
+<span class="sd">         or &#39;smm&#39; if you</span>
+<span class="sd">                        want to learn stochastic Mealy machine</span>
+
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">        learnedModel</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="kn">import</span> <span class="nn">os</span>
+    <span class="kn">import</span> <span class="nn">subprocess</span>
+    <span class="kn">from</span> <span class="nn">aalpy.utils.FileHandler</span> <span class="kn">import</span> <span class="n">load_automaton_from_file</span>
+
+    <span class="n">save_file</span> <span class="o">=</span> <span class="s2">&quot;jAlergiaModel.dot&quot;</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">save_file</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">save_file</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path_to_jAlergia_jar</span><span class="p">):</span>
+        <span class="n">path_to_jAlergia_jar</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">path_to_jAlergia_jar</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;JAlergia jar not found at </span><span class="si">{</span><span class="n">path_to_jAlergia_jar</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path_to_data_file</span><span class="p">):</span>
+        <span class="n">abs_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">path_to_data_file</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Input file not found.&#39;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="n">optimize_for</span> <span class="o">=</span> <span class="n">optimize_for</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span>
+
+    <span class="n">subprocess</span><span class="o">.</span><span class="n">call</span><span class="p">([</span><span class="s1">&#39;java&#39;</span><span class="p">,</span> <span class="n">heap_memory</span><span class="p">,</span> <span class="s1">&#39;-jar&#39;</span><span class="p">,</span> <span class="n">path_to_jAlergia_jar</span><span class="p">,</span> <span class="s1">&#39;-path&#39;</span><span class="p">,</span> <span class="n">abs_path</span><span class="p">,</span> <span class="s1">&#39;-eps&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">eps</span><span class="p">),</span> <span class="s1">&#39;-type&#39;</span><span class="p">,</span>
+                     <span class="n">automaton_type</span><span class="p">,</span> <span class="s1">&#39;-optim&#39;</span><span class="p">,</span> <span class="n">optimize_for</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">save_file</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;JAlergia error occurred.&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="n">model</span> <span class="o">=</span> <span class="n">load_automaton_from_file</span><span class="p">(</span><span class="n">save_file</span><span class="p">,</span> <span class="n">automaton_type</span><span class="o">=</span><span class="n">automaton_type</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">save_file</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">model</span>
 </pre></div>
 
@@ -293,11 +369,15 @@
                 <details>
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">Alergia</span><span class="p">:</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">0.005</span><span class="p">,</span> <span class="n">compatibility_checker</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">print_info</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">0.005</span><span class="p">,</span> <span class="n">compatibility_checker</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">optimize_for</span><span class="o">=</span><span class="s1">&#39;accuracy&#39;</span><span class="p">,</span>
+                 <span class="n">print_info</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="k">assert</span> <span class="n">eps</span> <span class="o">==</span> <span class="s1">&#39;auto&#39;</span> <span class="ow">or</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">eps</span> <span class="o">&lt;=</span> <span class="mi">2</span>
+        <span class="k">assert</span> <span class="n">optimize_for</span> <span class="ow">in</span> <span class="p">{</span><span class="s1">&#39;memory&#39;</span><span class="p">,</span> <span class="s1">&#39;accuracy&#39;</span><span class="p">}</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">=</span> <span class="n">automaton_type</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">print_info</span> <span class="o">=</span> <span class="n">print_info</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">optimize_for</span> <span class="o">=</span> <span class="n">optimize_for</span>
+        <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">optimize_for</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">eps</span> <span class="o">==</span> <span class="s1">&#39;auto&#39;</span><span class="p">:</span>
             <span class="n">eps</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">/</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">data</span><span class="p">)</span>  <span class="c1"># len - 1 to ignore initial output</span>
@@ -306,7 +386,7 @@
 
         <span class="n">pta_start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">t</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">create_fpta</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">t</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">create_fpta</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">,</span> <span class="n">optimize_for</span><span class="p">)</span>
 
         <span class="n">pta_time</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">pta_start</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">print_info</span><span class="p">:</span>
@@ -330,23 +410,23 @@
 
     <span class="k">def</span> <span class="nf">merge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q_r</span><span class="p">,</span> <span class="n">q_b</span><span class="p">):</span>
         <span class="n">t_q_b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_blue_node</span><span class="p">(</span><span class="n">q_b</span><span class="p">)</span>
-        <span class="n">prefix_leading_to_state</span> <span class="o">=</span> <span class="n">q_b</span><span class="o">.</span><span class="n">prefix</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">b_prefix</span> <span class="o">=</span> <span class="n">q_b</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">()</span>
         <span class="n">to_update</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span>
-        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">prefix_leading_to_state</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">b_prefix</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
             <span class="n">to_update</span> <span class="o">=</span> <span class="n">to_update</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">p</span><span class="p">]</span>
 
-        <span class="n">to_update</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">q_b</span><span class="o">.</span><span class="n">prefix</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">q_r</span>
+        <span class="n">to_update</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">b_prefix</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">q_r</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">fold</span><span class="p">(</span><span class="n">q_r</span><span class="p">,</span> <span class="n">t_q_b</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fold</span><span class="p">(</span><span class="n">q_r</span><span class="p">,</span> <span class="n">q_b</span><span class="p">,</span> <span class="n">t_q_b</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">fold</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q_r</span><span class="p">,</span> <span class="n">q_b</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">q_b</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="k">def</span> <span class="nf">fold</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q_r</span><span class="p">,</span> <span class="n">q_b</span><span class="p">,</span> <span class="n">t_q_b</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">t_q_b</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">q_r</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-                <span class="n">q_r</span><span class="o">.</span><span class="n">input_frequency</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="n">q_b</span><span class="o">.</span><span class="n">input_frequency</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">fold</span><span class="p">(</span><span class="n">q_r</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">c</span><span class="p">)</span>
+                <span class="n">q_r</span><span class="o">.</span><span class="n">input_frequency</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="n">t_q_b</span><span class="o">.</span><span class="n">input_frequency</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">fold</span><span class="p">(</span><span class="n">q_r</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">q_b</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">c</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">q_r</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span>  <span class="c1"># was c.copy()</span>
-                <span class="n">q_r</span><span class="o">.</span><span class="n">input_frequency</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">q_b</span><span class="o">.</span><span class="n">input_frequency</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="n">q_r</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">q_b</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="n">q_r</span><span class="o">.</span><span class="n">input_frequency</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">t_q_b</span><span class="o">.</span><span class="n">input_frequency</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
 
     <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
@@ -355,7 +435,7 @@
         <span class="n">blue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="o">.</span><span class="n">succs</span><span class="p">()</span>  <span class="c1"># intermediate successors scheduled for testing</span>
 
         <span class="k">while</span> <span class="n">blue</span><span class="p">:</span>
-            <span class="n">lex_min_blue</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">blue</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">prefix</span><span class="p">))</span>
+            <span class="n">lex_min_blue</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">blue</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">()))</span>
             <span class="n">merged</span> <span class="o">=</span> <span class="kc">False</span>
 
             <span class="k">for</span> <span class="n">q_r</span> <span class="ow">in</span> <span class="n">red</span><span class="p">:</span>
@@ -368,13 +448,13 @@
                 <span class="n">insort</span><span class="p">(</span><span class="n">red</span><span class="p">,</span> <span class="n">lex_min_blue</span><span class="p">)</span>
 
             <span class="n">blue</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-            <span class="n">prefixes_in_red</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">prefix</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">red</span><span class="p">]</span>
+            <span class="n">prefixes_in_red</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">()</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">red</span><span class="p">]</span>
             <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">red</span><span class="p">:</span>
                 <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">r</span><span class="o">.</span><span class="n">succs</span><span class="p">():</span>
-                    <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">prefix</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">prefixes_in_red</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">prefixes_in_red</span><span class="p">:</span>
                         <span class="n">blue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
 
-        <span class="k">assert</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">red</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">prefix</span><span class="p">))</span> <span class="o">==</span> <span class="n">red</span>
+        <span class="k">assert</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">red</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">()))</span> <span class="o">==</span> <span class="n">red</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">!=</span> <span class="s1">&#39;moore&#39;</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="n">red</span><span class="p">)</span>
@@ -385,10 +465,11 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">print_info</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Alergia Learning Time: </span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Alergia Learned </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">red</span><span class="p">)</span><span class="si">}</span><span class="s1"> state automaton.&#39;</span><span class="p">)</span>
+
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_automaton</span><span class="p">(</span><span class="n">red</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">red</span><span class="p">):</span>
-        <span class="n">red_sorted</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">red</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">prefix</span><span class="p">))</span>
+        <span class="n">red_sorted</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">red</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">()))</span>
         <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">red_sorted</span><span class="p">:</span>
             <span class="n">r</span><span class="o">.</span><span class="n">children_prob</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>  <span class="c1"># Initializing in here saves many unnecessary initializations</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mc&#39;</span><span class="p">:</span>
@@ -403,8 +484,10 @@
                     <span class="n">r</span><span class="o">.</span><span class="n">children_prob</span><span class="p">[</span><span class="n">io</span><span class="p">]</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">input_frequency</span><span class="p">[</span><span class="n">io</span><span class="p">]</span> <span class="o">/</span> <span class="n">outputs_per_input</span><span class="p">[</span><span class="n">io</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
 
     <span class="k">def</span> <span class="nf">get_blue_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">red_node</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimize_for</span> <span class="o">==</span> <span class="s1">&#39;memory&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">red_node</span>
         <span class="n">blue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">t</span>
-        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">red_node</span><span class="o">.</span><span class="n">prefix</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">red_node</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">():</span>
             <span class="n">blue</span> <span class="o">=</span> <span class="n">blue</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">p</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">blue</span>
 
@@ -421,17 +504,17 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">automaton_state</span> <span class="o">=</span> <span class="n">s_c</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">state_id</span><span class="p">)</span>
 
-            <span class="n">automaton_state</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">prefix</span>
+            <span class="n">automaton_state</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">()</span>
             <span class="n">states</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">automaton_state</span><span class="p">)</span>
-            <span class="n">red_mdp_map</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">prefix</span><span class="p">)]</span> <span class="o">=</span> <span class="n">automaton_state</span>
+            <span class="n">red_mdp_map</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">())]</span> <span class="o">=</span> <span class="n">automaton_state</span>
             <span class="n">red_mdp_map</span><span class="p">[</span><span class="n">automaton_state</span><span class="o">.</span><span class="n">state_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">s</span><span class="o">.</span><span class="n">prefix</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">s</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">():</span>
                 <span class="n">initial_state</span> <span class="o">=</span> <span class="n">automaton_state</span>
 
         <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">states</span><span class="p">:</span>
             <span class="n">red_eq</span> <span class="o">=</span> <span class="n">red_mdp_map</span><span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">state_id</span><span class="p">]</span>
             <span class="k">for</span> <span class="n">io</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">red_eq</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="n">destination</span> <span class="o">=</span> <span class="n">red_mdp_map</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">prefix</span><span class="p">)]</span>
+                <span class="n">destination</span> <span class="o">=</span> <span class="n">red_mdp_map</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">())]</span>
                 <span class="n">i</span> <span class="o">=</span> <span class="n">io</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mc&#39;</span> <span class="k">else</span> <span class="n">io</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
                     <span class="n">s</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">destination</span><span class="p">,</span> <span class="n">red_eq</span><span class="o">.</span><span class="n">children_prob</span><span class="p">[</span><span class="n">io</span><span class="p">]))</span>
@@ -459,16 +542,21 @@
     automaton_type,
     eps=0.005,
     compatibility_checker=None,
+    optimize_for=&#39;accuracy&#39;,
     print_info=False
 )</span>    </div>
 
                 <details>
             <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">0.005</span><span class="p">,</span> <span class="n">compatibility_checker</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">print_info</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">0.005</span><span class="p">,</span> <span class="n">compatibility_checker</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">optimize_for</span><span class="o">=</span><span class="s1">&#39;accuracy&#39;</span><span class="p">,</span>
+                 <span class="n">print_info</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="k">assert</span> <span class="n">eps</span> <span class="o">==</span> <span class="s1">&#39;auto&#39;</span> <span class="ow">or</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">eps</span> <span class="o">&lt;=</span> <span class="mi">2</span>
+        <span class="k">assert</span> <span class="n">optimize_for</span> <span class="ow">in</span> <span class="p">{</span><span class="s1">&#39;memory&#39;</span><span class="p">,</span> <span class="s1">&#39;accuracy&#39;</span><span class="p">}</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">=</span> <span class="n">automaton_type</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">print_info</span> <span class="o">=</span> <span class="n">print_info</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">optimize_for</span> <span class="o">=</span> <span class="n">optimize_for</span>
+        <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">optimize_for</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">eps</span> <span class="o">==</span> <span class="s1">&#39;auto&#39;</span><span class="p">:</span>
             <span class="n">eps</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">/</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">data</span><span class="p">)</span>  <span class="c1"># len - 1 to ignore initial output</span>
@@ -477,7 +565,7 @@
 
         <span class="n">pta_start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">t</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">create_fpta</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">t</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">create_fpta</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">,</span> <span class="n">optimize_for</span><span class="p">)</span>
 
         <span class="n">pta_time</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">pta_start</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">print_info</span><span class="p">:</span>
@@ -533,14 +621,14 @@
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">merge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q_r</span><span class="p">,</span> <span class="n">q_b</span><span class="p">):</span>
         <span class="n">t_q_b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_blue_node</span><span class="p">(</span><span class="n">q_b</span><span class="p">)</span>
-        <span class="n">prefix_leading_to_state</span> <span class="o">=</span> <span class="n">q_b</span><span class="o">.</span><span class="n">prefix</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">b_prefix</span> <span class="o">=</span> <span class="n">q_b</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">()</span>
         <span class="n">to_update</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span>
-        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">prefix_leading_to_state</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">b_prefix</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
             <span class="n">to_update</span> <span class="o">=</span> <span class="n">to_update</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">p</span><span class="p">]</span>
 
-        <span class="n">to_update</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">q_b</span><span class="o">.</span><span class="n">prefix</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">q_r</span>
+        <span class="n">to_update</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">b_prefix</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">q_r</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">fold</span><span class="p">(</span><span class="n">q_r</span><span class="p">,</span> <span class="n">t_q_b</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fold</span><span class="p">(</span><span class="n">q_r</span><span class="p">,</span> <span class="n">q_b</span><span class="p">,</span> <span class="n">t_q_b</span><span class="p">)</span>
 </pre></div>
 
         </details>
@@ -553,19 +641,19 @@
 
         
             <span class="def">def</span>
-            <span class="name">fold</span><span class="signature">(self, q_r, q_b)</span>:
+            <span class="name">fold</span><span class="signature">(self, q_r, q_b, t_q_b)</span>:
     </div>
 
                 <details>
             <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">fold</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q_r</span><span class="p">,</span> <span class="n">q_b</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">q_b</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">fold</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q_r</span><span class="p">,</span> <span class="n">q_b</span><span class="p">,</span> <span class="n">t_q_b</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">t_q_b</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">q_r</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-                <span class="n">q_r</span><span class="o">.</span><span class="n">input_frequency</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="n">q_b</span><span class="o">.</span><span class="n">input_frequency</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">fold</span><span class="p">(</span><span class="n">q_r</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">c</span><span class="p">)</span>
+                <span class="n">q_r</span><span class="o">.</span><span class="n">input_frequency</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="n">t_q_b</span><span class="o">.</span><span class="n">input_frequency</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">fold</span><span class="p">(</span><span class="n">q_r</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">q_b</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">c</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">q_r</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span>  <span class="c1"># was c.copy()</span>
-                <span class="n">q_r</span><span class="o">.</span><span class="n">input_frequency</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">q_b</span><span class="o">.</span><span class="n">input_frequency</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="n">q_r</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">q_b</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="n">q_r</span><span class="o">.</span><span class="n">input_frequency</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">t_q_b</span><span class="o">.</span><span class="n">input_frequency</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
 </pre></div>
 
         </details>
@@ -590,7 +678,7 @@
         <span class="n">blue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="o">.</span><span class="n">succs</span><span class="p">()</span>  <span class="c1"># intermediate successors scheduled for testing</span>
 
         <span class="k">while</span> <span class="n">blue</span><span class="p">:</span>
-            <span class="n">lex_min_blue</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">blue</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">prefix</span><span class="p">))</span>
+            <span class="n">lex_min_blue</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">blue</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">()))</span>
             <span class="n">merged</span> <span class="o">=</span> <span class="kc">False</span>
 
             <span class="k">for</span> <span class="n">q_r</span> <span class="ow">in</span> <span class="n">red</span><span class="p">:</span>
@@ -603,13 +691,13 @@
                 <span class="n">insort</span><span class="p">(</span><span class="n">red</span><span class="p">,</span> <span class="n">lex_min_blue</span><span class="p">)</span>
 
             <span class="n">blue</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-            <span class="n">prefixes_in_red</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">prefix</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">red</span><span class="p">]</span>
+            <span class="n">prefixes_in_red</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">()</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">red</span><span class="p">]</span>
             <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">red</span><span class="p">:</span>
                 <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">r</span><span class="o">.</span><span class="n">succs</span><span class="p">():</span>
-                    <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">prefix</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">prefixes_in_red</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">prefixes_in_red</span><span class="p">:</span>
                         <span class="n">blue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
 
-        <span class="k">assert</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">red</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">prefix</span><span class="p">))</span> <span class="o">==</span> <span class="n">red</span>
+        <span class="k">assert</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">red</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">()))</span> <span class="o">==</span> <span class="n">red</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">!=</span> <span class="s1">&#39;moore&#39;</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="n">red</span><span class="p">)</span>
@@ -620,6 +708,7 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">print_info</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Alergia Learning Time: </span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Alergia Learned </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">red</span><span class="p">)</span><span class="si">}</span><span class="s1"> state automaton.&#39;</span><span class="p">)</span>
+
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_automaton</span><span class="p">(</span><span class="n">red</span><span class="p">)</span>
 </pre></div>
 
@@ -639,7 +728,7 @@
                 <details>
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">red</span><span class="p">):</span>
-        <span class="n">red_sorted</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">red</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">prefix</span><span class="p">))</span>
+        <span class="n">red_sorted</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">red</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">()))</span>
         <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">red_sorted</span><span class="p">:</span>
             <span class="n">r</span><span class="o">.</span><span class="n">children_prob</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>  <span class="c1"># Initializing in here saves many unnecessary initializations</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mc&#39;</span><span class="p">:</span>
@@ -670,8 +759,10 @@
                 <details>
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">get_blue_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">red_node</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimize_for</span> <span class="o">==</span> <span class="s1">&#39;memory&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">red_node</span>
         <span class="n">blue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">t</span>
-        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">red_node</span><span class="o">.</span><span class="n">prefix</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">red_node</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">():</span>
             <span class="n">blue</span> <span class="o">=</span> <span class="n">blue</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">p</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">blue</span>
 </pre></div>
@@ -704,17 +795,17 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">automaton_state</span> <span class="o">=</span> <span class="n">s_c</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">state_id</span><span class="p">)</span>
 
-            <span class="n">automaton_state</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">prefix</span>
+            <span class="n">automaton_state</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">()</span>
             <span class="n">states</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">automaton_state</span><span class="p">)</span>
-            <span class="n">red_mdp_map</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">prefix</span><span class="p">)]</span> <span class="o">=</span> <span class="n">automaton_state</span>
+            <span class="n">red_mdp_map</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">())]</span> <span class="o">=</span> <span class="n">automaton_state</span>
             <span class="n">red_mdp_map</span><span class="p">[</span><span class="n">automaton_state</span><span class="o">.</span><span class="n">state_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">s</span><span class="o">.</span><span class="n">prefix</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">s</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">():</span>
                 <span class="n">initial_state</span> <span class="o">=</span> <span class="n">automaton_state</span>
 
         <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">states</span><span class="p">:</span>
             <span class="n">red_eq</span> <span class="o">=</span> <span class="n">red_mdp_map</span><span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">state_id</span><span class="p">]</span>
             <span class="k">for</span> <span class="n">io</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">red_eq</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="n">destination</span> <span class="o">=</span> <span class="n">red_mdp_map</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">prefix</span><span class="p">)]</span>
+                <span class="n">destination</span> <span class="o">=</span> <span class="n">red_mdp_map</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">())]</span>
                 <span class="n">i</span> <span class="o">=</span> <span class="n">io</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mc&#39;</span> <span class="k">else</span> <span class="n">io</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
                     <span class="n">s</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">destination</span><span class="p">,</span> <span class="n">red_eq</span><span class="o">.</span><span class="n">children_prob</span><span class="p">[</span><span class="n">io</span><span class="p">]))</span>
@@ -744,13 +835,14 @@
     automaton_type,
     eps=0.005,
     compatibility_checker=None,
+    optimize_for=&#39;accuracy&#39;,
     print_info=False
 )</span>:
     </div>
 
                 <details>
             <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">run_Alergia</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">0.005</span><span class="p">,</span> <span class="n">compatibility_checker</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">print_info</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+            <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">run_Alergia</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">0.005</span><span class="p">,</span> <span class="n">compatibility_checker</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">optimize_for</span><span class="o">=</span><span class="s1">&#39;accuracy&#39;</span><span class="p">,</span> <span class="n">print_info</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Run Alergia or IOAlergia on provided data.</span>
 
@@ -767,6 +859,8 @@
 <span class="sd">                        if you want to learn Moore Machine (underlying structure is deterministic), or &#39;smm&#39; if you</span>
 <span class="sd">                        want to learn stochastic Mealy machine</span>
 
+<span class="sd">        optimize_for: either &#39;memory&#39; or &#39;accuracy&#39;. memory will use 50% less memory, but will be more inaccurate.</span>
+
 <span class="sd">        compatibility_checker: impl. of class CompatibilityChecker, HoeffdingCompatibility with eps value by default</span>
 
 <span class="sd">        (note: not interchangeable, depends on data)</span>
@@ -777,7 +871,7 @@
 <span class="sd">        mdp or markov chain</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">assert</span> <span class="n">automaton_type</span> <span class="ow">in</span> <span class="p">{</span><span class="s1">&#39;mdp&#39;</span><span class="p">,</span> <span class="s1">&#39;mc&#39;</span><span class="p">,</span> <span class="s1">&#39;moore&#39;</span><span class="p">,</span> <span class="s1">&#39;smm&#39;</span><span class="p">}</span>
-    <span class="n">alergia</span> <span class="o">=</span> <span class="n">Alergia</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="n">eps</span><span class="p">,</span> <span class="n">automaton_type</span><span class="o">=</span><span class="n">automaton_type</span><span class="p">,</span>
+    <span class="n">alergia</span> <span class="o">=</span> <span class="n">Alergia</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="n">eps</span><span class="p">,</span> <span class="n">automaton_type</span><span class="o">=</span><span class="n">automaton_type</span><span class="p">,</span> <span class="n">optimize_for</span><span class="o">=</span><span class="n">optimize_for</span><span class="p">,</span>
                       <span class="n">compatibility_checker</span><span class="o">=</span><span class="n">compatibility_checker</span><span class="p">,</span> <span class="n">print_info</span><span class="o">=</span><span class="n">print_info</span><span class="p">)</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">alergia</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
     <span class="k">del</span> <span class="n">alergia</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="n">alergia</span><span class="o">.</span><span class="n">t</span><span class="p">,</span> <span class="n">alergia</span>
@@ -801,6 +895,8 @@ automaton_type: either 'mdp' if you wish to learn an MDP, 'mc' if you want to le
                 if you want to learn Moore Machine (underlying structure is deterministic), or 'smm' if you
                 want to learn stochastic Mealy machine
 
+optimize_for: either 'memory' or 'accuracy'. memory will use 50% less memory, but will be more inaccurate.
+
 compatibility_checker: impl. of class CompatibilityChecker, HoeffdingCompatibility with eps value by default
 
 (note: not interchangeable, depends on data)
@@ -813,6 +909,92 @@ print_info:
 </code></pre>
 </div>
 
+
+                </section>
+                <section id="run_JAlergia">
+                            <div class="attr function"><a class="headerlink" href="#run_JAlergia">#&nbsp;&nbsp</a>
+
+        
+            <span class="def">def</span>
+            <span class="name">run_JAlergia</span><span class="signature">(
+    path_to_data_file,
+    automaton_type,
+    path_to_jAlergia_jar,
+    eps=0.005,
+    heap_memory=&#39;-Xmx2048M&#39;,
+    optimize_for=&#39;accuracy&#39;
+)</span>:
+    </div>
+
+                <details>
+            <summary>View Source</summary>
+            <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">run_JAlergia</span><span class="p">(</span><span class="n">path_to_data_file</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">,</span> <span class="n">path_to_jAlergia_jar</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">0.005</span><span class="p">,</span>
+                 <span class="n">heap_memory</span><span class="o">=</span><span class="s1">&#39;-Xmx2048M&#39;</span><span class="p">,</span> <span class="n">optimize_for</span><span class="o">=</span><span class="s1">&#39;accuracy&#39;</span><span class="p">):</span>
+    <span class="k">assert</span> <span class="n">automaton_type</span> <span class="ow">in</span> <span class="p">{</span><span class="s1">&#39;mdp&#39;</span><span class="p">,</span> <span class="s1">&#39;smm&#39;</span><span class="p">,</span> <span class="s1">&#39;mc&#39;</span><span class="p">}</span>
+    <span class="k">assert</span> <span class="n">optimize_for</span> <span class="ow">in</span> <span class="p">{</span><span class="s1">&#39;memory&#39;</span><span class="p">,</span> <span class="s1">&#39;accuracy&#39;</span><span class="p">}</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Run Alergia or IOAlergia on provided data.</span>
+
+<span class="sd">    Args:</span>
+
+<span class="sd">        data: path to file containin fata either in a form [[I,I,I],[I,I,I],...] if learning Markov Chains or</span>
+<span class="sd">        [[O,(I,O),(I,O)...],</span>
+<span class="sd">        [O,(I,O_,...],..,] if learning MDPs (I represents input, O output).</span>
+<span class="sd">        Note that in whole data first symbol of each entry should be the same (Initial output of the MDP/MC).</span>
+
+<span class="sd">        eps: epsilon value</span>
+<span class="sd">        </span>
+<span class="sd">        heap_memory: java heap memory flag, increase if heap is full</span>
+<span class="sd">        </span>
+<span class="sd">        optimize_for: either &#39;memory&#39; or &#39;accuracy&#39;. memory will use 50% less memory, but will be more inaccurate.</span>
+
+<span class="sd">        automaton_type: either &#39;mdp&#39; if you wish to learn an MDP, &#39;mc&#39; if you want to learn Markov Chain,</span>
+<span class="sd">         or &#39;smm&#39; if you</span>
+<span class="sd">                        want to learn stochastic Mealy machine</span>
+
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">        learnedModel</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="kn">import</span> <span class="nn">os</span>
+    <span class="kn">import</span> <span class="nn">subprocess</span>
+    <span class="kn">from</span> <span class="nn">aalpy.utils.FileHandler</span> <span class="kn">import</span> <span class="n">load_automaton_from_file</span>
+
+    <span class="n">save_file</span> <span class="o">=</span> <span class="s2">&quot;jAlergiaModel.dot&quot;</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">save_file</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">save_file</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path_to_jAlergia_jar</span><span class="p">):</span>
+        <span class="n">path_to_jAlergia_jar</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">path_to_jAlergia_jar</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;JAlergia jar not found at </span><span class="si">{</span><span class="n">path_to_jAlergia_jar</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path_to_data_file</span><span class="p">):</span>
+        <span class="n">abs_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">path_to_data_file</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Input file not found.&#39;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="n">optimize_for</span> <span class="o">=</span> <span class="n">optimize_for</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span>
+
+    <span class="n">subprocess</span><span class="o">.</span><span class="n">call</span><span class="p">([</span><span class="s1">&#39;java&#39;</span><span class="p">,</span> <span class="n">heap_memory</span><span class="p">,</span> <span class="s1">&#39;-jar&#39;</span><span class="p">,</span> <span class="n">path_to_jAlergia_jar</span><span class="p">,</span> <span class="s1">&#39;-path&#39;</span><span class="p">,</span> <span class="n">abs_path</span><span class="p">,</span> <span class="s1">&#39;-eps&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">eps</span><span class="p">),</span> <span class="s1">&#39;-type&#39;</span><span class="p">,</span>
+                     <span class="n">automaton_type</span><span class="p">,</span> <span class="s1">&#39;-optim&#39;</span><span class="p">,</span> <span class="n">optimize_for</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">save_file</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;JAlergia error occurred.&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="n">model</span> <span class="o">=</span> <span class="n">load_automaton_from_file</span><span class="p">(</span><span class="n">save_file</span><span class="p">,</span> <span class="n">automaton_type</span><span class="o">=</span><span class="n">automaton_type</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">save_file</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">model</span>
+</pre></div>
+
+        </details>
+
+    
 
                 </section>
     </main>

@@ -102,9 +102,15 @@
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_states</span><span class="p">):</span>
         <span class="n">states</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">MealyState</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
 
+    <span class="n">state_buffer</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">states</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">states</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">input_alphabet</span><span class="p">:</span>
-            <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">states</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">state_buffer</span><span class="p">:</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">state_buffer</span><span class="p">)</span>
+                <span class="n">state_buffer</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">new_state</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">states</span><span class="p">)</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_state</span>
             <span class="n">state</span><span class="o">.</span><span class="n">output_fun</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">output_alphabet</span><span class="p">)</span>
 
     <span class="n">mm</span> <span class="o">=</span> <span class="n">MealyMachine</span><span class="p">(</span><span class="n">states</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">states</span><span class="p">)</span>
@@ -136,9 +142,15 @@
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_states</span><span class="p">):</span>
         <span class="n">states</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">MooreState</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">output_alphabet</span><span class="p">)))</span>
 
+    <span class="n">state_buffer</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">states</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">states</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">input_alphabet</span><span class="p">:</span>
-            <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">states</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">state_buffer</span><span class="p">:</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">state_buffer</span><span class="p">)</span>
+                <span class="n">state_buffer</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">new_state</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">states</span><span class="p">)</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_state</span>
 
     <span class="n">mm</span> <span class="o">=</span> <span class="n">MooreMachine</span><span class="p">(</span><span class="n">states</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">states</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">compute_prefixes</span><span class="p">:</span>
@@ -219,14 +231,21 @@
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_states</span><span class="p">):</span>
         <span class="n">states</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">MdpState</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;q</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">outputs</span><span class="o">.</span><span class="n">pop</span><span class="p">()))</span>
 
+    <span class="n">state_buffer</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">states</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">states</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">len_input</span><span class="p">):</span>
             <span class="n">prob</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">possible_probabilities</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">state_buffer</span><span class="p">:</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">state_buffer</span><span class="p">)</span>
+                <span class="n">state_buffer</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">new_state</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">states</span><span class="p">)</span>
+
             <span class="k">if</span> <span class="n">prob</span> <span class="o">==</span> <span class="mf">1.</span><span class="p">:</span>
-                <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">states</span><span class="p">),</span> <span class="n">prob</span><span class="p">))</span>
+                <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">new_state</span><span class="p">,</span> <span class="n">prob</span><span class="p">))</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">new_states</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">states</span><span class="p">)</span>
-                <span class="n">s1</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">new_states</span><span class="p">)</span>
+                <span class="n">s1</span> <span class="o">=</span> <span class="n">new_state</span>
                 <span class="n">new_states</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">s1</span><span class="p">)</span>
 
                 <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">s1</span><span class="p">,</span> <span class="n">prob</span><span class="p">))</span>
@@ -260,14 +279,21 @@
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_states</span><span class="p">):</span>
         <span class="n">states</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">StochasticMealyState</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;q</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">))</span>
 
+    <span class="n">state_buffer</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">states</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">states</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_inputs</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">state_buffer</span><span class="p">:</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">state_buffer</span><span class="p">)</span>
+                <span class="n">state_buffer</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">new_state</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">states</span><span class="p">)</span>
+
             <span class="n">prob</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">possible_probabilities</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">prob</span> <span class="o">==</span> <span class="mf">1.</span><span class="p">:</span>
-                <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">states</span><span class="p">),</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">outputs</span><span class="p">),</span> <span class="n">prob</span><span class="p">))</span>
+                <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">new_state</span><span class="p">,</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">outputs</span><span class="p">),</span> <span class="n">prob</span><span class="p">))</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">new_states</span><span class="p">,</span> <span class="n">new_outputs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">states</span><span class="p">),</span> <span class="nb">list</span><span class="p">(</span><span class="n">outputs</span><span class="p">)</span>
-                <span class="n">s1</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">new_states</span><span class="p">)</span>
+                <span class="n">s1</span> <span class="o">=</span> <span class="n">new_state</span>
                 <span class="n">o1</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">new_outputs</span><span class="p">)</span>
                 <span class="n">new_states</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">s1</span><span class="p">)</span>
                 <span class="n">new_outputs</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">o1</span><span class="p">)</span>
@@ -509,9 +535,15 @@
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_states</span><span class="p">):</span>
         <span class="n">states</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">MealyState</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
 
+    <span class="n">state_buffer</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">states</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">states</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">input_alphabet</span><span class="p">:</span>
-            <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">states</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">state_buffer</span><span class="p">:</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">state_buffer</span><span class="p">)</span>
+                <span class="n">state_buffer</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">new_state</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">states</span><span class="p">)</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_state</span>
             <span class="n">state</span><span class="o">.</span><span class="n">output_fun</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">output_alphabet</span><span class="p">)</span>
 
     <span class="n">mm</span> <span class="o">=</span> <span class="n">MealyMachine</span><span class="p">(</span><span class="n">states</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">states</span><span class="p">)</span>
@@ -576,9 +608,15 @@ compute_prefixes: if true, shortest path to reach each state will be computed (D
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_states</span><span class="p">):</span>
         <span class="n">states</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">MooreState</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">output_alphabet</span><span class="p">)))</span>
 
+    <span class="n">state_buffer</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">states</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">states</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">input_alphabet</span><span class="p">:</span>
-            <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">states</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">state_buffer</span><span class="p">:</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">state_buffer</span><span class="p">)</span>
+                <span class="n">state_buffer</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">new_state</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">states</span><span class="p">)</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_state</span>
 
     <span class="n">mm</span> <span class="o">=</span> <span class="n">MooreMachine</span><span class="p">(</span><span class="n">states</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">states</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">compute_prefixes</span><span class="p">:</span>
@@ -724,14 +762,21 @@ compute_prefixes: if true, shortest path to reach each state will be computed (D
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_states</span><span class="p">):</span>
         <span class="n">states</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">MdpState</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;q</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">outputs</span><span class="o">.</span><span class="n">pop</span><span class="p">()))</span>
 
+    <span class="n">state_buffer</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">states</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">states</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">len_input</span><span class="p">):</span>
             <span class="n">prob</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">possible_probabilities</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">state_buffer</span><span class="p">:</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">state_buffer</span><span class="p">)</span>
+                <span class="n">state_buffer</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">new_state</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">states</span><span class="p">)</span>
+
             <span class="k">if</span> <span class="n">prob</span> <span class="o">==</span> <span class="mf">1.</span><span class="p">:</span>
-                <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">states</span><span class="p">),</span> <span class="n">prob</span><span class="p">))</span>
+                <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">new_state</span><span class="p">,</span> <span class="n">prob</span><span class="p">))</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">new_states</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">states</span><span class="p">)</span>
-                <span class="n">s1</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">new_states</span><span class="p">)</span>
+                <span class="n">s1</span> <span class="o">=</span> <span class="n">new_state</span>
                 <span class="n">new_states</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">s1</span><span class="p">)</span>
 
                 <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">s1</span><span class="p">,</span> <span class="n">prob</span><span class="p">))</span>
@@ -795,14 +840,21 @@ num_unique_outputs: number of outputs
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_states</span><span class="p">):</span>
         <span class="n">states</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">StochasticMealyState</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;q</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">))</span>
 
+    <span class="n">state_buffer</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">states</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">states</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_inputs</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">state_buffer</span><span class="p">:</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">state_buffer</span><span class="p">)</span>
+                <span class="n">state_buffer</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">new_state</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">states</span><span class="p">)</span>
+
             <span class="n">prob</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">possible_probabilities</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">prob</span> <span class="o">==</span> <span class="mf">1.</span><span class="p">:</span>
-                <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">states</span><span class="p">),</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">outputs</span><span class="p">),</span> <span class="n">prob</span><span class="p">))</span>
+                <span class="n">state</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">new_state</span><span class="p">,</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">outputs</span><span class="p">),</span> <span class="n">prob</span><span class="p">))</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">new_states</span><span class="p">,</span> <span class="n">new_outputs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">states</span><span class="p">),</span> <span class="nb">list</span><span class="p">(</span><span class="n">outputs</span><span class="p">)</span>
-                <span class="n">s1</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">new_states</span><span class="p">)</span>
+                <span class="n">s1</span> <span class="o">=</span> <span class="n">new_state</span>
                 <span class="n">o1</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">new_outputs</span><span class="p">)</span>
                 <span class="n">new_states</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">s1</span><span class="p">)</span>
                 <span class="n">new_outputs</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">o1</span><span class="p">)</span>
