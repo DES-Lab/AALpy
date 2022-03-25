@@ -12,11 +12,15 @@ state_automaton_map = {'mc': (McState, MarkovChain), 'mdp': (MdpState, Mdp),
 
 
 class Alergia:
-    def __init__(self, data, automaton_type, eps=0.005, compatibility_checker=None, print_info=False):
+    def __init__(self, data, automaton_type, eps=0.005, compatibility_checker=None, optimize_for='accuracy',
+                 print_info=False):
         assert eps == 'auto' or 0 < eps <= 2
+        assert optimize_for in {'memory', 'accuracy'}
 
         self.automaton_type = automaton_type
         self.print_info = print_info
+        self.optimize_for = optimize_for
+        print(self.optimize_for)
 
         if eps == 'auto':
             eps = 10 / sum(len(d) - 1 for d in data)  # len - 1 to ignore initial output
@@ -25,7 +29,7 @@ class Alergia:
 
         pta_start = time.time()
 
-        self.t, self.a = create_fpta(data, automaton_type)
+        self.t, self.a = create_fpta(data, automaton_type, optimize_for)
 
         pta_time = round(time.time() - pta_start, 2)
         if self.print_info:
@@ -123,8 +127,9 @@ class Alergia:
                     r.children_prob[io] = r.input_frequency[io] / outputs_per_input[io[0]]
 
     def get_blue_node(self, red_node):
+        if self.optimize_for == 'memory':
+            return red_node
         blue = self.t
-        e = red_node.getPrefix()
         for p in red_node.getPrefix():
             blue = blue.children[p]
         return blue
@@ -166,7 +171,7 @@ class Alergia:
         return a_c(initial_state, states)
 
 
-def run_Alergia(data, automaton_type, eps=0.005, compatibility_checker=None, print_info=False):
+def run_Alergia(data, automaton_type, eps=0.005, compatibility_checker=None, optimize_for='accuracy', print_info=False):
     """
     Run Alergia or IOAlergia on provided data.
 
@@ -183,6 +188,8 @@ def run_Alergia(data, automaton_type, eps=0.005, compatibility_checker=None, pri
                         if you want to learn Moore Machine (underlying structure is deterministic), or 'smm' if you
                         want to learn stochastic Mealy machine
 
+        optimize_for: either 'memory' or 'accuracy'. memory will use 50% less memory, but will be more inaccurate.
+
         compatibility_checker: impl. of class CompatibilityChecker, HoeffdingCompatibility with eps value by default
 
         (note: not interchangeable, depends on data)
@@ -193,7 +200,7 @@ def run_Alergia(data, automaton_type, eps=0.005, compatibility_checker=None, pri
         mdp or markov chain
     """
     assert automaton_type in {'mdp', 'mc', 'moore', 'smm'}
-    alergia = Alergia(data, eps=eps, automaton_type=automaton_type,
+    alergia = Alergia(data, eps=eps, automaton_type=automaton_type, optimize_for=optimize_for,
                       compatibility_checker=compatibility_checker, print_info=print_info)
     model = alergia.run()
     del alergia.a, alergia.t, alergia
