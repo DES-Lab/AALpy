@@ -56,16 +56,16 @@ class Alergia:
 
         to_update.children[q_b.prefix[-1]] = q_r
 
-        self.fold(q_r, t_q_b)
+        self.fold(q_r, q_b, t_q_b)
 
-    def fold(self, q_r, q_b):
-        for i, c in q_b.children.items():
+    def fold(self, q_r, q_b, t_q_b):
+        for i, c in t_q_b.children.items():
             if i in q_r.children.keys():
-                q_r.input_frequency[i] += q_b.input_frequency[i]
-                self.fold(q_r.children[i], c)
+                q_r.input_frequency[i] += t_q_b.input_frequency[i]
+                self.fold(q_r.children[i], q_b.children[i], c)
             else:
-                q_r.children[i] = c  # was c.copy()
-                q_r.input_frequency[i] = q_b.input_frequency[i]
+                q_r.children[i] = q_b.children[i]  # was c.copy()
+                q_r.input_frequency[i] = t_q_b.input_frequency[i]
 
     def run(self):
         start_time = time.time()
@@ -104,6 +104,7 @@ class Alergia:
         if self.print_info:
             print(f'Alergia Learning Time: {round(time.time() - start_time, 2)}')
             print(f'Alergia Learned {len(red)} state automaton.')
+
         return self.to_automaton(red)
 
     def normalize(self, red):
