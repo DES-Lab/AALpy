@@ -259,7 +259,7 @@ def run_JAlergia(path_to_data_file, automaton_type, path_to_jAlergia_jar, eps=0.
 
     optimize_for = optimize_for[:3]
 
-    subprocess.call(['java', heap_memory, '-jar', path_to_jAlergia_jar, '-path', abs_path, '-eps', str(eps), '-type',
+    subprocess.call(['java', heap_memory, '-jar', path_to_jAlergia_jar, '-input', abs_path, '-eps', str(eps), '-type',
                      automaton_type, '-optim', optimize_for])
 
     if not os.path.exists(save_file):
