@@ -49,12 +49,12 @@ class Alergia:
 
     def merge(self, q_r, q_b):
         t_q_b = self.get_blue_node(q_b)
-        prefix_leading_to_state = q_b.prefix[:-1]
+        b_prefix = q_b.getPrefix()
         to_update = self.a
-        for p in prefix_leading_to_state:
+        for p in b_prefix[:-1]:
             to_update = to_update.children[p]
 
-        to_update.children[q_b.prefix[-1]] = q_r
+        to_update.children[b_prefix[-1]] = q_r
 
         self.fold(q_r, q_b, t_q_b)
 
@@ -64,7 +64,7 @@ class Alergia:
                 q_r.input_frequency[i] += t_q_b.input_frequency[i]
                 self.fold(q_r.children[i], q_b.children[i], c)
             else:
-                q_r.children[i] = q_b.children[i]  # was c.copy()
+                q_r.children[i] = q_b.children[i]
                 q_r.input_frequency[i] = t_q_b.input_frequency[i]
 
     def run(self):
@@ -74,7 +74,7 @@ class Alergia:
         blue = self.a.succs()  # intermediate successors scheduled for testing
 
         while blue:
-            lex_min_blue = min(list(blue), key=lambda x: len(x.prefix))
+            lex_min_blue = min(list(blue), key=lambda x: len(x.getPrefix()))
             merged = False
 
             for q_r in red:
@@ -87,13 +87,13 @@ class Alergia:
                 insort(red, lex_min_blue)
 
             blue.clear()
-            prefixes_in_red = [s.prefix for s in red]
+            prefixes_in_red = [s.getPrefix() for s in red]
             for r in red:
                 for s in r.succs():
-                    if s.prefix not in prefixes_in_red:
+                    if s.getPrefix() not in prefixes_in_red:
                         blue.append(s)
 
-        assert sorted(red, key=lambda x: len(x.prefix)) == red
+        assert sorted(red, key=lambda x: len(x.getPrefix())) == red
 
         if self.automaton_type != 'moore':
             self.normalize(red)
@@ -108,7 +108,7 @@ class Alergia:
         return self.to_automaton(red)
 
     def normalize(self, red):
-        red_sorted = sorted(list(red), key=lambda x: len(x.prefix))
+        red_sorted = sorted(list(red), key=lambda x: len(x.getPrefix()))
         for r in red_sorted:
             r.children_prob = dict()  # Initializing in here saves many unnecessary initializations
             if self.automaton_type == 'mc':
@@ -124,7 +124,8 @@ class Alergia:
 
     def get_blue_node(self, red_node):
         blue = self.t
-        for p in red_node.prefix:
+        e = red_node.getPrefix()
+        for p in red_node.getPrefix():
             blue = blue.children[p]
         return blue
 
@@ -141,17 +142,17 @@ class Alergia:
             else:
                 automaton_state = s_c(s.state_id)
 
-            automaton_state.prefix = s.prefix
+            automaton_state.prefix = s.getPrefix()
             states.append(automaton_state)
-            red_mdp_map[tuple(s.prefix)] = automaton_state
+            red_mdp_map[tuple(s.getPrefix())] = automaton_state
             red_mdp_map[automaton_state.state_id] = s
-            if not s.prefix:
+            if not s.getPrefix():
                 initial_state = automaton_state
 
         for s in states:
             red_eq = red_mdp_map[s.state_id]
             for io, c in red_eq.children.items():
-                destination = red_mdp_map[tuple(c.prefix)]
+                destination = red_mdp_map[tuple(c.getPrefix())]
                 i = io if self.automaton_type == 'mc' else io[0]
                 if self.automaton_type == 'mdp':
                     s.transitions[i].append((destination, red_eq.children_prob[io]))

@@ -2,28 +2,36 @@ from collections import defaultdict
 
 
 class AlergiaPtaNode:
-    __slots__ = ['output', 'input_frequency', 'children', 'prefix', 'state_id', 'children_prob']
+    __slots__ = ['output', 'input_frequency', 'children', 'parent_io', 'state_id', 'children_prob']
 
     def __init__(self, output):
         self.output = output
         self.input_frequency = defaultdict(int)
         self.children = dict()
-        self.prefix = ()
+        self.parent_io = None
         # # for visualization
         self.state_id = None
         self.children_prob = None
+
+    def getPrefix(self):
+        prefix = ()
+        curr_node = self
+        while curr_node.parent_io is not None:
+            prefix = (curr_node.parent_io[1],) + prefix
+            curr_node = curr_node.parent_io[0]
+        return prefix
 
     def succs(self):
         return list(self.children.values())
 
     def __lt__(self, other):
-        return len(self.prefix) < len(other.prefix)
+        return len(self.getPrefix()) < len(other.getPrefix())
 
     def __le__(self, other):
-        return len(self.prefix) <= len(other.prefix)
+        return len(self.getPrefix()) <= len(other.getPrefix())
 
     def __eq__(self, other):
-        return self.prefix == other.prefix
+        return self.getPrefix() == other.getPrefix()
 
 
 def create_fpta(data, automaton_type):
@@ -36,6 +44,7 @@ def create_fpta(data, automaton_type):
     else:
         root_node, root_copy = AlergiaPtaNode(None), AlergiaPtaNode(None)
 
+    root_node.parent_io, root_copy.parent_io = None, None
     for seq in data:
         if not_smm and seq[0] != root_node.output:
             print('All strings should have the same initial output')
@@ -50,9 +59,7 @@ def create_fpta(data, automaton_type):
                 else:
                     node, node_copy = AlergiaPtaNode(None), AlergiaPtaNode(None)
 
-                node.prefix = tuple(curr_node.prefix)
-                node.prefix += (el,)
-                node_copy.prefix = node.prefix
+                node.parent_io, node_copy.parent_io = (curr_node, el), (curr_copy, el)
 
                 curr_node.children[el] = node
                 curr_copy.children[el] = node_copy
