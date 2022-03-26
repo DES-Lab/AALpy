@@ -50,7 +50,8 @@ is mostly based on Angluin's [L* algorithm](https://people.eecs.berkeley.edu/~da
 selection of optimizations, including **efficient counterexample processing** and **caching**.
 
 AALpy also has an efficient implementation of the [ALERGIA](https://link.springer.com/article/10.1007/s10994-016-5565-9) algorithm, 
-suited for passive learning of Markov Chains and Markov Decision processes. With ALERGIA, one can also passively learn deterministic Moore machines.
+suited for passive learning of Markov Chains, Markov Decision processes, and Stochastic Mealy Machines.
+AALpy also act as a frontend to [jAlergia](https://github.com/emuskardin/jAlergia), a Java twin of AALpy's ALERGIA code.
  
 ## Installation
 
