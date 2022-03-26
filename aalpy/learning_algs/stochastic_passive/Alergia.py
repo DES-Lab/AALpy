@@ -20,7 +20,6 @@ class Alergia:
         self.automaton_type = automaton_type
         self.print_info = print_info
         self.optimize_for = optimize_for
-        print(self.optimize_for)
 
         if eps == 'auto':
             eps = 10 / sum(len(d) - 1 for d in data)  # len - 1 to ignore initial output
