@@ -1,9 +1,6 @@
-from aalpy.automata import StochasticMealyMachine, StochasticMealyState, Mdp, MdpState, Onfsm, OnfsmState
-
-from aalpy.utils.AutomatonGenerators import dfa_from_state_setup
-
-
 def get_Angluin_dfa():
+    from aalpy.utils.AutomatonGenerators import dfa_from_state_setup
+
     anguin_dfa = {
         'q0': (True, {'a': 'q1', 'b': 'q2'}),
         'q1': (False, {'a': 'q0', 'b': 'q3'}),
@@ -19,6 +16,8 @@ def get_benchmark_ONFSM():
     Returns ONFSM presented in 'Learning Finite State Models of Observable Nondeterministic Systems in a Testing
     Context'.
     """
+    from aalpy.automata import Onfsm, OnfsmState
+
     a = OnfsmState('a')
     b = OnfsmState('b')
     c = OnfsmState('c')
@@ -45,6 +44,8 @@ def get_ONFSM():
     """
     Returns example of an ONFSM.
     """
+    from aalpy.automata import Onfsm, OnfsmState
+
     q0 = OnfsmState('q0')
     q1 = OnfsmState('q1')
     q2 = OnfsmState('q2')
@@ -86,6 +87,8 @@ def get_ONFSM():
 
 
 def get_faulty_coffee_machine_MDP():
+    from aalpy.automata import Mdp, MdpState
+
     q0 = MdpState("q0", "init")
     q1 = MdpState("q1", "beep")
     q2 = MdpState("q2", "coffee")
@@ -104,6 +107,8 @@ def get_faulty_coffee_machine_MDP():
 
 
 def get_weird_coffee_machine_MDP():
+    from aalpy.automata import Mdp, MdpState
+
     q0 = MdpState("q0", "init")
     q1 = MdpState("q1", "beep")
     q2 = MdpState("q2", "coffee")
@@ -150,6 +155,8 @@ def get_weird_coffee_machine_MDP():
 
 
 def get_faulty_coffee_machine_SMM():
+    from aalpy.automata import StochasticMealyMachine, StochasticMealyState
+
     s0 = StochasticMealyState('s0')
     s1 = StochasticMealyState('s1')
     s2 = StochasticMealyState('s2')
@@ -168,6 +175,8 @@ def get_faulty_coffee_machine_SMM():
 
 
 def get_minimal_faulty_coffee_machine_SMM():
+    from aalpy.automata import StochasticMealyMachine, StochasticMealyState
+
     s0 = StochasticMealyState('s0')
     s1 = StochasticMealyState('s1')
 
@@ -183,6 +192,8 @@ def get_minimal_faulty_coffee_machine_SMM():
 
 
 def get_faulty_mqtt_SMM():
+    from aalpy.automata import StochasticMealyMachine, StochasticMealyState
+
     s0 = StochasticMealyState('s0')
     s1 = StochasticMealyState('s1')
     s2 = StochasticMealyState('s2')
@@ -213,6 +224,8 @@ def get_faulty_mqtt_SMM():
 
 
 def get_small_gridworld():
+    from aalpy.automata import StochasticMealyMachine, StochasticMealyState
+
     s0 = StochasticMealyState('s0')
     s1 = StochasticMealyState('s1')
     s2 = StochasticMealyState('s2')
@@ -346,6 +359,8 @@ class DateValidator:
 
 
 def get_small_pomdp():
+    from aalpy.automata import Mdp, MdpState
+
     q0 = MdpState("q0", "init")
     q1 = MdpState("q1", "beep")
     q2 = MdpState("q2", "beep")
