@@ -105,7 +105,7 @@ def save_automaton_to_file(automaton, path="LearnedModel", file_type='dot',
                     if not display_same_state_trans and s[0].state_id == state.state_id:
                         continue
                     prob = round(s[1], round_floats) if round_floats else s[1]
-                    graph.add_edge(Edge(state.state_id, s[0].state_id, label=f'{i}:{prob}'))
+                    graph.add_edge(Edge(state.state_id, s[0].state_id, label=f'"{i}:{prob}"'))
             elif is_onsfm:
                 new_state = state.transitions[i]
                 for s in new_state:
