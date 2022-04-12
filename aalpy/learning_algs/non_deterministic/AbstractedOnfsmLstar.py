@@ -3,14 +3,13 @@ import time
 from aalpy.base import SUL, Oracle
 from aalpy.learning_algs.non_deterministic.AbstractedOnfsmObservationTable import AbstractedNonDetObservationTable
 from aalpy.learning_algs.non_deterministic.TraceTree import SULWrapper
-from aalpy.utils.HelperFunctions import print_learning_info, print_observation_table, get_available_oracles_and_err_msg
+from aalpy.utils.HelperFunctions import print_learning_info, print_observation_table
 
 print_options = [0, 1, 2, 3]
-available_oracles, available_oracles_error_msg = get_available_oracles_and_err_msg()
 
 
 def run_abstracted_ONFSM_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, abstraction_mapping: dict, n_sampling=100,
-                               max_learning_rounds=None, custom_oracle=False, return_data=False, print_level=2):
+                               max_learning_rounds=None, return_data=False, print_level=2, trace_tree=False):
     """
     Based on ''Learning Abstracted Non-deterministic Finite State Machines'' from Pferscher and Aichernig.
     The algorithm learns an abstracted onfsm of a non-deterministic system. For the additional abstraction,
@@ -35,8 +34,6 @@ def run_abstracted_ONFSM_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, abst
 
         max_learning_rounds: if max_learning_rounds is reached, learning will stop (Default value = None)
 
-        custom_oracle: if True, warning about oracle type will be removed and custom oracle can be used
-
         return_data: if True, map containing all information like number of queries... will be returned
             (Default value = False)
 
@@ -47,9 +44,6 @@ def run_abstracted_ONFSM_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, abst
         learned abstracted ONFSM
 
     """
-    if not custom_oracle and type(eq_oracle) not in available_oracles:
-        raise SystemExit(available_oracles_error_msg)
-
     start_time = time.time()
     eq_query_time = 0
     learning_rounds = 0
@@ -58,7 +52,7 @@ def run_abstracted_ONFSM_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, abst
     sul = SULWrapper(sul)
     eq_oracle.sul = sul
 
-    abstracted_observation_table = AbstractedNonDetObservationTable(alphabet, sul, abstraction_mapping, n_sampling)
+    abstracted_observation_table = AbstractedNonDetObservationTable(alphabet, sul, abstraction_mapping, n_sampling, trace_tree=trace_tree)
 
     # We fist query the initial row. Then based on output in its cells, we generate new rows in S.A,
     # and then we perform membership/input queries for them.
@@ -99,6 +93,7 @@ def run_abstracted_ONFSM_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, abst
                 abstracted_observation_table.update_obs_table(e_set=extended_col)
                 e_column_for_consistency = abstracted_observation_table.get_row_to_make_consistent()
 
+        abstracted_observation_table.clean_tables()
         hypothesis = abstracted_observation_table.gen_hypothesis()
 
         if print_level == 3:
