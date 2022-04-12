@@ -117,7 +117,12 @@ def print_observation_table(ot, table_type):
     if table_type == 'det':
         s_set, extended_s, e_set, table = ot.S, ot.s_dot_a(), ot.E, ot.T
     elif table_type == 'non-det':
-        s_set, extended_s, e_set, table = ot.S, ot.S_dot_A, ot.E, ot.T
+        if ot.trace_tree_flag:
+            s_set, extended_s, e_set = ot.S, ot.S_dot_A, ot.E
+            table = ot.sul.pta.get_table(s_set + extended_s, e_set)
+        else:
+            s_set, extended_s, e_set, table = ot.S, ot.S_dot_A, ot.E, ot.T
+
     else:
         s_set, extended_s, e_set, table = ot.S, ot.get_extended_s(), ot.E, ot.T
 
@@ -158,6 +163,7 @@ def print_observation_table(ot, table_type):
         print("-" * len(row))
         print(row)
     print('-' * row_len)
+
 
 
 def is_suffix_of(suffix, trace) -> bool:

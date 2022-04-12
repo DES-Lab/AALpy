@@ -3,15 +3,13 @@ import time
 from aalpy.base import SUL, Oracle
 from aalpy.learning_algs.non_deterministic.OnfsmObservationTable import NonDetObservationTable
 from aalpy.learning_algs.non_deterministic.TraceTree import SULWrapper
-from aalpy.utils.HelperFunctions import extend_set, print_learning_info, print_observation_table, \
-    get_available_oracles_and_err_msg
+from aalpy.utils.HelperFunctions import extend_set, print_learning_info, print_observation_table
 
 print_options = [0, 1, 2, 3]
-available_oracles, available_oracles_error_msg = get_available_oracles_and_err_msg()
 
 
 def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=50,
-                      max_learning_rounds=None, custom_oracle=False, return_data=False, print_level=2):
+                      max_learning_rounds=None, return_data=False, print_level=2, trace_tree=False):
     """
     Based on ''Learning Finite State Models of Observable Nondeterministic Systems in a Testing Context '' from Fakih
     et al. Relies on the all-weather assumption. (By sampling we will obtain all possible non-deterministic outputs.
@@ -33,8 +31,6 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=50
 
         max_learning_rounds: if max_learning_rounds is reached, learning will stop (Default value = None)
 
-        custom_oracle: if True, warning about oracle type will be removed and custom oracle can be used
-
         return_data: if True, map containing all information like number of queries... will be returned
             (Default value = False)
 
@@ -46,9 +42,6 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=50
 
     """
     # Print warning
-    if not custom_oracle and type(eq_oracle) not in available_oracles:
-        raise SystemExit(available_oracles_error_msg)
-
     print('Starting learning with an all-weather assumption.\n'
           'See run_Lstar_ONFSM documentation for more details about possible non-convergence.')
 
@@ -60,7 +53,8 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=50
     sul = SULWrapper(sul)
     eq_oracle.sul = sul
 
-    observation_table = NonDetObservationTable(alphabet, sul, n_sampling)
+    # setting test_cells_again=TRUE seems to work better for larger onfsm and worse for smaller onfsm
+    observation_table = NonDetObservationTable(alphabet, sul, n_sampling, trace_tree, test_cells_again=False)
 
     # We fist query the initial row. Then based on output in its cells, we generate new rows in the extended S set,
     # and then we perform membership/input queries for them.
@@ -83,8 +77,14 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=50
             observation_table.update_obs_table(s_set=extended_rows)
             row_to_close = observation_table.get_row_to_close()
 
+        observation_table.clean_obs_table()
+
         # Generate hypothesis
         hypothesis = observation_table.gen_hypothesis()
+
+        # this could be removed if the using the else instead of the if in gen_hypothesis() but would perform worse
+        #while observation_table.clean_obs_table():
+        #    hypothesis = observation_table.gen_hypothesis()
 
         if print_level > 1:
             print(f'Hypothesis {learning_rounds}: {len(hypothesis.states)} states.')
@@ -108,7 +108,9 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=50
         cex_suffixes = observation_table.cex_processing(cex)
         # Add all suffixes to the E set and ask membership/input queries.
         added_suffixes = extend_set(observation_table.E, cex_suffixes)
+        print("added_suffixes ", added_suffixes)
         observation_table.update_obs_table(e_set=added_suffixes)
+
 
     total_time = round(time.time() - start_time, 2)
     eq_query_time = round(eq_query_time, 2)
@@ -125,6 +127,8 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=50
         'eq_oracle_time': eq_query_time,
         'total_time': total_time
     }
+
+    # sul.pta.print_trace_tree()
 
     if print_level > 0:
         print_learning_info(info)

@@ -7,7 +7,7 @@ from aalpy.utils.HelperFunctions import all_suffixes
 
 class NonDetObservationTable:
 
-    def __init__(self, alphabet: list, sul: SUL, n_sampling=100):
+    def __init__(self, alphabet: list, sul: SUL, n_sampling=100, trace_tree=False, test_cells_again=False):
         """
         Construction of the non-deterministic observation table.
 
@@ -23,9 +23,13 @@ class NonDetObservationTable:
         self.S = list()  # prefixes of S
         self.S_dot_A = []
         self.E = [tuple([a]) for a in alphabet]
-        self.T = defaultdict(dict)
-        self.n_samples = n_sampling
+        if not trace_tree:
+            self.T = defaultdict(dict)
 
+        self.n_samples = n_sampling
+        self.test_cells_again = test_cells_again
+
+        self.trace_tree_flag = trace_tree
         self.sul = sul
         empty_word = tuple()
 
@@ -33,6 +37,7 @@ class NonDetObservationTable:
         # Systems in a Testing Context'. Each element of S is a (inputs, outputs) tuple, where first element of the
         # tuple are inputs and second element of the tuple are outputs associated with inputs.
         self.S.append((empty_word, empty_word))
+
 
     def get_row_to_close(self):
         """
@@ -43,10 +48,12 @@ class NonDetObservationTable:
             row that will be moved to S set and closed
         """
         s_rows = set()
-        for s in self.S:
+        update_S_dot_A = self.S_dot_A.copy()
+
+        for s in self.S.copy():
             s_rows.add(self.row_to_hashable(s))
 
-        for t in self.S_dot_A:
+        for t in update_S_dot_A:
             row_t = self.row_to_hashable(t)
 
             if row_t not in s_rows:
@@ -55,6 +62,7 @@ class NonDetObservationTable:
                 return t
 
         return None
+
 
     def update_extended_S(self, row):
         """
@@ -66,16 +74,29 @@ class NonDetObservationTable:
 
             New rows of extended S set.
         """
-        s_set = set(self.S)
+        s_set = set(self.S + self.S_dot_A) # self.S should be enough. not both needed
         extension = []
-        for a in self.A:
-            for t in self.T[row][a]:
-                new_row = (row[0] + a, row[1] + tuple([t]))
-                if new_row not in s_set:
-                    extension.append(new_row)
+
+        if self.trace_tree_flag:
+            curr_node = self.sul.pta.get_to_node(row[0], row[1])
+
+            for a in self.A:
+                trace = self.sul.pta.get_single_trace(curr_node, a)
+                for t in trace:
+                    new_row = (row[0] + a, row[1] + tuple(t))
+                    if new_row not in s_set:
+                        extension.append(new_row)
+
+        else:
+            for a in self.A:
+                for t in self.T[row][a]:
+                    new_row = (row[0] + a, row[1] + tuple([t]))
+                    if new_row not in s_set:
+                        extension.append(new_row)
 
         self.S_dot_A.extend(extension)
         return extension
+
 
     def update_obs_table(self, s_set=None, e_set: list = None):
         """
@@ -84,28 +105,90 @@ class NonDetObservationTable:
         and  the  driver  reports  the  set  of  all  possible  outputs.
 
         Args:
-
             s_set: Prefixes of S set on which to preform membership queries (Default value = None)
             e_set: Suffixes of E set on which to perform membership queries
-
-
         """
 
         update_S = s_set if s_set else self.S + self.S_dot_A
-        update_E = e_set if e_set else self.E
+        update_E = e_set if e_set else self.E.copy()
 
-        for s in update_S:
-            for e in update_E:
-                if e not in self.T[s].keys():
-                    num_s_e_sampled = 0
-                    while num_s_e_sampled < self.n_samples:
-                        output = tuple(self.sul.query(s[0] + e))
-                        # Here I basically say... add just the last element of the output if it e is element of alphabet
-                        # else add last len(e) outputs
-                        o = output[-1] if len(e) == 1 else tuple(output[-len(e):])
-                        self.add_to_T((s[0], output[:len(s[1])]), e, o)
-                        if output[:len(s[1])] == s[1]:
-                            num_s_e_sampled += 1
+        if self.trace_tree_flag:
+            for s in update_S:
+                curr_node = self.sul.pta.get_to_node(s[0], s[1])
+                assert curr_node
+
+                for e in update_E:
+                    traces_of_e = self.sul.pta.get_single_trace(curr_node, e)
+                    if not traces_of_e or self.test_cells_again:
+                        num_s_e_sampled = 0
+                        while num_s_e_sampled < self.n_samples:
+                            output = tuple(self.sul.query(s[0] + e))
+
+                            if output[:len(s[1])] == s[1]:
+                                num_s_e_sampled += 1
+
+        else:
+            for s in update_S:
+                for e in update_E:
+                    if e not in self.T[s].keys() or self.test_cells_again:
+                        num_s_e_sampled = 0
+                        while num_s_e_sampled < self.n_samples:
+                            output = tuple(self.sul.query(s[0] + e))
+                            # Here I basically say... add just the last element of the output if it e is element of alphabet
+                            # else add last len(e) outputs
+                            o = output[-1] if len(e) == 1 else tuple(output[-len(e):])
+                            self.add_to_T((s[0], output[:len(s[1])]), e, o)
+
+                            if output[:len(s[1])] == s[1]:
+                                num_s_e_sampled += 1
+
+
+    def clean_obs_table(self):
+        """
+        Moves duplicates from S to S_dot_A. The entries in S_dot_A which are based on the moved row get deleted.
+        The table will be smaller and more efficient.
+
+        Returns:
+            A Boolean indicating whether cleaning was necessary or not
+        """
+        # just for testing without cleaning
+        #return False
+
+        tmp_S = self.S.copy()
+        tmp_both_S = self.S + self.S_dot_A
+        hashed_rows_from_s = set()
+        change_flag = False
+
+        tmp_S.sort()
+        tmp_S.sort(key=lambda t: len(t[0]))
+
+        for s in tmp_S:
+            hashed_s_row = self.row_to_hashable(s)
+            if hashed_s_row in hashed_rows_from_s:
+                change_flag = True
+                size = len(s[0])
+                for key in tmp_both_S:
+                    s_both_row = (key[0][:size], key[1][:size])
+                    if s != key and s == s_both_row:
+                        if key in self.S_dot_A:
+                            self.S_dot_A.remove(key)
+                        if key in self.S:
+                            self.S.remove(key)
+
+                if s in self.S:
+                    self.S_dot_A.append(s)
+                    self.S.remove(s)
+
+            else:
+                hashed_rows_from_s.add(hashed_s_row)
+
+        # this sort is just for the representation in the printed table
+        #self.S.sort()
+        #self.S.sort(key=lambda t: len(t[0]))
+
+        return change_flag
+
+
 
     def gen_hypothesis(self) -> Automaton:
         """
@@ -121,7 +204,7 @@ class NonDetObservationTable:
         initial = None
 
         stateCounter = 0
-        for prefix in self.S:
+        for prefix in self.S.copy():
             state_id = f's{stateCounter}'
             states_dict[prefix] = OnfsmState(state_id)
 
@@ -132,12 +215,39 @@ class NonDetObservationTable:
                 initial = states_dict[prefix]
             stateCounter += 1
 
-        for prefix in self.S:
-            for a in self.A:
-                for t in self.T[prefix][a]:
-                    state_in_S = state_distinguish[self.row_to_hashable((prefix[0] + a, prefix[1] + tuple([t])))]
-                    assert state_in_S
-                    states_dict[prefix].transitions[a[0]].append((t, state_in_S))
+        if self.trace_tree_flag:
+            for prefix in self.S.copy():
+                curr_node = self.sul.pta.get_to_node(prefix[0], prefix[1])
+                for a in self.A:
+                    trace = self.sul.pta.get_single_trace(curr_node, a)
+                    for t in trace:
+                        '''
+                        if t and not (self.row_to_hashable((prefix[0] + a, prefix[1] + tuple(t))) in state_distinguish.keys()):
+                            for e in self.E.copy():
+                                samples = 0
+                                while samples < 25:
+                                    output = tuple(self.sul.query(prefix[0] + a + e))
+                                    if output[:len(prefix[1] + tuple(t))] == prefix[1] + tuple(t):
+                                        samples += 1
+                        '''
+
+                        if t and self.row_to_hashable((prefix[0] + a, prefix[1] + tuple(t))) in state_distinguish.keys():
+                            state_in_S = state_distinguish[self.row_to_hashable((prefix[0] + a, prefix[1] + tuple(t)))]
+                            assert state_in_S   # shouldn't be necessary because of the if condition
+                            states_dict[prefix].transitions[a[0]].append((t[0], state_in_S))
+
+                        # This could probably be used instead of first if, but results in worse performance
+                        else:
+                            states_dict[prefix].transitions[a[0]].append((t[0], initial))
+
+        else:
+            for prefix in self.S:
+                for a in self.A:
+                    for t in self.T[prefix][a]:
+                        if self.row_to_hashable((prefix[0] + a, prefix[1] + tuple([t]))) in state_distinguish.keys():
+                            state_in_S = state_distinguish[self.row_to_hashable((prefix[0] + a, prefix[1] + tuple([t])))]
+                            assert state_in_S
+                            states_dict[prefix].transitions[a[0]].append((t, state_in_S))
 
         assert initial
         automaton = Onfsm(initial, [s for s in states_dict.values()])
@@ -160,9 +270,18 @@ class NonDetObservationTable:
 
         """
         row_repr = tuple()
+        curr_node = self.sul.pta.get_to_node(row_prefix[0], row_prefix[1])
+
         for e in self.E:
-            #if e in self.T[row_prefix].keys():
-            row_repr += (frozenset(self.T[row_prefix][e]),)
+            cell = self.sul.pta.get_single_trace(curr_node, e)
+
+            while not cell:
+                output = tuple(self.sul.query(row_prefix[0] + e))
+                if output[:len(row_prefix[1])] == row_prefix[1]:
+                    cell = self.sul.pta.get_single_trace(curr_node, e)
+
+            row_repr += (frozenset(cell),)
+
         return row_repr
 
     def add_to_T(self, s, e, value):
@@ -177,6 +296,7 @@ class NonDetObservationTable:
 
 
         """
+
         if e not in self.T[s]:
             self.T[s][e] = set()
         self.T[s][e].add(value)

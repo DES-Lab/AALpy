@@ -7,7 +7,7 @@ from aalpy.utils.HelperFunctions import extend_set
 
 
 class AbstractedNonDetObservationTable:
-    def __init__(self, alphabet: list, sul: SUL, abstraction_mapping: dict, n_sampling=100):
+    def __init__(self, alphabet: list, sul: SUL, abstraction_mapping: dict, n_sampling=100, trace_tree_flag=False, trace_tree=False):
         """
         Construction of the abstracted non-deterministic observation table.
 
@@ -21,13 +21,14 @@ class AbstractedNonDetObservationTable:
 
         assert alphabet is not None and sul is not None
 
-        self.observation_table = NonDetObservationTable(alphabet, sul, n_sampling)
+        self.observation_table = NonDetObservationTable(alphabet, sul, n_sampling, trace_tree=trace_tree_flag)
 
         self.S = list()
         self.S_dot_A = []
         self.E = []
         self.T = defaultdict(dict)
         self.A = [tuple([a]) for a in alphabet]
+        self.trace_tree_flag = trace_tree_flag
 
         self.abstraction_mapping = abstraction_mapping
 
@@ -375,3 +376,35 @@ class AbstractedNonDetObservationTable:
             cex_suffixes = self.observation_table.cex_processing(cex)
             added_suffixes = extend_set(self.observation_table.E, cex_suffixes)
             self.update_obs_table(e_set=added_suffixes)
+
+
+    def clean_tables(self):
+        if not self.trace_tree_flag:
+            return
+
+        self.observation_table.clean_obs_table()
+        self.abstract_obs_table()
+
+        update_S = self.S.copy()
+        whole_S= self.S + self.S_dot_A
+
+        update_S.sort()
+        update_S.sort(key=lambda t: len(t[0]))
+
+        s_rows = set()
+        for s in update_S:
+            hashed_s_row = self.row_to_hashable(s)
+            if hashed_s_row not in s_rows:
+                s_rows.add(hashed_s_row)
+            else:
+                size = len(s[0])
+                for row in whole_S:
+                    cmp_row = (row[0][:size], row[1][:size])
+                    if s == cmp_row:
+                        if row in self.S_dot_A:
+                            self.S_dot_A.remove(row)
+                        elif row in self.S:
+                            self.S.remove(row)
+
+                self.S_dot_A.append(s)
+                self.S.remove(s)
