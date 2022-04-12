@@ -165,7 +165,7 @@ def random_onfsm_example(num_states, input_size, output_size, n_sampling):
     eq_oracle = RandomWordEqOracle(alphabet, sul, num_walks=500, min_walk_len=10, max_walk_len=50)
     eq_oracle = RandomWalkEqOracle(alphabet, sul, num_steps=5000, reset_prob=0.15, reset_after_cex=True)
 
-    learned_model = run_non_det_Lstar(alphabet, sul, eq_oracle=eq_oracle, n_sampling=n_sampling)
+    learned_model = run_non_det_Lstar(alphabet, sul, eq_oracle=eq_oracle, n_sampling=n_sampling, print_level=3)
     return learned_model
 
 

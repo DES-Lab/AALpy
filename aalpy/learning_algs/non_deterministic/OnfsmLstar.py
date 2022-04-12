@@ -3,20 +3,21 @@ import time
 from aalpy.base import SUL, Oracle
 from aalpy.learning_algs.non_deterministic.OnfsmObservationTable import NonDetObservationTable
 from aalpy.learning_algs.non_deterministic.TraceTree import SULWrapper
-from aalpy.utils.HelperFunctions import extend_set, print_learning_info, print_observation_table
+from aalpy.utils.HelperFunctions import extend_set, print_learning_info, print_observation_table, \
+    get_available_oracles_and_err_msg
 
 print_options = [0, 1, 2, 3]
 
+available_oracles, available_oracles_error_msg = get_available_oracles_and_err_msg()
 
-def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=50,
-                      max_learning_rounds=None, return_data=False, print_level=2, trace_tree=False):
+
+def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=20, trace_tree=True,
+                      max_learning_rounds=None, custom_oracle=False, return_data=False, print_level=2,
+                      ):
     """
     Based on ''Learning Finite State Models of Observable Nondeterministic Systems in a Testing Context '' from Fakih
     et al. Relies on the all-weather assumption. (By sampling we will obtain all possible non-deterministic outputs.
-    Learning ONFSM relies on all-weather assumption. If this assumption is not satisfied by sampling,
-    learning might not converge to the minimal model and runtime could increase substantially.
-    Note that this is the inherent flaw of the all-weather assumption. (All outputs will be seen)
-    AALpy v.2.0 will try to solve that problem with a novel approach.
+    With table-shrinking we mitigate the undesired consequences of the all-weather assumption.
 
     Args:
 
@@ -29,7 +30,12 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=50
         n_sampling: number of times that each cell has to be updated. If this number is to low, all-weather condition
             will not hold and learning will not converge to the correct model. (Default value = 50)
 
+        trace_tree: removes limitation of all-weather assumption by dynamically keeping the observation table updated
+                    with respect to observations
+
         max_learning_rounds: if max_learning_rounds is reached, learning will stop (Default value = None)
+
+        custom_oracle: if True, warning about oracle type will be removed and custom oracle can be used
 
         return_data: if True, map containing all information like number of queries... will be returned
             (Default value = False)
@@ -41,9 +47,11 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=50
         learned ONFSM
 
     """
-    # Print warning
     print('Starting learning with an all-weather assumption.\n'
           'See run_Lstar_ONFSM documentation for more details about possible non-convergence.')
+
+    if not custom_oracle and type(eq_oracle) not in available_oracles:
+        raise SystemExit(available_oracles_error_msg)
 
     start_time = time.time()
     eq_query_time = 0
@@ -82,10 +90,6 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=50
         # Generate hypothesis
         hypothesis = observation_table.gen_hypothesis()
 
-        # this could be removed if the using the else instead of the if in gen_hypothesis() but would perform worse
-        #while observation_table.clean_obs_table():
-        #    hypothesis = observation_table.gen_hypothesis()
-
         if print_level > 1:
             print(f'Hypothesis {learning_rounds}: {len(hypothesis.states)} states.')
 
@@ -108,9 +112,7 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=50
         cex_suffixes = observation_table.cex_processing(cex)
         # Add all suffixes to the E set and ask membership/input queries.
         added_suffixes = extend_set(observation_table.E, cex_suffixes)
-        print("added_suffixes ", added_suffixes)
         observation_table.update_obs_table(e_set=added_suffixes)
-
 
     total_time = round(time.time() - start_time, 2)
     eq_query_time = round(eq_query_time, 2)
@@ -127,8 +129,6 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=50
         'eq_oracle_time': eq_query_time,
         'total_time': total_time
     }
-
-    # sul.pta.print_trace_tree()
 
     if print_level > 0:
         print_learning_info(info)

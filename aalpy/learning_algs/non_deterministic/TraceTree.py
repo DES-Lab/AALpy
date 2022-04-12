@@ -7,6 +7,7 @@ class SULWrapper(SUL):
     """
     Wrapper for non-deterministic SUL. After every step, input/output pair is added to the tree containing all traces.
     """
+
     def __init__(self, sul: SUL):
         super().__init__()
         self.sul = sul
@@ -37,6 +38,7 @@ class SULWrapper(SUL):
 
 class Node:
     """ """
+
     def __init__(self, output):
         self.output = output
         self.children = defaultdict(list)
@@ -55,6 +57,7 @@ class Node:
 
 class TraceTree:
     """ """
+
     def __init__(self):
         self.root_node = Node(None)
         self.curr_node = None
@@ -73,12 +76,12 @@ class TraceTree:
 
         Returns:
         """
-        if inp not in self.curr_node.children.keys() or out not in [child.output for child in self.curr_node.children[inp]]:
+        if inp not in self.curr_node.children.keys() or out not in [child.output for child in
+                                                                    self.curr_node.children[inp]]:
             node = Node(out)
             self.curr_node.children[inp].append(node)
         # This was in an else statement. But that seems wrong.
         self.curr_node = self.curr_node.get_child(inp, out)
-
 
     def get_to_node(self, inp, out):
         """
@@ -99,7 +102,6 @@ class TraceTree:
             curr_node = node
 
         return curr_node
-
 
     def get_single_trace(self, curr_node=None, e=None):
         """
@@ -144,7 +146,6 @@ class TraceTree:
 
         return result
 
-
     def get_table(self, s, e):
         """
         Generates a table from the tree
@@ -165,7 +166,6 @@ class TraceTree:
                 result[pair][inp] = self.get_single_trace(curr_node, inp)
 
         return result
-
 
     def print_trace_tree(self, curr=None, depth=0, curr_str=""):
         """
@@ -211,4 +211,3 @@ class TraceTree:
                     curr_str = ''.join(curr_str) + " |  "
 
                 self.print_trace_tree(curr.children[node][c], depth + 1, curr_str)
-

@@ -1,13 +1,14 @@
 from collections import defaultdict
 
 from aalpy.automata import Onfsm, OnfsmState
-from aalpy.base import Automaton, SUL
+from aalpy.base import Automaton
+from aalpy.learning_algs.non_deterministic.TraceTree import SULWrapper
 from aalpy.utils.HelperFunctions import all_suffixes
 
 
 class NonDetObservationTable:
 
-    def __init__(self, alphabet: list, sul: SUL, n_sampling=100, trace_tree=False, test_cells_again=False):
+    def __init__(self, alphabet: list, sul: SULWrapper, n_sampling=100, trace_tree=False, test_cells_again=False):
         """
         Construction of the non-deterministic observation table.
 
@@ -38,7 +39,6 @@ class NonDetObservationTable:
         # tuple are inputs and second element of the tuple are outputs associated with inputs.
         self.S.append((empty_word, empty_word))
 
-
     def get_row_to_close(self):
         """
         Get row for that need to be closed.
@@ -63,7 +63,6 @@ class NonDetObservationTable:
 
         return None
 
-
     def update_extended_S(self, row):
         """
         Helper generator function that returns extended S, or S.A set.
@@ -74,7 +73,7 @@ class NonDetObservationTable:
 
             New rows of extended S set.
         """
-        s_set = set(self.S + self.S_dot_A) # self.S should be enough. not both needed
+        s_set = set(self.S + self.S_dot_A)  # self.S should be enough. not both needed
         extension = []
 
         if self.trace_tree_flag:
@@ -96,7 +95,6 @@ class NonDetObservationTable:
 
         self.S_dot_A.extend(extension)
         return extension
-
 
     def update_obs_table(self, s_set=None, e_set: list = None):
         """
@@ -134,7 +132,8 @@ class NonDetObservationTable:
                         num_s_e_sampled = 0
                         while num_s_e_sampled < self.n_samples:
                             output = tuple(self.sul.query(s[0] + e))
-                            # Here I basically say... add just the last element of the output if it e is element of alphabet
+                            # Here I basically say...
+                            # add just the last element of the output if it e is element of alphabet
                             # else add last len(e) outputs
                             o = output[-1] if len(e) == 1 else tuple(output[-len(e):])
                             self.add_to_T((s[0], output[:len(s[1])]), e, o)
@@ -142,17 +141,17 @@ class NonDetObservationTable:
                             if output[:len(s[1])] == s[1]:
                                 num_s_e_sampled += 1
 
-
     def clean_obs_table(self):
         """
         Moves duplicates from S to S_dot_A. The entries in S_dot_A which are based on the moved row get deleted.
         The table will be smaller and more efficient.
 
         Returns:
+
             A Boolean indicating whether cleaning was necessary or not
         """
         # just for testing without cleaning
-        #return False
+        # return False
 
         tmp_S = self.S.copy()
         tmp_both_S = self.S + self.S_dot_A
@@ -183,12 +182,10 @@ class NonDetObservationTable:
                 hashed_rows_from_s.add(hashed_s_row)
 
         # this sort is just for the representation in the printed table
-        #self.S.sort()
-        #self.S.sort(key=lambda t: len(t[0]))
+        # self.S.sort()
+        # self.S.sort(key=lambda t: len(t[0]))
 
         return change_flag
-
-
 
     def gen_hypothesis(self) -> Automaton:
         """
@@ -231,9 +228,10 @@ class NonDetObservationTable:
                                         samples += 1
                         '''
 
-                        if t and self.row_to_hashable((prefix[0] + a, prefix[1] + tuple(t))) in state_distinguish.keys():
+                        if t and self.row_to_hashable(
+                                (prefix[0] + a, prefix[1] + tuple(t))) in state_distinguish.keys():
                             state_in_S = state_distinguish[self.row_to_hashable((prefix[0] + a, prefix[1] + tuple(t)))]
-                            assert state_in_S   # shouldn't be necessary because of the if condition
+                            assert state_in_S  # shouldn't be necessary because of the if condition
                             states_dict[prefix].transitions[a[0]].append((t[0], state_in_S))
 
                         # This could probably be used instead of first if, but results in worse performance
@@ -245,7 +243,8 @@ class NonDetObservationTable:
                 for a in self.A:
                     for t in self.T[prefix][a]:
                         if self.row_to_hashable((prefix[0] + a, prefix[1] + tuple([t]))) in state_distinguish.keys():
-                            state_in_S = state_distinguish[self.row_to_hashable((prefix[0] + a, prefix[1] + tuple([t])))]
+                            state_in_S = state_distinguish[
+                                self.row_to_hashable((prefix[0] + a, prefix[1] + tuple([t])))]
                             assert state_in_S
                             states_dict[prefix].transitions[a[0]].append((t, state_in_S))
 
