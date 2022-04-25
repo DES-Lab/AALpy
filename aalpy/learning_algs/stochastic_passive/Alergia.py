@@ -62,10 +62,10 @@ class Alergia:
         self.fold(q_r, q_b, t_q_b)
 
     def fold(self, q_r, q_b, t_q_b):
-        for i, c in t_q_b.children.items():
+        for i, c in q_b.children.items():
             if i in q_r.children.keys():
                 q_r.input_frequency[i] += t_q_b.input_frequency[i]
-                self.fold(q_r.children[i], q_b.children[i], c)
+                self.fold(q_r.children[i], q_b.children[i], self.get_blue_node(q_b.children[i]))
             else:
                 q_r.children[i] = q_b.children[i]
                 q_r.input_frequency[i] = t_q_b.input_frequency[i]
