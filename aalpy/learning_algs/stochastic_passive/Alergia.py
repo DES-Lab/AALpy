@@ -206,7 +206,7 @@ def run_Alergia(data, automaton_type, eps=0.005, compatibility_checker=None, opt
     return model
 
 
-def run_JAlergia(path_to_data_file, automaton_type, path_to_jAlergia_jar, eps=0.005,
+def run_JAlergia(data, automaton_type, path_to_jAlergia_jar, eps=0.005,
                  heap_memory='-Xmx2048M', optimize_for='accuracy'):
     assert automaton_type in {'mdp', 'smm', 'mc'}
     assert optimize_for in {'memory', 'accuracy'}
@@ -215,9 +215,9 @@ def run_JAlergia(path_to_data_file, automaton_type, path_to_jAlergia_jar, eps=0.
 
     Args:
 
-        data: path to file containin fata either in a form [[I,I,I],[I,I,I],...] if learning Markov Chains or
-        [[O,(I,O),(I,O)...],
-        [O,(I,O_,...],..,] if learning MDPs (I represents input, O output).
+        data: either a data in a list of lists or a path to file containing data. 
+        Form [[I,I,I],[I,I,I],...] if learning Markov Chains or
+        [[O,I,O,I,O...], [O,(I,O_,...],..,] if learning MDPs (I represents input, O output).
         Note that in whole data first symbol of each entry should be the same (Initial output of the MDP/MC).
 
         eps: epsilon value
@@ -241,6 +241,7 @@ def run_JAlergia(path_to_data_file, automaton_type, path_to_jAlergia_jar, eps=0.
     from aalpy.utils.FileHandler import load_automaton_from_file
 
     save_file = "jAlergiaModel.dot"
+    delete_tmp_file = False
     if os.path.exists(save_file):
         os.remove(save_file)
 
@@ -250,11 +251,20 @@ def run_JAlergia(path_to_data_file, automaton_type, path_to_jAlergia_jar, eps=0.
         print(f'JAlergia jar not found at {path_to_jAlergia_jar}.')
         return
 
-    if os.path.exists(path_to_data_file):
-        abs_path = os.path.abspath(path_to_data_file)
+    if isinstance(data, str):
+        if os.path.exists(data):
+            abs_path = os.path.abspath(data)
+        else:
+            print('Input file not found.')
+            return
     else:
-        print('Input file not found.')
-        return
+        if not isinstance(data, (list, tuple)):
+            print('Data should be either a list of sequences or a path to the data file.')
+        with open('jAlergiaInputs.txt', 'w') as f:
+            for seq in data:
+                f.write(','.join([str(s) for s in seq]))
+        delete_tmp_file = True
+        abs_path = os.path.abspath('jAlergiaInputs.txt')
 
     optimize_for = optimize_for[:3]
 
@@ -267,4 +277,8 @@ def run_JAlergia(path_to_data_file, automaton_type, path_to_jAlergia_jar, eps=0.
 
     model = load_automaton_from_file(save_file, automaton_type=automaton_type)
     os.remove(save_file)
+    if delete_tmp_file:
+        os.remove('jAlergiaInputs.txt')
+
     return model
+
