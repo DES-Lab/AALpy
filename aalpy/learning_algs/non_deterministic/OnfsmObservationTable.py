@@ -20,7 +20,7 @@ class NonDetObservationTable:
 
         self.A = [tuple([a]) for a in alphabet]
         self.S = list()  # prefixes of S
-        self.S_dot_A = []
+
         self.E = [tuple([a]) for a in alphabet]
 
         self.n_samples = n_sampling
@@ -43,7 +43,7 @@ class NonDetObservationTable:
             row that will be moved to S set and closed
         """
         s_rows = set()
-        update_S_dot_A = self.S_dot_A.copy()
+        update_S_dot_A = self.get_extended_S()
 
         for s in self.S.copy():
             s_rows.add(self.row_to_hashable(s))
@@ -53,13 +53,12 @@ class NonDetObservationTable:
             if row_t not in s_rows:
                 self.closing_counter += 1
                 self.S.append(t)
-                self.S_dot_A.remove(t)
                 return t
 
         self.closing_counter = 0
         return None
 
-    def update_extended_S(self, row):
+    def get_extended_S(self):
         """
         Helper generator function that returns extended S, or S.A set.
         For all values in the cell, create a new row where inputs is parent input plus element of alphabet, and
@@ -67,22 +66,20 @@ class NonDetObservationTable:
 
         Returns:
 
-            New rows of extended S set.
+            extended S set.
         """
 
-        new_rows_in_extended_set = []
+        S_dot_A = []
+        for row in self.S:
+            curr_node = self.sul.pta.get_to_node(row[0], row[1])
+            for a in self.A:
+                trace = self.sul.pta.get_all_traces(curr_node, a)
 
-        curr_node = self.sul.pta.get_to_node(row[0], row[1])
-        for a in self.A:
-            trace = self.sul.pta.get_all_traces(curr_node, a)
-
-            for t in trace:
-                new_row = (row[0] + a, row[1] + (t[-1],))
-                if new_row not in self.S:
-                    new_rows_in_extended_set.append(new_row)
-
-        self.S_dot_A.extend(new_rows_in_extended_set)
-        return new_rows_in_extended_set
+                for t in trace:
+                    new_row = (row[0] + a, row[1] + (t[-1],))
+                    if new_row not in self.S:
+                        S_dot_A.append(new_row)
+        return S_dot_A
 
     def update_obs_table(self, s_set=None, e_set: list = None):
         """
@@ -96,7 +93,7 @@ class NonDetObservationTable:
             e_set: Suffixes of E set on which to perform membership queries
         """
 
-        update_S = s_set if s_set else self.S + self.S_dot_A
+        update_S = s_set if s_set else self.S + self.get_extended_S()
         update_E = e_set if e_set else self.E
 
         # update_S, update_E = self.S + self.S_dot_A, self.E
@@ -119,7 +116,7 @@ class NonDetObservationTable:
         # return False
 
         tmp_S = self.S.copy()
-        tmp_both_S = self.S + self.S_dot_A
+        tmp_both_S = self.S + self.get_extended_S()
         hashed_rows_from_s = set()
 
         tmp_S.sort(key=lambda t: len(t[0]))
@@ -128,7 +125,6 @@ class NonDetObservationTable:
             hashed_s_row = self.row_to_hashable(s)
             if hashed_s_row in hashed_rows_from_s:
                 if s in self.S:
-                    self.S_dot_A.append(s)
                     self.S.remove(s)
                 size = len(s[0])
                 for row_prefix in tmp_both_S:
@@ -136,8 +132,6 @@ class NonDetObservationTable:
                     if s != row_prefix and s == s_both_row:
                         if row_prefix in self.S:
                             self.S.remove(row_prefix)
-                        if row_prefix in self.S_dot_A:
-                            self.S_dot_A.remove(row_prefix)
             else:
                 hashed_rows_from_s.add(hashed_s_row)
 
@@ -223,7 +217,7 @@ class NonDetObservationTable:
             suffixes to add to the E set
 
         """
-        prefixes = list(self.S + self.S_dot_A)
+        prefixes = self.S + self.get_extended_S()
         prefixes.reverse()
         trimmed_suffix = None
 

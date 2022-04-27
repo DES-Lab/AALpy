@@ -43,8 +43,6 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=20
         learned ONFSM
 
     """
-    print('Starting learning with an all-weather assumption.\n'
-          'See run_Lstar_ONFSM documentation for more details about possible non-convergence.')
 
     if not custom_oracle and type(eq_oracle) not in available_oracles:
         raise SystemExit(available_oracles_error_msg)
@@ -62,8 +60,8 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=20
     # We fist query the initial row. Then based on output in its cells, we generate new rows in the extended S set,
     # and then we perform membership/input queries for them.
     observation_table.update_obs_table()
-    new_rows = observation_table.update_extended_S(observation_table.S[0])
-    observation_table.update_obs_table(s_set=new_rows)
+    new_rows = observation_table.get_extended_S()
+    observation_table.update_obs_table()
 
     while True:
         learning_rounds += 1
@@ -76,7 +74,7 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=20
             # First we add new rows to the extended S set. They are added based on the values in the cells of the
             # rows that is to be closed. Once those rows are created, they are populated and closedness is checked
             # once again.
-            extended_rows = observation_table.update_extended_S(row_to_close)
+            extended_rows = observation_table.get_extended_S()
             observation_table.update_obs_table()
             observation_table.clean_obs_table()
             row_to_close = observation_table.get_row_to_close()
