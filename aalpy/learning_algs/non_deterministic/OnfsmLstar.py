@@ -11,9 +11,8 @@ print_options = [0, 1, 2, 3]
 available_oracles, available_oracles_error_msg = get_available_oracles_and_err_msg()
 
 
-def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=20, trace_tree=True,
-                      max_learning_rounds=None, custom_oracle=False, return_data=False, print_level=2,
-                      ):
+def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=20,
+                      max_learning_rounds=None, custom_oracle=False, return_data=False, print_level=2,):
     """
     Based on ''Learning Finite State Models of Observable Nondeterministic Systems in a Testing Context '' from Fakih
     et al. Relies on the all-weather assumption. (By sampling we will obtain all possible non-deterministic outputs.
@@ -29,9 +28,6 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=20
 
         n_sampling: number of times that each cell has to be updated. If this number is to low, all-weather condition
             will not hold and learning will not converge to the correct model. (Default value = 50)
-
-        trace_tree: removes limitation of all-weather assumption by dynamically keeping the observation table updated
-                    with respect to observations
 
         max_learning_rounds: if max_learning_rounds is reached, learning will stop (Default value = None)
 
@@ -61,8 +57,7 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=20
     sul = SULWrapper(sul)
     eq_oracle.sul = sul
 
-    # setting test_cells_again=TRUE seems to work better for larger onfsm and worse for smaller onfsm
-    observation_table = NonDetObservationTable(alphabet, sul, n_sampling, trace_tree, test_cells_again=False)
+    observation_table = NonDetObservationTable(alphabet, sul, n_sampling)
 
     # We fist query the initial row. Then based on output in its cells, we generate new rows in the extended S set,
     # and then we perform membership/input queries for them.
@@ -82,10 +77,9 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=20
             # rows that is to be closed. Once those rows are created, they are populated and closedness is checked
             # once again.
             extended_rows = observation_table.update_extended_S(row_to_close)
-            observation_table.update_obs_table(s_set=extended_rows)
+            observation_table.update_obs_table()
+            observation_table.clean_obs_table()
             row_to_close = observation_table.get_row_to_close()
-
-        observation_table.clean_obs_table()
 
         # Generate hypothesis
         hypothesis = observation_table.gen_hypothesis()
@@ -112,7 +106,7 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=20
         cex_suffixes = observation_table.cex_processing(cex)
         # Add all suffixes to the E set and ask membership/input queries.
         added_suffixes = extend_set(observation_table.E, cex_suffixes)
-        observation_table.update_obs_table(e_set=added_suffixes)
+        observation_table.update_obs_table()
 
     total_time = round(time.time() - start_time, 2)
     eq_query_time = round(eq_query_time, 2)
