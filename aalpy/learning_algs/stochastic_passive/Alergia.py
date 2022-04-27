@@ -28,7 +28,7 @@ class Alergia:
 
         pta_start = time.time()
 
-        self.t, self.a = create_fpta(data, automaton_type, optimize_for)
+        self.immutableTreeRoot, self.mutableTreeRoot = create_fpta(data, automaton_type, optimize_for)
 
         pta_time = round(time.time() - pta_start, 2)
         if self.print_info:
@@ -53,7 +53,7 @@ class Alergia:
     def merge(self, q_r, q_b):
         t_q_b = self.get_blue_node(q_b)
         b_prefix = q_b.getPrefix()
-        to_update = self.a
+        to_update = self.mutableTreeRoot
         for p in b_prefix[:-1]:
             to_update = to_update.children[p]
 
@@ -61,20 +61,20 @@ class Alergia:
 
         self.fold(q_r, q_b, t_q_b)
 
-    def fold(self, q_r, q_b, t_q_b):
-        for i, c in q_b.children.items():
-            if i in q_r.children.keys():
-                q_r.input_frequency[i] += t_q_b.input_frequency[i]
-                self.fold(q_r.children[i], q_b.children[i], self.get_blue_node(q_b.children[i]))
+    def fold(self, red, blue, blue_tree_node):
+        for i, c in blue.children.items():
+            if i in red.children.keys():
+                red.input_frequency[i] += blue_tree_node.input_frequency[i]
+                self.fold(red.children[i], blue.children[i], self.get_blue_node(blue.children[i]))
             else:
-                q_r.children[i] = q_b.children[i]
-                q_r.input_frequency[i] = t_q_b.input_frequency[i]
+                red.children[i] = blue.children[i]
+                red.input_frequency[i] = blue_tree_node.input_frequency[i]
 
     def run(self):
         start_time = time.time()
 
-        red = [self.a]  # representative nodes and will be included in the final output model
-        blue = self.a.succs()  # intermediate successors scheduled for testing
+        red = [self.mutableTreeRoot]  # representative nodes and will be included in the final output model
+        blue = self.mutableTreeRoot.successors()  # intermediate successors scheduled for testing
 
         while blue:
             lex_min_blue = min(list(blue), key=lambda x: len(x.getPrefix()))
@@ -90,10 +90,10 @@ class Alergia:
                 insort(red, lex_min_blue)
 
             blue.clear()
-            prefixes_in_red = [s.getPrefix() for s in red]
+
             for r in red:
-                for s in r.succs():
-                    if s.getPrefix() not in prefixes_in_red:
+                for s in r.successors():
+                    if s not in red:
                         blue.append(s)
 
         assert sorted(red, key=lambda x: len(x.getPrefix())) == red
@@ -128,7 +128,7 @@ class Alergia:
     def get_blue_node(self, red_node):
         if self.optimize_for == 'memory':
             return red_node
-        blue = self.t
+        blue = self.immutableTreeRoot
         for p in red_node.getPrefix():
             blue = blue.children[p]
         return blue
@@ -202,15 +202,12 @@ def run_Alergia(data, automaton_type, eps=0.005, compatibility_checker=None, opt
     alergia = Alergia(data, eps=eps, automaton_type=automaton_type, optimize_for=optimize_for,
                       compatibility_checker=compatibility_checker, print_info=print_info)
     model = alergia.run()
-    del alergia.a, alergia.t, alergia
+    del alergia.mutableTreeRoot, alergia.immutableTreeRoot, alergia
     return model
 
 
 def run_JAlergia(path_to_data_file, automaton_type, path_to_jAlergia_jar, eps=0.005,
                  heap_memory='-Xmx2048M', optimize_for='accuracy'):
-    # TODO rename path_to_data_file to data in next versions of AALpy after 20. may
-    assert automaton_type in {'mdp', 'smm', 'mc'}
-    assert optimize_for in {'memory', 'accuracy'}
     """
     Run Alergia or IOAlergia on provided data.
 
@@ -236,6 +233,9 @@ def run_JAlergia(path_to_data_file, automaton_type, path_to_jAlergia_jar, eps=0.
 
         learnedModel
     """
+    # TODO rename path_to_data_file to data in next versions of AALpy after 20. may
+    assert automaton_type in {'mdp', 'smm', 'mc'}
+    assert optimize_for in {'memory', 'accuracy'}
 
     import os
     import subprocess

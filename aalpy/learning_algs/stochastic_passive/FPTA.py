@@ -21,7 +21,7 @@ class AlergiaPtaNode:
             curr_node = curr_node.parent_io[0]
         return prefix
 
-    def succs(self):
+    def successors(self):
         return list(self.children.values())
 
     def __lt__(self, other):
