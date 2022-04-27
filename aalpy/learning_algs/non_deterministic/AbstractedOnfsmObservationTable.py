@@ -103,7 +103,7 @@ class AbstractedNonDetObservationTable:
 
             New rows of extended S set.
         """
-        return self.observation_table.get_extended_S(row)
+        return self.observation_table.get_extended_S() # TODO this will break
 
     def get_row_to_close(self):
         """
