@@ -165,7 +165,6 @@ def print_observation_table(ot, table_type):
     print('-' * row_len)
 
 
-
 def is_suffix_of(suffix, trace) -> bool:
     """
 
@@ -210,3 +209,38 @@ def get_available_oracles_and_err_msg():
                             'to True. '
 
     return available_oracles, available_oracles_msg
+
+
+def make_input_complete(automaton):
+    """
+    Makes the automaton input complete/enabled. If a input is not defined in a state, it will lead to the self loop.
+    In case of Mealy Machines, Stochastic Mealy machines and ONFSM 'epsilon' is used as output.
+
+    Args:
+
+        automaton: automaton that is not input complete
+
+    Returns:
+
+       input complete automaton
+    """
+    from aalpy.base import DeterministicAutomaton
+    from aalpy.automata import Mdp, StochasticMealyMachine, Onfsm, MealyMachine
+
+    input_al = automaton.get_input_alphabet()
+
+    for state in automaton.states:
+        for i in input_al:
+            if i not in state.transitions.keys():
+                if isinstance(automaton, DeterministicAutomaton):
+                    state.transitions[i] = state
+                    if isinstance(automaton, MealyMachine):
+                        state.output_fun[i] = 'epsilon'
+                if isinstance(automaton, Onfsm):
+                    state.transitions[i].append(('epsilon', state))
+                if isinstance(automaton, Mdp):
+                    state.transitions[i].append((state, 1.))
+                if isinstance(automaton, StochasticMealyMachine):
+                    state.transitions[i].append((state, 'epsilon', 1.))
+
+    return automaton

@@ -803,6 +803,7 @@ def jAlergiaExample():
     #                      path_to_jAlergia_jar='jAlergia/alergia.jar', optimize_for='memory')
 
     visualize_automaton(model)
+    return model
 
 
 def active_alergia_example(example='first_grid'):
