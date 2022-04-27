@@ -793,13 +793,13 @@ def jAlergiaExample():
     from aalpy.utils import visualize_automaton
 
     # if you need more heapspace check
-    model = run_JAlergia(data='jAlergia/exampleMdpData.txt', automaton_type='mdp', eps=0.005,
+    model = run_JAlergia(path_to_data_file='jAlergia/exampleMdpData.txt', automaton_type='mdp', eps=0.005,
                          path_to_jAlergia_jar='jAlergia/alergia.jar', optimize_for='memory')
 
     # # alternatively pass the data in following form
     # mc_data = [[1,2,3,4,5], [1,2,3,4,2,1], [1,3,5,2,3]]
     # mdp_data = [[1,2,3,1,2], [1,3,6,4,2]]
-    # model = run_JAlergia(data=mc_data, automaton_type='mdp', eps=0.005,
+    # model = run_JAlergia(path_to_data_file=mc_data, automaton_type='mdp', eps=0.005,
     #                      path_to_jAlergia_jar='jAlergia/alergia.jar', optimize_for='memory')
 
     visualize_automaton(model)

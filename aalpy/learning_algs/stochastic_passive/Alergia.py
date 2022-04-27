@@ -206,8 +206,9 @@ def run_Alergia(data, automaton_type, eps=0.005, compatibility_checker=None, opt
     return model
 
 
-def run_JAlergia(data, automaton_type, path_to_jAlergia_jar, eps=0.005,
+def run_JAlergia(path_to_data_file, automaton_type, path_to_jAlergia_jar, eps=0.005,
                  heap_memory='-Xmx2048M', optimize_for='accuracy'):
+    # TODO rename path_to_data_file to data in next versions of AALpy after 20. may
     assert automaton_type in {'mdp', 'smm', 'mc'}
     assert optimize_for in {'memory', 'accuracy'}
     """
@@ -215,7 +216,7 @@ def run_JAlergia(data, automaton_type, path_to_jAlergia_jar, eps=0.005,
 
     Args:
 
-        data: either a data in a list of lists or a path to file containing data. 
+        path_to_data_file: either a data in a list of lists or a path to file containing data. 
         Form [[I,I,I],[I,I,I],...] if learning Markov Chains or
         [[O,I,O,I,O...], [O,(I,O_,...],..,] if learning MDPs (I represents input, O output).
         Note that in whole data first symbol of each entry should be the same (Initial output of the MDP/MC).
@@ -251,17 +252,17 @@ def run_JAlergia(data, automaton_type, path_to_jAlergia_jar, eps=0.005,
         print(f'JAlergia jar not found at {path_to_jAlergia_jar}.')
         return
 
-    if isinstance(data, str):
-        if os.path.exists(data):
-            abs_path = os.path.abspath(data)
+    if isinstance(path_to_data_file, str):
+        if os.path.exists(path_to_data_file):
+            abs_path = os.path.abspath(path_to_data_file)
         else:
             print('Input file not found.')
             return
     else:
-        if not isinstance(data, (list, tuple)):
+        if not isinstance(path_to_data_file, (list, tuple)):
             print('Data should be either a list of sequences or a path to the data file.')
         with open('jAlergiaInputs.txt', 'w') as f:
-            for seq in data:
+            for seq in path_to_data_file:
                 f.write(','.join([str(s) for s in seq]))
         delete_tmp_file = True
         abs_path = os.path.abspath('jAlergiaInputs.txt')
