@@ -251,15 +251,22 @@ def generate_random_ONFSM(num_states, num_inputs, num_outputs, multiple_out_prob
         state = OnfsmState(f's{i}')
         states.append(state)
 
+    state_buffer = states.copy()
+
     for state in states:
         for i in inputs:
             state_outputs = 1
             if random.random() <= multiple_out_prob and num_outputs > 1:
-                state_outputs = random.randint(2, num_outputs)
+                state_outputs = random.randint(2, num_outputs - 1)
 
             random_out = random.sample(outputs, state_outputs)
             for index in range(state_outputs):
-                state.transitions[i].append((random_out[index], random.choice(states)))
+                if state_buffer:
+                    new_state = random.choice(state_buffer)
+                    state_buffer.remove(new_state)
+                else:
+                    new_state = random.choice(states)
+                state.transitions[i].append((random_out[index], new_state))
 
     return Onfsm(states[0], states)
 

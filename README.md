@@ -141,10 +141,13 @@ eq_oracle = RandomWalkEqOracle(alphabet, sul, num_steps=5000, reset_prob=0.09)
 learned_dfa = run_Lstar(alphabet, sul, eq_oracle, automaton_type='dfa')
 
 # save automaton to file and visualize it
-save_automaton_to_file(learned_dfa, path='Learned_Automaton', file_type='dot')
+# save_automaton_to_file(learned_dfa, path='Learned_Automaton', file_type='dot')
+# or
+learned_dfa.save()
 
 # visualize automaton
-visualize_automaton(learned_dfa)
+# visualize_automaton(learned_dfa)
+learned_dfa.visualize()
 # or just print its DOT representation
 print(learned_dfa)
 ```
