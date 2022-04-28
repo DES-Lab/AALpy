@@ -71,16 +71,15 @@ class RandomWalkEqOracle(Oracle):
             elif out_hyp is None:
                 if self.reset_after_cex:
                     self.random_steps_done = 0
+                self.sul.post()
 
                 if self.automata_type == 'onfsm':
-                    self.sul.post()
                     return inputs, outputs
                 else:
                     # hypothesis is MDP or SMM
                     cex = [hypothesis.initial_state.output] if self.automata_type == 'mdp' else []
                     for i, o in zip(inputs, outputs):
                         cex.extend([i, o])
-                    self.sul.post()
                     return cex
 
         return None
