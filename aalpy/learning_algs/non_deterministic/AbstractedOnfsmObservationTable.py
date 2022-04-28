@@ -60,6 +60,8 @@ class AbstractedNonDetObservationTable:
         """
 
         self.S = self.observation_table.S
+        # CHANGED
+        # self.S_dot_A = self.observation_table.S_dot_A
         self.S_dot_A = self.observation_table.get_extended_S()
         self.E = self.observation_table.E
 
@@ -68,6 +70,9 @@ class AbstractedNonDetObservationTable:
 
         for s in update_S:
             for e in update_E:
+                # CHANGED
+                #                observed_outputs = self.observation_table.T[s][e]
+                #                 for o_tup in observed_outputs:
                 for o_tup in self.get_all_outputs(s, e):
                     abstracted_outputs = []
                     if len(e) == 1:
@@ -93,6 +98,8 @@ class AbstractedNonDetObservationTable:
             self.T[s][e] = set()
         self.T[s][e].add(value)
 
+    # CHANGED
+    # helper function
     def get_all_outputs(self, s, e):
         reached_node = self.sul.pta.get_to_node(s[0], s[1])
         s = set()
@@ -109,7 +116,10 @@ class AbstractedNonDetObservationTable:
 
             New rows of extended S set.
         """
-        return self.observation_table.get_extended_S() # TODO this will break
+        # CHANGED
+        # return self.observation_table.update_extended_S(row)
+        #
+        return self.observation_table.get_extended_S()
 
     def get_row_to_close(self):
         """
@@ -154,6 +164,10 @@ class AbstractedNonDetObservationTable:
                     similar_s_dot_a_rows.append(t)
             similar_s_dot_a_rows.sort(key=lambda row: len(row[0]))
             for a in self.A:  # TODO: check if there is a mistake in the paper
+                # CHANGED
+                # complete_outputs = self.observation_table.T[s_row[0]][a]
+                #                 for similar_s_dot_a_row in similar_s_dot_a_rows:
+                #                     t_row_outputs = self.observation_table.T[similar_s_dot_a_row][a]
                 complete_outputs = self.get_all_outputs(s_row[0], a)
                 for similar_s_dot_a_row in similar_s_dot_a_rows:
                     t_row_outputs = self.get_all_outputs(similar_s_dot_a_row, a)
@@ -187,6 +201,8 @@ class AbstractedNonDetObservationTable:
             similar_s_dot_a_rows.sort(key=lambda row: len(row[0]))
 
             for a in self.A:
+                # CHANGED
+                #                 outputs = self.observation_table.T[s_row[0]][a]
                 outputs = self.get_all_outputs(s_row[0], a)
                 for o in outputs:
                     extended_s_sequence = (s_row[0][0] + a, s_row[0][1] + tuple([o]))
@@ -224,6 +240,8 @@ class AbstractedNonDetObservationTable:
 
         return None
 
+        #CHANGED
+        #Removed
     # def complete_extended_S(self, row_prefix):
     #     """
     #     Add given row to S.A
@@ -298,6 +316,7 @@ class AbstractedNonDetObservationTable:
                     similar_rows.append(row)
             for row in similar_rows:
                 for a in self.A:
+                    # CHANGED
                     for t in self.get_all_outputs(row, a):
                         if (row[0] + a, row[1] + tuple([t])) in unified_S:
                             state_in_S = state_distinguish[self.row_to_hashable((row[0] + a, row[1] + tuple([t])))]
@@ -376,10 +395,12 @@ class AbstractedNonDetObservationTable:
             # add prefixes of cex to S_dot_A
             cex_prefixes = [(tuple(cex[0][0:i + 1]), tuple(cex[1][0:i + 1])) for i in range(0, len(cex[0]))]
             prefixes_to_extend = self.extend_S_dot_A(cex_prefixes)
+            # CHANGED: REMOVED
             # self.observation_table.S_dot_A.extend(prefixes_to_extend)
             self.update_obs_table(s_set=prefixes_to_extend)
         else:
             # add distinguishing suffixes of cex to E
+            # CHANGED CEX PROX
             cex_suffixes = non_det_longest_prefix_cex_processing(self.observation_table, cex)
             added_suffixes = extend_set(self.observation_table.E, cex_suffixes)
             self.update_obs_table(e_set=added_suffixes)
