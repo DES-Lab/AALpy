@@ -9,7 +9,7 @@ print_options = [0, 1, 2, 3]
 
 
 def run_abstracted_ONFSM_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, abstraction_mapping: dict, n_sampling=100,
-                               max_learning_rounds=None, return_data=False, print_level=2, trace_tree=False):
+                               max_learning_rounds=None, return_data=False, print_level=2):
     """
     Based on ''Learning Abstracted Non-deterministic Finite State Machines'' from Pferscher and Aichernig.
     The algorithm learns an abstracted onfsm of a non-deterministic system. For the additional abstraction,
@@ -52,12 +52,12 @@ def run_abstracted_ONFSM_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, abst
     sul = SULWrapper(sul)
     eq_oracle.sul = sul
 
-    abstracted_observation_table = AbstractedNonDetObservationTable(alphabet, sul, abstraction_mapping, n_sampling, trace_tree=trace_tree)
+    abstracted_observation_table = AbstractedNonDetObservationTable(alphabet, sul, abstraction_mapping, n_sampling)
 
     # We fist query the initial row. Then based on output in its cells, we generate new rows in S.A,
     # and then we perform membership/input queries for them.
     abstracted_observation_table.update_obs_table()
-    new_rows = abstracted_observation_table.update_extended_S(abstracted_observation_table.S[0])
+    new_rows = abstracted_observation_table.update_extended_S()
     abstracted_observation_table.update_obs_table(s_set=new_rows)
 
     while True:
@@ -75,7 +75,7 @@ def run_abstracted_ONFSM_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, abst
                 # rows that is to be closed. Once those rows are created, they are populated and closedness is checked
                 # once again.
                 closed_complete_consistent = False
-                extended_rows = abstracted_observation_table.update_extended_S(row_to_close)
+                extended_rows = abstracted_observation_table.update_extended_S()
                 abstracted_observation_table.update_obs_table(s_set=extended_rows)
                 row_to_close = abstracted_observation_table.get_row_to_close()
 

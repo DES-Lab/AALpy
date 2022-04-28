@@ -401,7 +401,7 @@ def onfsm_mealy_paper_example():
     eq_oracle = RandomWalkEqOracle(alphabet, sul, num_steps=5000, reset_prob=0.25, reset_after_cex=True)
     eq_oracle = RandomWordEqOracle(alphabet, sul, num_walks=500, min_walk_len=5, max_walk_len=12)
 
-    learned_onfsm = run_non_det_Lstar(alphabet, sul, eq_oracle, n_sampling=10, print_level=2)
+    learned_onfsm = run_non_det_Lstar(alphabet, sul, eq_oracle, n_sampling=1, print_level=2)
 
     return learned_onfsm
 

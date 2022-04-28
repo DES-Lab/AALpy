@@ -1,14 +1,15 @@
 from collections import defaultdict
 
 from aalpy.automata import Onfsm, OnfsmState
-from aalpy.base import SUL
+from aalpy.learning_algs.non_deterministic.NonDeterministicCounterExampleProcessing import \
+    non_det_longest_prefix_cex_processing
 from aalpy.learning_algs.non_deterministic.OnfsmObservationTable import NonDetObservationTable
+from aalpy.learning_algs.non_deterministic.TraceTree import SULWrapper
 from aalpy.utils.HelperFunctions import extend_set
 
 
 class AbstractedNonDetObservationTable:
-    def __init__(self, alphabet: list, sul: SUL, abstraction_mapping: dict, n_sampling=100, trace_tree_flag=False,
-                 trace_tree=False):
+    def __init__(self, alphabet: list, sul: SULWrapper, abstraction_mapping: dict, n_sampling=100):
         """
         Construction of the abstracted non-deterministic observation table.
 
@@ -22,16 +23,16 @@ class AbstractedNonDetObservationTable:
 
         assert alphabet is not None and sul is not None
 
-        self.observation_table = NonDetObservationTable(alphabet, sul, n_sampling, trace_tree=trace_tree_flag)
+        self.observation_table = NonDetObservationTable(alphabet, sul, n_sampling)
 
         self.S = list()
         self.S_dot_A = []
         self.E = []
         self.T = defaultdict(dict)
         self.A = [tuple([a]) for a in alphabet]
-        self.trace_tree_flag = trace_tree_flag
 
         self.abstraction_mapping = abstraction_mapping
+        self.sul = sul
 
         empty_word = tuple()
         self.S.append((empty_word, empty_word))
@@ -59,7 +60,7 @@ class AbstractedNonDetObservationTable:
         """
 
         self.S = self.observation_table.S
-        self.S_dot_A = self.observation_table.S_dot_A
+        self.S_dot_A = self.observation_table.get_extended_S()
         self.E = self.observation_table.E
 
         update_S = self.S + self.S_dot_A
@@ -67,8 +68,7 @@ class AbstractedNonDetObservationTable:
 
         for s in update_S:
             for e in update_E:
-                observed_outputs = self.observation_table.T[s][e]
-                for o_tup in observed_outputs:
+                for o_tup in self.get_all_outputs(s, e):
                     abstracted_outputs = []
                     if len(e) == 1:
                         o_tup = tuple([o_tup])
@@ -93,7 +93,13 @@ class AbstractedNonDetObservationTable:
             self.T[s][e] = set()
         self.T[s][e].add(value)
 
-    def update_extended_S(self, row):
+    def get_all_outputs(self, s, e):
+        reached_node = self.sul.pta.get_to_node(s[0], s[1])
+        s = set()
+        s.update(self.sul.pta.get_all_traces(reached_node, e))
+        return s
+
+    def update_extended_S(self):
         """
         Helper generator function that returns extended S, or S.A set.
         For all values in the cell, create a new row where inputs is parent input plus element of alphabet, and
@@ -148,9 +154,9 @@ class AbstractedNonDetObservationTable:
                     similar_s_dot_a_rows.append(t)
             similar_s_dot_a_rows.sort(key=lambda row: len(row[0]))
             for a in self.A:  # TODO: check if there is a mistake in the paper
-                complete_outputs = self.observation_table.T[s_row[0]][a]
+                complete_outputs = self.get_all_outputs(s_row[0], a)
                 for similar_s_dot_a_row in similar_s_dot_a_rows:
-                    t_row_outputs = self.observation_table.T[similar_s_dot_a_row][a]
+                    t_row_outputs = self.get_all_outputs(similar_s_dot_a_row, a)
                     output_difference = t_row_outputs.difference(complete_outputs)
                     if len(output_difference) > 0:
                         for o in output_difference:
@@ -181,7 +187,7 @@ class AbstractedNonDetObservationTable:
             similar_s_dot_a_rows.sort(key=lambda row: len(row[0]))
 
             for a in self.A:
-                outputs = self.observation_table.T[s_row[0]][a]
+                outputs = self.get_all_outputs(s_row[0], a)
                 for o in outputs:
                     extended_s_sequence = (s_row[0][0] + a, s_row[0][1] + tuple([o]))
                     if extended_s_sequence in unified_S:
@@ -218,21 +224,21 @@ class AbstractedNonDetObservationTable:
 
         return None
 
-    def complete_extended_S(self, row_prefix):
-        """
-        Add given row to S.A
-
-        Args:
-
-            row_prefix: row that should be added to S.A
-
-        Returns:
-
-            the row that has been extended
-        """
-        extension = [row_prefix]
-        self.observation_table.S_dot_A.extend(extension)
-        return extension
+    # def complete_extended_S(self, row_prefix):
+    #     """
+    #     Add given row to S.A
+    #
+    #     Args:
+    #
+    #         row_prefix: row that should be added to S.A
+    #
+    #     Returns:
+    #
+    #         the row that has been extended
+    #     """
+    #     extension = [row_prefix]
+    #     self.observation_table.S_dot_A.extend(extension)
+    #     return extension
 
     def update_E(self, seq):
         if seq not in self.E:
@@ -292,7 +298,7 @@ class AbstractedNonDetObservationTable:
                     similar_rows.append(row)
             for row in similar_rows:
                 for a in self.A:
-                    for t in self.observation_table.T[row][a]:
+                    for t in self.get_all_outputs(row, a):
                         if (row[0] + a, row[1] + tuple([t])) in unified_S:
                             state_in_S = state_distinguish[self.row_to_hashable((row[0] + a, row[1] + tuple([t])))]
 
@@ -370,17 +376,15 @@ class AbstractedNonDetObservationTable:
             # add prefixes of cex to S_dot_A
             cex_prefixes = [(tuple(cex[0][0:i + 1]), tuple(cex[1][0:i + 1])) for i in range(0, len(cex[0]))]
             prefixes_to_extend = self.extend_S_dot_A(cex_prefixes)
-            self.observation_table.S_dot_A.extend(prefixes_to_extend)
+            # self.observation_table.S_dot_A.extend(prefixes_to_extend)
             self.update_obs_table(s_set=prefixes_to_extend)
         else:
             # add distinguishing suffixes of cex to E
-            cex_suffixes = self.observation_table.cex_processing(cex)
+            cex_suffixes = non_det_longest_prefix_cex_processing(self.observation_table, cex)
             added_suffixes = extend_set(self.observation_table.E, cex_suffixes)
             self.update_obs_table(e_set=added_suffixes)
 
     def clean_tables(self):
-        if not self.trace_tree_flag:
-            return
 
         self.observation_table.clean_obs_table()
         self.abstract_obs_table()
