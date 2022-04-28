@@ -1,6 +1,7 @@
 import time
 
 from aalpy.base import SUL, Oracle
+from aalpy.learning_algs.non_deterministic.NonDeterministicCounterExampleProcessing import non_det_rs_cex_processing
 from aalpy.learning_algs.non_deterministic.OnfsmObservationTable import NonDetObservationTable
 from aalpy.learning_algs.non_deterministic.TraceTree import SULWrapper
 from aalpy.utils.HelperFunctions import extend_set, print_learning_info, print_observation_table, \
@@ -11,7 +12,7 @@ print_options = [0, 1, 2, 3]
 available_oracles, available_oracles_error_msg = get_available_oracles_and_err_msg()
 
 
-def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=20,
+def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=1,
                       max_learning_rounds=None, custom_oracle=False, return_data=False, print_level=2,):
     """
     Based on ''Learning Finite State Models of Observable Nondeterministic Systems in a Testing Context '' from Fakih
@@ -101,7 +102,9 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=20
             print('Counterexample', cex)
 
         # Process counterexample -> Extract suffix to be added to E set
-        cex_suffixes = observation_table.cex_processing(cex)
+        cex_suffixes = non_det_rs_cex_processing(observation_table, hypothesis, cex)
+        # cex_suffixes = observation_table.cex_processing(cex)
+
         # Add all suffixes to the E set and ask membership/input queries.
         added_suffixes = extend_set(observation_table.E, cex_suffixes)
         observation_table.update_obs_table()

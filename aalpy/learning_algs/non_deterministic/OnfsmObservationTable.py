@@ -197,40 +197,11 @@ class NonDetObservationTable:
 
         for e in self.E:
             cell = self.sul.pta.get_all_traces(curr_node, e)
-            assert cell
+            while not cell:
+                self.update_obs_table(s_set=[row_prefix], e_set=[e])
+                cell = self.sul.pta.get_all_traces(curr_node, e)
+
             row_repr += (frozenset(cell),)
 
         return row_repr
 
-    def cex_processing(self, cex: tuple):
-        """
-        Suffix processing strategy found in Shahbaz-Groz paper 'Inferring Mealy Machines'.
-        It splits the counterexample into prefix and suffix. Prefix is the longest element of the S union S.A that
-        matches the beginning of the counterexample. By removing such prefix from counterexample, no consistency check
-        is needed.
-
-        Args:
-
-            cex: counterexample (inputs/outputs)
-
-        Returns:
-            suffixes to add to the E set
-
-        """
-        prefixes = self.S + self.get_extended_S()
-        prefixes.reverse()
-        trimmed_suffix = None
-
-        cex = tuple(cex[0])  # cex[0] are inputs, cex[1] are outputs
-        for p in prefixes:
-            prefix_inputs = p[0]
-            if prefix_inputs == tuple(cex[:len(prefix_inputs)]):
-                trimmed_suffix = cex[len(prefix_inputs):]
-                break
-
-        if trimmed_suffix:
-            suffixes = all_suffixes(trimmed_suffix)
-        else:
-            suffixes = all_suffixes(cex)
-        suffixes.reverse()
-        return suffixes
