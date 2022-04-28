@@ -1,3 +1,5 @@
+from collections import Counter
+
 from aalpy.automata import Onfsm, OnfsmState
 from aalpy.base import Automaton
 from aalpy.learning_algs.non_deterministic.TraceTree import SULWrapper
@@ -27,6 +29,9 @@ class NonDetObservationTable:
         self.closing_counter = 0
 
         self.sul = sul
+
+        self.sampling_counter = Counter()
+
         empty_word = tuple()
 
         # Elements of S are in form that is presented in 'Learning Finite State Models of Observable Nondeterministic
@@ -101,10 +106,13 @@ class NonDetObservationTable:
         for s in update_S:
             for e in update_E:
                 num_s_e_sampled = 0
+                # if self.sampling_counter[s[0] + e] >= len(s[0] + e) + 1 * 2:
+                #     continue
                 while num_s_e_sampled < self.n_samples:
                     output = tuple(self.sul.query(s[0] + e))
                     if output[:len(s[1])] == s[1]:
                         num_s_e_sampled += 1
+                        self.sampling_counter[s[0] + e] += 1
 
     def clean_obs_table(self):
         """
