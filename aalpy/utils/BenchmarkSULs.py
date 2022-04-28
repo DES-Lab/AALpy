@@ -18,10 +18,10 @@ def get_benchmark_ONFSM():
     """
     from aalpy.automata import Onfsm, OnfsmState
 
-    a = OnfsmState('a')
-    b = OnfsmState('b')
-    c = OnfsmState('c')
-    d = OnfsmState('d')
+    a = OnfsmState('q0')
+    b = OnfsmState('q1')
+    c = OnfsmState('g2')
+    d = OnfsmState('q3')
 
     a.transitions['a'].append((0, b))
     a.transitions['b'].append((2, a))
