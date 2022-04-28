@@ -23,15 +23,15 @@ Whether you work with regular languages or you would like to learn models of
 (black-box) reactive systems, AALpy supports a wide range of modeling formalisms, including 
 **deterministic**, **non-deterministic**, and **stochastic automata**. 
 
-<center>
-
+<div align="center">
+	
 | Automata Type   |      Supported Formalisms      |  Features |
 |----------|:-------------:|------:|
 | Deterministic     |  Deterministic Finite Automata<br />Mealy Machines<br />Moore Machines | Counterexample Processing<br />Seamless Caching<br />11 Equivalence Oracles |
 | Non-Deterministic |    Observable Non-Deterministic FSM <br /> Abstracted Non-Deterministic FSM|   Size Reduction Trough Abstraction<br />|
 | Stochastic        |  Markov Decision Processes<br />Stochastic Mealy Machines<br />Markov Chains |    Counterexample Processing<br />Row/Cell Compatability Metrics<br />Model Checking with PRISM<br />Alergia Passive Learning|
 
-</center>
+</div>
 
 <!---
 You can use it to learn **deterministic finite automata**, **Moore machines**, 
