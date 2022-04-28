@@ -205,8 +205,8 @@ def get_available_oracles_and_err_msg():
     available_oracles = {RandomWalkEqOracle, RandomWordEqOracle}
 
     available_oracles_msg = 'Warning! Only Random Walk and Random Word oracles are supported for non-deterministic and ' \
-                            'stochastic learning. If you have implemented the custom oracle, set the custom_oracle flag ' \
-                            'to True. '
+                            'stochastic learning. If you have implemented the custom oracle, set the custom_oracle ' \
+                            'flag to True. '
 
     return available_oracles, available_oracles_msg
 

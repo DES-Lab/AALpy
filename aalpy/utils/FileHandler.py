@@ -264,7 +264,7 @@ def load_automaton_from_file(path, automaton_type, compute_prefixes=False):
             label = n.get_attributes()['label']
             label = _strip_label(label)
 
-        _process_node_label(n, label, node_label_dict, nodeType ,automaton_type)
+        _process_node_label(n, label, node_label_dict, nodeType, automaton_type)
 
     initial_node = None
     for edge in graph.get_edge_list():
