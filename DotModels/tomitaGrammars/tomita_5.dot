@@ -1,0 +1,16 @@
+digraph "tomita_5" {
+s0 [label=s0, shape=doublecircle];
+s1 [label=s1];
+s2 [label=s2];
+s3 [label=s3];
+s0 -> s1  [label=0];
+s0 -> s2  [label=1];
+s1 -> s0  [label=0];
+s1 -> s3  [label=1];
+s2 -> s3  [label=0];
+s2 -> s0  [label=1];
+s3 -> s2  [label=0];
+s3 -> s1  [label=1];
+__start0 [label="", shape=none];
+__start0 -> s0  [label=""];
+}
