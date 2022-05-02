@@ -65,6 +65,9 @@ class StochasticMealyMachine(Automaton):
                 return out
         return None
 
+    def to_mdp(self):
+        return smm_to_mdp_conversion(self)
+
 
 def smm_to_mdp_conversion(smm: StochasticMealyMachine):
     """
