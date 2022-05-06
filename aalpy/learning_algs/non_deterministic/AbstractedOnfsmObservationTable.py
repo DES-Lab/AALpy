@@ -1,8 +1,6 @@
 from collections import defaultdict
 
 from aalpy.automata import Onfsm, OnfsmState
-from aalpy.learning_algs.non_deterministic.NonDeterministicCounterExampleProcessing import \
-    non_det_longest_prefix_cex_processing
 from aalpy.learning_algs.non_deterministic.OnfsmObservationTable import NonDetObservationTable
 from aalpy.learning_algs.non_deterministic.TraceTree import SULWrapper
 from aalpy.utils.HelperFunctions import extend_set
@@ -401,7 +399,9 @@ class AbstractedNonDetObservationTable:
         else:
             # add distinguishing suffixes of cex to E
             # CHANGED CEX PROX
-            cex_suffixes = non_det_longest_prefix_cex_processing(self.observation_table, cex)
+            # TODO: this will now not work as cex processing was changed
+            # cex_suffixes = non_det_longest_prefix_cex_processing(self.observation_table, cex)
+            cex_suffixes = None # TODO placeholder
             added_suffixes = extend_set(self.observation_table.E, cex_suffixes)
             self.update_obs_table(e_set=added_suffixes)
 

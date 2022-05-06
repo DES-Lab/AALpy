@@ -1,10 +1,9 @@
 import time
 
 from aalpy.base import SUL, Oracle
-from aalpy.learning_algs.non_deterministic.NonDeterministicCounterExampleProcessing import non_det_rs_cex_processing, non_det_longest_prefix_cex_processing
 from aalpy.learning_algs.non_deterministic.OnfsmObservationTable import NonDetObservationTable
 from aalpy.learning_algs.non_deterministic.TraceTree import SULWrapper
-from aalpy.utils.HelperFunctions import extend_set, print_learning_info, print_observation_table, \
+from aalpy.utils.HelperFunctions import print_learning_info, print_observation_table, \
     get_available_oracles_and_err_msg, all_suffixes
 
 
@@ -70,7 +69,8 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=1,
     new_rows = observation_table.get_extended_S()
     observation_table.update_obs_table()
 
-    # cex processing
+    # Keep track of last counterexample and last hypothesis size
+    # With this data we can check if the extension of the E set lead to state increase
     last_cex = None
     last_hyp_size = 0
 
