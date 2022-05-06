@@ -243,8 +243,8 @@ def generate_random_ONFSM(num_states, num_inputs, num_outputs, multiple_out_prob
         randomly generated ONFSM
 
     """
-    inputs = [random_string_generator(random.randint(1, 3)) for _ in range(num_inputs)]
-    outputs = [random_string_generator(random.randint(3, 7)) for _ in range(num_outputs)]
+    inputs = [f'I{i+1}' for i in range(num_inputs)]
+    outputs = [f'O{i+1}' for i in range(num_outputs)]
 
     states = []
     for i in range(num_states):
