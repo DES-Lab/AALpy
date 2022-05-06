@@ -12,7 +12,7 @@ print_options = [0, 1, 2, 3]
 available_oracles, available_oracles_error_msg = get_available_oracles_and_err_msg()
 
 
-def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=1, cex_processing='longest_prefix',
+def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=1,
                       max_learning_rounds=None, custom_oracle=False, return_data=False, print_level=2,):
     """
     Based on ''Learning Finite State Models of Observable Nondeterministic Systems in a Testing Context '' from Fakih
@@ -30,9 +30,6 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=1,
         n_sampling: number of times that each cell has to be updated. If this number is to low, all-weather condition
             will not hold and learning will not converge to the correct model. (Default value = 50)
 
-        cex_processing: counterexample processing strategy, either 'rs' to get experimental riverst-schapire or
-        'longest_prefix' to use counterexample processing defined in ONFSM paper
-
         max_learning_rounds: if max_learning_rounds is reached, learning will stop (Default value = None)
 
         custom_oracle: if True, warning about oracle type will be removed and custom oracle can be used
@@ -48,8 +45,6 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=1,
 
     """
 
-    assert cex_processing in {'rs', 'longest_prefix'}
-    # cex_processing = 'longest_prefix'
     if not custom_oracle and type(eq_oracle) not in available_oracles:
         raise SystemExit(available_oracles_error_msg)
 
@@ -66,7 +61,7 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=1,
     # We fist query the initial row. Then based on output in its cells, we generate new rows in the extended S set,
     # and then we perform membership/input queries for them.
     observation_table.update_obs_table()
-    new_rows = observation_table.get_extended_S()
+    observation_table.get_extended_S()
     observation_table.update_obs_table()
 
     # Keep track of last counterexample and last hypothesis size
