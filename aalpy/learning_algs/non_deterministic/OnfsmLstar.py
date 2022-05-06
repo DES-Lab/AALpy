@@ -5,7 +5,8 @@ from aalpy.learning_algs.non_deterministic.NonDeterministicCounterExampleProcess
 from aalpy.learning_algs.non_deterministic.OnfsmObservationTable import NonDetObservationTable
 from aalpy.learning_algs.non_deterministic.TraceTree import SULWrapper
 from aalpy.utils.HelperFunctions import extend_set, print_learning_info, print_observation_table, \
-    get_available_oracles_and_err_msg
+    get_available_oracles_and_err_msg, all_suffixes
+
 
 print_options = [0, 1, 2, 3]
 
@@ -69,6 +70,10 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=1,
     new_rows = observation_table.get_extended_S()
     observation_table.update_obs_table()
 
+    # cex processing
+    last_cex = None
+    last_hyp_size = 0
+
     while True:
         learning_rounds += 1
         if max_learning_rounds and learning_rounds - 1 == max_learning_rounds:
@@ -87,16 +92,23 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=1,
         # Generate hypothesis
         hypothesis = observation_table.gen_hypothesis()
 
-        if print_level > 1:
-            print(f'Hypothesis {learning_rounds}: {len(hypothesis.states)} states.')
+        # Cex has been successfully processed
+        if hypothesis.size > last_hyp_size:
+            last_hyp_size = hypothesis.size
 
-        if print_level == 3:
-            print_observation_table(observation_table, 'non-det')
+            # Find counterexample
+            if print_level > 1:
+                print(f'Hypothesis {learning_rounds}: {len(hypothesis.states)} states.')
 
-        # Find counterexample
-        eq_query_start = time.time()
-        cex = eq_oracle.find_cex(hypothesis)
-        eq_query_time += time.time() - eq_query_start
+            if print_level == 3:
+                print_observation_table(observation_table, 'non-det')
+
+            eq_query_start = time.time()
+            cex = eq_oracle.find_cex(hypothesis)
+            last_cex = cex
+            eq_query_time += time.time() - eq_query_start
+        else:
+            cex = last_cex
 
         # If no counterexample is found, return the hypothesis
         if cex is None:
@@ -106,13 +118,14 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=1,
             print('Counterexample', cex)
 
         # Process counterexample -> Extract suffixes to be added to E set
-        if cex_processing == 'rs':
-            cex_suffixes = non_det_rs_cex_processing(observation_table, hypothesis, cex)
-        else:
-            cex_suffixes = non_det_longest_prefix_cex_processing(observation_table, cex)
+        # cex_suffixes = non_det_longest_prefix_cex_processing(observation_table, cex)
+        cex_suffixes = all_suffixes(cex[0])
+        for suffix in cex_suffixes:
+            if suffix not in observation_table.E:
+                observation_table.E.append(suffix)
+                break
 
         # Add all suffixes to the E set and ask membership/input queries.
-        added_suffixes = extend_set(observation_table.E, cex_suffixes)
         observation_table.update_obs_table()
 
     total_time = round(time.time() - start_time, 2)
