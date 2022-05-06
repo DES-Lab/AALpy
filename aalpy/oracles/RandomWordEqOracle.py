@@ -51,7 +51,7 @@ class RandomWordEqOracle(Oracle):
             self.reset_hyp_and_sul(hypothesis)
             self.num_walks_done += 1
 
-            if self.automata_type == 'onfsm':
+            if self.automata_type != 'det':
                 prefix_lens = [len(p.prefix) for p in hypothesis.states]
                 max_prefix_len = max(prefix_lens)
                 diff = self.max_walk_len - max_prefix_len

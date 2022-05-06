@@ -402,6 +402,7 @@ class AbstractedNonDetObservationTable:
             # TODO: this will now not work as cex processing was changed
             # cex_suffixes = non_det_longest_prefix_cex_processing(self.observation_table, cex)
             cex_suffixes = None # TODO placeholder
+
             added_suffixes = extend_set(self.observation_table.E, cex_suffixes)
             self.update_obs_table(e_set=added_suffixes)
 
