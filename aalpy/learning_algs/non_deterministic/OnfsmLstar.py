@@ -12,7 +12,7 @@ print_options = [0, 1, 2, 3]
 available_oracles, available_oracles_error_msg = get_available_oracles_and_err_msg()
 
 
-def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=1, cex_processing='rs',
+def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=1, cex_processing='longest_prefix',
                       max_learning_rounds=None, custom_oracle=False, return_data=False, print_level=2,):
     """
     Based on ''Learning Finite State Models of Observable Nondeterministic Systems in a Testing Context '' from Fakih
@@ -80,7 +80,6 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=1,
             # First we add new rows to the extended S set. They are added based on the values in the cells of the
             # rows that is to be closed. Once those rows are created, they are populated and closedness is checked
             # once again.
-            extended_rows = observation_table.get_extended_S()
             observation_table.update_obs_table()
             observation_table.clean_obs_table()
             row_to_close = observation_table.get_row_to_close()

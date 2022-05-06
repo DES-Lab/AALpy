@@ -3,7 +3,6 @@ from collections import Counter
 from aalpy.automata import Onfsm, OnfsmState
 from aalpy.base import Automaton
 from aalpy.learning_algs.non_deterministic.TraceTree import SULWrapper
-from aalpy.utils.HelperFunctions import all_suffixes
 
 
 class NonDetObservationTable:
