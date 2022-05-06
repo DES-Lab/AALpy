@@ -1,3 +1,5 @@
+from statistics import mean
+
 from aalpy.automata import Onfsm, Mdp, StochasticMealyMachine
 from aalpy.base import Oracle, SUL
 from random import randint, choice
@@ -36,6 +38,9 @@ class RandomWordEqOracle(Oracle):
         self.num_walks_done = 0
         self.automata_type = None
 
+        # ONFSM heuristics - try to find cex that is as short as possible
+        self.increase_interval = 20
+
     def find_cex(self, hypothesis):
         if not self.automata_type:
             self.automata_type = automaton_dict.get(type(hypothesis), 'det')
@@ -46,7 +51,14 @@ class RandomWordEqOracle(Oracle):
             self.reset_hyp_and_sul(hypothesis)
             self.num_walks_done += 1
 
-            num_steps = randint(self.min_walk_len, self.max_walk_len)
+            if self.automata_type == 'onfsm':
+                prefix_lens = [len(p.prefix) for p in hypothesis.states]
+                max_prefix_len = max(prefix_lens)
+                diff = self.max_walk_len - max_prefix_len
+                testing_progress = self.num_walks_done / self.num_walks
+                num_steps = max_prefix_len + int(testing_progress * diff)
+            else:
+                num_steps = randint(self.min_walk_len, self.max_walk_len)
 
             for _ in range(num_steps):
                 inputs.append(choice(self.alphabet))
