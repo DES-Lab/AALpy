@@ -6,14 +6,13 @@ from aalpy.learning_algs.non_deterministic.TraceTree import SULWrapper
 from aalpy.utils.HelperFunctions import print_learning_info, print_observation_table, \
     get_available_oracles_and_err_msg, all_suffixes
 
-
 print_options = [0, 1, 2, 3]
 
 available_oracles, available_oracles_error_msg = get_available_oracles_and_err_msg()
 
 
 def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=1,
-                      max_learning_rounds=None, custom_oracle=False, return_data=False, print_level=2,):
+                      max_learning_rounds=None, custom_oracle=False, return_data=False, print_level=2, ):
     """
     Based on ''Learning Finite State Models of Observable Nondeterministic Systems in a Testing Context '' from Fakih
     et al. Relies on the all-weather assumption. (By sampling we will obtain all possible non-deterministic outputs.
@@ -67,7 +66,6 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=1,
     # Keep track of last counterexample and last hypothesis size
     # With this data we can check if the extension of the E set lead to state increase
     last_cex = None
-    last_hyp_size = 0
 
     while True:
         learning_rounds += 1
@@ -88,8 +86,7 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=1,
         hypothesis = observation_table.gen_hypothesis()
 
         # Cex has been successfully processed
-        if hypothesis.size > last_hyp_size:
-            last_hyp_size = hypothesis.size
+        if counterexample_not_valid(hypothesis, last_cex):
 
             # Find counterexample
             if print_level > 1:
@@ -126,7 +123,6 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=1,
     total_time = round(time.time() - start_time, 2)
     eq_query_time = round(eq_query_time, 2)
     learning_time = round(total_time - eq_query_time, 2)
-
     info = {
         'learning_rounds': learning_rounds,
         'automaton_size': len(hypothesis.states),
@@ -146,3 +142,14 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=1,
         return hypothesis, info
 
     return hypothesis
+
+
+def counterexample_not_valid(hypothesis, cex):
+    if cex is None:
+        return True
+    hypothesis.reset_to_initial()
+    for i, o in zip(cex[0], cex[1]):
+        out = hypothesis.step_to(i, o)
+        if out is None:
+            return False
+    return True
