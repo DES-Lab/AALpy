@@ -99,8 +99,8 @@ def run_RPNI(data, automaton_type):
 
 
 if __name__ == '__main__':
-    dfa = load_automaton_from_file('example.dot', automaton_type='mealy')
     dfa = load_automaton_from_file('../../../DotModels/mooreModel.dot', automaton_type='moore')
+    dfa = load_automaton_from_file('example.dot', automaton_type='mealy')
     dfa_sul = MealySUL(dfa)
     input_al = dfa.get_input_alphabet()
     data = []
