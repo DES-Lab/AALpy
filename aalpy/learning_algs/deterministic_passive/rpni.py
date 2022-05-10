@@ -15,6 +15,15 @@ class RpniNode:
     def copy(self):
         return deepcopy(self)
 
+    def __lt__(self, other):
+        return len(self.prefix) < len(other.prefix)
+
+    def __le__(self, other):
+        return len(self.prefix) <= len(other.prefix)
+
+    def __eq__(self, other):
+        return self.prefix == other.prefix
+
 
 def createPTA(data):
     root_node = RpniNode(data[0][0])
@@ -46,9 +55,9 @@ class RPNI:
             lex_min_blue = min(list(blue), key=lambda x: len(x.prefix))
             merged = False
 
-            for r in red:
-                if self.compatible(self.merge(r, lex_min_blue, in_compatability=True)):
-                    self.merge(r, lex_min_blue)
+            for red_state in red:
+                if self.compatible(self.merge(red_state, lex_min_blue, in_compatability=True)):
+                    self.merge(red_state, lex_min_blue)
                     merged = True
                     print('MERGING')
                     break
@@ -72,7 +81,7 @@ class RPNI:
             for io in seq:
                 i, o = io[0], io[1]
                 if i not in curr_node.children.keys():
-                    break
+                    return False
                 curr_node = curr_node.children[i]
                 if curr_node.output != curr_node.output:
                     return False
@@ -91,7 +100,7 @@ class RPNI:
         return to_update
 
     def fold(self, red_node, blue_node):
-        for i, c in blue_node.copy().children.items():
+        for i, c in blue_node.children.items():
             if i in red_node.children.keys():
                 self.fold(red_node.children[i], blue_node.children[i])
             else:
@@ -109,7 +118,7 @@ if __name__ == '__main__':
         for _ in range(5, 12):
             i = random.choice(input_al)
             o = dfa_sul.step(i)
-            seq.append((i,o))
+            seq.append((i, o))
         dfa_sul.post()
         data.append(seq)
 
