@@ -89,7 +89,9 @@ class RPNI:
 
     def merge(self, r, lex_min_blue, copy_nodes=False):
         to_update = self.root_node if not copy_nodes else self.root_node.copy()
-        red_node = r if not copy_nodes else r.copy()
+        red_node = to_update
+        for p in r.prefix:
+            red_node = red_node.children[p]
 
         b_prefix = lex_min_blue.prefix
         for p in b_prefix[:-1]:
@@ -99,24 +101,22 @@ class RPNI:
         print('FOLDING', red_node.prefix, lex_min_blue.prefix)
         self.fold(red_node, lex_min_blue)
 
-        print(to_update.output)
-        exit()
         return to_update
 
     def fold(self, red_node, blue_node):
+        # if red_node.output != blue_node.output:
+        #     print('  Changing output ', red_node.prefix, blue_node.prefix,
+        #           f'from {red_node.output} to {blue_node.output}')
+        red_node.output = blue_node.output
         for i in blue_node.children.keys():
             if i in red_node.children.keys():
-                print('  FOLD REC: ', red_node.children[i].prefix, blue_node.children[i].prefix)
+                # print('  FOLD REC: ', red_node.children[i].prefix, blue_node.children[i].prefix)
                 self.fold(red_node.children[i], blue_node.children[i])
             else:
                 red_node.children[i] = blue_node.children[i]
-                print('  FOLD Add: ', red_node.prefix, blue_node.children[i].prefix)
+                # print('  FOLD Add: ', red_node.prefix, blue_node.children[i].prefix)
 
-        print('  ENDING FOLD', red_node.prefix, blue_node.prefix)
-        if red_node.output != blue_node.output:
-            print('  Changing output ', red_node.prefix, blue_node.prefix,
-                  f'from {red_node.output} to {blue_node.output}')
-        red_node.output = blue_node.output
+        # print('  ENDING FOLD', red_node.prefix, blue_node.prefix)
 
 if __name__ == '__main__':
     dfa = get_Angluin_dfa()
