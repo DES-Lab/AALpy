@@ -34,6 +34,7 @@ class RPNI:
 
             if not merged:
                 insort(red, lex_min_blue)
+                print(len(red))
 
             blue.clear()
             for r in red:
@@ -79,11 +80,11 @@ class RPNI:
     def _fold(self, red_node, blue_node):
         red_node.output = blue_node.output
 
-        # if self.automaton_type == 'mealy':
-        #     updated_keys = {}
-        #     for io, val in red_node.children.items():
-        #         updated_keys[(io[0], blue_node.output)] = val
-        #     red_node.children = updated_keys
+        if self.automaton_type == 'mealy':
+            updated_keys = {}
+            for io, val in red_node.children.items():
+                updated_keys[(io[0], blue_node.output)] = val
+            red_node.children = updated_keys
 
         for i in blue_node.children.keys():
             if i in red_node.children.keys():
@@ -99,24 +100,25 @@ def run_RPNI(data, automaton_type):
 
 if __name__ == '__main__':
     dfa = load_automaton_from_file('../../../DotModels/Angluin_Mealy.dot', automaton_type='mealy')
+    dfa = load_automaton_from_file('example.dot', automaton_type='mealy')
     dfa_sul = MealySUL(dfa)
     input_al = dfa.get_input_alphabet()
     data = []
-    for _ in range(100):
+    for _ in range(5000):
         dfa_sul.pre()
         seq = []
-        for _ in range(5, 20):
+        for _ in range(10, 20):
             i = random.choice(input_al)
             o = dfa_sul.step(i)
             seq.append((i, o))
         dfa_sul.post()
         data.append(seq)
 
-    data = [[('a', False), ('a', False), ('a', True)],
-            [('a', False), ('a', False), ('b', False), ('a', True)],
-            [('b', False), ('b', False), ('a', True)],
-            [('b', False), ('b', False), ('a', True), ('b', False), ('a', True)],
-            [('a', False,), ('b', False,), ('a', False)]]
+    # data = [[('a', False), ('a', False), ('a', True)],
+    #         [('a', False), ('a', False), ('b', False), ('a', True)],
+    #         [('b', False), ('b', False), ('a', True)],
+    #         [('b', False), ('b', False), ('a', True), ('b', False), ('a', True)],
+    #         [('a', False,), ('b', False,), ('a', False)]]
     # a,bb,aab,aba
-    model = run_RPNI(data, 'moore')
+    model = run_RPNI(data, 'mealy')
     print(model)

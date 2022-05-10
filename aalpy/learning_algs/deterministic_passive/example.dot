@@ -1,0 +1,34 @@
+digraph LearnedModel {
+s0 [label=s0];
+s1 [label=s1];
+s2 [label=s2];
+s0 -> s0  [label="i0/o0"];
+s0 -> s1  [label="i1/o1"];
+s0 -> s0  [label="i2/o2"];
+s0 -> s0  [label="i3/o2"];
+s0 -> s0  [label="i4/o2"];
+s0 -> s0  [label="i5/o2"];
+s0 -> s0  [label="i6/o2"];
+s0 -> s0  [label="i7/o2"];
+s0 -> s0  [label="i8/o2"];
+s1 -> s0  [label="i0/o0"];
+s1 -> s1  [label="i1/o1"];
+s1 -> s1  [label="i2/o3"];
+s1 -> s1  [label="i3/o3"];
+s1 -> s1  [label="i4/o4"];
+s1 -> s1  [label="i5/o5"];
+s1 -> s2  [label="i6/o6"];
+s1 -> s1  [label="i7/o7"];
+s1 -> s1  [label="i8/o8"];
+s2 -> s0  [label="i0/o0"];
+s2 -> s1  [label="i1/o1"];
+s2 -> s2  [label="i2/o3"];
+s2 -> s2  [label="i3/o3"];
+s2 -> s2  [label="i4/o4"];
+s2 -> s2  [label="i5/o5"];
+s2 -> s2  [label="i6/o1"];
+s2 -> s2  [label="i7/o7"];
+s2 -> s2  [label="i8/o8"];
+__start0 [label="", shape=none];
+__start0 -> s0  [label=""];
+}
