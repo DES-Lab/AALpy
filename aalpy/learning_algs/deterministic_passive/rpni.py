@@ -4,7 +4,9 @@ from copy import deepcopy
 
 from aalpy.SULs import DfaSUL
 from aalpy.automata import DfaState, Dfa
-from aalpy.utils import get_Angluin_dfa
+from aalpy.learning_algs import run_Lstar
+from aalpy.oracles import RandomWalkEqOracle
+from aalpy.utils import get_Angluin_dfa, generate_random_dfa
 
 
 class RpniNode:
@@ -153,7 +155,39 @@ class RPNI:
         return Dfa(initial_state, list(prefix_state_map.values()))
 
 
+def test():
+    random_dfa = generate_random_dfa(num_states=10, alphabet=[1, 2], num_accepting_states=2)
+    alph = random_dfa.get_input_alphabet()
+    sul = DfaSUL(random_dfa)
+    eq_oracle = RandomWalkEqOracle(alph, sul)
+    minimal_model = run_Lstar(alph, sul, eq_oracle, automaton_type='dfa', print_level=1)
+
+    dfa_sul = DfaSUL(minimal_model)
+    input_al = minimal_model.get_input_alphabet()
+    data = []
+    for _ in range(10000):
+        dfa_sul.pre()
+        seq = []
+        for _ in range(5, 20):
+            i = random.choice(input_al)
+            o = dfa_sul.step(i)
+            seq.append((i, o))
+        dfa_sul.post()
+        data.append(seq)
+
+    rpni_model = RPNI(data).run_rpni()
+
+    eq_oracle_2 = RandomWalkEqOracle(alph, dfa_sul, num_steps=10000)
+    cex = eq_oracle_2.find_cex(rpni_model)
+    if cex is None:
+        print(rpni_model.size, minimal_model.size)
+        print("RPNI SUCESS")
+    else:
+        assert False
+
 if __name__ == '__main__':
+    test()
+    exit()
     dfa = get_Angluin_dfa()
     dfa_sul = DfaSUL(dfa)
     input_al = dfa.get_input_alphabet()
