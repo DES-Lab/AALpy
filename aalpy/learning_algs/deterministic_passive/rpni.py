@@ -1,79 +1,22 @@
 import random
+import time
 from bisect import insort
-from copy import deepcopy
 
-from aalpy.SULs import DfaSUL
-from aalpy.automata import DfaState, Dfa
-from aalpy.learning_algs import run_Lstar
-from aalpy.oracles import RandomWalkEqOracle
-from aalpy.utils import get_Angluin_dfa, generate_random_dfa
-
-
-class RpniNode:
-
-    def __init__(self, output):
-        self.output = output
-        self.children = dict()
-        self.prefix = ()
-
-    def copy(self):
-        return deepcopy(self)
-
-    def __lt__(self, other):
-        return len(self.prefix) < len(other.prefix)
-
-    def __le__(self, other):
-        return len(self.prefix) <= len(other.prefix)
-
-    def __eq__(self, other):
-        return self.prefix == other.prefix
-
-
-def createPTA(data):
-    root_node = RpniNode(False)
-    for seq in data:
-        curr_node = root_node
-        for i, o in seq:
-            if i not in curr_node.children.keys():
-                node = RpniNode(o)
-                node.prefix = curr_node.prefix + (i,)
-                curr_node.children[i] = node
-            curr_node = curr_node.children[i]
-
-    return root_node
-
-
-def visualize_pta(rootNode):
-    from pydot import Dot, Node, Edge
-    graph = Dot('fpta', graph_type='digraph')
-
-    graph.add_node(Node(str(rootNode.prefix), label=f'{rootNode.output}'))
-
-    queue = [rootNode]
-    visitied = set()
-    visitied.add(rootNode.prefix)
-    while queue:
-        curr = queue.pop(0)
-        for i, c in curr.children.items():
-            if c.prefix not in visitied:
-                graph.add_node(Node(str(c.prefix), label=f'{c.output}'))
-            graph.add_edge(Edge(str(curr.prefix), str(c.prefix), label=f'{i}'))
-            if c.prefix not in visitied:
-                queue.append(c)
-            visitied.add(c.prefix)
-
-    graph.add_node(Node('__start0', shape='none', label=''))
-    graph.add_edge(Edge('__start0', str(rootNode.prefix), label=''))
-
-    graph.write(path=f'pta.pdf', format='pdf')
+from aalpy.SULs import MooreSUL, MealySUL
+from aalpy.learning_algs.deterministic_passive.rpni_helper_functions import to_automaton, createPTA, \
+    check_sequance_dfa_and_moore, check_sequance_mealy
+from aalpy.utils import load_automaton_from_file
 
 
 class RPNI:
-    def __init__(self, data):
+    def __init__(self, data, automaton_type, print_info=True):
         self.data = data
-        self.root_node = createPTA(data)
+        self.automaton_type = automaton_type
+        self.root_node = createPTA(data, automaton_type)
+        self.print_info = print_info
 
     def run_rpni(self):
+        start_time = time.time()
 
         red = [self.root_node]
         blue = list(red[0].children.values())
@@ -83,13 +26,13 @@ class RPNI:
             merged = False
 
             for red_state in red:
-                if self.compatible(self.merge(red_state, lex_min_blue, copy_nodes=True)):
-                    self.merge(red_state, lex_min_blue)
-                    print('MERGING', red_state.prefix, lex_min_blue.prefix)
+                merge_candidate = self._merge(red_state, lex_min_blue, copy_nodes=True)
+                if self._compatible(merge_candidate):
+                    self._merge(red_state, lex_min_blue)
                     merged = True
+                    break  # I am not sure about this
 
             if not merged:
-                print('ADDING TO RED', lex_min_blue.prefix)
                 insort(red, lex_min_blue)
 
             blue.clear()
@@ -98,22 +41,24 @@ class RPNI:
                     if c not in red:
                         blue.append(c)
 
-        assert sorted(red, key=lambda x: len(x.prefix)) == red
-        print(f'RPNI returned {len(red)} state automaton')
-        return self.to_automaton(red)
+        if self.print_info:
+            print(f'RPNI Learning Time: {round(time.time() - start_time, 2)}')
+            print(f'RPNI Learned {len(red)} state automaton.')
 
-    def compatible(self, r):
+        assert sorted(red, key=lambda x: len(x.prefix)) == red
+        return to_automaton(red, self.automaton_type)
+
+    def _compatible(self, r):
         for sequance in self.data:
-            curr_node = r
-            for i, o in sequance:
-                if i not in curr_node.children.keys():
-                    return False  # TODO I DON'T KNOW
-                curr_node = curr_node.children[i]
-                if curr_node.output != o:
-                    return False
+            if self.automaton_type != 'mealy':
+                sequance_passing = check_sequance_dfa_and_moore(r, sequance)
+            else:
+                sequance_passing = check_sequance_mealy(r, sequance)
+            if not sequance_passing:
+                return False
         return True
 
-    def merge(self, r, lex_min_blue, copy_nodes=False):
+    def _merge(self, r, lex_min_blue, copy_nodes=False):
         root_node = self.root_node.copy() if copy_nodes else self.root_node
         lex_min_blue = lex_min_blue.copy() if copy_nodes else lex_min_blue
 
@@ -127,45 +72,37 @@ class RPNI:
             to_update = to_update.children[p]
 
         to_update.children[b_prefix[-1]] = red_node
-        self.fold(red_node, lex_min_blue)
+        self._fold(red_node, lex_min_blue)
 
         return root_node
 
-    def fold(self, red_node, blue_node):
+    def _fold(self, red_node, blue_node):
         red_node.output = blue_node.output
+
+        # if self.automaton_type == 'mealy':
+        #     updated_keys = {}
+        #     for io, val in red_node.children.items():
+        #         updated_keys[(io[0], blue_node.output)] = val
+        #     red_node.children = updated_keys
+
         for i in blue_node.children.keys():
             if i in red_node.children.keys():
-                self.fold(red_node.children[i], blue_node.children[i])
+                self._fold(red_node.children[i], blue_node.children[i])
             else:
                 red_node.children[i] = blue_node.children[i].copy()
 
-    def to_automaton(self, red):
-        state, automaton = DfaState, Dfa
 
-        initial_state = None
-        prefix_state_map = {}
-        for i, r in enumerate(red):
-            prefix_state_map[r.prefix] = DfaState(state_id=f's{i}', is_accepting=r.output)
-            if i == 0:
-                initial_state = prefix_state_map[r.prefix]
-
-        for r in red:
-            for i, c in r.children.items():
-                prefix_state_map[r.prefix].transitions[i] = prefix_state_map[c.prefix]
-        return Dfa(initial_state, list(prefix_state_map.values()))
+def run_RPNI(data, automaton_type):
+    assert automaton_type in {'dfa', 'mealy', 'moore'}
+    return RPNI(data, automaton_type).run_rpni()
 
 
-def test():
-    random_dfa = generate_random_dfa(num_states=10, alphabet=[1, 2], num_accepting_states=2)
-    alph = random_dfa.get_input_alphabet()
-    sul = DfaSUL(random_dfa)
-    eq_oracle = RandomWalkEqOracle(alph, sul)
-    minimal_model = run_Lstar(alph, sul, eq_oracle, automaton_type='dfa', print_level=1)
-
-    dfa_sul = DfaSUL(minimal_model)
-    input_al = minimal_model.get_input_alphabet()
+if __name__ == '__main__':
+    dfa = load_automaton_from_file('../../../DotModels/Angluin_Mealy.dot', automaton_type='mealy')
+    dfa_sul = MealySUL(dfa)
+    input_al = dfa.get_input_alphabet()
     data = []
-    for _ in range(10000):
+    for _ in range(100):
         dfa_sul.pre()
         seq = []
         for _ in range(5, 20):
@@ -175,38 +112,11 @@ def test():
         dfa_sul.post()
         data.append(seq)
 
-    rpni_model = RPNI(data).run_rpni()
-
-    eq_oracle_2 = RandomWalkEqOracle(alph, dfa_sul, num_steps=10000)
-    cex = eq_oracle_2.find_cex(rpni_model)
-    if cex is None:
-        print(rpni_model.size, minimal_model.size)
-        print("RPNI SUCESS")
-    else:
-        assert False
-
-if __name__ == '__main__':
-    test()
-    exit()
-    dfa = get_Angluin_dfa()
-    dfa_sul = DfaSUL(dfa)
-    input_al = dfa.get_input_alphabet()
-    data = []
-    for _ in range(10):
-        dfa_sul.pre()
-        seq = []
-        for _ in range(5, 12):
-            i = random.choice(input_al)
-            o = dfa_sul.step(i)
-            seq.append((i, o))
-        dfa_sul.post()
-        data.append(seq)
-
-    # data = [[('a', False), ('a', False), ('a', True)],
-    #         [('a', False), ('a', False), ('b', False), ('a', True)],
-    #         [('b', False), ('b', False), ('a', True)],
-    #         [('b', False), ('b', False), ('a', True), ('b', False), ('a', True)],
-    #         [('a', False,), ('b', False,), ('a', False)]]
+    data = [[('a', False), ('a', False), ('a', True)],
+            [('a', False), ('a', False), ('b', False), ('a', True)],
+            [('b', False), ('b', False), ('a', True)],
+            [('b', False), ('b', False), ('a', True), ('b', False), ('a', True)],
+            [('a', False,), ('b', False,), ('a', False)]]
     # a,bb,aab,aba
-    model = RPNI(data).run_rpni()
+    model = run_RPNI(data, 'mealy')
     print(model)
