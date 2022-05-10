@@ -30,7 +30,7 @@ class RPNI:
                 if self._compatible(merge_candidate):
                     self._merge(red_state, lex_min_blue)
                     merged = True
-                    break  # I am not sure about this
+                    # break  # I am not sure about this
 
             if not merged:
                 insort(red, lex_min_blue)
@@ -118,5 +118,5 @@ if __name__ == '__main__':
             [('b', False), ('b', False), ('a', True), ('b', False), ('a', True)],
             [('a', False,), ('b', False,), ('a', False)]]
     # a,bb,aab,aba
-    model = run_RPNI(data, 'mealy')
+    model = run_RPNI(data, 'moore')
     print(model)
