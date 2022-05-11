@@ -4,7 +4,7 @@ from bisect import insort
 
 from aalpy.SULs import MooreSUL, MealySUL
 from aalpy.learning_algs.deterministic_passive.rpni_helper_functions import to_automaton, createPTA, \
-    check_sequance_dfa_and_moore, check_sequance_mealy, test_rpni_with_eq_oracle
+    check_sequance_dfa_and_moore, check_sequance_mealy, test_rpni_with_eq_oracle, extract_unique_sequences
 from aalpy.utils import load_automaton_from_file
 
 
@@ -12,7 +12,11 @@ class RPNI:
     def __init__(self, data, automaton_type, print_info=True):
         self.data = data
         self.automaton_type = automaton_type
+        pta_construction_start = time.time()
         self.root_node = createPTA(data, automaton_type)
+        self.test_data = extract_unique_sequences(self.root_node)
+        if print_info:
+            print(f'PTA Construction Time: {round(time.time() - pta_construction_start, 2)}')
         self.print_info = print_info
 
     def run_rpni(self):
@@ -50,12 +54,12 @@ class RPNI:
         return to_automaton(red, self.automaton_type)
 
     def _compatible(self, r):
-        for sequance in self.data:
+        for sequence in self.test_data:
             if self.automaton_type != 'mealy':
-                sequance_passing = check_sequance_dfa_and_moore(r, sequance)
+                sequence_passing = check_sequance_dfa_and_moore(r, sequence)
             else:
-                sequance_passing = check_sequance_mealy(r, sequance)
-            if not sequance_passing:
+                sequence_passing = check_sequance_mealy(r, sequence)
+            if not sequence_passing:
                 return False
         return True
 
@@ -99,17 +103,17 @@ def run_RPNI(data, automaton_type):
 
 
 if __name__ == '__main__':
-    from random import seed
-    seed(1)
-    test_rpni_with_eq_oracle()
-    exit()
+    # from random import seed
+    # seed(1)
+    # test_rpni_with_eq_oracle()
+    # exit()
 
     dfa = load_automaton_from_file('../../../DotModels/mooreModel.dot', automaton_type='moore')
     dfa = load_automaton_from_file('example.dot', automaton_type='mealy')
     dfa_sul = MealySUL(dfa)
     input_al = dfa.get_input_alphabet()
     data = []
-    for _ in range(5000):
+    for _ in range(500):
         dfa_sul.pre()
         seq = []
         for _ in range(10, 20):
@@ -124,13 +128,14 @@ if __name__ == '__main__':
     #         [('b', False), ('b', False), ('a', True)],
     #         [('b', False), ('b', False), ('a', True), ('b', False), ('a', True)],
     #         [('a', False,), ('b', False,), ('a', False)]]
+
     # a,bb,aab,aba
     import cProfile
+
     pr = cProfile.Profile()
     pr.enable()
     model = run_RPNI(data, 'moore')
     pr.disable()
     pr.print_stats(sort='tottime')
-
 
     model.visualize()

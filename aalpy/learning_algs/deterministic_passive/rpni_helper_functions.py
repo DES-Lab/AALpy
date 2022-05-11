@@ -15,7 +15,7 @@ class RpniNode:
 
     def copy(self):
         return pickle.loads(pickle.dumps(self, -1))
-        #return deepcopy(self)
+        # return deepcopy(self)
 
     def __lt__(self, other):
         return len(self.prefix) < len(other.prefix)
@@ -63,6 +63,33 @@ def createPTA(data, automaton_type):
                 curr_node.children[i] = node
             curr_node = curr_node.children[i]
     return root_node
+
+
+def extract_unique_sequences(root_node):
+    def get_leaf_nodes(root_node):
+        leaves = []
+
+        def _get_leaf_nodes(node):
+            if node is not None:
+                if len(node.children.keys()) == 0:
+                    leaves.append(node)
+                for n in node.children.values():
+                    _get_leaf_nodes(n)
+
+        _get_leaf_nodes(root_node)
+        return leaves
+
+    leaf_nodes = get_leaf_nodes(root_node)
+    paths = []
+    for node in leaf_nodes:
+        seq = []
+        curr_node = root_node
+        for i in node.prefix:
+            curr_node = curr_node.children[i]
+            seq.append((i, curr_node.output))
+        paths.append(seq)
+
+    return paths
 
 
 def to_automaton(red, automaton_type):
