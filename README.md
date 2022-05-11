@@ -27,7 +27,7 @@ Whether you work with regular languages or you would like to learn models of
 	
 | Automata Type   |      Supported Formalisms      |  Features |
 |----------|:-------------:|------:|
-| Deterministic     |  Deterministic Finite Automata<br />Mealy Machines<br />Moore Machines | Counterexample Processing<br />Seamless Caching<br />11 Equivalence Oracles |
+| Deterministic     |  Deterministic Finite Automata<br />Mealy Machines<br />Moore Machines | Counterexample Processing<br />Seamless Caching<br />11 Equivalence Oracles <br /> Passive learning of all formalisms |
 | Non-Deterministic |    Observable Non-Deterministic FSM <br /> Abstracted Non-Deterministic FSM|   Size Reduction Trough Abstraction<br />|
 | Stochastic        |  Markov Decision Processes<br />Stochastic Mealy Machines<br />Markov Chains |    Counterexample Processing<br />Row/Cell Compatability Metrics<br />Model Checking with PRISM<br />Alergia Passive Learning|
 
@@ -48,6 +48,9 @@ enables efficient learning of system models with large input space.
 AALpy enables efficient learning by providing a **large set of equivalence oracles**, implementing various conformance testing strategies. Learning 
 is mostly based on Angluin's [L* algorithm](https://people.eecs.berkeley.edu/~dawnsong/teaching/s10/papers/angluin87.pdf), for which AALpy supports a 
 selection of optimizations, including **efficient counterexample processing** and **caching**.
+
+AALpy includes RPNI, a  **passive deterministic automata learning** algorithm. With RPNI, AALpy can construct determinisitc 
+models that conform to data.
 
 AALpy also has an efficient implementation of the [ALERGIA](https://link.springer.com/article/10.1007/s10994-016-5565-9) algorithm, 
 suited for passive learning of Markov Chains, Markov Decision processes, and Stochastic Mealy Machines.
