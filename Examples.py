@@ -860,7 +860,7 @@ def rpni_check_model_example():
 
     dfa_sul = MealySUL(model)
     data = []
-    for _ in range(50):
+    for _ in range(500):
         dfa_sul.pre()
         seq = []
         for _ in range(5, 20):
@@ -870,7 +870,7 @@ def rpni_check_model_example():
         dfa_sul.post()
         data.append(seq)
 
-    rpni_model = run_RPNI(data, automaton_type='moore', print_info=True)
+    rpni_model = run_RPNI(data, automaton_type='mealy', print_info=True)
 
     eq_oracle_2 = StatePrefixEqOracle(input_al, dfa_sul, walks_per_state=100)
     cex = eq_oracle_2.find_cex(rpni_model)
