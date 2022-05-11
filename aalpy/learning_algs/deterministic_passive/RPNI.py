@@ -106,7 +106,7 @@ class RPNI:
                 red_node.children[i] = blue_node.children[i].copy()
 
 
-def run_RPNI(data, automaton_type) -> Union[DeterministicAutomaton, None]:
+def run_RPNI(data, automaton_type, print_info=True) -> Union[DeterministicAutomaton, None]:
     """
     Run RPNI, a deterministic passive model learning algorithm.
     Resulting model conforms to the provided data.
@@ -117,13 +117,14 @@ def run_RPNI(data, automaton_type) -> Union[DeterministicAutomaton, None]:
 
         data: sequance of input output sequences. Eg. [[(i1,o1), (i2,o2)], [(i1,o1), (i1,o2), (i3,o1)], ...]
         automaton_type: either 'dfa', 'mealy', 'moore'
+        print_info: print learning progress and runtime information
 
     Returns:
 
         Model conforming to the data, or None if data is non-deterministic.
     """
     assert automaton_type in {'dfa', 'mealy', 'moore'}
-    rpni = RPNI(data, automaton_type)
+    rpni = RPNI(data, automaton_type, print_info)
     if rpni.root_node is None:
         print('DATA provided to RPNI is not deterministic. Ensure that the data is deterministic, '
               'or consider using Alergia.')

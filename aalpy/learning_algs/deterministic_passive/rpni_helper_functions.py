@@ -1,5 +1,6 @@
 import pickle
 
+
 class RpniNode:
     __slots__ = ['output', 'children', 'prefix']
 
@@ -37,7 +38,7 @@ def createPTA(data, automaton_type):
     for seq in data:
         curr_node = root_node
         for i, o in seq:
-            if i is None and seq.index((i,o)) == 0:
+            if i is None and seq.index((i, o)) == 0:
                 if root_node.output is not None and o != root_node.output:
                     return None
                 root_node.output = o
@@ -56,7 +57,7 @@ def createPTA(data, automaton_type):
 
 
 def extract_unique_sequences(root_node):
-    def get_leaf_nodes(root_node):
+    def get_leaf_nodes(root):
         leaves = []
 
         def _get_leaf_nodes(node):
@@ -66,7 +67,7 @@ def extract_unique_sequences(root_node):
                 for n in node.children.values():
                     _get_leaf_nodes(n)
 
-        _get_leaf_nodes(root_node)
+        _get_leaf_nodes(root)
         return leaves
 
     leaf_nodes = get_leaf_nodes(root_node)
@@ -113,15 +114,15 @@ def to_automaton(red, automaton_type):
     return automaton(initial_state, list(prefix_state_map.values()))
 
 
-def visualize_pta(rootNode):
+def visualize_pta(root_node):
     from pydot import Dot, Node, Edge
     graph = Dot('fpta', graph_type='digraph')
 
-    graph.add_node(Node(str(rootNode.prefix), label=f'{rootNode.output}'))
+    graph.add_node(Node(str(root_node.prefix), label=f'{root_node.output}'))
 
-    queue = [rootNode]
+    queue = [root_node]
     visited = set()
-    visited.add(rootNode.prefix)
+    visited.add(root_node.prefix)
     while queue:
         curr = queue.pop(0)
         for i, c in curr.children.items():
@@ -133,37 +134,6 @@ def visualize_pta(rootNode):
             visited.add(c.prefix)
 
     graph.add_node(Node('__start0', shape='none', label=''))
-    graph.add_edge(Edge('__start0', str(rootNode.prefix), label=''))
+    graph.add_edge(Edge('__start0', str(root_node.prefix), label=''))
 
     graph.write(path=f'pta.pdf', format='pdf')
-
-
-def test_rpni_with_eq_oracle(model, num_samples = 10000):
-    import random
-    from aalpy.SULs import MealySUL
-    from aalpy.learning_algs.deterministic_passive.RPNI import RPNI
-    from aalpy.oracles import RandomWalkEqOracle
-
-    input_al = model.get_input_alphabet()
-
-    dfa_sul = MealySUL(model)
-    data = []
-    for _ in range(10000):
-        dfa_sul.pre()
-        seq = []
-        for _ in range(5, 20):
-            i = random.choice(input_al)
-            o = dfa_sul.step(i)
-            seq.append((i, o))
-        dfa_sul.post()
-        data.append(seq)
-
-    rpni_model = RPNI(data, automaton_type='dfa').run_rpni()
-
-    eq_oracle_2 = RandomWalkEqOracle(input_al, dfa_sul, num_steps=10000)
-    cex = eq_oracle_2.find_cex(rpni_model)
-    if cex is None:
-        print(rpni_model.size, model.size)
-        print("Could not find a counterexample between RPNI and original model.")
-    else:
-        print('Counterexample found. Either RPNI data was incomplete, or there is a bug in RPNI algorithm :o ')
