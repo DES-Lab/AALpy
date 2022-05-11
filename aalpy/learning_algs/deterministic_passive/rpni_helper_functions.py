@@ -1,9 +1,4 @@
-from copy import deepcopy
 import pickle
-
-from aalpy.SULs import DfaSUL
-from aalpy.automata import DfaState, Dfa, MooreMachine, MooreState, MealyMachine, MealyState
-
 
 class RpniNode:
     __slots__ = ['output', 'children', 'prefix']
@@ -15,7 +10,6 @@ class RpniNode:
 
     def copy(self):
         return pickle.loads(pickle.dumps(self, -1))
-        # return deepcopy(self)
 
     def __lt__(self, other):
         return len(self.prefix) < len(other.prefix)
@@ -27,22 +21,13 @@ class RpniNode:
         return self.prefix == other.prefix
 
 
-def check_sequance_mealy(root_node, seq):
+def check_sequance(root_node, seq, automaton_type):
     curr_node = root_node
     for i, o in seq:
         if i not in curr_node.children.keys():
             return False
         curr_node = curr_node.children[i]
-    return True
-
-
-def check_sequance_dfa_and_moore(root_node, seq):
-    curr_node = root_node
-    for i, o in seq:
-        if i not in curr_node.children.keys():
-            return False
-        curr_node = curr_node.children[i]
-        if curr_node.output != o:
+        if automaton_type != 'mealy' and curr_node.output != o:
             return False
     return True
 
@@ -90,6 +75,8 @@ def extract_unique_sequences(root_node):
 
 
 def to_automaton(red, automaton_type):
+    from aalpy.automata import DfaState, Dfa, MooreMachine, MooreState, MealyMachine, MealyState
+
     if automaton_type == 'dfa':
         state, automaton = DfaState, Dfa
     elif automaton_type == 'moore':
@@ -143,16 +130,15 @@ def visualize_pta(rootNode):
     graph.write(path=f'pta.pdf', format='pdf')
 
 
-def test_rpni_with_eq_oracle():
+def test_rpni_with_eq_oracle(model, num_samples = 10000):
     import random
-    from aalpy.learning_algs.deterministic_passive.rpni import RPNI
+    from aalpy.SULs import MealySUL
+    from aalpy.learning_algs.deterministic_passive.RPNI import RPNI
     from aalpy.oracles import RandomWalkEqOracle
-    from aalpy.utils import generate_random_dfa
 
-    random_dfa = generate_random_dfa(num_states=10, alphabet=[1, 2], num_accepting_states=2)
-    input_al = random_dfa.get_input_alphabet()
+    input_al = model.get_input_alphabet()
 
-    dfa_sul = DfaSUL(random_dfa)
+    dfa_sul = MealySUL(model)
     data = []
     for _ in range(10000):
         dfa_sul.pre()
@@ -169,7 +155,7 @@ def test_rpni_with_eq_oracle():
     eq_oracle_2 = RandomWalkEqOracle(input_al, dfa_sul, num_steps=10000)
     cex = eq_oracle_2.find_cex(rpni_model)
     if cex is None:
-        print(rpni_model.size, random_dfa.size)
-        print("RPNI SUCESS")
+        print(rpni_model.size, model.size)
+        print("Could not find a counterexample between RPNI and original model.")
     else:
-        assert False
+        print('Counterexample found. Either RPNI data was incomplete, or there is a bug in RPNI algorithm :o ')

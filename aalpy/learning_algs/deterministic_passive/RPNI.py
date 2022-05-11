@@ -1,11 +1,8 @@
-import random
 import time
 from bisect import insort
 
-from aalpy.SULs import MooreSUL, MealySUL
 from aalpy.learning_algs.deterministic_passive.rpni_helper_functions import to_automaton, createPTA, \
-    check_sequance_dfa_and_moore, check_sequance_mealy, test_rpni_with_eq_oracle, extract_unique_sequences
-from aalpy.utils import load_automaton_from_file
+    check_sequance, extract_unique_sequences
 
 
 class RPNI:
@@ -34,11 +31,12 @@ class RPNI:
                 if self._compatible(merge_candidate):
                     self._merge(red_state, lex_min_blue)
                     merged = True
-                    break  # I am not sure about this
+                    break
 
             if not merged:
                 insort(red, lex_min_blue)
-                print(len(red))
+                if self.print_info:
+                    print(f'\rCurrent automaton size: {len(red)}', end="")
 
             blue.clear()
             for r in red:
@@ -47,6 +45,7 @@ class RPNI:
                         blue.append(c)
 
         if self.print_info:
+            print('')
             print(f'RPNI Learning Time: {round(time.time() - start_time, 2)}')
             print(f'RPNI Learned {len(red)} state automaton.')
 
@@ -55,11 +54,7 @@ class RPNI:
 
     def _compatible(self, r):
         for sequence in self.test_data:
-            if self.automaton_type != 'mealy':
-                sequence_passing = check_sequance_dfa_and_moore(r, sequence)
-            else:
-                sequence_passing = check_sequance_mealy(r, sequence)
-            if not sequence_passing:
+            if not check_sequance(r, sequence, automaton_type=self.automaton_type):
                 return False
         return True
 
@@ -112,44 +107,3 @@ class RPNI:
 def run_RPNI(data, automaton_type):
     assert automaton_type in {'dfa', 'mealy', 'moore'}
     return RPNI(data, automaton_type).run_rpni()
-
-
-if __name__ == '__main__':
-    # from random import seed
-    # seed(5)
-    # test_rpni_with_eq_oracle()
-    # exit()
-    #
-    # random.seed(4)
-
-    dfa = load_automaton_from_file('original.dot', automaton_type='mealy')
-    #dfa = load_automaton_from_file('../../../DotModels/Angluin_Moore.dot', automaton_type='moore')
-    dfa_sul = MealySUL(dfa)
-    input_al = dfa.get_input_alphabet()
-    data = []
-    for _ in range(5000):
-        dfa_sul.pre()
-        seq = []
-        for _ in range(10, 20):
-            i = random.choice(input_al)
-            o = dfa_sul.step(i)
-            seq.append((i, o))
-        dfa_sul.post()
-        data.append(seq)
-
-    # data = [[('a', False), ('a', False), ('a', True)],
-    #         [('a', False), ('a', False), ('b', False), ('a', True)],
-    #         [('b', False), ('b', False), ('a', True)],
-    #         [('b', False), ('b', False), ('a', True), ('b', False), ('a', True)],
-    #         [('a', False,), ('b', False,), ('a', False)]]
-
-    # a,bb,aab,aba
-    import cProfile
-
-    pr = cProfile.Profile()
-    pr.enable()
-    model = run_RPNI(data, 'mealy')
-    pr.disable()
-    pr.print_stats(sort='tottime')
-
-    model.visualize()

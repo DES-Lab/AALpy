@@ -832,3 +832,47 @@ def active_alergia_example(example='first_grid'):
     model = run_active_Alergia(data, sul, sampler, n_iter=10)
 
     print(model)
+
+
+def rpni_example():
+    from aalpy.learning_algs import run_RPNI
+    data = [[('a', False), ('a', False), ('a', True)],
+            [('a', False), ('a', False), ('b', False), ('a', True)],
+            [('b', False), ('b', False), ('a', True)],
+            [('b', False), ('b', False), ('a', True), ('b', False), ('a', True)],
+            [('a', False,), ('b', False,), ('a', False)]]
+
+    model = run_RPNI(data, automaton_type='dfa')
+    model.visualize()
+
+
+def rpni_check_model_example():
+    import random
+    from aalpy.SULs import MealySUL
+    from aalpy.learning_algs.deterministic_passive.RPNI import RPNI
+    from aalpy.oracles import RandomWalkEqOracle
+    from aalpy.utils import load_automaton_from_file
+
+    model = load_automaton_from_file('DotModels/Bluetooth/bluetooth_model.dot', automaton_type='mealy')
+    input_al = model.get_input_alphabet()
+
+    dfa_sul = MealySUL(model)
+    data = []
+    for _ in range(1000):
+        dfa_sul.pre()
+        seq = []
+        for _ in range(5, 20):
+            i = random.choice(input_al)
+            o = dfa_sul.step(i)
+            seq.append((i, o))
+        dfa_sul.post()
+        data.append(seq)
+
+    rpni_model = RPNI(data, automaton_type='mealy').run_rpni()
+
+    eq_oracle_2 = RandomWalkEqOracle(input_al, dfa_sul, num_steps=10000)
+    cex = eq_oracle_2.find_cex(rpni_model)
+    if cex is None:
+        print("Could not find a counterexample between RPNI and original model.")
+    else:
+        print('Counterexample found. Either RPNI data was incomplete, or there is a bug in RPNI algorithm :o ')
