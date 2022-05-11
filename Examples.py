@@ -853,24 +853,24 @@ def rpni_check_model_example():
     from aalpy.oracles import StatePrefixEqOracle
     from aalpy.utils import generate_random_mealy_machine, load_automaton_from_file
 
-    model = load_automaton_from_file('DotModels/Bluetooth/bluetooth_model.dot', automaton_type='mealy')
     model = generate_random_mealy_machine(num_states=5, input_alphabet=[1, 2, 3], output_alphabet=['a', 'b'])
+    model = load_automaton_from_file('DotModels/Bluetooth/bluetooth_model.dot', automaton_type='mealy')
 
     input_al = model.get_input_alphabet()
 
     dfa_sul = MealySUL(model)
     data = []
-    for _ in range(3000):
+    for _ in range(50):
         dfa_sul.pre()
         seq = []
-        for _ in range(5, 15):
+        for _ in range(5, 20):
             i = random.choice(input_al)
             o = dfa_sul.step(i)
             seq.append((i, o))
         dfa_sul.post()
         data.append(seq)
 
-    rpni_model = run_RPNI(data, automaton_type='mealy', print_info=True)
+    rpni_model = run_RPNI(data, automaton_type='moore', print_info=True)
 
     eq_oracle_2 = StatePrefixEqOracle(input_al, dfa_sul, walks_per_state=100)
     cex = eq_oracle_2.find_cex(rpni_model)

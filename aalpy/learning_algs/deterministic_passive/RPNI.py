@@ -108,7 +108,7 @@ class RPNI:
                 red_node.children[io] = blue_node.children[io].copy()
 
 
-def run_RPNI(data, automaton_type, print_info=True) -> Union[DeterministicAutomaton, None]:
+def run_RPNI(data, automaton_type, input_completeness=None, print_info=True) -> Union[DeterministicAutomaton, None]:
     """
     Run RPNI, a deterministic passive model learning algorithm.
     Resulting model conforms to the provided data.
@@ -119,6 +119,9 @@ def run_RPNI(data, automaton_type, print_info=True) -> Union[DeterministicAutoma
 
         data: sequance of input output sequences. Eg. [[(i1,o1), (i2,o2)], [(i1,o1), (i1,o2), (i3,o1)], ...]
         automaton_type: either 'dfa', 'mealy', 'moore'
+        input_completeness: either None, 'sink_state', or 'self_loop'. If None, learned model could be input incomplete,
+        sink_state will lead all undefined inputs form some state to the sink state, whereas self_loop will simply create
+        a self loop. In case of Mealy learning output of the added transition will be 'epsilon'.
         print_info: print learning progress and runtime information
 
     Returns:
@@ -126,9 +129,22 @@ def run_RPNI(data, automaton_type, print_info=True) -> Union[DeterministicAutoma
         Model conforming to the data, or None if data is non-deterministic.
     """
     assert automaton_type in {'dfa', 'mealy', 'moore'}
+    assert input_completeness in {None, 'self_loop', 'sink_state'}
+
     rpni = RPNI(data, automaton_type, print_info)
     if rpni.root_node is None:
         print('DATA provided to RPNI is not deterministic. Ensure that the data is deterministic, '
               'or consider using Alergia.')
         return None
-    return rpni.run_rpni()
+
+    learned_model = rpni.run_rpni()
+
+    if not learned_model.is_input_complete():
+        if not input_completeness:
+            print('Warning: Learned Model is not input complete (inputs not defined for all states). '
+                  'Consider calling .make_input_complete()')
+        else:
+            print(f'Learned model was not input complete. Adapting it with {input_completeness} transitions.')
+            learned_model.make_input_complete(input_completeness)
+
+    return learned_model
