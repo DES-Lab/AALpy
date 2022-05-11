@@ -5,6 +5,7 @@ from aalpy.automata import DfaState, Dfa, MooreMachine, MooreState, MealyMachine
 
 
 class RpniNode:
+    __slots__ = ['output', 'children', 'prefix']
 
     def __init__(self, output):
         self.output = output
