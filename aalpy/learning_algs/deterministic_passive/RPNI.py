@@ -105,5 +105,20 @@ class RPNI:
 
 
 def run_RPNI(data, automaton_type):
+    """
+    Run RPNI, a deterministic passive model learning algorithm.
+    Resulting model conforms to the provided data.
+    For more informations on RPNI, check out AALpy' Wiki:
+    https://github.com/DES-Lab/AALpy/wiki/RPNI---Passive-Deterministic-Automata-Learning
+
+    Args:
+
+        data: sequance of input output sequences. Eg. [[(i1,o1), (i2,o2)], [(i1,o1), (i1,o2), (i3,o1)], ...]
+        automaton_type: either 'dfa', 'mealy', 'moore'
+
+    Returns:
+
+        Model conforming to the data.
+    """
     assert automaton_type in {'dfa', 'mealy', 'moore'}
     return RPNI(data, automaton_type).run_rpni()
