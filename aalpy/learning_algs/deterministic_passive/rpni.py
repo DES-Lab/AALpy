@@ -28,15 +28,19 @@ class RPNI:
         while blue:
             lex_min_blue = min(list(blue), key=lambda x: len(x.prefix))
             merged = False
+            if len(red) > 18:
+                print('len blue', len(blue))
 
             for red_state in red:
                 merge_candidate = self._merge(red_state, lex_min_blue, copy_nodes=True)
                 if self._compatible(merge_candidate):
                     self._merge(red_state, lex_min_blue)
                     merged = True
-                    # break  # I am not sure about this
+                    break  # I am not sure about this
+                    #print('MERGED')
 
             if not merged:
+                #print('ADDED')
                 insort(red, lex_min_blue)
                 print(len(red))
 
@@ -108,8 +112,10 @@ if __name__ == '__main__':
     # test_rpni_with_eq_oracle()
     # exit()
 
+    random.seed(4)
+
     dfa = load_automaton_from_file('../../../DotModels/mooreModel.dot', automaton_type='moore')
-    dfa = load_automaton_from_file('example.dot', automaton_type='mealy')
+    dfa = load_automaton_from_file('original.dot', automaton_type='mealy')
     dfa_sul = MealySUL(dfa)
     input_al = dfa.get_input_alphabet()
     data = []
