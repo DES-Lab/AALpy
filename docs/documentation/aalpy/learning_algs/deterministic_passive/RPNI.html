@@ -77,12 +77,14 @@
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">,</span> <span class="n">print_info</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">=</span> <span class="n">automaton_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">print_info</span> <span class="o">=</span> <span class="n">print_info</span>
+
         <span class="n">pta_construction_start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span> <span class="o">=</span> <span class="n">createPTA</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">test_data</span> <span class="o">=</span> <span class="n">extract_unique_sequences</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root_node</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">print_info</span><span class="p">:</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">print_info</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;PTA Construction Time: </span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">pta_construction_start</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">print_info</span> <span class="o">=</span> <span class="n">print_info</span>
 
     <span class="k">def</span> <span class="nf">run_rpni</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
@@ -113,37 +115,36 @@
                         <span class="n">blue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">print_info</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;RPNI Learning Time: </span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">RPNI Learning Time: </span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;RPNI Learned </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">red</span><span class="p">)</span><span class="si">}</span><span class="s1"> state automaton.&#39;</span><span class="p">)</span>
 
         <span class="k">assert</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">red</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">prefix</span><span class="p">))</span> <span class="o">==</span> <span class="n">red</span>
         <span class="k">return</span> <span class="n">to_automaton</span><span class="p">(</span><span class="n">red</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_compatible</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_compatible</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root_node</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">sequence</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_data</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">check_sequance</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">sequence</span><span class="p">,</span> <span class="n">automaton_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">check_sequance</span><span class="p">(</span><span class="n">root_node</span><span class="p">,</span> <span class="n">sequence</span><span class="p">,</span> <span class="n">automaton_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span><span class="p">):</span>
                 <span class="k">return</span> <span class="kc">False</span>
         <span class="k">return</span> <span class="kc">True</span>
 
-    <span class="k">def</span> <span class="nf">_merge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">lex_min_blue</span><span class="p">,</span> <span class="n">copy_nodes</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_merge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">red_node</span><span class="p">,</span> <span class="n">lex_min_blue</span><span class="p">,</span> <span class="n">copy_nodes</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="n">root_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="k">if</span> <span class="n">copy_nodes</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span>
         <span class="n">lex_min_blue</span> <span class="o">=</span> <span class="n">lex_min_blue</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="k">if</span> <span class="n">copy_nodes</span> <span class="k">else</span> <span class="n">lex_min_blue</span>
 
-        <span class="n">red_node</span> <span class="o">=</span> <span class="n">root_node</span>
-        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">r</span><span class="o">.</span><span class="n">prefix</span><span class="p">:</span>
-            <span class="n">red_node</span> <span class="o">=</span> <span class="n">red_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">p</span><span class="p">]</span>
+        <span class="n">red_node_in_tree</span> <span class="o">=</span> <span class="n">root_node</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">red_node</span><span class="o">.</span><span class="n">prefix</span><span class="p">:</span>
+            <span class="n">red_node_in_tree</span> <span class="o">=</span> <span class="n">red_node_in_tree</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">p</span><span class="p">]</span>
 
-        <span class="n">b_prefix</span> <span class="o">=</span> <span class="n">lex_min_blue</span><span class="o">.</span><span class="n">prefix</span>
         <span class="n">to_update</span> <span class="o">=</span> <span class="n">root_node</span>
-        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">b_prefix</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">lex_min_blue</span><span class="o">.</span><span class="n">prefix</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
             <span class="n">to_update</span> <span class="o">=</span> <span class="n">to_update</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">p</span><span class="p">]</span>
 
-        <span class="n">to_update</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">b_prefix</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">red_node</span>
+        <span class="n">to_update</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">lex_min_blue</span><span class="o">.</span><span class="n">prefix</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">red_node_in_tree</span>
+
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">!=</span> <span class="s1">&#39;mealy&#39;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_fold</span><span class="p">(</span><span class="n">red_node</span><span class="p">,</span> <span class="n">lex_min_blue</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_fold</span><span class="p">(</span><span class="n">red_node_in_tree</span><span class="p">,</span> <span class="n">lex_min_blue</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_fold_mealy</span><span class="p">(</span><span class="n">red_node</span><span class="p">,</span> <span class="n">lex_min_blue</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_fold_mealy</span><span class="p">(</span><span class="n">red_node_in_tree</span><span class="p">,</span> <span class="n">lex_min_blue</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">root_node</span>
 
@@ -163,13 +164,14 @@
         <span class="k">for</span> <span class="n">io</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">red_node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">o</span> <span class="o">=</span> <span class="n">blue_io_map</span><span class="p">[</span><span class="n">io</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="k">if</span> <span class="n">io</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">blue_io_map</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">else</span> <span class="n">io</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
             <span class="n">updated_keys</span><span class="p">[(</span><span class="n">io</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">o</span><span class="p">)]</span> <span class="o">=</span> <span class="n">val</span>
+
         <span class="n">red_node</span><span class="o">.</span><span class="n">children</span> <span class="o">=</span> <span class="n">updated_keys</span>
 
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">blue_node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">red_node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_fold</span><span class="p">(</span><span class="n">red_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">blue_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">io</span> <span class="ow">in</span> <span class="n">blue_node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">io</span> <span class="ow">in</span> <span class="n">red_node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_fold_mealy</span><span class="p">(</span><span class="n">red_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">io</span><span class="p">],</span> <span class="n">blue_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">io</span><span class="p">])</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">red_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">blue_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="n">red_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">io</span><span class="p">]</span> <span class="o">=</span> <span class="n">blue_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">io</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
 
 <span class="k">def</span> <span class="nf">run_RPNI</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">,</span> <span class="n">print_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">DeterministicAutomaton</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
@@ -216,12 +218,14 @@
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">,</span> <span class="n">print_info</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">=</span> <span class="n">automaton_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">print_info</span> <span class="o">=</span> <span class="n">print_info</span>
+
         <span class="n">pta_construction_start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span> <span class="o">=</span> <span class="n">createPTA</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">test_data</span> <span class="o">=</span> <span class="n">extract_unique_sequences</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root_node</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">print_info</span><span class="p">:</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">print_info</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;PTA Construction Time: </span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">pta_construction_start</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">print_info</span> <span class="o">=</span> <span class="n">print_info</span>
 
     <span class="k">def</span> <span class="nf">run_rpni</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
@@ -252,37 +256,36 @@
                         <span class="n">blue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">print_info</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;RPNI Learning Time: </span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">RPNI Learning Time: </span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;RPNI Learned </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">red</span><span class="p">)</span><span class="si">}</span><span class="s1"> state automaton.&#39;</span><span class="p">)</span>
 
         <span class="k">assert</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">red</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">prefix</span><span class="p">))</span> <span class="o">==</span> <span class="n">red</span>
         <span class="k">return</span> <span class="n">to_automaton</span><span class="p">(</span><span class="n">red</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_compatible</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_compatible</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root_node</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">sequence</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_data</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">check_sequance</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">sequence</span><span class="p">,</span> <span class="n">automaton_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">check_sequance</span><span class="p">(</span><span class="n">root_node</span><span class="p">,</span> <span class="n">sequence</span><span class="p">,</span> <span class="n">automaton_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span><span class="p">):</span>
                 <span class="k">return</span> <span class="kc">False</span>
         <span class="k">return</span> <span class="kc">True</span>
 
-    <span class="k">def</span> <span class="nf">_merge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">lex_min_blue</span><span class="p">,</span> <span class="n">copy_nodes</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_merge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">red_node</span><span class="p">,</span> <span class="n">lex_min_blue</span><span class="p">,</span> <span class="n">copy_nodes</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="n">root_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="k">if</span> <span class="n">copy_nodes</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span>
         <span class="n">lex_min_blue</span> <span class="o">=</span> <span class="n">lex_min_blue</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="k">if</span> <span class="n">copy_nodes</span> <span class="k">else</span> <span class="n">lex_min_blue</span>
 
-        <span class="n">red_node</span> <span class="o">=</span> <span class="n">root_node</span>
-        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">r</span><span class="o">.</span><span class="n">prefix</span><span class="p">:</span>
-            <span class="n">red_node</span> <span class="o">=</span> <span class="n">red_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">p</span><span class="p">]</span>
+        <span class="n">red_node_in_tree</span> <span class="o">=</span> <span class="n">root_node</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">red_node</span><span class="o">.</span><span class="n">prefix</span><span class="p">:</span>
+            <span class="n">red_node_in_tree</span> <span class="o">=</span> <span class="n">red_node_in_tree</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">p</span><span class="p">]</span>
 
-        <span class="n">b_prefix</span> <span class="o">=</span> <span class="n">lex_min_blue</span><span class="o">.</span><span class="n">prefix</span>
         <span class="n">to_update</span> <span class="o">=</span> <span class="n">root_node</span>
-        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">b_prefix</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">lex_min_blue</span><span class="o">.</span><span class="n">prefix</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
             <span class="n">to_update</span> <span class="o">=</span> <span class="n">to_update</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">p</span><span class="p">]</span>
 
-        <span class="n">to_update</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">b_prefix</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">red_node</span>
+        <span class="n">to_update</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">lex_min_blue</span><span class="o">.</span><span class="n">prefix</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">red_node_in_tree</span>
+
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">!=</span> <span class="s1">&#39;mealy&#39;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_fold</span><span class="p">(</span><span class="n">red_node</span><span class="p">,</span> <span class="n">lex_min_blue</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_fold</span><span class="p">(</span><span class="n">red_node_in_tree</span><span class="p">,</span> <span class="n">lex_min_blue</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_fold_mealy</span><span class="p">(</span><span class="n">red_node</span><span class="p">,</span> <span class="n">lex_min_blue</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_fold_mealy</span><span class="p">(</span><span class="n">red_node_in_tree</span><span class="p">,</span> <span class="n">lex_min_blue</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">root_node</span>
 
@@ -302,13 +305,14 @@
         <span class="k">for</span> <span class="n">io</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">red_node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">o</span> <span class="o">=</span> <span class="n">blue_io_map</span><span class="p">[</span><span class="n">io</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="k">if</span> <span class="n">io</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">blue_io_map</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">else</span> <span class="n">io</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
             <span class="n">updated_keys</span><span class="p">[(</span><span class="n">io</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">o</span><span class="p">)]</span> <span class="o">=</span> <span class="n">val</span>
+
         <span class="n">red_node</span><span class="o">.</span><span class="n">children</span> <span class="o">=</span> <span class="n">updated_keys</span>
 
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">blue_node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">red_node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_fold</span><span class="p">(</span><span class="n">red_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">blue_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">io</span> <span class="ow">in</span> <span class="n">blue_node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">io</span> <span class="ow">in</span> <span class="n">red_node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_fold_mealy</span><span class="p">(</span><span class="n">red_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">io</span><span class="p">],</span> <span class="n">blue_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">io</span><span class="p">])</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">red_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">blue_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="n">red_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">io</span><span class="p">]</span> <span class="o">=</span> <span class="n">blue_node</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">io</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 </pre></div>
 
         </details>
@@ -327,12 +331,14 @@
             <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">,</span> <span class="n">print_info</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">=</span> <span class="n">automaton_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">print_info</span> <span class="o">=</span> <span class="n">print_info</span>
+
         <span class="n">pta_construction_start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">root_node</span> <span class="o">=</span> <span class="n">createPTA</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">test_data</span> <span class="o">=</span> <span class="n">extract_unique_sequences</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root_node</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">print_info</span><span class="p">:</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">print_info</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;PTA Construction Time: </span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">pta_construction_start</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">print_info</span> <span class="o">=</span> <span class="n">print_info</span>
 </pre></div>
 
         </details>
@@ -379,8 +385,7 @@
                         <span class="n">blue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">print_info</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;RPNI Learning Time: </span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">RPNI Learning Time: </span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;RPNI Learned </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">red</span><span class="p">)</span><span class="si">}</span><span class="s1"> state automaton.&#39;</span><span class="p">)</span>
 
         <span class="k">assert</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">red</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">prefix</span><span class="p">))</span> <span class="o">==</span> <span class="n">red</span>

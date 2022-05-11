@@ -110,6 +110,9 @@
 
 
 <span class="k">def</span> <span class="nf">check_sequance</span><span class="p">(</span><span class="n">root_node</span><span class="p">,</span> <span class="n">seq</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Checks whether each sequance in the dataset is valid in the current automaton.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">curr_node</span> <span class="o">=</span> <span class="n">root_node</span>
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">seq</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
@@ -343,6 +346,9 @@
                 <details>
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">check_sequance</span><span class="p">(</span><span class="n">root_node</span><span class="p">,</span> <span class="n">seq</span><span class="p">,</span> <span class="n">automaton_type</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Checks whether each sequance in the dataset is valid in the current automaton.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">curr_node</span> <span class="o">=</span> <span class="n">root_node</span>
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">seq</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
@@ -355,7 +361,9 @@
 
         </details>
 
-    
+            <div class="docstring"><p>Checks whether each sequance in the dataset is valid in the current automaton.</p>
+</div>
+
 
                 </section>
                 <section id="createPTA">
