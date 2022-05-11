@@ -77,18 +77,30 @@ class RPNI:
             to_update = to_update.children[p]
 
         to_update.children[b_prefix[-1]] = red_node
-        self._fold(red_node, lex_min_blue)
+        if self.automaton_type != 'mealy':
+            self._fold(red_node, lex_min_blue)
+        else:
+            self._fold_mealy(red_node, lex_min_blue)
 
         return root_node
 
     def _fold(self, red_node, blue_node):
         red_node.output = blue_node.output
 
-        if self.automaton_type == 'mealy':
-            updated_keys = {}
-            for io, val in red_node.children.items():
-                updated_keys[(io[0], blue_node.output)] = val
-            red_node.children = updated_keys
+        for i in blue_node.children.keys():
+            if i in red_node.children.keys():
+                self._fold(red_node.children[i], blue_node.children[i])
+            else:
+                red_node.children[i] = blue_node.children[i].copy()
+
+    def _fold_mealy(self, red_node, blue_node):
+        blue_io_map = {i: o for i, o in blue_node.children.keys()}
+
+        updated_keys = {}
+        for io, val in red_node.children.items():
+            o = blue_io_map[io[0]] if io[0] in blue_io_map.keys() else io[1]
+            updated_keys[(io[0], o)] = val
+        red_node.children = updated_keys
 
         for i in blue_node.children.keys():
             if i in red_node.children.keys():
@@ -111,11 +123,11 @@ if __name__ == '__main__':
     # random.seed(4)
 
     dfa = load_automaton_from_file('original.dot', automaton_type='mealy')
-    #dfa = load_automaton_from_file('../../../DotModels/mooreModel.dot', automaton_type='moore')
+    #dfa = load_automaton_from_file('../../../DotModels/Angluin_Moore.dot', automaton_type='moore')
     dfa_sul = MealySUL(dfa)
     input_al = dfa.get_input_alphabet()
     data = []
-    for _ in range(1000):
+    for _ in range(5000):
         dfa_sul.pre()
         seq = []
         for _ in range(10, 20):
@@ -136,7 +148,7 @@ if __name__ == '__main__':
 
     pr = cProfile.Profile()
     pr.enable()
-    model = run_RPNI(data, 'moore')
+    model = run_RPNI(data, 'mealy')
     pr.disable()
     pr.print_stats(sort='tottime')
 
