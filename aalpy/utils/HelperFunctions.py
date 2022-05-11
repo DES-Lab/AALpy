@@ -211,36 +211,74 @@ def get_available_oracles_and_err_msg():
     return available_oracles, available_oracles_msg
 
 
-def make_input_complete(automaton):
+def make_input_complete(automaton, missing_transition_go_to='self_loop'):
     """
     Makes the automaton input complete/enabled. If a input is not defined in a state, it will lead to the self loop.
     In case of Mealy Machines, Stochastic Mealy machines and ONFSM 'epsilon' is used as output.
+    Self loop simply loops the transition back to state which was not input complete,
+    whereas 'sink_state' leads all transitions to a newly added sink state. If transitions have output
+    (Mealy machines and their derivatives), 'epsilon' is used as an output value. If a state has an output value,
+    it is either False (in case of DFA) or 'sink_state' in case of Moore machines and its derivatives.
 
     Args:
 
-        automaton: automaton that is not input complete
+        automaton: automaton that is potentially not input complete
+        missing_transition_go_to: either 'self_loop' or 'sink_state'.
 
     Returns:
 
-       input complete automaton
+        an input complete automaton
     """
     from aalpy.base import DeterministicAutomaton
-    from aalpy.automata import Mdp, StochasticMealyMachine, Onfsm, MealyMachine
+    from aalpy.automata import Dfa, MooreState, MealyMachine, Mdp, StochasticMealyMachine, Onfsm, \
+        DfaState, MealyState, MooreMachine, OnfsmState, MdpState, StochasticMealyState
+
+    assert missing_transition_go_to in {'self_loop', 'sink_state'}
 
     input_al = automaton.get_input_alphabet()
+
+    if automaton.is_input_complete():
+        return automaton
+
+    sink_state = None
+    sink_state_type_dict = {Dfa: DfaState(state_id='sink', is_accepting=False),
+                            MooreMachine: MooreState(state_id='sink', output='sink_state'),
+                            MealyMachine: MealyState(state_id='sink'),
+                            Onfsm: OnfsmState(state_id='sink'),
+                            Mdp: MdpState(state_id='sink', output='sink_state'),
+                            StochasticMealyMachine: StochasticMealyState(state_id='sink')}
+
+    if missing_transition_go_to == 'sink_state':
+        sink_state = sink_state_type_dict[automaton.__class__]
+        automaton.states.append(sink_state)
 
     for state in automaton.states:
         for i in input_al:
             if i not in state.transitions.keys():
-                if isinstance(automaton, DeterministicAutomaton):
-                    state.transitions[i] = state
+                if missing_transition_go_to == 'self_loop':
+                    if isinstance(automaton, DeterministicAutomaton):
+                        state.transitions[i] = state
+                        if isinstance(automaton, MealyMachine):
+                            state.output_fun[i] = 'epsilon'
+                    if isinstance(automaton, Onfsm):
+                        state.transitions[i].append(('epsilon', state))
+                    if isinstance(automaton, Mdp):
+                        state.transitions[i].append((state, 1.))
+                    if isinstance(automaton, StochasticMealyMachine):
+                        state.transitions[i].append((state, 'epsilon', 1.))
+                else:
+                    if isinstance(automaton, Dfa):
+                        state.transitions[i] = sink_state
+                    if isinstance(automaton, MooreMachine):
+                        state.transitions[i] = sink_state
                     if isinstance(automaton, MealyMachine):
+                        state.transitions[i] = sink_state
                         state.output_fun[i] = 'epsilon'
-                if isinstance(automaton, Onfsm):
-                    state.transitions[i].append(('epsilon', state))
-                if isinstance(automaton, Mdp):
-                    state.transitions[i].append((state, 1.))
-                if isinstance(automaton, StochasticMealyMachine):
-                    state.transitions[i].append((state, 'epsilon', 1.))
+                    if isinstance(automaton, Onfsm):
+                        state.transitions[i].append(('epsilon', sink_state))
+                    if isinstance(automaton, Mdp):
+                        state.transitions[i].append((sink_state, 1.))
+                    if isinstance(automaton, StochasticMealyMachine):
+                        state.transitions[i].append((sink_state, 'epsilon', 1.))
 
     return automaton
