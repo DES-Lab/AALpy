@@ -4,7 +4,7 @@ from bisect import insort
 
 from aalpy.SULs import MooreSUL, MealySUL
 from aalpy.learning_algs.deterministic_passive.rpni_helper_functions import to_automaton, createPTA, \
-    check_sequance_dfa_and_moore, check_sequance_mealy
+    check_sequance_dfa_and_moore, check_sequance_mealy, test_rpni_with_eq_oracle
 from aalpy.utils import load_automaton_from_file
 
 
@@ -99,6 +99,11 @@ def run_RPNI(data, automaton_type):
 
 
 if __name__ == '__main__':
+    from random import seed
+    seed(1)
+    test_rpni_with_eq_oracle()
+    exit()
+
     dfa = load_automaton_from_file('../../../DotModels/mooreModel.dot', automaton_type='moore')
     dfa = load_automaton_from_file('example.dot', automaton_type='mealy')
     dfa_sul = MealySUL(dfa)
@@ -120,5 +125,12 @@ if __name__ == '__main__':
     #         [('b', False), ('b', False), ('a', True), ('b', False), ('a', True)],
     #         [('a', False,), ('b', False,), ('a', False)]]
     # a,bb,aab,aba
+    import cProfile
+    pr = cProfile.Profile()
+    pr.enable()
     model = run_RPNI(data, 'moore')
+    pr.disable()
+    pr.print_stats(sort='tottime')
+
+
     model.visualize()

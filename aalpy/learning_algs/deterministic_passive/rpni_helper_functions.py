@@ -1,4 +1,5 @@
 from copy import deepcopy
+import pickle
 
 from aalpy.SULs import DfaSUL
 from aalpy.automata import DfaState, Dfa, MooreMachine, MooreState, MealyMachine, MealyState
@@ -13,7 +14,8 @@ class RpniNode:
         self.prefix = ()
 
     def copy(self):
-        return deepcopy(self)
+        return pickle.loads(pickle.dumps(self, -1))
+        #return deepcopy(self)
 
     def __lt__(self, other):
         return len(self.prefix) < len(other.prefix)
@@ -117,21 +119,16 @@ def visualize_pta(rootNode):
     graph.write(path=f'pta.pdf', format='pdf')
 
 
-def test_rpni_alongside_lstar():
+def test_rpni_with_eq_oracle():
     import random
     from aalpy.learning_algs.deterministic_passive.rpni import RPNI
-    from aalpy.learning_algs import run_Lstar
     from aalpy.oracles import RandomWalkEqOracle
     from aalpy.utils import generate_random_dfa
 
     random_dfa = generate_random_dfa(num_states=10, alphabet=[1, 2], num_accepting_states=2)
-    alph = random_dfa.get_input_alphabet()
-    sul = DfaSUL(random_dfa)
-    eq_oracle = RandomWalkEqOracle(alph, sul)
-    minimal_model = run_Lstar(alph, sul, eq_oracle, automaton_type='dfa', print_level=1)
+    input_al = random_dfa.get_input_alphabet()
 
-    dfa_sul = DfaSUL(minimal_model)
-    input_al = minimal_model.get_input_alphabet()
+    dfa_sul = DfaSUL(random_dfa)
     data = []
     for _ in range(10000):
         dfa_sul.pre()
@@ -145,10 +142,10 @@ def test_rpni_alongside_lstar():
 
     rpni_model = RPNI(data, automaton_type='dfa').run_rpni()
 
-    eq_oracle_2 = RandomWalkEqOracle(alph, dfa_sul, num_steps=10000)
+    eq_oracle_2 = RandomWalkEqOracle(input_al, dfa_sul, num_steps=10000)
     cex = eq_oracle_2.find_cex(rpni_model)
     if cex is None:
-        print(rpni_model.size, minimal_model.size)
+        print(rpni_model.size, random_dfa.size)
         print("RPNI SUCESS")
     else:
         assert False
