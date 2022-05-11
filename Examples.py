@@ -836,7 +836,7 @@ def active_alergia_example(example='first_grid'):
 
 def rpni_example():
     from aalpy.learning_algs import run_RPNI
-    data = [[('a', False), ('a', False), ('a', True)],
+    data = [[(None, False), ('a', False), ('a', False), ('a', True)],
             [('a', False), ('a', False), ('b', False), ('a', True)],
             [('b', False), ('b', False), ('a', True)],
             [('b', False), ('b', False), ('a', True), ('b', False), ('a', True)],

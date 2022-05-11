@@ -1,6 +1,8 @@
 import time
 from bisect import insort
+from typing import Union
 
+from aalpy.base import DeterministicAutomaton
 from aalpy.learning_algs.deterministic_passive.rpni_helper_functions import to_automaton, createPTA, \
     check_sequance, extract_unique_sequences
 
@@ -104,11 +106,11 @@ class RPNI:
                 red_node.children[i] = blue_node.children[i].copy()
 
 
-def run_RPNI(data, automaton_type):
+def run_RPNI(data, automaton_type) -> Union[DeterministicAutomaton, None]:
     """
     Run RPNI, a deterministic passive model learning algorithm.
     Resulting model conforms to the provided data.
-    For more informations on RPNI, check out AALpy' Wiki:
+    For more information on RPNI, check out AALpy' Wiki:
     https://github.com/DES-Lab/AALpy/wiki/RPNI---Passive-Deterministic-Automata-Learning
 
     Args:
@@ -118,7 +120,12 @@ def run_RPNI(data, automaton_type):
 
     Returns:
 
-        Model conforming to the data.
+        Model conforming to the data, or None if data is non-deterministic.
     """
     assert automaton_type in {'dfa', 'mealy', 'moore'}
-    return RPNI(data, automaton_type).run_rpni()
+    rpni = RPNI(data, automaton_type)
+    if rpni.root_node is None:
+        print('DATA provided to RPNI is not deterministic. Ensure that the data is deterministic, '
+              'or consider using Alergia.')
+        return None
+    return rpni.run_rpni()

@@ -37,12 +37,20 @@ def createPTA(data, automaton_type):
     for seq in data:
         curr_node = root_node
         for i, o in seq:
+            if i is None and seq.index((i,o)) == 0:
+                if root_node.output is not None and o != root_node.output:
+                    return None
+                root_node.output = o
+                continue
             if automaton_type == 'mealy':
                 i = (i, o)
             if i not in curr_node.children.keys():
                 node = RpniNode(o)
                 node.prefix = curr_node.prefix + (i,)
                 curr_node.children[i] = node
+            else:
+                if curr_node.children[i].output != o:
+                    return None
             curr_node = curr_node.children[i]
     return root_node
 
