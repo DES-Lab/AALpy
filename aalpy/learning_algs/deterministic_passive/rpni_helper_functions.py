@@ -30,11 +30,10 @@ class RpniNode:
 def check_sequance_mealy(root_node, seq):
     curr_node = root_node
     for i, o in seq:
-        i = (i, o)
         if i not in curr_node.children.keys():
             return False
-        # if curr_node.children[i].output != o:
-        #     return False
+        if curr_node.children[i].output != o:
+            return False
         curr_node = curr_node.children[i]
     return True
 
