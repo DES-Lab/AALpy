@@ -11,12 +11,14 @@ class RPNI:
     def __init__(self, data, automaton_type, print_info=True):
         self.data = data
         self.automaton_type = automaton_type
+        self.print_info = print_info
+
         pta_construction_start = time.time()
         self.root_node = createPTA(data, automaton_type)
         self.test_data = extract_unique_sequences(self.root_node)
-        if print_info:
+
+        if self.print_info:
             print(f'PTA Construction Time: {round(time.time() - pta_construction_start, 2)}')
-        self.print_info = print_info
 
     def run_rpni(self):
         start_time = time.time()
@@ -47,37 +49,36 @@ class RPNI:
                         blue.append(c)
 
         if self.print_info:
-            print('')
-            print(f'RPNI Learning Time: {round(time.time() - start_time, 2)}')
+            print(f'\nRPNI Learning Time: {round(time.time() - start_time, 2)}')
             print(f'RPNI Learned {len(red)} state automaton.')
 
         assert sorted(red, key=lambda x: len(x.prefix)) == red
         return to_automaton(red, self.automaton_type)
 
-    def _compatible(self, r):
+    def _compatible(self, root_node):
         for sequence in self.test_data:
-            if not check_sequance(r, sequence, automaton_type=self.automaton_type):
+            if not check_sequance(root_node, sequence, automaton_type=self.automaton_type):
                 return False
         return True
 
-    def _merge(self, r, lex_min_blue, copy_nodes=False):
+    def _merge(self, red_node, lex_min_blue, copy_nodes=False):
         root_node = self.root_node.copy() if copy_nodes else self.root_node
         lex_min_blue = lex_min_blue.copy() if copy_nodes else lex_min_blue
 
-        red_node = root_node
-        for p in r.prefix:
-            red_node = red_node.children[p]
+        red_node_in_tree = root_node
+        for p in red_node.prefix:
+            red_node_in_tree = red_node_in_tree.children[p]
 
-        b_prefix = lex_min_blue.prefix
         to_update = root_node
-        for p in b_prefix[:-1]:
+        for p in lex_min_blue.prefix[:-1]:
             to_update = to_update.children[p]
 
-        to_update.children[b_prefix[-1]] = red_node
+        to_update.children[lex_min_blue.prefix[-1]] = red_node_in_tree
+
         if self.automaton_type != 'mealy':
-            self._fold(red_node, lex_min_blue)
+            self._fold(red_node_in_tree, lex_min_blue)
         else:
-            self._fold_mealy(red_node, lex_min_blue)
+            self._fold_mealy(red_node_in_tree, lex_min_blue)
 
         return root_node
 
@@ -97,13 +98,14 @@ class RPNI:
         for io, val in red_node.children.items():
             o = blue_io_map[io[0]] if io[0] in blue_io_map.keys() else io[1]
             updated_keys[(io[0], o)] = val
+
         red_node.children = updated_keys
 
-        for i in blue_node.children.keys():
-            if i in red_node.children.keys():
-                self._fold(red_node.children[i], blue_node.children[i])
+        for io in blue_node.children.keys():
+            if io in red_node.children.keys():
+                self._fold_mealy(red_node.children[io], blue_node.children[io])
             else:
-                red_node.children[i] = blue_node.children[i].copy()
+                red_node.children[io] = blue_node.children[io].copy()
 
 
 def run_RPNI(data, automaton_type, print_info=True) -> Union[DeterministicAutomaton, None]:

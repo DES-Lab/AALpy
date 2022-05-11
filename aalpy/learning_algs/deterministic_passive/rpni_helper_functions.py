@@ -23,6 +23,9 @@ class RpniNode:
 
 
 def check_sequance(root_node, seq, automaton_type):
+    """
+    Checks whether each sequance in the dataset is valid in the current automaton.
+    """
     curr_node = root_node
     for i, o in seq:
         if i not in curr_node.children.keys():
