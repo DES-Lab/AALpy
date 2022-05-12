@@ -31,6 +31,8 @@ class RPNI:
             merged = False
 
             for red_state in red:
+                if not self._compatible_states(red_state, lex_min_blue):
+                    continue
                 merge_candidate = self._merge(red_state, lex_min_blue, copy_nodes=True)
                 if self._compatible(merge_candidate):
                     self._merge(red_state, lex_min_blue)
@@ -56,12 +58,32 @@ class RPNI:
         return to_automaton(red, self.automaton_type)
 
     def _compatible(self, root_node):
+        """
+        Check if current model is compatible with the data.
+        """
         for sequence in self.test_data:
             if not check_sequance(root_node, sequence, automaton_type=self.automaton_type):
                 return False
         return True
 
+    def _compatible_states(self, red_node, blue_node):
+        """
+        Only allow merging of states that have same output(s).
+        """
+        if self.automaton_type != 'mealy':
+            return red_node.output is None or red_node.output == blue_node.output
+        else:
+            red_io = {i: o for i, o in red_node.children.keys()}
+            blue_io = {i: o for i, o in blue_node.children.keys()}
+            for common_i in set(red_io.keys()).intersection(blue_io.keys()):
+                if red_io[common_i] != blue_io[common_i]:
+                    return False
+        return True
+
     def _merge(self, red_node, lex_min_blue, copy_nodes=False):
+        """
+        Merge two states and return the root node of resulting model.
+        """
         root_node = self.root_node.copy() if copy_nodes else self.root_node
         lex_min_blue = lex_min_blue.copy() if copy_nodes else lex_min_blue
 
@@ -89,7 +111,7 @@ class RPNI:
             if i in red_node.children.keys():
                 self._fold(red_node.children[i], blue_node.children[i])
             else:
-                red_node.children[i] = blue_node.children[i].copy()
+                red_node.children[i] = blue_node.children[i]
 
     def _fold_mealy(self, red_node, blue_node):
         blue_io_map = {i: o for i, o in blue_node.children.keys()}
@@ -105,7 +127,7 @@ class RPNI:
             if io in red_node.children.keys():
                 self._fold_mealy(red_node.children[io], blue_node.children[io])
             else:
-                red_node.children[io] = blue_node.children[io].copy()
+                red_node.children[io] = blue_node.children[io]
 
 
 def run_RPNI(data, automaton_type, input_completeness=None, print_info=True) -> Union[DeterministicAutomaton, None]:
