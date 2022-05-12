@@ -11,7 +11,7 @@ path_to_dir = '../DotModels/MDPs/'
 files = ['first_grid.dot', 'second_grid.dot',
          'slot_machine.dot', 'mqtt.dot', 'tcp.dot']  # 'shared_coin.dot'
 
-aalpy.paths.path_to_prism = "C:/Program Files/prism-4.6/bin/prism.bat"
+aalpy.paths.path_to_prism = "C:/Program Files/prism-4.7/bin/prism.bat"
 aalpy.paths.path_to_properties = "prism_eval_props/"
 
 
@@ -36,7 +36,7 @@ def deleteSampleFile(path="alergiaSamples.txt"):
         os.remove(path)
 
 
-num_traces = 100
+num_traces = 100000
 
 for file in ['first_grid.dot']:
 
@@ -48,8 +48,6 @@ for file in ['first_grid.dot']:
     mdp_sul = MdpSUL(original_mdp)
 
     for _ in range(1):
-        deleteSampleFile('alergiaMdpSamples1.txt')
-        deleteSampleFile('alergiaSmmSamples1.txt')
 
         data = []
         for _ in range(num_traces):
@@ -59,20 +57,14 @@ for file in ['first_grid.dot']:
                 o = mdp_sul.step(i)
                 sample.append((i, o))
             data.append(sample)
+            mdp_sul.post()
 
-        writeSamplesToFile(data, path='alergiaMdpSamples1.txt')
+        learned_mdp = run_Alergia(data, automaton_type='mdp')
 
-        learned_mdp = run_JAlergia(path_to_data_file='alergiaMdpSamples1.txt', automaton_type='mdp', eps=0.005,
-                                   path_to_jAlergia_jar='../jAlergia/alergia.jar', heap_memory='-Xmx12g')
-
-        print(learned_mdp)
         for s in data:
             s.pop(0)
 
-        writeSamplesToFile(data, path='alergiaSmmSamples1.txt')
-
-        learned_smm = run_JAlergia(path_to_data_file='alergiaSmmSamples1.txt', automaton_type='smm',
-                                   path_to_jAlergia_jar='../jAlergia/alergia.jar', heap_memory='-Xmx12g')
+        learned_smm = run_Alergia(data, automaton_type='smm')
 
         smm_2_mdp = smm_to_mdp_conversion(learned_smm)
 
@@ -89,5 +81,5 @@ for file in ['first_grid.dot']:
         for key, val in mdp_err.items():
             if key not in smm_err.keys() or smm_err[key] == 0:
                 continue
-            smm_diff[key] = round(val / smm_err[key], 2)
-        print(f'SMM improvement: {smm_diff}')
+            smm_diff[key] = round(smm_err[key] - val, 2)
+        print(f'SMM differance: {smm_diff}')
