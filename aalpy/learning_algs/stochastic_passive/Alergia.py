@@ -2,13 +2,13 @@ import time
 from collections import defaultdict
 from bisect import insort
 
-from aalpy.automata import MarkovChain, MdpState, Mdp, McState, MooreMachine, MooreState, StochasticMealyState, \
+from aalpy.automata import MarkovChain, MdpState, Mdp, McState, StochasticMealyState, \
     StochasticMealyMachine
 from aalpy.learning_algs.stochastic_passive.CompatibilityChecker import HoeffdingCompatibility
 from aalpy.learning_algs.stochastic_passive.FPTA import create_fpta
 
 state_automaton_map = {'mc': (McState, MarkovChain), 'mdp': (MdpState, Mdp),
-                       'moore': (MooreState, MooreMachine), 'smm': (StochasticMealyState, StochasticMealyMachine)}
+                       'smm': (StochasticMealyState, StochasticMealyMachine)}
 
 
 class Alergia:
@@ -41,7 +41,7 @@ class Alergia:
         if not a.children.values() or not b.children.values():
             return True
 
-        if self.automaton_type != 'moore' and not self.diff_checker.check_difference(a, b):
+        if self.diff_checker.are_states_different(a, b):
             return False
 
         for el in set(a.children.keys()).intersection(b.children.keys()):
@@ -98,8 +98,7 @@ class Alergia:
 
         assert sorted(red, key=lambda x: len(x.getPrefix())) == red
 
-        if self.automaton_type != 'moore':
-            self.normalize(red)
+        self.normalize(red)
 
         for i, r in enumerate(red):
             r.state_id = f'q{i}'
@@ -183,9 +182,8 @@ def run_Alergia(data, automaton_type, eps=0.005, compatibility_checker=None, opt
         eps: epsilon value if you are using default HoeffdingCompatibility. If it is set to 'auto' it will be computed
         as 10/(all steps in the data)
 
-        automaton_type: either 'mdp' if you wish to learn an MDP, 'mc' if you want to learn Markov Chain, 'moore'
-                        if you want to learn Moore Machine (underlying structure is deterministic), or 'smm' if you
-                        want to learn stochastic Mealy machine
+        automaton_type: either 'mdp' if you wish to learn an MDP, 'mc' if you want to learn Markov Chain, or 'smm' if
+        you want to learn stochastic Mealy machine
 
         optimize_for: either 'memory' or 'accuracy'. memory will use 50% less memory, but will be more inaccurate.
 
@@ -196,9 +194,9 @@ def run_Alergia(data, automaton_type, eps=0.005, compatibility_checker=None, opt
 
     Returns:
 
-        mdp or markov chain
+        mdp, smm, or markov chain
     """
-    assert automaton_type in {'mdp', 'mc', 'moore', 'smm'}
+    assert automaton_type in {'mdp', 'mc', 'smm'}
     alergia = Alergia(data, eps=eps, automaton_type=automaton_type, optimize_for=optimize_for,
                       compatibility_checker=compatibility_checker, print_info=print_info)
     model = alergia.run()
@@ -282,4 +280,3 @@ def run_JAlergia(path_to_data_file, automaton_type, path_to_jAlergia_jar, eps=0.
         os.remove('jAlergiaInputs.txt')
 
     return model
-
