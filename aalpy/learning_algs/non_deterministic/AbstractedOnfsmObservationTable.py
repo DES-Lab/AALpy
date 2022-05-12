@@ -51,6 +51,11 @@ class AbstractedNonDetObservationTable:
 
         self.observation_table.update_obs_table(s_set, e_set)
         self.abstract_obs_table()
+    
+    def add_row_prefix(self, row_prefix):
+        if row_prefix not in self.S and row_prefix not in self.S_dot_A:
+            self.S_dot_A.append(row_prefix)
+
 
     def abstract_obs_table(self):
         """
@@ -58,9 +63,7 @@ class AbstractedNonDetObservationTable:
         """
 
         self.S = self.observation_table.S
-        # CHANGED
-        # self.S_dot_A = self.observation_table.S_dot_A
-        self.S_dot_A = self.observation_table.get_extended_S()
+        self.S_dot_A = list(set(self.observation_table.get_extended_S()).union(set(self.S_dot_A) - set(self.S)))
         self.E = self.observation_table.E
 
         update_S = self.S + self.S_dot_A
@@ -68,15 +71,12 @@ class AbstractedNonDetObservationTable:
 
         for s in update_S:
             for e in update_E:
-                # CHANGED
-                #                observed_outputs = self.observation_table.T[s][e]
-                #                 for o_tup in observed_outputs:
                 for o_tup in self.get_all_outputs(s, e):
                     abstracted_outputs = []
                     if len(e) == 1:
                         o_tup = tuple([o_tup])
                     for o in o_tup:
-                        abstract_output = self.get_abstraction(o)
+                        abstract_output = self.get_abstraction(o[0])
                         abstracted_outputs.append(abstract_output)
                     self.add_to_T(s, e, tuple(abstracted_outputs))
 
@@ -104,7 +104,7 @@ class AbstractedNonDetObservationTable:
         s.update(self.sul.pta.get_all_traces(reached_node, e))
         return s
 
-    def update_extended_S(self):
+    def update_extended_S(self, row_prefix = None):
         """
         Helper generator function that returns extended S, or S.A set.
         For all values in the cell, create a new row where inputs is parent input plus element of alphabet, and
@@ -114,10 +114,7 @@ class AbstractedNonDetObservationTable:
 
             New rows of extended S set.
         """
-        # CHANGED
-        # return self.observation_table.update_extended_S(row)
-        #
-        return self.observation_table.get_extended_S()
+        return self.observation_table.get_extended_S(row_prefix=row_prefix)
 
     def get_row_to_close(self):
         """
@@ -161,18 +158,14 @@ class AbstractedNonDetObservationTable:
                 if row_t == s_row[1]:
                     similar_s_dot_a_rows.append(t)
             similar_s_dot_a_rows.sort(key=lambda row: len(row[0]))
-            for a in self.A:  # TODO: check if there is a mistake in the paper
-                # CHANGED
-                # complete_outputs = self.observation_table.T[s_row[0]][a]
-                #                 for similar_s_dot_a_row in similar_s_dot_a_rows:
-                #                     t_row_outputs = self.observation_table.T[similar_s_dot_a_row][a]
+            for a in self.A: 
                 complete_outputs = self.get_all_outputs(s_row[0], a)
                 for similar_s_dot_a_row in similar_s_dot_a_rows:
                     t_row_outputs = self.get_all_outputs(similar_s_dot_a_row, a)
                     output_difference = t_row_outputs.difference(complete_outputs)
                     if len(output_difference) > 0:
                         for o in output_difference:
-                            extension = (similar_s_dot_a_row[0] + a, similar_s_dot_a_row[1] + tuple([o]))
+                            extension = (similar_s_dot_a_row[0] + a, similar_s_dot_a_row[1] + tuple([o[0]]))
                             if extension not in self.S and extension not in self.S_dot_A:
                                 return extension
                             else:
@@ -314,13 +307,13 @@ class AbstractedNonDetObservationTable:
                     similar_rows.append(row)
             for row in similar_rows:
                 for a in self.A:
-                    # CHANGED
                     for t in self.get_all_outputs(row, a):
-                        if (row[0] + a, row[1] + tuple([t])) in unified_S:
-                            state_in_S = state_distinguish[self.row_to_hashable((row[0] + a, row[1] + tuple([t])))]
+                        s_entry = (row[0] + a, row[1] + t)
+                        if s_entry in unified_S:
+                            state_in_S = state_distinguish[self.row_to_hashable(s_entry)]
 
-                            if (t, state_in_S) not in states_dict[prefix].transitions[a[0]]:
-                                states_dict[prefix].transitions[a[0]].append((t, state_in_S))
+                            if (t[0], state_in_S) not in states_dict[prefix].transitions[a[0]]:
+                                states_dict[prefix].transitions[a[0]].append((t[0], state_in_S))
 
         assert initial
         automaton = Onfsm(initial, [s for s in states_dict.values()])

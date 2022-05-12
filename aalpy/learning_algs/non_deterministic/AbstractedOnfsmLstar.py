@@ -57,10 +57,14 @@ def run_abstracted_ONFSM_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, abst
     # We fist query the initial row. Then based on output in its cells, we generate new rows in S.A,
     # and then we perform membership/input queries for them.
     abstracted_observation_table.update_obs_table()
-    # CHANGED
-    # new_rows = abstracted_observation_table.update_extended_S(abstracted_observation_table.S[0])
     new_rows = abstracted_observation_table.update_extended_S()
     abstracted_observation_table.update_obs_table(s_set=new_rows)
+
+    # TODO remove print stmts
+    print('Observation Table')
+    print_observation_table(abstracted_observation_table.observation_table, 'non-det')
+    print('Abstracted Observation Table')
+    print_observation_table(abstracted_observation_table, 'abstracted-non-det')
 
     while True:
         learning_rounds += 1
@@ -77,19 +81,26 @@ def run_abstracted_ONFSM_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, abst
                 # rows that is to be closed. Once those rows are created, they are populated and closedness is checked
                 # once again.
                 closed_complete_consistent = False
-                # CHANGED
-                #  extended_rows = abstracted_observation_table.update_extended_S(row_to_close)
-                extended_rows = abstracted_observation_table.update_extended_S()
+                extended_rows = abstracted_observation_table.update_extended_S(row_to_close)
                 abstracted_observation_table.update_obs_table(s_set=extended_rows)
                 row_to_close = abstracted_observation_table.get_row_to_close()
+            
+            # TODO remove print stmts
+            print('Observation Table')
+            print_observation_table(abstracted_observation_table.observation_table, 'non-det')
+            print('Abstracted Observation Table')
+            print_observation_table(abstracted_observation_table, 'abstracted-non-det')
 
             row_to_complete = abstracted_observation_table.get_row_to_complete()
             while row_to_complete is not None:
                 closed_complete_consistent = False
-                # CHANGED
-                # THIS FUNCTION I REMOVED?
-                # extended_rows = abstracted_observation_table.complete_extended_S(row_to_complete)
-                abstracted_observation_table.update_obs_table(s_set=extended_rows)
+                abstracted_observation_table.add_row_prefix(row_to_complete)
+                abstracted_observation_table.update_obs_table(s_set=[row_to_complete])
+                # TODO remove print stmts
+                print('Observation Table')
+                print_observation_table(abstracted_observation_table.observation_table, 'non-det')
+                print('Abstracted Observation Table')
+                print_observation_table(abstracted_observation_table, 'abstracted-non-det')
                 row_to_complete = abstracted_observation_table.get_row_to_complete()
 
             e_column_for_consistency = abstracted_observation_table.get_row_to_make_consistent()

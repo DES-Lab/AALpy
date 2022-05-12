@@ -1,5 +1,7 @@
 from collections import Counter
 
+from numpy import row_stack
+
 from aalpy.automata import Onfsm, OnfsmState
 from aalpy.base import Automaton
 from aalpy.learning_algs.non_deterministic.TraceTree import SULWrapper
@@ -62,7 +64,7 @@ class NonDetObservationTable:
         self.closing_counter = 0
         return None
 
-    def get_extended_S(self):
+    def get_extended_S(self, row_prefix = None):
         """
         Helper generator function that returns extended S, or S.A set.
         For all values in the cell, create a new row where inputs is parent input plus element of alphabet, and
@@ -73,8 +75,10 @@ class NonDetObservationTable:
             extended S set.
         """
 
+        rows = self.S if row_prefix == None else [row_prefix]
+
         S_dot_A = []
-        for row in self.S:
+        for row in rows:
             curr_node = self.sul.pta.get_to_node(row[0], row[1])
             for a in self.A:
                 trace = self.sul.pta.get_all_traces(curr_node, a)
