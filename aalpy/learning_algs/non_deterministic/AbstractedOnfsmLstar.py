@@ -60,12 +60,6 @@ def run_abstracted_ONFSM_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, abst
     new_rows = abstracted_observation_table.update_extended_S()
     abstracted_observation_table.update_obs_table(s_set=new_rows)
 
-    # TODO remove print stmts
-    print('Observation Table')
-    print_observation_table(abstracted_observation_table.observation_table, 'non-det')
-    print('Abstracted Observation Table')
-    print_observation_table(abstracted_observation_table, 'abstracted-non-det')
-
     while True:
         learning_rounds += 1
         if max_learning_rounds and learning_rounds - 1 == max_learning_rounds:
@@ -85,22 +79,12 @@ def run_abstracted_ONFSM_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, abst
                 abstracted_observation_table.update_obs_table(s_set=extended_rows)
                 row_to_close = abstracted_observation_table.get_row_to_close()
             
-            # TODO remove print stmts
-            print('Observation Table')
-            print_observation_table(abstracted_observation_table.observation_table, 'non-det')
-            print('Abstracted Observation Table')
-            print_observation_table(abstracted_observation_table, 'abstracted-non-det')
 
             row_to_complete = abstracted_observation_table.get_row_to_complete()
             while row_to_complete is not None:
                 closed_complete_consistent = False
-                abstracted_observation_table.add_row_prefix(row_to_complete)
+                abstracted_observation_table.extend_S_dot_A([row_to_complete])
                 abstracted_observation_table.update_obs_table(s_set=[row_to_complete])
-                # TODO remove print stmts
-                print('Observation Table')
-                print_observation_table(abstracted_observation_table.observation_table, 'non-det')
-                print('Abstracted Observation Table')
-                print_observation_table(abstracted_observation_table, 'abstracted-non-det')
                 row_to_complete = abstracted_observation_table.get_row_to_complete()
 
             e_column_for_consistency = abstracted_observation_table.get_row_to_make_consistent()
@@ -116,7 +100,7 @@ def run_abstracted_ONFSM_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, abst
         if print_level == 3:
             print('Observation Table')
             print_observation_table(abstracted_observation_table.observation_table, 'non-det')
-
+            print()
             print('Abstracted Observation Table')
             # CHANGED, but not important to alg
             print_observation_table(abstracted_observation_table, 'abstracted-non-det')

@@ -3,7 +3,7 @@ from collections import defaultdict
 from aalpy.automata import Onfsm, OnfsmState
 from aalpy.learning_algs.non_deterministic.OnfsmObservationTable import NonDetObservationTable
 from aalpy.learning_algs.non_deterministic.TraceTree import SULWrapper
-from aalpy.utils.HelperFunctions import extend_set
+from aalpy.utils.HelperFunctions import all_suffixes, extend_set
 
 
 class AbstractedNonDetObservationTable:
@@ -51,10 +51,7 @@ class AbstractedNonDetObservationTable:
 
         self.observation_table.update_obs_table(s_set, e_set)
         self.abstract_obs_table()
-    
-    def add_row_prefix(self, row_prefix):
-        if row_prefix not in self.S and row_prefix not in self.S_dot_A:
-            self.S_dot_A.append(row_prefix)
+        self.clean_obs_table()
 
 
     def abstract_obs_table(self):
@@ -73,11 +70,11 @@ class AbstractedNonDetObservationTable:
             for e in update_E:
                 for o_tup in self.get_all_outputs(s, e):
                     abstracted_outputs = []
-                    if len(e) == 1:
-                        o_tup = tuple([o_tup])
-                    for o in o_tup:
-                        abstract_output = self.get_abstraction(o[0])
-                        abstracted_outputs.append(abstract_output)
+                    o_tup = tuple([o_tup])
+                    for outputs in o_tup:
+                        for o in outputs:
+                            abstract_output = self.get_abstraction(o)
+                            abstracted_outputs.append(abstract_output)
                     self.add_to_T(s, e, tuple(abstracted_outputs))
 
     def add_to_T(self, s, e, value):
@@ -253,6 +250,37 @@ class AbstractedNonDetObservationTable:
         if seq not in self.E:
             self.E.append(seq)
 
+    def clean_obs_table(self):
+        """
+        Moves duplicates from S to S_dot_A. The entries in S_dot_A which are based on the moved row get deleted.
+        The table will be smaller and more efficient.
+
+        """
+        # just for testing without cleaning
+        # return False
+
+        tmp_S = self.S.copy()
+        tmp_both_S = self.S + self.S_dot_A
+        hashed_rows_from_s = set()
+
+        tmp_S.sort(key=lambda t: len(t[0]))
+
+        for s in tmp_S:
+            hashed_s_row = self.row_to_hashable(s)
+            if hashed_s_row in hashed_rows_from_s:
+                if s in self.S:
+                    self.S.remove(s)
+                    self.observation_table.S.remove(s)
+                size = len(s[0])
+                for row_prefix in tmp_both_S:
+                    s_both_row = (row_prefix[0][:size], row_prefix[1][:size])
+                    if s != row_prefix and s == s_both_row:
+                        if row_prefix in self.S:
+                            self.S.remove(row_prefix)
+                            self.observation_table.S.remove(s)
+            else:
+                hashed_rows_from_s.add(hashed_s_row)
+
     def row_to_hashable(self, row_prefix):
         """
         Creates the hashable representation of the row. Frozenset is used as the order of element in each cell does not
@@ -321,6 +349,7 @@ class AbstractedNonDetObservationTable:
 
         return automaton
 
+
     def extend_S_dot_A(self, cex_prefixes: list):
         """
         Extends S.A based on counterexample prefixes.
@@ -338,6 +367,7 @@ class AbstractedNonDetObservationTable:
         for cex_prefix in cex_prefixes:
             if cex_prefix not in prefixes:
                 prefixes_to_extend.append(cex_prefix)
+                self.S_dot_A.append(cex_prefix)
         return prefixes_to_extend
 
     def get_abstraction(self, out):
@@ -386,6 +416,7 @@ class AbstractedNonDetObservationTable:
             # add prefixes of cex to S_dot_A
             cex_prefixes = [(tuple(cex[0][0:i + 1]), tuple(cex[1][0:i + 1])) for i in range(0, len(cex[0]))]
             prefixes_to_extend = self.extend_S_dot_A(cex_prefixes)
+
             # CHANGED: REMOVED
             # self.observation_table.S_dot_A.extend(prefixes_to_extend)
             self.update_obs_table(s_set=prefixes_to_extend)
@@ -394,7 +425,7 @@ class AbstractedNonDetObservationTable:
             # CHANGED CEX PROX
             # TODO: this will now not work as cex processing was changed
             # cex_suffixes = non_det_longest_prefix_cex_processing(self.observation_table, cex)
-            cex_suffixes = None # TODO placeholder
+            cex_suffixes = all_suffixes(cex[0])
 
             added_suffixes = extend_set(self.observation_table.E, cex_suffixes)
             self.update_obs_table(e_set=added_suffixes)
