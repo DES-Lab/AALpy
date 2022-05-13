@@ -1,5 +1,7 @@
 
 class Node(object):
+    __slots__ = ['value', 'children']
+
     def __init__(self, value=None):
         self.value = value
         self.children = {}

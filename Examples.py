@@ -390,7 +390,7 @@ def onfsm_mealy_paper_example():
     """
 
     from aalpy.SULs import OnfsmSUL
-    from aalpy.oracles import RandomWalkEqOracle, RandomWordEqOracle
+    from aalpy.oracles import RandomWalkEqOracle
     from aalpy.learning_algs import run_non_det_Lstar
     from aalpy.utils import get_benchmark_ONFSM
 
@@ -418,7 +418,7 @@ def multi_client_mqtt_example():
     import random
 
     from aalpy.base import SUL
-    from aalpy.oracles import RandomWalkEqOracle, RandomWordEqOracle
+    from aalpy.oracles import RandomWalkEqOracle
     from aalpy.learning_algs import run_abstracted_ONFSM_Lstar
     from aalpy.SULs import MealySUL
     from aalpy.utils import load_automaton_from_file
@@ -832,3 +832,49 @@ def active_alergia_example(example='first_grid'):
     model = run_active_Alergia(data, sul, sampler, n_iter=10)
 
     print(model)
+
+
+def rpni_example():
+    from aalpy.learning_algs import run_RPNI
+    data = [[(None, False), ('a', False), ('a', False), ('a', True)],
+            [('a', False), ('a', False), ('b', False), ('a', True)],
+            [('b', False), ('b', False), ('a', True)],
+            [('b', False), ('b', False), ('a', True), ('b', False), ('a', True)],
+            [('a', False,), ('b', False,), ('a', False)]]
+
+    model = run_RPNI(data, automaton_type='dfa')
+    model.visualize()
+
+
+def rpni_check_model_example():
+    import random
+    from aalpy.SULs import MealySUL
+    from aalpy.learning_algs import run_RPNI
+    from aalpy.oracles import StatePrefixEqOracle
+    from aalpy.utils import generate_random_mealy_machine, load_automaton_from_file
+
+    model = load_automaton_from_file('DotModels/Bluetooth/bluetooth_model.dot', automaton_type='mealy')
+    model = generate_random_mealy_machine(num_states=5, input_alphabet=[1, 2, 3], output_alphabet=['a', 'b'])
+
+    input_al = model.get_input_alphabet()
+
+    dfa_sul = MealySUL(model)
+    data = []
+    for _ in range(3000):
+        dfa_sul.pre()
+        seq = []
+        for _ in range(5, 15):
+            i = random.choice(input_al)
+            o = dfa_sul.step(i)
+            seq.append((i, o))
+        dfa_sul.post()
+        data.append(seq)
+
+    rpni_model = run_RPNI(data, automaton_type='mealy', print_info=True)
+
+    eq_oracle_2 = StatePrefixEqOracle(input_al, dfa_sul, walks_per_state=100)
+    cex = eq_oracle_2.find_cex(rpni_model)
+    if cex is None:
+        print("Could not find a counterexample between the RPNI-model and the original model.")
+    else:
+        print('Counterexample found. Either RPNI data was incomplete, or there is a bug in RPNI algorithm :o ')

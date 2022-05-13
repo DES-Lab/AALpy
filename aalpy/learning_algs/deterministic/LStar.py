@@ -14,7 +14,8 @@ print_options = [0, 1, 2, 3]
 def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type,
               closing_strategy='longest_first', cex_processing='rs', suffix_closedness=True, closedness_type='suffix',
               max_learning_rounds=None, cache_and_non_det_check=True, return_data=False, print_level=2):
-    """Executes L* algorithm with Riverst-Schapire counter example processing.
+    """
+    Executes L* algorithm.
 
     Args:
 
