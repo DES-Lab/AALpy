@@ -390,7 +390,7 @@ def onfsm_mealy_paper_example():
     """
 
     from aalpy.SULs import OnfsmSUL
-    from aalpy.oracles import RandomWalkEqOracle
+    from aalpy.oracles import RandomWordEqOracle
     from aalpy.learning_algs import run_non_det_Lstar
     from aalpy.utils import get_benchmark_ONFSM
 
@@ -398,7 +398,6 @@ def onfsm_mealy_paper_example():
     alphabet = onfsm.get_input_alphabet()
 
     sul = OnfsmSUL(onfsm)
-    eq_oracle = RandomWalkEqOracle(alphabet, sul, num_steps=5000, reset_prob=0.25, reset_after_cex=True)
     eq_oracle = RandomWordEqOracle(alphabet, sul, num_walks=500, min_walk_len=5, max_walk_len=12)
 
     learned_onfsm = run_non_det_Lstar(alphabet, sul, eq_oracle, n_sampling=1, print_level=2)
