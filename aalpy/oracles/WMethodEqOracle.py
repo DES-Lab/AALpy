@@ -34,7 +34,7 @@ class WMethodEqOracle(Oracle):
         transition_cover = [state.prefix + (letter,) for state in hypothesis.states for letter in self.alphabet]
 
         middle = []
-        for i in range(self.m - len(hypothesis.states)):
+        for i in range(self.m + 1 - len(hypothesis.states)):
             middle.extend(list(product(self.alphabet, repeat=i)))
 
         test_set = []
