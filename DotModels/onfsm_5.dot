@@ -1,0 +1,20 @@
+digraph Angluin_Mealy {
+s0 [label=s0];
+s1 [label=s1];
+s2 [label=s2];
+s3 [label=s3];
+s4 [label=s4];
+s0 -> s1  [label="a/X"];
+s0 -> s2  [label="a/Y"];
+s0 -> s0  [label="b/Z"];
+s1 -> s1  [label="a/X"];
+s1 -> s3  [label="b/Z"];
+s2 -> s2  [label="a/Y"];
+s2 -> s4  [label="b/W"];
+s3 -> s0  [label="a/V"];
+s3 -> s3  [label="b/Z"];
+s4 -> s0  [label="a/V"];
+s4 -> s4  [label="b/W"];
+__start0 [label="", shape=none];
+__start0 -> s0  [label=""];
+}
