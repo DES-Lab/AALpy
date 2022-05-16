@@ -28,7 +28,7 @@ Whether you work with regular languages or you would like to learn models of
 | Automata Type   |      Supported Formalisms      |  Features |
 |----------|:-------------:|------:|
 | Deterministic     |  Deterministic Finite Automata<br />Mealy Machines<br />Moore Machines | Counterexample Processing<br />Seamless Caching<br />11 Equivalence Oracles <br /> Passive learning of all formalisms |
-| Non-Deterministic |    Observable Non-Deterministic FSM <br /> Abstracted Non-Deterministic FSM|   Size Reduction Trough Abstraction<br />|
+| Non-Deterministic |    Observable Non-Deterministic FSM <br /> Abstracted Non-Deterministic FSM|   Dynamic Observation Table Updates <br/> Size Reduction Trough Abstraction<br />|
 | Stochastic        |  Markov Decision Processes<br />Stochastic Mealy Machines<br />Markov Chains |    Counterexample Processing<br />Row/Cell Compatability Metrics<br />Model Checking with PRISM<br />Alergia Passive Learning|
 
 </div>
