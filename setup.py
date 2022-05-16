@@ -7,10 +7,11 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='aalpy',
-    version='1.2.6',
+    version='1.2.7',
     packages=['aalpy', 'aalpy.base', 'aalpy.SULs', 'aalpy.utils', 'aalpy.oracles', 'aalpy.automata',
               'aalpy.learning_algs', 'aalpy.learning_algs.stochastic', 'aalpy.learning_algs.deterministic',
-              'aalpy.learning_algs.non_deterministic', 'aalpy.learning_algs.stochastic_passive'],
+              'aalpy.learning_algs.non_deterministic',
+              'aalpy.learning_algs.stochastic_passive', 'aalpy.learning_algs.deterministic_passive'],
     url='https://github.com/DES-Lab/AALpy',
     license='MIT',
     license_files=('LICENSE.txt',),
