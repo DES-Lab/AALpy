@@ -1,7 +1,5 @@
 from collections import Counter
 
-from numpy import row_stack
-
 from aalpy.automata import Onfsm, OnfsmState
 from aalpy.base import Automaton
 from aalpy.learning_algs.non_deterministic.TraceTree import SULWrapper
