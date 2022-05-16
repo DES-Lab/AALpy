@@ -174,7 +174,7 @@ class DeterministicTest(unittest.TestCase):
                                                                  max_number_of_states=len(angluin_example.states))
                             random_W_method_eq_oracle = RandomWMethodEqOracle(alphabet, sul,
                                                                               walks_per_state=10, walk_len=50)
-                            bf_exploration_eq_oracle = BreadthFirstExplorationEqOracle(alphabet, sul, 3)
+                            bf_exploration_eq_oracle = BreadthFirstExplorationEqOracle(alphabet, sul, 4)
                             random_word_eq_oracle = RandomWordEqOracle(alphabet, sul)
                             cache_based_eq_oracle = CacheBasedEqOracle(alphabet, sul)
                             kWayStateCoverageEqOracle = KWayStateCoverageEqOracle(alphabet, sul)

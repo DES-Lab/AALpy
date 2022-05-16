@@ -207,6 +207,7 @@ def _process_node_label(node, label, node_label_dict, node_type, automaton_type)
             label_output = _strip_label(label)
             label = label_output.split('|')[0]
             output = label_output.split('|')[1]
+            output = output if not output.isdigit() else int(output)
             node_label_dict[node_name] = node_type(label, output)
         else:
             node_label_dict[node_name] = node_type(label)

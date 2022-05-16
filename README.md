@@ -49,12 +49,14 @@ AALpy enables efficient learning by providing a **large set of equivalence oracl
 is mostly based on Angluin's [L* algorithm](https://people.eecs.berkeley.edu/~dawnsong/teaching/s10/papers/angluin87.pdf), for which AALpy supports a 
 selection of optimizations, including **efficient counterexample processing** and **caching**.
 
-AALpy includes RPNI, a  **passive deterministic automata learning** algorithm. With RPNI, AALpy can construct determinisitc 
-models that conform to data.
-
+AALpy also includes **passive automata learning algorithms**. Unlike active algorithms which learn by interaction with the system, passive
+learning algorithms construct a model based on provided data.
+AALpy includes an implementation of RPNI, a  passive deterministic automata learning algorithm that constructs a model that conforms to the
+provided data.
 AALpy also has an efficient implementation of the [ALERGIA](https://link.springer.com/article/10.1007/s10994-016-5565-9) algorithm, 
 suited for passive learning of Markov Chains, Markov Decision processes, and Stochastic Mealy Machines.
-AALpy also act as a frontend to [jAlergia](https://github.com/emuskardin/jAlergia), a Java twin of AALpy's ALERGIA code.
+For more efficient ALERGIA execution, AALpy offers bindings to [jAlergia](https://github.com/emuskardin/jAlergia), 
+a Java twin of AALpy's ALERGIA code.
  
 ## Installation
 
