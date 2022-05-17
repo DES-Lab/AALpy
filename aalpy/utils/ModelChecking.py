@@ -338,18 +338,30 @@ def generate_test_cases(automaton: DeterministicAutomaton, oracle):
 
 
 def statistical_model_checking(model, goals, max_num_steps, num_tests=105967):
+    """
 
+
+    Args:
+        model: model on which model checking is performed
+        goals: set of goal outputs
+        max_num_steps: bounded length of tests
+        num_tests: num of tests that will be performed
+
+    Returns:
+
+        num of tests containing element of goals set / num_tests
+    """
     def compute_output_sequence(model, seq):
         model.reset_to_initial()
-        outputs = [model.step(i) for i in seq]
-        return outputs
+        observed_outputs = {model.step(i) for i in seq}
+        return observed_outputs
 
     goal_reached = 0
     inputs = model.get_input_alphabet()
     for _ in range(num_tests):
         test_sequence = choices(inputs, k=max_num_steps)
         outputs = compute_output_sequence(model, test_sequence)
-        if goals & set(outputs):
+        if goals & outputs:
             goal_reached += 1
 
     return goal_reached / num_tests
