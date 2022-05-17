@@ -6,6 +6,7 @@ import aalpy.paths
 from aalpy.SULs import MealySUL, DfaSUL, MooreSUL
 from aalpy.automata import Mdp, StochasticMealyMachine, MealyMachine, Dfa, MooreMachine
 from aalpy.base import DeterministicAutomaton, SUL
+from random import choices
 
 prism_prob_output_regex = re.compile("Result: (\d+\.\d+)")
 
@@ -334,3 +335,15 @@ def generate_test_cases(automaton: DeterministicAutomaton, oracle):
     cex = oracle.find_cex(automaton)
     assert cex is None
     return wrapped_sul.test_cases
+
+
+def statistical_model_checking(model, goals, max_num_steps, num_tests=105967):
+    goal_reached = 0
+    inputs = model.get_input_alphabet()
+    for _ in range(num_tests):
+        test_sequence = choices(inputs, k=max_num_steps)
+        outputs = model.compute_output_seq(test_sequence)
+        if goals & set(outputs):
+            goal_reached += 1
+
+    return goal_reached / num_tests

@@ -59,3 +59,21 @@ class Mdp(Automaton):
                 self.current_state = new_state[0]
                 return out
         return None
+
+    def compute_output_seq(self, sequence):
+        """
+        Given an input sequence, compute the output response from the initial state.
+        Args:
+
+            sequence: an input sequence over the alphabet
+
+        Returns:
+
+            the output response
+        """
+        self.reset_to_initial()
+        outputs = []
+        for i in sequence:
+            output = self.step(i)
+            outputs.append(output)
+        return outputs
