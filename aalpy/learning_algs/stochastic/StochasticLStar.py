@@ -109,6 +109,9 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, target_una
     observation_table.update_obs_table_with_freq_obs()
 
     learning_rounds = 0
+
+    last_cex = None
+
     while True:
         learning_rounds += 1
 
@@ -134,10 +137,18 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, target_una
             print_observation_table(observation_table, 'stochastic')
 
         cex = None
-        if not chaos_cex_present:
-            eq_query_start = time.time()
-            cex = stochastic_teacher.equivalence_query(hypothesis)
-            eq_query_time += time.time() - eq_query_start
+        # Keep reusing the counterexample until it is processed
+        if last_cex and is_cex_processed(hypothesis, last_cex):
+            last_cex = None
+        else:
+            cex = last_cex
+
+        if cex is None:
+            if not chaos_cex_present:
+                eq_query_start = time.time()
+                cex = stochastic_teacher.equivalence_query(hypothesis)
+                last_cex = cex
+                eq_query_time += time.time() - eq_query_start
 
         if cex:
             if print_level == 3:
@@ -157,6 +168,8 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, target_una
                 for suf in suffixes:
                     if suf not in observation_table.E:
                         observation_table.E.append(suf)
+                        break
+
 
         # Ask queries for non-completed cells and update the observation table
         refined = observation_table.refine_not_completed_cells(n_resample)
@@ -201,3 +214,14 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, target_una
         return hypothesis, info
 
     return hypothesis
+
+
+def is_cex_processed(hypothesis, cex):
+    last_inp = cex[-1]
+    hypothesis.reset_to_initial()
+    for i in range(0, len(cex)-1, 2):
+        o = hypothesis.step_to(cex[i], cex[i + 1])
+        if o is None:
+            return False
+    o = hypothesis.step(last_inp)
+    return o is not None

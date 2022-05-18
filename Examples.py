@@ -569,7 +569,7 @@ def weird_coffee_machine_mdp_example():
     :return learned MDP
     """
     from aalpy.SULs import MdpSUL
-    from aalpy.oracles import RandomWalkEqOracle
+    from aalpy.oracles import RandomWordEqOracle
     from aalpy.learning_algs import run_stochastic_Lstar
     from aalpy.utils import get_weird_coffee_machine_MDP
 
@@ -577,12 +577,12 @@ def weird_coffee_machine_mdp_example():
     input_alphabet = mdp.get_input_alphabet()
     sul = MdpSUL(mdp)
 
-    eq_oracle = RandomWalkEqOracle(input_alphabet, sul=sul, num_steps=4000, reset_prob=0.11,
+    eq_oracle = RandomWordEqOracle(input_alphabet, sul=sul, num_walks=2000, min_walk_len=4, max_walk_len=10,
                                    reset_after_cex=True)
 
     learned_mdp = run_stochastic_Lstar(input_alphabet, sul, eq_oracle, n_c=20, n_resample=1000, min_rounds=10,
-                                       max_rounds=500, strategy='normal', cex_processing='rs',
-                                       samples_cex_strategy='bfs', automaton_type='smm')
+                                       max_rounds=500, strategy='normal', cex_processing=None,
+                                       samples_cex_strategy=None, automaton_type='smm')
 
     return learned_mdp
 
