@@ -177,16 +177,13 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, target_una
         refined = observation_table.refine_not_completed_cells(n_resample)
         observation_table.update_obs_table_with_freq_obs()
 
-        if cex:
-            continue
-
         if property_based_stopping and learning_rounds >= min_rounds:
             # stop based on maximum allowed error
             if stop_based_on_confidence(hypothesis, property_based_stopping, print_level):
                 break
         else:
             # stop based on number of unambiguous rows
-            stop_based_on_unambiguity = observation_table.stop(learning_rounds, chaos_cex_present, stopping_range_dict,
+            stop_based_on_unambiguity = observation_table.stop(learning_rounds, chaos_cex_present, cex, stopping_range_dict,
                                                                target_unambiguity=target_unambiguity,
                                                                min_rounds=min_rounds, max_rounds=max_rounds,
                                                                print_unambiguity=print_level > 1)
