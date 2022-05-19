@@ -354,7 +354,7 @@ class StochasticTeacher:
             counterexample
 
         """
-        if self.last_cex and not is_cex_processed(hypothesis, self.last_cex):
+        if self.last_cex and not self.is_cex_processed(hypothesis, self.last_cex):
             return self.last_cex
 
         if self.samples_cex_strategy:
@@ -380,13 +380,14 @@ class StochasticTeacher:
         self.last_cex = cex
         return cex
 
-
-def is_cex_processed(hypothesis, cex):
-    last_inp = cex[-1]
-    hypothesis.reset_to_initial()
-    for i in range(0, len(cex) - 1, 2):
-        o = hypothesis.step_to(cex[i], cex[i + 1])
-        if o is None:
-            return False
-    o = hypothesis.step(last_inp)
-    return o is not None
+    def is_cex_processed(self, hypothesis, cex):
+        if self.automaton_type == 'mdp':
+            cex = cex[1:]
+        last_inp = cex[-1]
+        hypothesis.reset_to_initial()
+        for i in range(0, len(cex) - 1, 2):
+            o = hypothesis.step_to(cex[i], cex[i + 1])
+            if o is None:
+                return False
+        o = hypothesis.step(last_inp)
+        return o is not None
