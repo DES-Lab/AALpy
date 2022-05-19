@@ -23,11 +23,11 @@ available_oracles, available_oracles_error_msg = get_available_oracles_and_err_m
 
 def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, target_unambiguity=0.99,
                          min_rounds=10, max_rounds=200, automaton_type='mdp', strategy='normal',
-                         cex_processing=None, samples_cex_strategy=None, custom_oracle=False,
+                         cex_processing=None, samples_cex_strategy=None, stopping_range_dict='strict', custom_oracle=False,
                          return_data=False, property_based_stopping=None, n_c=20, n_resample=100, print_level=2):
     """
-    Learning of Markov Decision Processes based on 'L*-Based Learning of Markov Decision Processes'
-    and 'Active Model Learning of Stochastic Reactive Systems' by Tappler et al.
+    Learning of Markov Decision Processes and Stochastic Mealy machines based on 'L*-Based Learning of Markov Decision
+    Processes' and 'Active Model Learning of Stochastic Reactive Systems' by Tappler et al.
 
     Args:
 
@@ -54,6 +54,11 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, target_una
         samples_cex_strategy: strategy for finding counterexamples in the trace tree. None, 'bfs' or
             "random:<#traces to check:int>:<stop probability for single trace in [0,1)>" eg. random:200:0.2
 
+        stopping_range_dict: Values in form of a dictionary, or 'strict', 'relaxed' to use predefined stopping
+        criteria. Custom values: Dictionary where keys encode the last n unambiguity values which need to be in range
+        of its value in order to perform early stopping. Eg. {5: 0.001, 10: 0.01} would stop if last 5 hypothesis had
+        unambiguity values when max(last_5_vals) - (last_5_vals) <= 0.001.
+
         property_based_stopping: A tuple containing (path to the properties file, correct values of each property,
             allowed error for each property. Recommended one is 0.02 (2%)).
 
@@ -78,6 +83,8 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, target_una
     assert samples_cex_strategy in cex_sampling_options or samples_cex_strategy.startswith('random')
     assert cex_processing in cex_processing_options
     assert automaton_type in {'mdp', 'smm'}
+    if not isinstance(stopping_range_dict, dict):
+        assert stopping_range_dict in {'strict', 'relaxed'}
     if property_based_stopping:
         assert len(property_based_stopping) == 3
 
@@ -89,6 +96,11 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, target_una
 
     if not custom_oracle and type(eq_oracle) not in available_oracles:
         raise SystemExit(available_oracles_error_msg)
+
+    if stopping_range_dict == 'strict':
+        stopping_range_dict = {12: 0.001, 18: 0.002, 25: 0.005, 30: 0.01, 35: 0.02}
+    elif stopping_range_dict == 'relaxed':
+        stopping_range_dict = {7: 0.001, 12: 0.003, 17: 0.005, 22: 0.01, 28: 0.02}
 
     stochastic_teacher = StochasticTeacher(sul, n_c, eq_oracle, automaton_type, compatibility_checker,
                                            samples_cex_strategy=samples_cex_strategy)
@@ -170,7 +182,6 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, target_una
                         observation_table.E.append(suf)
                         break
 
-
         # Ask queries for non-completed cells and update the observation table
         refined = observation_table.refine_not_completed_cells(n_resample)
         observation_table.update_obs_table_with_freq_obs()
@@ -181,7 +192,7 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, target_una
                 break
         else:
             # stop based on number of unambiguous rows
-            stop_based_on_unambiguity = observation_table.stop(learning_rounds, chaos_cex_present,
+            stop_based_on_unambiguity = observation_table.stop(learning_rounds, chaos_cex_present, stopping_range_dict,
                                                                target_unambiguity=target_unambiguity,
                                                                min_rounds=min_rounds, max_rounds=max_rounds,
                                                                print_unambiguity=print_level > 1)
@@ -219,7 +230,7 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, target_una
 def is_cex_processed(hypothesis, cex):
     last_inp = cex[-1]
     hypothesis.reset_to_initial()
-    for i in range(0, len(cex)-1, 2):
+    for i in range(0, len(cex) - 1, 2):
         o = hypothesis.step_to(cex[i], cex[i + 1])
         if o is None:
             return False

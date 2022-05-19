@@ -358,7 +358,7 @@ class SamplingBasedObservationTable:
         else:
             self.update_obs_table_with_freq_obs()
 
-    def stop(self, learning_round, chaos_cex_present, min_rounds=10, max_rounds=None,
+    def stop(self, learning_round, chaos_cex_present, stopping_range_dict, min_rounds=10, max_rounds=None,
              target_unambiguity=0.99, print_unambiguity=False):
         """
         Decide if learning should terminate.
@@ -367,6 +367,8 @@ class SamplingBasedObservationTable:
 
           learning_round: current learning round
           chaos_cex_present: is chaos counterexample present in the hypothesis
+          stopping_range_dict: dictionary where keys are number of last unambiguity values and value is
+          maximum differance allowed between them
           min_rounds: minimum number of learning rounds (Default value = 5)
           max_rounds: maximum number of learning rounds (Default value = None)
           target_unambiguity: percentage of rows with unambiguous representatives (Default value = 0.99)
@@ -398,9 +400,8 @@ class SamplingBasedObservationTable:
         self.unambiguity_values.append(unambiguous_rows_percentage)
         if self.strategy != 'classic' and learning_round >= min_rounds:
             # keys are number of last unambiguity values and value is maximum differance allowed between them
-            stopping_dict = {12: 0.001, 18: 0.002, 25: 0.005, 30: 0.01, 35: 0.02}
 
-            for num_last, diff in stopping_dict.items():
+            for num_last, diff in stopping_range_dict.items():
                 last_n_unamb = self.unambiguity_values[-num_last:]
                 if abs(max(last_n_unamb) - min(last_n_unamb) <= diff):
                     return True
