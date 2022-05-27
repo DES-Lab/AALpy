@@ -105,6 +105,9 @@ For more detailed examples, check out:
 [Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py) contains examples covering almost the whole AALpy's functionality, and it is a great starting point/reference.
 [Wiki](https://github.com/DES-Lab/AALpy/wiki) has a step-by-step guide to using AALpy and can help you understand AALpy and automata learning in general. 
 
+<details>
+  <summary>Code snipped demonstrating some of AALpy's functionalities</summary>
+
 The following snippet demonstrates a short example in which an automaton is either [loaded](https://github.com/DES-Lab/AALpy/wiki/Loading,Saving,-Syntax-and-Visualization-of-Automata) or [randomly generated](https://github.com/DES-Lab/AALpy/wiki/Generation-of-Random-Automata) and then [learned](https://github.com/DES-Lab/AALpy/wiki/Setting-Up-Learning).
 ```python
 from aalpy.utils import load_automaton_from_file, save_automaton_to_file, visualize_automaton, generate_random_dfa, dfa_from_state_setup
@@ -155,6 +158,8 @@ learned_dfa.visualize()
 print(learned_dfa)
 ```
 
+</details>
+
 To make experiments reproducible, define a random seed at the beginning of your program.
 ```Python
 from random import seed
@@ -168,18 +173,10 @@ AALpy has been used to:
 - [Find bugs in VIM text editor](https://github.com/DES-Lab/AALpy/discussions/13)
 
 ## Cite AALpy and Research Contact
-If you use AALpy in your research, please cite:
-```
-@inproceedings{aalpy,
-	title = {{AALpy}: An Active Automata Learning Library},
-	author = {Edi Mu\v{s}kardin and Bernhard K. Aichernig and Ingo Pill and Andrea Pferscher and Martin Tappler},
-	booktitle = {Automated Technology for Verification and Analysis - 19th International
-	Symposium, {ATVA} 2021, Gold Coast, Australia, October 18-22, 2021, Proceedings},
-	series    = {Lecture Notes in Computer Science},  
-	publisher = {Springer},
-	year      = {2021},
-}
-```
+If you use AALpy in your research, please cite us with of the following:
+- [Extended version (preferred)](https://www.researchgate.net/publication/359517046_AALpy_an_active_automata_learning_library/citation/download)
+- [Tool paper](https://dblp.org/rec/conf/atva/MuskardinAPPT21.html?view=bibtex)
+
 If you have research suggestions or you need specific help concerning your research, feel free to start a [discussion](https://github.com/DES-Lab/AALpy/discussions) or contact [edi.muskardin@silicon-austria.com](mailto:edi.muskardin@silicon-austria.com).
 We are happy to help you and consult you in applying automata learning in various domains.
 
