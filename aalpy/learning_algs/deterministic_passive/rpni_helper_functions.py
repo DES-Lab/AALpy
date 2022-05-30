@@ -22,17 +22,25 @@ class RpniNode:
         return self.prefix == other.prefix
 
 
-def check_sequance(root_node, seq, automaton_type):
+def check_sequence(root_node, seq, automaton_type):
     """
-    Checks whether each sequance in the dataset is valid in the current automaton.
+    Checks whether each sequence in the dataset is valid in the current automaton.
     """
     curr_node = root_node
     for i, o in seq:
-        if i not in curr_node.children.keys():
-            return False
-        curr_node = curr_node.children[i]
-        if automaton_type != 'mealy' and curr_node.output != o:
-            return False
+        if automaton_type == 'mealy':
+            input_outputs = {i: o for i, o in curr_node.children.keys()}
+
+            if o is not None:
+                if i[0] not in input_outputs.keys() or input_outputs[i[0]] != o:
+                    return False
+
+                curr_node = curr_node.children[(i[0], input_outputs[i[0]])]
+        else:
+            # For dfa and moore, check if outputs are the same, iff output in test data is concrete (not None)
+            curr_node = curr_node.children[i]
+            if o is not None and curr_node.output != o:
+                return False
     return True
 
 
@@ -41,11 +49,6 @@ def createPTA(data, automaton_type):
     for seq in data:
         curr_node = root_node
         for i, o in seq:
-            if i is None and seq.index((i, o)) == 0:
-                if root_node.output is not None and o != root_node.output:
-                    return None
-                root_node.output = o
-                continue
             if automaton_type == 'mealy':
                 i = (i, o)
             if i not in curr_node.children.keys():
@@ -53,9 +56,11 @@ def createPTA(data, automaton_type):
                 node.prefix = curr_node.prefix + (i,)
                 curr_node.children[i] = node
             else:
-                if curr_node.children[i].output != o:
+                if o is not None and curr_node.children[i].output is not None and curr_node.children[i].output != o:
                     return None
             curr_node = curr_node.children[i]
+            if curr_node.output is None and o is not None:
+                curr_node.output = o
     return root_node
 
 

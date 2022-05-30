@@ -4,7 +4,7 @@ from typing import Union
 
 from aalpy.base import DeterministicAutomaton
 from aalpy.learning_algs.deterministic_passive.rpni_helper_functions import to_automaton, createPTA, \
-    check_sequance, extract_unique_sequences
+    check_sequence, extract_unique_sequences, visualize_pta
 
 
 class RPNI:
@@ -62,7 +62,7 @@ class RPNI:
         Check if current model is compatible with the data.
         """
         for sequence in self.test_data:
-            if not check_sequance(root_node, sequence, automaton_type=self.automaton_type):
+            if not check_sequence(root_node, sequence, automaton_type=self.automaton_type):
                 return False
         return True
 
@@ -71,8 +71,10 @@ class RPNI:
         Only allow merging of states that have same output(s).
         """
         if self.automaton_type != 'mealy':
-            return red_node.output is None or red_node.output == blue_node.output
+            # None is compatible with everything
+            return red_node.output == blue_node.output or red_node.output is None or blue_node.output is None
         else:
+            return True
             red_io = {i: o for i, o in red_node.children.keys()}
             blue_io = {i: o for i, o in blue_node.children.keys()}
             for common_i in set(red_io.keys()).intersection(blue_io.keys()):
@@ -105,7 +107,8 @@ class RPNI:
         return root_node
 
     def _fold(self, red_node, blue_node):
-        red_node.output = blue_node.output
+        # Change the output of red only to concrete output, ignore None
+        red_node.output = blue_node.output if blue_node.output is not None else red_node.output
 
         for i in blue_node.children.keys():
             if i in red_node.children.keys():
@@ -118,7 +121,10 @@ class RPNI:
 
         updated_keys = {}
         for io, val in red_node.children.items():
-            o = blue_io_map[io[0]] if io[0] in blue_io_map.keys() else io[1]
+            if io[0] in blue_io_map.keys() and blue_io_map[io[0]] is not None:
+                o = blue_io_map[io[0]]
+            else:
+                o = io[1]
             updated_keys[(io[0], o)] = val
 
         red_node.children = updated_keys
@@ -139,7 +145,7 @@ def run_RPNI(data, automaton_type, input_completeness=None, print_info=True) -> 
 
     Args:
 
-        data: sequance of input output sequences. Eg. [[(i1,o1), (i2,o2)], [(i1,o1), (i1,o2), (i3,o1)], ...]
+        data: sequence of input output sequences. Eg. [[(i1,o1), (i2,o2)], [(i1,o1), (i1,o2), (i3,o1)], ...]
         automaton_type: either 'dfa', 'mealy', 'moore'
         input_completeness: either None, 'sink_state', or 'self_loop'. If None, learned model could be input incomplete,
         sink_state will lead all undefined inputs form some state to the sink state, whereas self_loop will simply create

@@ -840,6 +840,22 @@ def rpni_example():
             [('b', False), ('b', False), ('a', True)],
             [('b', False), ('b', False), ('a', True), ('b', False), ('a', True)],
             [('a', False,), ('b', False,), ('a', False)]]
+    data = [[('a', None), ('a', None), ('a', True)],
+            [('a', None), ('a', None), ('b', None), ('a', True)],
+            [('b', None), ('b', None), ('a', True)],
+            [('b', None), ('b', None), ('a', None), ('b', None), ('a', True)],
+            [('a', False,)],
+            [('b', None), ('b', False)],
+            [('a', None), ('a', None), ('b', False)],
+            [('a', None), ('b', None), ('a', False)]]
+    # data = [(('a', 'a', 'a'), True),
+    #         (('a', 'a', 'b', 'a'), True),
+    #         (('b', 'b', 'a'), True),
+    #         (('b', 'b', 'a', 'b', 'a'), True),
+    #         (('a',), False),
+    #         (('b', 'b'), False),
+    #         (('a', 'a', 'b'), False),
+    #         (('a', 'b', 'a'), False),]
 
     model = run_RPNI(data, automaton_type='dfa')
     model.visualize()
@@ -850,9 +866,12 @@ def rpni_check_model_example():
     from aalpy.SULs import MealySUL
     from aalpy.learning_algs import run_RPNI
     from aalpy.oracles import StatePrefixEqOracle
-    from aalpy.utils import generate_random_mealy_machine, load_automaton_from_file
+    from aalpy.utils import generate_random_mealy_machine, generate_random_moore_machine, generate_random_dfa, load_automaton_from_file
+    random.seed(1)
 
     model = generate_random_mealy_machine(num_states=5, input_alphabet=[1, 2, 3], output_alphabet=['a', 'b'])
+    model = generate_random_dfa(num_states=5, alphabet=[1,2,3], num_accepting_states=2)
+    model = generate_random_moore_machine(num_states=5, input_alphabet=[1,2,3], output_alphabet=['a', 'b'])
     model = load_automaton_from_file('DotModels/Bluetooth/bluetooth_model.dot', automaton_type='mealy')
 
     input_al = model.get_input_alphabet()
@@ -862,10 +881,12 @@ def rpni_check_model_example():
     for _ in range(500):
         dfa_sul.pre()
         seq = []
-        for _ in range(5, 20):
+        o = None
+        for _ in range(random.randint(3, 7)):
             i = random.choice(input_al)
             o = dfa_sul.step(i)
-            seq.append((i, o))
+            seq.append((i, None))
+        seq[-1] = (seq[-1][0], o)
         dfa_sul.post()
         data.append(seq)
 
