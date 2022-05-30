@@ -148,7 +148,7 @@ def generate_random_mdp(num_states, input_size, output_size, possible_probabilit
 
     if not possible_probabilities:
         possible_probabilities = [(1.,), (1.,), (1.,), (0.9, 0.1),
-                                  (0.8, 0.2), (0.7, 0.3), (0.8, 0.1, 0.1), (0.7, 0.2, 0.1)]
+                                  (0.8, 0.2), (0.7, 0.3), (0.8, 0.1, 0.1), (0.7, 0.2, 0.1), (0.6, 0.2, 0.1, 0.1)]
         # ensure that there are no infinite loops
         possible_probabilities = [p for p in possible_probabilities if len(p) <= num_states]
 
@@ -204,7 +204,7 @@ def generate_random_smm(num_states, input_size, output_size, possible_probabilit
 
     if not possible_probabilities:
         possible_probabilities = [(1.,), (1.,), (1.,), (0.9, 0.1),
-                                  (0.8, 0.2), (0.7, 0.3), (0.8, 0.1, 0.1), (0.7, 0.2, 0.1)]
+                                  (0.8, 0.2), (0.7, 0.3), (0.8, 0.1, 0.1), (0.7, 0.2, 0.1), (0.6, 0.2, 0.1, 0.1)]
         # ensure that there are no infinite loops
         possible_probabilities = [p for p in possible_probabilities if len(p) <= num_states]
 
