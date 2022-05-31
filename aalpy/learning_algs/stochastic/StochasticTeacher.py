@@ -105,7 +105,6 @@ class StochasticTeacher:
         self.samples_cex_strategy = samples_cex_strategy
 
         # eq query cache
-        self.last_hyp_size = 0
         self.last_cex = None
         self.last_tree_cex = None
 
@@ -355,6 +354,9 @@ class StochasticTeacher:
             counterexample
 
         """
+        if self.last_cex and not self.is_cex_processed(hypothesis, self.last_cex):
+            return self.last_cex
+
         if self.samples_cex_strategy:
             cex = None
             if self.samples_cex_strategy == 'bfs':
@@ -368,22 +370,24 @@ class StochasticTeacher:
                 except Exception as e:
                     print("Problem in random DFS for cex in samples:", e)
             if cex:
-                self.last_tree_cex = cex
+                self.last_cex = cex
                 self.eq_oracle.reset_counter()
                 return cex
-
-        # Repeat same cex if it did not lead to state size increase
-        # if self.last_cex and len(hypothesis.states) == self.last_hyp_size:
-        #     if random() <= 0.33:
-        #         cex = self.eq_oracle.find_cex(hypothesis)
-        #         if cex and len(cex) < len(self.last_cex):
-        #             self.last_cex = cex[:-1]
-        #     return self.last_cex
-
-        self.last_hyp_size = len(hypothesis.states)
 
         cex = self.eq_oracle.find_cex(hypothesis)
         if cex:  # remove last output
             cex = cex[:-1]
         self.last_cex = cex
         return cex
+
+    def is_cex_processed(self, hypothesis, cex):
+        if self.automaton_type == 'mdp':
+            cex = cex[1:]
+        last_inp = cex[-1]
+        hypothesis.reset_to_initial()
+        for i in range(0, len(cex) - 1, 2):
+            o = hypothesis.step_to(cex[i], cex[i + 1])
+            if o is None:
+                return False
+        o = hypothesis.step(last_inp)
+        return o is not None

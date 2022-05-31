@@ -126,103 +126,118 @@ def generate_random_dfa(num_states, alphabet, num_accepting_states=1, compute_pr
     return dfa
 
 
-def generate_random_mdp(num_states, len_input, custom_outputs=None, num_unique_outputs=None):
+def generate_random_mdp(num_states, input_size, output_size, possible_probabilities=None):
     """
     Generates random MDP.
 
     Args:
 
         num_states: number of states
-        len_input: number of inputs
-        custom_outputs: user predefined outputs
-        num_unique_outputs: number of outputs
+        input_size: number of inputs
+        output_size: user predefined outputs
+        possible_probabilities: list of possible probability pairs to choose from
 
     Returns:
 
         random MDP
 
     """
-    num_unique_outputs = num_states if not num_unique_outputs else num_unique_outputs
-    outputs = [random_string_generator(random.randint(3, 7)) for _ in range(num_unique_outputs)]
-    outputs = custom_outputs if custom_outputs else outputs
 
-    while len(outputs) < num_states:
-        outputs.append(random.choice(outputs))
+    inputs = [f'i{i+1}' for i in range(input_size)]
+    outputs = [f'o{i+1}' for i in range(output_size)]
 
-    possible_probabilities = [1.0, 1.0, 1.0, 1.0, 0.8, 0.5, 0.9]
+    if not possible_probabilities:
+        possible_probabilities = [(1.,), (1.,), (1.,), (0.9, 0.1),
+                                  (0.8, 0.2), (0.7, 0.3), (0.8, 0.1, 0.1), (0.7, 0.2, 0.1), (0.6, 0.2, 0.1, 0.1)]
+        # ensure that there are no infinite loops
+        possible_probabilities = [p for p in possible_probabilities if len(p) <= num_states]
+
+    state_outputs = outputs.copy()
     states = []
     for i in range(num_states):
-        states.append(MdpState(f'q{i}', outputs.pop()))
+        curr_output = state_outputs.pop(0) if state_outputs else random.choice(outputs)
+        states.append(MdpState(f'q{i}', curr_output))
 
     state_buffer = list(states)
     for state in states:
-        for i in range(len_input):
+        for i in inputs:
             prob = random.choice(possible_probabilities)
-            if state_buffer:
-                new_state = random.choice(state_buffer)
-                state_buffer.remove(new_state)
-            else:
-                new_state = random.choice(states)
+            reached_states = []
+            for _ in prob:
+                while True:
+                    new_state = random.choice(state_buffer) if state_buffer else random.choice(states)
 
-            if prob == 1.:
-                state.transitions[i].append((new_state, prob))
-            else:
-                new_states = list(states)
-                s1 = new_state
-                new_states.remove(s1)
+                    # ensure determinism
+                    if new_state.output not in {s.output for s in reached_states}:
+                        break
 
-                state.transitions[i].append((s1, prob))
-                state.transitions[i].append((random.choice(new_states), round(1 - prob, 2)))
+                    if state_buffer:
+                        state_buffer.remove(new_state)
 
-    return Mdp(states[0], states), list(range(len_input))
+                reached_states.append(new_state)
+
+            for prob, reached_state in zip(prob, reached_states):
+                state.transitions[i].append((reached_state, prob))
+
+    return Mdp(states[0], states)
 
 
-def generate_random_smm(num_states, num_inputs, num_output):
+def generate_random_smm(num_states, input_size, output_size, possible_probabilities=None):
     """
     Generates random MDP.
 
     Args:
 
         num_states: number of states
-        num_inputs: number of inputs
-        num_output: number of outputs
+        input_size: number of inputs
+        output_size: number of outputs
+        possible_probabilities: list of possible probability pairs to choose from
 
     Returns:
 
         random SMM
 
     """
-    import string
-    inputs = list(range(num_inputs))
-    outputs = list(string.ascii_uppercase)[:num_output]
 
-    possible_probabilities = [1.0, 1.0, 1.0, 1.0, 0.75, 0.5, 0.9]
+    inputs = [f'i{i + 1}' for i in range(input_size)]
+    outputs = [f'o{i + 1}' for i in range(output_size)]
+
+    if not possible_probabilities:
+        possible_probabilities = [(1.,), (1.,), (1.,), (0.9, 0.1),
+                                  (0.8, 0.2), (0.7, 0.3), (0.8, 0.1, 0.1), (0.7, 0.2, 0.1), (0.6, 0.2, 0.1, 0.1)]
+        # ensure that there are no infinite loops
+        possible_probabilities = [p for p in possible_probabilities if len(p) <= num_states]
 
     states = []
     for i in range(num_states):
         states.append(StochasticMealyState(f'q{i}'))
 
     state_buffer = list(states)
+    output_buffer = outputs.copy()
     for state in states:
-        for i in range(num_inputs):
-            if state_buffer:
-                new_state = random.choice(state_buffer)
-                state_buffer.remove(new_state)
-            else:
-                new_state = random.choice(states)
-
+        for i in inputs:
             prob = random.choice(possible_probabilities)
-            if prob == 1.:
-                state.transitions[i].append((new_state, random.choice(outputs), prob))
-            else:
-                new_states, new_outputs = list(states), list(outputs)
-                s1 = new_state
-                o1 = random.choice(new_outputs)
-                new_states.remove(s1)
-                new_outputs.remove(o1)
+            reached_states = []
+            transition_outputs = []
+            for _ in prob:
+                while True:
+                    o = random.choice(output_buffer) if output_buffer else random.choice(outputs)
+                    new_state = random.choice(state_buffer) if state_buffer else random.choice(states)
 
-                state.transitions[i].append((s1, o1, prob))
-                state.transitions[i].append((random.choice(new_states), random.choice(outputs), round(1 - prob, 2)))
+                    # ensure determinism
+                    if o not in transition_outputs:
+                        break
+
+                    if output_buffer:
+                        output_buffer.remove(o)
+                    if state_buffer:
+                        state_buffer.remove(new_state)
+
+                reached_states.append(new_state)
+                transition_outputs.append(o)
+
+            for index in range(len(prob)):
+                state.transitions[i].append((reached_states[index], transition_outputs[index], prob[index]))
 
     return StochasticMealyMachine(states[0], states)
 
