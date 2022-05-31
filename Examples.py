@@ -796,7 +796,7 @@ def jAlergiaExample():
     from aalpy.learning_algs import run_JAlergia
     from aalpy.utils import visualize_automaton
 
-    # if you need more heapspace check
+    # if you need more heap space check
     model = run_JAlergia(path_to_data_file='jAlergia/exampleMdpData.txt', automaton_type='mdp', eps=0.005,
                          path_to_jAlergia_jar='jAlergia/alergia.jar', optimize_for='memory')
 
@@ -868,7 +868,7 @@ def rpni_check_model_example():
     num_sequences = 1000
     data = []
     for _ in range(num_sequences):
-        seq_len = random.randint(1, 10)
+        seq_len = random.randint(1, 20)
         random_seq = random.choices(input_al, k=seq_len)
         output = model.compute_output_seq(model.initial_state, random_seq)[-1]
         data.append((random_seq, output))
