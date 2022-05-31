@@ -119,38 +119,53 @@ class RPNI:
                 red_node.children[i] = blue_node.children[i]
 
     def _fold_mealy(self, red_node, blue_node):
-        print('FOLDING', red_node.prefix, blue_node.prefix)
+        # print('FOLDING', red_node.prefix, blue_node.prefix)
         blue_io_map = {i: o for i, o in blue_node.children.keys()}
-
+        print('----------------------Folding-------------------------------------')
+        print('RED NODE', red_node.prefix)
+        print('BLUE NODE', blue_node.prefix)
         updated_keys = {}
         original_keys = red_node.children.copy()
+        print('blue kids', blue_node.children.keys())
+        print('red kids',  red_node.children.keys())
         for io, val in red_node.children.items():
-            if io[0] in blue_io_map.keys() :
+            if io[0] in blue_io_map.keys():
                 o = blue_io_map[io[0]]
+                print(io[0], io[1], 'becomes', o)
             else:
                 o = io[1]
             updated_keys[(io[0], o)] = val
 
+        print('updated red', updated_keys.keys())
         red_node.children = updated_keys
 
+        red_io_map = {i: o for i, o in red_node.children.keys()}
+
         for io in blue_node.children.keys():
-            if io in red_node.children.keys():
-                print('RECURSIVE CALL')
-                self._fold_mealy(red_node.children[io], blue_node.children[io])
-                print('RECURSIVE EXIT')
+            if io[0] in red_io_map.keys():
+                # print('RECURSIVE CALL')
+                print(red_io_map.keys())
+                red_io_map = {i: o for i, o in red_node.children.keys()}
+
+                self._fold_mealy(red_node.children[(io[0], red_io_map[io[0]])], blue_node.children[io])
+                # print('RECURSIVE EXIT')
             else:
+                kids_before_ext = red_node.children.copy().keys()
                 red_node.children[io] = blue_node.children[io]
+
                 if self.broken_set(red_node):
-                    print('REEEEEEEEEE')
+                    print('BROKEN,', red_node.prefix, 'adding', io)
+                    print('red kids before', kids_before_ext)
+                    print('red kids after', red_node.children.keys())
+                    # print('REEEEEEEEEE')
                     exit()
-
-
 
     def broken_set(self, a):
         keys = [i[0] for i, _ in a.children.keys()]
         if len(set(keys)) != len(keys):
             return True
         return False
+
 
 def run_RPNI(data, automaton_type, input_completeness=None, print_info=True) -> Union[DeterministicAutomaton, None]:
     """
