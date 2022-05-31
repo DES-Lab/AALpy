@@ -17,6 +17,7 @@ class RPNI:
         self.root_node = createPTA(data, automaton_type)
         self.test_data = extract_unique_sequences(self.root_node)
 
+        visualize_pta(self.root_node)
         if self.print_info:
             print(f'PTA Construction Time: {round(time.time() - pta_construction_start, 2)}')
 
@@ -25,7 +26,6 @@ class RPNI:
 
         red = [self.root_node]
         blue = list(red[0].children.values())
-
         while blue:
             lex_min_blue = min(list(blue), key=lambda x: len(x.prefix))
             merged = False
@@ -35,6 +35,8 @@ class RPNI:
                     continue
                 merge_candidate = self._merge(red_state, lex_min_blue, copy_nodes=True)
                 if self._compatible(merge_candidate):
+                    # visualize_pta(self.root_node, path=f'ptas/before{counter}.pdf')
+                    # visualize_pta(merge_candidate, path=f'ptas/{counter}.pdf')
                     self._merge(red_state, lex_min_blue)
                     merged = True
                     break
@@ -117,11 +119,13 @@ class RPNI:
                 red_node.children[i] = blue_node.children[i]
 
     def _fold_mealy(self, red_node, blue_node):
+        print('FOLDING', red_node.prefix, blue_node.prefix)
         blue_io_map = {i: o for i, o in blue_node.children.keys()}
 
         updated_keys = {}
+        original_keys = red_node.children.copy()
         for io, val in red_node.children.items():
-            if io[0] in blue_io_map.keys() and blue_io_map[io[0]] is not None:
+            if io[0] in blue_io_map.keys() :
                 o = blue_io_map[io[0]]
             else:
                 o = io[1]
@@ -131,10 +135,22 @@ class RPNI:
 
         for io in blue_node.children.keys():
             if io in red_node.children.keys():
+                print('RECURSIVE CALL')
                 self._fold_mealy(red_node.children[io], blue_node.children[io])
+                print('RECURSIVE EXIT')
             else:
                 red_node.children[io] = blue_node.children[io]
+                if self.broken_set(red_node):
+                    print('REEEEEEEEEE')
+                    exit()
 
+
+
+    def broken_set(self, a):
+        keys = [i[0] for i, _ in a.children.keys()]
+        if len(set(keys)) != len(keys):
+            return True
+        return False
 
 def run_RPNI(data, automaton_type, input_completeness=None, print_info=True) -> Union[DeterministicAutomaton, None]:
     """
