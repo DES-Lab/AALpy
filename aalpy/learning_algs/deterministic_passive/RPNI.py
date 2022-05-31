@@ -4,7 +4,7 @@ from typing import Union
 
 from aalpy.base import DeterministicAutomaton
 from aalpy.learning_algs.deterministic_passive.rpni_helper_functions import to_automaton, createPTA, \
-    check_sequence, extract_unique_sequences, visualize_pta
+    check_sequence, extract_unique_sequences
 
 
 class RPNI:
@@ -17,7 +17,6 @@ class RPNI:
         self.root_node = createPTA(data, automaton_type)
         self.test_data = extract_unique_sequences(self.root_node)
 
-        visualize_pta(self.root_node)
         if self.print_info:
             print(f'PTA Construction Time: {round(time.time() - pta_construction_start, 2)}')
 
@@ -35,8 +34,6 @@ class RPNI:
                     continue
                 merge_candidate = self._merge(red_state, lex_min_blue, copy_nodes=True)
                 if self._compatible(merge_candidate):
-                    # visualize_pta(self.root_node, path=f'ptas/before{counter}.pdf')
-                    # visualize_pta(merge_candidate, path=f'ptas/{counter}.pdf')
                     self._merge(red_state, lex_min_blue)
                     merged = True
                     break
@@ -76,7 +73,6 @@ class RPNI:
             # None is compatible with everything
             return red_node.output == blue_node.output or red_node.output is None or blue_node.output is None
         else:
-            return True
             red_io = {i: o for i, o in red_node.children.keys()}
             blue_io = {i: o for i, o in blue_node.children.keys()}
             for common_i in set(red_io.keys()).intersection(blue_io.keys()):
@@ -119,52 +115,20 @@ class RPNI:
                 red_node.children[i] = blue_node.children[i]
 
     def _fold_mealy(self, red_node, blue_node):
-        # print('FOLDING', red_node.prefix, blue_node.prefix)
         blue_io_map = {i: o for i, o in blue_node.children.keys()}
-        print('----------------------Folding-------------------------------------')
-        print('RED NODE', red_node.prefix)
-        print('BLUE NODE', blue_node.prefix)
+
         updated_keys = {}
-        original_keys = red_node.children.copy()
-        print('blue kids', blue_node.children.keys())
-        print('red kids',  red_node.children.keys())
         for io, val in red_node.children.items():
-            if io[0] in blue_io_map.keys():
-                o = blue_io_map[io[0]]
-                print(io[0], io[1], 'becomes', o)
-            else:
-                o = io[1]
+            o = blue_io_map[io[0]] if io[0] in blue_io_map.keys() else io[1]
             updated_keys[(io[0], o)] = val
 
-        print('updated red', updated_keys.keys())
         red_node.children = updated_keys
 
-        red_io_map = {i: o for i, o in red_node.children.keys()}
-
         for io in blue_node.children.keys():
-            if io[0] in red_io_map.keys():
-                # print('RECURSIVE CALL')
-                print(red_io_map.keys())
-                red_io_map = {i: o for i, o in red_node.children.keys()}
-
-                self._fold_mealy(red_node.children[(io[0], red_io_map[io[0]])], blue_node.children[io])
-                # print('RECURSIVE EXIT')
+            if io in red_node.children.keys():
+                self._fold_mealy(red_node.children[io], blue_node.children[io])
             else:
-                kids_before_ext = red_node.children.copy().keys()
                 red_node.children[io] = blue_node.children[io]
-
-                if self.broken_set(red_node):
-                    print('BROKEN,', red_node.prefix, 'adding', io)
-                    print('red kids before', kids_before_ext)
-                    print('red kids after', red_node.children.keys())
-                    # print('REEEEEEEEEE')
-                    exit()
-
-    def broken_set(self, a):
-        keys = [i[0] for i, _ in a.children.keys()]
-        if len(set(keys)) != len(keys):
-            return True
-        return False
 
 
 def run_RPNI(data, automaton_type, input_completeness=None, print_info=True) -> Union[DeterministicAutomaton, None]:
@@ -176,8 +140,8 @@ def run_RPNI(data, automaton_type, input_completeness=None, print_info=True) -> 
 
     Args:
 
-        data: sequence of input output sequences. Eg. [[(i1,o1), (i2,o2)], [(i1,o1), (i1,o2), (i3,o1)], ...]
-        automaton_type: either 'dfa', 'mealy', 'moore'
+        data: sequence of input sequences and corresponding label. Eg. [[(i1,i2,i3, ...), label], ...]
+        automaton_type: either 'dfa', 'mealy', 'moore'. Note that for 'mealy' machine learning, data has to be prefix-closed.
         input_completeness: either None, 'sink_state', or 'self_loop'. If None, learned model could be input incomplete,
         sink_state will lead all undefined inputs form some state to the sink state, whereas self_loop will simply create
         a self loop. In case of Mealy learning output of the added transition will be 'epsilon'.

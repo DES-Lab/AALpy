@@ -834,8 +834,6 @@ def active_alergia_example(example='first_grid'):
 
 
 def rpni_example():
-    from aalpy.learning_algs import run_RPNI
-
     data = [(('a', 'a', 'a'), True),
             (('a', 'a', 'b', 'a'), True),
             (('b', 'b', 'a'), True),
@@ -845,45 +843,64 @@ def rpni_example():
             (('a', 'a', 'b'), False),
             (('a', 'b', 'a'), False)]
 
-    model = run_RPNI(data, automaton_type='mealy')
+    from aalpy.learning_algs import run_RPNI
+    model = run_RPNI(data, automaton_type='dfa')
     model.visualize()
 
 
 def rpni_check_model_example():
     import random
-    from aalpy.SULs import MealySUL
+    from aalpy.SULs import MooreSUL
     from aalpy.learning_algs import run_RPNI
     from aalpy.oracles import StatePrefixEqOracle
-    from aalpy.utils import generate_random_mealy_machine, generate_random_moore_machine, generate_random_dfa, \
-        load_automaton_from_file
-    random.seed(1)
+    from aalpy.utils import generate_random_moore_machine, generate_random_dfa, load_automaton_from_file
 
     model = generate_random_dfa(num_states=5, alphabet=[1, 2, 3], num_accepting_states=2)
-    model = generate_random_mealy_machine(num_states=5, input_alphabet=[1, 2, 3], output_alphabet=['a', 'b'])
-    model = load_automaton_from_file('DotModels/Bluetooth/bluetooth_model.dot', automaton_type='mealy')
     model = generate_random_moore_machine(num_states=5, input_alphabet=[1, 2, 3], output_alphabet=['a', 'b'])
 
     input_al = model.get_input_alphabet()
 
-    dfa_sul = MealySUL(model)
+    num_sequences = 1000
     data = []
-    for _ in range(500):
-        dfa_sul.pre()
-        seq = []
-        o = None
-        for _ in range(random.randint(1, 7)):
-            i = random.choice(input_al)
-            o = dfa_sul.step(i)
-            seq.append(i)
-        dfa_sul.post()
-
-        data.append((seq, o))
+    for _ in range(num_sequences):
+        seq_len = random.randint(1, 10)
+        random_seq = random.choices(input_al, k=seq_len)
+        output = model.compute_output_seq(model.initial_state, random_seq)[-1]
+        data.append((random_seq, output))
 
     rpni_model = run_RPNI(data, automaton_type='moore', print_info=True)
 
-    eq_oracle_2 = StatePrefixEqOracle(input_al, dfa_sul, walks_per_state=100)
+    rpni_model.make_input_complete('sink_state')
+    sul = MooreSUL(model)
+    eq_oracle_2 = StatePrefixEqOracle(input_al, sul, walks_per_state=100)
     cex = eq_oracle_2.find_cex(rpni_model)
     if cex is None:
         print("Could not find a counterexample between the RPNI-model and the original model.")
     else:
         print('Counterexample found. Either RPNI data was incomplete, or there is a bug in RPNI algorithm :o ')
+
+
+def rpni_mealy_example():
+    import random
+    from aalpy.learning_algs import run_RPNI
+    from aalpy.utils import generate_random_mealy_machine, load_automaton_from_file
+    from aalpy.utils.HelperFunctions import all_prefixes
+    random.seed(1)
+
+    model = generate_random_mealy_machine(num_states=5, input_alphabet=[1, 2, 3], output_alphabet=['a', 'b'])
+    model = load_automaton_from_file('DotModels/Bluetooth/bluetooth_model.dot', automaton_type='mealy')
+
+    input_al = model.get_input_alphabet()
+    num_sequences = 1000
+    data = []
+    for _ in range(num_sequences):
+        seq_len = random.randint(1, 10)
+        random_seq = random.choices(input_al, k=seq_len)
+        # make sure that all prefixes all included in the dataset
+        for prefix in all_prefixes(random_seq):
+            output = model.compute_output_seq(model.initial_state, prefix)[-1]
+            data.append((prefix, output))
+
+    rpni_model = run_RPNI(data, automaton_type='mealy', print_info=True)
+
+    return rpni_model

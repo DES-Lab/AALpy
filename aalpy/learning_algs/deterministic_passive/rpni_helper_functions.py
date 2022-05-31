@@ -31,10 +31,6 @@ def check_sequence(root_node, seq, automaton_type):
         if automaton_type == 'mealy':
             input_outputs = {i: o for i, o in curr_node.children.keys()}
             if i[0] not in input_outputs.keys() or o is not None and input_outputs[i[0]] != o:
-                # print('i[0] not in input_outputs.keys()', i[0] not in input_outputs.keys())
-                # print('o is not None', o is not None)
-                # print('input_outputs[i[0]] != o', input_outputs[i[0]] != o)
-                # print(curr_node.children.keys(), i, o)
                 return False
             curr_node = curr_node.children[(i[0], input_outputs[i[0]])]
         else:
@@ -60,6 +56,10 @@ def createPTA(data, automaton_type):
             curr_node = curr_node.children[i]
         if curr_node.output is None:
             curr_node.output = label
+        else:
+            # check for non-determinism
+            if curr_node.output != label:
+                return None
 
     # Breath first traversal over the automaton to update the edges for RPNI-Mealy
     if automaton_type == 'mealy':
