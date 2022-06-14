@@ -163,9 +163,10 @@ def run_RPNI(data, automaton_type, input_completeness=None, print_info=True) -> 
     learned_model = rpni.run_rpni()
 
     if not learned_model.is_input_complete():
-        if not input_completeness and print_info:
-            print('Warning: Learned Model is not input complete (inputs not defined for all states). '
-                  'Consider calling .make_input_complete()')
+        if not input_completeness:
+            if print_info:
+                print('Warning: Learned Model is not input complete (inputs not defined for all states). '
+                      'Consider calling .make_input_complete()')
         else:
             if print_info:
                 print(f'Learned model was not input complete. Adapting it with {input_completeness} transitions.')
