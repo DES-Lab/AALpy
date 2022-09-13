@@ -1,4 +1,5 @@
 import random
+import warnings
 
 from aalpy.automata import Dfa, DfaState, MdpState, Mdp, MealyMachine, MealyState, \
     MooreMachine, MooreState, OnfsmState, Onfsm, MarkovChain, McState, StochasticMealyState, StochasticMealyMachine
@@ -12,6 +13,28 @@ def generate_random_deterministic_automata(automaton_type,
                                            ensure_minimality=True,
                                            **kwargs
                                            ):
+    """
+    Generates a random deterministic automata of 'automaton_type'.
+
+    Args:
+        automaton_type: type of automaton, either 'dfa', 'mealy', or 'moore'
+        num_states: number of states
+        input_alphabet_size: size of input alphabet
+        output_alphabet_size: size of output alphabet (ignored for DFAs)
+        compute_prefixes: compute prefixes leading to each state
+        ensure_minimality: ensure that the automaton is minimal
+        **kwargs:
+            : 'custom_input_alphabet'  a list of custom input alphabet values
+            : 'custom_output_alphabet' a list of custom output alphabet values
+            : 'num_accepting_states' number of accepting states for DFA generation
+
+    Returns:
+
+        Random deterministic automaton of user defined type, size. If ensure_minimality is set to False returned
+        automaton is not necessarily minimal. If minimality is reacquired and random automaton cannot be produced in
+        multiple interactions, non-minimal automaton will be returned and a warning message printed.
+    """
+
     assert automaton_type in {'dfa', 'mealy', 'moore'}
     if output_alphabet_size < 2 or output_alphabet_size is None:
         output_alphabet_size = 2
@@ -28,11 +51,12 @@ def generate_random_deterministic_automata(automaton_type,
     if 'custom_output_alphabet' in kwargs:
         output_alphabet = kwargs.get('custom_output_alphabet')
     accepting_state_ids = None
-    if 'custom_num_accepting_states' in kwargs:
-        num_accepting_states = kwargs.get('custom_num_accepting_states')
+    if 'num_accepting_states' in kwargs:
+        num_accepting_states = kwargs.get('num_accepting_states')
         accepting_state_ids = [f's{i + 1}' for i in random.sample(list(range(num_states)), k=num_accepting_states)]
 
     states = [state_class_map[automaton_type](state_id=f's{i + 1}') for i in range(num_states)]
+    state_id_state_map = {state.state_id: state for state in states}
 
     if automaton_type != 'mealy':
         for state in states:
@@ -44,9 +68,9 @@ def generate_random_deterministic_automata(automaton_type,
             else:
                 state.output = output
 
-    state_buffer = [state.state_id for state in states]
+    state_buffer = {state.state_id for state in states}
     queue = [states[0]]
-    state_buffer.pop(0)
+    state_buffer.remove(states[0].state_id)
     visited_states = set()
 
     while queue:
@@ -55,7 +79,7 @@ def generate_random_deterministic_automata(automaton_type,
         for i in input_alphabet:
             # states from which to choose next state (while all states have not be reached)
             if state_buffer:
-                new_state_candidates = [_get_state_by_id(state_id, states) for state_id in state_buffer]
+                new_state_candidates = [state_id_state_map[state_id] for state_id in state_buffer]
             else:
                 new_state_candidates = states
 
@@ -82,10 +106,17 @@ def generate_random_deterministic_automata(automaton_type,
                 print('Non-reachable state:', state.state_id)
 
     if ensure_minimality:
+        minimality_iterations = 1
         while not random_automaton.is_minimal():
+            # to avoid infinite loops
+            if minimality_iterations == 100:
+                warnings.warn(f'Non-minimal automaton ({automaton_type}, num_states : {num_states}) returned.')
+                break
+
             random_automaton = generate_random_deterministic_automata(automaton_type, num_states,
                                                                       input_alphabet_size,
                                                                       output_alphabet_size,
+                                                                      compute_prefixes=False,
                                                                       ensure_minimality=False)
 
     return random_automaton
@@ -149,7 +180,7 @@ def generate_random_moore_machine(num_states, input_alphabet, output_alphabet, c
     return random_moore_machine
 
 
-def generate_random_dfa(num_states, input_alphabet, num_accepting_states=1, compute_prefixes=False,
+def generate_random_dfa(num_states, alphabet, num_accepting_states=1, compute_prefixes=False,
                         ensure_minimality=True) -> Dfa:
     """
     Generates a random DFA.
@@ -157,7 +188,7 @@ def generate_random_dfa(num_states, input_alphabet, num_accepting_states=1, comp
     Args:
 
         num_states: number of states
-        input_alphabet: input alphabet
+        alphabet: input alphabet
         num_accepting_states: number of accepting states (Default value = 1)
         compute_prefixes: if true, shortest path to reach each state will be computed (Default value = False)
         ensure_minimality: returned automaton will be minimal
@@ -171,11 +202,12 @@ def generate_random_dfa(num_states, input_alphabet, num_accepting_states=1, comp
         num_accepting_states = num_states - 1
 
     random_dfa = generate_random_deterministic_automata('dfa', num_states,
-                                                        input_alphabet_size=len(input_alphabet),
+                                                        input_alphabet_size=len(alphabet),
                                                         output_alphabet_size=2,
                                                         ensure_minimality=ensure_minimality,
                                                         compute_prefixes=compute_prefixes,
-                                                        custom_num_accepting_states=num_accepting_states)
+                                                        custom_input_alphabet=alphabet,
+                                                        num_accepting_states=num_accepting_states)
 
     return random_dfa
 
@@ -498,8 +530,3 @@ def mealy_from_state_setup(state_setup) -> MealyMachine:
     return mm
 
 
-def _get_state_by_id(state_id, states):
-    for state in states:
-        if state.state_id == state_id:
-            return state
-    return None
