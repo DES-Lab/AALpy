@@ -122,8 +122,8 @@ def generate_random_deterministic_automata(automaton_type,
     return random_automaton
 
 
-def generate_random_mealy_machine(num_states, input_alphabet, output_alphabet, compute_prefixes=False,
-                                  ensure_minimality=True) -> MealyMachine:
+def generate_random_mealy_machine(num_states, input_alphabet, output_alphabet,
+                                  compute_prefixes=False, ensure_minimality=True) -> MealyMachine:
     """
     Generates a random Mealy machine. Kept for backwards compatibility.
 
@@ -151,8 +151,8 @@ def generate_random_mealy_machine(num_states, input_alphabet, output_alphabet, c
     return random_mealy_machine
 
 
-def generate_random_moore_machine(num_states, input_alphabet, output_alphabet, compute_prefixes=False,
-                                  ensure_minimality=True) -> MooreMachine:
+def generate_random_moore_machine(num_states, input_alphabet, output_alphabet,
+                                  compute_prefixes=False, ensure_minimality=True) -> MooreMachine:
     """
     Generates a random Moore machine.
 
@@ -180,8 +180,8 @@ def generate_random_moore_machine(num_states, input_alphabet, output_alphabet, c
     return random_moore_machine
 
 
-def generate_random_dfa(num_states, alphabet, num_accepting_states=1, compute_prefixes=False,
-                        ensure_minimality=True) -> Dfa:
+def generate_random_dfa(num_states, alphabet, num_accepting_states=1,
+                        compute_prefixes=False, ensure_minimality=True) -> Dfa:
     """
     Generates a random DFA.
 
