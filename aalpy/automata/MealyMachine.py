@@ -30,3 +30,6 @@ class MealyMachine(DeterministicAutomaton):
         output = self.current_state.output_fun[letter]
         self.current_state = self.current_state.transitions[letter]
         return output
+
+    def is_minimal(self):
+        return self.compute_characterization_set() != []

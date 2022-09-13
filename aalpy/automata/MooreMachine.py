@@ -6,7 +6,7 @@ class MooreState(AutomatonState):
     Single state of a Moore machine. Each state has an output value.
     """
 
-    def __init__(self, state_id, output):
+    def __init__(self, state_id, output=None):
         super().__init__(state_id)
         self.output = output
 
@@ -35,5 +35,8 @@ class MooreMachine(DeterministicAutomaton):
 
     def compute_characterization_set(self, char_set_init=None, online_suffix_closure=True, split_all_blocks=True):
         return super(MooreMachine, self).compute_characterization_set(char_set_init if char_set_init else [()],
-                                                             online_suffix_closure,
-                                                             split_all_blocks)
+                                                                      online_suffix_closure,
+                                                                      split_all_blocks)
+
+    def is_minimal(self):
+        return self.compute_characterization_set() != []

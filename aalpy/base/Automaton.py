@@ -141,6 +141,7 @@ class Automaton(ABC):
         from aalpy.utils import visualize_automaton
         visualize_automaton(self, path, file_type, display_same_state_transitions)
 
+
 class DeterministicAutomaton(Automaton):
 
     @abstractmethod
@@ -162,7 +163,9 @@ class DeterministicAutomaton(Automaton):
 
         """
         if origin_state not in self.states or target_state not in self.states:
-            raise SystemExit("State not in the automaton.")
+            import warnings
+            warnings.warn('Origin or target state not in automaton. Returning empty path.')
+            return ()
 
         explored = []
         queue = [[origin_state]]
@@ -256,7 +259,7 @@ class DeterministicAutomaton(Automaton):
                     if (next_s1, next_s2) not in visited:
                         to_explore.append((next_s1, next_s2, new_prefix))
 
-        raise SystemExit('Distinguishing sequence could not be computed (Non-canonical automaton).')
+        return None
 
     def compute_output_seq(self, state, sequence):
         """
@@ -292,7 +295,7 @@ class DeterministicAutomaton(Automaton):
                         if true, sequences are used to distinguish all states, yielding a potentially smaller set, which
                         is useful for conformance testing and learning
 
-        Returns: a characterization set
+        Returns: a characterization set or [] if a non-minimal automaton is passed to the function
 
         """
         from copy import copy
@@ -316,7 +319,8 @@ class DeterministicAutomaton(Automaton):
             split_state1 = block_to_split[0]
             split_state2 = block_to_split[1]
             dist_seq = self.find_distinguishing_seq(split_state1, split_state2)
-            assert ((not split_all_blocks) or (dist_seq not in char_set))
+            if dist_seq is None:
+                return []
 
             # in L*-based learning, we use suffix-closed column labels, so it makes sense to use a suffix-closed
             # char set in this context

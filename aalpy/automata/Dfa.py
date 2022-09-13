@@ -37,3 +37,7 @@ class Dfa(DeterministicAutomaton):
         return super(Dfa, self).compute_characterization_set(char_set_init if char_set_init else [()],
                                                              online_suffix_closure,
                                                              split_all_blocks)
+
+    def is_minimal(self):
+        return self.compute_characterization_set() != []
+
