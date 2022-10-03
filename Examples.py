@@ -186,7 +186,8 @@ def random_mdp_example(num_states, input_len, num_outputs, n_c=20, n_resample=10
     from aalpy.learning_algs import run_stochastic_Lstar
     from aalpy.utils import generate_random_mdp
 
-    mdp, input_alphabet = generate_random_mdp(num_states, input_len, num_outputs)
+    mdp = generate_random_mdp(num_states, input_len, num_outputs)
+    input_alphabet = mdp.get_input_alphabet()
     sul = MdpSUL(mdp)
     eq_oracle = RandomWalkEqOracle(input_alphabet, sul=sul, num_steps=5000, reset_prob=0.11,
                                    reset_after_cex=True)
