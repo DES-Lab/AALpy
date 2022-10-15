@@ -16,7 +16,7 @@ def prettify_hypothesis(hypothesis: Dfa, alphabet, keep_access_strings: bool):
     if not keep_access_strings:
         s = state_name_gen('s')
     old_to_new = {}
-    for state in hypothesis.states.values():
+    for state in hypothesis.states:
         old_name = state.state_id
         if keep_access_strings:
             new_name = ''.join(str(n) for n in old_name)

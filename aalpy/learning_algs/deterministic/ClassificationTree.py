@@ -113,7 +113,7 @@ class ClassificationTree:
                 state.transitions[letter] = states[transition_target_id]
 
         return Dfa(initial_state=initial_state,
-                   states=states)
+                   states=list(states.values()))
 
     # def least_common_ancestor(self, node_1_id, node_2_id):
     #     def _lca(root, n1, n2):
