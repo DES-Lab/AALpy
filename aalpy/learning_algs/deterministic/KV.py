@@ -17,8 +17,8 @@ counterexample_processing_strategy = [None, 'rs', 'longest_prefix']
 closedness_options = ['prefix', 'suffix']
 print_options = [0, 1, 2, 3]
 
-def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa',
-           max_learning_rounds=None, cache_and_non_det_check=True, return_data=False, print_level=2):
+def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', max_learning_rounds=None,
+           cache_and_non_det_check=True, return_data=False, print_level=2, pretty_state_names=True):
     """
     Executes TTT algorithm.
 
@@ -91,13 +91,9 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa',
     while True:
         hypothesis = ctree.gen_hypothesis()
 
-        # print(repr(hypothesis))
-
         # Perform an equivalence query on this automaton
         eq_query_start = time.time()
         cex = eq_oracle.find_cex(hypothesis)
-        # cex = ['a', 'b', 'b', 'a', 'b','a']
-        # cex = ['b','a','b']
         eq_query_time += time.time() - eq_query_start
         print(f"processing {cex=}")
 
@@ -119,7 +115,6 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa',
                 d = ctree.least_common_ancestor(s_i, s_star_i)
                 break
         assert j is not None and d is not None
-        print(f"{d=}")
 
         # s_j_minus_1 = ctree.sift(cex[:j-1] or (None,))
         hypothesis.execute_sequence(hypothesis.initial_state, cex[:j-1] or (None,))
@@ -137,10 +132,13 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa',
                               parent=d_node,
                               tree=ctree)
 
-        d_node.children[cex_should_be] = new_node
-        d_node.children[not cex_should_be] = node_to_replace
+        print(f"pos query is {(*cex[:j-1], *(cex[j-1], *d))}")
+        pos = sul.query((*cex[:j-1], *(cex[j-1], *d)))[-1]
 
-    prettify_hypothesis(hypothesis, alphabet, keep_access_strings=False)
-    print(hypothesis)
+        d_node.children[pos] = new_node
+        d_node.children[not pos] = node_to_replace
+
+    prettify_hypothesis(hypothesis, alphabet, keep_access_strings=not pretty_state_names)
+
     return hypothesis
 

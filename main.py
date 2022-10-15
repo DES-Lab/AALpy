@@ -48,7 +48,8 @@ def main():
     learned_dfa_kv = run_KV(alphabet, sul, eq_oracle, automaton_type='dfa',
                             cache_and_non_det_check=True, print_level=3)
 
-    learned_dfa_kv.save()
+    print(learned_dfa_kv)
+    # learned_dfa_kv.save()
 
 if __name__ == "__main__":
     main()

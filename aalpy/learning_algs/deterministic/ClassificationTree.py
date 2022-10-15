@@ -34,7 +34,7 @@ class CTLeafNode(CTNode):
         super().__init__(parent)
         self.access_string = access_string
         self.tree = tree
-        assert access_string not in tree.leaf_nodes
+        assert access_string not in tree.leaf_nodes, f"a leaf node with {access_string=} already exists!"
         tree.leaf_nodes[access_string] = self
 
     def __repr__(self):
