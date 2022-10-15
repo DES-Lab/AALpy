@@ -5,7 +5,7 @@ from aalpy.utils.HelperFunctions import extend_set, print_learning_info, print_o
 from .ClassificationTree import ClassificationTree, CTInternalNode, CTLeafNode
 from .CounterExampleProcessing import longest_prefix_cex_processing, rs_cex_processing
 from .DiscriminationTree import DiscriminationTree, DTStateNode, DTDiscriminatorNode
-from .KV_helpers import state_name_gen
+from .KV_helpers import state_name_gen, prettify_hypothesis
 from .ObservationTable import ObservationTable
 from .TTTHypothesis import TTTHypothesis
 from .TTT_helper_functions import link, close_transitions, rs_split_cex
@@ -76,7 +76,9 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa',
     # Perform an equivalence query on this automaton
     eq_query_start = time.time()
     cex = tuple(eq_oracle.find_cex(hypothesis))
+    # cex = ('b',)
     eq_query_time += time.time() - eq_query_start
+    print(f"processing {cex=}")
 
     # initialise the classification tree to have a root
     # labeled with the empty word as the distinguishing string
@@ -89,41 +91,56 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa',
     while True:
         hypothesis = ctree.gen_hypothesis()
 
+        # print(repr(hypothesis))
+
         # Perform an equivalence query on this automaton
         eq_query_start = time.time()
-        cex = tuple(eq_oracle.find_cex(hypothesis))
+        cex = eq_oracle.find_cex(hypothesis)
+        # cex = ['a', 'b', 'b', 'a', 'b','a']
+        # cex = ['b','a','b']
         eq_query_time += time.time() - eq_query_start
+        print(f"processing {cex=}")
 
         if cex is None:
             break
+        else:
+            cex = tuple(cex)
 
         cex_should_be = not hypothesis.execute_sequence(hypothesis.initial_state, cex)[-1]
 
         j = None
-        for i in range(len(cex) + 1):
+        d = None
+        for i in range(1, len(cex) + 1):
             s_i = ctree.sift(cex[:i] or (None,))
             hypothesis.execute_sequence(hypothesis.initial_state, cex[:i] or (None,))
             s_star_i = hypothesis.current_state.state_id
             if s_i != s_star_i:
                 j = i
+                d = ctree.least_common_ancestor(s_i, s_star_i)
                 break
-        assert j is not None
+        assert j is not None and d is not None
+        print(f"{d=}")
 
-        s_j_minus_1 = ctree.sift(cex[:j-1] or (None,))
-        node_to_replace = ctree.leaf_nodes[s_j_minus_1]
+        # s_j_minus_1 = ctree.sift(cex[:j-1] or (None,))
+        hypothesis.execute_sequence(hypothesis.initial_state, cex[:j-1] or (None,))
+        node_to_replace_id = hypothesis.current_state.state_id
+        node_to_replace = ctree.leaf_nodes[node_to_replace_id]
 
-        # TODO what should the distinguishing string be here?
-        d_node = node_to_replace.parent.children[node_to_replace.path_to_node] = CTInternalNode(distinguishing_string=(*cex[:j],cex[j-1]),
-                                                                                       parent=node_to_replace.parent)
+        d_node = node_to_replace.parent.children[node_to_replace.path_to_node] = CTInternalNode(distinguishing_string=(cex[j-1], *d),
+                                                                                                parent=node_to_replace.parent)
 
+        node_to_replace.parent.children[node_to_replace.path_to_node] = d_node
         node_to_replace.parent = d_node
-        # TODO is this access string correct? this already seems to exist
-        new_node = CTLeafNode(access_string=cex[:j-1] or (None,),
+
+        print(f"access string: {tuple(cex[:j-1]) or (None,)}")
+        new_node = CTLeafNode(access_string=tuple(cex[:j-1]) or (None,),
                               parent=d_node,
                               tree=ctree)
 
         d_node.children[cex_should_be] = new_node
         d_node.children[not cex_should_be] = node_to_replace
 
+    prettify_hypothesis(hypothesis, alphabet, keep_access_strings=False)
+    print(hypothesis)
     return hypothesis
 

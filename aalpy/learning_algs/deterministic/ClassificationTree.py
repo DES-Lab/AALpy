@@ -16,7 +16,7 @@ class CTNode:
 
     @property
     def path_to_node(self):
-        return not self.parent.children[True] == self if self.parent else None
+        return self.parent.children[True] == self if self.parent else None
 
 
 class CTInternalNode(CTNode):
@@ -34,7 +34,7 @@ class CTLeafNode(CTNode):
         super().__init__(parent)
         self.access_string = access_string
         self.tree = tree
-        assert not tree.leaf_nodes.get(access_string, False)
+        assert access_string not in tree.leaf_nodes
         tree.leaf_nodes[access_string] = self
 
     def __repr__(self):
@@ -114,4 +114,57 @@ class ClassificationTree:
 
         return Dfa(initial_state=initial_state,
                    states=states)
+
+    # def least_common_ancestor(self, node_1_id, node_2_id):
+    #     def _lca(root, n1, n2):
+    #         if isinstance(root, CTInternalNode):
+    #             if root
+
+
+
+        # return _lca(self.root, node_1_id, node_2_id).distinguishing_string
+
+    def least_common_ancestor(self, node_1_id, node_2_id):
+        '''
+        Find the distinguishing string of the least common ancestor
+        of the leaf nodes node_1 and node_2. Both nodes have to exist.
+        Adapted from https://www.geeksforgeeks.org/lowest-common-ancestor-binary-tree-set-1/
+
+        Args:
+
+            node_1_id: first leaf node's id
+            node_2_id: second leaf node's id
+
+        Returns:
+
+            the distinguishing string of the lca
+
+        '''
+
+        def findLCA(root, n1, n2):
+
+            # Base Case
+            if root is None:
+                return None
+
+            # If either n1 or n2 matches with root's key, report
+            #  the presence by returning root (Note that if a key is
+            #  ancestor of other, then the ancestor key becomes LCA
+            if isinstance(root, CTLeafNode) and (root.access_string == n1 or root.access_string == n2):
+                return root.parent
+
+            # Look for keys in left and right subtrees
+            left_lca = findLCA(root.children[False], n1, n2) if isinstance(root, CTInternalNode) else None
+            right_lca = findLCA(root.children[True], n1, n2) if isinstance(root, CTInternalNode) else None
+
+            # If both of the above calls return Non-NULL, then one key
+            # is present in once subtree and other is present in other,
+            # So this node is the LCA
+            if left_lca and right_lca:
+                return root
+
+            # Otherwise check if left subtree or right subtree is LCA
+            return left_lca if left_lca is not None else right_lca
+
+        return findLCA(self.root, node_1_id, node_2_id).distinguishing_string
 

@@ -21,8 +21,8 @@ def get_learnlib_tut_dfa():
 
 def main():
     # Import the DFA presented in Angluin's seminal paper
-    dfa = get_Angluin_dfa()
-    # dfa = get_learnlib_tut_dfa()
+    # dfa = get_Angluin_dfa()
+    dfa = get_learnlib_tut_dfa()
 
     # Get its input alphabet
     alphabet = dfa.get_input_alphabet()
@@ -47,6 +47,8 @@ def main():
 
     learned_dfa_kv = run_KV(alphabet, sul, eq_oracle, automaton_type='dfa',
                             cache_and_non_det_check=True, print_level=3)
+
+    learned_dfa_kv.save()
 
 if __name__ == "__main__":
     main()

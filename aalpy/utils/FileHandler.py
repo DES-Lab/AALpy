@@ -132,10 +132,10 @@ def save_automaton_to_file(automaton, path="LearnedModel", file_type='dot',
     automaton_type = automaton_types[automaton.__class__]
 
     graph = Dot(path, graph_type='digraph')
-    for state in automaton.states:
+    for state in automaton.states.values():
         graph.add_node(_get_node(state, automaton_type))
 
-    for state in automaton.states:
+    for state in automaton.states.values():
         _add_transition_to_graph(graph, state, automaton_type, display_same_state_trans, round_floats)
 
     # add initial node
