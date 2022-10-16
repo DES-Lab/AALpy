@@ -10,6 +10,10 @@ class DfaState(AutomatonState):
         super().__init__(state_id)
         self.is_accepting = is_accepting
 
+    def __repr__(self):
+        id = str(self.state_id) if self.state_id != (None,) else '(None)'
+        return f"{self.__class__.__name__}'{id}' " + ("(accepting)" if self.is_accepting else "")
+
 
 class Dfa(DeterministicAutomaton):
     """

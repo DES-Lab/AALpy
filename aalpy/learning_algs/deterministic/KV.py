@@ -76,7 +76,6 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ma
     # Perform an equivalence query on this automaton
     eq_query_start = time.time()
     cex = tuple(eq_oracle.find_cex(hypothesis))
-    # cex = ('b',)
     eq_query_time += time.time() - eq_query_start
     print(f"processing {cex=}")
 
@@ -88,6 +87,7 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ma
                                cex=cex,
                                empty_is_true=empty_string_mq)
 
+    cex_list = []
     while True:
         hypothesis = ctree.gen_hypothesis()
 
@@ -95,14 +95,15 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ma
         eq_query_start = time.time()
         cex = eq_oracle.find_cex(hypothesis)
         eq_query_time += time.time() - eq_query_start
-        print(f"processing {cex=}")
 
         if cex is None:
             break
         else:
             cex = tuple(cex)
-
-        cex_should_be = not hypothesis.execute_sequence(hypothesis.initial_state, cex)[-1]
+            print(f"processing {cex=}")
+            if cex in cex_list:
+                print(f"WARNING! already got {cex=} once!")
+            cex_list.append(cex)
 
         j = None
         d = None
@@ -116,7 +117,6 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ma
                 break
         assert j is not None and d is not None
 
-        # s_j_minus_1 = ctree.sift(cex[:j-1] or (None,))
         hypothesis.execute_sequence(hypothesis.initial_state, cex[:j-1] or (None,))
         node_to_replace_id = hypothesis.current_state.state_id
         node_to_replace = ctree.leaf_nodes[node_to_replace_id]
@@ -124,15 +124,14 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ma
         d_node = node_to_replace.parent.children[node_to_replace.path_to_node] = CTInternalNode(distinguishing_string=(cex[j-1], *d),
                                                                                                 parent=node_to_replace.parent)
 
-        node_to_replace.parent.children[node_to_replace.path_to_node] = d_node
         node_to_replace.parent = d_node
 
-        print(f"access string: {tuple(cex[:j-1]) or (None,)}")
+        # print(f"access string: {tuple(cex[:j-1]) or (None,)}")
         new_node = CTLeafNode(access_string=tuple(cex[:j-1]) or (None,),
                               parent=d_node,
                               tree=ctree)
 
-        print(f"pos query is {(*cex[:j-1], *(cex[j-1], *d))}")
+        # print(f"pos query is {(*cex[:j-1], *(cex[j-1], *d))}")
         pos = sul.query((*cex[:j-1], *(cex[j-1], *d)))[-1]
 
         d_node.children[pos] = new_node
