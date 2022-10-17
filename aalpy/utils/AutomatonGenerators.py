@@ -68,7 +68,7 @@ def generate_random_deterministic_automata(automaton_type,
             else:
                 state.output = output
 
-    state_buffer = {state.state_id for state in states}
+    state_buffer = [state.state_id for state in states]
     queue = [states[0]]
     state_buffer.remove(states[0].state_id)
     visited_states = set()
@@ -113,11 +113,21 @@ def generate_random_deterministic_automata(automaton_type,
                 warnings.warn(f'Non-minimal automaton ({automaton_type}, num_states : {num_states}) returned.')
                 break
 
-            random_automaton = generate_random_deterministic_automata(automaton_type, num_states,
+            custom_args = {}
+            if 'custom_input_alphabet' in kwargs:
+                custom_args['custom_input_alphabet'] = kwargs.get('custom_input_alphabet')
+            if 'custom_output_alphabet' in kwargs:
+                custom_args['custom_output_alphabet'] = kwargs.get('custom_output_alphabet')
+            if 'num_accepting_states' in kwargs:
+                custom_args['num_accepting_states'] = kwargs.get('num_accepting_states')
+
+            random_automaton = generate_random_deterministic_automata(automaton_type,
+                                                                      num_states,
                                                                       input_alphabet_size,
                                                                       output_alphabet_size,
-                                                                      compute_prefixes=False,
-                                                                      ensure_minimality=False)
+                                                                      False, # compute prefixes
+                                                                      False, # ensure minimality
+                                                                      **custom_args)
 
     return random_automaton
 
