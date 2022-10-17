@@ -21,12 +21,10 @@ def checkConformance(alphabet, learned_dfa, states_num, sul):
 
 
 def runKV():
-    alphabet_size = random.randint(0,10)
+    alphabet_size = random.randint(0,20)
     maximum_number_states = 10
     alphabet = list(string.ascii_letters[:26])[:alphabet_size]
-    # TODO: exception if hypothesis has only one state with self-transitions
-    # can be reproduced with num_states = 1
-    num_states = random.randint(2,maximum_number_states)
+    num_states = random.randint(1,maximum_number_states)
     num_accepting_states = random.randint(1,num_states)
 
     dfa = generate_random_dfa(num_states, alphabet, num_accepting_states)
