@@ -14,7 +14,7 @@ def checkConformance(alphabet, learned_dfa, states_num, sul):
     learned_dfa.characterization_set = None
     learned_dfa = compute_shortest_prefixes(learned_dfa)
     #eq_oracle = WMethodEqOracle(alphabet,sul,states_num)
-    eq_oracle = RandomWalkEqOracle(alphabet, sul, 100)
+    eq_oracle = RandomWalkEqOracle(alphabet, sul, 500)
     cex = eq_oracle.find_cex(learned_dfa)
     cex = None
     return True if cex == None else False
@@ -24,7 +24,9 @@ def runKV():
     alphabet_size = random.randint(0,10)
     maximum_number_states = 10
     alphabet = list(string.ascii_letters[:26])[:alphabet_size]
-    num_states = random.randint(1,maximum_number_states)
+    # TODO: exception if hypothesis has only one state with self-transitions
+    # can be reproduced with num_states = 1
+    num_states = random.randint(2,maximum_number_states)
     num_accepting_states = random.randint(1,num_states)
 
     dfa = generate_random_dfa(num_states, alphabet, num_accepting_states)
@@ -57,6 +59,8 @@ def main():
             learned_correctly += 1
         else:
             wrongy_learned_dfas.append(res)
+    
+    print(f'learned correctly: {learned_correctly}/{random_learning_examples}')
 
 
 if __name__ == "__main__":
