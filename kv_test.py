@@ -20,7 +20,8 @@ def checkConformance(alphabet, learned_dfa, states_num, sul):
     return True if cex == None else False
 
 
-def runKV():
+def runKV(seed):
+    random.seed(seed)
     alphabet_size = random.randint(0,20)
     maximum_number_states = 10
     alphabet = list(string.ascii_letters[:26])[:alphabet_size]
@@ -52,11 +53,12 @@ def main():
     random_learning_examples = 10
 
     for i in range(random_learning_examples):
-        res = runKV()
+        res = runKV(i)
         if res == None:
             learned_correctly += 1
         else:
-            wrongy_learned_dfas.append(res)
+            print(f"seed for wrongly learned DFA: {i}")
+            wrongy_learned_dfas.append(i)
     
     print(f'learned correctly: {learned_correctly}/{random_learning_examples}')
 
