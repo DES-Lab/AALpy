@@ -115,14 +115,6 @@ class ClassificationTree:
         return Dfa(initial_state=initial_state,
                    states=list(states.values()))
 
-    # def least_common_ancestor(self, node_1_id, node_2_id):
-    #     def _lca(root, n1, n2):
-    #         if isinstance(root, CTInternalNode):
-    #             if root
-
-
-
-        # return _lca(self.root, node_1_id, node_2_id).distinguishing_string
 
     def least_common_ancestor(self, node_1_id, node_2_id):
         '''
@@ -168,3 +160,34 @@ class ClassificationTree:
 
         return findLCA(self.root, node_1_id, node_2_id).distinguishing_string
 
+    def update(self, cex: tuple, hypothesis: Dfa):
+        j = None
+        d = None
+        for i in range(1, len(cex) + 1):
+            s_i = self.sift(cex[:i] or (None,))
+            hypothesis.execute_sequence(hypothesis.initial_state, cex[:i] or (None,))
+            s_star_i = hypothesis.current_state.state_id
+            if s_i != s_star_i:
+                j = i
+                d = self.least_common_ancestor(s_i, s_star_i)
+                break
+        assert j is not None and d is not None
+
+        hypothesis.execute_sequence(hypothesis.initial_state, cex[:j - 1] or (None,))
+        node_to_replace_id = hypothesis.current_state.state_id
+        node_to_replace = self.leaf_nodes[node_to_replace_id]
+
+        d_node = node_to_replace.parent.children[node_to_replace.path_to_node] = CTInternalNode(
+            distinguishing_string=(cex[j - 1], *d),
+            parent=node_to_replace.parent)
+
+        node_to_replace.parent = d_node
+
+        new_node = CTLeafNode(access_string=tuple(cex[:j - 1]) or (None,),
+                              parent=d_node,
+                              tree=self)
+
+        pos = self.sul.query((*cex[:j - 1], *(cex[j - 1], *d)))[-1]
+
+        d_node.children[pos] = new_node
+        d_node.children[not pos] = node_to_replace

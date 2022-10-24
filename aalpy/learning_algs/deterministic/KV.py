@@ -109,37 +109,7 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ma
                 print(f"WARNING! already got {cex=} once!")
             cex_list.append(cex)
 
-        j = None
-        d = None
-        for i in range(1, len(cex) + 1):
-            s_i = ctree.sift(cex[:i] or (None,))
-            hypothesis.execute_sequence(hypothesis.initial_state, cex[:i] or (None,))
-            s_star_i = hypothesis.current_state.state_id
-            if s_i != s_star_i:
-                j = i
-                d = ctree.least_common_ancestor(s_i, s_star_i)
-                break
-        assert j is not None and d is not None
-
-        hypothesis.execute_sequence(hypothesis.initial_state, cex[:j-1] or (None,))
-        node_to_replace_id = hypothesis.current_state.state_id
-        node_to_replace = ctree.leaf_nodes[node_to_replace_id]
-
-        d_node = node_to_replace.parent.children[node_to_replace.path_to_node] = CTInternalNode(distinguishing_string=(cex[j-1], *d),
-                                                                                                parent=node_to_replace.parent)
-
-        node_to_replace.parent = d_node
-
-        # print(f"access string: {tuple(cex[:j-1]) or (None,)}")
-        new_node = CTLeafNode(access_string=tuple(cex[:j-1]) or (None,),
-                              parent=d_node,
-                              tree=ctree)
-
-        # print(f"pos query is {(*cex[:j-1], *(cex[j-1], *d))}")
-        pos = sul.query((*cex[:j-1], *(cex[j-1], *d)))[-1]
-
-        d_node.children[pos] = new_node
-        d_node.children[not pos] = node_to_replace
+        ctree.update(cex, hypothesis)
 
     prettify_hypothesis(hypothesis, alphabet, keep_access_strings=not pretty_state_names)
 
