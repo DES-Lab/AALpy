@@ -75,8 +75,12 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ma
 
     # Perform an equivalence query on this automaton
     eq_query_start = time.time()
-    cex = tuple(eq_oracle.find_cex(hypothesis))
+    cex = eq_oracle.find_cex(hypothesis)
     eq_query_time += time.time() - eq_query_start
+    if cex is None:
+        return hypothesis
+    else:
+        cex = tuple(cex)
     print(f"processing {cex=}")
 
     # initialise the classification tree to have a root
