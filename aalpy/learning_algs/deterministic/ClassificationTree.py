@@ -134,38 +134,46 @@ class ClassificationTree:
         '''
 
         def findLCA(root, n1, n2):
-
-            # Base Case
             if root is None:
                 return None
 
-            # If either n1 or n2 matches with root's key, report
-            #  the presence by returning root (Note that if a key is
-            #  ancestor of other, then the ancestor key becomes LCA
             if isinstance(root, CTLeafNode) and (root.access_string == n1 or root.access_string == n2):
                 return root.parent
 
-            # Look for keys in left and right subtrees
             left_lca = findLCA(root.children[False], n1, n2) if isinstance(root, CTInternalNode) else None
             right_lca = findLCA(root.children[True], n1, n2) if isinstance(root, CTInternalNode) else None
 
-            # If both of the above calls return Non-NULL, then one key
-            # is present in once subtree and other is present in other,
-            # So this node is the LCA
             if left_lca and right_lca:
                 return root
 
-            # Otherwise check if left subtree or right subtree is LCA
             return left_lca if left_lca is not None else right_lca
 
         return findLCA(self.root, node_1_id, node_2_id).distinguishing_string
 
     def update(self, cex: tuple, hypothesis: Dfa):
-        j = None
-        d = None
+        '''
+        Updates the classification tree based on a counterexample.
+        - For each prefix cex[:i] of the counterexample, get
+              s_i      = self.sift(cex[:i])    and
+              s_star_i = id of the state with the access sequence cex[:i]
+                         in the hypothesis
+          and let j be the least i such that s_i != s_star_i.
+        - Replace the CTLeafNode labeled with the access string of the state
+          that is reached by the sequence cex[:j-1] in the hypothesis
+          with an CTInternalNode with two CTLeafNodes: one keeps the old
+          access string, and one gets the new access string cex[:j-1].
+          The internal node is labeled with the distinguishing string (cex[j-1],*d),
+          where d is the distinguishing string of the LCA of s_i and s_star_i.
+
+        Args:
+            cex: the counterexample used to update the tree
+            hypothesis: the former (wrong) hypothesis
+
+        '''
+        j = d = None
         for i in range(1, len(cex) + 1):
-            s_i = self.sift(cex[:i] or (None,))
-            hypothesis.execute_sequence(hypothesis.initial_state, cex[:i] or (None,))
+            s_i = self.sift(cex[:i])
+            hypothesis.execute_sequence(hypothesis.initial_state, cex[:i])
             s_star_i = hypothesis.current_state.state_id
             if s_i != s_star_i:
                 j = i
@@ -174,20 +182,23 @@ class ClassificationTree:
         assert j is not None and d is not None
 
         hypothesis.execute_sequence(hypothesis.initial_state, cex[:j - 1] or (None,))
-        node_to_replace_id = hypothesis.current_state.state_id
-        node_to_replace = self.leaf_nodes[node_to_replace_id]
 
-        d_node = node_to_replace.parent.children[node_to_replace.path_to_node] = CTInternalNode(
-            distinguishing_string=(cex[j - 1], *d),
-            parent=node_to_replace.parent)
+        self.insert_new_leaf(discriminator=(cex[j - 1], *d),
+                             old_leaf_access_string=hypothesis.current_state.state_id,
+                             new_leaf_access_string=tuple(cex[:j - 1]) or (None,),
+                             new_leaf_position=self.sul.query((*cex[:j - 1], *(cex[j - 1], *d)))[-1])
 
-        node_to_replace.parent = d_node
-
-        new_node = CTLeafNode(access_string=tuple(cex[:j - 1]) or (None,),
-                              parent=d_node,
+    def insert_new_leaf(self, discriminator, old_leaf_access_string, new_leaf_access_string, new_leaf_position: bool):
+        old_leaf = self.leaf_nodes[old_leaf_access_string]
+        discriminator_node = CTInternalNode(distinguishing_string=discriminator,
+                                            parent=old_leaf.parent)
+        new_leaf = CTLeafNode(access_string=new_leaf_access_string,
+                              parent=discriminator_node,
                               tree=self)
 
-        pos = self.sul.query((*cex[:j - 1], *(cex[j - 1], *d)))[-1]
+        old_leaf.parent.children[old_leaf.path_to_node] = discriminator_node
 
-        d_node.children[pos] = new_node
-        d_node.children[not pos] = node_to_replace
+        old_leaf.parent = discriminator_node
+
+        discriminator_node.children[new_leaf_position] = new_leaf
+        discriminator_node.children[not new_leaf_position] = old_leaf
