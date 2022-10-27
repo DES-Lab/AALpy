@@ -102,6 +102,7 @@ class ClassificationTree:
                                  is_accepting=node.in_right_side)
             if new_state.state_id == (None,):
                 initial_state = new_state
+            new_state.prefix = node.access_string
             states[new_state.state_id] = new_state
         assert initial_state is not None
 
@@ -188,7 +189,38 @@ class ClassificationTree:
                              new_leaf_access_string=tuple(cex[:j - 1]) or (None,),
                              new_leaf_position=self.sul.query((*cex[:j - 1], *(cex[j - 1], *d)))[-1])
 
+    def update_rs(self, cex: tuple, hypothesis: Dfa):
+        '''
+        Updates the classification tree based on a counterexample,
+        using Rivest & Schapire's counterexample processing
+        - Replace the CTLeafNode labeled with the access string of the state
+          that is reached by the sequence cex[:j-1] in the hypothesis
+          with an CTInternalNode with two CTLeafNodes: one keeps the old
+          access string, and one gets the new access string cex[:j-1].
+          The internal node is labeled with the distinguishing string (cex[j-1],*d),
+          where d is the distinguishing string of the LCA of s_i and s_star_i.
+
+        Args:
+            cex: the counterexample used to update the tree
+            hypothesis: the former (wrong) hypothesis
+
+        '''
+        from aalpy.learning_algs.deterministic.CounterExampleProcessing import rs_cex_processing
+        v = max(rs_cex_processing(self.sul, cex, hypothesis, suffix_closedness=True), key=len)
+        a = cex[len(cex) - len(v) - 1]
+        u = cex[:len(cex) - len(v) - 1]
+        assert (*u, a, *v) == cex
+
+        hypothesis.execute_sequence(hypothesis.initial_state, u)
+        u_state = hypothesis.current_state.state_id
+
+        self.insert_new_leaf(discriminator=v,
+                             old_leaf_access_string=u_state,
+                             new_leaf_access_string=(*u_state, a),
+                             new_leaf_position=self.sul.query((*u, *v))[-1])
+
     def insert_new_leaf(self, discriminator, old_leaf_access_string, new_leaf_access_string, new_leaf_position: bool):
+        print(f"{discriminator=} {old_leaf_access_string=} {new_leaf_access_string=}")
         old_leaf = self.leaf_nodes[old_leaf_access_string]
         discriminator_node = CTInternalNode(distinguishing_string=discriminator,
                                             parent=old_leaf.parent)

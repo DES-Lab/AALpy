@@ -21,7 +21,8 @@ print_options = [0, 1, 2, 3]
 # TODO implement reuse_counterexamples
 
 def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', max_learning_rounds=None,
-           return_data=False, print_level=2, pretty_state_names=True, reuse_counterexamples=False):
+           return_data=False, print_level=2, pretty_state_names=True, reuse_counterexamples=False,
+           use_rs_cex_processing=False):
     """
     Executes TTT algorithm.
 
@@ -47,9 +48,11 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ma
                             if True, genereic 's0'-sX' state names will be used
             (Default value = True)
 
-        reuse_counterexamples: Slight improvement on the original KV algorithm. If True, a counterexample will be
+        reuse_counterexamples: Slight improvement over the original KV algorithm. If True, a counterexample will be
                                reused until the hypothesis accepts it.
             (Default value = False)
+
+        use_rs_cex_processing: Improvement over the original KV algorithm, use Rivest & Schapire to split counterexamples
 
     Returns:
 
@@ -128,7 +131,10 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ma
                     supposed_result = not hypothesis.get_result(cex)
                 cex_list.append(cex)
 
-        ctree.update(cex, hypothesis)
+        if use_rs_cex_processing:
+            ctree.update_rs(cex, hypothesis)
+        else:
+            ctree.update(cex, hypothesis)
 
     prettify_hypothesis(hypothesis, alphabet, keep_access_strings=not pretty_state_names)
 
