@@ -17,8 +17,11 @@ counterexample_processing_strategy = [None, 'rs', 'longest_prefix']
 closedness_options = ['prefix', 'suffix']
 print_options = [0, 1, 2, 3]
 
+# TODO implement max_learning_rounds, return_data, print_level
+# TODO implement reuse_counterexamples
+
 def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', max_learning_rounds=None,
-           cache_and_non_det_check=True, return_data=False, print_level=2, pretty_state_names=True):
+           return_data=False, print_level=2, pretty_state_names=True, reuse_counterexamples=False):
     """
     Executes TTT algorithm.
 
@@ -34,13 +37,19 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ma
 
         max_learning_rounds: number of learning rounds after which learning will terminate (Default value = None)
 
-        cache_and_non_det_check: Use caching and non-determinism checks (Default value = True)
-
         return_data: if True, a map containing all information(runtime/#queries/#steps) will be returned
             (Default value = False)
 
         print_level: 0 - None, 1 - just results, 2 - current round and hypothesis size, 3 - educational/debug
             (Default value = 2)
+
+        pretty_state_names: if False, the resulting dfa's state names will be the ones generated during learning.
+                            if True, genereic 's0'-sX' state names will be used
+            (Default value = True)
+
+        reuse_counterexamples: Slight improvement on the original KV algorithm. If True, a counterexample will be
+                               reused until the hypothesis accepts it.
+            (Default value = False)
 
     Returns:
 
@@ -81,6 +90,8 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ma
         return hypothesis
     else:
         cex = tuple(cex)
+        if reuse_counterexamples:
+            supposed_result = not hypothesis.get_result(cex)
     print(f"processing {cex=}")
 
     # initialise the classification tree to have a root
@@ -95,19 +106,27 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ma
     while True:
         hypothesis = ctree.gen_hypothesis()
 
-        # Perform an equivalence query on this automaton
-        eq_query_start = time.time()
-        cex = eq_oracle.find_cex(hypothesis)
-        eq_query_time += time.time() - eq_query_start
-
-        if cex is None:
-            break
+        if reuse_counterexamples and hypothesis.get_result(cex) != supposed_result:
+            # our hypothesis still doesn't get the supposed result for the former counterexample -> reuse it
+            pass
         else:
-            cex = tuple(cex)
-            print(f"processing {cex=}")
-            if cex in cex_list:
-                print(f"WARNING! already got {cex=} once!")
-            cex_list.append(cex)
+            # Perform an equivalence query on this automaton
+            eq_query_start = time.time()
+            cex = eq_oracle.find_cex(hypothesis)
+            eq_query_time += time.time() - eq_query_start
+
+            if cex is None:
+                break
+            else:
+                cex = tuple(cex)
+                print(f"processing {cex=}")
+                if cex in cex_list:
+                    print(f"WARNING! already got {cex=} once!")
+                    if reuse_counterexamples:
+                        assert False
+                if reuse_counterexamples:
+                    supposed_result = not hypothesis.get_result(cex)
+                cex_list.append(cex)
 
         ctree.update(cex, hypothesis)
 

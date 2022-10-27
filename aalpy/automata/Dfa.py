@@ -45,3 +45,15 @@ class Dfa(DeterministicAutomaton):
     def is_minimal(self):
         return self.compute_characterization_set() != []
 
+    def get_result(self, input: tuple):
+        """
+        Args:
+            input: query
+
+        Returns:
+            the final result of the query <input>, starting from the initial state
+        """
+        saved_state = self.current_state
+        res = self.execute_sequence(self.initial_state, input)[-1]
+        self.current_state = saved_state
+        return res

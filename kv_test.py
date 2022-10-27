@@ -21,6 +21,7 @@ def checkConformance(alphabet, learned_dfa, states_num, sul):
 
 
 def runKV(seed):
+    print(f"using {seed=}")
     random.seed(seed)
     alphabet_size = random.randint(0,20)
     maximum_number_states = 10
@@ -40,7 +41,7 @@ def runKV(seed):
     eq_oracle = RandomWalkEqOracle(alphabet, sul, 500, reset_after_cex=True)
 
     learned_dfa_kv = run_KV(alphabet, sul, eq_oracle, automaton_type='dfa',
-                            cache_and_non_det_check=True, print_level=3)
+                            print_level=3, reuse_counterexamples=True)
 
     learning_result = checkConformance(alphabet, learned_dfa_kv, len(dfa.states), sul)
 
@@ -53,7 +54,7 @@ def main():
     random_learning_examples = 10
 
     for i in range(random_learning_examples):
-        res = runKV(i)
+        res = runKV(random.randint(0,2000))
         if res == None:
             learned_correctly += 1
         else:
