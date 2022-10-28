@@ -34,7 +34,7 @@ def runKV(seed):
     # Get its input alphabet
     alphabet = dfa.get_input_alphabet()
 
-    # Create a SUL instance wrapping the Angluin's automaton
+    # Create a SUL instance wrapping the random automaton
     sul = DfaSUL(dfa)
 
     # create a random walk equivalence oracle that will perform up to 500 steps every learning round
