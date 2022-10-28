@@ -13,8 +13,8 @@ def compute_shortest_prefixes(dfa):
 def checkConformance(alphabet, learned_dfa, states_num, sul):
     learned_dfa.characterization_set = None
     learned_dfa = compute_shortest_prefixes(learned_dfa)
-    eq_oracle = WMethodEqOracle(alphabet,sul,states_num)
-    #eq_oracle = RandomWalkEqOracle(alphabet, sul, 500)
+    #eq_oracle = WMethodEqOracle(alphabet,sul,states_num)
+    eq_oracle = RandomWalkEqOracle(alphabet, sul, 500)
     cex = eq_oracle.find_cex(learned_dfa)
     cex = None
     return True if cex == None else False
@@ -23,13 +23,13 @@ def checkConformance(alphabet, learned_dfa, states_num, sul):
 def runKV(seed):
     print(f"using {seed=}")
     random.seed(seed)
-    alphabet_size = random.randint(0,20)
+    alphabet_size = random.randint(1,20)
     maximum_number_states = 10
     alphabet = list(string.ascii_letters[:26])[:alphabet_size]
     num_states = random.randint(1,maximum_number_states)
     num_accepting_states = random.randint(1,num_states)
 
-    dfa = generate_random_dfa(num_states, alphabet, num_accepting_states)
+    dfa = generate_random_dfa(num_states, alphabet, num_accepting_states,ensure_minimality=False)
 
     # Get its input alphabet
     alphabet = dfa.get_input_alphabet()
@@ -41,7 +41,7 @@ def runKV(seed):
     eq_oracle = RandomWalkEqOracle(alphabet, sul, 500, reset_after_cex=True)
 
     learned_dfa_kv = run_KV(alphabet, sul, eq_oracle, automaton_type='dfa',
-                            print_level=3, reuse_counterexamples=True, use_rs_cex_processing=True)
+                            print_level=3, reuse_counterexamples=True, use_rs_cex_processing=False)
 
     learning_result = checkConformance(alphabet, learned_dfa_kv, len(dfa.states), sul)
 
