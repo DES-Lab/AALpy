@@ -340,7 +340,7 @@ def generate_random_smm(num_states, input_size, output_size, possible_probabilit
     return StochasticMealyMachine(states[0], states)
 
 
-def generate_random_ONFSM(num_states, num_inputs, num_outputs, multiple_out_prob=0.1):
+def generate_random_ONFSM(num_states, num_inputs, num_outputs, multiple_out_prob=0.33):
     """
     Randomly generate an observable non-deterministic finite-state machine.
 
