@@ -401,7 +401,7 @@ def onfsm_mealy_paper_example():
     sul = OnfsmSUL(onfsm)
     eq_oracle = RandomWordEqOracle(alphabet, sul, num_walks=500, min_walk_len=5, max_walk_len=12)
 
-    learned_onfsm = run_non_det_Lstar(alphabet, sul, eq_oracle, n_sampling=1, print_level=2)
+    learned_onfsm = run_non_det_Lstar(alphabet, sul, eq_oracle, n_sampling=10, print_level=2)
 
     return learned_onfsm
 
@@ -859,7 +859,7 @@ def rpni_check_model_example():
     from aalpy.SULs import MooreSUL
     from aalpy.learning_algs import run_RPNI
     from aalpy.oracles import StatePrefixEqOracle
-    from aalpy.utils import generate_random_moore_machine, generate_random_dfa, load_automaton_from_file
+    from aalpy.utils import generate_random_moore_machine, generate_random_dfa
 
     model = generate_random_dfa(num_states=5, alphabet=[1, 2, 3], num_accepting_states=2)
     model = generate_random_moore_machine(num_states=5, input_alphabet=[1, 2, 3], output_alphabet=['a', 'b'])
@@ -910,3 +910,48 @@ def rpni_mealy_example():
     rpni_model = run_RPNI(data, automaton_type='mealy', print_info=True)
 
     return rpni_model
+
+
+def compare_stochastic_and_non_deterministic_learning(example='first_grid'):
+    import aalpy.paths
+    aalpy.paths.path_to_prism = "C:/Program Files/prism-4.6/bin/prism.bat"
+    aalpy.paths.path_to_properties = "Benchmarking/prism_eval_props/"
+
+    from aalpy.SULs import MdpSUL, OnfsmSUL
+    from aalpy.automata import StochasticMealyMachine
+    from aalpy.automata.StochasticMealyMachine import smm_to_mdp_conversion
+    from aalpy.learning_algs import run_stochastic_Lstar, run_non_det_Lstar
+    from aalpy.utils import load_automaton_from_file, model_check_experiment, get_properties_file, \
+        get_correct_prop_values
+    from aalpy.oracles import RandomWordEqOracle
+
+    mdp = load_automaton_from_file(f'./DotModels/MDPs/first_grid.dot', automaton_type='mdp')
+    input_alphabet = mdp.get_input_alphabet()
+
+    # Stochastic Learning
+    print("Stochastic Learning")
+    sul = MdpSUL(mdp)
+    eq_oracle = RandomWordEqOracle(input_alphabet, sul, num_walks=100, min_walk_len=5, max_walk_len=15,
+                                   reset_after_cex=True)
+    stochastic_learned_model = run_stochastic_Lstar(input_alphabet=input_alphabet, eq_oracle=eq_oracle, sul=sul,
+                                                    automaton_type='smm', target_unambiguity=0.99)
+
+    # Non Deterministic Learning
+    print("Non-deterministic Learning")
+    sul = OnfsmSUL(mdp)
+    eq_oracle = RandomWordEqOracle(input_alphabet, sul, num_walks=100, min_walk_len=5, max_walk_len=15,
+                                   reset_after_cex=True)
+    non_det_model = run_non_det_Lstar(alphabet=input_alphabet, eq_oracle=eq_oracle, sul=sul, n_sampling=5,
+                                      stochastic=True, print_level=2)
+
+    for model_type, model in [('Stochastic Learning', stochastic_learned_model),
+                              ('Non-deterministic learning', non_det_model)]:
+        if isinstance(model, StochasticMealyMachine):
+            mdp = smm_to_mdp_conversion(model)
+        else:
+            mdp = model
+
+    values, diff = model_check_experiment(get_properties_file(example), get_correct_prop_values(example), mdp)
+
+    print(model_type)
+    print('Error for each property:', [round(d * 100, 2) for d in diff.values()])

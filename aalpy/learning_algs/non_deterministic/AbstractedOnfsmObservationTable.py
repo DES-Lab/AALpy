@@ -2,12 +2,12 @@ from collections import defaultdict
 
 from aalpy.automata import Onfsm, OnfsmState
 from aalpy.learning_algs.non_deterministic.OnfsmObservationTable import NonDetObservationTable
-from aalpy.learning_algs.non_deterministic.TraceTree import SULWrapper
+from aalpy.learning_algs.non_deterministic.NonDeterministicSULWrapper import NonDeterministicSULWrapper
 from aalpy.utils.HelperFunctions import all_suffixes, extend_set
 
 
 class AbstractedNonDetObservationTable:
-    def __init__(self, alphabet: list, sul: SULWrapper, abstraction_mapping: dict, n_sampling=100):
+    def __init__(self, alphabet: list, sul: NonDeterministicSULWrapper, abstraction_mapping: dict, n_sampling=100):
         """
         Construction of the abstracted non-deterministic observation table.
 
@@ -49,10 +49,9 @@ class AbstractedNonDetObservationTable:
 
         """
 
-        self.observation_table.update_obs_table(s_set, e_set)
+        self.observation_table.query_missing_observations(s_set, e_set)
         self.abstract_obs_table()
         self.clean_obs_table()
-
 
     def abstract_obs_table(self):
         """
@@ -96,12 +95,11 @@ class AbstractedNonDetObservationTable:
     # CHANGED
     # helper function
     def get_all_outputs(self, s, e):
-        reached_node = self.sul.pta.get_to_node(s[0], s[1])
-        s = set()
-        s.update(self.sul.pta.get_all_traces(reached_node, e))
-        return s
+        cell_outputs = set()
+        cell_outputs.update(self.sul.cache.get_all_traces(s, e))
+        return cell_outputs
 
-    def update_extended_S(self, row_prefix = None):
+    def update_extended_S(self, row_prefix=None):
         """
         Helper generator function that returns extended S, or S.A set.
         For all values in the cell, create a new row where inputs is parent input plus element of alphabet, and
@@ -155,7 +153,7 @@ class AbstractedNonDetObservationTable:
                 if row_t == s_row[1]:
                     similar_s_dot_a_rows.append(t)
             similar_s_dot_a_rows.sort(key=lambda row: len(row[0]))
-            for a in self.A: 
+            for a in self.A:
                 complete_outputs = self.get_all_outputs(s_row[0], a)
                 for similar_s_dot_a_row in similar_s_dot_a_rows:
                     t_row_outputs = self.get_all_outputs(similar_s_dot_a_row, a)
@@ -227,24 +225,6 @@ class AbstractedNonDetObservationTable:
                 return tuple([inp]) + e
 
         return None
-
-        #CHANGED
-        #Removed
-    # def complete_extended_S(self, row_prefix):
-    #     """
-    #     Add given row to S.A
-    #
-    #     Args:
-    #
-    #         row_prefix: row that should be added to S.A
-    #
-    #     Returns:
-    #
-    #         the row that has been extended
-    #     """
-    #     extension = [row_prefix]
-    #     self.observation_table.S_dot_A.extend(extension)
-    #     return extension
 
     def update_E(self, seq):
         if seq not in self.E:
@@ -348,7 +328,6 @@ class AbstractedNonDetObservationTable:
         automaton.characterization_set = self.E
 
         return automaton
-
 
     def extend_S_dot_A(self, cex_prefixes: list):
         """

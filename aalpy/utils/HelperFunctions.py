@@ -118,7 +118,7 @@ def print_observation_table(ot, table_type):
         s_set, extended_s, e_set, table = ot.S, ot.s_dot_a(), ot.E, ot.T
     elif table_type == 'non-det':
         s_set, extended_s, e_set = ot.S, ot.get_extended_S(), ot.E
-        table = ot.sul.pta.get_table(s_set + extended_s, e_set)
+        table = ot.sul.cache.get_table(s_set + extended_s, e_set)
     elif table_type == 'abstracted-non-det':
         s_set, extended_s, e_set, table = ot.S, ot.S_dot_A, ot.E, ot.T
     else:
