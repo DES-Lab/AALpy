@@ -213,11 +213,13 @@ class ClassificationTree:
 
         hypothesis.execute_sequence(hypothesis.initial_state, u)
         u_state = hypothesis.current_state.state_id
+        hypothesis.step(a)
+        ua_state = hypothesis.current_state.state_id
 
         self.insert_new_leaf(discriminator=v,
-                             old_leaf_access_string=u_state,
+                             old_leaf_access_string=ua_state,
                              new_leaf_access_string=(*u_state, a),
-                             new_leaf_position=self.sul.query((*u, *v))[-1])
+                             new_leaf_position=self.sul.query((*u, a, *v))[-1])
 
     def insert_new_leaf(self, discriminator, old_leaf_access_string, new_leaf_access_string, new_leaf_position: bool):
         print(f"{discriminator=} {old_leaf_access_string=} {new_leaf_access_string=}")
