@@ -1,10 +1,10 @@
 import time
 
 from aalpy.base import SUL, Oracle
-from aalpy.learning_algs.non_deterministic.OnfsmObservationTable import NonDetObservationTable
 from aalpy.learning_algs.non_deterministic.NonDeterministicSULWrapper import NonDeterministicSULWrapper
+from aalpy.learning_algs.non_deterministic.OnfsmObservationTable import NonDetObservationTable
 from aalpy.utils.HelperFunctions import print_learning_info, print_observation_table, \
-    get_available_oracles_and_err_msg, all_suffixes, all_prefixes
+    get_available_oracles_and_err_msg, all_suffixes
 
 print_options = [0, 1, 2, 3]
 

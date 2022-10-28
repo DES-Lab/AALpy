@@ -78,7 +78,6 @@ def run_abstracted_ONFSM_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, abst
                 extended_rows = abstracted_observation_table.update_extended_S(row_to_close)
                 abstracted_observation_table.update_obs_table(s_set=extended_rows)
                 row_to_close = abstracted_observation_table.get_row_to_close()
-            
 
             row_to_complete = abstracted_observation_table.get_row_to_complete()
             while row_to_complete is not None:

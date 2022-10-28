@@ -55,7 +55,8 @@ class AbstractedNonDetObservationTable:
 
     def abstract_obs_table(self):
         """
-        Creation of abstracted observation table. The provided abstraction mapping is used to replace outputs by abstracted outputs.
+        Creation of abstracted observation table. The provided abstraction mapping is used to
+        replace outputs by abstracted outputs.
         """
 
         self.S = self.observation_table.S
@@ -365,7 +366,9 @@ class AbstractedNonDetObservationTable:
 
     def cex_processing(self, cex: tuple, hypothesis: Onfsm):
         """
-        Add counterexample to the observation table. If the counterexample leads to a state where an output of the same equivalence class already exists, the prefixes of the counterexample are added to S.A. Otherwise, the postfixes of counterexample are added to E. 
+        Add counterexample to the observation table. If the counterexample leads to a state where an output of the
+        same equivalence class already exists, the prefixes of the counterexample are added to S.A.
+        Otherwise, the postfixes of counterexample are added to E.
 
 
         Args:

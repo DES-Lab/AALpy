@@ -145,37 +145,6 @@ class TraceTree:
 
         return result
 
-    def prune(self, threshold=0.1):
-        counter = 0
-        pruned_nodes = set()
-
-        queue = [(self.root_node, tuple())]
-        while queue:
-            curr_node, path = queue.pop(0)
-            to_delete = []
-            for inp in curr_node.children.keys():
-                children = curr_node.children[inp]
-                total_samples = sum(child.frequency_counter for child in children)
-                for child in children:
-                    #if child.frequency_counter / total_samples <= threshold:
-                    if child.output == 'DANGER':
-                        to_delete.append((inp, child.output, path + (inp, child.output)))
-                    else:
-                        queue.append((child, path + (inp, child.output)))
-
-            for i, o, path_to_delete_node in to_delete:
-                delete_candidate = curr_node.get_child(i, o)
-                if delete_candidate is not None:
-                    # detach from the tree/cache
-                    curr_node.children[i].remove(delete_candidate)
-                    # get inputs and outputs from path to node
-                    inputs, outputs = path_to_delete_node[0::2], path_to_delete_node[1::2]
-                    # add to set of nodes that were pruned in this iteration
-                    pruned_nodes.add((inputs, outputs))
-                    counter += 1
-
-        return pruned_nodes
-
     def find_cex_in_cache(self, hypothesis):
 
         queue = [(self.root_node, tuple())]
