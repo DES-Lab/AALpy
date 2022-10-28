@@ -84,3 +84,12 @@ class CacheTree:
                 return None
 
         return output_seq
+
+    def add_to_cache(self, input_sequence, output_sequence):
+        """
+        Add input-output sequence to cache
+        """
+        self.reset()
+        for i,o in zip(input_sequence, output_sequence):
+            self.step_in_cache(i, o)
+

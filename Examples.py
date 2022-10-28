@@ -98,6 +98,34 @@ def random_dfa_example(alphabet_size, number_of_states, num_accepting_states=1):
     return learned_dfa
 
 
+def random_deterministic_example_with_provided_sequances():
+    from random import choice, randint
+
+    input_alphabet = [f'i{i + 1}' for i in range(2)]
+    output_alphabet = [f'o{i + 1}' for i in range(4)]
+
+    from aalpy.utils import generate_random_mealy_machine
+    random_mealy = generate_random_mealy_machine(10, input_alphabet, output_alphabet)
+
+    from aalpy.SULs import MealySUL
+    sul_mealy = MealySUL(random_mealy)
+
+    # samples obtained form somewhere else
+    samples = []
+    for _ in range(1000):
+        inputs = tuple(choice(input_alphabet) for _ in range(randint(4, 12)))
+        outputs = sul_mealy.query(inputs)
+        input_output_pair = (inputs, outputs)
+        samples.append(input_output_pair)
+
+    from aalpy.oracles import RandomWalkEqOracle
+    random_walk_eq_oracle = RandomWalkEqOracle(input_alphabet, sul_mealy, 5000)
+
+    from aalpy.learning_algs import run_Lstar
+    learned_mealy = run_Lstar(input_alphabet, sul_mealy, random_walk_eq_oracle, automaton_type='mealy',
+                              samples=None)
+
+
 def big_input_alphabet_example(input_alphabet_size=1000, automaton_depth=4):
     """
         Small example where input alphabet can be huge and outputs are just true and false (DFA).
