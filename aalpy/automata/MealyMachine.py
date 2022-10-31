@@ -32,4 +32,4 @@ class MealyMachine(DeterministicAutomaton):
         return output
 
     def is_minimal(self):
-        return self.compute_characterization_set() != []
+        return self.compute_characterization_set(raise_warning=False) != []
