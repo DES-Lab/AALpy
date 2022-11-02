@@ -80,9 +80,10 @@ class RandomWordEqOracle(Oracle):
                     return inputs
 
                 elif out_hyp is None:
+                    self.sul.post()
+
                     if self.reset_after_cex:
                         self.num_walks_done = 0
-                        self.sul.post()
 
                     if self.automata_type == 'onfsm':
                         return inputs, outputs
