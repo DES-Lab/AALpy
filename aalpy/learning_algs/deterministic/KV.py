@@ -13,16 +13,16 @@ from ...SULs import DfaSUL
 from ...base.SUL import CacheSUL
 from aalpy.automata import Dfa, DfaState
 
-counterexample_processing_strategy = [None, 'rs', 'longest_prefix']
-closedness_options = ['prefix', 'suffix']
+counterexample_processing_strategy = [None, 'rs']
 print_options = [0, 1, 2, 3]
 
-# TODO implement max_learning_rounds, return_data, print_level
-# TODO implement reuse_counterexamples
+# TODO implement print_level
 
-def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', max_learning_rounds=None,
-           return_data=False, print_level=2, pretty_state_names=True, reuse_counterexamples=False,
-           use_rs_cex_processing=False):
+
+def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', cex_processing=None,
+           max_learning_rounds=None, return_data=False, print_level=2, pretty_state_names=True,
+           reuse_counterexamples=False,
+           ):
     """
     Executes TTT algorithm.
 
@@ -34,7 +34,7 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ma
 
         eq_oracle: equivalence oracle
 
-        automaton_type: type of automaton to be learned. Currently only 'dfa' supported
+        automaton_type: type of automaton to be learned. Currently only 'dfa' supported.
 
         max_learning_rounds: number of learning rounds after which learning will terminate (Default value = None)
 
@@ -45,7 +45,7 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ma
             (Default value = 2)
 
         pretty_state_names: if False, the resulting dfa's state names will be the ones generated during learning.
-                            if True, genereic 's0'-sX' state names will be used
+                            if True, generic 's0'-sX' state names will be used
             (Default value = True)
 
         reuse_counterexamples: Slight improvement over the original KV algorithm. If True, a counterexample will be
@@ -61,14 +61,13 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ma
     """
 
     assert print_level in print_options
+    assert cex_processing in counterexample_processing_strategy
     assert automaton_type == 'dfa'
     assert isinstance(sul, DfaSUL)
 
     start_time = time.time()
     eq_query_time = 0
     learning_rounds = 0
-
-    # name_gen = state_name_gen('s')
 
     # Do a membership query on the empty string to determine whether
     # the start state of the SUL is accepting or rejecting
@@ -105,9 +104,20 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ma
                                cex=cex,
                                empty_is_true=empty_string_mq)
 
-    cex_list = []
+    cex_list = []  # not needed, just here to check if cex get reused
     while True:
+        learning_rounds += 1
+        if max_learning_rounds and learning_rounds - 1 == max_learning_rounds:
+            break
+
         hypothesis = ctree.gen_hypothesis()
+
+        if print_level > 1:
+            print(f'Hypothesis {learning_rounds}: {len(hypothesis.states)} states.')
+
+        if print_level == 3:
+            # TODO: print classification tree
+            pass
 
         if reuse_counterexamples and hypothesis.get_result(cex) != supposed_result:
             # our hypothesis still doesn't get the supposed result for the former counterexample -> reuse it
@@ -122,21 +132,45 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ma
                 break
             else:
                 cex = tuple(cex)
-                print(f"processing {cex=}")
                 if cex in cex_list:
-                    print(f"WARNING! already got {cex=} once!")
                     if reuse_counterexamples:
                         assert False
                 if reuse_counterexamples:
                     supposed_result = not hypothesis.get_result(cex)
                 cex_list.append(cex)
 
-        if use_rs_cex_processing:
+            if print_level == 3:
+                print('Counterexample', cex)
+
+        if cex_processing == 'rs':
             ctree.update_rs(cex, hypothesis)
         else:
             ctree.update(cex, hypothesis)
 
+    total_time = round(time.time() - start_time, 2)
+    eq_query_time = round(eq_query_time, 2)
+    learning_time = round(total_time - eq_query_time, 2)
+
+    info = {
+        'learning_rounds': learning_rounds,
+        'automaton_size': len(hypothesis.states),
+        'queries_learning': sul.num_queries,
+        'steps_learning': sul.num_steps,
+        'queries_eq_oracle': eq_oracle.num_queries,
+        'steps_eq_oracle': eq_oracle.num_steps,
+        'learning_time': learning_time,
+        'eq_oracle_time': eq_query_time,
+        'total_time': total_time,
+        'classification_tree': ctree
+    }
+
     prettify_hypothesis(hypothesis, alphabet, keep_access_strings=not pretty_state_names)
+
+    if print_level > 0:
+        print_learning_info(info)
+
+    if return_data:
+        return hypothesis, info
 
     return hypothesis
 

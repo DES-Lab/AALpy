@@ -41,7 +41,7 @@ def runKV(seed):
     eq_oracle = RandomWalkEqOracle(alphabet, sul, 500, reset_after_cex=True)
 
     learned_dfa_kv = run_KV(alphabet, sul, eq_oracle, automaton_type='dfa',
-                            print_level=3, reuse_counterexamples=True, use_rs_cex_processing=True)
+                            print_level=3, reuse_counterexamples=True, cex_processing='rs')
 
     learning_result = checkConformance(alphabet, learned_dfa_kv, len(dfa.states), sul)
 
