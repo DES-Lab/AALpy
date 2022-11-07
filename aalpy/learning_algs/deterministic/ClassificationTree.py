@@ -212,6 +212,7 @@ class ClassificationTree:
         assert (*u, a, *v) == cex
 
         hypothesis.execute_sequence(hypothesis.initial_state, u)
+        # TODO change to prefix field
         u_state = hypothesis.current_state.state_id
         hypothesis.step(a)
         ua_state = hypothesis.current_state.state_id
