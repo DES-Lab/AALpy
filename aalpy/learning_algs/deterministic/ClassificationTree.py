@@ -219,10 +219,10 @@ class ClassificationTree:
         self.insert_new_leaf(discriminator=v,
                              old_leaf_access_string=ua_state,
                              new_leaf_access_string=(*u_state, a),
-                             new_leaf_position=self.sul.query((*u, a, *v))[-1])
+                             new_leaf_position=self.sul.query((*u, a, *v))[-1]) # TODO we could probably sub this with not hyp.get_result(cex)
 
     def insert_new_leaf(self, discriminator, old_leaf_access_string, new_leaf_access_string, new_leaf_position: bool):
-        print(f"{discriminator=} {old_leaf_access_string=} {new_leaf_access_string=}")
+        # print(f"{discriminator=} {old_leaf_access_string=} {new_leaf_access_string=}")
         old_leaf = self.leaf_nodes[old_leaf_access_string]
         discriminator_node = CTInternalNode(distinguishing_string=discriminator,
                                             parent=old_leaf.parent)

@@ -20,7 +20,7 @@ print_options = [0, 1, 2, 3]
 
 
 def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', cex_processing=None,
-           max_learning_rounds=None, return_data=False, print_level=2, pretty_state_names=True,
+           max_learning_rounds=None, cache_and_non_det_check=True, return_data=False, print_level=2, pretty_state_names=True,
            reuse_counterexamples=False,
            ):
     """
@@ -37,6 +37,8 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ce
         automaton_type: type of automaton to be learned. Currently only 'dfa' supported.
 
         max_learning_rounds: number of learning rounds after which learning will terminate (Default value = None)
+
+        cache_and_non_det_check: Use caching and non-determinism checks (Default value = True)
 
         return_data: if True, a map containing all information(runtime/#queries/#steps) will be returned
             (Default value = False)
@@ -65,9 +67,15 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ce
     assert automaton_type == 'dfa'
     assert isinstance(sul, DfaSUL)
 
+    if cache_and_non_det_check:
+        # Wrap the sul in the CacheSUL, so that all steps/queries are cached
+        sul = CacheSUL(sul)
+        eq_oracle.sul = sul
+
     start_time = time.time()
     eq_query_time = 0
     learning_rounds = 0
+    found_on_first_try = False
 
     # Do a membership query on the empty string to determine whether
     # the start state of the SUL is accepting or rejecting
@@ -89,12 +97,11 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ce
     cex = eq_oracle.find_cex(hypothesis)
     eq_query_time += time.time() - eq_query_start
     if cex is None:
-        return hypothesis
+        found_on_first_try = True
     else:
         cex = tuple(cex)
         if reuse_counterexamples:
             supposed_result = not hypothesis.get_result(cex)
-    print(f"processing {cex=}")
 
     # initialise the classification tree to have a root
     # labeled with the empty word as the distinguishing string
@@ -105,7 +112,7 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ce
                                empty_is_true=empty_string_mq)
 
     cex_list = []  # not needed, just here to check if cex get reused
-    while True:
+    while True and not found_on_first_try:
         learning_rounds += 1
         if max_learning_rounds and learning_rounds - 1 == max_learning_rounds:
             break
@@ -163,6 +170,9 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ce
         'total_time': total_time,
         'classification_tree': ctree
     }
+
+    if cache_and_non_det_check:
+        info['cache_saved'] = sul.num_cached_queries
 
     prettify_hypothesis(hypothesis, alphabet, keep_access_strings=not pretty_state_names)
 
