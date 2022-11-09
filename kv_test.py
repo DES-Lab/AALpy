@@ -13,8 +13,8 @@ def compute_shortest_prefixes(dfa):
 def checkConformance(alphabet, learned_dfa, states_num, sul):
     learned_dfa.characterization_set = None
     learned_dfa = compute_shortest_prefixes(learned_dfa)
-    eq_oracle = WMethodEqOracle(alphabet,sul,states_num+1)
-    #eq_oracle = RandomWalkEqOracle(alphabet, sul, 500)
+    #eq_oracle = WMethodEqOracle(alphabet,sul,states_num+1)
+    eq_oracle = RandomWalkEqOracle(alphabet, sul, 5000)
     cex = eq_oracle.find_cex(learned_dfa)
     cex = None
     return True if cex == None else False
