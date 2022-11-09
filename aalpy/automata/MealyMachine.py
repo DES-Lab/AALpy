@@ -5,6 +5,7 @@ class MealyState(AutomatonState):
     """
     Single state of a Mealy machine. Each state has an output_fun dictionary that maps inputs to outputs.
     """
+
     def __init__(self, state_id):
         super().__init__(state_id)
         self.output_fun = dict()
@@ -32,4 +33,16 @@ class MealyMachine(DeterministicAutomaton):
         return output
 
     def is_minimal(self):
-        return self.compute_characterization_set() != []
+        return self.compute_characterization_set(raise_warning=False) != []
+
+    def to_state_setup(self):
+        state_setup_dict = {}
+
+        # ensure prefixes are computed
+        self.compute_prefixes()
+
+        sorted_states = sorted(self.states, key=lambda x: len(x.prefix))
+        for s in sorted_states:
+            state_setup_dict[s.state_id] = {k: (s.output_fun[k], v.state_id) for k, v in s.transitions.items()}
+
+        return state_setup_dict

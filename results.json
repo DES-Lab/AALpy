@@ -1,0 +1,17 @@
+{
+    "random": {
+        "lstar_rs": {
+            "learning_rounds": 27,
+            "automaton_size": 1983,
+            "queries_learning": 601754,
+            "steps_learning": 3314805,
+            "queries_eq_oracle": 638,
+            "steps_eq_oracle": 2363,
+            "learning_time": 10.17,
+            "eq_oracle_time": 0.01,
+            "total_time": 10.18,
+            "cache_saved": 53127
+        }
+    },
+    "wmethod": {}
+}

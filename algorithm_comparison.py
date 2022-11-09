@@ -8,7 +8,7 @@ from aalpy.SULs import DfaSUL
 from aalpy.learning_algs.deterministic.LStar import run_Lstar
 from aalpy.learning_algs.deterministic.KV import run_KV
 from aalpy.oracles import RandomWalkEqOracle, WMethodEqOracle, StatePrefixEqOracle
-from aalpy.utils import load_automaton_from_file
+from aalpy.utils import load_automaton_from_file, dfa_from_state_setup
 from kv_test import checkConformance
 
 
@@ -53,7 +53,6 @@ def setup_oracle(dfa, type):
     return sul, oracle
 
 def main():
-    sys.setrecursionlimit(10000)
     folder_path = '/home/maxi/Downloads/DFA/principle/BenchmarkRandomDFAs/DFArandomChamparnaudParanthon_1000States_20Inputs'
     #folder_path = '/Users/andrea/PhD/bachelor_thesis/maximilian_rindler/DFA/principle/BenchmarkRandomDFAs/DFArandomChamparnaudParanthon_1000States_20Inputs'
     dir = os.listdir(folder_path)
@@ -64,12 +63,12 @@ def main():
     for filename in dir:
         print(f"loading {filename}... ", end='')
         if automata_data and filename in automata_data:
-            print("load from pickle", end='')
-            dfa = automata_data[filename]
+            print("load from pickle ", end='')
+            dfa = dfa_from_state_setup(automata_data[filename])
         else:
-            print("load from file and save as pickle", end='')
+            print("load from file and save as pickle ", end='')
             dfa = load_automaton_from_file(os.path.join(folder_path, filename), 'dfa')
-            automata_data[filename] = dfa
+            automata_data[filename] = dfa.to_state_setup()
             with open('automata.pickle', "wb") as automata_file:
                 pickle.dump(automata_data, automata_file)
 

@@ -276,7 +276,8 @@ class DeterministicAutomaton(Automaton):
         self.current_state = state_save
         return output
 
-    def compute_characterization_set(self, char_set_init=None, online_suffix_closure=True, split_all_blocks=True):
+    def compute_characterization_set(self, char_set_init=None, online_suffix_closure=True, split_all_blocks=True,
+                                     raise_warning=True):
         """
         Computation of a characterization set, that is, a set of sequences that can distinguish all states in the
         automation. The implementation follows the approach for finding multiple preset diagnosing experiments described
@@ -294,6 +295,7 @@ class DeterministicAutomaton(Automaton):
                         sequences are only checked on a subset of the states to be distinguished
                         if true, sequences are used to distinguish all states, yielding a potentially smaller set, which
                         is useful for conformance testing and learning
+            raise_warning: prints warning message if characterization set cannot be computed
 
         Returns: a characterization set or [] if a non-minimal automaton is passed to the function
 
@@ -320,6 +322,10 @@ class DeterministicAutomaton(Automaton):
             split_state2 = block_to_split[1]
             dist_seq = self.find_distinguishing_seq(split_state1, split_state2)
             if dist_seq is None:
+                if raise_warning:
+                    import warnings
+                    warnings.warn("Automaton is non-canonical: could not compute characterization set."
+                                  "Returning an empty list.")
                 return []
 
             # in L*-based learning, we use suffix-closed column labels, so it makes sense to use a suffix-closed
@@ -371,3 +377,8 @@ class DeterministicAutomaton(Automaton):
             for new_block in block_after_split.values():
                 new_blocks.append(new_block)
         return new_blocks
+
+    def compute_prefixes(self):
+        for s in self.states:
+            if not s.prefix:
+                s.prefix = self.get_shortest_path(self.initial_state, s)

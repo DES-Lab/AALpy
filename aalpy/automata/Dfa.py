@@ -10,10 +10,6 @@ class DfaState(AutomatonState):
         super().__init__(state_id)
         self.is_accepting = is_accepting
 
-    def __repr__(self):
-        id = str(self.state_id) if self.state_id != (None,) else '(None)'
-        return f"{self.__class__.__name__}'{id}' " + ("(accepting)" if self.is_accepting else "")
-
 
 class Dfa(DeterministicAutomaton):
     """
@@ -37,14 +33,31 @@ class Dfa(DeterministicAutomaton):
             self.current_state = self.current_state.transitions[letter]
         return self.current_state.is_accepting
 
-    def compute_characterization_set(self, char_set_init=None, online_suffix_closure=True, split_all_blocks=True):
+    def compute_characterization_set(self, char_set_init=None, online_suffix_closure=True, split_all_blocks=True,
+                                     raise_warning=True):
         return super(Dfa, self).compute_characterization_set(char_set_init if char_set_init else [()],
-                                                             online_suffix_closure,
-                                                             split_all_blocks)
+                                                             online_suffix_closure, split_all_blocks, raise_warning)
 
     def is_minimal(self):
         return self.compute_characterization_set() != []
 
+    def compute_output_seq(self, state, sequence):
+        if not sequence:
+            return [state.is_accepting]
+        return super(Dfa, self).compute_output_seq(state, sequence)
+
+    def to_state_setup(self):
+        state_setup_dict = {}
+
+        # ensure prefixes are computed
+        self.compute_prefixes()
+
+        sorted_states = sorted(self.states, key=lambda x: len(x.prefix))
+        for s in sorted_states:
+            state_setup_dict[s.state_id] = (s.is_accepting, {k: v.state_id for k, v in s.transitions.items()})
+
+        return state_setup_dict
+    
     def get_result(self, input: tuple):
         """
         Args:
@@ -57,3 +70,4 @@ class Dfa(DeterministicAutomaton):
         res = self.execute_sequence(self.initial_state, input)[-1]
         self.current_state = saved_state
         return res
+
