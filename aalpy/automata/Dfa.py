@@ -46,3 +46,14 @@ class Dfa(DeterministicAutomaton):
             return [state.is_accepting]
         return super(Dfa, self).compute_output_seq(state, sequence)
 
+    def to_state_setup(self):
+        state_setup_dict = {}
+
+        # ensure prefixes are computed
+        self.compute_prefixes()
+
+        sorted_states = sorted(self.states, key=lambda x: len(x.prefix))
+        for s in sorted_states:
+            state_setup_dict[s.state_id] = (s.is_accepting, {k: v.state_id for k, v in s.transitions.items()})
+
+        return state_setup_dict

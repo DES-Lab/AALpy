@@ -377,3 +377,8 @@ class DeterministicAutomaton(Automaton):
             for new_block in block_after_split.values():
                 new_blocks.append(new_block)
         return new_blocks
+
+    def compute_prefixes(self):
+        for s in self.states:
+            if not s.prefix:
+                s.prefix = self.get_shortest_path(self.initial_state, s)
