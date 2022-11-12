@@ -1,3 +1,4 @@
+import datetime
 import json
 import os
 import pickle
@@ -22,9 +23,9 @@ def run_algorithm(algorithm_name, oracle_name, dfa):
     alphabet = dfa.get_input_alphabet()
 
     if algorithm_name == 'kv':
-        algorithm = partial(run_KV, alphabet, sul, oracle, automaton_type='dfa', return_data=True, print_level=0, reuse_counterexamples=True, cex_processing=None)
+        algorithm = partial(run_KV, alphabet, sul, oracle, automaton_type='dfa', return_data=True, print_level=0, reuse_counterexamples=False, cex_processing=None)
     elif algorithm_name == 'kv_rs':
-        algorithm = partial(run_KV, alphabet, sul, oracle, automaton_type='dfa', return_data=True, print_level=0, reuse_counterexamples=True, cex_processing='rs')
+        algorithm = partial(run_KV, alphabet, sul, oracle, automaton_type='dfa', return_data=True, print_level=0, reuse_counterexamples=False, cex_processing='rs')
     elif algorithm_name == 'lstar':
         algorithm = partial(run_Lstar, alphabet, sul, oracle, automaton_type='dfa', return_data=True, print_level=0, cex_processing=None)
     elif algorithm_name == 'lstar_rs':
@@ -45,7 +46,7 @@ def setup_oracle(dfa, type):
     alphabet = dfa.get_input_alphabet()
     sul = DfaSUL(dfa)
     if type == 'random':
-        oracle = RandomWalkEqOracle(alphabet, sul, 500, reset_after_cex=True,reset_prob=0.25)
+        oracle = RandomWalkEqOracle(alphabet, sul, 10000, reset_after_cex=True,reset_prob=0.25)
         #oracle = StatePrefixEqOracle
     else:
         oracle = WMethodEqOracle(alphabet, sul, dfa.size)
@@ -59,20 +60,21 @@ def main():
     with open('automata.pickle', "rb") as automata_file:
         automata_data = pickle.load(automata_file)
     learned = 0
-    to_learn = 2
+    to_learn = 4
     for filename in dir:
         print(f"loading {filename}... ", end='')
         if automata_data and filename in automata_data:
-            print("load from pickle ", end='')
+            print("load from pickle... ", end='')
             dfa = dfa_from_state_setup(automata_data[filename])
         else:
-            print("load from file and save as pickle ", end='')
+            print("load from file and save as pickle... ", end='')
             dfa = load_automaton_from_file(os.path.join(folder_path, filename), 'dfa')
             automata_data[filename] = dfa.to_state_setup()
             with open('automata.pickle', "wb") as automata_file:
                 pickle.dump(automata_data, automata_file)
+        print("done")
 
-        print("running algorithms... ", end='')
+        print("running algorithms... ")
         run_algorithm('kv', 'random', dfa)
         run_algorithm('kv_rs', 'random', dfa)
         run_algorithm('lstar', 'random', dfa)
@@ -84,8 +86,10 @@ def main():
         if learned >= to_learn:
             break
 
-    with open('results.json', 'w+') as file:
+    with open(f'results_{str(datetime.datetime.now()).replace(" ", "_")}.json', 'w+') as file:
         file.write(json.dumps(results, indent=4))
+
+    print(results)
 
 
 
