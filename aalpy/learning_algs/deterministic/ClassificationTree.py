@@ -183,11 +183,11 @@ class ClassificationTree:
                 break
         assert j is not None and d is not None
 
-        hypothesis.execute_sequence(hypothesis.initial_state, cex[:j - 1] or (None,))
+        hypothesis.execute_sequence(hypothesis.initial_state, cex[:j - 1] or tuple())
 
         self.insert_new_leaf(discriminator=(cex[j - 1], *d),
                              old_leaf_access_string=hypothesis.current_state.prefix,
-                             new_leaf_access_string=tuple(cex[:j - 1]) or (None,),
+                             new_leaf_access_string=tuple(cex[:j - 1]) or tuple(),
                              new_leaf_position=self.sul.query((*cex[:j - 1], *(cex[j - 1], *d)))[-1])
 
     def update_rs(self, cex: tuple, hypothesis: Dfa):

@@ -78,8 +78,11 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ce
     eq_query_start = time.time()
     cex = eq_oracle.find_cex(hypothesis)
     eq_query_time += time.time() - eq_query_start
+    already_found = False
     if cex is None:
-        return hypothesis
+        already_found = True
+    else:
+        cex = tuple(cex)
 
     # initialise the classification tree to have a root
     # labeled with the empty word as the distinguishing string
@@ -89,7 +92,7 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ce
                                              cex=cex,
                                              empty_is_true=empty_string_mq)
 
-    while True:
+    while True and not already_found:
         learning_rounds += 1
         if max_learning_rounds and learning_rounds - 1 == max_learning_rounds:
             break
