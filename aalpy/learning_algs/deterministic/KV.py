@@ -100,7 +100,8 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ce
         hypothesis = classification_tree.gen_hypothesis()
 
         if print_level > 1:
-            print(f'Hypothesis {learning_rounds}: {len(hypothesis.states)} states.')
+            if learning_rounds <= 20 or learning_rounds % 10 == 0:
+                print(f'Hypothesis {learning_rounds}: {len(hypothesis.states)} states.')
 
         if print_level == 3:
             # TODO: print classification tree
