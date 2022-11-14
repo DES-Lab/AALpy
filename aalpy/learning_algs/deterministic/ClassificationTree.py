@@ -51,9 +51,9 @@ class CTLeafNode(CTNode):
 
 class ClassificationTree:
     def __init__(self, alphabet: list, sul: SUL, cex: tuple, empty_is_true: bool):
-        self.root = CTInternalNode(distinguishing_string=(None,), parent=None)
+        self.root = CTInternalNode(distinguishing_string=tuple([]), parent=None)
         self.leaf_nodes = {}
-        self.root.children[empty_is_true] = CTLeafNode(access_string=(None,),
+        self.root.children[empty_is_true] = CTLeafNode(access_string=tuple([]),
                                                        parent=self.root,
                                                        tree=self)
         self.root.children[not empty_is_true] = CTLeafNode(access_string=cex,
@@ -100,7 +100,7 @@ class ClassificationTree:
         for node in self.leaf_nodes.values():
             new_state = DfaState(state_id=node.access_string,
                                  is_accepting=node.in_right_side)
-            if new_state.state_id == (None,):
+            if new_state.state_id == ():
                 initial_state = new_state
             new_state.prefix = node.access_string
             states[new_state.state_id] = new_state

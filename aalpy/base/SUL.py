@@ -29,6 +29,7 @@ class SUL(ABC):
             list of outputs, where the i-th output corresponds to the output of the system after the i-th input
 
         """
+        # print(word)
         self.pre()
         # Empty string for DFA
         if len(word) == 0:

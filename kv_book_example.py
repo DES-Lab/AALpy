@@ -25,11 +25,12 @@ class KVBookExample(SUL):
 
 def main():
     sul = KVBookExample()
-    eq_oracle = RandomWalkEqOracle(sul.alphabet, sul, 500)
+    eq_oracle = RandomWalkEqOracle(sul.alphabet, sul, 500000)
 
     learned_dfa = run_KV(sul.alphabet, sul, eq_oracle, automaton_type='dfa',
-                        print_level=3, reuse_counterexamples=True, cex_processing="rs")
+                       print_level=1, reuse_counterexamples=True, cex_processing="rs")
 
+    eq_oracle = RandomWalkEqOracle(sul.alphabet, sul, 500000)
     learned_dfa = run_Lstar(sul.alphabet, sul, eq_oracle, automaton_type='dfa',
                         print_level=3, cex_processing="rs")
 
