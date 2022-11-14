@@ -27,7 +27,7 @@ chi2_table[0.999] = \
 class DifferenceChecker(ABC):
 
     @abstractmethod
-    def check_difference(self, c1: dict, c2: dict, **kwargs) -> bool:
+    def are_cells_different(self, c1: dict, c2: dict, **kwargs) -> bool:
         pass
 
     def difference_value(self, c1: dict, c2: dict):
@@ -42,7 +42,7 @@ class HoeffdingChecker(DifferenceChecker):
     def __init__(self, alpha=0.05):
         self.alpha = alpha
 
-    def check_difference(self, c1: dict, c2: dict, **kwargs) -> bool:
+    def are_cells_different(self, c1: dict, c2: dict, **kwargs) -> bool:
         if c1.keys() != c2.keys():
             return True
 
@@ -67,7 +67,7 @@ class AdvancedHoeffdingChecker(DifferenceChecker):
         self.alpha = alpha
         self.use_diff = use_diff
 
-    def check_difference(self, c1: dict, c2: dict, **kwargs) -> bool:
+    def are_cells_different(self, c1: dict, c2: dict, **kwargs) -> bool:
         n1 = sum(c1.values())
         n2 = sum(c2.values())
 
@@ -118,7 +118,7 @@ class ChiSquareChecker(DifferenceChecker):
         self.chi2_values = chi2_table[1 - self.alpha]
         self.use_diff = use_diff_value
 
-    def check_difference(self, c1_out_freq: dict, c2_out_freq: dict, **kwargs) -> bool:
+    def are_cells_different(self, c1_out_freq: dict, c2_out_freq: dict, **kwargs) -> bool:
         # chi square test for homogeneity (see, for instance: https://online.stat.psu.edu/stat415/lesson/17/17.1)
         if not c1_out_freq or not c2_out_freq:
             return False
@@ -131,7 +131,7 @@ class ChiSquareChecker(DifferenceChecker):
             # if the supports of the tested frequencies are completely then chi2 makes no sense, use the Hoeffding test
             # to determine if there are enough observations for a difference
             hoeffding_checker = AdvancedHoeffdingChecker()
-            return hoeffding_checker.check_difference(c1_out_freq, c2_out_freq)
+            return hoeffding_checker.are_cells_different(c1_out_freq, c2_out_freq)
 
         Q = self.compute_Q(c1_out_freq, c2_out_freq, keys)
         if dof not in self.chi2_values.keys():

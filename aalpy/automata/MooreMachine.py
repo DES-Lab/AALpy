@@ -36,12 +36,25 @@ class MooreMachine(DeterministicAutomaton):
     def compute_characterization_set(self, char_set_init=None, online_suffix_closure=True, split_all_blocks=True,
                                      raise_warning=True):
         return super(MooreMachine, self).compute_characterization_set(char_set_init if char_set_init else [()],
-                                                                      online_suffix_closure, split_all_blocks, raise_warning)
+                                                                      online_suffix_closure, split_all_blocks,
+                                                                      raise_warning)
 
     def is_minimal(self):
-        return self.compute_characterization_set(raise_warning=False) != []
+        return self.compute_characterization_set(raise_warning=False) is not None
 
     def compute_output_seq(self, state, sequence):
         if not sequence:
             return [state.output]
         return super(MooreMachine, self).compute_output_seq(state, sequence)
+
+    def to_state_setup(self):
+        state_setup_dict = {}
+
+        # ensure prefixes are computed
+        self.compute_prefixes()
+
+        sorted_states = sorted(self.states, key=lambda x: len(x.prefix))
+        for s in sorted_states:
+            state_setup_dict[s.state_id] = (s.output, {k: v.state_id for k, v in s.transitions.items()})
+
+        return state_setup_dict

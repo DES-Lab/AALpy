@@ -297,7 +297,7 @@ class DeterministicAutomaton(Automaton):
                         is useful for conformance testing and learning
             raise_warning: prints warning message if characterization set cannot be computed
 
-        Returns: a characterization set or [] if a non-minimal automaton is passed to the function
+        Returns: a characterization set or None if a non-minimal automaton is passed to the function
 
         """
         from copy import copy
@@ -325,8 +325,8 @@ class DeterministicAutomaton(Automaton):
                 if raise_warning:
                     import warnings
                     warnings.warn("Automaton is non-canonical: could not compute characterization set."
-                                  "Returning an empty list.")
-                return []
+                                  "Returning None.")
+                return None
 
             # in L*-based learning, we use suffix-closed column labels, so it makes sense to use a suffix-closed
             # char set in this context
@@ -377,3 +377,8 @@ class DeterministicAutomaton(Automaton):
             for new_block in block_after_split.values():
                 new_blocks.append(new_block)
         return new_blocks
+
+    def compute_prefixes(self):
+        for s in self.states:
+            if not s.prefix:
+                s.prefix = self.get_shortest_path(self.initial_state, s)

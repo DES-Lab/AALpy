@@ -228,7 +228,7 @@ class SamplingBasedObservationTable:
                         for e in self.E:
                             if e == ignore:
                                 continue
-                            if self.cell_diff(s1 + i + o, s2 + i + o, e):
+                            if self.are_cells_incompatible(s1 + i + o, s2 + i + o, e):
                                 return i + o + e
         return None
 
@@ -431,7 +431,7 @@ class SamplingBasedObservationTable:
         unambiguous_rows_percentage = numerator / len(self.S + extended_s)
         return round(unambiguous_rows_percentage * 100, 2)
 
-    def cell_diff(self, s1, s2, e):
+    def are_cells_incompatible(self, s1, s2, e):
         """
         Checks if 2 cells are considered different.
 
@@ -448,13 +448,13 @@ class SamplingBasedObservationTable:
         """
         if self.strategy == 'classic':
             if self.teacher.complete_query(s1, e) and self.teacher.complete_query(s2, e):
-                return self.compatibility_checker.check_difference(self.T[s1][e], self.T[s2][e])
+                return self.compatibility_checker.are_cells_different(self.T[s1][e], self.T[s2][e])
         elif self.strategy == 'normal' or self.strategy == 'chi2':
             if e in self.T[s1] and e in self.T[s2]:
-                return self.compatibility_checker.check_difference(self.T[s1][e], self.T[s2][e])
+                return self.compatibility_checker.are_cells_different(self.T[s1][e], self.T[s2][e])
         else:
             if e in self.T[s1] and e in self.T[s2]:
-                return self.compatibility_checker.check_difference(self.T[s1][e], self.T[s2][e], s1=s1,s2=s2,e=e)
+                return self.compatibility_checker.are_cells_different(self.T[s1][e], self.T[s2][e], s1=s1, s2=s2, e=e)
         return False
 
     def are_rows_compatible(self, s1, s2, e_ignore=None):
@@ -478,7 +478,7 @@ class SamplingBasedObservationTable:
         for e in self.E:
             if e == e_ignore:
                 continue
-            if self.cell_diff(s1, s2, e):
+            if self.are_cells_incompatible(s1, s2, e):
                 return False
         return True
 

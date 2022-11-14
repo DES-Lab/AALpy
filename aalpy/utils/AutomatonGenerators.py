@@ -125,7 +125,7 @@ def generate_random_deterministic_automata(automaton_type,
                                                                       num_states,
                                                                       input_alphabet_size,
                                                                       output_alphabet_size,
-                                                                      False, # compute prefixes
+                                                                      compute_prefixes, # compute prefixes
                                                                       False, # ensure minimality
                                                                       **custom_args)
 
