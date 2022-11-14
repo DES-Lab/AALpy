@@ -1,4 +1,5 @@
 from itertools import product
+import warnings
 from random import shuffle, choice, randint
 
 from aalpy.base.Oracle import Oracle
@@ -94,6 +95,9 @@ class RandomWMethodEqOracle(Oracle):
 
         if not hypothesis.characterization_set:
             hypothesis.characterization_set = hypothesis.compute_characterization_set()
+            # fix for non-minimal intermediate hypothesis that can occur in KV
+            if hypothesis.characterization_set is None:
+                hypothesis.characterization_set = [(a,) for a in hypothesis.get_input_alphabet()]
 
         states_to_cover = []
         for state in hypothesis.states:
