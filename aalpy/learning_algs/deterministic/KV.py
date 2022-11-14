@@ -1,17 +1,12 @@
 import time
 
+from aalpy.automata import Dfa, DfaState
 from aalpy.base import Oracle, SUL
-from aalpy.utils.HelperFunctions import extend_set, print_learning_info, print_observation_table, all_prefixes
-from .ClassificationTree import ClassificationTree, CTLeafNode
-from .CounterExampleProcessing import longest_prefix_cex_processing, rs_cex_processing
-from .DiscriminationTree import DiscriminationTree, DTStateNode, DTDiscriminatorNode
-from .KV_helpers import state_name_gen, prettify_hypothesis
-from .ObservationTable import ObservationTable
-from .TTTHypothesis import TTTHypothesis
-from .TTT_helper_functions import link, close_transitions, rs_split_cex
+from aalpy.utils.HelperFunctions import print_learning_info
+from .ClassificationTree import ClassificationTree
+from .KV_helpers import prettify_hypothesis
 from ...SULs import DfaSUL
 from ...base.SUL import CacheSUL
-from aalpy.automata import Dfa, DfaState
 
 counterexample_processing_strategy = [None, 'rs']
 print_options = [0, 1, 2, 3]

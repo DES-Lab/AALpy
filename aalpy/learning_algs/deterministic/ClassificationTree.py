@@ -1,6 +1,5 @@
 from aalpy.automata import DfaState, Dfa
 from aalpy.base import SUL
-from aalpy.learning_algs.deterministic.KV_helpers import state_name_gen
 
 
 class CTNode:
@@ -49,6 +48,8 @@ class CTLeafNode(CTNode):
             p = p.parent
         return p.children[True] == c
 
+# all nodes same class, then differentiate with is_leaf, ...
+
 class ClassificationTree:
     def __init__(self, alphabet: list, sul: SUL, cex: tuple, empty_is_true: bool):
         self.root = CTInternalNode(distinguishing_string=tuple(), parent=None)
@@ -63,7 +64,7 @@ class ClassificationTree:
         self.sul = sul
 
     def sift(self, word):
-        '''
+        """
         Sifting a word into the classification tree.
         Starting at the root, at every inner node (a CTInternalNode),
         we branch into the "true" or "false" child, depending on the result of the
@@ -77,7 +78,7 @@ class ClassificationTree:
         Returns:
 
             the CTLeafNode that is reached by the sifting operation.
-        '''
+        """
         for letter in word:
             assert letter is None or letter in self.alphabet
 
@@ -91,34 +92,34 @@ class ClassificationTree:
         return node.access_string
 
     def gen_hypothesis(self):
-
         # for each CTLeafNode of this CT,
         # create a state in the hypothesis that is labeled by that
         # node's access string. The start state is the empty word
         states = {}
         initial_state = None
+        state_counter = 0
         for node in self.leaf_nodes.values():
-            new_state = DfaState(state_id=node.access_string,
+            state_counter += 1
+            new_state = DfaState(state_id=f's{state_counter}',
                                  is_accepting=node.in_right_side)
-            if new_state.state_id == ():
-                initial_state = new_state
             new_state.prefix = node.access_string
-            states[new_state.state_id] = new_state
+            if new_state.prefix == ():
+                initial_state = new_state
+            states[new_state.prefix] = new_state
         assert initial_state is not None
 
         # For each access state s of the hypothesis and each letter b in the
         # alphabet, compute the b-transition out of state s by sifting s.state_id*b
         for state in states.values():
             for letter in self.alphabet:
-                transition_target_id = self.sift((*state.state_id, letter))
+                transition_target_id = self.sift((*state.prefix, letter))
                 state.transitions[letter] = states[transition_target_id]
 
         return Dfa(initial_state=initial_state,
                    states=list(states.values()))
 
-
     def least_common_ancestor(self, node_1_id, node_2_id):
-        '''
+        """
         Find the distinguishing string of the least common ancestor
         of the leaf nodes node_1 and node_2. Both nodes have to exist.
         Adapted from https://www.geeksforgeeks.org/lowest-common-ancestor-binary-tree-set-1/
@@ -132,7 +133,7 @@ class ClassificationTree:
 
             the distinguishing string of the lca
 
-        '''
+        """
 
         def findLCA(root, n1, n2):
             if root is None:
@@ -152,7 +153,7 @@ class ClassificationTree:
         return findLCA(self.root, node_1_id, node_2_id).distinguishing_string
 
     def update(self, cex: tuple, hypothesis: Dfa):
-        '''
+        """
         Updates the classification tree based on a counterexample.
         - For each prefix cex[:i] of the counterexample, get
               s_i      = self.sift(cex[:i])    and
@@ -170,12 +171,12 @@ class ClassificationTree:
             cex: the counterexample used to update the tree
             hypothesis: the former (wrong) hypothesis
 
-        '''
+        """
         j = d = None
         for i in range(1, len(cex) + 1):
             s_i = self.sift(cex[:i])
             hypothesis.execute_sequence(hypothesis.initial_state, cex[:i])
-            s_star_i = hypothesis.current_state.state_id
+            s_star_i = hypothesis.current_state.prefix
             if s_i != s_star_i:
                 j = i
                 d = self.least_common_ancestor(s_i, s_star_i)
@@ -185,12 +186,12 @@ class ClassificationTree:
         hypothesis.execute_sequence(hypothesis.initial_state, cex[:j - 1] or (None,))
 
         self.insert_new_leaf(discriminator=(cex[j - 1], *d),
-                             old_leaf_access_string=hypothesis.current_state.state_id,
+                             old_leaf_access_string=hypothesis.current_state.prefix,
                              new_leaf_access_string=tuple(cex[:j - 1]) or (None,),
                              new_leaf_position=self.sul.query((*cex[:j - 1], *(cex[j - 1], *d)))[-1])
 
     def update_rs(self, cex: tuple, hypothesis: Dfa):
-        '''
+        """
         Updates the classification tree based on a counterexample,
         using Rivest & Schapire's counterexample processing
         - Replace the CTLeafNode labeled with the access string of the state
@@ -204,7 +205,7 @@ class ClassificationTree:
             cex: the counterexample used to update the tree
             hypothesis: the former (wrong) hypothesis
 
-        '''
+        """
         from aalpy.learning_algs.deterministic.CounterExampleProcessing import rs_cex_processing
         v = max(rs_cex_processing(self.sul, cex, hypothesis, suffix_closedness=True), key=len)
         a = cex[len(cex) - len(v) - 1]
@@ -213,17 +214,17 @@ class ClassificationTree:
 
         hypothesis.execute_sequence(hypothesis.initial_state, u)
         # TODO change to prefix field
-        u_state = hypothesis.current_state.state_id
+        u_state = hypothesis.current_state.prefix
         hypothesis.step(a)
-        ua_state = hypothesis.current_state.state_id
+        ua_state = hypothesis.current_state.prefix
 
         self.insert_new_leaf(discriminator=v,
                              old_leaf_access_string=ua_state,
                              new_leaf_access_string=(*u_state, a),
-                             new_leaf_position=self.sul.query((*u, a, *v))[-1]) # TODO we could probably sub this with not hyp.get_result(cex)
+                             new_leaf_position=self.sul.query((*u, a, *v))[
+                                 -1])  # TODO we could probably sub this with not hyp.get_result(cex)
 
     def insert_new_leaf(self, discriminator, old_leaf_access_string, new_leaf_access_string, new_leaf_position: bool):
-        # print(f"{discriminator=} {old_leaf_access_string=} {new_leaf_access_string=}")
         old_leaf = self.leaf_nodes[old_leaf_access_string]
         discriminator_node = CTInternalNode(distinguishing_string=discriminator,
                                             parent=old_leaf.parent)

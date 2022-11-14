@@ -12,7 +12,7 @@ sul = DfaSUL(dfa)
 
 #eq_oracle = RandomWordEqOracle(input_al, sul, min_walk_len=10, max_walk_len=15)
 eq_oracle = RandomWMethodEqOracle(input_al, sul, walks_per_state=10, walk_len=20)
-learned_model = run_KV(input_al, sul, eq_oracle, cex_processing='rs', print_level=1)
+learned_model = run_KV(input_al, sul, eq_oracle, cex_processing=None, print_level=1)
 
 eq_oracle = RandomWordEqOracle(input_al, sul, min_walk_len=3, max_walk_len=10)
-learned_model = run_Lstar(input_al, sul, eq_oracle, automaton_type='dfa', cex_processing='rs', print_level=1)
+learned_model = run_Lstar(input_al, sul, eq_oracle, automaton_type='dfa', cex_processing=None, print_level=1)
