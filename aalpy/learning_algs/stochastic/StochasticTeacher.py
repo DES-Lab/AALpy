@@ -278,7 +278,7 @@ class StochasticTeacher:
                 for i in curr_node.children.keys():
                     freq_in_tree = self.frequency_query(trace, (i,))
                     freq_in_hyp = self.frequency_query(rep_trace, (i,))
-                    if self.compatibility_checker.check_difference(freq_in_tree, freq_in_hyp):
+                    if self.compatibility_checker.are_cells_different(freq_in_tree, freq_in_hyp):
                         return trace + (i,)
             # choose next node randomly and return None if there is no next node
             if not curr_node.children:
@@ -324,7 +324,7 @@ class StochasticTeacher:
                 for i in curr_node.children.keys():
                     freq_in_tree = self.frequency_query(trace, (i,))
                     freq_in_hyp = self.frequency_query(rep_trace, (i,))
-                    if self.compatibility_checker.check_difference(freq_in_tree, freq_in_hyp):
+                    if self.compatibility_checker.are_cells_different(freq_in_tree, freq_in_hyp):
                         return trace + (i,)
             for i in curr_node.children.keys():
                 for c in curr_node.children[i].values():

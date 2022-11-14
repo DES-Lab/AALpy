@@ -1,38 +1,16 @@
 from collections import defaultdict
 
-from aalpy.base import SUL
-
-
-class SULWrapper(SUL):
-    """
-    Wrapper for non-deterministic SUL. After every step, input/output pair is added to the tree containing all traces.
-    """
-
-    def __init__(self, sul: SUL):
-        super().__init__()
-        self.sul = sul
-        self.pta = TraceTree()
-
-    def pre(self):
-        self.pta.reset()
-        self.sul.pre()
-
-    def post(self):
-        self.sul.post()
-
-    def step(self, letter):
-        out = self.sul.step(letter)
-        self.pta.add_to_tree(letter, out)
-        return out
-
 
 class Node:
-    __slots__ = ['output', 'children', 'parent']
+    __slots__ = ['output', 'children', 'parent', 'frequency_counter']
 
     def __init__(self, output):
         self.output = output
         self.children = defaultdict(list)
         self.parent = None
+
+        # frq counter
+        self.frequency_counter = 0
 
     def get_child(self, inp, out):
         """
@@ -81,7 +59,14 @@ class TraceTree:
             node = Node(out)
             self.curr_node.children[inp].append(node)
             node.parent = self.curr_node
+
         self.curr_node = self.curr_node.get_child(inp, out)
+        self.curr_node.frequency_counter += 1
+
+    def add_trace(self, inputs, outputs):
+        self.reset()
+        for i, o in zip(inputs, outputs):
+            self.add_to_tree(i, o)
 
     def get_to_node(self, inputs, outputs):
         """
@@ -99,17 +84,17 @@ class TraceTree:
         for i, o in zip(inputs, outputs):
             node = curr_node.get_child(i, o)
             if node is None:
-                assert False
+                return None
             curr_node = node
 
         return curr_node
 
-    def get_all_traces(self, curr_node=None, e=None):
+    def get_all_traces(self, prefix, e=None):
         """
 
         Args:
 
-          curr_node: current node
+          prefix: prefix
           e: List of inputs
 
         Returns:
@@ -117,8 +102,14 @@ class TraceTree:
           Traces of outputs corresponding to the input-sequence given by e
         """
 
-        if not curr_node or not e:
+        if not prefix or not e:
             return []
+
+        curr_node = self.root_node
+        for i, o in zip(prefix[0], prefix[1]):
+            curr_node = curr_node.get_child(i, o)
+            if curr_node is None:
+                return []
 
         queue = [(curr_node, 0)]
         reached_nodes = []
@@ -146,11 +137,67 @@ class TraceTree:
           a table in a format that can be used for printing.
         """
         result = {}
-        for pair in s:
-            curr_node = self.get_to_node(pair[0], pair[1])
-            result[pair] = {}
+        for prefix in s:
+            result[prefix] = {}
 
             for inp in e:
-                result[pair][inp] = self.get_all_traces(curr_node, inp)
+                result[prefix][inp] = self.get_all_traces(prefix, inp)
 
         return result
+
+    def find_cex_in_cache(self, hypothesis):
+
+        queue = [(self.root_node, tuple())]
+        while queue:
+            curr_node, path = queue.pop(0)
+
+            if path:
+                hypothesis.reset_to_initial()
+                inputs, outputs = [], []
+                for i, o in zip(path[0::2], path[1::2]):
+                    inputs.append(i)
+                    outputs.append(o)
+                    out = hypothesis.step_to(i, o)
+                    if out is None:
+                        return inputs, outputs
+            for inp in curr_node.children.keys():
+                children = curr_node.children[inp]
+                for child in children:
+                    # if curr_node.frequency_counter[(inp, child_out)] >= threshold:
+                    queue.append((child, path + (inp, child.output)))
+
+        return None
+
+    def get_s_e_sampling_frequency(self, prefix, suffix):
+        sampling_frequency = 0
+        curr_node = self.root_node
+        for i, o in zip(prefix[0], prefix[1]):
+            curr_node = curr_node.get_child(i, o)
+            if curr_node is None:
+                return 0
+
+        queue = [(curr_node, 0)]
+        while queue:
+            node, depth = queue.pop(0)
+            children_with_same_input = node.children[suffix[depth]]
+            if depth == len(suffix) - 1:
+                for c in children_with_same_input:
+                    sampling_frequency += c.frequency_counter
+            else:
+                for c in children_with_same_input:
+                    queue.append((c, depth + 1))
+
+        return sampling_frequency
+
+    def get_sampling_distributions(self, prefix, input_from_alphabet):
+        sampling_distribution = {}
+        curr_node = self.root_node
+        for i, o in zip(prefix[0], prefix[1]):
+            curr_node = curr_node.get_child(i, o)
+
+        children = curr_node.children[input_from_alphabet]
+        sampling_sum = sum(c.frequency_counter for c in children)
+        for c in children:
+            sampling_distribution[c.output] = c.frequency_counter / sampling_sum
+
+        return sampling_distribution

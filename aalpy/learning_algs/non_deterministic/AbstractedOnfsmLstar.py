@@ -2,7 +2,7 @@ import time
 
 from aalpy.base import SUL, Oracle
 from aalpy.learning_algs.non_deterministic.AbstractedOnfsmObservationTable import AbstractedNonDetObservationTable
-from aalpy.learning_algs.non_deterministic.TraceTree import SULWrapper
+from aalpy.learning_algs.non_deterministic.NonDeterministicSULWrapper import NonDeterministicSULWrapper
 from aalpy.utils.HelperFunctions import print_learning_info, print_observation_table
 
 print_options = [0, 1, 2, 3]
@@ -49,7 +49,7 @@ def run_abstracted_ONFSM_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, abst
     learning_rounds = 0
     hypothesis = None
 
-    sul = SULWrapper(sul)
+    sul = NonDeterministicSULWrapper(sul)
     eq_oracle.sul = sul
 
     abstracted_observation_table = AbstractedNonDetObservationTable(alphabet, sul, abstraction_mapping, n_sampling)
@@ -78,7 +78,6 @@ def run_abstracted_ONFSM_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, abst
                 extended_rows = abstracted_observation_table.update_extended_S(row_to_close)
                 abstracted_observation_table.update_obs_table(s_set=extended_rows)
                 row_to_close = abstracted_observation_table.get_row_to_close()
-            
 
             row_to_complete = abstracted_observation_table.get_row_to_complete()
             while row_to_complete is not None:

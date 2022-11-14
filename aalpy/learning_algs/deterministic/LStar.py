@@ -11,7 +11,7 @@ closedness_options = ['prefix', 'suffix']
 print_options = [0, 1, 2, 3]
 
 
-def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type,
+def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, samples=None,
               closing_strategy='longest_first', cex_processing='rs', suffix_closedness=True, closedness_type='suffix',
               max_learning_rounds=None, cache_and_non_det_check=True, return_data=False, print_level=2):
     """
@@ -26,6 +26,9 @@ def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type,
         eq_oracle: equivalence oracle
 
         automaton_type: type of automaton to be learned. Either 'dfa', 'mealy' or 'moore'.
+
+        samples: input output traces provided to the learning algorithm. They are added to cache and could reduce
+        total interaction with the system. Syntax: list of [(input_sequence, output_sequence)] or None
 
         closing_strategy: closing strategy used in the close method. Either 'longest_first', 'shortest_first' or
             'single' (Default value = 'longest_first')
@@ -59,10 +62,14 @@ def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type,
     assert closedness_type in closedness_options
     assert print_level in print_options
 
-    if cache_and_non_det_check:
+    if cache_and_non_det_check or samples is not None:
         # Wrap the sul in the CacheSUL, so that all steps/queries are cached
         sul = CacheSUL(sul)
         eq_oracle.sul = sul
+
+        if samples:
+            for input_seq, output_seq in samples:
+                sul.cache.add_to_cache(input_seq, output_seq)
 
     start_time = time.time()
     eq_query_time = 0

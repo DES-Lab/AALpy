@@ -40,7 +40,7 @@ class MooreMachine(DeterministicAutomaton):
                                                                       raise_warning)
 
     def is_minimal(self):
-        return self.compute_characterization_set(raise_warning=False) != []
+        return self.compute_characterization_set(raise_warning=False) is not None
 
     def compute_output_seq(self, state, sequence):
         if not sequence:

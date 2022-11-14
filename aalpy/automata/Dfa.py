@@ -39,7 +39,7 @@ class Dfa(DeterministicAutomaton):
                                                              online_suffix_closure, split_all_blocks, raise_warning)
 
     def is_minimal(self):
-        return self.compute_characterization_set() != []
+        return self.compute_characterization_set(raise_warning=False) is not None
 
     def compute_output_seq(self, state, sequence):
         if not sequence:
@@ -57,17 +57,3 @@ class Dfa(DeterministicAutomaton):
             state_setup_dict[s.state_id] = (s.is_accepting, {k: v.state_id for k, v in s.transitions.items()})
 
         return state_setup_dict
-    
-    def get_result(self, input: tuple):
-        """
-        Args:
-            input: query
-
-        Returns:
-            the final result of the query <input>, starting from the initial state
-        """
-        saved_state = self.current_state
-        res = self.execute_sequence(self.initial_state, input)[-1]
-        self.current_state = saved_state
-        return res
-

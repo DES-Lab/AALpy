@@ -33,7 +33,7 @@ class MealyMachine(DeterministicAutomaton):
         return output
 
     def is_minimal(self):
-        return self.compute_characterization_set(raise_warning=False) != []
+        return self.compute_characterization_set(raise_warning=False) is not None
 
     def to_state_setup(self):
         state_setup_dict = {}

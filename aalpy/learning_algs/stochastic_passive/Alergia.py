@@ -261,7 +261,7 @@ def run_JAlergia(path_to_data_file, automaton_type, path_to_jAlergia_jar, eps=0.
             print('Data should be either a list of sequences or a path to the data file.')
         with open('jAlergiaInputs.txt', 'w') as f:
             for seq in path_to_data_file:
-                f.write(','.join([str(s) for s in seq]))
+                f.write(','.join([str(s) for s in seq])+'\n')
         delete_tmp_file = True
         abs_path = os.path.abspath('jAlergiaInputs.txt')
 
