@@ -80,6 +80,7 @@ def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, sampl
 
     # Initial update of observation table, for empty row
     observation_table.update_obs_table()
+    cex = None
     while True:
         learning_rounds += 1
         if max_learning_rounds and learning_rounds - 1 == max_learning_rounds:
@@ -106,16 +107,17 @@ def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, sampl
         # Generate hypothesis
         hypothesis = observation_table.gen_hypothesis(check_for_duplicate_rows=cex_processing is None)
 
-        if print_level > 1:
-            print(f'Hypothesis {learning_rounds}: {len(hypothesis.states)} states.')
-
-        if print_level == 3:
-            print_observation_table(observation_table, 'det')
-
         # Find counterexample
-        eq_query_start = time.time()
-        cex = eq_oracle.find_cex(hypothesis)
-        eq_query_time += time.time() - eq_query_start
+        if cex is None or counterexample_successfully_processed(sul, cex, hypothesis):
+            if print_level > 1:
+                print(f'Hypothesis {learning_rounds}: {len(hypothesis.states)} states.')
+
+            if print_level == 3:
+                print_observation_table(observation_table, 'det')
+
+            eq_query_start = time.time()
+            cex = eq_oracle.find_cex(hypothesis)
+            eq_query_time += time.time() - eq_query_start
 
         # If no counterexample is found, return the hypothesis
         if cex is None:
@@ -169,3 +171,9 @@ def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, sampl
         return hypothesis, info
 
     return hypothesis
+
+
+def counterexample_successfully_processed(sul, cex, hypothesis):
+    cex_outputs = sul.query(cex)
+    hyp_outputs = hypothesis.execute_sequence(hypothesis.initial_state, cex)
+    return cex_outputs[-1] == hyp_outputs[-1]
