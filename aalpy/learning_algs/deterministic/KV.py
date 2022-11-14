@@ -17,9 +17,6 @@ counterexample_processing_strategy = [None, 'rs']
 print_options = [0, 1, 2, 3]
 
 
-# TODO implement print_level
-
-
 def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', cex_processing=None,
            max_learning_rounds=None, return_data=False, print_level=2, pretty_state_names=True, ):
     """
@@ -68,13 +65,14 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ce
 
     # Do a membership query on the empty string to determine whether
     # the start state of the SUL is accepting or rejecting
-    empty_string_mq = sul.query((None,))[-1]
+    empty_string_mq = sul.query(tuple())[-1]
 
     # Construct a hypothesis automaton that consists simply of this
     # single (accepting or rejecting) state with self-loops for
     # all transitions.
     initial_state = DfaState(state_id=(),
                              is_accepting=empty_string_mq)
+
     for a in alphabet:
         initial_state.transitions[a] = initial_state
 
@@ -159,10 +157,3 @@ def counterexample_successfully_processed(sul, cex, hypothesis):
     cex_outputs = sul.query(cex)
     hyp_outputs = hypothesis.execute_sequence(hypothesis.initial_state, cex)
     return cex_outputs[-1] == hyp_outputs[-1]
-    # TODO THIS ONLY CONSIDERS LAST OUTPUT!
-    hypothesis.reset_to_initial()
-    for i, sul_out in zip(cex, cex_outputs):
-        hyp_out = hypothesis.step(i)
-        if hyp_out != sul_out:
-            return False
-    return True
