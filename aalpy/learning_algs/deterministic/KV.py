@@ -13,7 +13,7 @@ print_options = [0, 1, 2, 3]
 
 
 def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', cex_processing=None,
-           max_learning_rounds=None, return_data=False, print_level=2, pretty_state_names=True, ):
+           max_learning_rounds=None, cache_and_non_det_check=True, return_data=False, print_level=2):
     """
     Executes TTT algorithm.
 
@@ -31,15 +31,14 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ce
 
         max_learning_rounds: number of learning rounds after which learning will terminate (Default value = None)
 
+        cache_and_non_det_check: Use caching and non-determinism checks (Default value = True)
+
         return_data: if True, a map containing all information(runtime/#queries/#steps) will be returned
             (Default value = False)
 
         print_level: 0 - None, 1 - just results, 2 - current round and hypothesis size, 3 - educational/debug
             (Default value = 2)
 
-        pretty_state_names: if False, the resulting dfa's state names will be the ones generated during learning.
-                            if True, generic 's0'-sX' state names will be used
-            (Default value = True)
 
     Returns:
 
@@ -56,7 +55,10 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ce
     eq_query_time = 0
     learning_rounds = 0
 
-    sul = CacheSUL(sul)
+    if cache_and_non_det_check:
+        # Wrap the sul in the CacheSUL, so that all steps/queries are cached
+        sul = CacheSUL(sul)
+        eq_oracle.sul = sul
 
     # Do a membership query on the empty string to determine whether
     # the start state of the SUL is accepting or rejecting
@@ -114,6 +116,8 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ce
 
             if cex is None:
                 break
+            else:
+                cex = tuple(cex)
 
             if print_level == 3:
                 print('Counterexample', cex)
