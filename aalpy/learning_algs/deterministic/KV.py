@@ -134,10 +134,9 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ce
         'learning_time': learning_time,
         'eq_oracle_time': eq_query_time,
         'total_time': total_time,
-        'classification_tree': classification_tree
+        'classification_tree': classification_tree,
+        'cache_saved': sul.num_cached_queries,
     }
-
-    prettify_hypothesis(hypothesis, alphabet, keep_access_strings=not pretty_state_names)
 
     if print_level > 0:
         print_learning_info(info)
