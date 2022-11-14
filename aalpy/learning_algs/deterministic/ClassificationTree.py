@@ -23,6 +23,7 @@ class CTInternalNode(CTNode):
         super().__init__(parent)
         self.distinguishing_string = distinguishing_string
         self.children = {True: None, False: None}
+        self.query_cache = dict()
 
     def __repr__(self):
         return f"{self.__class__.__name__} '{self.distinguishing_string}'"
@@ -85,7 +86,12 @@ class ClassificationTree:
         node = self.root
 
         while isinstance(node, CTInternalNode):
-            mq_result = self.sul.query((*word, *node.distinguishing_string))[-1]
+            query = (*word, *node.distinguishing_string)
+            if query not in node.query_cache.keys():
+                mq_result = self.sul.query(query)[-1]
+                node.query_cache[query] = mq_result
+            else:
+                mq_result = node.query_cache[query]
             node = node.children[mq_result]
 
         assert isinstance(node, CTLeafNode)
@@ -235,6 +241,7 @@ class ClassificationTree:
         old_leaf.parent.children[old_leaf.path_to_node] = discriminator_node
 
         old_leaf.parent = discriminator_node
+        old_leaf.query_cache = dict()
 
         discriminator_node.children[new_leaf_position] = new_leaf
         discriminator_node.children[not new_leaf_position] = old_leaf
