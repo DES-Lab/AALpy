@@ -49,7 +49,7 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ce
     assert print_level in print_options
     assert cex_processing in counterexample_processing_strategy
     assert automaton_type == 'dfa'
-    assert isinstance(sul, DfaSUL)
+    # assert isinstance(sul, DfaSUL)
 
     start_time = time.time()
     eq_query_time = 0
