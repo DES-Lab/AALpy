@@ -30,9 +30,9 @@ def main():
     learned_dfa = run_KV(sul.alphabet, sul, eq_oracle, automaton_type='dfa',
                        print_level=1, cex_processing="rs")
 
-    eq_oracle = RandomWalkEqOracle(sul.alphabet, sul, 500000)
-    learned_dfa = run_Lstar(sul.alphabet, sul, eq_oracle, automaton_type='dfa',
-                        print_level=3, cex_processing="rs")
+    #eq_oracle = RandomWalkEqOracle(sul.alphabet, sul, 500000)
+    #learned_dfa = run_Lstar(sul.alphabet, sul, eq_oracle, automaton_type='dfa',
+    #                    print_level=3, cex_processing="rs")
 
     #    learned_dfa = run_Lstar(sul.alphabet, sul, eq_oracle, automaton_type="dfa")
 

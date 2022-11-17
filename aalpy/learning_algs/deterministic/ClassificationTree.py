@@ -1,6 +1,7 @@
 from aalpy.automata import DfaState, Dfa
 from aalpy.base import SUL
 
+from collections import defaultdict
 
 class CTNode:
     def __init__(self, parent):
@@ -22,7 +23,7 @@ class CTInternalNode(CTNode):
     def __init__(self, distinguishing_string: tuple, parent: 'CTInternalNode'):
         super().__init__(parent)
         self.distinguishing_string = distinguishing_string
-        self.children = {True: None, False: None}
+        self.children = defaultdict(lambda: None) #{True: None, False: None}
         self.query_cache = dict()
 
     def __repr__(self):
@@ -52,15 +53,23 @@ class CTLeafNode(CTNode):
 # all nodes same class, then differentiate with is_leaf, ...
 
 class ClassificationTree:
-    def __init__(self, alphabet: list, sul: SUL, cex: tuple, empty_is_true: bool):
-        self.root = CTInternalNode(distinguishing_string=tuple(), parent=None)
+    def __init__(self, alphabet: list, sul: SUL, automaton_type: str, cex: tuple):
+       
         self.leaf_nodes = {}
-        self.root.children[empty_is_true] = CTLeafNode(access_string=tuple(),
-                                                       parent=self.root,
-                                                       tree=self)
-        self.root.children[not empty_is_true] = CTLeafNode(access_string=cex,
-                                                           parent=self.root,
-                                                           tree=self)
+
+        if automaton_type == "dfa":
+            empty_is_true = sul.query(())[-1]
+            self.root = CTInternalNode(distinguishing_string=tuple(), parent=None)
+            self.root.children[empty_is_true] = CTLeafNode(access_string=tuple(), parent=self.root, tree=self)
+            self.root.children[not empty_is_true] = CTLeafNode(access_string=cex, parent=self.root, tree=self)
+        elif automaton_type == "mealy":
+            self.root = CTInternalNode(distinguishing_string=(cex[-1],), parent=None)
+            hypothesis_output = sul.query((cex[-1],))[-1]
+            cex_output = sul.query(cex)[-1]
+            self.root.children[hypothesis_output] = CTLeafNode(access_string=tuple(), parent=self.root, tree=self)
+            self.root.children[cex_output] = CTLeafNode(access_string=cex[:-1], parent=self.root, tree=self)
+
+
         self.alphabet = alphabet
         self.sul = sul
 
