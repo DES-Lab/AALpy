@@ -1,7 +1,9 @@
-from aalpy.automata import DfaState, Dfa
+from aalpy.automata import DfaState, Dfa, MealyState, MealyMachine
 from aalpy.base import SUL
 
 from collections import defaultdict
+
+automaton_class = {'dfa': Dfa, 'mealy': MealyMachine}
 
 class CTNode:
     def __init__(self, parent):
@@ -56,19 +58,18 @@ class ClassificationTree:
     def __init__(self, alphabet: list, sul: SUL, automaton_type: str, cex: tuple):
        
         self.leaf_nodes = {}
-
-        if automaton_type == "dfa":
+        self.automaton_type = automaton_type
+        if self.automaton_type == "dfa":
             empty_is_true = sul.query(())[-1]
             self.root = CTInternalNode(distinguishing_string=tuple(), parent=None)
             self.root.children[empty_is_true] = CTLeafNode(access_string=tuple(), parent=self.root, tree=self)
             self.root.children[not empty_is_true] = CTLeafNode(access_string=cex, parent=self.root, tree=self)
-        elif automaton_type == "mealy":
+        elif self.automaton_type == "mealy":
             self.root = CTInternalNode(distinguishing_string=(cex[-1],), parent=None)
             hypothesis_output = sul.query((cex[-1],))[-1]
             cex_output = sul.query(cex)[-1]
             self.root.children[hypothesis_output] = CTLeafNode(access_string=tuple(), parent=self.root, tree=self)
             self.root.children[cex_output] = CTLeafNode(access_string=cex[:-1], parent=self.root, tree=self)
-
 
         self.alphabet = alphabet
         self.sul = sul
@@ -115,8 +116,11 @@ class ClassificationTree:
         state_counter = 0
         for node in self.leaf_nodes.values():
             state_counter += 1
-            new_state = DfaState(state_id=f's{state_counter}',
-                                 is_accepting=node.in_right_side)
+            if self.automaton_type == "dfa":
+                new_state = DfaState(state_id=f's{state_counter}',
+                                    is_accepting=node.in_right_side)
+            elif self.automaton_type == "mealy":
+                new_state = MealyState(state_id=f's{state_counter}')
             new_state.prefix = node.access_string
             if new_state.prefix == ():
                 initial_state = new_state
@@ -129,8 +133,12 @@ class ClassificationTree:
             for letter in self.alphabet:
                 transition_target_id = self.sift((*state.prefix, letter))
                 state.transitions[letter] = states[transition_target_id]
+                if self.automaton_type == "mealy":
+                    output = self.sul.query((*state.prefix, letter))[-1]
+                    state.output_fun[letter] = output
 
-        return Dfa(initial_state=initial_state,
+
+        return automaton_class[self.automaton_type](initial_state=initial_state,
                    states=list(states.values()))
 
     def least_common_ancestor(self, node_1_id, node_2_id):
