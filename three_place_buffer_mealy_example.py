@@ -41,10 +41,10 @@ def main():
 
     learned_dfa = run_KV(sul.alphabet, sul, eq_oracle, automaton_type='mealy', print_level=1, cex_processing=None)
 
-    eq_oracle = RandomWalkEqOracle(sul.alphabet, sul, 1000)
+    #eq_oracle = RandomWalkEqOracle(sul.alphabet, sul, 1000)
     #learned_dfa = run_Lstar(sul.alphabet, sul, eq_oracle, automaton_type='mealy', print_level=3, cex_processing="rs")
 
-    #learned_dfa.visualize()
+    learned_dfa.visualize()
 
 
 if __name__ == "__main__":
