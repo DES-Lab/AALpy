@@ -102,6 +102,7 @@ class ClassificationTree:
                 node.query_cache[query] = mq_result
             else:
                 mq_result = node.query_cache[query]
+            # TODO: check if mq_result is part of the children
             node = node.children[mq_result]
 
         assert isinstance(node, CTLeafNode)
@@ -158,23 +159,47 @@ class ClassificationTree:
 
         """
 
-        def findLCA(root, n1, n2):
+        def findLCAOld(root, n1, n2):
             if root is None:
                 return None
 
             if isinstance(root, CTLeafNode) and (root.access_string == n1 or root.access_string == n2):
                 return root.parent
 
-            left_lca = findLCA(root.children[False], n1, n2) if isinstance(root, CTInternalNode) else None
-            right_lca = findLCA(root.children[True], n1, n2) if isinstance(root, CTInternalNode) else None
+            # TODO: adapt this method to be more generic, idea iterate through all children
+
+            left_lca = findLCAOld(root.children[False], n1, n2) if isinstance(root, CTInternalNode) else None
+            right_lca = findLCAOld(root.children[True], n1, n2) if isinstance(root, CTInternalNode) else None
 
             if left_lca and right_lca:
                 return root
 
             return left_lca if left_lca is not None else right_lca
+        
+        def ancestor(parent, node):
+            for child in parent.children.values():
+                if isinstance(child, CTLeafNode):
+                    if child.access_string == node:
+                        return True
+                else: 
+                    next_ancestor = ancestor(child, node)
+                    if next_ancestor:
+                        return True
+            return False
+        
+        def findLCA(node_1_id, node_2_id):
+            node = self.leaf_nodes[node_1_id]
+            parent = node.parent
+            while parent:
+                if ancestor(parent, node_2_id):
+                    return parent
+                if parent.parent:
+                    parent = parent.parent
+                else:
+                    return parent
+            return None
 
-        return findLCA(self.root, node_1_id, node_2_id).distinguishing_string
-
+        return findLCA(node_1_id, node_2_id).distinguishing_string  #findLCAOld(self.root, node_1_id, node_2_id).distinguishing_string #findLCA(node_1_id, node_2_id).distinguishing_string 
     def update(self, cex: tuple, hypothesis: Dfa):
         """
         Updates the classification tree based on a counterexample.

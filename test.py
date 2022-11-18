@@ -18,10 +18,6 @@ learned_model = run_KV(input_al, sul, eq_oracle, cex_processing='rs', print_leve
 
 sul1 = DfaSUL(dfa)
 eq_oracle = StatePrefixEqOracle(input_al, sul, walks_per_state=20, walk_len=20)
-learned_model = run_Lstar(input_al, sul1, eq_oracle, automaton_type='dfa', cex_processing='rs',
-                          suffix_closedness=True,
-                          closedness_type='prefix',
-                          closing_strategy='single_longest',
-                          print_level=1)
+#learned_model = run_Lstar(input_al, sul1, eq_oracle, automaton_type='dfa', cex_processing='rs',suffix_closedness=True,closedness_type='prefix',closing_strategy='single_longest',print_level=1)
 
 # 44395 , False, single_lonest
