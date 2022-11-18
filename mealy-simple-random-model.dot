@@ -1,0 +1,19 @@
+digraph LearnedModel {
+s1 [label=s1];
+s2 [label=s2];
+s3 [label=s3];
+s4 [label=s4];
+s5 [label=s5];
+s1 -> s4  [label="i1/o1"];
+s1 -> s2  [label="i2/o1"];
+s2 -> s1  [label="i1/o1"];
+s2 -> s4  [label="i2/o2"];
+s3 -> s5  [label="i1/o1"];
+s3 -> s3  [label="i2/o1"];
+s4 -> s3  [label="i1/o2"];
+s4 -> s5  [label="i2/o2"];
+s5 -> s2  [label="i1/o2"];
+s5 -> s3  [label="i2/o1"];
+__start0 [label="", shape=none];
+__start0 -> s1  [label=""];
+}

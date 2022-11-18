@@ -100,7 +100,7 @@ class ClassificationTree:
                 node.query_cache[query] = mq_result
             else:
                 mq_result = node.query_cache[query]
-            # TODO: check if mq_result is part of the children
+            # TODO: check if mq_result is part of the children, add new node if not
             node = node.children[mq_result]
 
         assert isinstance(node, CTLeafNode)
