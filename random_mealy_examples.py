@@ -5,8 +5,8 @@ from aalpy.learning_algs.deterministic.KV import run_KV
 from aalpy.oracles import StatePrefixEqOracle
 from aalpy.utils import generate_random_deterministic_automata
 
-automata_sizes = [5,]
-input_al_sizes = [2]
+automata_sizes = [5,10,20,100,1000]
+input_al_sizes = [2, 5, 10, 20]
 num_repeats = 1
 
 i = 0
@@ -25,6 +25,5 @@ for automata_size in automata_sizes:
             sul = MealySUL(model)
             eq_oracle = StatePrefixEqOracle(input_al, sul, walks_per_state=15, walk_len=10)
 
-            learned_model = run_KV(input_al, sul, eq_oracle, automaton_type='mealy', cex_processing='rs', print_level=2)
-            if len(learned_model.states) != automata_size:
-                print('Failing seed', i)
+            learned_model = run_KV(input_al, sul, eq_oracle, automaton_type='mealy', cex_processing=None, print_level=2)
+            assert len(learned_model.states) == automata_size

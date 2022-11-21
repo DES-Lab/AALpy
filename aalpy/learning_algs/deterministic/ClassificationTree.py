@@ -292,6 +292,7 @@ class ClassificationTree:
         old_leaf.parent.children[old_leaf.path_to_node] = discriminator_node
 
         old_leaf.parent = discriminator_node
+        old_leaf.path_to_node = other_leaf_position
         old_leaf.query_cache = dict()
 
         discriminator_node.children[new_leaf_position] = new_leaf
