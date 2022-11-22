@@ -170,23 +170,6 @@ class ClassificationTree:
             the distinguishing string of the lca
 
         """
-
-        def findLCAOld(root, n1, n2):
-            if root is None:
-                return None
-
-            if isinstance(root, CTLeafNode) and (root.access_string == n1 or root.access_string == n2):
-                return root.parent
-
-            # TODO: adapt this method to be more generic, idea iterate through all children
-
-            left_lca = findLCAOld(root.children[False], n1, n2) if isinstance(root, CTInternalNode) else None
-            right_lca = findLCAOld(root.children[True], n1, n2) if isinstance(root, CTInternalNode) else None
-
-            if left_lca and right_lca:
-                return root
-
-            return left_lca if left_lca is not None else right_lca
         
         def ancestor(parent, node):
             for child in parent.children.values():
@@ -211,7 +194,8 @@ class ClassificationTree:
                     return parent
             return None
 
-        return findLCA(node_1_id, node_2_id).distinguishing_string  #findLCAOld(self.root, node_1_id, node_2_id).distinguishing_string 
+        return findLCA(node_1_id, node_2_id).distinguishing_string 
+         
     def update(self, cex: tuple, hypothesis):
         """
         Updates the classification tree based on a counterexample.
