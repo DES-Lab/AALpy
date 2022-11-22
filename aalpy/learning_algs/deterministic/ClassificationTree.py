@@ -1,10 +1,14 @@
-from aalpy.automata import DfaState, Dfa
+from aalpy.automata import DfaState, Dfa, MealyState, MealyMachine
 from aalpy.base import SUL
 
+from collections import defaultdict
+
+automaton_class = {'dfa': Dfa, 'mealy': MealyMachine}
 
 class CTNode:
-    def __init__(self, parent):
+    def __init__(self, parent, path_to_node):
         self.parent = parent
+        self.path_to_node = path_to_node
 
     @property
     def root(self):
@@ -13,16 +17,13 @@ class CTNode:
             p = p.parent
         return p
 
-    @property
-    def path_to_node(self):
-        return self.parent.children[True] == self if self.parent else None
 
 
 class CTInternalNode(CTNode):
-    def __init__(self, distinguishing_string: tuple, parent: 'CTInternalNode'):
-        super().__init__(parent)
+    def __init__(self, distinguishing_string: tuple, parent: 'CTInternalNode', path_to_node):
+        super().__init__(parent, path_to_node)
         self.distinguishing_string = distinguishing_string
-        self.children = {True: None, False: None}
+        self.children = defaultdict(lambda: None) #{True: None, False: None}
         self.query_cache = dict()
 
     def __repr__(self):
@@ -30,8 +31,8 @@ class CTInternalNode(CTNode):
 
 
 class CTLeafNode(CTNode):
-    def __init__(self, access_string: tuple, parent: 'CTInternalNode', tree: 'ClassificationTree'):
-        super().__init__(parent)
+    def __init__(self, access_string: tuple, parent: 'CTInternalNode', tree: 'ClassificationTree', path_to_node):
+        super().__init__(parent, path_to_node)
         self.access_string = access_string
         self.tree = tree
         assert access_string not in tree.leaf_nodes, f"a leaf node with {access_string=} already exists!"
@@ -52,15 +53,22 @@ class CTLeafNode(CTNode):
 # all nodes same class, then differentiate with is_leaf, ...
 
 class ClassificationTree:
-    def __init__(self, alphabet: list, sul: SUL, cex: tuple, empty_is_true: bool):
-        self.root = CTInternalNode(distinguishing_string=tuple(), parent=None)
+    def __init__(self, alphabet: list, sul: SUL, automaton_type: str, cex: tuple):
+       
         self.leaf_nodes = {}
-        self.root.children[empty_is_true] = CTLeafNode(access_string=tuple(),
-                                                       parent=self.root,
-                                                       tree=self)
-        self.root.children[not empty_is_true] = CTLeafNode(access_string=cex,
-                                                           parent=self.root,
-                                                           tree=self)
+        self.automaton_type = automaton_type
+        if self.automaton_type == "dfa":
+            empty_is_true = sul.query(())[-1]
+            self.root = CTInternalNode(distinguishing_string=tuple(), parent=None, path_to_node=None)
+            self.root.children[empty_is_true] = CTLeafNode(access_string=tuple(), parent=self.root, tree=self, path_to_node=empty_is_true)
+            self.root.children[not empty_is_true] = CTLeafNode(access_string=cex, parent=self.root, tree=self, path_to_node=not empty_is_true)
+        elif self.automaton_type == "mealy":
+            self.root = CTInternalNode(distinguishing_string=(cex[-1],), parent=None, path_to_node=None)
+            hypothesis_output = sul.query((cex[-1],))[-1]
+            cex_output = sul.query(cex)[-1]
+            self.root.children[hypothesis_output] = CTLeafNode(access_string=tuple(), parent=self.root, tree=self, path_to_node=hypothesis_output)
+            self.root.children[cex_output] = CTLeafNode(access_string=cex[:-1], parent=self.root, tree=self, path_to_node=cex_output)
+
         self.alphabet = alphabet
         self.sul = sul
 
@@ -84,7 +92,6 @@ class ClassificationTree:
             assert letter is None or letter in self.alphabet
 
         node = self.root
-
         while isinstance(node, CTInternalNode):
             query = (*word, *node.distinguishing_string)
             if query not in node.query_cache.keys():
@@ -92,10 +99,18 @@ class ClassificationTree:
                 node.query_cache[query] = mq_result
             else:
                 mq_result = node.query_cache[query]
+            # TODO: check if mq_result is part of the children, add new node if not
+            if mq_result not in node.children.keys():
+                new_leaf = CTLeafNode(access_string=word,
+                              parent=node,
+                              tree=self,path_to_node=mq_result)
+                self.leaf_nodes[word] = new_leaf
+                node.children[mq_result] = new_leaf
+ 
             node = node.children[mq_result]
 
         assert isinstance(node, CTLeafNode)
-        return node.access_string
+        return node
 
     def gen_hypothesis(self):
         # for each CTLeafNode of this CT,
@@ -103,25 +118,40 @@ class ClassificationTree:
         # node's access string. The start state is the empty word
         states = {}
         initial_state = None
-        state_counter = 0
+        state_counter = 1
         for node in self.leaf_nodes.values():
-            state_counter += 1
-            new_state = DfaState(state_id=f's{state_counter}',
-                                 is_accepting=node.in_right_side)
+            if self.automaton_type == "dfa":
+                new_state = DfaState(state_id=f's{state_counter}',
+                                    is_accepting=node.in_right_side)
+            elif self.automaton_type == "mealy":
+                new_state = MealyState(state_id=f's{state_counter}')
             new_state.prefix = node.access_string
             if new_state.prefix == ():
                 initial_state = new_state
             states[new_state.prefix] = new_state
+            state_counter += 1
         assert initial_state is not None
 
         # For each access state s of the hypothesis and each letter b in the
         # alphabet, compute the b-transition out of state s by sifting s.state_id*b
-        for state in states.values():
+        states_for_transitions = list(states.values())
+        for state in states_for_transitions:
             for letter in self.alphabet:
-                transition_target_id = self.sift((*state.prefix, letter))
+                transition_target_node = self.sift((*state.prefix, letter))
+                transition_target_id = transition_target_node.access_string
+                if self.automaton_type == "mealy" and transition_target_id not in states:
+                    new_state = MealyState(state_id=f's{state_counter}')
+                    new_state.prefix = transition_target_id
+                    states_for_transitions.append(new_state)
+                    states[new_state.prefix] = new_state
+                    state_counter += 1
                 state.transitions[letter] = states[transition_target_id]
+                if self.automaton_type == "mealy":
+                    output = self.sul.query((*state.prefix, letter))[-1]
+                    state.output_fun[letter] = output
 
-        return Dfa(initial_state=initial_state,
+
+        return automaton_class[self.automaton_type](initial_state=initial_state,
                    states=list(states.values()))
 
     def least_common_ancestor(self, node_1_id, node_2_id):
@@ -140,25 +170,33 @@ class ClassificationTree:
             the distinguishing string of the lca
 
         """
+        
+        def ancestor(parent, node):
+            for child in parent.children.values():
+                if isinstance(child, CTLeafNode):
+                    if child.access_string == node:
+                        return True
+                else: 
+                    next_ancestor = ancestor(child, node)
+                    if next_ancestor:
+                        return True
+            return False
+        
+        def findLCA(node_1_id, node_2_id):
+            node = self.leaf_nodes[node_1_id]
+            parent = node.parent
+            while parent:
+                if ancestor(parent, node_2_id):
+                    return parent
+                if parent.parent:
+                    parent = parent.parent
+                else:
+                    return parent
+            return None
 
-        def findLCA(root, n1, n2):
-            if root is None:
-                return None
+        return findLCA(node_1_id, node_2_id).distinguishing_string 
 
-            if isinstance(root, CTLeafNode) and (root.access_string == n1 or root.access_string == n2):
-                return root.parent
-
-            left_lca = findLCA(root.children[False], n1, n2) if isinstance(root, CTInternalNode) else None
-            right_lca = findLCA(root.children[True], n1, n2) if isinstance(root, CTInternalNode) else None
-
-            if left_lca and right_lca:
-                return root
-
-            return left_lca if left_lca is not None else right_lca
-
-        return findLCA(self.root, node_1_id, node_2_id).distinguishing_string
-
-    def update(self, cex: tuple, hypothesis: Dfa):
+    def update(self, cex: tuple, hypothesis):
         """
         Updates the classification tree based on a counterexample.
         - For each prefix cex[:i] of the counterexample, get
@@ -180,13 +218,16 @@ class ClassificationTree:
         """
         j = d = None
         for i in range(1, len(cex) + 1):
-            s_i = self.sift(cex[:i])
+            s_i = self.sift(cex[:i]).access_string
             hypothesis.execute_sequence(hypothesis.initial_state, cex[:i])
             s_star_i = hypothesis.current_state.prefix
             if s_i != s_star_i:
                 j = i
                 d = self.least_common_ancestor(s_i, s_star_i)
                 break
+        if j is None and d is None:
+            j = len(cex)
+            d = []
         assert j is not None and d is not None
 
         hypothesis.execute_sequence(hypothesis.initial_state, cex[:j - 1] or tuple())
@@ -196,7 +237,7 @@ class ClassificationTree:
                              new_leaf_access_string=tuple(cex[:j - 1]) or tuple(),
                              new_leaf_position=self.sul.query((*cex[:j - 1], *(cex[j - 1], *d)))[-1])
 
-    def update_rs(self, cex: tuple, hypothesis: Dfa):
+    def update_rs(self, cex: tuple, hypothesis):
         """
         Updates the classification tree based on a counterexample,
         using Rivest & Schapire's counterexample processing
@@ -230,18 +271,29 @@ class ClassificationTree:
                              new_leaf_position=self.sul.query((*u, a, *v))[
                                  -1])  # TODO we could probably sub this with not hyp.get_result(cex)
 
-    def insert_new_leaf(self, discriminator, old_leaf_access_string, new_leaf_access_string, new_leaf_position: bool):
+    def insert_new_leaf(self, discriminator, old_leaf_access_string, new_leaf_access_string, new_leaf_position):
+        if self.automaton_type == "dfa":
+            other_leaf_position = not new_leaf_position
+        else:
+            # TODO check if this query is in the node cache
+            other_leaf_position = self.sul.query((*old_leaf_access_string, *discriminator))[-1]
+            
+
         old_leaf = self.leaf_nodes[old_leaf_access_string]
+
         discriminator_node = CTInternalNode(distinguishing_string=discriminator,
-                                            parent=old_leaf.parent)
+                                            parent=old_leaf.parent, path_to_node=old_leaf.path_to_node)
+
         new_leaf = CTLeafNode(access_string=new_leaf_access_string,
                               parent=discriminator_node,
-                              tree=self)
+                              tree=self,path_to_node=new_leaf_position)
 
         old_leaf.parent.children[old_leaf.path_to_node] = discriminator_node
 
         old_leaf.parent = discriminator_node
+        old_leaf.path_to_node = other_leaf_position
         old_leaf.query_cache = dict()
 
         discriminator_node.children[new_leaf_position] = new_leaf
-        discriminator_node.children[not new_leaf_position] = old_leaf
+        discriminator_node.children[other_leaf_position] = old_leaf
+

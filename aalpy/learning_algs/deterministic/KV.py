@@ -1,6 +1,6 @@
 import time
 
-from aalpy.automata import Dfa, DfaState
+from aalpy.automata import Dfa, DfaState, MealyState, MealyMachine
 from aalpy.base import Oracle, SUL
 from aalpy.utils.HelperFunctions import print_learning_info
 from .ClassificationTree import ClassificationTree
@@ -10,6 +10,7 @@ from ...base.SUL import CacheSUL
 
 counterexample_processing_strategy = [None, 'rs']
 print_options = [0, 1, 2, 3]
+automaton_class = {'dfa': Dfa, 'mealy': MealyMachine}
 
 
 def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', cex_processing=None,
@@ -48,7 +49,7 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ce
 
     assert print_level in print_options
     assert cex_processing in counterexample_processing_strategy
-    assert automaton_type == 'dfa'
+    assert automaton_type in [*automaton_class]
     # assert isinstance(sul, DfaSUL)
 
     start_time = time.time()
@@ -60,25 +61,32 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ce
         sul = CacheSUL(sul)
         eq_oracle.sul = sul
 
-    # Do a membership query on the empty string to determine whether
-    # the start state of the SUL is accepting or rejecting
-    empty_string_mq = sul.query(tuple())[-1]
+    if automaton_type == 'dfa':
+        # Do a membership query on the empty string to determine whether
+        # the start state of the SUL is accepting or rejecting
+        empty_string_mq = sul.query(tuple())[-1]
 
-    # Construct a hypothesis automaton that consists simply of this
-    # single (accepting or rejecting) state with self-loops for
-    # all transitions.
-    initial_state = DfaState(state_id=(),
-                             is_accepting=empty_string_mq)
+        # Construct a hypothesis automaton that consists simply of this
+        # single (accepting or rejecting) state with self-loops for
+        # all transitions.
+        initial_state = DfaState(state_id=(), is_accepting=empty_string_mq)
+
+
+    elif automaton_type == 'mealy':
+        initial_state = MealyState(state_id=())
+
 
     for a in alphabet:
         initial_state.transitions[a] = initial_state
+        if automaton_type == 'mealy':
+            initial_state.output_fun[a] = sul.query((a,))[-1]
 
-    hypothesis = Dfa(initial_state=initial_state,
-                     states=[initial_state])
+    hypothesis = automaton_class[automaton_type](initial_state, [initial_state])
 
     # Perform an equivalence query on this automaton
     eq_query_start = time.time()
     cex = eq_oracle.find_cex(hypothesis)
+    print(cex)
     eq_query_time += time.time() - eq_query_start
     already_found = False
     if cex is None:
@@ -89,10 +97,7 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ce
     # initialise the classification tree to have a root
     # labeled with the empty word as the distinguishing string
     # and two leaves labeled with access strings cex and empty word
-    classification_tree = ClassificationTree(alphabet=alphabet,
-                                             sul=sul,
-                                             cex=cex,
-                                             empty_is_true=empty_string_mq)
+    classification_tree = ClassificationTree(alphabet=alphabet, sul=sul, automaton_type=automaton_type, cex=cex)
 
     while True and not already_found:
         learning_rounds += 1

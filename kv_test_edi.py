@@ -7,7 +7,7 @@ from aalpy.oracles import StatePrefixEqOracle
 from aalpy.utils import generate_random_deterministic_automata
 
 automata_sizes = [1000,]
-input_al_sizes = [3,5,10]
+input_al_sizes = [2, 4, 6, 8, 10]
 num_repeats = 1
 
 i = 0

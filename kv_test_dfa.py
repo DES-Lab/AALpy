@@ -24,7 +24,7 @@ def runKV(seed):
     print(f"using {seed=}")
     random.seed(seed)
     alphabet_size = random.randint(1,20)
-    maximum_number_states = 10
+    maximum_number_states = 100
     alphabet = list(string.ascii_letters[:26])[:alphabet_size]
     num_states = random.randint(1,maximum_number_states)
     num_accepting_states = random.randint(1,num_states)
@@ -41,7 +41,7 @@ def runKV(seed):
     eq_oracle = RandomWalkEqOracle(alphabet, sul, 500, reset_after_cex=True)
 
     learned_dfa_kv = run_KV(alphabet, sul, eq_oracle, automaton_type='dfa',
-                            print_level=3, reuse_counterexamples=True, cex_processing='rs')
+                            print_level=3, cex_processing='rs')
 
     learning_result = checkConformance(alphabet, learned_dfa_kv, len(dfa.states), sul)
 
