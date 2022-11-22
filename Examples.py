@@ -218,7 +218,7 @@ def random_mdp_example(num_states, input_len, num_outputs, n_c=20, n_resample=10
     input_alphabet = mdp.get_input_alphabet()
     sul = MdpSUL(mdp)
     eq_oracle = RandomWalkEqOracle(input_alphabet, sul=sul, num_steps=5000, reset_prob=0.11,
-                                   reset_after_cex=True)
+                                   reset_after_cex=False)
 
     learned_mdp = run_stochastic_Lstar(input_alphabet, sul, eq_oracle, n_c=n_c, n_resample=n_resample,
                                        min_rounds=min_rounds, max_rounds=max_rounds)

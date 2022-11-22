@@ -282,17 +282,17 @@ def make_input_complete(automaton, missing_transition_go_to='self_loop'):
     return automaton
 
 
-def convert_i_o_traces_for_RPNI(sequances):
+def convert_i_o_traces_for_RPNI(sequences):
     """
-    Converts a list of input-output sequances to RPNI format.
+    Converts a list of input-output sequences to RPNI format.
     Eg. [[(1,'a'), (2,'b'), (3,'c')], [(6,'7'), (4,'e'), (3,'c')]] to
     [((1,), 'a'), ((1, 2), 'b'), ((1, 2, 3), 'c'), ((6,), '7'), ((6, 4), 'e'), ((6, 4, 3), 'c')]
     """
-    rpni_sequances = set()
+    rpni_sequences = set()
 
-    for s in sequances:
+    for s in sequences:
         for i in range(len(s)):
             inputs = tuple([io[0] for io in s[:i+1]])
-            rpni_sequances.add((inputs, s[i][1]))
+            rpni_sequences.add((inputs, s[i][1]))
 
-    return list(rpni_sequances)
+    return list(rpni_sequences)
