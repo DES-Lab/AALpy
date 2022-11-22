@@ -4,8 +4,6 @@ from aalpy.automata import Dfa, DfaState, MealyState, MealyMachine
 from aalpy.base import Oracle, SUL
 from aalpy.utils.HelperFunctions import print_learning_info
 from .ClassificationTree import ClassificationTree
-from .KV_helpers import prettify_hypothesis
-from ...SULs import DfaSUL
 from ...base.SUL import CacheSUL
 
 counterexample_processing_strategy = [None, 'rs']
@@ -84,7 +82,7 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ce
     # Perform an equivalence query on this automaton
     eq_query_start = time.time()
     cex = eq_oracle.find_cex(hypothesis)
-    print(cex)
+
     eq_query_time += time.time() - eq_query_start
     already_found = False
     if cex is None:
