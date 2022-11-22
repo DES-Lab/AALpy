@@ -253,7 +253,7 @@ class ClassificationTree:
                              new_leaf_access_string=tuple(cex[:j - 1]) or tuple(),
                              new_leaf_position=self.sul.query((*cex[:j - 1], *(cex[j - 1], *d)))[-1])
 
-    def update_rs(self, cex: tuple, hypothesis: Dfa):
+    def update_rs(self, cex: tuple, hypothesis):
         """
         Updates the classification tree based on a counterexample,
         using Rivest & Schapire's counterexample processing

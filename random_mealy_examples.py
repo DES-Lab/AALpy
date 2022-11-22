@@ -26,6 +26,6 @@ for automata_size in automata_sizes:
                 sul = MealySUL(model)
                 eq_oracle = StatePrefixEqOracle(input_al, sul, walks_per_state=15, walk_len=10)
 
-                learned_model = run_KV(input_al, sul, eq_oracle, automaton_type='mealy', cex_processing=None, print_level=2)
+                learned_model = run_KV(input_al, sul, eq_oracle, automaton_type='mealy', cex_processing='rs', print_level=2)
                 assert len(learned_model.states) == automata_size
                 #learned_model.visualize()

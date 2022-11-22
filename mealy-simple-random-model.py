@@ -22,7 +22,7 @@ def main():
     # eq_oracle = RandomWalkEqOracle(alphabet, sul, 1000)
     eq_oracle = StatePrefixEqOracle(alphabet, sul, walks_per_state=15, walk_len=10)
 
-    learned_mealy = run_KV(alphabet, sul, eq_oracle, automaton_type='mealy', print_level=2, cex_processing=None)
+    learned_mealy = run_KV(alphabet, sul, eq_oracle, automaton_type='mealy', print_level=2, cex_processing='rs')
 
     #sul = MealySUL(mealy)
     #eq_oracle = RandomWalkEqOracle(alphabet, sul, 1000)

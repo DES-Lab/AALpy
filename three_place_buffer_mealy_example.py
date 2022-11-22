@@ -39,7 +39,7 @@ def main():
     sul = ThreePlaceBufferExample()
     eq_oracle = RandomWalkEqOracle(sul.alphabet, sul, 1000)
 
-    learned_dfa = run_KV(sul.alphabet, sul, eq_oracle, automaton_type='mealy', print_level=1, cex_processing=None)
+    learned_dfa = run_KV(sul.alphabet, sul, eq_oracle, automaton_type='mealy', print_level=1, cex_processing='rs')
 
     #eq_oracle = RandomWalkEqOracle(sul.alphabet, sul, 1000)
     #learned_dfa = run_Lstar(sul.alphabet, sul, eq_oracle, automaton_type='mealy', print_level=3, cex_processing="rs")

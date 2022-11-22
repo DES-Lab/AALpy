@@ -42,7 +42,7 @@ def runKV(seed):
     eq_oracle = RandomWalkEqOracle(alphabet, sul, 500, reset_after_cex=True)
 
     learned_dfa_kv = run_KV(alphabet, sul, eq_oracle, automaton_type='mealy',
-                            print_level=3, cex_processing=None)
+                            print_level=3, cex_processing='rs')
 
     learning_result = checkConformance(alphabet, learned_dfa_kv, len(mealy.states), sul)
 
