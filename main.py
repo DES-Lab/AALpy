@@ -2,7 +2,6 @@ from aalpy.utils import get_Angluin_dfa
 from aalpy.SULs import DfaSUL
 from aalpy.oracles import RandomWalkEqOracle
 from aalpy.learning_algs import run_Lstar
-from aalpy.learning_algs.deterministic.TTT import run_TTT
 from aalpy.learning_algs.deterministic.KV import run_KV
 
 def get_learnlib_tut_dfa():
