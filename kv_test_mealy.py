@@ -1,6 +1,7 @@
 import string
 import random
 from aalpy.learning_algs.deterministic.KV import run_KV
+from aalpy.learning_algs.deterministic.LStar import run_Lstar
 from aalpy.utils import generate_random_mealy_machine
 from aalpy.SULs import MealySUL
 from aalpy.oracles import RandomWalkEqOracle, WMethodEqOracle
@@ -31,18 +32,24 @@ def runKV(seed):
     num_states = random.randint(1,maximum_number_states)
 
     mealy = generate_random_mealy_machine(num_states, input_alphabet, output_alphabet)
-    print("mealy generated")
     # Get its input alphabet
     alphabet = mealy.get_input_alphabet()
 
     # Create a SUL instance wrapping the random automaton
     sul = MealySUL(mealy)
-
     # create a random walk equivalence oracle that will perform up to 500 steps every learning round
     eq_oracle = RandomWalkEqOracle(alphabet, sul, 500, reset_after_cex=True)
 
+    print("\nKV results:")
     learned_dfa_kv = run_KV(alphabet, sul, eq_oracle, automaton_type='mealy',
-                            print_level=3, cex_processing='rs')
+                            print_level=1, cex_processing='rs')
+
+    sul = MealySUL(mealy)
+    # create a random walk equivalence oracle that will perform up to 500 steps every learning round
+    eq_oracle = RandomWalkEqOracle(alphabet, sul, 500, reset_after_cex=True)
+    print("\nL* results:")
+    learned_dfa_kv = run_Lstar(alphabet, sul, eq_oracle, automaton_type='mealy',
+                            print_level=1, cex_processing='rs')
 
     learning_result = checkConformance(alphabet, learned_dfa_kv, len(mealy.states), sul)
 
