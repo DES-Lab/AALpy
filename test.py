@@ -7,14 +7,17 @@ from aalpy.utils import generate_random_deterministic_automata, get_Angluin_dfa
 
 from random import seed
 # dfa = get_Angluin_dfa()
-dfa = generate_random_deterministic_automata('dfa', num_states=100, input_alphabet_size=2, output_alphabet_size=2, num_accepting_states=20)
+dfa = generate_random_deterministic_automata('dfa', num_states=200, input_alphabet_size=2, output_alphabet_size=3)
 input_al = dfa.get_input_alphabet()
 sul = MealySUL(dfa)
 
 #eq_oracle = RandomWordEqOracle(input_al, sul, min_walk_len=10, max_walk_len=15)
 #eq_oracle = RandomWMethodEqOracle(input_al, sul, walks_per_state=20, walk_len=20)
 eq_oracle = RandomWordEqOracle(input_al, sul, num_walks=5000, reset_after_cex=True)
+
+
 learned_model = run_KV(input_al, sul, eq_oracle, automaton_type='dfa', cex_processing='rs', print_level=2)
+
 
 exit()
 learned_model.visualize()

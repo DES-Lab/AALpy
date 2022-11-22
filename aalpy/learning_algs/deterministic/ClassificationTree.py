@@ -7,24 +7,31 @@ automaton_class = {'dfa': Dfa, 'mealy': MealyMachine}
 
 
 class CTNode:
+    __slots__ = ['parent', 'path_to_node']
+
     def __init__(self, parent, path_to_node):
         self.parent = parent
         self.path_to_node = path_to_node
 
+    def is_leaf(self):
+        pass
 
 class CTInternalNode(CTNode):
+    __slots__ = ['distinguishing_string', 'children', 'query_cache']
+
     def __init__(self, distinguishing_string: tuple, parent, path_to_node):
         super().__init__(parent, path_to_node)
         self.distinguishing_string = distinguishing_string
         self.children = defaultdict(None)  # {True: None, False: None}
         self.query_cache = dict()
-        self.output_cache = dict()
 
-    def __repr__(self):
-        return f"{self.__class__.__name__} '{self.distinguishing_string}'"
+    def is_leaf(self):
+        return False
 
 
 class CTLeafNode(CTNode):
+    __slots__ = ['access_string']
+
     def __init__(self, access_string: tuple, parent, path_to_node):
         super().__init__(parent, path_to_node)
         self.access_string = access_string
@@ -40,6 +47,9 @@ class CTLeafNode(CTNode):
             c = p
             p = p.parent
         return p.children[True] == c
+
+    def is_leaf(self):
+        return True
 
 
 class ClassificationTree:
@@ -106,7 +116,7 @@ class ClassificationTree:
             assert letter is None or letter in self.alphabet
 
         node = self.root
-        while isinstance(node, CTInternalNode):
+        while not node.is_leaf():
             query = (*word, *node.distinguishing_string)
             if query not in self.query_cache.keys():
                 mq_result = self.sul.query(query)
@@ -124,13 +134,13 @@ class ClassificationTree:
                 new_leaf = CTLeafNode(access_string=word,
                                       parent=node,
                                       path_to_node=mq_result)
-                new_leaf.output = mq_result
+
                 self.leaf_nodes[word] = new_leaf
                 node.children[mq_result] = new_leaf
 
             node = node.children[mq_result]
 
-        assert isinstance(node, CTLeafNode)
+        assert node.is_leaf()
         return node
 
     def gen_hypothesis(self):
@@ -150,7 +160,7 @@ class ClassificationTree:
                     self.query_cache[node.access_string] = is_accepting
 
                 new_state = DfaState(state_id=f's{state_counter}',
-                                     is_accepting=is_accepting) # was node.in_right_side
+                                     is_accepting=is_accepting)  # was node.in_right_side
             elif self.automaton_type == "mealy":
                 new_state = MealyState(state_id=f's{state_counter}')
             else:
@@ -211,7 +221,7 @@ class ClassificationTree:
 
         def ancestor(parent, node):
             for child in parent.children.values():
-                if isinstance(child, CTLeafNode):
+                if child.is_leaf():
                     if child.access_string == node:
                         return True
                 else:
@@ -324,8 +334,6 @@ class ClassificationTree:
                               path_to_node=new_leaf_position)
 
         self.leaf_nodes[new_leaf_access_string] = new_leaf
-
-        new_leaf.output = new_leaf_position
 
         old_leaf.parent.children[old_leaf.path_to_node] = discriminator_node
 
