@@ -7,7 +7,7 @@ from aalpy.utils import generate_random_deterministic_automata, get_Angluin_dfa
 
 from random import seed
 # dfa = get_Angluin_dfa()
-dfa = generate_random_deterministic_automata('mealy', num_states=2000, input_alphabet_size=4, output_alphabet_size=3,)
+dfa = generate_random_deterministic_automata('mealy', num_states=10, input_alphabet_size=10, output_alphabet_size=3,)
 input_al = dfa.get_input_alphabet()
 sul = MealySUL(dfa)
 

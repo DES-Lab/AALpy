@@ -103,13 +103,12 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ce
 
         hypothesis = classification_tree.gen_hypothesis()
 
-        if print_level > 1:
-            if learning_rounds <= 20 or learning_rounds % 10 == 0:
-                print(f'Hypothesis {learning_rounds}: {hypothesis.size} states.')
+        if print_level == 2:
+            print(f'\rHypothesis {learning_rounds}: {hypothesis.size} states.', end="")
 
         if print_level == 3:
-            # TODO: print classification tree
-            pass
+            # would be nice to have an option to print classification tree
+            print(f'Hypothesis {learning_rounds}: {hypothesis.size} states.')
 
         if counterexample_successfully_processed(sul, cex, hypothesis):
             # Perform an equivalence query on this automaton
@@ -149,6 +148,8 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ce
     }
 
     if print_level > 0:
+        if print_level == 2:
+            print("")
         print_learning_info(info)
 
     if return_data:
