@@ -1,14 +1,14 @@
 import time
 
-from aalpy.automata import Dfa, DfaState, MealyState, MealyMachine
+from aalpy.automata import Dfa, DfaState, MealyState, MealyMachine, MooreState, MooreMachine
 from aalpy.base import Oracle, SUL
 from aalpy.utils.HelperFunctions import print_learning_info
 from .ClassificationTree import ClassificationTree
 from ...base.SUL import CacheSUL
 
-counterexample_processing_strategy = [None, 'rs']
 print_options = [0, 1, 2, 3]
-automaton_class = {'dfa': Dfa, 'mealy': MealyMachine}
+counterexample_processing_strategy = [None, 'rs']
+automaton_class = {'dfa': Dfa, 'mealy': MealyMachine, 'moore': MooreMachine}
 
 
 def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', cex_processing=None,
@@ -48,7 +48,6 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ce
     assert print_level in print_options
     assert cex_processing in counterexample_processing_strategy
     assert automaton_type in [*automaton_class]
-    # assert isinstance(sul, DfaSUL)
 
     start_time = time.time()
     eq_query_time = 0
@@ -59,7 +58,7 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ce
         sul = CacheSUL(sul)
         eq_oracle.sul = sul
 
-    if automaton_type == 'dfa':
+    if automaton_type != 'mealy':
         # Do a membership query on the empty string to determine whether
         # the start state of the SUL is accepting or rejecting
         empty_string_mq = sul.query(tuple())[-1]
@@ -67,9 +66,11 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ce
         # Construct a hypothesis automaton that consists simply of this
         # single (accepting or rejecting) state with self-loops for
         # all transitions.
-        initial_state = DfaState(state_id='s0', is_accepting=empty_string_mq)
-
-    elif automaton_type == 'mealy':
+        if automaton_type == 'dfa':
+            initial_state = DfaState(state_id='s0', is_accepting=empty_string_mq)
+        else:
+            initial_state = MooreState(state_id='s0', output=empty_string_mq)
+    else:
         initial_state = MealyState(state_id='s0')
 
     for a in alphabet:
@@ -104,7 +105,7 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ce
 
         if print_level > 1:
             if learning_rounds <= 20 or learning_rounds % 10 == 0:
-                print(f'Hypothesis {learning_rounds}: {len(hypothesis.states)} states.')
+                print(f'Hypothesis {learning_rounds}: {hypothesis.size} states.')
 
         if print_level == 3:
             # TODO: print classification tree
@@ -135,7 +136,7 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ce
 
     info = {
         'learning_rounds': learning_rounds,
-        'automaton_size': len(hypothesis.states),
+        'automaton_size': hypothesis.size,
         'queries_learning': sul.num_queries,
         'steps_learning': sul.num_steps,
         'queries_eq_oracle': eq_oracle.num_queries,
