@@ -18,13 +18,12 @@ class CTNode:
 
 
 class CTInternalNode(CTNode):
-    __slots__ = ['distinguishing_string', 'children', 'query_cache']
+    __slots__ = ['distinguishing_string', 'children']
 
     def __init__(self, distinguishing_string: tuple, parent, path_to_node):
         super().__init__(parent, path_to_node)
         self.distinguishing_string = distinguishing_string
         self.children = defaultdict(None)  # {True: None, False: None}
-        self.query_cache = dict()
 
     def is_leaf(self):
         return False
@@ -100,7 +99,7 @@ class ClassificationTree:
         """
         Sifting a word into the classification tree.
         Starting at the root, at every inner node (a CTInternalNode),
-        we branch into the "true" or "false" child, depending on the result of the
+        we branch into the child, depending on the result of the
         membership query (word * node.distinguishing_string). Repeated until a leaf
         (a CTLeafNode) is reached, which is the result of the sifting.
 
