@@ -7,7 +7,7 @@ from aalpy.utils import generate_random_deterministic_automata, get_Angluin_dfa
 
 from random import seed
 # dfa = get_Angluin_dfa()
-dfa = generate_random_deterministic_automata('moore', num_states=200, input_alphabet_size=4, output_alphabet_size=2,)
+dfa = generate_random_deterministic_automata('moore', num_states=200, input_alphabet_size=4, output_alphabet_size=4,)
 input_al = dfa.get_input_alphabet()
 sul = MealySUL(dfa)
 
@@ -17,7 +17,6 @@ eq_oracle = RandomWordEqOracle(input_al, sul, num_walks=5000, reset_after_cex=Tr
 
 
 learned_model = run_KV(input_al, sul, eq_oracle, automaton_type='moore', cex_processing='rs', print_level=2)
-
 
 exit()
 learned_model.visualize()

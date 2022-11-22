@@ -40,6 +40,17 @@ class CTLeafNode(CTNode):
     def __repr__(self):
         return f"{self.__class__.__name__} '{self.access_string}'"
 
+    @property
+    def output(self):
+        c, p = self, self.parent
+        while p.parent:
+            c = p
+            p = p.parent
+        for output, child in p.children.items():
+            if child == c:
+                return output
+        assert False
+
     def is_leaf(self):
         return True
 
@@ -140,11 +151,11 @@ class ClassificationTree:
         for node in self.leaf_nodes.values():
 
             if self.automaton_type != "mealy":
-                output = self._query_and_update_cache(node.access_string)
+                # output = self._query_and_update_cache(node.access_string)
                 if self.automaton_type == 'dfa':
-                    new_state = DfaState(state_id=f's{state_counter}', is_accepting=output)  # was node.in_right_side
+                    new_state = DfaState(state_id=f's{state_counter}', is_accepting=node.output)
                 else:
-                    new_state = MooreState(state_id=f's{state_counter}', output=output)
+                    new_state = MooreState(state_id=f's{state_counter}', output=node.output)
             else:
                 new_state = MealyState(state_id=f's{state_counter}')
 
@@ -180,8 +191,7 @@ class ClassificationTree:
                 if self.automaton_type == "mealy":
                     state.output_fun[letter] = self._query_and_update_cache(state.prefix + (letter,))
 
-        return automaton_class[self.automaton_type](initial_state=initial_state,
-                                                    states=list(states.values()))
+        return automaton_class[self.automaton_type](initial_state=initial_state, states=list(states.values()))
 
     def _least_common_ancestor(self, node_1_id, node_2_id):
         """
