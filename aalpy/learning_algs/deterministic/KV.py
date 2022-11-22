@@ -14,7 +14,7 @@ automaton_class = {'dfa': Dfa, 'mealy': MealyMachine, 'moore': MooreMachine}
 def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', cex_processing=None,
            max_learning_rounds=None, cache_and_non_det_check=True, return_data=False, print_level=2):
     """
-    Executes TTT algorithm.
+    Executes the KV algorithm.
 
     Args:
 

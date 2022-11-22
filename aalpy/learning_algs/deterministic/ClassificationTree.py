@@ -40,15 +40,6 @@ class CTLeafNode(CTNode):
     def __repr__(self):
         return f"{self.__class__.__name__} '{self.access_string}'"
 
-    @property
-    def in_right_side(self):
-        c = self
-        p = self.parent
-        while p.parent:
-            c = p
-            p = p.parent
-        return p.children[True] == c
-
     def is_leaf(self):
         return True
 
