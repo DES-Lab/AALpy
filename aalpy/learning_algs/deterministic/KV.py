@@ -69,12 +69,10 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ce
         # Construct a hypothesis automaton that consists simply of this
         # single (accepting or rejecting) state with self-loops for
         # all transitions.
-        initial_state = DfaState(state_id=(), is_accepting=empty_string_mq)
-
+        initial_state = DfaState(state_id='s0', is_accepting=empty_string_mq)
 
     elif automaton_type == 'mealy':
-        initial_state = MealyState(state_id=())
-
+        initial_state = MealyState(state_id='s0')
 
     for a in alphabet:
         initial_state.transitions[a] = initial_state

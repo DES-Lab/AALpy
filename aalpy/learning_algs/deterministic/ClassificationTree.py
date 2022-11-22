@@ -5,6 +5,7 @@ from collections import defaultdict
 
 automaton_class = {'dfa': Dfa, 'mealy': MealyMachine}
 
+
 class CTNode:
     def __init__(self, parent, path_to_node):
         self.parent = parent
@@ -18,13 +19,13 @@ class CTNode:
         return p
 
 
-
 class CTInternalNode(CTNode):
     def __init__(self, distinguishing_string: tuple, parent: 'CTInternalNode', path_to_node):
         super().__init__(parent, path_to_node)
         self.distinguishing_string = distinguishing_string
-        self.children = defaultdict(lambda: None) #{True: None, False: None}
+        self.children = defaultdict(None)  # {True: None, False: None}
         self.query_cache = dict()
+        self.output_cache = dict()
 
     def __repr__(self):
         return f"{self.__class__.__name__} '{self.distinguishing_string}'"
@@ -38,6 +39,8 @@ class CTLeafNode(CTNode):
         assert access_string not in tree.leaf_nodes, f"a leaf node with {access_string=} already exists!"
         tree.leaf_nodes[access_string] = self
 
+        self.output = None
+
     def __repr__(self):
         return f"{self.__class__.__name__} '{self.access_string}'"
 
@@ -50,29 +53,40 @@ class CTLeafNode(CTNode):
             p = p.parent
         return p.children[True] == c
 
+
 # all nodes same class, then differentiate with is_leaf, ...
 
 class ClassificationTree:
     def __init__(self, alphabet: list, sul: SUL, automaton_type: str, cex: tuple):
-       
         self.leaf_nodes = {}
         self.automaton_type = automaton_type
         if self.automaton_type == "dfa":
             empty_is_true = sul.query(())[-1]
             self.root = CTInternalNode(distinguishing_string=tuple(), parent=None, path_to_node=None)
-            self.root.children[empty_is_true] = CTLeafNode(access_string=tuple(), parent=self.root, tree=self, path_to_node=empty_is_true)
-            self.root.children[not empty_is_true] = CTLeafNode(access_string=cex, parent=self.root, tree=self, path_to_node=not empty_is_true)
+            self.root.children[empty_is_true] = CTLeafNode(access_string=tuple(), parent=self.root, tree=self,
+                                                           path_to_node=empty_is_true)
+            self.root.children[not empty_is_true] = CTLeafNode(access_string=cex, parent=self.root, tree=self,
+                                                               path_to_node=not empty_is_true)
         elif self.automaton_type == "mealy":
             self.root = CTInternalNode(distinguishing_string=(cex[-1],), parent=None, path_to_node=None)
             hypothesis_output = sul.query((cex[-1],))[-1]
             cex_output = sul.query(cex)[-1]
-            self.root.children[hypothesis_output] = CTLeafNode(access_string=tuple(), parent=self.root, tree=self, path_to_node=hypothesis_output)
-            self.root.children[cex_output] = CTLeafNode(access_string=cex[:-1], parent=self.root, tree=self, path_to_node=cex_output)
+            self.root.children[hypothesis_output] = CTLeafNode(access_string=tuple(),
+                                                               parent=self.root,
+                                                               tree=self,
+                                                               path_to_node=hypothesis_output)
+            self.root.children[cex_output] = CTLeafNode(access_string=cex[:-1],
+                                                        parent=self.root,
+                                                        tree=self,
+                                                        path_to_node=cex_output)
+
+            self.root.children[hypothesis_output].output = hypothesis_output
+            self.root.children[cex_output].output = cex_output
 
         self.alphabet = alphabet
         self.sul = sul
 
-    def sift(self, word):
+    def sift(self, word, return_output=False):
         """
         Sifting a word into the classification tree.
         Starting at the root, at every inner node (a CTInternalNode),
@@ -92,24 +106,34 @@ class ClassificationTree:
             assert letter is None or letter in self.alphabet
 
         node = self.root
+        root_output = None
         while isinstance(node, CTInternalNode):
             query = (*word, *node.distinguishing_string)
             if query not in node.query_cache.keys():
-                mq_result = self.sul.query(query)[-1]
-                node.query_cache[query] = mq_result
+                mq_result = self.sul.query(query)
+                node.query_cache[query] = mq_result[-1]
+                node.output_cache[query[:len(word)]] = mq_result[len(word) - 1]
+                mq_result = mq_result[-1]
             else:
                 mq_result = node.query_cache[query]
+
+            if root_output is None:
+                root_output = node.output_cache[query[:len(word)]]
+
             # TODO: check if mq_result is part of the children, add new node if not
             if mq_result not in node.children.keys():
                 new_leaf = CTLeafNode(access_string=word,
-                              parent=node,
-                              tree=self,path_to_node=mq_result)
+                                      parent=node,
+                                      tree=self, path_to_node=mq_result)
+                new_leaf.output = mq_result
                 self.leaf_nodes[word] = new_leaf
                 node.children[mq_result] = new_leaf
- 
+
             node = node.children[mq_result]
 
         assert isinstance(node, CTLeafNode)
+        if return_output:
+            return node, root_output
         return node
 
     def gen_hypothesis(self):
@@ -122,7 +146,7 @@ class ClassificationTree:
         for node in self.leaf_nodes.values():
             if self.automaton_type == "dfa":
                 new_state = DfaState(state_id=f's{state_counter}',
-                                    is_accepting=node.in_right_side)
+                                     is_accepting=node.in_right_side)
             elif self.automaton_type == "mealy":
                 new_state = MealyState(state_id=f's{state_counter}')
             new_state.prefix = node.access_string
@@ -137,7 +161,7 @@ class ClassificationTree:
         states_for_transitions = list(states.values())
         for state in states_for_transitions:
             for letter in self.alphabet:
-                transition_target_node = self.sift((*state.prefix, letter))
+                transition_target_node, output1 = self.sift((*state.prefix, letter), return_output=True)
                 transition_target_id = transition_target_node.access_string
                 if self.automaton_type == "mealy" and transition_target_id not in states:
                     new_state = MealyState(state_id=f's{state_counter}')
@@ -147,12 +171,12 @@ class ClassificationTree:
                     state_counter += 1
                 state.transitions[letter] = states[transition_target_id]
                 if self.automaton_type == "mealy":
-                    output = self.sul.query((*state.prefix, letter))[-1]
-                    state.output_fun[letter] = output
-
+                    # output = self.sul.query((*state.prefix, letter))[-1]
+                    # print(output, output1)
+                    state.output_fun[letter] = output1
 
         return automaton_class[self.automaton_type](initial_state=initial_state,
-                   states=list(states.values()))
+                                                    states=list(states.values()))
 
     def least_common_ancestor(self, node_1_id, node_2_id):
         """
@@ -170,18 +194,18 @@ class ClassificationTree:
             the distinguishing string of the lca
 
         """
-        
+
         def ancestor(parent, node):
             for child in parent.children.values():
                 if isinstance(child, CTLeafNode):
                     if child.access_string == node:
                         return True
-                else: 
+                else:
                     next_ancestor = ancestor(child, node)
                     if next_ancestor:
                         return True
             return False
-        
+
         def findLCA(node_1_id, node_2_id):
             node = self.leaf_nodes[node_1_id]
             parent = node.parent
@@ -194,7 +218,7 @@ class ClassificationTree:
                     return parent
             return None
 
-        return findLCA(node_1_id, node_2_id).distinguishing_string 
+        return findLCA(node_1_id, node_2_id).distinguishing_string
 
     def update(self, cex: tuple, hypothesis):
         """
@@ -268,8 +292,7 @@ class ClassificationTree:
         self.insert_new_leaf(discriminator=v,
                              old_leaf_access_string=ua_state,
                              new_leaf_access_string=(*u_state, a),
-                             new_leaf_position=self.sul.query((*u, a, *v))[
-                                 -1])  # TODO we could probably sub this with not hyp.get_result(cex)
+                             new_leaf_position=self.sul.query((*u, a, *v))[-1])  # TODO we could probably sub this with not hyp.get_result(cex)
 
     def insert_new_leaf(self, discriminator, old_leaf_access_string, new_leaf_access_string, new_leaf_position):
         if self.automaton_type == "dfa":
@@ -277,7 +300,6 @@ class ClassificationTree:
         else:
             # TODO check if this query is in the node cache
             other_leaf_position = self.sul.query((*old_leaf_access_string, *discriminator))[-1]
-            
 
         old_leaf = self.leaf_nodes[old_leaf_access_string]
 
@@ -286,7 +308,8 @@ class ClassificationTree:
 
         new_leaf = CTLeafNode(access_string=new_leaf_access_string,
                               parent=discriminator_node,
-                              tree=self,path_to_node=new_leaf_position)
+                              tree=self, path_to_node=new_leaf_position)
+        new_leaf.output = new_leaf_position
 
         old_leaf.parent.children[old_leaf.path_to_node] = discriminator_node
 
@@ -296,4 +319,3 @@ class ClassificationTree:
 
         discriminator_node.children[new_leaf_position] = new_leaf
         discriminator_node.children[other_leaf_position] = old_leaf
-
