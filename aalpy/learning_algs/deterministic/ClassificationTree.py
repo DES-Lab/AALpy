@@ -92,7 +92,6 @@ class ClassificationTree:
             assert letter is None or letter in self.alphabet
 
         node = self.root
-
         while isinstance(node, CTInternalNode):
             query = (*word, *node.distinguishing_string)
             if query not in node.query_cache.keys():
@@ -101,10 +100,17 @@ class ClassificationTree:
             else:
                 mq_result = node.query_cache[query]
             # TODO: check if mq_result is part of the children, add new node if not
+            if mq_result not in node.children.keys():
+                new_leaf = CTLeafNode(access_string=word,
+                              parent=node,
+                              tree=self,path_to_node=mq_result)
+                self.leaf_nodes[word] = new_leaf
+                node.children[mq_result] = new_leaf
+ 
             node = node.children[mq_result]
 
         assert isinstance(node, CTLeafNode)
-        return node.access_string
+        return node
 
     def gen_hypothesis(self):
         # for each CTLeafNode of this CT,
@@ -112,9 +118,8 @@ class ClassificationTree:
         # node's access string. The start state is the empty word
         states = {}
         initial_state = None
-        state_counter = 0
+        state_counter = 1
         for node in self.leaf_nodes.values():
-            state_counter += 1
             if self.automaton_type == "dfa":
                 new_state = DfaState(state_id=f's{state_counter}',
                                     is_accepting=node.in_right_side)
@@ -124,13 +129,22 @@ class ClassificationTree:
             if new_state.prefix == ():
                 initial_state = new_state
             states[new_state.prefix] = new_state
+            state_counter += 1
         assert initial_state is not None
 
         # For each access state s of the hypothesis and each letter b in the
         # alphabet, compute the b-transition out of state s by sifting s.state_id*b
-        for state in states.values():
+        states_for_transitions = list(states.values())
+        for state in states_for_transitions:
             for letter in self.alphabet:
-                transition_target_id = self.sift((*state.prefix, letter))
+                transition_target_node = self.sift((*state.prefix, letter))
+                transition_target_id = transition_target_node.access_string
+                if self.automaton_type == "mealy" and transition_target_id not in states:
+                    new_state = MealyState(state_id=f's{state_counter}')
+                    new_state.prefix = transition_target_id
+                    states_for_transitions.append(new_state)
+                    states[new_state.prefix] = new_state
+                    state_counter += 1
                 state.transitions[letter] = states[transition_target_id]
                 if self.automaton_type == "mealy":
                     output = self.sul.query((*state.prefix, letter))[-1]
@@ -220,7 +234,7 @@ class ClassificationTree:
         """
         j = d = None
         for i in range(1, len(cex) + 1):
-            s_i = self.sift(cex[:i])
+            s_i = self.sift(cex[:i]).access_string
             hypothesis.execute_sequence(hypothesis.initial_state, cex[:i])
             s_star_i = hypothesis.current_state.prefix
             if s_i != s_star_i:
