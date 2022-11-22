@@ -302,12 +302,36 @@ class ClassificationTree:
         hypothesis.step(a)
         ua_state = hypothesis.current_state.prefix
 
+        if self.automaton_type == 'dfa':
+            new_leaf_position = not hypothesis.execute_sequence(hypothesis.initial_state, cex)[-1]
+        else:
+            new_leaf_position = self.sul.query(cex)[-1]
+
         self._insert_new_leaf(discriminator=v,
                               old_leaf_access_string=ua_state,
                               new_leaf_access_string=(*u_state, a),
-                              new_leaf_position=self.sul.query((*u, a, *v))[-1])
+                              new_leaf_position=new_leaf_position)
 
     def _insert_new_leaf(self, discriminator, old_leaf_access_string, new_leaf_access_string, new_leaf_position):
+        """
+        Inserts a new leaf in the classification tree by:
+        - moving the leaf node specified by <old_leaf_access_string> down one level
+        - inserting an internal node  at the former position of the old node (i.e. as the parent of the old node)
+        - adding a new leaf node with <new_leaf_access_string> as child of the new internal node / sibling of the old node
+        Could also be thought of as 'splitting' the old node into two (one of which keeps the old access string and one
+        of which gets the new one) with <discriminator> as the distinguishing string between the two.
+
+        where one of the resulting nodes keeps the old
+        node's access string and the other gets new_leaf_access_string.
+        Args:
+            discriminator: The distinguishing string of the new internal node
+            old_leaf_access_string: The access string specifying the leaf node to be 'split' (or rather moved down)
+            new_leaf_access_string: The access string of the leaf node that will be created
+            new_leaf_position: The path from the new internal node to the new leaf node
+
+        Returns:
+
+        """
         if self.automaton_type == "dfa":
             other_leaf_position = not new_leaf_position
         else:
@@ -316,20 +340,24 @@ class ClassificationTree:
 
         old_leaf = self.leaf_nodes[old_leaf_access_string]
 
+        # create an internal node at the same position as the old leaf node
         discriminator_node = CTInternalNode(distinguishing_string=discriminator,
                                             parent=old_leaf.parent, path_to_node=old_leaf.path_to_node)
 
+        # create the new leaf node and add it as child of the internal node
         new_leaf = CTLeafNode(access_string=new_leaf_access_string,
                               parent=discriminator_node,
                               path_to_node=new_leaf_position)
-
         self.leaf_nodes[new_leaf_access_string] = new_leaf
 
+        # redirect the old nodes former parent to the internal node
         old_leaf.parent.children[old_leaf.path_to_node] = discriminator_node
 
+        # add the internal node as parent of the old leaf
         old_leaf.parent = discriminator_node
         old_leaf.path_to_node = other_leaf_position
 
+        # set the two nodes as children of the internal node
         discriminator_node.children[new_leaf_position] = new_leaf
         discriminator_node.children[other_leaf_position] = old_leaf
 

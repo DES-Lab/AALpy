@@ -10,7 +10,7 @@ from aalpy.learning_algs.deterministic.LStar import run_Lstar
 from aalpy.learning_algs.deterministic.KV import run_KV
 from aalpy.oracles import RandomWalkEqOracle, WMethodEqOracle, StatePrefixEqOracle
 from aalpy.utils import load_automaton_from_file, dfa_from_state_setup
-from kv_test import checkConformance
+from kv_test_dfa import checkConformance
 
 
 results = dict(random=dict(),
@@ -23,9 +23,9 @@ def run_algorithm(algorithm_name, oracle_name, dfa):
     alphabet = dfa.get_input_alphabet()
 
     if algorithm_name == 'kv':
-        algorithm = partial(run_KV, alphabet, sul, oracle, automaton_type='dfa', return_data=True, print_level=0, reuse_counterexamples=False, cex_processing=None)
+        algorithm = partial(run_KV, alphabet, sul, oracle, automaton_type='dfa', return_data=True, print_level=0, cex_processing=None)
     elif algorithm_name == 'kv_rs':
-        algorithm = partial(run_KV, alphabet, sul, oracle, automaton_type='dfa', return_data=True, print_level=0, reuse_counterexamples=False, cex_processing='rs')
+        algorithm = partial(run_KV, alphabet, sul, oracle, automaton_type='dfa', return_data=True, print_level=0, cex_processing='rs')
     elif algorithm_name == 'lstar':
         algorithm = partial(run_Lstar, alphabet, sul, oracle, automaton_type='dfa', return_data=True, print_level=0, cex_processing=None)
     elif algorithm_name == 'lstar_rs':
@@ -46,7 +46,7 @@ def setup_oracle(dfa, type):
     alphabet = dfa.get_input_alphabet()
     sul = DfaSUL(dfa)
     if type == 'random':
-        oracle = RandomWalkEqOracle(alphabet, sul, 10000, reset_after_cex=True,reset_prob=0.25)
+        oracle = RandomWalkEqOracle(alphabet, sul, 100000, reset_after_cex=True,reset_prob=0.25)
         #oracle = StatePrefixEqOracle
     else:
         oracle = WMethodEqOracle(alphabet, sul, dfa.size)
@@ -60,7 +60,7 @@ def main():
     with open('automata.pickle', "rb") as automata_file:
         automata_data = pickle.load(automata_file)
     learned = 0
-    to_learn = 4
+    to_learn = 2
     for filename in dir:
         print(f"loading {filename}... ", end='')
         if automata_data and filename in automata_data:
@@ -76,9 +76,9 @@ def main():
 
         print("running algorithms... ")
         run_algorithm('kv', 'random', dfa)
-        run_algorithm('kv_rs', 'random', dfa)
-        run_algorithm('lstar', 'random', dfa)
-        run_algorithm('lstar_rs', 'random', dfa)
+        # run_algorithm('kv_rs', 'random', dfa)
+        # run_algorithm('lstar', 'random', dfa)
+        # run_algorithm('lstar_rs', 'random', dfa)
         #print('done')
 
         learned += 1
