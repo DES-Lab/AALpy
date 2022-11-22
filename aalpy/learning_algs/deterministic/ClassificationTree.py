@@ -195,7 +195,7 @@ class ClassificationTree:
             return None
 
         return findLCA(node_1_id, node_2_id).distinguishing_string 
-         
+
     def update(self, cex: tuple, hypothesis):
         """
         Updates the classification tree based on a counterexample.
@@ -275,6 +275,7 @@ class ClassificationTree:
         if self.automaton_type == "dfa":
             other_leaf_position = not new_leaf_position
         else:
+            # TODO check if this query is in the node cache
             other_leaf_position = self.sul.query((*old_leaf_access_string, *discriminator))[-1]
             
 
