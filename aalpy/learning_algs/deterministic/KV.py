@@ -24,7 +24,7 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type='dfa', ce
 
         eq_oracle: equivalence oracle
 
-        automaton_type: type of automaton to be learned. Currently only 'dfa' supported.
+        automaton_type: type of automaton to be learned. One of 'dfa', 'mealy', 'moore'
 
         cex_processing: None for no counterexample processing, or 'rs' for Rivest & Schapire counterexample processing
 
