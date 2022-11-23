@@ -55,7 +55,10 @@ class Automaton(ABC):
         self.states = states
         self.characterization_set: list = []
         self.current_state = initial_state
-        self.size = len(self.states)
+
+    @property
+    def size(self):
+        return len(self.states)
 
     def reset_to_initial(self):
         """
@@ -276,7 +279,13 @@ class DeterministicAutomaton(Automaton):
         self.current_state = state_save
         return output
 
-    def compute_characterization_set(self, char_set_init=None, online_suffix_closure=True, split_all_blocks=True,
+    def is_minimal(self):
+        pass
+
+    def compute_characterization_set(self, char_set_init=None,
+                                     online_suffix_closure=True,
+                                     split_all_blocks=True,
+                                     return_same_states=False,
                                      raise_warning=True):
         """
         Computation of a characterization set, that is, a set of sequences that can distinguish all states in the
@@ -295,6 +304,8 @@ class DeterministicAutomaton(Automaton):
                         sequences are only checked on a subset of the states to be distinguished
                         if true, sequences are used to distinguish all states, yielding a potentially smaller set, which
                         is useful for conformance testing and learning
+            return_same_states: if True, a single distinguishable pair of states will be returned, or None None if there
+                        are no non-distinguishable states
             raise_warning: prints warning message if characterization set cannot be computed
 
         Returns: a characterization set or None if a non-minimal automaton is passed to the function
@@ -322,6 +333,9 @@ class DeterministicAutomaton(Automaton):
             split_state2 = block_to_split[1]
             dist_seq = self.find_distinguishing_seq(split_state1, split_state2)
             if dist_seq is None:
+                if return_same_states:
+                    return split_state1, split_state2
+
                 if raise_warning:
                     import warnings
                     warnings.warn("Automaton is non-canonical: could not compute characterization set."
@@ -356,6 +370,8 @@ class DeterministicAutomaton(Automaton):
                     blocks.append(new_block)
 
         char_set = list(set(char_set))
+        if return_same_states:
+            return None, None
         return char_set
 
     def _split_blocks(self, blocks, seq):
@@ -382,3 +398,15 @@ class DeterministicAutomaton(Automaton):
         for s in self.states:
             if not s.prefix:
                 s.prefix = self.get_shortest_path(self.initial_state, s)
+
+    def minimize(self):
+        s1, s2 = self.compute_characterization_set(return_same_states=True)
+        while s1 and s2:
+            for s in self.states:
+                for i, new_state in s.transitions.items():
+                    if new_state == s2:
+                        s.transitions[i] = s1
+            self.states.remove(s2)
+            s1, s2 = self.compute_characterization_set(return_same_states=True)
+
+        self.compute_prefixes()

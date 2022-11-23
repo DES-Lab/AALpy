@@ -34,10 +34,10 @@ class MooreMachine(DeterministicAutomaton):
         return self.current_state.output
 
     def compute_characterization_set(self, char_set_init=None, online_suffix_closure=True, split_all_blocks=True,
-                                     raise_warning=True):
+                                     return_same_states=False, raise_warning=True):
         return super(MooreMachine, self).compute_characterization_set(char_set_init if char_set_init else [()],
                                                                       online_suffix_closure, split_all_blocks,
-                                                                      raise_warning)
+                                                                      return_same_states, raise_warning)
 
     def is_minimal(self):
         return self.compute_characterization_set(raise_warning=False) is not None

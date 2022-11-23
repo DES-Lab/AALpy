@@ -12,7 +12,7 @@ class RandomWordEqOracle(Oracle):
     Equivalence oracle where queries are of random length in a predefined range.
     """
 
-    def __init__(self, alphabet: list, sul: SUL, num_walks=100, min_walk_len=10, max_walk_len=100,
+    def __init__(self, alphabet: list, sul: SUL, num_walks=500, min_walk_len=10, max_walk_len=30,
                  reset_after_cex=True):
         """
         Args:

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from aalpy.base.CacheTree import CacheTree
+from aalpy.base.CacheTree import CacheTree, CacheDict
 
 
 class SUL(ABC):
@@ -78,10 +78,10 @@ class CacheSUL(SUL):
     This multiset/cache is encoded as a tree.
     """
 
-    def __init__(self, sul: SUL):
+    def __init__(self, sul: SUL, cache_type='tree'):
         super().__init__()
         self.sul = sul
-        self.cache = CacheTree()
+        self.cache = CacheTree() if cache_type == 'tree' else CacheDict()
 
     def query(self, word):
         """

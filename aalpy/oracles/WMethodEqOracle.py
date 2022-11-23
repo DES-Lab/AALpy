@@ -73,7 +73,7 @@ class RandomWMethodEqOracle(Oracle):
     Random walks stem from fixed prefix (path to the state). At the end of the random
     walk an element from the characterization set is added to the test case.
     """
-    def __init__(self, alphabet: list, sul: SUL, walks_per_state=10, walk_len=20):
+    def __init__(self, alphabet: list, sul: SUL, walks_per_state=12, walk_len=12):
         """
         Args:
 

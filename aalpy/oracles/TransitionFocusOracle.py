@@ -11,7 +11,7 @@ class TransitionFocusOracle(Oracle):
     all interesting behavior occurs on the transitions between states and potential bugs can be found only by
     focusing on transitions.
     """
-    def __init__(self, alphabet, sul: SUL, num_random_walks=1000, walk_len=20, same_state_prob=0.2):
+    def __init__(self, alphabet, sul: SUL, num_random_walks=500, walk_len=20, same_state_prob=0.2):
         """
         Args:
             alphabet: input alphabet

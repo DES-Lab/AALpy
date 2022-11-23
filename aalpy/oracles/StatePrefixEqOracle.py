@@ -12,7 +12,7 @@ class StatePrefixEqOracle(Oracle):
     rand_walk_len exactly walk_per_state times during learning. Therefore excessive testing of initial states is
     avoided.
     """
-    def __init__(self, alphabet: list, sul: SUL, walks_per_state=10, walk_len=30, depth_first=False):
+    def __init__(self, alphabet: list, sul: SUL, walks_per_state=10, walk_len=12, depth_first=False):
         """
         Args:
 
