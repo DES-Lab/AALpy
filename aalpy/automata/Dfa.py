@@ -34,9 +34,10 @@ class Dfa(DeterministicAutomaton):
         return self.current_state.is_accepting
 
     def compute_characterization_set(self, char_set_init=None, online_suffix_closure=True, split_all_blocks=True,
-                                     raise_warning=True):
+                                     return_same_states=False, raise_warning=True):
         return super(Dfa, self).compute_characterization_set(char_set_init if char_set_init else [()],
-                                                             online_suffix_closure, split_all_blocks, raise_warning)
+                                                             online_suffix_closure, split_all_blocks,
+                                                             return_same_states, raise_warning)
 
     def is_minimal(self):
         return self.compute_characterization_set(raise_warning=False) is not None
@@ -57,3 +58,4 @@ class Dfa(DeterministicAutomaton):
             state_setup_dict[s.state_id] = (s.is_accepting, {k: v.state_id for k, v in s.transitions.items()})
 
         return state_setup_dict
+
