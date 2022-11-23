@@ -16,7 +16,7 @@ class KWayTransitionCoverageEqOracle(Oracle):
     """
 
     def __init__(self, alphabet: list, sul: SUL, k: int = 2, method='random',
-                 num_generate_paths: int = 20000,
+                 num_generate_paths: int = 300,
                  max_path_len: int = 50,
                  max_number_of_steps: int = 0,
                  optimize: str = 'steps',

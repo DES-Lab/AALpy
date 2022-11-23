@@ -10,7 +10,7 @@ class KWayStateCoverageEqOracle(Oracle):
     random walk at the end.
     """
 
-    def __init__(self, alphabet: list, sul: SUL, k=2, random_walk_len=100, method='combinations'):
+    def __init__(self, alphabet: list, sul: SUL, k=2, random_walk_len=10, method='combinations'):
         """
 
         Args:
