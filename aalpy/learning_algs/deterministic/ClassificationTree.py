@@ -63,6 +63,8 @@ class ClassificationTree:
         self.leaf_nodes = {}
         self.query_cache = dict()
 
+        self.sifting_cache = {}
+
         if self.automaton_type == "dfa" or self.automaton_type == 'moore':
             initial_output = sul.query(())[-1]
             cex_output = sul.query(cex)[-1]
@@ -114,6 +116,9 @@ class ClassificationTree:
         for letter in word:
             assert letter is None or letter in self.alphabet
 
+        if word in self.sifting_cache:
+            return self.sifting_cache[word]
+
         node = self.root
         while not node.is_leaf():
             query = word + node.distinguishing_string
@@ -137,6 +142,7 @@ class ClassificationTree:
 
             node = node.children[mq_result]
 
+        self.sifting_cache[word] = node
         assert node.is_leaf()
         return node
 
@@ -360,6 +366,16 @@ class ClassificationTree:
         # set the two nodes as children of the internal node
         discriminator_node.children[new_leaf_position] = new_leaf
         discriminator_node.children[other_leaf_position] = old_leaf
+
+        # sifting cache update
+        sifting_cache_outdated = []
+        if old_leaf in self.sifting_cache.values():
+            for prefix, node in self.sifting_cache.items():
+                if old_leaf == node:
+                    sifting_cache_outdated.append(prefix)
+
+        for to_delete in sifting_cache_outdated:
+            del self.sifting_cache[to_delete]
 
     def _query_and_update_cache(self, word):
         if word in self.query_cache.keys():

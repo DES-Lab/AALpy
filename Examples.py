@@ -8,7 +8,7 @@ def random_mealy_example(alphabet_size, number_of_states, output_size=8):
     """
 
     from aalpy.SULs import MealySUL
-    from aalpy.learning_algs import run_Lstar
+    from aalpy.learning_algs import run_Lstar, run_KV
     from aalpy.oracles import RandomWalkEqOracle, StatePrefixEqOracle
 
     alphabet = [*range(0, alphabet_size)]
@@ -21,9 +21,12 @@ def random_mealy_example(alphabet_size, number_of_states, output_size=8):
     # random_walk_eq_oracle = RandomWalkEqOracle(alphabet, sul_mealy, 5000)
     state_origin_eq_oracle = StatePrefixEqOracle(alphabet, sul_mealy, walks_per_state=10, walk_len=15)
 
-    learned_mealy = run_Lstar(alphabet, sul_mealy, state_origin_eq_oracle, automaton_type='mealy', cex_processing='rs')
+    learned_mealy1 = run_Lstar(alphabet, sul_mealy, state_origin_eq_oracle, automaton_type='mealy', cex_processing='rs')
 
-    return learned_mealy
+    state_origin_eq_oracle = StatePrefixEqOracle(alphabet, sul_mealy, walks_per_state=10, walk_len=15)
+    learned_mealy2 = run_KV(alphabet, sul_mealy, state_origin_eq_oracle, automaton_type='mealy', cex_processing='rs')
+
+    return learned_mealy1
 
 
 def random_moore_example(alphabet_size, number_of_states, output_size=8):
