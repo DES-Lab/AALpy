@@ -2,17 +2,19 @@ import time
 
 from aalpy.base import Oracle, SUL
 from aalpy.utils.HelperFunctions import extend_set, print_learning_info, print_observation_table, all_prefixes
-from .CounterExampleProcessing import longest_prefix_cex_processing, rs_cex_processing
+from .CounterExampleProcessing import longest_prefix_cex_processing, rs_cex_processing, \
+    counterexample_successfully_processed
 from .ObservationTable import ObservationTable
 from ...base.SUL import CacheSUL
 
 counterexample_processing_strategy = [None, 'rs', 'longest_prefix']
-closedness_options = ['prefix', 'suffix']
+closedness_options = ['suffix_all', 'suffix_single']
 print_options = [0, 1, 2, 3]
 
 
 def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, samples=None,
-              closing_strategy='longest_first', cex_processing='rs', suffix_closedness=True, closedness_type='suffix',
+              closing_strategy='shortest_first', cex_processing='rs',
+              e_set_suffix_closed=False, all_prefixes_in_obs_table=True,
               max_learning_rounds=None, cache_and_non_det_check=True, return_data=False, print_level=2):
     """
     Executes L* algorithm.
@@ -31,17 +33,17 @@ def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, sampl
         total interaction with the system. Syntax: list of [(input_sequence, output_sequence)] or None
 
         closing_strategy: closing strategy used in the close method. Either 'longest_first', 'shortest_first' or
-            'single' (Default value = 'longest_first')
+            'single' (Default value = 'shortest_first')
 
         cex_processing: Counterexample processing strategy. Either None, 'rs' (Riverst-Schapire) or 'longest_prefix'.
             (Default value = 'rs')
 
-        suffix_closedness: if True E set will be suffix closed, (Default value = True)
+        e_set_suffix_closed: True option ensures that E set is suffix closed,
+            False adds just a single suffix per counterexample.
 
-        closedness_type: either 'suffix' or 'prefix'. If suffix, E set will be suffix closed, prefix closed otherwise
-
-        meaning that all prefixes of the suffix will be added. If false, just a single suffix will be added.
-            (Default value = 'suffix')
+        all_prefixes_in_obs_table: if True, entries of observation table will contain the whole output of the whole
+            suffix, otherwise just the last output meaning that all prefixes of the suffix will be added.
+            If False, just a single suffix will be added.
 
         max_learning_rounds: number of learning rounds after which learning will terminate (Default value = None)
 
@@ -58,8 +60,8 @@ def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, sampl
         automaton of type automaton_type (dict containing all information about learning if 'return_data' is True)
 
     """
+
     assert cex_processing in counterexample_processing_strategy
-    assert closedness_type in closedness_options
     assert print_level in print_options
 
     if cache_and_non_det_check or samples is not None:
@@ -76,21 +78,22 @@ def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, sampl
     learning_rounds = 0
     hypothesis = None
 
-    observation_table = ObservationTable(alphabet, sul, automaton_type)
+    observation_table = ObservationTable(alphabet, sul, automaton_type, all_prefixes_in_obs_table)
 
     # Initial update of observation table, for empty row
     observation_table.update_obs_table()
+    cex = None
+
     while True:
-        learning_rounds += 1
-        if max_learning_rounds and learning_rounds - 1 == max_learning_rounds:
+        if max_learning_rounds and learning_rounds == max_learning_rounds:
             break
 
         # Make observation table consistent (iff there is no counterexample processing)
         if not cex_processing:
             inconsistent_rows = observation_table.get_causes_of_inconsistency()
             while inconsistent_rows is not None:
-                extend_set(observation_table.E, inconsistent_rows)
-                observation_table.update_obs_table(e_set=inconsistent_rows)
+                added_suffix = extend_set(observation_table.E, inconsistent_rows)
+                observation_table.update_obs_table(e_set=added_suffix)
                 inconsistent_rows = observation_table.get_causes_of_inconsistency()
 
         # Close observation table
@@ -104,22 +107,28 @@ def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, sampl
             rows_to_close = observation_table.get_rows_to_close(closing_strategy)
 
         # Generate hypothesis
-        hypothesis = observation_table.gen_hypothesis(check_for_duplicate_rows=cex_processing is None)
+        hypothesis = observation_table.gen_hypothesis(no_cex_processing_used=cex_processing is None)
+        # Find counterexample if none has previously been found (first round) and cex is successfully processed
+        # (not a counterexample in the current hypothesis)
+        if cex is None or counterexample_successfully_processed(sul, cex, hypothesis):
+            learning_rounds += 1
 
-        if print_level > 1:
-            print(f'Hypothesis {learning_rounds}: {len(hypothesis.states)} states.')
+            if print_level > 1:
+                print(f'Hypothesis {learning_rounds}: {len(hypothesis.states)} states.')
 
-        if print_level == 3:
-            print_observation_table(observation_table, 'det')
+            if print_level == 3:
+                print_observation_table(observation_table, 'det')
 
-        # Find counterexample
-        eq_query_start = time.time()
-        cex = eq_oracle.find_cex(hypothesis)
-        eq_query_time += time.time() - eq_query_start
+            eq_query_start = time.time()
+            cex = eq_oracle.find_cex(hypothesis)
+            eq_query_time += time.time() - eq_query_start
 
         # If no counterexample is found, return the hypothesis
         if cex is None:
             break
+
+        # make sure counterexample is a tuple in case oracle returns a list
+        cex = tuple(cex)
 
         if print_level == 3:
             print('Counterexample', cex)
@@ -134,11 +143,12 @@ def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, sampl
 
             observation_table.update_obs_table(s_set=s_to_update)
             continue
+
         elif cex_processing == 'longest_prefix':
             cex_suffixes = longest_prefix_cex_processing(observation_table.S + list(observation_table.s_dot_a()),
-                                                         cex, closedness_type)
+                                                         cex, closedness='suffix')
         else:
-            cex_suffixes = rs_cex_processing(sul, cex, hypothesis, suffix_closedness, closedness_type)
+            cex_suffixes = rs_cex_processing(sul, cex, hypothesis, e_set_suffix_closed, closedness='suffix')
 
         added_suffixes = extend_set(observation_table.E, cex_suffixes)
         observation_table.update_obs_table(e_set=added_suffixes)
@@ -149,7 +159,7 @@ def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, sampl
 
     info = {
         'learning_rounds': learning_rounds,
-        'automaton_size': len(hypothesis.states),
+        'automaton_size': hypothesis.size,
         'queries_learning': sul.num_queries,
         'steps_learning': sul.num_steps,
         'queries_eq_oracle': eq_oracle.num_queries,
@@ -157,7 +167,7 @@ def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, sampl
         'learning_time': learning_time,
         'eq_oracle_time': eq_query_time,
         'total_time': total_time,
-        'characterization set': observation_table.E
+        'characterization_set': observation_table.E
     }
     if cache_and_non_det_check:
         info['cache_saved'] = sul.num_cached_queries
