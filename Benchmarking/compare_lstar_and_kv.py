@@ -1,16 +1,12 @@
-import pickle
-from collections import defaultdict
-from statistics import mean
-
-from aalpy.SULs import MealySUL, DfaSUL
+from aalpy.SULs import DfaSUL
 from aalpy.learning_algs import run_Lstar, run_KV
 from aalpy.oracles import RandomWordEqOracle
 from aalpy.utils import generate_random_deterministic_automata
 
 automata_type = ['dfa', 'mealy', 'moore']
-automata_size = [10, 50, 100, 500]
+automata_size = [10, 100, 500, 1000,]
 input_sizes = [2, 3]
-output_sizes = [2, 3, 5]
+output_sizes = [2, 3, 5, 10]
 
 test_models = []
 for model_type in automata_type:
@@ -22,7 +18,7 @@ for model_type in automata_type:
 
                 print('------------------------------------------')
                 if model_type != 'dfa':
-                    print(f'Type: {model_type}, size: {size}, # inputs: {i}, # outputs: {output_sizes}')
+                    print(f'Type: {model_type}, size: {size}, # inputs: {i}, # outputs: {o}')
                 else:
                     print(f'Type: {model_type}, size: {size}, # inputs: {i}, # accepting: {size//8}')
 
