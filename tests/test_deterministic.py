@@ -77,7 +77,9 @@ class DeterministicTest(unittest.TestCase):
                 sul = DfaSUL(angluin_example)
                 eq_oracle = RandomWalkEqOracle(alphabet, sul, 500)
 
-                learned_dfa = run_Lstar(alphabet, sul, eq_oracle, automaton_type=automata, suffix_closedness=s_closed,
+                learned_dfa = run_Lstar(alphabet, sul, eq_oracle, automaton_type=automata,
+                                        all_prefixes_in_obs_table=True,
+                                        e_set_suffix_closed=s_closed,
                                         cache_and_non_det_check=True, cex_processing='rs', print_level=0)
 
                 is_eq = self.prove_equivalence(learned_dfa)
@@ -191,8 +193,10 @@ class DeterministicTest(unittest.TestCase):
                                 oracle.sul = sul
 
                                 learned_model = run_Lstar(alphabet, sul, oracle, automaton_type=automata,
-                                                          closing_strategy=closing, suffix_closedness=suffix,
-                                                          cache_and_non_det_check=cache, cex_processing=cex,
+                                                          closing_strategy=closing,
+                                                          cache_and_non_det_check=cache,
+                                                          cex_processing=cex,
+                                                          e_set_suffix_closed=suffix,
                                                           print_level=0)
 
                                 is_eq = self.prove_equivalence(learned_model)

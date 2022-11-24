@@ -18,11 +18,10 @@ def random_mealy_example(alphabet_size, number_of_states, output_size=8):
 
     sul_mealy = MealySUL(random_mealy)
 
-    random_walk_eq_oracle = RandomWalkEqOracle(alphabet, sul_mealy, 5000)
+    # random_walk_eq_oracle = RandomWalkEqOracle(alphabet, sul_mealy, 5000)
     state_origin_eq_oracle = StatePrefixEqOracle(alphabet, sul_mealy, walks_per_state=10, walk_len=15)
 
-    learned_mealy = run_Lstar(alphabet, sul_mealy, random_walk_eq_oracle, automaton_type='mealy',
-                              cex_processing='longest_prefix')
+    learned_mealy = run_Lstar(alphabet, sul_mealy, state_origin_eq_oracle, automaton_type='mealy', cex_processing='rs')
 
     return learned_mealy
 
@@ -47,6 +46,7 @@ def random_moore_example(alphabet_size, number_of_states, output_size=8):
     sul_mealy = MooreSUL(random_moore)
 
     state_origin_eq_oracle = StatePrefixEqOracle(alphabet, sul_mealy, walks_per_state=15, walk_len=20)
+    # custom parameterization
     learned_moore = run_Lstar(alphabet, sul_mealy, state_origin_eq_oracle, cex_processing='rs',
                               closing_strategy='single', automaton_type='moore', cache_and_non_det_check=True)
     return learned_moore
@@ -123,7 +123,7 @@ def random_deterministic_example_with_provided_sequances():
 
     from aalpy.learning_algs import run_Lstar
     learned_mealy = run_Lstar(input_alphabet, sul_mealy, random_walk_eq_oracle, automaton_type='mealy',
-                              samples=None)
+                              samples=samples)
 
 
 def big_input_alphabet_example(input_alphabet_size=1000, automaton_depth=4):

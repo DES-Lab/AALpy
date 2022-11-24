@@ -8,7 +8,7 @@ closing_options = ['shortest_first', 'longest_first', 'single', 'single_longest'
 
 
 class ObservationTable:
-    def __init__(self, alphabet: list, sul: SUL, automaton_type="mealy"):
+    def __init__(self, alphabet: list, sul: SUL, automaton_type, prefixes_in_cell=False):
         """
         Constructor of the observation table. Initial queries are asked in the constructor.
 
@@ -24,6 +24,9 @@ class ObservationTable:
         assert automaton_type in aut_type
         assert alphabet is not None and sul is not None
         self.automaton_type = automaton_type
+
+        # If True add prefixes of each element of E set to a cell, else only add the output
+        self.prefixes_in_cell = prefixes_in_cell
 
         self.A = [tuple([a]) for a in alphabet]
         self.S = list()  # prefixes of S
@@ -99,7 +102,6 @@ class ObservationTable:
             a+e values that are the causes of inconsistency
 
         """
-        causes_of_inconsistency = set()
         for i, s1 in enumerate(self.S):
             for s2 in self.S[i + 1:]:
                 if self.T[s1] == self.T[s2]:
@@ -107,11 +109,9 @@ class ObservationTable:
                         if self.T[s1 + a] != self.T[s2 + a]:
                             for index, e in enumerate(self.E):
                                 if self.T[s1 + a][index] != self.T[s2 + a][index]:
-                                    causes_of_inconsistency.add(a + e)
+                                    return [(a + e)]
 
-        if not causes_of_inconsistency:
-            return None
-        return causes_of_inconsistency
+        return None
 
     def s_dot_a(self):
         """
@@ -146,10 +146,14 @@ class ObservationTable:
         for s in update_S:
             for e in update_E:
                 if len(self.T[s]) != len(self.E):
-                    output = self.sul.query(s + e)
-                    self.T[s] += (output[-1],)
+                    output = tuple(self.sul.query(s + e))
+                    if self.prefixes_in_cell and len(e) > 1:
+                        obs_table_entry = tuple([output[-len(e):]],)
+                    else:
+                        obs_table_entry = (output[-1],)
+                    self.T[s] += obs_table_entry
 
-    def gen_hypothesis(self, check_for_duplicate_rows=False) -> Automaton:
+    def gen_hypothesis(self, no_cex_processing_used=False) -> Automaton:
         """
         Generate automaton based on the values found in the observation table.
         :return:
@@ -168,22 +172,14 @@ class ObservationTable:
         initial_state = None
         automaton_class = {'dfa': Dfa, 'mealy': MealyMachine, 'moore': MooreMachine}
 
-        # delete duplicate rows, only possible if no counterexample processing is present
-        # counterexample processing removes the need for consistency check, as it ensures
-        # that no two rows in the S set are the same
-        if check_for_duplicate_rows:
-            rows_to_delete = set()
-            for i, s1 in enumerate(self.S):
-                for s2 in self.S[i + 1:]:
-                    if self.T[s1] == self.T[s2]:
-                        rows_to_delete.add(s2)
-
-            for row in rows_to_delete:
-                self.S.remove(row)
+        s_set = self.S
+        # Added check for the algorithm without counterexample processing
+        if no_cex_processing_used:
+            s_set = self._get_row_representatives()
 
         # create states based on S set
         stateCounter = 0
-        for prefix in self.S:
+        for prefix in s_set:
             state_id = f's{stateCounter}'
 
             if self.automaton_type == 'dfa':
@@ -202,7 +198,7 @@ class ObservationTable:
             stateCounter += 1
 
         # add transitions based on extended S set
-        for prefix in self.S:
+        for prefix in s_set:
             for a in self.A:
                 state_in_S = state_distinguish[self.T[prefix + a]]
                 states_dict[prefix].transitions[a[0]] = state_in_S
@@ -213,3 +209,11 @@ class ObservationTable:
         automaton.characterization_set = self.E
 
         return automaton
+
+    def _get_row_representatives(self):
+        self.S.sort(key=len)
+        representatives = defaultdict(list)
+        for prefix in self.S:
+            representatives[self.T[prefix]].append(prefix)
+
+        return [r[0] for r in representatives.values()]
