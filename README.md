@@ -60,9 +60,12 @@ a Java twin of AALpy's ALERGIA code.
  
 ## Installation
 
-Use the package manager [pip](https://pip.pypa.io/en/stable/) to install AALpy.
+Use the package manager [pip](https://pip.pypa.io/en/stable/) to install the latest release of AALpy:
 ```bash
 pip install aalpy
+
+# or to install the current status of the master branch which might contain bugfixes/new features in between releases
+pip install https://github.com/DES-Lab/AALpy/archive/master.zip
 ```
 The minimum required version of Python is 3.6.  
 Ensure that you have [Graphviz](https://graphviz.org/) installed and added to your path if you want to visualize models.
@@ -82,9 +85,6 @@ please check out our **Wiki**. On Wiki, you will find more detailed examples on 
 
 For the **official documentation** of all classes and methods, check out:
 - <https://des-lab.github.io/AALpy/documentation/index.html>
-
-**Interactive examples** can be found in the [notebooks](https://github.com/DES-Lab/AALpy/tree/master/notebooks) folder.
-If you would like to interact/change those examples in the browser, click [here](https://mybinder.org/v2/gh/DES-Lab/AALpy/master). (Navigate to the _notebooks_ folder and select one notebook)
 
 [Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py) contains many examples and it is a great starting point. 
 
