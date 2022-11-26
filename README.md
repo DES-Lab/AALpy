@@ -34,12 +34,11 @@ Whether you work with regular languages or you would like to learn models of
 
 AALpy enables efficient learning by providing a large set of equivalence oracles, implementing various conformance testing strategies. Active learning 
 is mostly based on Angluin's [L* algorithm](https://people.eecs.berkeley.edu/~dawnsong/teaching/s10/papers/angluin87.pdf), for which AALpy supports a 
-selection of optimizations, including efficient counterexample processing caching. However, the recent addition of 
-[KV](https://mitpress.mit.edu/9780262111935/an-introduction-to-computational-learning-theory/) algorithm with smart counterexample processing and caching
-reacquires (on average) much less interaction with the system than L*.
+selection of optimizations, including efficient counterexample processing caching. However, the recent addition of efficiently implemented 
+[KV](https://mitpress.mit.edu/9780262111935/an-introduction-to-computational-learning-theory/) algorithm
+requires (on average) much less interaction with the system under learning than L*.
 
-AALpy also includes **passive automata learning algorithms**, namely RPNI for deterministic and ALERGIA for stochastic models.  
-Unlike active algorithms which learn by interaction with the system, passive learning algorithms construct a model based on provided data.
+AALpy also includes **passive automata learning algorithms**, namely RPNI for deterministic and ALERGIA for stochastic models. Unlike active algorithms which learn by interaction with the system, passive learning algorithms construct a model based on provided data.
  
 ## Installation
 
