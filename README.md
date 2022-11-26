@@ -10,14 +10,13 @@
 ![GitHub pull requests](https://img.shields.io/github/issues-pr/des-lab/aalpy)
 [![Python 3.6](https://img.shields.io/badge/python-3.6%2B-blue)](https://www.python.org/downloads/release/python-360/)
 ![PyPI - Wheel](https://img.shields.io/pypi/wheel/aalpy)
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/DES-Lab/AALpy/master)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 </div>
 <hr />
 
-AALpy is a light-weight active automata learning library written in pure Python. 
-You can start learning automata in just a few lines of code. 
+AALpy is a light-weight automata learning library written in Python. 
+You can start learning automata in just a few lines of code.
 
 Whether you work with regular languages or you would like to learn models of 
 (black-box) reactive systems, AALpy supports a wide range of modeling formalisms, including 
@@ -25,57 +24,38 @@ Whether you work with regular languages or you would like to learn models of
 
 <div align="center">
 	
-| Automata Type   |      Supported Formalisms      |  Features |
-|----------|:-------------:|------:|
-| Deterministic     |  Deterministic Finite Automata<br />Mealy Machines<br />Moore Machines | Counterexample Processing<br />Seamless Caching<br />11 Equivalence Oracles <br /> Passive learning of all formalisms |
-| Non-Deterministic |    Observable Non-Deterministic FSM <br /> Abstracted Non-Deterministic FSM|   Dynamic Observation Table Updates <br/> Size Reduction Trough Abstraction<br />|
-| Stochastic        |  Markov Decision Processes<br />Stochastic Mealy Machines<br />Markov Chains |    Counterexample Processing<br />Row/Cell Compatability Metrics<br />Model Checking with PRISM<br />Alergia Passive Learning|
+| **Automata Type** |                      **Supported Formalisms**                     | **Algorithms**        |                                                       **Features** |
+|-------------------|:-----------------------------------------------------------------:|-----------------------|-------------------------------------------------------------------:|
+| Deterministic     |                 DFAs <br /> Mealy Machines <br /> Moore Machines                 |      L* <br /> KV <br /> RPNI      | Seamless Caching <br /> Counterexample Processing <br /> 11 Equivalence Oracles  |
+| Non-Deterministic |                      ONFSM <br /> Abstracted ONFSM                      |        L*<sub>ONFSM</sub>       |                                 Size Reduction  Trough Abstraction |
+| Stochastic        | Markov Decision Processes <br /> Stochastic Mealy Machines <br /> Markov Chains | L*<sub>MDP</sub> <br /> L*<sub>SMM</sub> <br /> ALERGIA |               Counterexample Processing <br /> Exportable to PRISM format  <br /> Bindings to jALERGIA|
 
 </div>
 
-<!---
-You can use it to learn **deterministic finite automata**, **Moore machines**, 
-and **Mealy machines** of deterministic systems. 
-If the system that you would like to learn shows non-deterministic or
-stochastic behavior, AALpy allows you to learn **observable
-nondeterministic finite-state machines**, **Markov decision processes**, 
-or **stochastic Mealy machines**.
-
-Finally, support for learning **abstracted non-deterministic Mealy machines** 
-enables efficient learning of system models with large input space.
---->
-
-AALpy enables efficient learning by providing a **large set of equivalence oracles**, implementing various conformance testing strategies. Learning 
+AALpy enables efficient learning by providing a large set of equivalence oracles, implementing various conformance testing strategies. Active learning 
 is mostly based on Angluin's [L* algorithm](https://people.eecs.berkeley.edu/~dawnsong/teaching/s10/papers/angluin87.pdf), for which AALpy supports a 
-selection of optimizations, including **efficient counterexample processing** and **caching**.
+selection of optimizations, including efficient counterexample processing caching. However, the recent addition of 
+[KV](https://mitpress.mit.edu/9780262111935/an-introduction-to-computational-learning-theory/) algorithm with smart counterexample processing and caching
+reacquires (on average) much less interaction with the system than L*.
 
-AALpy also includes **passive automata learning algorithms**. Unlike active algorithms which learn by interaction with the system, passive
-learning algorithms construct a model based on provided data.
-AALpy includes an implementation of RPNI, a  passive deterministic automata learning algorithm that constructs a model that conforms to the
-provided data.
-AALpy also has an efficient implementation of the [ALERGIA](https://link.springer.com/article/10.1007/s10994-016-5565-9) algorithm, 
-suited for passive learning of Markov Chains, Markov Decision processes, and Stochastic Mealy Machines.
-For more efficient ALERGIA execution, AALpy offers bindings to [jAlergia](https://github.com/emuskardin/jAlergia), 
-a Java twin of AALpy's ALERGIA code.
+AALpy also includes **passive automata learning algorithms**, namely RPNI for deterministic and ALERGIA for stochastic models.  
+Unlike active algorithms which learn by interaction with the system, passive learning algorithms construct a model based on provided data.
  
 ## Installation
 
 Use the package manager [pip](https://pip.pypa.io/en/stable/) to install the latest release of AALpy:
 ```bash
 pip install aalpy
-
-# or to install the current status of the master branch which might contain bugfixes/new features in between releases
+```
+To install current version of the master branch. 
+It might contain bugfixes and added functionalities between releases.
+```bash
 pip install https://github.com/DES-Lab/AALpy/archive/master.zip
 ```
 The minimum required version of Python is 3.6.  
 Ensure that you have [Graphviz](https://graphviz.org/) installed and added to your path if you want to visualize models.
 
-For manual installation, clone the master and install the following dependency.
-```bash
-pip install pydot
-# and to install the library
-python setup.py install
-```
+For manual installation, clone the repo and install `pydot` (the only dependency).
 
 ## Documentation and Wiki
 
@@ -86,7 +66,7 @@ please check out our **Wiki**. On Wiki, you will find more detailed examples on 
 For the **official documentation** of all classes and methods, check out:
 - <https://des-lab.github.io/AALpy/documentation/index.html>
 
-[Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py) contains many examples and it is a great starting point. 
+***[Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py)*** contains many examples and it is a great starting point. 
 
 ## Usage
 
@@ -113,7 +93,7 @@ The following snippet demonstrates a short example in which an automaton is eith
 from aalpy.utils import load_automaton_from_file, save_automaton_to_file, visualize_automaton, generate_random_dfa, dfa_from_state_setup
 from aalpy.SULs import DfaSUL
 from aalpy.oracles import RandomWalkEqOracle
-from aalpy.learning_algs import run_Lstar
+from aalpy.learning_algs import run_Lstar, run_KV
 
 # load an automaton
 # automaton = load_automaton_from_file('path_to_the_file.dot', automaton_type='dfa')
@@ -144,7 +124,10 @@ sul = DfaSUL(random_dfa)
 eq_oracle = RandomWalkEqOracle(alphabet, sul, num_steps=5000, reset_prob=0.09)
 
 # start learning
-learned_dfa = run_Lstar(alphabet, sul, eq_oracle, automaton_type='dfa')
+# run_KV is for the most part reacquires much fewer interactions with the system under learning
+learned_dfa = run_KV(alphabet, sul, eq_oracle, automaton_type='dfa')
+# or run L*
+# learned_dfa_lstar = run_Lstar(alphabet, sul, eq_oracle, automaton_type='dfa')
 
 # save automaton to file and visualize it
 # save_automaton_to_file(learned_dfa, path='Learned_Automaton', file_type='dot')
@@ -157,7 +140,6 @@ learned_dfa.visualize()
 # or just print its DOT representation
 print(learned_dfa)
 ```
-
 </details>
 
 To make experiments reproducible, define a random seed at the beginning of your program.
