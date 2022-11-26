@@ -1,107 +1,144 @@
-def random_mealy_example(alphabet_size, number_of_states, output_size=8):
-    """
-    Generate a random Mealy machine and learn it.
-    :param alphabet_size: size of input alphabet
-    :param number_of_states: number of states in generated Mealy machine
-    :param output_size: size of the output
-    :return: learned Mealy machine
-    """
-
+def random_deterministic_model_example():
+    from aalpy.utils import generate_random_deterministic_automata
     from aalpy.SULs import MealySUL
-    from aalpy.learning_algs import run_Lstar, run_KV
-    from aalpy.oracles import RandomWalkEqOracle, StatePrefixEqOracle
+    from aalpy.oracles import RandomWMethodEqOracle
+    from aalpy.learning_algs import run_KV
 
-    alphabet = [*range(0, alphabet_size)]
+    model_type = 'mealy'  # or 'moore', 'dfa'
+    random_model = generate_random_deterministic_automata(automaton_type=model_type, num_states=100,
+                                                          input_alphabet_size=3, output_alphabet_size=4)
 
-    from aalpy.utils import generate_random_mealy_machine
-    random_mealy = generate_random_mealy_machine(number_of_states, alphabet, output_alphabet=list(range(output_size)))
+    sul = MealySUL(random_model)
+    input_alphabet = random_model.get_input_alphabet()
 
-    sul_mealy = MealySUL(random_mealy)
+    # select any of the oracles
+    eq_oracle = RandomWMethodEqOracle(input_alphabet, sul, walks_per_state=10, walk_len=20)
 
-    # random_walk_eq_oracle = RandomWalkEqOracle(alphabet, sul_mealy, 5000)
-    state_origin_eq_oracle = StatePrefixEqOracle(alphabet, sul_mealy, walks_per_state=10, walk_len=15)
+    learned_model = run_KV(input_alphabet, sul, eq_oracle, model_type)
 
-    learned_mealy1 = run_Lstar(alphabet, sul_mealy, state_origin_eq_oracle, automaton_type='mealy', cex_processing='rs')
-
-    state_origin_eq_oracle = StatePrefixEqOracle(alphabet, sul_mealy, walks_per_state=10, walk_len=15)
-    learned_mealy2 = run_KV(alphabet, sul_mealy, state_origin_eq_oracle, automaton_type='mealy', cex_processing='rs')
-
-    return learned_mealy1
+    return learned_model
 
 
-def random_moore_example(alphabet_size, number_of_states, output_size=8):
+def angluin_seminal_example():
     """
-    Generate a random Moore machine and learn it.
-    :param alphabet_size: size of input alphabet
-    :param number_of_states: number of states in generated Mealy machine
-    :param output_size: size of the output
-    :return: learned Moore machine
+    Example automaton from Angluin's seminal paper.
+    :return: learned DFA
     """
-    alphabet = [*range(0, alphabet_size)]
-
-    from aalpy.SULs import MooreSUL
-    from aalpy.learning_algs import run_Lstar
-    from aalpy.oracles import StatePrefixEqOracle
-    from aalpy.utils import generate_random_moore_machine
-
-    random_moore = generate_random_moore_machine(number_of_states, alphabet, output_alphabet=list(range(output_size)))
-
-    sul_mealy = MooreSUL(random_moore)
-
-    state_origin_eq_oracle = StatePrefixEqOracle(alphabet, sul_mealy, walks_per_state=15, walk_len=20)
-    # custom parameterization
-    learned_moore = run_Lstar(alphabet, sul_mealy, state_origin_eq_oracle, cex_processing='rs',
-                              closing_strategy='single', automaton_type='moore', cache_and_non_det_check=True)
-    return learned_moore
-
-
-def random_dfa_example(alphabet_size, number_of_states, num_accepting_states=1):
-    """
-    Generate a random DFA machine and learn it.
-    :param alphabet_size: size of the input alphabet
-    :param number_of_states: number of states in the generated DFA
-    :param num_accepting_states: number of accepting states
-    :return: DFA
-    """
-    import string
     from aalpy.SULs import DfaSUL
+    from aalpy.oracles import RandomWalkEqOracle
     from aalpy.learning_algs import run_Lstar
-    from aalpy.oracles import StatePrefixEqOracle, TransitionFocusOracle, WMethodEqOracle, \
-        RandomWalkEqOracle, RandomWMethodEqOracle, BreadthFirstExplorationEqOracle, RandomWordEqOracle, \
-        CacheBasedEqOracle, UserInputEqOracle, KWayStateCoverageEqOracle, KWayTransitionCoverageEqOracle, PacOracle
-    from aalpy.utils import generate_random_dfa
+    from aalpy.utils import get_Angluin_dfa
 
-    assert num_accepting_states <= number_of_states
+    dfa = get_Angluin_dfa()
 
-    alphabet = list(string.ascii_letters[:26])[:alphabet_size]
-    random_dfa = generate_random_dfa(number_of_states, alphabet, num_accepting_states)
-    alphabet = list(string.ascii_letters[:26])[:alphabet_size]
-    # visualize_automaton(random_dfa, path='correct')
-    sul_dfa = DfaSUL(random_dfa)
+    alphabet = dfa.get_input_alphabet()
 
-    # examples of various equivalence oracles
+    sul = DfaSUL(dfa)
+    eq_oracle = RandomWalkEqOracle(alphabet, sul, 500)
 
-    random_walk_eq_oracle = RandomWalkEqOracle(alphabet, sul_dfa, 5000)
-    state_origin_eq_oracle = StatePrefixEqOracle(alphabet, sul_dfa, walks_per_state=10, walk_len=50)
-    tran_cov_eq_oracle = TransitionFocusOracle(alphabet, sul_dfa, num_random_walks=200, walk_len=30,
-                                               same_state_prob=0.3)
-    w_method_eq_oracle = WMethodEqOracle(alphabet, sul_dfa, max_number_of_states=number_of_states)
-    pac_oracle = PacOracle(alphabet, sul_dfa)
-    random_W_method_eq_oracle = RandomWMethodEqOracle(alphabet, sul_dfa, walks_per_state=10, walk_len=50)
-    bf_exploration_eq_oracle = BreadthFirstExplorationEqOracle(alphabet, sul_dfa, 5)
-    random_word_eq_oracle = RandomWordEqOracle(alphabet, sul_dfa)
-    cache_based_eq_oracle = CacheBasedEqOracle(alphabet, sul_dfa)
-    user_based_eq_oracle = UserInputEqOracle(alphabet, sul_dfa)
-    kWayStateCoverageEqOracle = KWayStateCoverageEqOracle(alphabet, sul_dfa)
-    kWayTransitionCoverageEqOracle = KWayTransitionCoverageEqOracle(alphabet, sul_dfa)
-    learned_dfa = run_Lstar(alphabet, sul_dfa, random_W_method_eq_oracle, automaton_type='dfa',
-                            cache_and_non_det_check=True, cex_processing='rs')
+    learned_dfa = run_Lstar(alphabet, sul, eq_oracle, automaton_type='dfa',
+                            cache_and_non_det_check=True, cex_processing=None, print_level=3)
 
-    # visualize_automaton(learned_dfa)
     return learned_dfa
 
 
-def random_deterministic_example_with_provided_sequances():
+def tomita_example(tomita_number=3):
+    """
+    Pass a tomita function to this example and learn it.
+    :param: function of the desired tomita grammar
+    :rtype: Dfa
+    :return DFA representing tomita grammar
+    """
+    from aalpy.SULs import TomitaSUL
+    from aalpy.learning_algs import run_Lstar
+    from aalpy.oracles import StatePrefixEqOracle
+
+    tomita_sul = TomitaSUL(tomita_number)
+    alphabet = [0, 1]
+    state_origin_eq_oracle = StatePrefixEqOracle(alphabet, tomita_sul, walks_per_state=50, walk_len=10)
+
+    # or replace run_Lstar with run_KV
+    learned_dfa = run_Lstar(alphabet, tomita_sul, state_origin_eq_oracle, automaton_type='dfa', )
+
+    return learned_dfa
+
+
+def regex_example(regex, alphabet):
+    """
+    Learn a regular expression.
+    :param regex: regex to learn
+    :param alphabet: alphabet of the regex
+    :return: DFA representing the regex
+    """
+    from aalpy.SULs import RegexSUL
+    from aalpy.oracles import StatePrefixEqOracle
+    from aalpy.learning_algs import run_Lstar
+
+    regex_sul = RegexSUL(regex)
+
+    eq_oracle = StatePrefixEqOracle(alphabet, regex_sul, walks_per_state=2000,
+                                    walk_len=15)
+
+    # or replace run_Lstar with run_KV
+    learned_regex = run_Lstar(alphabet, regex_sul, eq_oracle, automaton_type='dfa')
+
+    return learned_regex
+
+
+def learn_date_validator():
+    from aalpy.base import SUL
+    from aalpy.utils import visualize_automaton, DateValidator
+    from aalpy.oracles import StatePrefixEqOracle
+    from aalpy.learning_algs import run_Lstar
+
+    class DateSUL(SUL):
+        """
+        An example implementation of a system under learning that
+        can be used to learn the behavior of the date validator.
+        """
+
+        def __init__(self):
+            super().__init__()
+            # DateValidator is a black-box class used for date string verification
+            # The format of the dates is %d/%m/%Y'
+            # Its method is_date_accepted returns True if date is accepted, False otherwise
+            self.dv = DateValidator()
+            self.string = ""
+
+        def pre(self):
+            # reset the string used for testing
+            self.string = ""
+            pass
+
+        def post(self):
+            pass
+
+        def step(self, letter):
+            # add the input to the current string
+            if letter is not None:
+                self.string += str(letter)
+
+            # test if the current sting is accepted
+            return self.dv.is_date_accepted(self.string)
+
+    # instantiate the SUL
+    sul = DateSUL()
+
+    # define the input alphabet
+    alphabet = list(range(0, 9)) + ['/']
+
+    # define a equivalence oracle
+
+    eq_oracle = StatePrefixEqOracle(alphabet, sul, walks_per_state=500, walk_len=15)
+
+    # run the learning algorithm
+
+    learned_model = run_Lstar(alphabet, sul, eq_oracle, automaton_type='dfa')
+    # visualize the automaton
+    visualize_automaton(learned_model)
+
+
+def random_deterministic_example_with_provided_sequences():
     from random import choice, randint
 
     input_alphabet = [f'i{i + 1}' for i in range(2)]
@@ -227,124 +264,6 @@ def random_mdp_example(num_states, input_len, num_outputs, n_c=20, n_resample=10
                                        min_rounds=min_rounds, max_rounds=max_rounds)
 
     return learned_mdp
-
-
-def angluin_seminal_example():
-    """
-    Example automaton from Angluin's seminal paper.
-    :return: learned DFA
-    """
-    from aalpy.SULs import DfaSUL
-    from aalpy.oracles import RandomWalkEqOracle
-    from aalpy.learning_algs import run_Lstar
-    from aalpy.utils import get_Angluin_dfa
-
-    dfa = get_Angluin_dfa()
-
-    alphabet = dfa.get_input_alphabet()
-
-    sul = DfaSUL(dfa)
-    eq_oracle = RandomWalkEqOracle(alphabet, sul, 500)
-
-    learned_dfa = run_Lstar(alphabet, sul, eq_oracle, automaton_type='dfa',
-                            cache_and_non_det_check=True, cex_processing=None, print_level=3)
-
-    return learned_dfa
-
-
-def tomita_example(tomita_number):
-    """
-    Pass a tomita function to this example and learn it.
-    :param: function of the desired tomita grammar
-    :rtype: Dfa
-    :return DFA representing tomita grammar
-    """
-    from aalpy.SULs import TomitaSUL
-    from aalpy.learning_algs import run_Lstar
-    from aalpy.oracles import StatePrefixEqOracle
-
-    tomita_sul = TomitaSUL(tomita_number)
-    alphabet = [0, 1]
-    state_origin_eq_oracle = StatePrefixEqOracle(alphabet, tomita_sul, walks_per_state=50, walk_len=10)
-
-    learned_dfa = run_Lstar(alphabet, tomita_sul, state_origin_eq_oracle, automaton_type='dfa',
-                            cache_and_non_det_check=True)
-
-    return learned_dfa
-
-
-def regex_example(regex, alphabet):
-    """
-    Learn a regular expression.
-    :param regex: regex to learn
-    :param alphabet: alphabet of the regex
-    :return: DFA representing the regex
-    """
-    from aalpy.SULs import RegexSUL
-    from aalpy.oracles import StatePrefixEqOracle
-    from aalpy.learning_algs import run_Lstar
-
-    regex_sul = RegexSUL(regex)
-
-    eq_oracle = StatePrefixEqOracle(alphabet, regex_sul, walks_per_state=2000,
-                                    walk_len=15)
-
-    learned_regex = run_Lstar(alphabet, regex_sul, eq_oracle, automaton_type='dfa')
-
-    return learned_regex
-
-
-def learn_date_validator():
-    from aalpy.base import SUL
-    from aalpy.utils import visualize_automaton, DateValidator
-    from aalpy.oracles import StatePrefixEqOracle
-    from aalpy.learning_algs import run_Lstar
-
-    class DateSUL(SUL):
-        """
-        An example implementation of a system under learning that
-        can be used to learn the behavior of the date validator.
-        """
-
-        def __init__(self):
-            super().__init__()
-            # DateValidator is a black-box class used for date string verification
-            # The format of the dates is %d/%m/%Y'
-            # Its method is_date_accepted returns True if date is accepted, False otherwise
-            self.dv = DateValidator()
-            self.string = ""
-
-        def pre(self):
-            # reset the string used for testing
-            self.string = ""
-            pass
-
-        def post(self):
-            pass
-
-        def step(self, letter):
-            # add the input to the current string
-            if letter is not None:
-                self.string += str(letter)
-
-            # test if the current sting is accepted
-            return self.dv.is_date_accepted(self.string)
-
-    # instantiate the SUL
-    sul = DateSUL()
-
-    # define the input alphabet
-    alphabet = list(range(0, 9)) + ['/']
-
-    # define a equivalence oracle
-
-    eq_oracle = StatePrefixEqOracle(alphabet, sul, walks_per_state=500, walk_len=15)
-
-    # run the learning algorithm
-
-    learned_model = run_Lstar(alphabet, sul, eq_oracle, automaton_type='dfa')
-    # visualize the automaton
-    visualize_automaton(learned_model)
 
 
 def learn_python_class():
