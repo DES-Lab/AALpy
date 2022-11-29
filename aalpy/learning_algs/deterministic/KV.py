@@ -4,6 +4,7 @@ from aalpy.automata import Dfa, DfaState, MealyState, MealyMachine, MooreState, 
 from aalpy.base import Oracle, SUL
 from aalpy.utils.HelperFunctions import print_learning_info
 from .ClassificationTree import ClassificationTree
+from .CounterExampleProcessing import counterexample_successfully_processed
 from ...base.SUL import CacheSUL
 
 print_options = [0, 1, 2, 3]
@@ -157,8 +158,3 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, cex_proc
 
     return hypothesis
 
-
-def counterexample_successfully_processed(sul, cex, hypothesis):
-    cex_outputs = sul.query(cex)
-    hyp_outputs = hypothesis.execute_sequence(hypothesis.initial_state, cex)
-    return cex_outputs[-1] == hyp_outputs[-1]
