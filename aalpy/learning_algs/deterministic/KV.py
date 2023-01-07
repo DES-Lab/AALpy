@@ -74,6 +74,8 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, cex_proc
     else:
         initial_state = MealyState(state_id='s0')
 
+    initial_state.prefix = tuple()
+
     for a in alphabet:
         initial_state.transitions[a] = initial_state
         if automaton_type == 'mealy':
