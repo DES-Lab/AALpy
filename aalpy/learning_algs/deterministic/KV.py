@@ -88,49 +88,46 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, cex_proc
     cex = eq_oracle.find_cex(hypothesis)
 
     eq_query_time += time.time() - eq_query_start
-    already_found = False
-    if cex is None:
-        already_found = True
-    else:
+    if cex is not None:
         cex = tuple(cex)
 
-    # initialise the classification tree to have a root
-    # labeled with the empty word as the distinguishing string
-    # and two leaves labeled with access strings cex and empty word
-    classification_tree = ClassificationTree(alphabet=alphabet, sul=sul, automaton_type=automaton_type, cex=cex)
+        # initialise the classification tree to have a root
+        # labeled with the empty word as the distinguishing string
+        # and two leaves labeled with access strings cex and empty word
+        classification_tree = ClassificationTree(alphabet=alphabet, sul=sul, automaton_type=automaton_type, cex=cex)
 
-    while True and not already_found:
-        learning_rounds += 1
-        if max_learning_rounds and learning_rounds - 1 == max_learning_rounds:
-            break
-
-        hypothesis = classification_tree.gen_hypothesis()
-
-        if print_level == 2:
-            print(f'\rHypothesis {learning_rounds}: {hypothesis.size} states.', end="")
-
-        if print_level == 3:
-            # would be nice to have an option to print classification tree
-            print(f'Hypothesis {learning_rounds}: {hypothesis.size} states.')
-
-        if counterexample_successfully_processed(sul, cex, hypothesis):
-            # Perform an equivalence query on this automaton
-            eq_query_start = time.time()
-            cex = eq_oracle.find_cex(hypothesis)
-            eq_query_time += time.time() - eq_query_start
-
-            if cex is None:
+        while True:
+            learning_rounds += 1
+            if max_learning_rounds and learning_rounds - 1 == max_learning_rounds:
                 break
-            else:
-                cex = tuple(cex)
+
+            hypothesis = classification_tree.gen_hypothesis()
+
+            if print_level == 2:
+                print(f'\rHypothesis {learning_rounds}: {hypothesis.size} states.', end="")
 
             if print_level == 3:
-                print('Counterexample', cex)
+                # would be nice to have an option to print classification tree
+                print(f'Hypothesis {learning_rounds}: {hypothesis.size} states.')
 
-        if cex_processing == 'rs':
-            classification_tree.update_rs(cex, hypothesis)
-        else:
-            classification_tree.update(cex, hypothesis)
+            if counterexample_successfully_processed(sul, cex, hypothesis):
+                # Perform an equivalence query on this automaton
+                eq_query_start = time.time()
+                cex = eq_oracle.find_cex(hypothesis)
+                eq_query_time += time.time() - eq_query_start
+
+                if cex is None:
+                    break
+                else:
+                    cex = tuple(cex)
+
+                if print_level == 3:
+                    print('Counterexample', cex)
+
+            if cex_processing == 'rs':
+                classification_tree.update_rs(cex, hypothesis)
+            else:
+                classification_tree.update(cex, hypothesis)
 
     total_time = round(time.time() - start_time, 2)
     eq_query_time = round(eq_query_time, 2)
@@ -146,7 +143,6 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, cex_proc
         'learning_time': learning_time,
         'eq_oracle_time': eq_query_time,
         'total_time': total_time,
-        'classification_tree': classification_tree,
         'cache_saved': sul.num_cached_queries,
     }
 
