@@ -1,4 +1,10 @@
+import random
+import time
 import unittest
+
+from aalpy.learning_algs.deterministic_passive.RPNI import RPNI
+
+from aalpy.learning_algs.deterministic_passive.GeneralizedStateMerging import StateMerging, GeneralizedStateMerging
 
 from aalpy.SULs import DfaSUL, MealySUL, MooreSUL
 from aalpy.automata import Dfa, MealyMachine, MooreMachine
@@ -6,7 +12,9 @@ from aalpy.learning_algs import run_Lstar
 from aalpy.oracles import WMethodEqOracle, RandomWalkEqOracle, StatePrefixEqOracle, TransitionFocusOracle, \
     RandomWMethodEqOracle, BreadthFirstExplorationEqOracle, RandomWordEqOracle, CacheBasedEqOracle, \
     KWayStateCoverageEqOracle
-from aalpy.utils import get_Angluin_dfa, load_automaton_from_file
+from aalpy.utils import get_Angluin_dfa, load_automaton_from_file, generate_random_moore_machine, save_automaton_to_file
+
+from aalpy.utils.ModelChecking import bisimilar
 
 correct_automata = {Dfa: get_Angluin_dfa(),
                     MealyMachine: load_automaton_from_file('../DotModels/Angluin_Mealy.dot', automaton_type='mealy'),
@@ -109,6 +117,77 @@ class DeterministicTest(unittest.TestCase):
                     assert False
 
         assert True
+
+    def test_GSM(self):
+
+        def sample(moore : MooreMachine, number, length) :
+            alphabet = moore.get_input_alphabet()
+            ret = [None] * number
+            for idx in range(number):
+                k = random.randint(0,length)
+                seq = random.choices(alphabet,k=k)
+                moore.execute_sequence(moore.initial_state, seq)
+                ret[idx] = [seq,moore.current_state.output]
+            return ret
+
+        nr_states = 10
+        nr_ins = 5
+        nr_outs= 5
+        nr_samples = nr_states * 100
+        sample_length = nr_states
+
+        in_alph = [f"i{idx}" for idx in range(nr_ins)]
+        out_alph = [f"o{idx}" for idx in range(nr_outs)]
+
+        GSM_time = []
+        RPNI_time = []
+
+        while True:
+            machine = generate_random_moore_machine(nr_states, in_alph, out_alph)
+            samples = sample(machine, nr_samples, sample_length)
+
+            print("run GSM")
+            ct = time.time()
+            gsm_state = GeneralizedStateMerging(samples, "moore", print_info=False)
+            gsm = gsm_state.run()
+            GSM_time.append(round(time.time() - ct,2))
+
+            print("run RPNI")
+            ct = time.time()
+            rpni_state = RPNI(samples, "moore", print_info=False)
+            rpni = rpni_state.run_rpni()
+            RPNI_time.append(round(time.time() - ct,2))
+
+            cex = bisimilar(gsm,rpni)
+            if cex is None:
+                total_rpni = sum(RPNI_time)
+                total_gsm = sum(GSM_time)
+                print("models are equivalent.")
+                print(f"timing: {GSM_time[-1]} / {RPNI_time[-1]} = {GSM_time[-1]/RPNI_time[-1]}")
+                print(f"total: {total_gsm} / {total_rpni} = {total_gsm/total_rpni}")
+            else:
+                if cex not in [o for _,o in samples]:
+                    continue
+
+                pta = StateMerging(samples, "moore").to_automaton()
+
+                automata = {"pta" : pta, "gsm" : gsm, "rpni" : rpni}
+                print(f"counter example: {cex}")
+                for name, automaton in automata.items():
+                    out = automaton.execute_sequence(automaton.initial_state, cex)[-1]
+                    print(f"{name}: {out}")
+
+                print("timing")
+                print(sum(GSM_time), GSM_time)
+                print(sum(RPNI_time), RPNI_time)
+
+
+                for file_format in ("pdf","dot"):
+                    save_automaton_to_file(pta, "PTA", file_format)
+                    save_automaton_to_file(gsm, "GSM", file_format)
+                    save_automaton_to_file(rpni, "RPNI", file_format)
+                    save_automaton_to_file(machine, "Truth", file_format)
+                break
 
     def test_eq_oracles(self):
         angluin_example = get_Angluin_dfa()
