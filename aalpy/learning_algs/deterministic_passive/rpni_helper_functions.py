@@ -1,4 +1,6 @@
 import pickle
+import queue
+from typing import Set
 
 
 class RpniNode:
@@ -21,6 +23,33 @@ class RpniNode:
     def __eq__(self, other):
         return self.prefix == other.prefix
 
+    def get_all_nodes(self) -> Set['RpniNode'] :
+        qu = queue.Queue()
+        qu.put(self)
+        nodes = set()
+        while not qu.empty():
+            state = qu.get()
+            nodes.add(state)
+            for child in state.children.values():
+                if child not in nodes:
+                    qu.put(child)
+        return nodes
+
+    def to_automaton(self, automaton_type):
+        nodes = self.get_all_nodes()
+        nodes.remove(self) # dunno whether order is preserved?
+        nodes = [self] + list(nodes)
+        return to_automaton(nodes, automaton_type)
+
+    def compatible_outputs(self, other):
+        so, oo = [self.output, other.output]
+        return so is None or oo is None or so == oo
+
+    def get_child_by_prefix(self, prefix):
+        node = self
+        for symbol in prefix:
+            node = node.children[symbol]
+        return node
 
 def check_sequence(root_node, seq, automaton_type):
     """
