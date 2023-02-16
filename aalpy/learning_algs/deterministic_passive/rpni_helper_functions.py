@@ -23,6 +23,9 @@ class RpniNode:
     def __eq__(self, other):
         return self.prefix == other.prefix
 
+    def __hash__(self):
+        return id(self) # TODO This is a hack
+
     def get_all_nodes(self) -> Set['RpniNode'] :
         qu = queue.Queue()
         qu.put(self)
