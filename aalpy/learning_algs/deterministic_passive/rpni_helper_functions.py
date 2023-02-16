@@ -51,6 +51,71 @@ class RpniNode:
             node = node.children[symbol]
         return node
 
+class StateMerging:
+    def __init__(self, data, automaton_type, print_info=True):
+        self.data = data
+        self.automaton_type = automaton_type
+        self.print_info = print_info
+
+        self.root = createPTA(data, automaton_type)
+        self.merges = []
+
+    def merge(self, red_node, lex_min_blue, copy_nodes=False):
+        """
+        Merge two states and return the root node of resulting model.
+        """
+
+        if not copy_nodes:
+            self.merges.append((red_node,lex_min_blue))
+
+        root_node = self.root.copy() if copy_nodes else self.root
+        lex_min_blue = lex_min_blue.copy() if copy_nodes else lex_min_blue
+
+        red_node_in_tree = root_node
+        for p in red_node.prefix:
+            red_node_in_tree = red_node_in_tree.children[p]
+
+        to_update = root_node
+        for p in lex_min_blue.prefix[:-1]:
+            to_update = to_update.children[p]
+
+        to_update.children[lex_min_blue.prefix[-1]] = red_node_in_tree
+
+        if not self._fold(red_node_in_tree, lex_min_blue, not copy_nodes):
+            return None
+
+        return root_node
+
+    def _fold(self, red_node, blue_node, report):
+        # Change the output of red only to concrete output, ignore None
+        if report and not RpniNode.compatible_outputs(red_node, blue_node):
+            print(f"conflict {red_node.prefix} ({red_node.output}) {blue_node.prefix} ({blue_node.output})")
+            return False
+        red_node.output = blue_node.output if blue_node.output is not None else red_node.output
+
+        for i in blue_node.children.keys():
+            if i in red_node.children.keys():
+                self._fold(red_node.children[i], blue_node.children[i], report)
+            else:
+                red_node.children[i] = blue_node.children[i]
+        return True
+
+    def to_automaton(self):
+        return self.root.to_automaton(self.automaton_type)
+
+    def replay_log(self, commands : list) :
+        for command, args in commands:
+            if command == "merge":
+                self.merge(self.root.get_child_by_prefix(args[0]), self.root.get_child_by_prefix(args[1]))
+            elif command == "promote":
+                pass
+
+    @staticmethod
+    def replay_log_on_pta(data, commands : list, automaton_type : str):
+        sm = StateMerging(data, automaton_type)
+        sm.replay_log(commands)
+        return sm.to_automaton()
+
 def check_sequence(root_node, seq, automaton_type):
     """
     Checks whether each sequence in the dataset is valid in the current automaton.
