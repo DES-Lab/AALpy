@@ -155,14 +155,6 @@ class DeterministicTest(unittest.TestCase):
                 continue
 
             pta = createPTA(samples, automaton_type).to_automaton()
-            from aalpy.automata import MealyState
-            for a in [pta, gsm]:
-                state: MealyState
-                for state in a.states:
-                    for key in state.transitions:
-                        if key not in state.output_fun:
-                            state.output_fun[key] = None
-
             automata = {"pta" : pta, "gsm" : gsm}
             print(f"counter example: {cex}")
             for name, automaton in automata.items():

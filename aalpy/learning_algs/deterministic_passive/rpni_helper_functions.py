@@ -237,8 +237,7 @@ def to_automaton(red, automaton_type):
                 prefix_state_map[r.prefix].transitions[i] = prefix_state_map[c.prefix]
             else:
                 prefix_state_map[r.prefix].transitions[i] = prefix_state_map[c.prefix]
-                if i in r.output:
-                    prefix_state_map[r.prefix].output_fun[i] = r.output[i]
+                prefix_state_map[r.prefix].output_fun[i] = r.output[i] if i in r.output else None
 
     return automaton(initial_state, list(prefix_state_map.values()))
 
