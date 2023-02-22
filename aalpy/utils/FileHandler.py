@@ -167,15 +167,13 @@ def _process_label(label, source, destination, automaton_type):
     if automaton_type == 'dfa' or automaton_type == 'moore':
         source.transitions[int(label) if label.isdigit() else label] = destination
     if automaton_type == 'mealy':
-        inp = label.split('/')[0]
-        out = label.split('/')[1]
+        inp, out = label.split('/', maxsplit=1)
         inp = int(inp) if inp.isdigit() else inp
         out = int(out) if out.isdigit() else out
         source.transitions[inp] = destination
         source.output_fun[inp] = out
     if automaton_type == 'onfsm':
-        inp = label.split('/')[0]
-        out = label.split('/')[1]
+        inp, out = label.split('/', maxsplit=1)
         inp = int(inp) if inp.isdigit() else inp
         out = int(out) if out.isdigit() else out
         source.transitions[inp].append((out, destination))
@@ -183,16 +181,13 @@ def _process_label(label, source, destination, automaton_type):
         prob = label
         source.transitions.append((destination, float(prob)))
     if automaton_type == 'mdp':
-        inp = label.split(':')[0]
-        prob = label.split(':')[1]
+        inp, prob = label.split(':', maxsplit=1)
         inp = int(inp) if inp.isdigit() else inp
         prob = float(prob)
         source.transitions[inp].append((destination, prob))
     if automaton_type == 'smm':
-        inp = label.split('/')[0]
-        out_prob = label.split('/')[1]
-        out = out_prob.split(':')[0]
-        prob = out_prob.split(':')[1]
+        inp, out_prob = label.split('/', maxsplit=1)
+        out, prob = out_prob.split(':', maxsplit=1)
         inp = int(inp) if inp.isdigit() else inp
         out = int(out) if out.isdigit() else out
         source.transitions[inp].append((destination, out, float(prob)))
