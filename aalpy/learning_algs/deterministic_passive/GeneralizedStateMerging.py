@@ -148,7 +148,7 @@ class GeneralizedStateMerging:
       if self.automaton_type == AutomatonType.moore and partition.output is None:
         partition.output = blue.output
       if self.automaton_type == AutomatonType.mealy:
-        for key in filter(lambda k : k not in red.output or red.output[k] is None, blue.output):
+        for key in filter(lambda k : k not in partition.output or partition.output[k] is None, blue.output):
           partition.output[key] = blue.output[key]
 
       partitions[blue] = partition
