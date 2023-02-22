@@ -2,6 +2,8 @@ import random
 import time
 import unittest
 
+from aalpy.learning_algs.deterministic_passive.rpni_helper_functions import createPTA
+
 from aalpy.learning_algs.deterministic_passive.RPNI import RPNI
 
 from aalpy.learning_algs.deterministic_passive.GeneralizedStateMerging import StateMerging, GeneralizedStateMerging
@@ -120,74 +122,58 @@ class DeterministicTest(unittest.TestCase):
 
     def test_GSM(self):
 
-        def sample(moore : MooreMachine, number, length) :
-            alphabet = moore.get_input_alphabet()
+        def sample(automaton, number, length) :
+            alphabet = automaton.get_input_alphabet()
             ret = [None] * number
             for idx in range(number):
-                k = random.randint(0,length)
+                k = random.randint(1,length) # doesn't sample initial state of moore machines
                 seq = random.choices(alphabet,k=k)
-                moore.execute_sequence(moore.initial_state, seq)
-                ret[idx] = [seq,moore.current_state.output]
+                output = automaton.compute_output_seq(automaton.initial_state, seq)[-1]
+                ret[idx] = (seq, output)
             return ret
 
         nr_states = 10
-        nr_ins = 5
-        nr_outs= 5
-        nr_samples = nr_states * 100
-        sample_length = nr_states
+        nr_ins = 3
+        nr_outs= 4
+        nr_samples = nr_states * 10000
+        sample_length = nr_states * 3
 
-        in_alph = [f"i{idx}" for idx in range(nr_ins)]
-        out_alph = [f"o{idx}" for idx in range(nr_outs)]
-
-        GSM_time = []
-        RPNI_time = []
+        from aalpy.utils.AutomatonGenerators import generate_random_deterministic_automata
 
         while True:
-            machine = generate_random_moore_machine(nr_states, in_alph, out_alph)
-            samples = sample(machine, nr_samples, sample_length)
+            automaton_type = 'mealy'
+            truth = generate_random_deterministic_automata(automaton_type, nr_states, nr_ins, nr_outs)
+            samples = sample(truth, nr_samples, sample_length)
 
             print("run GSM")
-            ct = time.time()
-            gsm_state = GeneralizedStateMerging(samples, "moore", print_info=False)
+            gsm_state = GeneralizedStateMerging(samples, automaton_type, print_info=True)
             gsm = gsm_state.run()
-            GSM_time.append(round(time.time() - ct,2))
 
-            print("run RPNI")
-            ct = time.time()
-            rpni_state = RPNI(samples, "moore", print_info=False)
-            rpni = rpni_state.run_rpni()
-            RPNI_time.append(round(time.time() - ct,2))
-
-            cex = bisimilar(gsm,rpni)
+            cex = bisimilar(gsm,truth)
             if cex is None:
-                total_rpni = sum(RPNI_time)
-                total_gsm = sum(GSM_time)
                 print("models are equivalent.")
-                print(f"timing: {GSM_time[-1]} / {RPNI_time[-1]} = {GSM_time[-1]/RPNI_time[-1]}")
-                print(f"total: {total_gsm} / {total_rpni} = {total_gsm/total_rpni}")
-            else:
-                if cex not in [o for _,o in samples]:
-                    continue
+                continue
 
-                pta = StateMerging(samples, "moore").to_automaton()
+            pta = createPTA(samples, automaton_type).to_automaton()
+            from aalpy.automata import MealyState
+            for a in [pta, gsm]:
+                state: MealyState
+                for state in a.states:
+                    for key in state.transitions:
+                        if key not in state.output_fun:
+                            state.output_fun[key] = None
 
-                automata = {"pta" : pta, "gsm" : gsm, "rpni" : rpni}
-                print(f"counter example: {cex}")
-                for name, automaton in automata.items():
-                    out = automaton.execute_sequence(automaton.initial_state, cex)[-1]
-                    print(f"{name}: {out}")
+            automata = {"pta" : pta, "gsm" : gsm}
+            print(f"counter example: {cex}")
+            for name, automaton in automata.items():
+                out = automaton.execute_sequence(automaton.initial_state, cex)[-1]
+                print(f"{name}: {out}")
 
-                print("timing")
-                print(sum(GSM_time), GSM_time)
-                print(sum(RPNI_time), RPNI_time)
-
-
-                for file_format in ("pdf","dot"):
-                    save_automaton_to_file(pta, "PTA", file_format)
-                    save_automaton_to_file(gsm, "GSM", file_format)
-                    save_automaton_to_file(rpni, "RPNI", file_format)
-                    save_automaton_to_file(machine, "Truth", file_format)
-                break
+            for file_format in ("dot","pdf"):
+                save_automaton_to_file(truth, "Truth", file_format)
+                save_automaton_to_file(pta, "PTA", file_format)
+                save_automaton_to_file(gsm, "GSM", file_format)
+            break
 
     def test_eq_oracles(self):
         angluin_example = get_Angluin_dfa()
