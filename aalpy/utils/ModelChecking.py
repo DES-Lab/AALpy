@@ -6,8 +6,8 @@ from typing import Tuple
 
 import aalpy.paths
 from aalpy.SULs import MealySUL, DfaSUL, MooreSUL
-from aalpy.automata import Mdp, StochasticMealyMachine, MealyMachine, Dfa, MooreMachine, MooreState
-from aalpy.base import DeterministicAutomaton, SUL
+from aalpy.automata import Mdp, StochasticMealyMachine, MealyMachine, Dfa, MooreMachine, MooreState, MealyState
+from aalpy.base import DeterministicAutomaton, SUL, AutomatonState
 from random import choices
 
 prism_prob_output_regex = re.compile("Result: (\d+\.\d+)")
@@ -226,12 +226,12 @@ def stop_based_on_confidence(hypothesis, property_based_stopping, print_level=2)
 
     return True
 
-def bisimilar(a1 : MooreMachine, a2 : MooreMachine) :
+def bisimilar(a1 : DeterministicAutomaton, a2 : DeterministicAutomaton) :
     """
     Checks whether the provided moore machines are bisimilar
     """
 
-    to_check = queue.Queue[Tuple[MooreState,MooreState]]()
+    to_check = queue.Queue[Tuple[AutomatonState,AutomatonState]]()
     to_check.put((a1.initial_state, a2.initial_state))
     requirements = dict()
     requirements[(a1.initial_state,a2.initial_state)] = []
@@ -241,7 +241,8 @@ def bisimilar(a1 : MooreMachine, a2 : MooreMachine) :
     while not to_check.empty():
         s1, s2 = to_check.get()
 
-        if s1.output != s2.output:
+        if (isinstance(s1, MooreState) and s1.output != s2.output) or \
+           (isinstance(s1, MealyState) and s1.output_fun != s2.output_fun):
             counter_example = requirements[(s1,s2)]
             break
 
