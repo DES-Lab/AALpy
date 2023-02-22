@@ -63,7 +63,7 @@ class GeneralizedStateMerging:
             blue_states.append(c)
 
     if self.print_info:
-      print(f'\nGSM Learning Time: {round(time.time() - start_time, 2)}')
+      print(f'GSM Learning Time: {round(time.time() - start_time, 2)}')
       print(f'GSM Learned {len(red_states)} state automaton.')
 
     return to_automaton(red_states, self.automaton_type)
@@ -121,7 +121,7 @@ class GeneralizedStateMerging:
 
     # TODO add possibility to calculate (custom) scores of the merge candidates
     # TODO add option to loosen determinism to output determinism for use in alergia
-    # TODO make associated data (such as observation frequency) availabel to cost function
+    # TODO make associated data (such as observation frequency) available to cost function
 
     # TODO move to RpniNode and generalize to non-tree values for blue?
     # maybe create partition first and check compatibility afterwards?
