@@ -3,16 +3,16 @@ import time
 from typing import Tuple
 
 from aalpy.utils import save_automaton_to_file
-from aalpy.learning_algs.deterministic_passive.rpni_helper_functions import to_automaton, RpniNode, StateMerging
+from aalpy.learning_algs.deterministic_passive.rpni_helper_functions import to_automaton, RpniNode, StateMerging, \
+  AutomatonType, createPTA
+
 
 class GeneralizedStateMerging:
-  def __init__(self, data, automaton_type, print_info=True):
+  def __init__(self, data, automaton_type : AutomatonType, print_info=True):
     self.data = data
+    automaton_type = AutomatonType[automaton_type] if isinstance(automaton_type, str) else automaton_type
     self.automaton_type = automaton_type
     self.print_info = print_info
-
-    if self.automaton_type == 'mealy':
-      raise ValueError("Automaton type not implemented")
 
     pta_construction_start = time.time()
     self.merger = StateMerging(data, automaton_type)
@@ -82,6 +82,9 @@ class GeneralizedStateMerging:
     Compatibility check based on futures
     """
 
+    if self.automaton_type == AutomatonType.mealy:
+      raise NotImplementedError()
+
     # TODO move to RpniNode and generalize to non-tree values blue_node
     # this is done by tracking which (red,blue) pairs have been visited
 
@@ -130,10 +133,9 @@ class GeneralizedStateMerging:
     while not q.empty():
       red, blue = q.get()
 
-      def get_partition(node):
+      def get_partition(node : RpniNode):
         if node not in partitions:
-          p = RpniNode(node.output)
-          p.children = dict(node.children)
+          p = node.shallow_copy()
           partitions[node] = p
         else:
           p = partitions[node]
@@ -143,8 +145,11 @@ class GeneralizedStateMerging:
 
       if not RpniNode.compatible_outputs(partition, blue):
         return None
-      if partition.output is None:
+      if self.automaton_type == AutomatonType.moore and partition.output is None:
         partition.output = blue.output
+      if self.automaton_type == AutomatonType.mealy:
+        for key in filter(lambda k : k not in red.output or red.output[k] is None, blue.output):
+          partition.output[key] = blue.output[key]
 
       partitions[blue] = partition
 

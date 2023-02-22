@@ -1,15 +1,28 @@
 import pickle
 import queue
+from enum import Enum, auto
 from typing import Set
 
+class AutomatonType(Enum): # TODO would be nice for global use
+    mealy = auto()
+    moore = auto()
 
 class RpniNode:
-    __slots__ = ['output', 'children', 'prefix']
+    __slots__ = ['output', 'children', 'prefix', "type"]
 
-    def __init__(self, output):
+    def __init__(self, output = None, children = None, automaton_type = AutomatonType.moore):
+        if output is None and automaton_type == AutomatonType.mealy:
+            output = dict()
+        if children is None:
+            children = dict()
         self.output = output
-        self.children = dict()
+        self.children = children
         self.prefix = ()
+        self.type = automaton_type
+
+    def shallow_copy(self):
+        output = self.output if self.type == AutomatonType.moore else dict(self.output)
+        return RpniNode(output, dict(self.children), self.type)
 
     def copy(self):
         return pickle.loads(pickle.dumps(self, -1))
@@ -38,15 +51,19 @@ class RpniNode:
                     qu.put(child)
         return nodes
 
-    def to_automaton(self, automaton_type):
+    def to_automaton(self):
         nodes = self.get_all_nodes()
         nodes.remove(self) # dunno whether order is preserved?
         nodes = [self] + list(nodes)
-        return to_automaton(nodes, automaton_type)
+        return to_automaton(nodes, self.type)
 
     def compatible_outputs(self, other):
         so, oo = [self.output, other.output]
-        return so is None or oo is None or so == oo
+        cmp = lambda x,y : x is None or y is None or x==y
+        if self.type == AutomatonType.moore:
+            return cmp(so,oo)
+        else:
+            return all(cmp(so[key], oo[key]) for key in filter(lambda k : k in oo, so))
 
     def get_child_by_prefix(self, prefix):
         node = self
@@ -55,7 +72,7 @@ class RpniNode:
         return node
 
 class StateMerging:
-    def __init__(self, data, automaton_type, print_info=True):
+    def __init__(self, data, automaton_type : AutomatonType, print_info=True):
         self.data = data
         self.automaton_type = automaton_type
         self.print_info = print_info
@@ -67,6 +84,9 @@ class StateMerging:
         """
         Merge two states and return the root node of resulting model.
         """
+
+        if self.automaton_type == AutomatonType.mealy:
+            raise NotImplementedError()
 
         if not copy_nodes:
             self.merges.append((red_node,lex_min_blue))
@@ -104,7 +124,7 @@ class StateMerging:
         return True
 
     def to_automaton(self):
-        return self.root.to_automaton(self.automaton_type)
+        return self.root.to_automaton()
 
     def replay_log(self, commands : list) :
         for command, args in commands:
@@ -114,7 +134,7 @@ class StateMerging:
                 pass
 
     @staticmethod
-    def replay_log_on_pta(data, commands : list, automaton_type : str):
+    def replay_log_on_pta(data, commands : list, automaton_type : AutomatonType):
         sm = StateMerging(data, automaton_type)
         sm.replay_log(commands)
         return sm.to_automaton()
@@ -139,40 +159,32 @@ def check_sequence(root_node, seq, automaton_type):
 
 
 def createPTA(data, automaton_type):
+    if isinstance(automaton_type,str):
+        automaton_type = AutomatonType[automaton_type]
     data.sort(key=lambda x: len(x[0]))
 
-    root_node = RpniNode(None)
+    root_node = RpniNode(automaton_type=automaton_type)
     for seq, label in data:
         curr_node = root_node
-        for i in seq:
-            if i not in curr_node.children.keys():
-                node = RpniNode(None)
-                node.prefix = curr_node.prefix + (i,)
-                curr_node.children[i] = node
+        for idx, symbol in enumerate(seq):
+            if symbol not in curr_node.children.keys():
+                node = RpniNode(automaton_type=automaton_type)
+                node.prefix = curr_node.prefix + (symbol,)
+                curr_node.children[symbol] = node
 
-            curr_node = curr_node.children[i]
-        if curr_node.output is None:
-            curr_node.output = label
-        else:
-            # check for non-determinism
+            if automaton_type == AutomatonType.mealy and idx == len(seq)-1:
+                if symbol not in curr_node.output:
+                    curr_node.output[symbol] = label
+                if curr_node.output[symbol] != label:
+                    return None
+            curr_node = curr_node.children[symbol]
+        if automaton_type == AutomatonType.moore:
+            if curr_node.output is None:
+                curr_node.output = label
             if curr_node.output != label:
-                return None
-
-    # Breath first traversal over the automaton to update the edges for RPNI-Mealy
-    if automaton_type == 'mealy':
-        queue = [root_node]
-        root_node.prefix = ()
-        while queue:
-            node_in_processing = queue.pop(0)
-            input_output_edge_keys = dict()
-            for input_value, child in node_in_processing.children.items():
-                input_output_edge_keys[(input_value, child.output)] = child
-                child.prefix = node_in_processing.prefix + ((input_value, child.output),)
-                queue.append(child)
-            node_in_processing.children = input_output_edge_keys
+                    return None
 
     return root_node
-
 
 def extract_unique_sequences(root_node):
     def get_leaf_nodes(root):
@@ -200,13 +212,10 @@ def extract_unique_sequences(root_node):
 
     return paths
 
-
 def to_automaton(red, automaton_type):
     from aalpy.automata import DfaState, Dfa, MooreMachine, MooreState, MealyMachine, MealyState
 
-    if automaton_type == 'dfa':
-        state, automaton = DfaState, Dfa
-    elif automaton_type == 'moore':
+    if automaton_type == AutomatonType.moore:
         state, automaton = MooreState, MooreMachine
     else:
         state, automaton = MealyState, MealyMachine
@@ -214,7 +223,8 @@ def to_automaton(red, automaton_type):
     initial_state = None
     prefix_state_map = {}
     for i, r in enumerate(red):
-        if automaton_type != 'mealy':
+        if automaton_type == AutomatonType.moore:
+            print(automaton_type)
             prefix_state_map[r.prefix] = state(f's{i}', r.output)
         else:
             prefix_state_map[r.prefix] = state(f's{i}')
@@ -223,11 +233,12 @@ def to_automaton(red, automaton_type):
 
     for r in red:
         for i, c in r.children.items():
-            if automaton_type != 'mealy':
+            if automaton_type == AutomatonType.moore:
                 prefix_state_map[r.prefix].transitions[i] = prefix_state_map[c.prefix]
             else:
-                prefix_state_map[r.prefix].transitions[i[0]] = prefix_state_map[c.prefix]
-                prefix_state_map[r.prefix].output_fun[i[0]] = i[1]
+                prefix_state_map[r.prefix].transitions[i] = prefix_state_map[c.prefix]
+                if i in r.output:
+                    prefix_state_map[r.prefix].output_fun[i] = r.output[i]
 
     return automaton(initial_state, list(prefix_state_map.values()))
 
