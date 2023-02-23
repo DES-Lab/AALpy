@@ -3,14 +3,16 @@ import queue
 from enum import Enum, auto
 from typing import Set
 
-class AutomatonType(Enum): # TODO would be nice for global use
+
+class AutomatonType(Enum):  # TODO would be nice for global use,
     mealy = auto()
     moore = auto()
+
 
 class RpniNode:
     __slots__ = ['output', 'children', 'prefix', "type"]
 
-    def __init__(self, output = None, children = None, automaton_type = AutomatonType.moore):
+    def __init__(self, output=None, children=None, automaton_type=AutomatonType.moore):
         if output is None and automaton_type == AutomatonType.mealy:
             output = dict()
         if children is None:
@@ -37,9 +39,9 @@ class RpniNode:
         return self.prefix == other.prefix
 
     def __hash__(self):
-        return id(self) # TODO This is a hack
+        return id(self)  # TODO This is a hack
 
-    def get_all_nodes(self) -> Set['RpniNode'] :
+    def get_all_nodes(self) -> Set['RpniNode']:
         qu = queue.Queue()
         qu.put(self)
         nodes = set()
@@ -53,17 +55,17 @@ class RpniNode:
 
     def to_automaton(self):
         nodes = self.get_all_nodes()
-        nodes.remove(self) # dunno whether order is preserved?
+        nodes.remove(self)  # dunno whether order is preserved?
         nodes = [self] + list(nodes)
         return to_automaton(nodes, self.type)
 
     def compatible_outputs(self, other):
         so, oo = [self.output, other.output]
-        cmp = lambda x,y : x is None or y is None or x==y
+        cmp = lambda x, y: x is None or y is None or x == y
         if self.type == AutomatonType.moore:
-            return cmp(so,oo)
+            return cmp(so, oo)
         else:
-            return all(cmp(so[key], oo[key]) for key in filter(lambda k : k in oo, so))
+            return all(cmp(so[key], oo[key]) for key in filter(lambda k: k in oo, so))
 
     def get_child_by_prefix(self, prefix):
         node = self
@@ -71,8 +73,9 @@ class RpniNode:
             node = node.children[symbol]
         return node
 
+
 class StateMerging:
-    def __init__(self, data, automaton_type : AutomatonType, print_info=True):
+    def __init__(self, data, automaton_type: AutomatonType, print_info=True):
         self.data = data
         self.automaton_type = automaton_type
         self.print_info = print_info
@@ -89,7 +92,7 @@ class StateMerging:
             raise NotImplementedError()
 
         if not copy_nodes:
-            self.merges.append((red_node,lex_min_blue))
+            self.merges.append((red_node, lex_min_blue))
 
         root_node = self.root.copy() if copy_nodes else self.root
         lex_min_blue = lex_min_blue.copy() if copy_nodes else lex_min_blue
@@ -126,7 +129,7 @@ class StateMerging:
     def to_automaton(self):
         return self.root.to_automaton()
 
-    def replay_log(self, commands : list) :
+    def replay_log(self, commands: list):
         for command, args in commands:
             if command == "merge":
                 self.merge(self.root.get_child_by_prefix(args[0]), self.root.get_child_by_prefix(args[1]))
@@ -134,10 +137,11 @@ class StateMerging:
                 pass
 
     @staticmethod
-    def replay_log_on_pta(data, commands : list, automaton_type : AutomatonType):
+    def replay_log_on_pta(data, commands: list, automaton_type: AutomatonType):
         sm = StateMerging(data, automaton_type)
         sm.replay_log(commands)
         return sm.to_automaton()
+
 
 def check_sequence(root_node, seq, automaton_type):
     """
@@ -159,7 +163,7 @@ def check_sequence(root_node, seq, automaton_type):
 
 
 def createPTA(data, automaton_type):
-    if isinstance(automaton_type,str):
+    if isinstance(automaton_type, str):
         automaton_type = AutomatonType[automaton_type]
     data.sort(key=lambda x: len(x[0]))
 
@@ -172,7 +176,7 @@ def createPTA(data, automaton_type):
                 node.prefix = curr_node.prefix + (symbol,)
                 curr_node.children[symbol] = node
 
-            if automaton_type == AutomatonType.mealy and idx == len(seq)-1:
+            if automaton_type == AutomatonType.mealy and idx == len(seq) - 1:
                 if symbol not in curr_node.output:
                     curr_node.output[symbol] = label
                 if curr_node.output[symbol] != label:
@@ -182,9 +186,10 @@ def createPTA(data, automaton_type):
             if curr_node.output is None:
                 curr_node.output = label
             if curr_node.output != label:
-                    return None
+                return None
 
     return root_node
+
 
 def extract_unique_sequences(root_node):
     def get_leaf_nodes(root):
@@ -212,6 +217,7 @@ def extract_unique_sequences(root_node):
 
     return paths
 
+
 def to_automaton(red, automaton_type):
     from aalpy.automata import DfaState, Dfa, MooreMachine, MooreState, MealyMachine, MealyState
 
@@ -224,7 +230,6 @@ def to_automaton(red, automaton_type):
     prefix_state_map = {}
     for i, r in enumerate(red):
         if automaton_type == AutomatonType.moore:
-            print(automaton_type)
             prefix_state_map[r.prefix] = state(f's{i}', r.output)
         else:
             prefix_state_map[r.prefix] = state(f's{i}')
