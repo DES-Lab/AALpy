@@ -64,12 +64,12 @@ def get_random_samples(automaton, num_random_seq, length, prefix_closed=False):
 
 
 num_states = 10
-num_inputs = 3
-num_outputs = 4
+num_inputs = 4
+num_outputs = 5
 num_random_samples = num_states * 1000
 sample_length = num_states * 2
 
-num_tests = 10
+num_tests = 1000
 
 automata_types = ['mealy', 'moore']
 
@@ -81,7 +81,7 @@ for automaton_type in automata_types:
         # samples = get_random_samples(ground_truth, num_random_samples, sample_length,)
         samples = get_characterizing_set(ground_truth, prefix_closed=True)
 
-        gsm_state = GeneralizedStateMerging(samples, automaton_type, print_info=True)
+        gsm_state = GeneralizedStateMerging(samples, automaton_type, print_info=False)
         learned_model = gsm_state.run()
 
         cex = bisimilar(learned_model, ground_truth)
