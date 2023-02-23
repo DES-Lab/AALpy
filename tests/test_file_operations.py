@@ -21,14 +21,15 @@ class TestFileHandler(unittest.TestCase):
 
             for model, type in zip(models, types):
                 model.save()
+                print(model)
                 loaded_model = load_automaton_from_file('LearnedModel.dot', type)
                 loaded_model.save()
                 loaded_model2 = load_automaton_from_file('LearnedModel.dot', type)
-                # loaded_model2.visualize(path=type)
+
                 if type != 'mc':
-                    ia = model.get_input_alphabet()
-                    ia2 = loaded_model2.get_input_alphabet()
-                    assert set(ia) == set(ia2)
+                    assert set(model.get_input_alphabet()) == set(loaded_model.get_input_alphabet())
+                    assert set(model.get_input_alphabet()) == set(loaded_model2.get_input_alphabet())
+
                 if type in {'dfa', 'moore', 'mealy'}:
                     assert model.compute_characterization_set() == loaded_model2.compute_characterization_set()
 

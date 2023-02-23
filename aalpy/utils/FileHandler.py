@@ -12,23 +12,32 @@ automaton_types = {Dfa: 'dfa', MealyMachine: 'mealy', MooreMachine: 'moore', Mdp
                    StochasticMealyMachine: 'smm', Onfsm: 'onfsm', MarkovChain: 'mc'}
 
 
+def _wrap_label(label):
+    """
+    Adds a " " around a label if not already present on both ends.
+    """
+    if label[0] == '\"' and label[-1] == '\"':
+        return label
+    return f'\"{label}\"'
+
+
 def _get_node(state, automaton_type):
     if automaton_type == 'dfa':
         if state.is_accepting:
-            return Node(state.state_id, label=state.state_id, shape='doublecircle')
-        return Node(state.state_id, label=state.state_id)
+            return Node(state.state_id, label=_wrap_label(state.state_id), shape='doublecircle')
+        return Node(state.state_id, label=_wrap_label(state.state_id))
     if automaton_type == 'mealy':
-        return Node(state.state_id, label=state.state_id)
+        return Node(state.state_id, label=_wrap_label(state.state_id))
     if automaton_type == 'moore':
-        return Node(state.state_id, label=f'{state.state_id}|{state.output}', shape='record', style='rounded')
+        return Node(state.state_id, label=_wrap_label(f'{state.state_id}|{state.output}'), shape='record', style='rounded')
     if automaton_type == 'onfsm':
-        return Node(state.state_id, label=state.state_id)
+        return Node(state.state_id, label=_wrap_label(state.state_id))
     if automaton_type == 'mc':
-        return Node(state.state_id, label=f'{state.output}')
+        return Node(state.state_id, label=_wrap_label(f'{state.output}'))
     if automaton_type == 'mdp':
-        return Node(state.state_id, label=f'{state.output}')
+        return Node(state.state_id, label=_wrap_label(f'{state.output}'))
     if automaton_type == 'smm':
-        return Node(state.state_id, label=state.state_id)
+        return Node(state.state_id, label=_wrap_label(state.state_id))
 
 
 def _add_transition_to_graph(graph, state, automaton_type, display_same_state_trans, round_floats):
@@ -37,20 +46,20 @@ def _add_transition_to_graph(graph, state, automaton_type, display_same_state_tr
             new_state = state.transitions[i]
             if not display_same_state_trans and new_state.state_id == state.state_id:
                 continue
-            graph.add_edge(Edge(state.state_id, new_state.state_id, label=f'{i}'))
+            graph.add_edge(Edge(state.state_id, new_state.state_id, label=_wrap_label(f'{i}')))
     if automaton_type == 'mealy':
         for i in state.transitions.keys():
             new_state = state.transitions[i]
             if not display_same_state_trans and new_state.state_id == state.state_id:
                 continue
-            graph.add_edge(Edge(state.state_id, new_state.state_id, label=f'{i}/{state.output_fun[i]}'))
+            graph.add_edge(Edge(state.state_id, new_state.state_id, label=_wrap_label(f'{i}/{state.output_fun[i]}')))
     if automaton_type == 'onfsm':
         for i in state.transitions.keys():
             new_state = state.transitions[i]
             for s in new_state:
                 if not display_same_state_trans and state.state_id == s[1].state_id:
                     continue
-                graph.add_edge(Edge(state.state_id, s[1].state_id, label=f'{i}/{s[0]}'))
+                graph.add_edge(Edge(state.state_id, s[1].state_id, label=_wrap_label(f'{i}/{s[0]}')))
     if automaton_type == 'mc':
         for new_state, prob in state.transitions:
             prob = round(prob, round_floats) if round_floats else prob
@@ -62,7 +71,7 @@ def _add_transition_to_graph(graph, state, automaton_type, display_same_state_tr
                 if not display_same_state_trans and s[0].state_id == state.state_id:
                     continue
                 prob = round(s[1], round_floats) if round_floats else s[1]
-                graph.add_edge(Edge(state.state_id, s[0].state_id, label=f'"{i}:{prob}"'))
+                graph.add_edge(Edge(state.state_id, s[0].state_id, label=_wrap_label(f'{i}:{prob}')))
     if automaton_type == 'smm':
         for i in state.transitions.keys():
             new_state = state.transitions[i]
@@ -70,7 +79,7 @@ def _add_transition_to_graph(graph, state, automaton_type, display_same_state_tr
                 if not display_same_state_trans and s[0].state_id == state.state_id:
                     continue
                 prob = round(s[2], round_floats) if round_floats else s[2]
-                graph.add_edge(Edge(state.state_id, s[0].state_id, label=f'{i}/{s[1]}:{prob}'))
+                graph.add_edge(Edge(state.state_id, s[0].state_id, label=_wrap_label(f'{i}/{s[1]}:{prob}')))
 
 
 def visualize_automaton(automaton, path="LearnedModel", file_type='pdf', display_same_state_trans=True):
