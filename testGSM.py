@@ -13,6 +13,8 @@ def get_characterizing_set(automaton, prefix_closed=False):
     alphabet = automaton.get_input_alphabet()
     data_set = []
 
+    if isinstance(automaton, MooreMachine):
+        data_set.append(((),automaton.initial_state.output))
     char_set = automaton.compute_characterization_set()
     for i in alphabet:
         if (i,) not in char_set:
@@ -86,9 +88,14 @@ for automaton_type in automata_types:
 
         cex = bisimilar(learned_model, ground_truth)
         cex_sanity_check = compare_automata(ground_truth, learned_model, num_cex=1)
-        if cex:
+        if cex is not None or cex_sanity_check:
+            if cex is None:
+                print("Warning: Bisimilarity found none")
+                cex = cex_sanity_check[0]
             print(f"Counterexample found: {cex}")
-            exit()
-        if cex_sanity_check:
-            print(f"Counterexample found: {cex_sanity_check[0]}")
+            print(ground_truth.execute_sequence(ground_truth.initial_state, cex))
+            print(learned_model.execute_sequence(learned_model.initial_state, cex))
+
+            learned_model.visualize("learned")
+            ground_truth.visualize("truth")
             exit()
