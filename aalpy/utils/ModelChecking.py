@@ -4,9 +4,12 @@ import re
 from collections import defaultdict
 from typing import Tuple
 
+import itertools as it
+
 import aalpy.paths
 from aalpy.SULs import MealySUL, DfaSUL, MooreSUL
-from aalpy.automata import Mdp, StochasticMealyMachine, MealyMachine, Dfa, MooreMachine, MooreState, MealyState
+from aalpy.automata import Mdp, StochasticMealyMachine, MealyMachine, Dfa, MooreMachine, MooreState, MealyState, \
+    DfaState
 from aalpy.base import DeterministicAutomaton, SUL, AutomatonState
 from random import choices
 
@@ -226,56 +229,41 @@ def stop_based_on_confidence(hypothesis, property_based_stopping, print_level=2)
 
     return True
 
-def bisimilar(a1 : DeterministicAutomaton, a2 : DeterministicAutomaton) :
+def bisimilar(a1: DeterministicAutomaton, a2: DeterministicAutomaton):
     """
-    Checks whether the provided moore machines are bisimilar
+    Checks whether the provided automata are bisimilar
     """
 
-    to_check = queue.Queue[Tuple[AutomatonState,AutomatonState]]()
+    if a1.__class__ != a2.__class__:
+        raise ValueError("tried to check bisimilarity of distinct automaton types")
+    supported_automaton_types = (Dfa, MooreMachine, MealyMachine)
+    if not isinstance(a1, supported_automaton_types):
+        raise NotImplementedError(f"bisimilarity is not implemented for {a1.__class__.__name__}. Supported: {', '.join(t.__name__ for t in supported_automaton_types)}")
+
+    to_check = queue.Queue[Tuple[AutomatonState, AutomatonState]]()
     to_check.put((a1.initial_state, a2.initial_state))
     requirements = dict()
-    requirements[(a1.initial_state,a2.initial_state)] = []
-
-    counter_example = None
+    requirements[(a1.initial_state, a2.initial_state)] = []
 
     while not to_check.empty():
         s1, s2 = to_check.get()
-
-        if (isinstance(s1, MooreState) and s1.output != s2.output) or \
+        if (isinstance(s1, DfaState)) and s1.is_accepting != s2.is_accepting or \
+           (isinstance(s1, MooreState) and s1.output != s2.output) or \
            (isinstance(s1, MealyState) and s1.output_fun != s2.output_fun):
-            counter_example = requirements[(s1,s2)]
-            break
+            return requirements[(s1, s2)]
 
-        t1 = set(s1.transitions.keys())
-        t2 = set(s2.transitions.keys())
-        if t1 != t2:
-            t = list(set.union(t1,t2).difference(set.intersection(t1,t2)))
-            counter_example = requirements[(s1,s2)] + t[0:1]
-            break
+        t1, t2 = s1.transitions, s2.transitions
+        # not using sets -> deterministic but inefficient
+        # could use set to detect and slow only if detection?
+        for t in it.chain(t1.keys(), t2.keys()):
+            if (t in t1.keys()) != (t in t2.keys()):
+                return requirements[(s1, s2)] + [t]
 
-        for t in t1:
-            c1 = s1.transitions[t]
-            c2 = s2.transitions[t]
-            if (c1,c2) not in requirements:
-                requirements[(c1,c2)] = requirements[(s1,s2)] + [t]
-                to_check.put((c1,c2))
-
-    if counter_example:
-        a1.reset_to_initial()
-        a2.reset_to_initial()
-        print("counter example")
-        for t in counter_example:
-            t1 = t in a1.current_state.transitions
-            t2 = t in a2.current_state.transitions
-            if t1 != t2:
-                print(f"{t} present: {t1} {t2}")
-            elif t1 and t2:
-                print(t, a1.step(t), a2.step(t))
-            else:
-                assert False
-
-    return counter_example
-
+        for t in t1.keys():
+            c1, c2 = t1[t], t2[t]
+            if (c1, c2) not in requirements:
+                requirements[(c1, c2)] = requirements[(s1, s2)] + [t]
+                to_check.put((c1, c2))
 
 def compare_automata(aut_1: DeterministicAutomaton, aut_2: DeterministicAutomaton, num_cex=10):
     """
