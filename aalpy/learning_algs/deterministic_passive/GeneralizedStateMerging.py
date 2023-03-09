@@ -161,3 +161,41 @@ class GeneralizedStateMerging:
                     # blue_child is blue after merging if there is a red state in the partition
                     partition.children[symbol] = blue_child
         return partitions
+
+
+def run_GSM(data, automaton_type, input_completeness=None, print_info=True):
+    """
+    Run GSM, a deterministic passive model learning algorithm.
+    Resulting model conforms to the provided data.
+
+    Args:
+
+        data: sequence of input sequences and corresponding label. Eg. [[(i1,i2,i3, ...), label], ...]
+        automaton_type: either 'dfa', 'mealy', 'moore'. Note that for 'mealy' machine learning, data has to be prefix-closed.
+        input_completeness: either None, 'sink_state', or 'self_loop'. If None, learned model could be input incomplete,
+        sink_state will lead all undefined inputs form some state to the sink state, whereas self_loop will simply create
+        a self loop. In case of Mealy learning output of the added transition will be 'epsilon'.
+        print_info: print learning progress and runtime information
+
+    Returns:
+
+        Model conforming to the data, or None if data is non-deterministic.
+    """
+    assert automaton_type in {'dfa', 'mealy', 'moore'}
+    assert input_completeness in {None, 'self_loop', 'sink_state'}
+
+    gsm = GeneralizedStateMerging(data, automaton_type, print_info)
+
+    learned_model = gsm.run()
+
+    if not learned_model.is_input_complete():
+        if not input_completeness:
+            if print_info:
+                print('Warning: Learned Model is not input complete (inputs not defined for all states). '
+                      'Consider calling .make_input_complete()')
+        else:
+            if print_info:
+                print(f'Learned model was not input complete. Adapting it with {input_completeness} transitions.')
+            learned_model.make_input_complete(input_completeness)
+
+    return learned_model
