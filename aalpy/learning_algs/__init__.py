@@ -7,4 +7,3 @@ from .stochastic.StochasticLStar import run_stochastic_Lstar
 from .stochastic_passive.Alergia import run_Alergia, run_JAlergia
 from .stochastic_passive.ActiveAleriga import run_active_Alergia
 from .deterministic_passive.RPNI import run_RPNI
-from .deterministic_passive.GeneralizedStateMerging import run_GSM

@@ -4,7 +4,6 @@ import unittest
 from aalpy.SULs import DfaSUL, MealySUL, MooreSUL
 from aalpy.automata import Dfa, MealyMachine, MooreMachine
 from aalpy.learning_algs import run_Lstar
-from aalpy.learning_algs.deterministic_passive.GeneralizedStateMerging import GeneralizedStateMerging
 from aalpy.learning_algs.deterministic_passive.rpni_helper_functions import createPTA
 from aalpy.oracles import WMethodEqOracle, RandomWalkEqOracle, StatePrefixEqOracle, TransitionFocusOracle, \
     RandomWMethodEqOracle, BreadthFirstExplorationEqOracle, RandomWordEqOracle, CacheBasedEqOracle, \
@@ -114,53 +113,6 @@ class DeterministicTest(unittest.TestCase):
                     assert False
 
         assert True
-
-    def test_GSM(self):
-
-        def sample(automaton, number, length):
-            alphabet = automaton.get_input_alphabet()
-            ret = []
-            for idx in range(number):
-                k = random.randint(1, length)  # doesn't sample initial state of moore machines
-                seq = random.choices(alphabet, k=k)
-                output = automaton.compute_output_seq(automaton.initial_state, seq)[-1]
-                ret.append((seq, output))
-            return ret
-
-        nr_states = 10
-        nr_ins = 3
-        nr_outs = 4
-        nr_samples = nr_states * 10000
-        sample_length = nr_states * 3
-
-        num_tests = 5
-
-        for _ in range(num_tests):
-            automaton_type = 'mealy'
-            truth = generate_random_deterministic_automata(automaton_type, nr_states, nr_ins, nr_outs)
-            samples = sample(truth, nr_samples, sample_length)
-
-            print("run GSM")
-            gsm_state = GeneralizedStateMerging(samples, automaton_type, print_info=True)
-            gsm = gsm_state.run()
-
-            cex = bisimilar(gsm, truth)
-            if cex is None:
-                print("models are equivalent.")
-                continue
-
-            pta = createPTA(samples, automaton_type).to_automaton()
-            automata = {"pta": pta, "gsm": gsm}
-            print(f"counter example: {cex}")
-            for name, automaton in automata.items():
-                out = automaton.execute_sequence(automaton.initial_state, cex)[-1]
-                print(f"{name}: {out}")
-
-            for file_format in ("dot", "pdf"):
-                save_automaton_to_file(truth, "Truth", file_format)
-                save_automaton_to_file(pta, "PTA", file_format)
-                save_automaton_to_file(gsm, "GSM", file_format)
-            break
 
     def test_eq_oracles(self):
         angluin_example = get_Angluin_dfa()
