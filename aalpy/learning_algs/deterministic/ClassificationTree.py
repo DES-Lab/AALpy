@@ -152,7 +152,7 @@ class ClassificationTree:
         # node's access string. The start state is the empty word
         states = {}
         initial_state = None
-        state_counter = 0
+        state_counter = 1
         for node in self.leaf_nodes.values():
 
             if self.automaton_type != "mealy":
