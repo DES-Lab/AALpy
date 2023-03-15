@@ -1,6 +1,7 @@
 import os
 import sys
 import traceback
+from pathlib import Path
 
 from pydot import Dot, Node, Edge, graph_from_dot_file
 
@@ -140,7 +141,7 @@ def save_automaton_to_file(automaton, path="LearnedModel", file_type='dot',
         display_same_state_trans = True
     automaton_type = automaton_types[automaton.__class__]
 
-    graph = Dot(path, graph_type='digraph')
+    graph = Dot(Path(path).name, graph_type='digraph')
     for state in automaton.states:
         graph.add_node(_get_node(state, automaton_type))
 
