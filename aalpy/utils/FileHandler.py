@@ -209,8 +209,7 @@ def _process_node_label(node, label, node_label_dict, node_type, automaton_type)
     else:
         if automaton_type == 'moore' and label != "":
             label_output = _strip_label(label)
-            label = label_output.split('|')[0]
-            output = label_output.split('|')[1]
+            label, output = label_output.split("|", maxsplit=1)
             output = output if not output.isdigit() else int(output)
             node_label_dict[node_name] = node_type(label, output)
         else:
