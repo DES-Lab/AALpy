@@ -1,3 +1,5 @@
+import copy
+import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
 
@@ -166,7 +168,6 @@ class DeterministicAutomaton(Automaton):
 
         """
         if origin_state not in self.states or target_state not in self.states:
-            import warnings
             warnings.warn('Origin or target state not in automaton. Returning empty path.')
             return ()
 
@@ -280,7 +281,12 @@ class DeterministicAutomaton(Automaton):
         return output
 
     def is_minimal(self):
-        pass
+        mm = self
+        if not self.is_input_complete():
+            warnings.warn("Automaton is not input-complete: Checking minimality may take longer")
+            mm = copy.deepcopy(self)
+            mm.make_input_complete("sink_state")
+        return mm.compute_characterization_set(raise_warning=False) is not None
 
     def compute_characterization_set(self, char_set_init=None,
                                      online_suffix_closure=True,
@@ -311,10 +317,8 @@ class DeterministicAutomaton(Automaton):
         Returns: a characterization set or None if a non-minimal automaton is passed to the function
 
         """
-        from copy import copy
-
         blocks = list()
-        blocks.append(copy(self.states))
+        blocks.append(copy.copy(self.states))
         char_set = [] if not char_set_init else char_set_init
         if char_set_init:
             for seq in char_set_init:
@@ -337,7 +341,6 @@ class DeterministicAutomaton(Automaton):
                     return split_state1, split_state2
 
                 if raise_warning:
-                    import warnings
                     warnings.warn("Automaton is non-canonical: could not compute characterization set."
                                   "Returning None.")
                 return None

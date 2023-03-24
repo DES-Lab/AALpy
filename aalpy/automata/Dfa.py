@@ -39,9 +39,6 @@ class Dfa(DeterministicAutomaton):
                                                              online_suffix_closure, split_all_blocks,
                                                              return_same_states, raise_warning)
 
-    def is_minimal(self):
-        return self.compute_characterization_set(raise_warning=False) is not None
-
     def compute_output_seq(self, state, sequence):
         if not sequence:
             return [state.is_accepting]
