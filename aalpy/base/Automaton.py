@@ -2,6 +2,7 @@ import copy
 import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from typing import Optional
 
 
 class AutomatonState(ABC):
@@ -153,7 +154,7 @@ class DeterministicAutomaton(Automaton):
     def step(self, letter):
         pass
 
-    def get_shortest_path(self, origin_state: AutomatonState, target_state: AutomatonState) -> tuple:
+    def get_shortest_path(self, origin_state: AutomatonState, target_state: AutomatonState) -> Optional[tuple]:
         """
         Breath First Search over the automaton
 
@@ -164,12 +165,11 @@ class DeterministicAutomaton(Automaton):
 
         Returns:
 
-            sequence of inputs that lead from origin_state to target state
+            sequence of inputs that lead from origin_state to target state or None if no path exists
 
         """
         if origin_state not in self.states or target_state not in self.states:
-            warnings.warn('Origin or target state not in automaton. Returning empty path.')
-            return ()
+            raise ValueError('Origin or target state not in automaton.')
 
         explored = []
         queue = [[origin_state]]
@@ -197,7 +197,7 @@ class DeterministicAutomaton(Automaton):
 
                 # mark node as explored
                 explored.append(node)
-        return ()
+        return None
 
     def is_strongly_connected(self) -> bool:
         """
