@@ -284,6 +284,9 @@ class DeterministicAutomaton(Automaton):
         return output
 
     def is_minimal(self):
+        if not self.is_input_complete():
+            warnings.warn('Minimization of non input complete automata is not yet supported. Returning False.')
+            return False
         return self.compute_characterization_set(raise_warning=False) is not None
 
     def compute_characterization_set(self, char_set_init=None,
@@ -401,6 +404,10 @@ class DeterministicAutomaton(Automaton):
                 s.prefix = self.get_shortest_path(self.initial_state, s)
 
     def minimize(self):
+        if not self.is_input_complete():
+            warnings.warn('Minimization of non input complete automata is not yet supported.\n Model not minimized.')
+            return
+
         s1, s2 = self.compute_characterization_set(return_same_states=True)
         while s1 and s2:
             for s in self.states:
