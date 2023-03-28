@@ -162,14 +162,14 @@ def run_RPNI(data, automaton_type, algorithm='gsm',
         rpni = RPNI(data, automaton_type, print_info)
 
         if rpni.root_node is None:
-            print('DATA provided to RPNI is not deterministic. Ensure that the data is deterministic, '
+            print('Data provided to RPNI is not deterministic. Ensure that the data is deterministic, '
                   'or consider using Alergia.')
             return None
     else:
         rpni = GeneralizedStateMerging(data, automaton_type, print_info)
 
         if rpni.merger.root is None:
-            print('DATA provided to RPNI is not deterministic. Ensure that the data is deterministic, '
+            print('Data provided to RPNI is not deterministic. Ensure that the data is deterministic, '
                   'or consider using Alergia.')
             return None
 
