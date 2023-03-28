@@ -32,9 +32,6 @@ class MealyMachine(DeterministicAutomaton):
         self.current_state = self.current_state.transitions[letter]
         return output
 
-    def is_minimal(self):
-        return self.compute_characterization_set(raise_warning=False) is not None
-
     def to_state_setup(self):
         state_setup_dict = {}
 

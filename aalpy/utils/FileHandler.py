@@ -1,6 +1,7 @@
 import os
 import sys
 import traceback
+from pathlib import Path
 
 from pydot import Dot, Node, Edge, graph_from_dot_file
 
@@ -82,7 +83,7 @@ def _add_transition_to_graph(graph, state, automaton_type, display_same_state_tr
                 graph.add_edge(Edge(state.state_id, s[0].state_id, label=_wrap_label(f'{i}/{s[1]}:{prob}')))
 
 
-def visualize_automaton(automaton, path="LearnedModel", file_type='pdf', display_same_state_trans=True):
+def visualize_automaton(automaton, path="LearnedModel", file_type="pdf", display_same_state_trans=True):
     """
     Create a graphical representation of the automaton.
     Function is round in the separate thread in the background.
@@ -92,9 +93,9 @@ def visualize_automaton(automaton, path="LearnedModel", file_type='pdf', display
 
         automaton: automaton to be visualized
 
-        path: file in which visualization will be saved (Default value = "Model_Visualization")
+        path: pathlike or str, file in which visualization will be saved (Default value = "LearnedModel.pdf")
 
-        file_type: type of file/visualization. Can be ['png', 'svg', 'pdf'] (Default value = 'pdf')
+        file_type: type of file/visualization. Can be ['png', 'svg', 'pdf'] (Default value = "pdf")
 
         display_same_state_trans: if True, same state transitions will be displayed (Default value = True)
 
@@ -110,7 +111,7 @@ def visualize_automaton(automaton, path="LearnedModel", file_type='pdf', display
     visualization_thread.start()
 
 
-def save_automaton_to_file(automaton, path="LearnedModel", file_type='dot',
+def save_automaton_to_file(automaton, path="LearnedModel", file_type="dot",
                            display_same_state_trans=True, visualize=False, round_floats=None):
     """
     The Standard of the automata strictly follows the syntax found at: https://automata.cs.ru.nl/Syntax/Overview.
@@ -120,9 +121,9 @@ def save_automaton_to_file(automaton, path="LearnedModel", file_type='dot',
 
         automaton: automaton to be saved to file
 
-        path: file in which automaton will be saved (Default value = "LearnedModel")
+        path: pathlike or str, file in which visualization will be saved (Default value = "LearnedModel")
 
-        file_type: Can be ['dot', 'png', 'svg', 'pdf'] (Default value = 'dot')
+        file_type: type of file/visualization. Can be ['dot', 'png', 'svg', 'pdf'] (Default value = "dot)
 
         display_same_state_trans: True, should not be set to false except from the visualization method
             (Default value = True)
@@ -134,13 +135,16 @@ def save_automaton_to_file(automaton, path="LearnedModel", file_type='dot',
     Returns:
 
     """
-    assert file_type in file_types
+    path = Path(path)
+    file_type = file_type.lower()
+    assert file_type in file_types, f"Filetype {file_type} not in allowed filetypes"
+    path = path.with_suffix(f".{file_type}")
     if file_type == 'dot' and not display_same_state_trans:
         print("When saving to file all transitions will be saved")
         display_same_state_trans = True
     automaton_type = automaton_types[automaton.__class__]
 
-    graph = Dot(path, graph_type='digraph')
+    graph = Dot(path.stem, graph_type='digraph')
     for state in automaton.states:
         graph.add_node(_get_node(state, automaton_type))
 
@@ -155,21 +159,19 @@ def save_automaton_to_file(automaton, path="LearnedModel", file_type='dot',
         return graph.to_string()
     else:
         try:
-            graph.write(path=f'{path}.{file_type}', format=file_type if file_type != 'dot' else 'raw')
-            print(f'Model saved to {path}.{file_type}.')
+            graph.write(path=path, format=file_type if file_type != 'dot' else 'raw')
+            print(f'Model saved to {path.as_posix()}.')
 
             if visualize and file_type in {'pdf', 'png', 'svg'}:
                 try:
                     import webbrowser
-                    abs_path = os.path.abspath(f'{path}.{file_type}')
-                    path = f'file:///{abs_path}'
-                    webbrowser.open(path)
+                    webbrowser.open(path.resolve().as_uri())
                 except OSError:
                     traceback.print_exc()
-                    print(f'Could not open the file {path}.{file_type}.', file=sys.stderr)
+                    print(f'Could not open the file {path.as_posix()}.', file=sys.stderr)
         except OSError:
             traceback.print_exc()
-            print(f'Could not write to the file {path}.{file_type}.', file=sys.stderr)
+            print(f'Could not write to the file {path.as_posix()}.', file=sys.stderr)
 
 
 def _process_label(label, source, destination, automaton_type):
@@ -209,8 +211,7 @@ def _process_node_label(node, label, node_label_dict, node_type, automaton_type)
     else:
         if automaton_type == 'moore' and label != "":
             label_output = _strip_label(label)
-            label = label_output.split('|')[0]
-            output = label_output.split('|')[1]
+            label, output = label_output.split("|", maxsplit=1)
             output = output if not output.isdigit() else int(output)
             node_label_dict[node_name] = node_type(label, output)
         else:
@@ -238,7 +239,7 @@ def load_automaton_from_file(path, automaton_type, compute_prefixes=False):
 
     Args:
 
-        path: path to the file
+        path: pathlike or str to the file
 
         automaton_type: type of the automaton, if not specified it will be automatically determined according,
             one of ['dfa', 'mealy', 'moore', 'mdp', 'smm', 'onfsm', 'mc']
@@ -250,6 +251,7 @@ def load_automaton_from_file(path, automaton_type, compute_prefixes=False):
       automaton
 
     """
+    path = Path(path)
     graph = graph_from_dot_file(path)[0]
 
     assert automaton_type in automaton_types.values()
