@@ -2,6 +2,7 @@ import copy
 import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from typing import Union
 
 
 class AutomatonState(ABC):
@@ -153,7 +154,7 @@ class DeterministicAutomaton(Automaton):
     def step(self, letter):
         pass
 
-    def get_shortest_path(self, origin_state: AutomatonState, target_state: AutomatonState) -> tuple:
+    def get_shortest_path(self, origin_state: AutomatonState, target_state: AutomatonState) -> Union[tuple, None]:
         """
         Breath First Search over the automaton
 
@@ -164,7 +165,8 @@ class DeterministicAutomaton(Automaton):
 
         Returns:
 
-            sequence of inputs that lead from origin_state to target state
+            sequence of inputs that lead from origin_state to target state, or None if target state is not reachable
+            from origin state
 
         """
         if origin_state not in self.states or target_state not in self.states:
@@ -197,7 +199,8 @@ class DeterministicAutomaton(Automaton):
 
                 # mark node as explored
                 explored.append(node)
-        return ()
+
+        return None
 
     def is_strongly_connected(self) -> bool:
         """
@@ -281,12 +284,7 @@ class DeterministicAutomaton(Automaton):
         return output
 
     def is_minimal(self):
-        mm = self
-        if not self.is_input_complete():
-            warnings.warn("Automaton is not input-complete: Checking minimality may take longer")
-            mm = copy.deepcopy(self)
-            mm.make_input_complete("sink_state")
-        return mm.compute_characterization_set(raise_warning=False) is not None
+        return self.compute_characterization_set(raise_warning=False) is not None
 
     def compute_characterization_set(self, char_set_init=None,
                                      online_suffix_closure=True,

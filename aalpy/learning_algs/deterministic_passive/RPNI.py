@@ -3,6 +3,7 @@ from bisect import insort
 from typing import Union
 
 from aalpy.base import DeterministicAutomaton
+from aalpy.learning_algs.deterministic_passive.GeneralizedStateMerging import GeneralizedStateMerging
 from aalpy.learning_algs.deterministic_passive.rpni_helper_functions import to_automaton, createPTA, \
     check_sequence, extract_unique_sequences
 
@@ -131,7 +132,8 @@ class RPNI:
                 red_node.children[io] = blue_node.children[io]
 
 
-def run_RPNI(data, automaton_type, input_completeness=None, print_info=True) -> Union[DeterministicAutomaton, None]:
+def run_RPNI(data, automaton_type, algorithm='gsm',
+             input_completeness=None, print_info=True) -> Union[DeterministicAutomaton, None]:
     """
     Run RPNI, a deterministic passive model learning algorithm.
     Resulting model conforms to the provided data.
@@ -142,6 +144,7 @@ def run_RPNI(data, automaton_type, input_completeness=None, print_info=True) -> 
 
         data: sequence of input sequences and corresponding label. Eg. [[(i1,i2,i3, ...), label], ...]
         automaton_type: either 'dfa', 'mealy', 'moore'. Note that for 'mealy' machine learning, data has to be prefix-closed.
+        algorithm: either 'gsm' (generalized state merging) or 'classic' for base RPNI implementation. GSM is much faster and less resource intensive.
         input_completeness: either None, 'sink_state', or 'self_loop'. If None, learned model could be input incomplete,
         sink_state will lead all undefined inputs form some state to the sink state, whereas self_loop will simply create
         a self loop. In case of Mealy learning output of the added transition will be 'epsilon'.
@@ -151,14 +154,24 @@ def run_RPNI(data, automaton_type, input_completeness=None, print_info=True) -> 
 
         Model conforming to the data, or None if data is non-deterministic.
     """
+    assert algorithm in {'gsm', 'classic'}
     assert automaton_type in {'dfa', 'mealy', 'moore'}
     assert input_completeness in {None, 'self_loop', 'sink_state'}
 
-    rpni = RPNI(data, automaton_type, print_info)
-    if rpni.root_node is None:
-        print('DATA provided to RPNI is not deterministic. Ensure that the data is deterministic, '
-              'or consider using Alergia.')
-        return None
+    if algorithm == 'classic':
+        rpni = RPNI(data, automaton_type, print_info)
+
+        if rpni.root_node is None:
+            print('DATA provided to RPNI is not deterministic. Ensure that the data is deterministic, '
+                  'or consider using Alergia.')
+            return None
+    else:
+        rpni = GeneralizedStateMerging(data, automaton_type, print_info)
+
+        if rpni.merger.root is None:
+            print('DATA provided to RPNI is not deterministic. Ensure that the data is deterministic, '
+                  'or consider using Alergia.')
+            return None
 
     learned_model = rpni.run_rpni()
 
