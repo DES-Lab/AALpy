@@ -12,7 +12,7 @@ class MdpState(AutomatonState):
         self.transitions = defaultdict(list)
 
 
-class Mdp(Automaton):
+class Mdp(Automaton[MdpState]):
     """Markov Decision Process."""
 
     def __init__(self, initial_state: MdpState, states: list):

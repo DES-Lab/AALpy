@@ -41,7 +41,7 @@ class OnfsmState(AutomatonState):
             return possible_transitions
 
 
-class Onfsm(Automaton):
+class Onfsm(Automaton[OnfsmState]):
     """
     Observable non-deterministic finite state automaton.
     """

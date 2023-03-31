@@ -2,7 +2,7 @@ import copy
 import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from typing import Union
+from typing import Union, TypeVar, Generic, List
 
 
 class AutomatonState(ABC):
@@ -40,13 +40,14 @@ class AutomatonState(ABC):
         all_trans = set(self.transitions.keys())
         return [t for t in all_trans if t not in dst]
 
+AutomatonStateType = TypeVar("AutomatonStateType") # TODO should restrict to automaton state but this gives an error in the ide.
 
-class Automaton(ABC):
+class Automaton(ABC, Generic[AutomatonStateType]):
     """
     Abstract class representing an automaton.
     """
 
-    def __init__(self, initial_state, states: list):
+    def __init__(self, initial_state : AutomatonStateType, states: List[AutomatonStateType]):
         """
         Args:
 
@@ -54,8 +55,8 @@ class Automaton(ABC):
             states (list) : list containing all states of the automaton
 
         """
-        self.initial_state = initial_state
-        self.states = states
+        self.initial_state : AutomatonState= initial_state
+        self.states : List[AutomatonStateType] = states
         self.characterization_set: list = []
         self.current_state = initial_state
 
@@ -148,7 +149,7 @@ class Automaton(ABC):
         visualize_automaton(self, path, file_type, display_same_state_transitions)
 
 
-class DeterministicAutomaton(Automaton):
+class DeterministicAutomaton(Automaton[AutomatonStateType]):
 
     @abstractmethod
     def step(self, letter):

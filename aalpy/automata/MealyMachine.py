@@ -11,7 +11,7 @@ class MealyState(AutomatonState):
         self.output_fun = dict()
 
 
-class MealyMachine(DeterministicAutomaton):
+class MealyMachine(DeterministicAutomaton[MealyState]):
 
     def __init__(self, initial_state: MealyState, states):
         super().__init__(initial_state, states)

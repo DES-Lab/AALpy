@@ -11,7 +11,7 @@ class DfaState(AutomatonState):
         self.is_accepting = is_accepting
 
 
-class Dfa(DeterministicAutomaton):
+class Dfa(DeterministicAutomaton[DfaState]):
     """
     Deterministic finite automaton.
     """

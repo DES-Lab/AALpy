@@ -11,7 +11,7 @@ class McState(AutomatonState):
         self.transitions = list()
 
 
-class MarkovChain(Automaton):
+class MarkovChain(Automaton[McState]):
     """Markov Decision Process."""
 
     def __init__(self, initial_state, states: list):

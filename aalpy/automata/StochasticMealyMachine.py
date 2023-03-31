@@ -14,7 +14,7 @@ class StochasticMealyState(AutomatonState):
         self.transitions = defaultdict(list)
 
 
-class StochasticMealyMachine(Automaton):
+class StochasticMealyMachine(Automaton[StochasticMealyState]):
 
     def __init__(self, initial_state: StochasticMealyState, states: list):
         super().__init__(initial_state, states)
