@@ -284,7 +284,7 @@ def make_input_complete(automaton, missing_transition_go_to='self_loop'):
     return automaton
 
 
-def convert_i_o_traces_for_RPNI(sequences):
+def convert_i_o_traces_for_RPNI(sequences, automaton_type="mealy"):
     """
     Converts a list of input-output sequences to RPNI format.
     Eg. [[(1,'a'), (2,'b'), (3,'c')], [(6,'7'), (4,'e'), (3,'c')]] to
@@ -292,7 +292,13 @@ def convert_i_o_traces_for_RPNI(sequences):
     """
     rpni_sequences = set()
 
+    if automaton_type not in ["mealy", "moore", "dfa"]:
+        raise ValueError()
+
     for s in sequences:
+        if automaton_type in ["moore", "dfa"]:
+            rpni_sequences.add((tuple(),s[0]))
+            s = s[1:]
         for i in range(len(s)):
             inputs = tuple([io[0] for io in s[:i + 1]])
             rpni_sequences.add((inputs, s[i][1]))
