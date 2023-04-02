@@ -61,10 +61,10 @@ class Automaton(ABC, Generic[AutomatonStateType]):
             states (list) : list containing all states of the automaton
 
         """
-        self.initial_state : AutomatonState= initial_state
+        self.initial_state : AutomatonStateType = initial_state
         self.states : List[AutomatonStateType] = states
         self.characterization_set: list = []
-        self.current_state = initial_state
+        self.current_state : AutomatonStateType = initial_state
 
     @property
     def size(self):
@@ -119,7 +119,7 @@ class Automaton(ABC, Generic[AutomatonStateType]):
                     alphabet.append(i)
         return list(alphabet)
 
-    def get_state_by_id(self, state_id) -> AutomatonState:
+    def get_state_by_id(self, state_id) -> AutomatonStateType:
         for state in self.states:
             if state.state_id == state_id:
                 return state
@@ -161,7 +161,7 @@ class DeterministicAutomaton(Automaton[AutomatonStateType]):
     def step(self, letter):
         pass
 
-    def get_shortest_path(self, origin_state: AutomatonState, target_state: AutomatonState) -> Union[tuple, None]:
+    def get_shortest_path(self, origin_state: AutomatonStateType, target_state: AutomatonStateType) -> Union[tuple, None]:
         """
         Breath First Search over the automaton
 
