@@ -1,18 +1,22 @@
 import random
 from collections import defaultdict
+from typing import Dict, Generic
+from typing_extensions import Self
 
 from aalpy.base import Automaton, AutomatonState
+# TODO edit setup to include this in base?
+from aalpy.base.Automaton import OutputType, InputType, ProbabilisticOptions
 
 
-class MdpState(AutomatonState):
+class MdpState(AutomatonState, Generic[InputType, OutputType]):
     def __init__(self, state_id, output=None):
         super().__init__(state_id)
-        self.output = output
+        self.output : OutputType = output
         # each child is a tuple (Node(output), probability)
-        self.transitions = defaultdict(list)
+        self.transitions : Dict[InputType, ProbabilisticOptions[Self]] = defaultdict(list)
 
 
-class Mdp(Automaton[MdpState]):
+class Mdp(Automaton[MdpState[InputType, OutputType]]):
     """Markov Decision Process."""
 
     def __init__(self, initial_state: MdpState, states: list):

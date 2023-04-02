@@ -1,15 +1,19 @@
 from collections import defaultdict
 from random import choice
+from typing import Generic, Tuple, Dict, List
+from typing_extensions import Self
 
 from aalpy.base import Automaton, AutomatonState
+from aalpy.base.Automaton import OutputType, InputType
 
 
-class OnfsmState(AutomatonState):
+class OnfsmState(AutomatonState, Generic[InputType, OutputType]):
     """ """
     def __init__(self, state_id):
         super().__init__(state_id)
+        # TODO this order is inconsistent with probabilistic models
         # key/input maps to the list of tuples of possible output/new state [(output1, state1), (output2, state2)]
-        self.transitions = defaultdict(list)
+        self.transitions : Dict[InputType, List[Tuple[OutputType, Self]]] = defaultdict(list)
 
     def add_transition(self, inp, out, new_state):
         """
@@ -41,7 +45,7 @@ class OnfsmState(AutomatonState):
             return possible_transitions
 
 
-class Onfsm(Automaton[OnfsmState]):
+class Onfsm(Automaton[OnfsmState[InputType, OutputType]]):
     """
     Observable non-deterministic finite state automaton.
     """

@@ -2,7 +2,7 @@ import copy
 import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from typing import Union, TypeVar, Generic, List
+from typing import Union, TypeVar, Generic, List, Tuple, Dict
 
 
 class AutomatonState(ABC):
@@ -19,7 +19,7 @@ class AutomatonState(ABC):
 
         """
         self.state_id = state_id
-        self.transitions = dict()
+        self.transitions = None
         self.prefix = None
 
     def get_diff_state_transitions(self) -> list:
@@ -41,6 +41,12 @@ class AutomatonState(ABC):
         return [t for t in all_trans if t not in dst]
 
 AutomatonStateType = TypeVar("AutomatonStateType") # TODO should restrict to automaton state but this gives an error in the ide.
+
+OutputType = TypeVar("OutputType")
+InputType = TypeVar("InputType")
+
+TransitionType = TypeVar("TransitionType")
+ProbabilisticOptions = List[Tuple[TransitionType, float]]
 
 class Automaton(ABC, Generic[AutomatonStateType]):
     """

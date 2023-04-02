@@ -1,17 +1,22 @@
+from typing import Generic, Dict
+from typing_extensions import Self
+
 from aalpy.base import AutomatonState, DeterministicAutomaton
+from aalpy.base.Automaton import InputType, OutputType
 
 
-class MooreState(AutomatonState):
+class MooreState(AutomatonState, Generic[InputType,OutputType]):
     """
     Single state of a Moore machine. Each state has an output value.
     """
 
     def __init__(self, state_id, output=None):
         super().__init__(state_id)
-        self.output = output
+        self.output : OutputType = output
+        self.transitions : Dict[InputType, Self] = dict()
 
 
-class MooreMachine(DeterministicAutomaton):
+class MooreMachine(DeterministicAutomaton[MooreState[InputType, OutputType]]):
 
     def __init__(self, initial_state: AutomatonState, states: list):
         super().__init__(initial_state, states)

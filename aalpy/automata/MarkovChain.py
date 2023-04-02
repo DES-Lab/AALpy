@@ -1,17 +1,20 @@
 import random
+from typing import Generic
+from typing_extensions import Self
 
 from aalpy.base import Automaton, AutomatonState
+from aalpy.base.Automaton import OutputType, ProbabilisticOptions
 
 
-class McState(AutomatonState):
+class McState(AutomatonState, Generic[OutputType]):
     def __init__(self, state_id, output):
         super().__init__(state_id)
-        self.output = output
+        self.output : OutputType = output
         # transitions is a list of tuples (Node(output), probability)
-        self.transitions = list()
+        self.transitions : ProbabilisticOptions[Self] = list()
 
 
-class MarkovChain(Automaton[McState]):
+class MarkovChain(Automaton[McState[OutputType]]):
     """Markov Decision Process."""
 
     def __init__(self, initial_state, states: list):

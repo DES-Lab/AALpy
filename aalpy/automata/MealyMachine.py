@@ -1,17 +1,22 @@
+from typing import Generic, Dict
+from typing_extensions import Self
+
 from aalpy.base import AutomatonState, DeterministicAutomaton
+from aalpy.base.Automaton import OutputType, InputType
 
 
-class MealyState(AutomatonState):
+class MealyState(AutomatonState, Generic[InputType, OutputType]):
     """
     Single state of a Mealy machine. Each state has an output_fun dictionary that maps inputs to outputs.
     """
 
     def __init__(self, state_id):
         super().__init__(state_id)
-        self.output_fun = dict()
+        self.transitions : Dict[InputType, Self] = dict()
+        self.output_fun : Dict[InputType, OutputType] = dict()
 
 
-class MealyMachine(DeterministicAutomaton[MealyState]):
+class MealyMachine(DeterministicAutomaton[MealyState[InputType, OutputType]]):
 
     def __init__(self, initial_state: MealyState, states):
         super().__init__(initial_state, states)
