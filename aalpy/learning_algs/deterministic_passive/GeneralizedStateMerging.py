@@ -1,10 +1,8 @@
 import queue
 import time
-from typing import Tuple
 
 from aalpy.learning_algs.deterministic_passive.rpni_helper_functions import to_automaton, RpniNode, StateMerging, \
     createPTA
-from aalpy.utils import save_automaton_to_file
 
 
 class GeneralizedStateMerging:
