@@ -1,5 +1,5 @@
 import os
-import queue
+from queue import Queue
 import re
 from collections import defaultdict
 from typing import Tuple
@@ -240,7 +240,7 @@ def bisimilar(a1: DeterministicAutomaton, a2: DeterministicAutomaton):
     if not isinstance(a1, supported_automaton_types):
         raise NotImplementedError(f"bisimilarity is not implemented for {a1.__class__.__name__}. Supported: {', '.join(t.__name__ for t in supported_automaton_types)}")
 
-    to_check = queue.Queue[Tuple[AutomatonState, AutomatonState]]()
+    to_check : Queue[Tuple[AutomatonState, AutomatonState]] = Queue()
     to_check.put((a1.initial_state, a2.initial_state))
     requirements = dict()
     requirements[(a1.initial_state, a2.initial_state)] = []

@@ -84,7 +84,7 @@ for automaton_type in automata_types:
         samples = get_characterizing_set(ground_truth, prefix_closed=True)
 
         gsm_state = GeneralizedStateMerging(samples, automaton_type, print_info=False)
-        learned_model = gsm_state.run()
+        learned_model = gsm_state.run_rpni()
 
         cex = bisimilar(learned_model, ground_truth)
         cex_sanity_check = compare_automata(ground_truth, learned_model, num_cex=1)

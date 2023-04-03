@@ -2,7 +2,8 @@ import queue
 import time
 from typing import Tuple
 
-from aalpy.learning_algs.deterministic_passive.rpni_helper_functions import to_automaton, RpniNode, StateMerging
+from aalpy.learning_algs.deterministic_passive.rpni_helper_functions import to_automaton, RpniNode, StateMerging, \
+    createPTA
 from aalpy.utils import save_automaton_to_file
 
 
@@ -14,7 +15,7 @@ class GeneralizedStateMerging:
         self.print_info = print_info
 
         pta_construction_start = time.time()
-        self.merger = StateMerging(data, self.automaton_type)
+        self.root = createPTA(data, self.automaton_type)
         self.log = []
 
         if self.print_info:
@@ -24,7 +25,7 @@ class GeneralizedStateMerging:
         start_time = time.time()
 
         # sorted list of states already considered
-        red_states = [self.merger.root]
+        red_states = [self.root]
         # used to get the minimal non-red state
         blue_states = list(red_states[0].children.values())
 
@@ -52,9 +53,8 @@ class GeneralizedStateMerging:
                     node.output = block.output
                     node.children = block.children
 
-                node = self.merger.root.get_child_by_prefix(blue_state.prefix[:-1])
+                node = self.root.get_child_by_prefix(blue_state.prefix[:-1])
                 node.children[blue_state.prefix[-1]] = red_state
-                # self.merge(red_state, blue_state)
 
             blue_states.clear()
             for r in red_states:
@@ -67,47 +67,6 @@ class GeneralizedStateMerging:
             print(f'RPNI-GSM Learned {len(red_states)} state automaton.')
 
         return to_automaton(red_states, self.final_automaton_type)
-
-    def merge(self, red_state, blue_state):
-        if not self.merger.merge(red_state, blue_state):
-            print(f"error on command: {self.log[-1]}")
-            v1 = StateMerging.replay_log_on_pta(self.data, self.log[:-1], self.automaton_type)
-            v2 = StateMerging.replay_log_on_pta(self.data, self.log, self.automaton_type)
-            save_automaton_to_file(v1, "pre", "pdf")
-            save_automaton_to_file(v2, "post", "pdf")
-            raise AssertionError(f"error on command: {self.log[-1]}")
-
-    def _compatible_states_future(self, red, blue):
-        """
-        Compatibility check based on futures
-        """
-
-        if self.automaton_type == 'mealy':
-            raise NotImplementedError()
-
-        # this is done by tracking which (red,blue) pairs have been visited
-
-        overwrites = []
-
-        def revert_overrides():
-            for overwrite in overwrites:
-                overwrite.output = None
-
-        q: queue.Queue[Tuple[RpniNode, RpniNode]] = queue.Queue()
-        q.put((red, blue))
-        while not q.empty():
-            red, blue = q.get()
-            if not RpniNode.compatible_outputs(red, blue):
-                revert_overrides()
-                return False
-            if red.output is None and blue.output is not None:
-                red.output = blue.output
-                overwrites.append(red)
-            for symbol in blue.children.keys():
-                if symbol in red.children.keys():
-                    q.put((red.children[symbol], blue.children[symbol]))
-        revert_overrides()
-        return True
 
     def _partition_from_merge(self, red: RpniNode, blue: RpniNode):
         """
