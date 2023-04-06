@@ -9,8 +9,8 @@ class Node:
 
     def __init__(self, output, prefix):
         self.output = output
-        self.transitions : Dict[Any,Dict[Any,Node]] = defaultdict(lambda : dict())
-        self.prefix = prefix
+        self.transitions : Dict[Tuple[Any,Any], Node] = dict()
+        self.prefix : Tuple[Tuple[Any,Any]] = prefix
 
     def __lt__(self, other):
         return len(self.prefix) < len(other.prefix)
@@ -26,27 +26,23 @@ class Node:
 
     def shallow_copy(self):
         node = Node(self.output, self.prefix)
-        for in_sym, options in self.transitions.items():
-            node.transitions[in_sym] = dict(options)
+        node.transitions = dict(self.transitions)
         return node
 
     def get_by_prefix(self, seq : List[Tuple[Any, Any]]) -> 'Node':
         node = self
-        for in_sym, out_sym in seq:
-            node = node.transitions[in_sym][out_sym]
+        for sym_pair in seq:
+            node = node.transitions[sym_pair]
         return node
 
-    def get_children(self):
-        return [node for options in self.transitions.values() for node in options.values()]
-
     def get_all_nodes(self) -> Set['Node']:
-        qu = Queue()
+        qu = Queue[Node]()
         qu.put(self)
         nodes = set()
         while not qu.empty():
             state = qu.get()
             nodes.add(state)
-            for child in state.get_children():
+            for child in state.transitions.values():
                 if child not in nodes:
                     qu.put(child)
         return nodes
@@ -65,21 +61,29 @@ class Node:
         initial_state = state_map[nodes[0]]
 
         for r in nodes:
-            for in_sym, options in r.transitions.items():
-                for out_sym, c in options.items():
-                    state_map[r].transitions[in_sym].append(state_map[c])
+            for (in_sym, out_sym), c in r.transitions.items():
+                state_map[r].transitions[in_sym].append(state_map[c])
 
         return NDMooreMachine(initial_state, list(state_map.values()))
 
     def compatible_outputs(self, other : 'Node'):
         return self.output == other.output
 
+    def get_two_stage_transition_dict(self):
+        transitions = defaultdict(lambda : dict())
+        for (in_sym, out_sym), child in self.transitions.items():
+            transitions[in_sym][out_sym] = child
+        return transitions
+
     def nondeterministic_additions(self, other : 'Node'):
         count = 0
-        for in_sym, opts in self.transitions.items():
-            if in_sym not in other.transitions.keys():
+        st = self.get_two_stage_transition_dict()
+        ot = other.get_two_stage_transition_dict()
+
+        for in_sym, opts in st.items():
+            if in_sym not in ot:
                 continue
-            count += sum(out_sym not in opts.keys() for out_sym in other.transitions[in_sym])
+            count += sum(out_sym not in opts.keys() for out_sym in ot[in_sym])
         return count
 
     def visualize(self, path : str):
@@ -92,7 +96,7 @@ class Node:
         visited.add(self)
         while queue:
             curr = queue.pop(0)
-            for in_sym, options in curr.transitions.items():
+            for in_sym, options in curr.get_two_stage_transition_dict().items():
                 if 1 < len(options) :
                     color = 'red'
                 else:
@@ -110,20 +114,21 @@ class Node:
 
         graph.write(path=path, format='pdf')
 
-def createPTA(data) :
+    @staticmethod
+    def createPTA(data) :
 
-    root_node = Node(data[0][0], tuple())
-    for seq in data:
-        if not seq[0] == root_node.output:
-            raise ValueError("conflicting initial outputs")
+        root_node = Node(data[0][0], tuple())
+        for seq in data:
+            if not seq[0] == root_node.output:
+                raise ValueError("conflicting initial outputs")
 
-        curr_node = root_node
-        for in_sym, out_sym in seq[1:]:
-            options = curr_node.transitions[in_sym]
-            if out_sym not in options.keys():
-                node = Node(out_sym, curr_node.prefix + ((in_sym,out_sym),))
-                options[out_sym] = node
+            curr_node = root_node
+            for in_sym, out_sym in seq[1:]:
+                sym_pair = (in_sym, out_sym)
+                if sym_pair not in curr_node.transitions:
+                    node = Node(out_sym, curr_node.prefix + (sym_pair,))
+                    curr_node.transitions[sym_pair] = node
 
-            curr_node = options[out_sym]
+                curr_node = curr_node.transitions[sym_pair]
 
-    return root_node
+        return root_node
