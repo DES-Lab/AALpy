@@ -1,6 +1,6 @@
-import queue
+from queue import Queue
 import time
-from typing import Tuple
+from typing import Dict, Optional, Tuple
 
 from aalpy.learning_algs.non_deterministic_passive.rpni_helper_functions import Node, createPTA
 
@@ -22,11 +22,10 @@ class GeneralizedStateMerging:
         # sorted list of states already considered
         red_states = [self.root]
         # used to get the minimal non-red state
-        blue_states = list(red_states[0].children.values())
+        blue_states = self.root.get_children()
 
         while blue_states:
             blue_state = min(list(blue_states), key=lambda x: len(x.prefix))
-
             partition = None
             for red_state in red_states:
                 partition = self._partition_from_merge(red_state, blue_state)
@@ -44,15 +43,15 @@ class GeneralizedStateMerging:
                 # use the partition for merging
                 for node in partition.keys():
                     block = partition[node]
-                    node.children = block.children
+                    node.transitions = block.transitions
 
-                node = self.root.get_child_by_prefix(blue_state.prefix[:-1])
+                node = self.root.get_by_prefix(blue_state.prefix[:-1])
                 in_sym, out_sym = blue_state.prefix[-1]
-                node.children[in_sym][out_sym] = red_state
+                node.transitions[in_sym][out_sym] = red_state
 
             blue_states.clear()
             for r in red_states:
-                for c in r.children.values():
+                for c in r.get_children():
                     if c not in red_states:
                         blue_states.append(c)
 
@@ -62,38 +61,38 @@ class GeneralizedStateMerging:
 
         return self.root.to_automaton()
 
-    def _partition_from_merge(self, red: Node, blue: Node):
+    def _partition_from_merge(self, red: Node, blue: Node) -> Optional[Dict[Node, Node]] :
         """
         Compatibility check based on partitions
         """
 
         partitions = dict()
-        q = queue.Queue()
+
+        def get_partition(node: Node) -> Node:
+            if node not in partitions:
+                p = node.shallow_copy()
+                partitions[node] = p
+            else:
+                p = partitions[node]
+            return p
+
+        q = Queue[Tuple[Node,Node]]()
         q.put((red, blue))
 
         while not q.empty():
             red, blue = q.get()
-
-            def get_partition(node: Node) -> Node:
-                if node not in partitions:
-                    p = node.shallow_copy()
-                    partitions[node] = p
-                else:
-                    p = partitions[node]
-                return p
-
             partition = get_partition(red)
 
-            if not Node.compatible_outputs(partition, blue) or 0 != Node.nondeterministic_additions(partition, blue) :
+            if not Node.compatible_outputs(partition, blue) or 0 < Node.nondeterministic_additions(partition, blue) :
                 return None
 
             partitions[blue] = partition
 
-            for in_sym, blue_opts in blue.children.items():
+            for in_sym, blue_opts in blue.transitions.items():
                 for out_sym, blue_child in blue_opts.items():
-                    if in_sym in partition.children.keys() and out_sym in partition.children[in_sym]:
-                        q.put((partition.children[in_sym][out_sym], blue_child))
+                    if in_sym in partition.transitions.keys() and out_sym in partition.transitions[in_sym]:
+                        q.put((partition.transitions[in_sym][out_sym], blue_child))
                     else:
                         # blue_child is blue after merging if there is a red state in the partition
-                        partition.children[in_sym][out_sym] = blue_child
+                        partition.transitions[in_sym][out_sym] = blue_child
         return partitions

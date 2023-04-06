@@ -1,4 +1,5 @@
 import random
+from collections import defaultdict
 from typing import List, Dict
 
 from aalpy.base import AutomatonState, Automaton
@@ -10,7 +11,7 @@ class NDMooreState(AutomatonState):
 
     def __init__(self, state_id, output=None):
         super().__init__(state_id)
-        self.transitions : Dict[List] = dict()
+        self.transitions : Dict[List] = defaultdict(lambda : list())
         self.output = output
 
 
