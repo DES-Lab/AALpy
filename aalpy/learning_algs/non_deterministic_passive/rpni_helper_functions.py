@@ -2,6 +2,7 @@ from collections import defaultdict
 from queue import Queue
 from typing import Set, Dict, Any, List, Tuple
 import pydot
+from aalpy.automata.NonDeterministicMooreMachine import NDMooreMachine, NDMooreState
 
 
 class Node:
@@ -10,7 +11,7 @@ class Node:
     def __init__(self, output, prefix):
         self.output = output
         self.transitions : Dict[Tuple[Any,Any], Node] = dict()
-        self.prefix : Tuple[Tuple[Any,Any]] = prefix
+        self.prefix : List[Tuple[Any,Any]] = prefix
 
     def __lt__(self, other):
         return len(self.prefix) < len(other.prefix)
@@ -51,8 +52,6 @@ class Node:
         nodes = self.get_all_nodes()
         nodes.remove(self)  # dunno whether order is preserved?
         nodes = [self] + list(nodes)
-
-        from aalpy.automata.NonDeterministicMooreMachine import NDMooreMachine, NDMooreState
 
         state_map = dict()
         for i, r in enumerate(nodes):
@@ -117,7 +116,7 @@ class Node:
     @staticmethod
     def createPTA(data) :
 
-        root_node = Node(data[0][0], tuple())
+        root_node = Node(data[0][0], [])
         for seq in data:
             if not seq[0] == root_node.output:
                 raise ValueError("conflicting initial outputs")
@@ -126,7 +125,7 @@ class Node:
             for in_sym, out_sym in seq[1:]:
                 sym_pair = (in_sym, out_sym)
                 if sym_pair not in curr_node.transitions:
-                    node = Node(out_sym, curr_node.prefix + (sym_pair,))
+                    node = Node(out_sym, curr_node.prefix + [sym_pair])
                     curr_node.transitions[sym_pair] = node
 
                 curr_node = curr_node.transitions[sym_pair]

@@ -10,7 +10,7 @@ class GeneralizedStateMerging:
         self.print_info = print_info
 
         pta_construction_start = time.time()
-        self.root = Node.createPTA(data)
+        self.root : Node = Node.createPTA(data)
         self.log = []
 
         if self.print_info:
