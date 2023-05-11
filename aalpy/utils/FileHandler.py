@@ -227,7 +227,7 @@ def _strip_label(label: str) -> str:
         label = label[1:-1]
     if label[0] == '{' and label[-1] == '}':
         label = label[1:-1]
-    label = label.replace(" ", "")
+    # label = label.replace(" ", "")
     return label
 
 
