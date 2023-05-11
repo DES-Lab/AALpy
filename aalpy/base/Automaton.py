@@ -418,3 +418,7 @@ class DeterministicAutomaton(Automaton):
             s1, s2 = self.compute_characterization_set(return_same_states=True)
 
         self.compute_prefixes()
+
+    @abstractmethod
+    def copy(self):
+        return

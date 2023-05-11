@@ -56,3 +56,6 @@ class Dfa(DeterministicAutomaton):
 
         return state_setup_dict
 
+    def copy(self):
+        from aalpy.utils import dfa_from_state_setup
+        return dfa_from_state_setup(self.to_state_setup())

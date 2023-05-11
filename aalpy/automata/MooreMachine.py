@@ -55,3 +55,7 @@ class MooreMachine(DeterministicAutomaton):
             state_setup_dict[s.state_id] = (s.output, {k: v.state_id for k, v in s.transitions.items()})
 
         return state_setup_dict
+
+    def copy(self):
+        from aalpy.utils import moore_from_state_setup
+        return moore_from_state_setup(self.to_state_setup())

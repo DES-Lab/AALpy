@@ -43,3 +43,7 @@ class MealyMachine(DeterministicAutomaton):
             state_setup_dict[s.state_id] = {k: (s.output_fun[k], v.state_id) for k, v in s.transitions.items()}
 
         return state_setup_dict
+
+    def copy(self):
+        from aalpy.utils import mealy_from_state_setup
+        return mealy_from_state_setup(self.to_state_setup())
