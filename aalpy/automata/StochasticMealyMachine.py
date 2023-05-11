@@ -7,6 +7,7 @@ from aalpy.base import Automaton, AutomatonState
 
 class StochasticMealyState(AutomatonState):
     """ """
+
     def __init__(self, state_id):
         super().__init__(state_id)
         # each child is a tuple (newNode, output, probability)
@@ -67,6 +68,19 @@ class StochasticMealyMachine(Automaton):
 
     def to_mdp(self):
         return smm_to_mdp_conversion(self)
+
+    def to_state_setup(self):
+        state_setup_dict = {}
+
+        for s in self.states:
+            state_setup_dict[s.state_id] = {k: [(node.state_id, output, prob) for node, output, prob in v]
+                                            for k, v in s.transitions.items()}
+
+        return state_setup_dict
+
+    def copy(self):
+        from aalpy.utils import smm_from_state_setup
+        return smm_from_state_setup(self.to_state_setup())
 
 
 def smm_to_mdp_conversion(smm: StochasticMealyMachine):

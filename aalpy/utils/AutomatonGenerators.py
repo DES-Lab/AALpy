@@ -125,8 +125,8 @@ def generate_random_deterministic_automata(automaton_type,
                                                                       num_states,
                                                                       input_alphabet_size,
                                                                       output_alphabet_size,
-                                                                      compute_prefixes, # compute prefixes
-                                                                      False, # ensure minimality
+                                                                      compute_prefixes,  # compute prefixes
+                                                                      False,  # ensure minimality
                                                                       **custom_args)
 
     return random_automaton
@@ -540,3 +540,27 @@ def mealy_from_state_setup(state_setup) -> MealyMachine:
     return mm
 
 
+def mdp_from_state_setup(state_setup):
+    from aalpy.automata import MdpState, Mdp
+    states_map = {key: MdpState(key, output=value[0]) for key, value in state_setup.items()}
+
+    for key, values in state_setup.items():
+        source = states_map[key]
+        for i, transitions in values[1].items():
+            for node, prob in transitions:
+                source.transitions[i].append((states_map[node], prob))
+
+    return Mdp(states_map['q0'], list(states_map.values()))
+
+
+def smm_from_state_setup(state_setup):
+    from aalpy.automata import StochasticMealyState, StochasticMealyMachine
+    states_map = {key: StochasticMealyState(key) for key in state_setup.keys()}
+
+    for key, values in state_setup.items():
+        source = states_map[key]
+        for i, transitions in values.items():
+            for node, output, prob in transitions:
+                source.transitions[i].append((states_map[node], output, prob))
+
+    return StochasticMealyMachine(states_map['q0'], list(states_map.values()))

@@ -14,6 +14,7 @@ class MdpState(AutomatonState):
 
 class Mdp(Automaton):
     """Markov Decision Process."""
+
     def __init__(self, initial_state: MdpState, states: list):
         super().__init__(initial_state, states)
 
@@ -60,3 +61,15 @@ class Mdp(Automaton):
                 return out
         return None
 
+    def to_state_setup(self):
+        state_setup_dict = {}
+
+        for s in self.states:
+            state_setup_dict[s.state_id] = (s.output, {k: [(node.state_id, prob) for node, prob in v]
+                                                       for k, v in s.transitions.items()})
+
+        return state_setup_dict
+
+    def copy(self):
+        from aalpy.utils import mdp_from_state_setup
+        return mdp_from_state_setup(self.to_state_setup())

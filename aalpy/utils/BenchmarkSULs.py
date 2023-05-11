@@ -157,9 +157,9 @@ def get_weird_coffee_machine_MDP():
 def get_faulty_coffee_machine_SMM():
     from aalpy.automata import StochasticMealyMachine, StochasticMealyState
 
-    s0 = StochasticMealyState('s0')
-    s1 = StochasticMealyState('s1')
-    s2 = StochasticMealyState('s2')
+    s0 = StochasticMealyState('q0')
+    s1 = StochasticMealyState('q1')
+    s2 = StochasticMealyState('q2')
 
     s0.transitions['but'].append((s0, 'init', 1.))
     s0.transitions['coin'].append((s1, 'beep', 1.))
@@ -177,8 +177,8 @@ def get_faulty_coffee_machine_SMM():
 def get_minimal_faulty_coffee_machine_SMM():
     from aalpy.automata import StochasticMealyMachine, StochasticMealyState
 
-    s0 = StochasticMealyState('s0')
-    s1 = StochasticMealyState('s1')
+    s0 = StochasticMealyState('q0')
+    s1 = StochasticMealyState('q1')
 
     s0.transitions['but'].append((s0, 'init', 1.))
     s0.transitions['coin'].append((s1, 'beep', 1.))
@@ -194,9 +194,9 @@ def get_minimal_faulty_coffee_machine_SMM():
 def get_faulty_mqtt_SMM():
     from aalpy.automata import StochasticMealyMachine, StochasticMealyState
 
-    s0 = StochasticMealyState('s0')
-    s1 = StochasticMealyState('s1')
-    s2 = StochasticMealyState('s2')
+    s0 = StochasticMealyState('q0')
+    s1 = StochasticMealyState('q1')
+    s2 = StochasticMealyState('q2')
 
     s0.transitions['connect'].append((s1, 'CONNACK', 1.))
     s0.transitions['disconnect'].append((s0, 'CONCLOSED', 1.))
@@ -226,10 +226,10 @@ def get_faulty_mqtt_SMM():
 def get_small_gridworld():
     from aalpy.automata import StochasticMealyMachine, StochasticMealyState
 
-    s0 = StochasticMealyState('s0')
-    s1 = StochasticMealyState('s1')
-    s2 = StochasticMealyState('s2')
-    s3 = StochasticMealyState('s3')
+    s0 = StochasticMealyState('q0')
+    s1 = StochasticMealyState('q1')
+    s2 = StochasticMealyState('q2')
+    s3 = StochasticMealyState('q3')
 
     p_g = 0.8
     p_m = 0.6
