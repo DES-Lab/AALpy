@@ -72,6 +72,11 @@ class StochasticMealyMachine(Automaton):
     def to_state_setup(self):
         state_setup_dict = {}
 
+        # ensure initial state is first in the list
+        if self.states[0] != self.initial_state:
+            self.states.remove(self.initial_state)
+            self.states.insert(0, self.initial_state)
+
         for s in self.states:
             state_setup_dict[s.state_id] = {k: [(node.state_id, output, prob) for node, output, prob in v]
                                             for k, v in s.transitions.items()}

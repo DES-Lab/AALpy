@@ -550,7 +550,8 @@ def mdp_from_state_setup(state_setup):
             for node, prob in transitions:
                 source.transitions[i].append((states_map[node], prob))
 
-    return Mdp(states_map['q0'], list(states_map.values()))
+    initial_state = states_map[list(state_setup.keys())[0]]
+    return Mdp(initial_state, list(states_map.values()))
 
 
 def smm_from_state_setup(state_setup):
@@ -563,4 +564,5 @@ def smm_from_state_setup(state_setup):
             for node, output, prob in transitions:
                 source.transitions[i].append((states_map[node], output, prob))
 
-    return StochasticMealyMachine(states_map['q0'], list(states_map.values()))
+    initial_state = states_map[list(state_setup.keys())[0]]
+    return StochasticMealyMachine(initial_state, list(states_map.values()))
