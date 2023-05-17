@@ -1,8 +1,7 @@
 import queue
 import time
 
-from aalpy.learning_algs.deterministic_passive.rpni_helper_functions import to_automaton, RpniNode, StateMerging, \
-    createPTA
+from aalpy.learning_algs.deterministic_passive.rpni_helper_functions import to_automaton, RpniNode, createPTA
 
 
 class GeneralizedStateMerging:

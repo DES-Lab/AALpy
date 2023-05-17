@@ -862,6 +862,36 @@ def rpni_mealy_example():
     return rpni_model
 
 
+def random_active_rpni_example():
+    import random
+    from aalpy.learning_algs import run_active_RPNI
+    from aalpy.learning_algs.deterministic_passive.active_RPNI import RandomWordSampler
+    from aalpy.utils import generate_random_deterministic_automata
+    from aalpy.utils.HelperFunctions import all_prefixes
+    from aalpy.SULs import MealySUL
+
+    model = generate_random_deterministic_automata('mealy', num_states=50,
+                                                   input_alphabet_size=3, output_alphabet_size=5)
+
+    input_al = model.get_input_alphabet()
+    num_sequences = 100
+    data = []
+    for _ in range(num_sequences):
+        seq_len = random.randint(1, 20)
+        random_seq = random.choices(input_al, k=seq_len)
+        # make sure that all prefixes all included in the dataset
+        for prefix in all_prefixes(random_seq):
+            output = model.compute_output_seq(model.initial_state, prefix)[-1]
+            data.append((prefix, output))
+
+    sampler = RandomWordSampler(500, 5, 25)
+    sul = MealySUL(model)
+    active_rpni_model = run_active_RPNI(data, sul, sampler=sampler, n_iter=5,
+                                        automaton_type='mealy', print_info=True)
+
+    return active_rpni_model
+
+
 def compare_stochastic_and_non_deterministic_learning(example='first_grid'):
     import aalpy.paths
     aalpy.paths.path_to_prism = "C:/Program Files/prism-4.6/bin/prism.bat"
