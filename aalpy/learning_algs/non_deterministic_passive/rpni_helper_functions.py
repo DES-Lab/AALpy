@@ -6,9 +6,10 @@ from aalpy.automata.NonDeterministicMooreMachine import NDMooreMachine, NDMooreS
 
 
 class Node:
-    __slots__ = ['output', 'transitions', 'prefix', "type"]
+    __slots__ = ['output', 'count', 'transitions', 'prefix', "type"]
 
     def __init__(self, output, prefix):
+        self.count = 0
         self.output = output
         self.transitions : Dict[Tuple[Any,Any], Node] = dict()
         self.prefix : List[Tuple[Any,Any]] = prefix
@@ -117,6 +118,7 @@ class Node:
     def createPTA(data) :
 
         root_node = Node(data[0][0], [])
+        root_node.count = len(data)
         for seq in data:
             if not seq[0] == root_node.output:
                 raise ValueError("conflicting initial outputs")
@@ -127,7 +129,9 @@ class Node:
                 if sym_pair not in curr_node.transitions:
                     node = Node(out_sym, curr_node.prefix + [sym_pair])
                     curr_node.transitions[sym_pair] = node
-
-                curr_node = curr_node.transitions[sym_pair]
+                else:
+                    node = curr_node.transitions[sym_pair]
+                node.count += 1
+                curr_node = node
 
         return root_node
