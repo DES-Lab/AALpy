@@ -114,6 +114,17 @@ class Node:
 
         graph.write(path=path, format='pdf')
 
+    def prune(self, threshold = 20):
+        q = Queue[Node]()
+        q.put(self)
+        while not q.empty():
+            node = q.get()
+            if node.count < threshold:
+                node.transitions.clear()
+
+            for child in node.transitions.values():
+                q.put(child)
+
     @staticmethod
     def createPTA(data) :
 
