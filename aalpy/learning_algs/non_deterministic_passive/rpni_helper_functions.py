@@ -86,8 +86,27 @@ class Node:
             count += sum(out_sym not in opts.keys() for out_sym in ot[in_sym])
         return count
 
-    def visualize(self, path : str):
+    def visualize(self, path : str, data = None, pta = None):
         graph = pydot.Dot('fpta', graph_type='digraph')
+
+        transition_count = defaultdict(lambda : 0)
+        if data is None:
+            data = []
+        elif pta is None:
+            pta = Node.createPTA(data)
+        for seq in data:
+            current = self
+            current_pta = pta
+            for sym_pair in seq[1:]:
+                if sym_pair not in current_pta.transitions:
+                    break
+                if sym_pair not in current.transitions:
+                    raise AssertionError("no lang inclusion")
+                transition_count[(current,sym_pair)] += 1
+                current = current.transitions[sym_pair]
+                current_pta = current_pta.transitions[sym_pair]
+                if current.output != sym_pair[1]:
+                    raise AssertionError("wrong output")
 
         graph.add_node(pydot.Node(str(self.prefix), label=f'{self.output}'))
 
@@ -107,7 +126,7 @@ class Node:
                         graph.add_node(pydot.Node(str(c.prefix), label=f'{c.output}'))
                         queue.append(c)
                         visited.add(c)
-                    graph.add_edge(pydot.Edge(str(curr.prefix), str(c.prefix), label=f'{in_sym}', color=color))
+                    graph.add_edge(pydot.Edge(str(curr.prefix), str(c.prefix), label=f'{in_sym} [{transition_count[(curr,(in_sym,out_sym))]}]', color=color, fontcolor=color))
 
         graph.add_node(pydot.Node('__start0', shape='none', label=''))
         graph.add_edge(pydot.Edge('__start0', str(self.prefix), label=''))
