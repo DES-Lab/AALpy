@@ -181,7 +181,7 @@ class GeneralizedStateMerging:
             red, blue = q.get()
             partition = get_partition(red)
 
-            if not self.local_score(partition, blue) :
+            if not self.local_merge_score(partition, blue) :
                 return False, dict()
 
             partitions[blue] = partition

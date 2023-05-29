@@ -39,13 +39,16 @@ class Node:
 
     def shallow_copy(self) -> 'Node':
         node = Node(self.prefix)
-        node.transitions = {in_sym : dict(t) for in_sym, t in self.transitions.items()}
+        for in_sym, t in self.transitions.items():
+            node.transitions[in_sym] = dict(t)
         node.transition_count = copy.deepcopy(self.transition_count)
         return node
 
     def get_by_prefix(self, seq : Prefix) -> 'Node':
         node = self
         for in_sym, out_sym in seq:
+            if in_sym is None:
+                continue
             node = node.transitions[in_sym][out_sym]
         return node
 
@@ -78,7 +81,7 @@ class Node:
         for r in nodes:
             for in_sym, transitions in r.transitions.items():
                 count = r.transition_count[in_sym]
-                total = sum(count)
+                total = sum(count.values())
                 for out_sym, new_state in transitions.items():
                     transition = (state_map[new_state], out_sym, count[out_sym] / total)
                     state_map[r].transitions[in_sym].append(transition)
@@ -90,24 +93,20 @@ class Node:
 
         graph.add_node(pydot.Node(str(self.prefix), label=f'{self.count()}'))
 
-        queue = Queue[Node]()
-        queue.put(self)
-        visited = set()
-        visited.add(self)
-        while queue:
-            curr = queue.get()
-            for in_sym, options in curr.transitions.items():
+        nodes = self.get_all_nodes()
+
+        for node in nodes:
+            graph.add_node(pydot.Node(str(node.prefix), label=f'{node.count()}'))
+
+        for node in nodes:
+            for in_sym, options in node.transitions.items():
                 if 1 < len(options) :
                     color = 'red'
                 else:
                     color = 'black'
 
                 for out_sym, c in options.items():
-                    if c not in visited:
-                        graph.add_node(pydot.Node(str(c.prefix), label=f'{c.count()}'))
-                        queue.put(c)
-                        visited.add(c)
-                    graph.add_edge(pydot.Edge(str(curr.prefix), str(c.prefix), label=f'{in_sym} / {out_sym} [{curr.transition_count[in_sym][out_sym]}]', color=color, fontcolor=color))
+                    graph.add_edge(pydot.Edge(str(node.prefix), str(c.prefix), label=f'{in_sym} / {out_sym} [{node.transition_count[in_sym][out_sym]}]', color=color, fontcolor=color))
 
         graph.add_node(pydot.Node('__start0', shape='none', label=''))
         graph.add_edge(pydot.Edge('__start0', str(self.prefix), label=''))
@@ -118,13 +117,13 @@ class Node:
         for seq in data:
             curr_node : Node = self
             for in_sym, out_sym in seq:
+                curr_node.transition_count[in_sym][out_sym] += 1
                 transitions = curr_node.transitions[in_sym]
-                if out_sym not in transitions[out_sym]:
+                if out_sym not in transitions:
                     node = Node(curr_node.prefix + [(in_sym, out_sym)])
                     transitions[out_sym] = node
                 else:
                     node = transitions[out_sym]
-                node.transition_count[in_sym][out_sym] += 1
                 curr_node = node
     @staticmethod
     def createPTA(data, initial_output = None) :
