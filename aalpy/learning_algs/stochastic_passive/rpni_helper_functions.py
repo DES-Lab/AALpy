@@ -1,13 +1,18 @@
 import copy
 from collections import defaultdict
 from queue import Queue
-from typing import Set, Dict, Any, List, Tuple
+from typing import Set, Dict, Any, List, Tuple, Literal
 import pydot
 
-from aalpy.automata import StochasticMealyMachine, StochasticMealyState
+from aalpy.automata import StochasticMealyMachine, StochasticMealyState, MooreState, MooreMachine, NDMooreState, \
+    NDMooreMachine, Mdp, MdpState, MealyMachine, MealyState, Onfsm, OnfsmState
+from aalpy.base import Automaton
 
 TransitionID = Tuple[Any, Any]
 Prefix = List[TransitionID]
+
+OutputBehavior = Literal["moore", "mealy"]
+TransitionBehavior = Literal["deterministic", "nondeterministic", "stochastic"]
 
 class Node:
     __slots__ = ['transitions', 'prefix', "transition_count"]
@@ -64,29 +69,57 @@ class Node:
                     qu.put(child)
         return nodes
 
-    def to_automaton(self) -> StochasticMealyMachine:
+    def to_automaton(self, output_behavior : OutputBehavior, transition_behavior : TransitionBehavior) -> Automaton:
         #TODO fix
         nodes = self.get_all_nodes()
         nodes.remove(self)  # dunno whether order is preserved?
         nodes = [self] + list(nodes)
 
+        type_dict = {
+            ("moore","deterministic") : (MooreMachine, MooreState),
+            ("moore","nondeterministic") : (NDMooreMachine, NDMooreState),
+            ("moore","stochastic") : (Mdp, MdpState),
+            ("mealy","deterministic") : (MealyMachine, MealyState),
+            ("mealy","nondeterministic") : (Onfsm, OnfsmState),
+            ("mealy","stochastic") : (StochasticMealyMachine, StochasticMealyState),
+        }
+
+        Machine, State = type_dict[(output_behavior, transition_behavior)]
+
         state_map = dict()
-        for i, r in enumerate(nodes):
-            state = StochasticMealyState(f's{i}')
-            state_map[r] = state
-            state.prefix = r.prefix
+        for i, node in enumerate(nodes):
+            state_id = f's{i}'
+            match output_behavior:
+                case "mealy" : state = State(state_id)
+                case "moore" : state = State(state_id, node.prefix[-1][1])
+            state_map[node] = state
+            state.prefix = node.prefix
 
         initial_state = state_map[self]
 
-        for r in nodes:
-            for in_sym, transitions in r.transitions.items():
-                count = r.transition_count[in_sym]
+        for node in nodes:
+            state = state_map[node]
+            for in_sym, transitions in node.transitions.items():
+                count = node.transition_count[in_sym]
                 total = sum(count.values())
-                for out_sym, new_state in transitions.items():
-                    transition = (state_map[new_state], out_sym, count[out_sym] / total)
-                    state_map[r].transitions[in_sym].append(transition)
+                for out_sym, target_node in transitions.items():
+                    target_state = state_map[target_node]
+                    match (output_behavior, transition_behavior):
+                        case ("moore","deterministic") :
+                            state.transitions[in_sym] = target_state
+                        case ("mealy","deterministic") :
+                            state.transitions[in_sym] = target_state
+                            state.output_fun[in_sym] = out_sym
+                        case ("moore","nondeterministic"):
+                            state.transitions[in_sym].append(target_state)
+                        case ("mealy","nondeterministic"):
+                            state.transitions[in_sym].append((out_sym, target_state))
+                        case ("moore","stochastic"):
+                            state.transitions[in_sym].append((target_state, count[out_sym] / total))
+                        case ("mealy","stochastic"):
+                            state.transitions[in_sym].append((target_state, out_sym, count[out_sym] / total))
 
-        return StochasticMealyMachine(initial_state, list(state_map.values()))
+        return Machine(initial_state, list(state_map.values()))
 
     def visualize(self, path : str):
         graph = pydot.Dot('fpta', graph_type='digraph')

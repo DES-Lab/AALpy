@@ -2,10 +2,9 @@ import copy
 from math import sqrt, log
 from queue import Queue
 import time
-from typing import Dict, Tuple, Literal, Callable
+from typing import Dict, Tuple, Callable
 
-from aalpy.learning_algs.stochastic_passive.rpni_helper_functions import Node
-
+from aalpy.learning_algs.stochastic_passive.rpni_helper_functions import Node, OutputBehavior, TransitionBehavior
 
 Score = bool
 ScoreFunction = Callable[[Node,Node], Score]
@@ -22,7 +21,6 @@ def hoeffding_compatibility(eps) -> ScoreFunction:
         return True
     return similar
 
-
 class DebugInfo:
     def __init__(self, lvl):
         self.lvl = lvl
@@ -38,9 +36,6 @@ class DebugInfo:
                 fn(*args, **kw)
             return wrapper
         return decorator
-
-OutputBehavior = Literal["moore", "mealy"]
-TransitionBehavior = Literal["deterministic", "nondeterministic", "probabilistic"]
 
 class GeneralizedStateMerging:
     class DebugInfo(DebugInfo):
@@ -154,7 +149,7 @@ class GeneralizedStateMerging:
 
         self.debug.learning_done(red_states, start_time)
 
-        return self.root.to_automaton()
+        return self.root.to_automaton(self.output_behavior, self.transition_behavior)
 
     def _partition_from_merge(self, red: Node, blue: Node) -> Tuple[bool,Dict[Node, Node]] :
         """
