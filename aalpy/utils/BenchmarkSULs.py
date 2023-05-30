@@ -385,3 +385,165 @@ def get_small_pomdp():
     q4.transitions['but'].append((q4, 1))
 
     return Mdp(q0, [q0, q1, q2, q3, q4])
+
+#
+# class CarAlarmSystem:
+#
+#     def __init__(self, max_wait_time=700):
+#         self.timer = 0
+#         self.max_wait_time = max_wait_time
+#         self.bonnet_open = False
+#         self.trunk_open = False
+#         self.doors_opened = [False, False, False, False]
+#         # Is alarm active
+#         self.alarm_active = False
+#         # Is alarm triggered
+#         self.alarm_triggered = False
+#         # Is car locked
+#         self.is_locked = False
+#         # Time at which car was locked and alarm activated
+#         self.locked_time = None
+#         self.alarm_activation_time = None
+#
+#     def __get_alarm_status(self):
+#         if self.is_locked and self.alarm_active:
+#             self.alarm_triggered = True
+#         if not self.alarm_triggered:
+#             return None
+#         alarm_note = ''
+#         if abs(self.timer - self.alarm_activation_time) <= 30:
+#             alarm_note += '_ALARM_SOUND'
+#         if abs(self.timer - self.alarm_activation_time) <= 500:
+#             alarm_note += '_ALARM_LIGHTS'
+#         return alarm_note
+#
+#     def open_bonnet(self):
+#         if self.bonnet_open:
+#             return 'Bonnet already opened'
+#         self.bonnet_open = True
+#         alarm_note = self.__get_alarm_status()
+#         return_msg = 'Bonnet opened'
+#         if alarm_note:
+#             return_msg += alarm_note
+#         return return_msg
+#
+#     def close_bonnet(self):
+#         if not self.bonnet_open:
+#             return 'Bonnet already closed'
+#         self.bonnet_open = False
+#         alarm_note = self.__get_alarm_status()
+#         return_msg = 'Bonnet closed'
+#         if alarm_note:
+#             return_msg += alarm_note
+#         return return_msg
+#
+#     def open_trunk(self):
+#         if self.trunk_open:
+#             return 'Trunk already opened'
+#         self.trunk_open = True
+#         alarm_note = self.__get_alarm_status()
+#         return_msg = 'Trunk opened'
+#         if alarm_note:
+#             return_msg += alarm_note
+#         return return_msg
+#
+#     def close_trunk(self):
+#         if not self.trunk_open:
+#             return 'Trunk already closed'
+#         self.trunk_open = False
+#         alarm_note = self.__get_alarm_status()
+#         return_msg = 'Trunk closed'
+#         if alarm_note:
+#             return_msg += alarm_note
+#         return return_msg
+#
+#     def open_door(self, door_id):
+#         door_id = door_id - 1
+#         if self.doors_opened[door_id]:
+#             return 'Door already opened'
+#         self.doors_opened[door_id] = True
+#         alarm_note = self.__get_alarm_status()
+#         return_msg = 'Doors opened'
+#         if alarm_note:
+#             return_msg += alarm_note
+#         return return_msg
+#
+#     def close_door(self, door_id):
+#         door_id = door_id - 1
+#         if not self.doors_opened[door_id]:
+#             return 'Door already closed'
+#         self.doors_opened[door_id] = False
+#         alarm_note = self.__get_alarm_status()
+#         return_msg = 'Doors closed'
+#         if alarm_note:
+#             return_msg += alarm_note
+#         return return_msg
+#
+#     def lock_vehicle(self):
+#         if self.is_locked:
+#             return 'Locked'
+#         if not self.bonnet_open and not self.trunk_open and len(list(set(self.doors_opened))) == 1 and self.doors_opened[0] is False:
+#             self.is_locked = True
+#             self.locked_time = self.timer
+#             return 'Locked'
+#         return 'Cannot lock'
+#
+#     def unlock_vehicle(self):
+#         self.is_locked = False
+#         self.alarm_active = False
+#         self.locked_time = None
+#         return 'Unlocked'
+#
+#     def wait(self, time_to_wait):
+#         self.timer += time_to_wait
+#         self.timer = min(self.timer, self.max_wait_time)
+#         if self.locked_time and abs(self.timer - self.locked_time) >= 20:
+#             self.alarm_active = True
+#             self.alarm_activation_time = self.timer
+#         if self.alarm_active:
+#             return 'Alarm Activated'
+#         return 'Waiting'
+#
+#     def reset(self):
+#         self.timer = 0
+#         self.bonnet_open = False
+#         self.doors_opened = [False, False, False, False]
+#         # Is alarm active
+#         self.alarm_active = False
+#         # Is alarm triggered
+#         self.alarm_triggered = False
+#         # Is car locked
+#         self.is_locked = False
+#         # Time at which car was locked and alarm activated
+#         self.locked_time = None
+#         self.alarm_activation_time = None
+#
+#
+# if __name__ == '__main__':
+#     from aalpy.learning_algs import run_Lstar
+#     from aalpy.oracles import RandomWMethodEqOracle
+#     from aalpy.SULs import FunctionDecorator, PyClassSUL
+#     # class under learning (do not instantiate it)
+#     car_alarm_class = CarAlarmSystem
+#
+#     # methods weapped in the function decorators
+#     input_al = [FunctionDecorator(car_alarm_class.open_trunk), FunctionDecorator(car_alarm_class.close_trunk),
+#                 FunctionDecorator(car_alarm_class.open_bonnet), FunctionDecorator(car_alarm_class.close_bonnet),
+#                 FunctionDecorator(car_alarm_class.lock_vehicle), FunctionDecorator(car_alarm_class.unlock_vehicle),
+#
+#                 FunctionDecorator(car_alarm_class.open_door, 1), FunctionDecorator(car_alarm_class.close_door, 1),
+#                 FunctionDecorator(car_alarm_class.open_door, 2), FunctionDecorator(car_alarm_class.close_door, 2),
+#                 FunctionDecorator(car_alarm_class.open_door, 3), FunctionDecorator(car_alarm_class.close_door, 3),
+#                 FunctionDecorator(car_alarm_class.open_door, 4), FunctionDecorator(car_alarm_class.close_door, 4),
+#
+#                 FunctionDecorator(car_alarm_class.wait, 10),
+#                 FunctionDecorator(car_alarm_class.wait, 20),
+#                 FunctionDecorator(car_alarm_class.wait, 200),
+#                 ]
+#
+#     sul = PyClassSUL(car_alarm_class)
+#
+#     eq_oracle = RandomWMethodEqOracle(input_al, sul, walks_per_state=100, walk_len=10)
+#
+#     learned_model = run_Lstar(input_al, sul, eq_oracle=eq_oracle, automaton_type='mealy', cache_and_non_det_check=True)
+#     print(learned_model)
