@@ -1,5 +1,4 @@
 from typing import Generic, Dict
-from typing_extensions import Self
 
 from aalpy.base import AutomatonState, DeterministicAutomaton
 from aalpy.base.Automaton import InputType, OutputType
@@ -13,7 +12,7 @@ class MooreState(AutomatonState, Generic[InputType,OutputType]):
     def __init__(self, state_id, output=None):
         super().__init__(state_id)
         self.output : OutputType = output
-        self.transitions : Dict[InputType, Self] = dict()
+        self.transitions : Dict[InputType, MooreState] = dict()
 
 
 class MooreMachine(DeterministicAutomaton[MooreState[InputType, OutputType]]):

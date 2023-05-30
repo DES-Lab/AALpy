@@ -1,11 +1,10 @@
 import random
 from collections import defaultdict
-from typing import Dict, Generic
-from typing_extensions import Self
+from typing import Dict, Generic, List, Tuple
 
 from aalpy.base import Automaton, AutomatonState
 # TODO edit setup to include this in base?
-from aalpy.base.Automaton import OutputType, InputType, ProbabilisticOptions
+from aalpy.base.Automaton import OutputType, InputType
 
 
 class MdpState(AutomatonState, Generic[InputType, OutputType]):
@@ -13,7 +12,7 @@ class MdpState(AutomatonState, Generic[InputType, OutputType]):
         super().__init__(state_id)
         self.output : OutputType = output
         # each child is a tuple (Node(output), probability)
-        self.transitions : Dict[InputType, ProbabilisticOptions[Self]] = defaultdict(list)
+        self.transitions : Dict[InputType, List[Tuple[MdpState, float]]] = defaultdict(list)
 
 
 class Mdp(Automaton[MdpState[InputType, OutputType]]):

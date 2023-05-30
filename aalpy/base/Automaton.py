@@ -45,9 +45,6 @@ AutomatonStateType = TypeVar("AutomatonStateType") # TODO should restrict to aut
 OutputType = TypeVar("OutputType")
 InputType = TypeVar("InputType")
 
-TransitionType = TypeVar("TransitionType")
-ProbabilisticOptions = List[Tuple[TransitionType, float]]
-
 class Automaton(ABC, Generic[AutomatonStateType]):
     """
     Abstract class representing an automaton.

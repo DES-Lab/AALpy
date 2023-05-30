@@ -1,5 +1,4 @@
 from typing import Generic, Dict
-from typing_extensions import Self
 
 from aalpy.base import AutomatonState, DeterministicAutomaton
 from aalpy.base.Automaton import OutputType, InputType
@@ -12,7 +11,7 @@ class MealyState(AutomatonState, Generic[InputType, OutputType]):
 
     def __init__(self, state_id):
         super().__init__(state_id)
-        self.transitions : Dict[InputType, Self] = dict()
+        self.transitions : Dict[InputType, MealyState] = dict()
         self.output_fun : Dict[InputType, OutputType] = dict()
 
 

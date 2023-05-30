@@ -1,7 +1,6 @@
 import random
 from collections import defaultdict
 from typing import Generic, Tuple, List, Dict
-from typing_extensions import Self
 
 from aalpy.automata import MdpState, Mdp
 from aalpy.base import Automaton, AutomatonState
@@ -14,7 +13,7 @@ class StochasticMealyState(AutomatonState, Generic[InputType, OutputType]):
     def __init__(self, state_id):
         super().__init__(state_id)
         # each child is a tuple (newNode, output, probability)
-        self.transitions : Dict[InputType, List[Tuple[Self, OutputType, float]]] = defaultdict(list)
+        self.transitions : Dict[InputType, List[Tuple[StochasticMealyState, OutputType, float]]] = defaultdict(list)
 
 
 class StochasticMealyMachine(Automaton[StochasticMealyState[InputType, OutputType]]):
