@@ -70,9 +70,9 @@ class GeneralizedStateMerging:
 
         @lvl_required(1)
         def learning_done(self, red_states, start_time):
-            print(f'\nRPNI-GSM Learning Time: {round(time.time() - start_time, 2)}')
-            print(f'RPNI-GSM Learned {len(red_states)} state automaton.')
-            self.instance.root.visualize("wee", self.instance.data, self.pta)
+            print(f'\nLearning Time: {round(time.time() - start_time, 2)}')
+            print(f'Learned {len(red_states)} state automaton.')
+            self.instance.root.visualize("model.pdf")
             #self.pta.visualize("pta")
 
     def __init__(self, data, output_behavior : OutputBehavior = "moore",
@@ -87,7 +87,7 @@ class GeneralizedStateMerging:
             if output_behavior == "deterministic" :
                 local_score = lambda x,y : True
             else :
-                local_score = hoeffding_compatibility(0.5)
+                local_score = hoeffding_compatibility(0.005)
         self.local_score : ScoreFunction = local_score
         self.update_transition_count = update_count
 
