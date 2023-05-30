@@ -40,7 +40,7 @@ class AutomatonState(ABC):
         all_trans = set(self.transitions.keys())
         return [t for t in all_trans if t not in dst]
 
-AutomatonStateType = TypeVar("AutomatonStateType") # TODO should restrict to automaton state but this gives an error in the ide.
+AutomatonStateType = TypeVar("AutomatonStateType", bound=AutomatonState)
 
 OutputType = TypeVar("OutputType")
 InputType = TypeVar("InputType")
