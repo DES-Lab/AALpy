@@ -266,10 +266,9 @@ def generate_random_mdp(num_states, input_size, output_size, possible_probabilit
 
                     # ensure determinism
                     if new_state.output not in {s.output for s in reached_states}:
+                        if state_buffer:
+                            state_buffer.remove(new_state)
                         break
-
-                    if state_buffer:
-                        state_buffer.remove(new_state)
 
                 reached_states.append(new_state)
 
@@ -281,7 +280,7 @@ def generate_random_mdp(num_states, input_size, output_size, possible_probabilit
 
 def generate_random_smm(num_states, input_size, output_size, possible_probabilities=None):
     """
-    Generates random MDP.
+    Generates random SMM.
 
     Args:
 
@@ -324,12 +323,11 @@ def generate_random_smm(num_states, input_size, output_size, possible_probabilit
 
                     # ensure determinism
                     if o not in transition_outputs:
+                        if output_buffer:
+                            output_buffer.remove(o)
+                        if state_buffer:
+                            state_buffer.remove(new_state)
                         break
-
-                    if output_buffer:
-                        output_buffer.remove(o)
-                    if state_buffer:
-                        state_buffer.remove(new_state)
 
                 reached_states.append(new_state)
                 transition_outputs.append(o)
