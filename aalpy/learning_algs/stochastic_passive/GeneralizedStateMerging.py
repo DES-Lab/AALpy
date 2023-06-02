@@ -47,12 +47,10 @@ class GeneralizedStateMerging:
                 return
             self.instance = instance
             self.log = []
-            self.pta = None
 
         @lvl_required(1)
         def pta_construction_done(self, start_time):
             print(f'PTA Construction Time: {round(time.time() - start_time, 2)}')
-            self.pta = copy.deepcopy(self.instance.root)
             states = self.instance.root.get_all_nodes()
             leafs = [state for state in states if len(state.transitions.keys()) == 0]
             depth = [len(state.prefix) for state in leafs]
@@ -73,7 +71,6 @@ class GeneralizedStateMerging:
             print(f'\nLearning Time: {round(time.time() - start_time, 2)}')
             print(f'Learned {len(red_states)} state automaton.')
             self.instance.root.visualize("model.pdf")
-            #self.pta.visualize("pta")
 
     def __init__(self, data, output_behavior : OutputBehavior = "moore",
                  transition_behavior : TransitionBehavior = "deterministic",
