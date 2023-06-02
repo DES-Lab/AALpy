@@ -21,6 +21,19 @@ def hoeffding_compatibility(eps) -> ScoreFunction:
         return True
     return similar
 
+def non_det_compatibility(eps) -> ScoreFunction:
+    print("Warning: using experimental compatibility criterion for nondeterministic automata")
+    def similar(a: Node, b: Node, _: Any):
+        for in_sym in filter(lambda x : x in a.transitions.keys(), b.transitions.keys()):
+            a_count, b_count = (x.transition_count[in_sym] for x in [a,b])
+            a_total, b_total = (sum(x.values()) for x in [a_count, b_count])
+            if a_total < eps or b_total < eps:
+                continue
+            if set(a_count.keys()) != set(b_count.keys()):
+                return False
+        return True
+    return similar
+
 class DebugInfo:
     def __init__(self, lvl):
         self.lvl = lvl
@@ -83,12 +96,12 @@ class GeneralizedStateMerging:
         if info_update is None:
             info_update = lambda a, b, c : c
         self.info_update = info_update
-        
+
         if local_score is None:
-            if output_behavior == "deterministic" :
-                local_score = lambda x,y : True
-            else :
-                local_score = hoeffding_compatibility(0.005)
+            match transition_behavior:
+                case "deterministic" : local_score = lambda x,y,_ : True
+                case "nondeterministic" : local_score = non_det_compatibility(20)
+                case "stochastic" : local_score = hoeffding_compatibility(0.005)
         self.local_score : ScoreFunction = local_score
         self.update_transition_count = update_count
 
