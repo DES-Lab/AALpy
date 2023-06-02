@@ -121,15 +121,23 @@ class Node:
 
         return Machine(initial_state, list(state_map.values()))
 
-    def visualize(self, path : str):
+    def visualize(self, path : str, output_behavior : OutputBehavior):
         graph = pydot.Dot('fpta', graph_type='digraph')
 
-        graph.add_node(pydot.Node(str(self.prefix), label=f'{self.count()}'))
+        match output_behavior:
+            case "moore":
+                state_label = lambda node : f'{node.prefix[-1][1]} {node.count()}'
+                transition_label = lambda node, in_sym, out_sym : f'{in_sym} [{node.transition_count[in_sym][out_sym]}]'
+            case "mealy":
+                state_label = lambda node: f'{node.count()}'
+                transition_label = lambda node, in_sym, out_sym : f'{in_sym} / {out_sym} [{node.transition_count[in_sym][out_sym]}]'
+
+        graph.add_node(pydot.Node(str(self.prefix), label=state_label(self)))
 
         nodes = self.get_all_nodes()
 
         for node in nodes:
-            graph.add_node(pydot.Node(str(node.prefix), label=f'{node.count()}'))
+            graph.add_node(pydot.Node(str(node.prefix), label=state_label(node)))
 
         for node in nodes:
             for in_sym, options in node.transitions.items():
@@ -139,7 +147,7 @@ class Node:
                     color = 'black'
 
                 for out_sym, c in options.items():
-                    graph.add_edge(pydot.Edge(str(node.prefix), str(c.prefix), label=f'{in_sym} / {out_sym} [{node.transition_count[in_sym][out_sym]}]', color=color, fontcolor=color))
+                    graph.add_edge(pydot.Edge(str(node.prefix), str(c.prefix), label=transition_label(node,in_sym,out_sym), color=color, fontcolor=color))
 
         graph.add_node(pydot.Node('__start0', shape='none', label=''))
         graph.add_edge(pydot.Edge('__start0', str(self.prefix), label=''))
