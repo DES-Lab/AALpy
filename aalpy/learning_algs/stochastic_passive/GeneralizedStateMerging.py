@@ -91,7 +91,7 @@ class GeneralizedStateMerging:
         pta_construction_start = time.time()
         self.root: Node
         if isinstance(data, Node):
-            self.root = copy.deepcopy(data)
+            self.root = data#copy.deepcopy(data)
         elif output_behavior == "moore":
             self.root = Node.createPTA([d[1:] for d in data], data[0][0])
         else :

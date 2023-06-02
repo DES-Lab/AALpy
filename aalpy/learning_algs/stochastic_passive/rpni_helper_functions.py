@@ -14,12 +14,17 @@ Prefix = List[TransitionID]
 OutputBehavior = Literal["moore", "mealy"]
 TransitionBehavior = Literal["deterministic", "nondeterministic", "stochastic"]
 
+def zero():
+    return 0
+def create_count_dict():
+    return defaultdict(zero)
+
 class Node:
     __slots__ = ['transitions', 'prefix', "transition_count"]
 
     def __init__(self, prefix):
         self.transitions = defaultdict[Any, Dict[Any,Node]](dict)
-        self.transition_count = defaultdict[Any, defaultdict[Any, int]](lambda : defaultdict(lambda : 0))
+        self.transition_count = defaultdict[Any, defaultdict[Any, int]](create_count_dict)
         self.prefix : Prefix = prefix
 
     def __lt__(self, other):
