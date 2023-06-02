@@ -2,14 +2,14 @@ import copy
 from math import sqrt, log
 from queue import Queue
 import time
-from typing import Dict, Tuple, Callable
+from typing import Dict, Tuple, Callable, Any
 
 from aalpy.learning_algs.stochastic_passive.rpni_helper_functions import Node, OutputBehavior, TransitionBehavior
 
 Score = bool
-ScoreFunction = Callable[[Node,Node], Score]
+ScoreFunction = Callable[[Node,Node,Any], Score]
 def hoeffding_compatibility(eps) -> ScoreFunction:
-    def similar(a: Node, b: Node):
+    def similar(a: Node, b: Node, _: Any):
         for in_sym in filter(lambda x : x in a.transitions.keys(), b.transitions.keys()):
             a_count, b_count = (x.transition_count[in_sym] for x in [a,b])
             a_total, b_total = (sum(x.values()) for x in [a_count, b_count])
@@ -74,12 +74,16 @@ class GeneralizedStateMerging:
 
     def __init__(self, data, output_behavior : OutputBehavior = "moore",
                  transition_behavior : TransitionBehavior = "deterministic",
-                 local_score : ScoreFunction = None, update_count : bool = False, debug_lvl=0):
+                 local_score : ScoreFunction = None, info_update : Callable[[Node, Node, Any],Any] = None, update_count : bool = False, debug_lvl=0):
         self.data = data
         self.debug = GeneralizedStateMerging.DebugInfo(debug_lvl, self)
         self.output_behavior : OutputBehavior = output_behavior
         self.transition_behavior : TransitionBehavior = transition_behavior
 
+        if info_update is None:
+            info_update = lambda a, b, c : c
+        self.info_update = info_update
+        
         if local_score is None:
             if output_behavior == "deterministic" :
                 local_score = lambda x,y : True
@@ -102,12 +106,12 @@ class GeneralizedStateMerging:
             if not self.root.is_deterministic():
                 raise ValueError("required deterministic automaton but input data is nondeterministic")
 
-    def local_merge_score(self, a : Node, b : Node):
+    def local_merge_score(self, a : Node, b : Node, info : Any):
         if self.output_behavior == "moore" and not Node.moore_compatible(a,b):
             return False
         if self.transition_behavior == "deterministic" and not Node.deterministic_compatible(a,b):
             return False
-        return self.local_score(a,b)
+        return self.local_score(a,b,info)
 
     def run(self):
         start_time = time.time()
@@ -168,14 +172,15 @@ class GeneralizedStateMerging:
         node = get_partition(self.root.get_by_prefix(blue.prefix[:-1]))
         node.transitions[blue.prefix[-1][0]][blue.prefix[-1][1]] = red
 
-        q = Queue[Tuple[Node,Node]]()
-        q.put((red, blue))
+        q = Queue[Tuple[Node,Node,Any]]()
+        q.put((red, blue, None))
 
         while not q.empty():
-            red, blue = q.get()
+            red, blue, info = q.get()
             partition = get_partition(red)
+            info = self.info_update(partition, blue, info)
 
-            if not self.local_merge_score(partition, blue) :
+            if not self.local_merge_score(partition, blue, info) :
                 return False, dict()
 
             partitions[blue] = partition
@@ -184,7 +189,7 @@ class GeneralizedStateMerging:
                 partition_transitions = partition.transitions[in_sym]
                 for out_sym, blue_child in blue_transitions.items():
                     if out_sym in partition_transitions:
-                        q.put((partition_transitions[out_sym], blue_child))
+                        q.put((partition_transitions[out_sym], blue_child, info))
                     else:
                         # blue_child is blue after merging if there is a red state in the partition
                         partition_transitions[out_sym] = blue_child
