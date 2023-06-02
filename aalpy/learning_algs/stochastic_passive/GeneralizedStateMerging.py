@@ -86,7 +86,8 @@ class GeneralizedStateMerging:
         def learning_done(self, red_states, start_time):
             print(f'\nLearning Time: {round(time.time() - start_time, 2)}')
             print(f'Learned {len(red_states)} state automaton.')
-            self.instance.root.visualize("model.pdf",self.instance.output_behavior)
+            if 1 < self.lvl:
+                self.instance.root.visualize("model.pdf",self.instance.output_behavior)
 
     def __init__(self, data, output_behavior : OutputBehavior = "moore",
                  transition_behavior : TransitionBehavior = "deterministic",
