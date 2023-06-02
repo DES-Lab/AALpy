@@ -164,8 +164,7 @@ class GeneralizedStateMerging:
                 for node in partition.keys():
                     block = partition[node]
                     node.transitions = block.transitions
-                    if self.update_transition_count:
-                        node.transition_count = block.transition_count
+                    node.transition_count = block.transition_count
 
             blue_states.clear()
             for r in red_states:
@@ -223,5 +222,6 @@ class GeneralizedStateMerging:
                     else:
                         # blue_child is blue after merging if there is a red state in the partition
                         partition_transitions[out_sym] = blue_child
-                    partition.transition_count[in_sym][out_sym] += blue.transition_count[in_sym][out_sym]
+                    if self.update_transition_count:
+                        partition.transition_count[in_sym][out_sym] += blue.transition_count[in_sym][out_sym]
         return True, remaining_nodes
