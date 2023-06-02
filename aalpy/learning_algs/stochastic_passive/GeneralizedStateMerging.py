@@ -1,10 +1,13 @@
 import copy
+import typing
 from math import sqrt, log
 from queue import Queue
 import time
-from typing import Dict, Tuple, Callable, Any
+from typing import Dict, Tuple, Callable, Any, Literal
 
 from aalpy.learning_algs.stochastic_passive.rpni_helper_functions import Node, OutputBehavior, TransitionBehavior
+
+CompatibilityBehavior = Literal["future", "partition"]
 
 Score = bool
 ScoreFunction = Callable[[Node,Node,Any], Score]
@@ -87,11 +90,20 @@ class GeneralizedStateMerging:
 
     def __init__(self, data, output_behavior : OutputBehavior = "moore",
                  transition_behavior : TransitionBehavior = "deterministic",
+                 compatibility_behavior : CompatibilityBehavior = "partition",
                  local_score : ScoreFunction = None, info_update : Callable[[Node, Node, Any],Any] = None, update_count : bool = False, debug_lvl=0):
         self.data = data
         self.debug = GeneralizedStateMerging.DebugInfo(debug_lvl, self)
+
+        if output_behavior not in typing.get_args(OutputBehavior):
+            raise ValueError(f"invalid output behavior {output_behavior}")
         self.output_behavior : OutputBehavior = output_behavior
+        if transition_behavior not in typing.get_args(TransitionBehavior):
+            raise ValueError(f"invalid transition behavior {transition_behavior}")
         self.transition_behavior : TransitionBehavior = transition_behavior
+        if compatibility_behavior not in typing.get_args(CompatibilityBehavior):
+            raise ValueError(f"invalid compatibility behavior {compatibility_behavior}")
+        self.compatibility_behavior : CompatibilityBehavior = compatibility_behavior
 
         if info_update is None:
             info_update = lambda a, b, c : c
@@ -167,7 +179,8 @@ class GeneralizedStateMerging:
 
     def _partition_from_merge(self, red: Node, blue: Node) -> Tuple[bool,Dict[Node, Node]] :
         """
-        Compatibility check based on partitions
+        Compatibility check based on partitions.
+        assumes that blue is a tree and red is not in blue
         """
 
         partitions = dict()
@@ -191,9 +204,13 @@ class GeneralizedStateMerging:
         while not q.empty():
             red, blue, info = q.get()
             partition = get_partition(red)
-            info = self.info_update(partition, blue, info)
 
-            if not self.local_merge_score(partition, blue, info) :
+            match self.compatibility_behavior:
+                case "partition": red_to_compare = partition
+                case "future": red_to_compare = red
+
+            info = self.info_update(red_to_compare, blue, info)
+            if not self.local_merge_score(red_to_compare, blue, info) :
                 return False, dict()
 
             partitions[blue] = partition
