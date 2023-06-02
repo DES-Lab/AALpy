@@ -121,7 +121,7 @@ class GeneralizedStateMerging:
         blue_states = list(child for _, child in self.root.transition_iterator())
 
         while blue_states:
-            blue_state = min(list(blue_states), key=lambda x: len(x.prefix))
+            blue_state = min(blue_states, key=lambda x: len(x.prefix))
             partition = None
             for red_state in red_states:
                 score, partition = self._partition_from_merge(red_state, blue_state)
@@ -157,11 +157,13 @@ class GeneralizedStateMerging:
         """
 
         partitions = dict()
+        remaining_nodes = dict()
 
         def get_partition(node: Node) -> Node:
             if node not in partitions:
                 p = node.shallow_copy()
                 partitions[node] = p
+                remaining_nodes[node] = p
             else:
                 p = partitions[node]
             return p
@@ -190,4 +192,4 @@ class GeneralizedStateMerging:
                         # blue_child is blue after merging if there is a red state in the partition
                         partition_transitions[out_sym] = blue_child
                     partition.transition_count[in_sym][out_sym] += blue.transition_count[in_sym][out_sym]
-        return True, partitions
+        return True, remaining_nodes
