@@ -144,12 +144,16 @@ class GeneralizedStateMerging:
 
         # sorted list of states already considered
         red_states = [self.root]
-        # used to get the minimal non-red state
-        blue_states = list(child for _, child in self.root.transition_iterator())
 
-        while blue_states:
-            blue_state = min(blue_states, key=lambda x: len(x.prefix))
-            partition = None
+        while True:
+            blue_state = None
+            for r in red_states:
+                for _, c in r.transition_iterator():
+                    if c not in red_states and (blue_state is None or c < blue_state):
+                        blue_state = c
+            if blue_state is None:
+                break
+
             for red_state in red_states:
                 score, partition = self._partition_from_merge(red_state, blue_state)
                 if score:
@@ -162,16 +166,9 @@ class GeneralizedStateMerging:
                 self.debug.log_merge(red_state, blue_state)
 
                 # use the partition for merging
-                for node in partition.keys():
-                    block = partition[node]
+                for node, block in partition.items():
                     node.transitions = block.transitions
                     node.transition_count = block.transition_count
-
-            blue_states.clear()
-            for r in red_states:
-                for _, c in r.transition_iterator():
-                    if c not in red_states:
-                        blue_states.append(c)
 
         self.debug.learning_done(red_states, start_time)
 
