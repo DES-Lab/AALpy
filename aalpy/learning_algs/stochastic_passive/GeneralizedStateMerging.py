@@ -92,7 +92,7 @@ class GeneralizedStateMerging:
     def __init__(self, data, output_behavior : OutputBehavior = "moore",
                  transition_behavior : TransitionBehavior = "deterministic",
                  compatibility_behavior : CompatibilityBehavior = "partition",
-                 local_score : ScoreFunction = None, info_update : Callable[[Node, Node, Any],Any] = None, update_count : bool = False, debug_lvl=0):
+                 local_score : ScoreFunction = None, info_update : Callable[[Node, Node, Any],Any] = None, debug_lvl=0):
         self.data = data
         self.debug = GeneralizedStateMerging.DebugInfo(debug_lvl, self)
 
@@ -116,7 +116,6 @@ class GeneralizedStateMerging:
                 case "nondeterministic" : local_score = non_det_compatibility(20)
                 case "stochastic" : local_score = hoeffding_compatibility(0.005)
         self.local_score : ScoreFunction = local_score
-        self.update_transition_count = update_count
 
         pta_construction_start = time.time()
         self.root: Node
@@ -127,6 +126,9 @@ class GeneralizedStateMerging:
         else :
             self.root = Node.createPTA(data)
         self.debug.pta_construction_done(pta_construction_start)
+
+        if self.compatibility_behavior == "future":
+            self.pta_state_dictionary = {node : node.shallow_copy() for node in self.root.get_all_nodes()}
 
         if transition_behavior == "deterministic":
             if not self.root.is_deterministic():
@@ -203,11 +205,11 @@ class GeneralizedStateMerging:
             partition = get_partition(red)
 
             match self.compatibility_behavior:
-                case "partition": red_to_compare = partition
-                case "future": red_to_compare = red
+                case "partition": red_to_compare, blue_to_compare = partition, blue
+                case "future": red_to_compare, blue_to_compare = (self.pta_state_dictionary[x] for x in [red,blue])
 
-            info = self.info_update(red_to_compare, blue, info)
-            if not self.local_merge_score(red_to_compare, blue, info) :
+            info = self.info_update(red_to_compare, blue_to_compare, info)
+            if not self.local_merge_score(red_to_compare, blue_to_compare, info) :
                 return False, dict()
 
             partitions[blue] = partition
@@ -220,6 +222,5 @@ class GeneralizedStateMerging:
                     else:
                         # blue_child is blue after merging if there is a red state in the partition
                         partition_transitions[out_sym] = blue_child
-                    if self.update_transition_count:
-                        partition.transition_count[in_sym][out_sym] += blue.transition_count[in_sym][out_sym]
+                    partition.transition_count[in_sym][out_sym] += blue.transition_count[in_sym][out_sym]
         return True, remaining_nodes
