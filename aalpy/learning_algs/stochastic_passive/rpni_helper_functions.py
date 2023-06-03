@@ -1,5 +1,6 @@
 import copy
 from collections import defaultdict
+from functools import total_ordering
 from queue import Queue
 from typing import Set, Dict, Any, List, Tuple, Literal
 import pydot
@@ -19,6 +20,7 @@ def zero():
 def create_count_dict():
     return defaultdict(zero)
 
+@total_ordering
 class Node:
     __slots__ = ['transitions', 'prefix', "transition_count"]
 
@@ -28,10 +30,11 @@ class Node:
         self.prefix : Prefix = prefix
 
     def __lt__(self, other):
-        return len(self.prefix) < len(other.prefix)
-
-    def __le__(self, other):
-        return len(self.prefix) <= len(other.prefix)
+        s_prefix = self.prefix[1:]
+        o_prefix = other.prefix[1:]
+        if len(s_prefix) == len(o_prefix):
+            return s_prefix < o_prefix
+        return len(s_prefix) < len(o_prefix)
 
     def __eq__(self, other):
         return self.prefix == other.prefix
