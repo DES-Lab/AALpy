@@ -78,10 +78,7 @@ class Node:
         return nodes
 
     def to_automaton(self, output_behavior : OutputBehavior, transition_behavior : TransitionBehavior) -> Automaton:
-        #TODO fix
         nodes = self.get_all_nodes()
-        nodes.remove(self)  # dunno whether order is preserved?
-        nodes = [self] + list(nodes)
 
         type_dict = {
             ("moore","deterministic") : (MooreMachine, MooreState),
@@ -129,7 +126,7 @@ class Node:
 
         return Machine(initial_state, list(state_map.values()))
 
-    def visualize(self, path : str, output_behavior : OutputBehavior):
+    def visualize(self, path : str, output_behavior : OutputBehavior, produce_pdf : bool = False):
         graph = pydot.Dot('fpta', graph_type='digraph')
 
         match output_behavior:
@@ -160,7 +157,8 @@ class Node:
         graph.add_node(pydot.Node('__start0', shape='none', label=''))
         graph.add_edge(pydot.Edge('__start0', str(self.prefix), label=''))
 
-        graph.write(path=path, format='pdf')
+        format = 'pdf' if produce_pdf else 'raw'
+        graph.write(path=path, format=format)
 
     def add_data(self, data):
         for seq in data:
