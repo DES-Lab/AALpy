@@ -157,24 +157,47 @@ class GeneralizedStateMerging:
                 break
 
             for red_state in red_states:
-                score, partition = self._partition_from_merge(red_state, blue_state)
+                match self.compatibility_behavior:
+                    case "partition": score, partition = self._partition_from_merge(red_state, blue_state)
+                    case "future": score = self._check_futures(red_state, blue_state)
                 if score:
                     break
 
             if not score:
-                red_states.append(blue_state)
                 self.debug.log_promote(blue_state, red_states)
+                red_states.append(blue_state)
             else:
                 self.debug.log_merge(red_state, blue_state)
-
-                # use the partition for merging
-                for node, block in partition.items():
-                    node.transitions = block.transitions
-                    node.transition_count = block.transition_count
+                match self.compatibility_behavior:
+                    case "future": self._partition_from_merge(red_state, blue_state)
+                    case "partition":
+                        # use the partition for merging
+                        for node, block in partition.items():
+                            node.transitions = block.transitions
+                            node.transition_count = block.transition_count
 
         self.debug.learning_done(red_states, start_time)
 
         return self.root.to_automaton(self.output_behavior, self.transition_behavior)
+
+    def _check_futures(self, red: Node, blue: Node) -> bool:
+        q = Queue[Tuple[Node, Node, Any]]()
+        q.put((red,blue,None))
+
+        while not q.empty():
+            red, blue, info = q.get()
+            red_to_compare, blue_to_compare = (self.pta_state_dictionary[x] for x in [red, blue])
+
+            info = self.info_update(red_to_compare, blue_to_compare, info)
+            if not self.local_merge_score(red_to_compare, blue_to_compare, info):
+                return False
+
+            for in_sym, blue_transitions in blue_to_compare.transitions.items():
+                red_transitions = red_to_compare.transitions[in_sym]
+                for out_sym, blue_child in blue_transitions.items():
+                    if out_sym in red_transitions.keys():
+                        q.put((red_transitions[out_sym], blue_child, info))
+        return True
 
     def _partition_from_merge(self, red: Node, blue: Node) -> Tuple[bool,Dict[Node, Node]] :
         """
@@ -185,16 +208,20 @@ class GeneralizedStateMerging:
         partitions = dict()
         remaining_nodes = dict()
 
-        def get_partition(node: Node) -> Node:
-            if node not in partitions:
-                p = node.shallow_copy()
-                partitions[node] = p
-                remaining_nodes[node] = p
+        def update_partition(red_node: Node, blue_node: Node) -> Node:
+            if self.compatibility_behavior == "future":
+                return red_node
+            if red_node not in partitions:
+                p = red_node.shallow_copy()
+                partitions[red_node] = p
+                remaining_nodes[red_node] = p
             else:
-                p = partitions[node]
+                p = partitions[red_node]
+            if blue_node is not None:
+                partitions[blue_node] = p
             return p
 
-        node = get_partition(self.root.get_by_prefix(blue.prefix[:-1]))
+        node = update_partition(self.root.get_by_prefix(blue.prefix[:-1]), None)
         node.transitions[blue.prefix[-1][0]][blue.prefix[-1][1]] = red
 
         q = Queue[Tuple[Node,Node,Any]]()
@@ -202,17 +229,11 @@ class GeneralizedStateMerging:
 
         while not q.empty():
             red, blue, info = q.get()
-            partition = get_partition(red)
+            partition = update_partition(red, blue)
 
-            match self.compatibility_behavior:
-                case "partition": red_to_compare, blue_to_compare = partition, blue
-                case "future": red_to_compare, blue_to_compare = (self.pta_state_dictionary[x] for x in [red,blue])
-
-            info = self.info_update(red_to_compare, blue_to_compare, info)
-            if not self.local_merge_score(red_to_compare, blue_to_compare, info) :
+            info = self.info_update(partition, blue, info)
+            if self.compatibility_behavior == "partition" and not self.local_merge_score(partition, blue, info) :
                 return False, dict()
-
-            partitions[blue] = partition
 
             for in_sym, blue_transitions in blue.transitions.items():
                 partition_transitions = partition.transitions[in_sym]
