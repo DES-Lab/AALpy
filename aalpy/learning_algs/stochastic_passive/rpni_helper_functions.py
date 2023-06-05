@@ -68,13 +68,13 @@ class Node:
     def get_all_nodes(self) -> Set['Node']:
         qu = Queue[Node]()
         qu.put(self)
-        nodes = set()
+        nodes = {self}
         while not qu.empty():
             state = qu.get()
-            nodes.add(state)
             for _, child in state.transition_iterator():
                 if child not in nodes:
                     qu.put(child)
+                    nodes.add(child)
         return nodes
 
     def to_automaton(self, output_behavior : OutputBehavior, transition_behavior : TransitionBehavior) -> Automaton:
