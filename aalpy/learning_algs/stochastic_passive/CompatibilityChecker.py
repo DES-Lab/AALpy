@@ -12,11 +12,18 @@ class CompatibilityChecker(ABC):
         pass
 
 
+def get_two_stage_dict(input_dict: dict):
+    ret = defaultdict(dict)
+    for (in_sym, out_sym), value in input_dict.items():
+        ret[in_sym][out_sym] = value
+    return ret
+
+
 class HoeffdingCompatibility(CompatibilityChecker):
     def __init__(self, eps):
         self.eps = eps
 
-    def hoeffding_bound(self, a : dict, b : dict):
+    def hoeffding_bound(self, a: dict, b: dict):
         n1 = sum(a.values())
         n2 = sum(b.values())
 
@@ -31,14 +38,8 @@ class HoeffdingCompatibility(CompatibilityChecker):
                 return True
         return False
 
-    def get_two_stage_dict(self, input_dict : dict):
-        ret = defaultdict(dict)
-        for (in_sym, out_sym), value in input_dict.items():
-            ret[in_sym][out_sym] = value
-        return ret
-
     def are_states_different(self, a: AlergiaPtaNode, b: AlergiaPtaNode, **kwargs):
-        # no data availably for any node
+        # no data available for any node
         if len(a.input_frequency) * len(b.input_frequency) == 0:
             return False
 
@@ -47,10 +48,9 @@ class HoeffdingCompatibility(CompatibilityChecker):
             return self.hoeffding_bound(a.input_frequency, b.input_frequency)
 
         # IOAlergia: check hoeffding bound conditioned on inputs
-        a_dict, b_dict = (self.get_two_stage_dict(x.input_frequency) for x in [a,b])
+        a_dict, b_dict = (get_two_stage_dict(x.input_frequency) for x in [a, b])
 
-        for key in filter(lambda x : x in a_dict.keys(), b_dict.keys()):
-            if self.hoeffding_bound(a_dict[key], b_dict[key]) == True:
+        for key in filter(lambda x: x in a_dict.keys(), b_dict.keys()):
+            if self.hoeffding_bound(a_dict[key], b_dict[key]):
                 return True
         return False
-

@@ -231,7 +231,6 @@ def run_JAlergia(path_to_data_file, automaton_type, path_to_jAlergia_jar, eps=0.
 
         learnedModel
     """
-    # TODO rename path_to_data_file to data in next versions of AALpy after 20. may
     assert automaton_type in {'mdp', 'smm', 'mc'}
     assert optimize_for in {'memory', 'accuracy'}
 
