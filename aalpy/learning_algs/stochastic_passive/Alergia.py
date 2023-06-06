@@ -176,7 +176,8 @@ def run_Alergia(data, automaton_type, eps=0.005, compatibility_checker=None, opt
     Args:
 
         data: data either in a form [[I,I,I],[I,I,I],...] if learning Markov Chains or [[O,(I,O),(I,O)...],
-        [O,(I,O_,...],..,] if learning MDPs (I represents input, O output).
+        [O,(I,O), (I, O)_,...],..,] if learning MDPs, or [[I,O,I,O...], [I,O_,...],..,] if learning SMMs
+         (I represents input, O output).
         Note that in whole data first symbol of each entry should be the same (Initial output of the MDP/MC).
 
         eps: epsilon value if you are using default HoeffdingCompatibility. If it is set to 'auto' it will be computed
@@ -213,7 +214,8 @@ def run_JAlergia(path_to_data_file, automaton_type, path_to_jAlergia_jar, eps=0.
 
         path_to_data_file: either a data in a list of lists or a path to file containing data. 
         Form [[I,I,I],[I,I,I],...] if learning Markov Chains or
-        [[O,I,O,I,O...], [O,(I,O_,...],..,] if learning MDPs (I represents input, O output).
+        [[O,I,O,I,O...], [O,I,O_,...],..,] if learning MDPs (I represents input, O output), or
+        [[I,O,I,O...], [I,O_,...],..,] if learning SMMs.
         Note that in whole data first symbol of each entry should be the same (Initial output of the MDP/MC).
 
         eps: epsilon value
