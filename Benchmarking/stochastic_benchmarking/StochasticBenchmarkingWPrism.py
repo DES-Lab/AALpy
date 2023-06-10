@@ -11,10 +11,10 @@ from aalpy.automata.StochasticMealyMachine import smm_to_mdp_conversion
 
 path_to_dir = '../DotModels/MDPs/'
 files = ['first_grid.dot', 'second_grid.dot',
-         'slot_machine.dot', 'mqtt.dot', 'tcp.dot']  # 'shared_coin.dot'
+         'slot_machine.dot', 'mqtt.dot', 'tcp.dot'] # 'shared_coin.dot'
 
-aalpy.paths.path_to_prism = "C:/Program Files/prism-4.6/bin/prism.bat"
-aalpy.paths.path_to_properties = "prism_eval_props/"
+aalpy.paths.path_to_prism =      "C:/Program Files/prism-4.6/bin/prism.bat"
+aalpy.paths.path_to_properties = "../prism_eval_props/"
 
 n_c = 20
 n_resample = 1000
@@ -68,22 +68,18 @@ for seed in range(1, 4):
         mdp_sul = MdpSUL(original_mdp)
 
         eq_oracle = RandomWalkEqOracle(input_alphabet, mdp_sul, num_steps=n_resample * (1 / 0.25),
-                                       reset_after_cex=True, reset_prob=0.25)
+                                                   reset_after_cex=True, reset_prob=0.25)
 
         learned_mdp, data_mdp = run_stochastic_Lstar(input_alphabet, mdp_sul, eq_oracle, automaton_type='mdp',
-                                                     n_c=n_c, n_resample=n_resample, min_rounds=min_rounds,
-                                                     strategy=strategy,
-                                                     max_rounds=max_rounds, return_data=True,
-                                                     samples_cex_strategy="bfs")
+                                                     n_c=n_c, n_resample=n_resample, min_rounds=min_rounds, strategy=strategy,
+                                                     max_rounds=max_rounds, return_data=True, samples_cex_strategy="bfs")
 
         mdp_sul.num_steps = 0
         mdp_sul.num_queries = 0
 
         learned_smm, data_smm = run_stochastic_Lstar(input_alphabet, mdp_sul, eq_oracle, automaton_type='smm',
-                                                     n_c=n_c, n_resample=n_resample, min_rounds=min_rounds,
-                                                     strategy=strategy,
-                                                     max_rounds=max_rounds, return_data=True,
-                                                     samples_cex_strategy="bfs")
+                                                     n_c=n_c, n_resample=n_resample, min_rounds=min_rounds, strategy=strategy,
+                                                     max_rounds=max_rounds, return_data=True, samples_cex_strategy="bfs")
 
         smm_2_mdp = smm_to_mdp_conversion(learned_smm)
 
