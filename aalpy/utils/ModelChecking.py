@@ -23,7 +23,8 @@ def get_properties_file(exp_name):
         'shared_coin': aalpy.paths.path_to_properties + 'shared_coin_eval.props',
         'slot_machine': aalpy.paths.path_to_properties + 'slot_machine_eval.props',
         'mqtt': aalpy.paths.path_to_properties + 'emqtt_two_client.props',
-        'tcp': aalpy.paths.path_to_properties + 'tcp_eval.props'
+        'tcp': aalpy.paths.path_to_properties + 'tcp_eval.props',
+        'bluetooth': aalpy.paths.path_to_properties + 'bluetooth.props',
     }
     return property_files[exp_name]
 
@@ -40,7 +41,12 @@ def get_correct_prop_values(exp_name):
                          'prob5': 0.28567, 'prob6': 0.2500000000000001, 'prob7': 0.025445087448668406},
         'mqtt': {'prob1': 0.9612, 'prob2': 0.34390000000000004, 'prob3': 0.6513215599000001, 'prob4': 0.814697981114816,
                  'prob5': 0.7290000000000001},
-        'tcp': {'prob1': 0.19, 'prob2': 0.5695327900000001, 'prob3': 0.7712320754503901, 'prob4': 0.8784233454094308}
+        'tcp': {'prob1': 0.19, 'prob2': 0.5695327900000001, 'prob3': 0.7712320754503901, 'prob4': 0.8784233454094308},
+        'bluetooth': {'prop1': 0.16800000000000004, 'prop2': 0.3926480000000001, 'prop3': 0.5572338000000001,
+                      'prop4': 0.6772233874640001, 'prop5': 0.7646958490393682, 'prop6': 0.8284632739463244,
+                      'prop7': 0.36000000000000004, 'prop8': 0.5904, 'prop9': 0.7902848,
+                      'prop10': 0.8926258176000001, 'prop11': 0.9450244186112, 'prop12': 0.9718525023289344,
+                      'prop13': 0.9855884811924145}
     }
     return list(correct_model_properties[exp_name].values())
 
@@ -229,6 +235,7 @@ def stop_based_on_confidence(hypothesis, property_based_stopping, print_level=2)
 
     return True
 
+
 def bisimilar(a1: DeterministicAutomaton, a2: DeterministicAutomaton):
     """
     Checks whether the provided automata are bisimilar
@@ -238,9 +245,10 @@ def bisimilar(a1: DeterministicAutomaton, a2: DeterministicAutomaton):
         raise ValueError("tried to check bisimilarity of distinct automaton types")
     supported_automaton_types = (Dfa, MooreMachine, MealyMachine)
     if not isinstance(a1, supported_automaton_types):
-        raise NotImplementedError(f"bisimilarity is not implemented for {a1.__class__.__name__}. Supported: {', '.join(t.__name__ for t in supported_automaton_types)}")
+        raise NotImplementedError(
+            f"bisimilarity is not implemented for {a1.__class__.__name__}. Supported: {', '.join(t.__name__ for t in supported_automaton_types)}")
 
-    to_check : Queue[Tuple[AutomatonState, AutomatonState]] = Queue()
+    to_check: Queue[Tuple[AutomatonState, AutomatonState]] = Queue()
     to_check.put((a1.initial_state, a2.initial_state))
     requirements = dict()
     requirements[(a1.initial_state, a2.initial_state)] = []
@@ -248,8 +256,8 @@ def bisimilar(a1: DeterministicAutomaton, a2: DeterministicAutomaton):
     while not to_check.empty():
         s1, s2 = to_check.get()
         if (isinstance(s1, DfaState)) and s1.is_accepting != s2.is_accepting or \
-           (isinstance(s1, MooreState) and s1.output != s2.output) or \
-           (isinstance(s1, MealyState) and s1.output_fun != s2.output_fun):
+                (isinstance(s1, MooreState) and s1.output != s2.output) or \
+                (isinstance(s1, MealyState) and s1.output_fun != s2.output_fun):
             return requirements[(s1, s2)]
 
         t1, t2 = s1.transitions, s2.transitions
@@ -264,6 +272,7 @@ def bisimilar(a1: DeterministicAutomaton, a2: DeterministicAutomaton):
             if (c1, c2) not in requirements:
                 requirements[(c1, c2)] = requirements[(s1, s2)] + [t]
                 to_check.put((c1, c2))
+
 
 def compare_automata(aut_1: DeterministicAutomaton, aut_2: DeterministicAutomaton, num_cex=10):
     """
@@ -391,6 +400,7 @@ def statistical_model_checking(model, goals, max_num_steps, num_tests=105967):
 
         num of tests containing element of goals set / num_tests
     """
+
     def compute_output_sequence(model, seq):
         model.reset_to_initial()
         observed_outputs = {model.step(i) for i in seq}
