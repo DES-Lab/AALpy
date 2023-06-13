@@ -2,7 +2,7 @@ import os
 from queue import Queue
 import re
 from collections import defaultdict
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Union
 
 import itertools as it
 
@@ -235,10 +235,10 @@ def stop_based_on_confidence(hypothesis, property_based_stopping, print_level=2)
 
     return True
 
-def bisimilar(a1: DeterministicAutomaton, a2: DeterministicAutomaton) -> Optional[list]:
+def bisimilar(a1: DeterministicAutomaton, a2: DeterministicAutomaton, return_cex = False) -> Union[bool, None, list]:
     """
     Checks whether the provided automata are bisimilar.
-    Returns a counterexample or None.
+    If return_cex the function returns a counter example or None, otherwise a Boolean is returned.
     """
 
     # TODO allow states as inputs instead of automata
@@ -259,20 +259,22 @@ def bisimilar(a1: DeterministicAutomaton, a2: DeterministicAutomaton) -> Optiona
         if (isinstance(s1, DfaState)) and s1.is_accepting != s2.is_accepting or \
                 (isinstance(s1, MooreState) and s1.output != s2.output) or \
                 (isinstance(s1, MealyState) and s1.output_fun != s2.output_fun):
-            return requirements[(s1, s2)]
+            return requirements[(s1, s2)] if return_cex else False
 
         t1, t2 = s1.transitions, s2.transitions
         # not using sets -> deterministic but inefficient
         # could use set to detect and slow only if detection?
         for t in it.chain(t1.keys(), t2.keys()):
             if (t in t1.keys()) != (t in t2.keys()):
-                return requirements[(s1, s2)] + [t]
+                return requirements[(s1, s2)] + [t] if return_cex else False
 
         for t in t1.keys():
             c1, c2 = t1[t], t2[t]
             if (c1, c2) not in requirements:
                 requirements[(c1, c2)] = requirements[(s1, s2)] + [t]
                 to_check.put((c1, c2))
+
+    return None if return_cex else True
 
 
 def compare_automata(aut_1: DeterministicAutomaton, aut_2: DeterministicAutomaton, num_cex=10):
