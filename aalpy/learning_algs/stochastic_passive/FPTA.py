@@ -1,6 +1,8 @@
 from collections import defaultdict
+from functools import total_ordering
 
 
+@total_ordering
 class AlergiaPtaNode:
     __slots__ = ['output', 'input_frequency', 'children', 'parent_io', 'state_id', 'children_prob']
 
@@ -25,10 +27,11 @@ class AlergiaPtaNode:
         return list(self.children.values())
 
     def __lt__(self, other):
-        return len(self.getPrefix()) < len(other.getPrefix())
+        s_prefix, o_prefix = self.getPrefix(), other.getPrefix()
+        return (len(s_prefix), s_prefix) < (len(o_prefix), o_prefix)
 
     def __le__(self, other):
-        return len(self.getPrefix()) <= len(other.getPrefix())
+        return self < other or self == other
 
     def __eq__(self, other):
         return self.getPrefix() == other.getPrefix()
