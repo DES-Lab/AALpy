@@ -1,17 +1,16 @@
+import itertools as it
 import os
-from queue import Queue
 import re
 from collections import defaultdict
-from typing import Tuple, Optional, Union
-
-import itertools as it
+from queue import Queue
+from random import choices
+from typing import Tuple, Union
 
 import aalpy.paths
 from aalpy.SULs import MealySUL, DfaSUL, MooreSUL
 from aalpy.automata import Mdp, StochasticMealyMachine, MealyMachine, Dfa, MooreMachine, MooreState, MealyState, \
     DfaState
 from aalpy.base import DeterministicAutomaton, SUL, AutomatonState
-from random import choices
 
 prism_prob_output_regex = re.compile("Result: (\d+\.\d+)")
 
@@ -235,7 +234,8 @@ def stop_based_on_confidence(hypothesis, property_based_stopping, print_level=2)
 
     return True
 
-def bisimilar(a1: DeterministicAutomaton, a2: DeterministicAutomaton, return_cex = False) -> Union[bool, None, list]:
+
+def bisimilar(a1: DeterministicAutomaton, a2: DeterministicAutomaton, return_cex=False) -> Union[bool, None, list]:
     """
     Checks whether the provided automata are bisimilar.
     If return_cex the function returns a counter example or None, otherwise a Boolean is returned.
