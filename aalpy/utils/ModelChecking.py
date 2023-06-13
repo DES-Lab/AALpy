@@ -235,19 +235,22 @@ def stop_based_on_confidence(hypothesis, property_based_stopping, print_level=2)
 
     return True
 
-def bisimilar(a1: DeterministicAutomaton, a2: DeterministicAutomaton) -> Optional[list]:
+
+def bisimilar(a1: DeterministicAutomaton, a2: DeterministicAutomaton, return_cex=False):
     """
     Checks whether the provided automata are bisimilar.
-    Returns a counterexample or None.
+
+    Returns: if 'return_cex' it returns a counterexample or None, else it returns True if the a1 and a2 are bisimilar,
+    else False
     """
 
     # TODO allow states as inputs instead of automata
     if a1.__class__ != a2.__class__:
-        raise ValueError("tried to check bisimilarity of different automaton types")
+        raise ValueError("Tried to check bisimilarity of different automaton types")
     supported_automaton_types = (Dfa, MooreMachine, MealyMachine)
     if not isinstance(a1, supported_automaton_types):
         raise NotImplementedError(
-            f"bisimilarity is not implemented for {a1.__class__.__name__}. Supported: {', '.join(t.__name__ for t in supported_automaton_types)}")
+            f"Bisimilarity is not implemented for {a1.__class__.__name__}. Supported: {', '.join(t.__name__ for t in supported_automaton_types)}")
 
     to_check: Queue[Tuple[AutomatonState, AutomatonState]] = Queue()
     to_check.put((a1.initial_state, a2.initial_state))
@@ -259,7 +262,10 @@ def bisimilar(a1: DeterministicAutomaton, a2: DeterministicAutomaton) -> Optiona
         if (isinstance(s1, DfaState)) and s1.is_accepting != s2.is_accepting or \
                 (isinstance(s1, MooreState) and s1.output != s2.output) or \
                 (isinstance(s1, MealyState) and s1.output_fun != s2.output_fun):
-            return requirements[(s1, s2)]
+            if return_cex:
+                return tuple(requirements[(s1, s2)])
+            else:
+                return False
 
         t1, t2 = s1.transitions, s2.transitions
         # not using sets -> deterministic but inefficient
@@ -273,6 +279,10 @@ def bisimilar(a1: DeterministicAutomaton, a2: DeterministicAutomaton) -> Optiona
             if (c1, c2) not in requirements:
                 requirements[(c1, c2)] = requirements[(s1, s2)] + [t]
                 to_check.put((c1, c2))
+
+    if return_cex:
+        return None
+    return True
 
 
 def compare_automata(aut_1: DeterministicAutomaton, aut_2: DeterministicAutomaton, num_cex=10):

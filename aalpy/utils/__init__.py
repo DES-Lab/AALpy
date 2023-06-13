@@ -6,5 +6,5 @@ from .BenchmarkSULs import *
 from .DataHandler import DataHandler, CharacterTokenizer, DelimiterTokenizer, IODelimiterTokenizer
 from .FileHandler import save_automaton_to_file, load_automaton_from_file, visualize_automaton
 from .ModelChecking import model_check_experiment, mdp_2_prism_format, model_check_properties, get_properties_file, \
-    get_correct_prop_values, compare_automata, generate_test_cases, statistical_model_checking
+    get_correct_prop_values, compare_automata, generate_test_cases, statistical_model_checking, bisimilar
 from .HelperFunctions import make_input_complete, convert_i_o_traces_for_RPNI
