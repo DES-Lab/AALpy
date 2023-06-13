@@ -30,11 +30,8 @@ class Node:
         self.prefix : Prefix = prefix
 
     def __lt__(self, other):
-        s_prefix = self.prefix[1:]
-        o_prefix = other.prefix[1:]
-        if len(s_prefix) == len(o_prefix):
-            return s_prefix < o_prefix
-        return len(s_prefix) < len(o_prefix)
+        s_prefix, o_prefix = (x.prefix[1:] for x in [self, other])
+        return (len(s_prefix), s_prefix) < (len(o_prefix), o_prefix)
 
     def __eq__(self, other):
         return self.prefix == other.prefix
