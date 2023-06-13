@@ -165,7 +165,7 @@ def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, target_una
                 suffixes = None
                 if cex_processing == 'longest_prefix':
                     prefixes = observation_table.S + list(observation_table.get_extended_s())
-                    suffixes = stochastic_longest_prefix(cex, prefixes)
+                    suffixes = [stochastic_longest_prefix(cex, prefixes)[-1]]
                 elif cex_processing == 'rs':
                     suffixes = stochastic_rs(sul, cex, hypothesis)
                 for suf in suffixes:
