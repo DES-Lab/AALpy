@@ -2,7 +2,7 @@ import os
 from queue import Queue
 import re
 from collections import defaultdict
-from typing import Tuple
+from typing import Tuple, Optional
 
 import itertools as it
 
@@ -235,14 +235,15 @@ def stop_based_on_confidence(hypothesis, property_based_stopping, print_level=2)
 
     return True
 
-
-def bisimilar(a1: DeterministicAutomaton, a2: DeterministicAutomaton):
+def bisimilar(a1: DeterministicAutomaton, a2: DeterministicAutomaton) -> Optional[list]:
     """
-    Checks whether the provided automata are bisimilar
+    Checks whether the provided automata are bisimilar.
+    Returns a counterexample or None.
     """
 
+    # TODO allow states as inputs instead of automata
     if a1.__class__ != a2.__class__:
-        raise ValueError("tried to check bisimilarity of distinct automaton types")
+        raise ValueError("tried to check bisimilarity of different automaton types")
     supported_automaton_types = (Dfa, MooreMachine, MealyMachine)
     if not isinstance(a1, supported_automaton_types):
         raise NotImplementedError(
