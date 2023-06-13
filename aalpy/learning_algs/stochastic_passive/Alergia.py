@@ -77,7 +77,7 @@ class Alergia:
         blue = self.mutableTreeRoot.successors()  # intermediate successors scheduled for testing
 
         while blue:
-            lex_min_blue = min(list(blue), key=lambda x: len(x.getPrefix()))
+            lex_min_blue = min(list(blue))
             merged = False
 
             for q_r in red:
