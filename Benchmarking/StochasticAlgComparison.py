@@ -38,8 +38,9 @@ for file in files:
                                    max_walk_len=16, reset_after_cex=True)
 
     learned_classic_mdp, data_mdp = run_stochastic_Lstar(input_alphabet, mdp_sul, eq_oracle, automaton_type='mdp',
-                                                         min_rounds=10, strategy='classic', n_c=20, n_resample=500,
-                                                         max_rounds=200, return_data=True, target_unambiguity=0.95,
+                                                         min_rounds=10, strategy='classic', n_c=20, n_resample=2000,
+                                                         stopping_range_dict={},
+                                                         max_rounds=200, return_data=True, target_unambiguity=0.98,
                                                          print_level=1)
 
     del mdp_sul
@@ -52,7 +53,7 @@ for file in files:
 
     learned_smm, data_smm = run_stochastic_Lstar(input_alphabet, mdp_sul, eq_oracle, automaton_type='smm',
                                                  min_rounds=10, strategy='normal',
-                                                 max_rounds=200, return_data=True, target_unambiguity=0.95,
+                                                 max_rounds=200, return_data=True, target_unambiguity=0.98,
                                                  print_level=1)
 
     smm_2_mdp = smm_to_mdp_conversion(learned_smm)
@@ -68,7 +69,7 @@ for file in files:
     alergia_samples = []
     for _ in range(num_alergia_samples):
         sample = [mdp_sul.pre()]
-        for _ in range(random.randint(5, 25)):
+        for _ in range(random.randint(10, 30)):
             action = random.choice(input_alphabet)
             output = mdp_sul.step(action)
             sample.append((action, output))
@@ -82,3 +83,6 @@ for file in files:
     print('Classic MDP learning', mean(mdp_err.values()), mdp_err)
     print('SMM learning', mean(smm_err.values()), smm_err)
     print('Alergia learning', mean(alergia_error.values()), alergia_error)
+
+    print('Classic MDP traces', data_mdp["queries_learning"] + data_mdp["queries_eq_oracle"])
+    print('SMM learning traces', data_smm["queries_learning"] + data_smm["queries_eq_oracle"])
