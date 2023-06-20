@@ -8,7 +8,7 @@ from aalpy.automata import Dfa, DfaState, MdpState, Mdp, MealyMachine, MealyStat
 def generate_random_deterministic_automata(automaton_type,
                                            num_states,
                                            input_alphabet_size,
-                                           output_alphabet_size,
+                                           output_alphabet_size=None,
                                            compute_prefixes=False,
                                            ensure_minimality=True,
                                            **kwargs
@@ -20,13 +20,12 @@ def generate_random_deterministic_automata(automaton_type,
         automaton_type: type of automaton, either 'dfa', 'mealy', or 'moore'
         num_states: number of states
         input_alphabet_size: size of input alphabet
-        output_alphabet_size: size of output alphabet (ignored for DFAs)
+        output_alphabet_size: size of output alphabet. (ignored for DFAs)
         compute_prefixes: compute prefixes leading to each state
         ensure_minimality: ensure that the automaton is minimal
         **kwargs:
-            : 'custom_input_alphabet'  a list of custom input alphabet values
-            : 'custom_output_alphabet' a list of custom output alphabet values
-            : 'num_accepting_states' number of accepting states for DFA generation
+            : 'num_accepting_states' number of accepting states for DFA generation. If not defined, half of states will
+            be accepting
 
     Returns:
 
@@ -48,25 +47,48 @@ def generate_random_deterministic_automata(automaton_type,
     # For backwards comparability or if uses passes custom input output functions
     if 'custom_input_alphabet' in kwargs:
         input_alphabet = kwargs.get('custom_input_alphabet')
+        if len(input_alphabet) != input_alphabet_size:
+            assert False, 'Lenght of input_alphabet_size and custom input alphabet should be equal.'
     if 'custom_output_alphabet' in kwargs:
         output_alphabet = kwargs.get('custom_output_alphabet')
-    accepting_state_ids = None
+        if len(output_alphabet) != output_alphabet_size:
+            assert False, 'Lenght of output_alphabet_size and custom output alphabet should be equal.'
+
+    num_accepting_states = None
     if 'num_accepting_states' in kwargs:
         num_accepting_states = kwargs.get('num_accepting_states')
-        accepting_state_ids = [f's{i + 1}' for i in random.sample(list(range(num_states)), k=num_accepting_states)]
+    if num_accepting_states is None:
+        num_accepting_states = num_states // 2
+
+    num_random_outputs = num_states if automaton_type != 'mealy' else num_states * input_alphabet_size
+
+    output_list = []
+    output_al_copy = output_alphabet.copy()
+
+    if automaton_type != 'dfa':
+        for _ in range(num_random_outputs):
+            if output_al_copy:
+                o = random.choice(output_al_copy)
+                output_al_copy.remove(o)
+            else:
+                o = random.choice(output_alphabet)
+            output_list.append(o)
+    else:
+        output_list = [True] * num_accepting_states + [False] * (num_states - num_accepting_states)
+        random.shuffle(output_list)
 
     states = [state_class_map[automaton_type](state_id=f's{i + 1}') for i in range(num_states)]
     state_id_state_map = {state.state_id: state for state in states}
 
-    if automaton_type != 'mealy':
-        for state in states:
-            output = random.choice(output_alphabet)
-            if automaton_type == 'dfa':
-                if accepting_state_ids is not None:
-                    output = state.state_id in accepting_state_ids
-                state.is_accepting = output
-            else:
-                state.output = output
+    # define an output function
+    for state_index, state in enumerate(states):
+        if automaton_type == 'dfa':
+            state.is_accepting = output_list[state_index]
+        if automaton_type == 'moore':
+            state.output = output_list[state_index]
+        if automaton_type == 'mealy':
+            for i in input_alphabet:
+                state.output_fun[i] = output_list.pop(0)
 
     state_buffer = [state.state_id for state in states]
     queue = [states[0]]
@@ -90,9 +112,6 @@ def generate_random_deterministic_automata(automaton_type,
 
             state.transitions[i] = new_state
 
-            if automaton_type == 'mealy':
-                state.output_fun[i] = random.choice(output_alphabet)
-
         for child in state.transitions.values():
             if child.state_id not in visited_states and child not in queue:
                 queue.append(child)
@@ -107,7 +126,7 @@ def generate_random_deterministic_automata(automaton_type,
 
     if ensure_minimality:
         minimality_iterations = 1
-        while not random_automaton.is_minimal():
+        while not random_automaton.is_minimal() and random_automaton.size != num_states:
             # to avoid infinite loops
             if minimality_iterations == 100:
                 warnings.warn(f'Non-minimal automaton ({automaton_type}, num_states : {num_states}) returned.')
