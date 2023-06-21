@@ -35,7 +35,7 @@ def generate_random_deterministic_automata(automaton_type,
     """
 
     assert automaton_type in {'dfa', 'mealy', 'moore'}
-    if output_alphabet_size < 2 or output_alphabet_size is None:
+    if output_alphabet_size and output_alphabet_size < 2 or output_alphabet_size is None:
         output_alphabet_size = 2
 
     state_class_map = {'dfa': DfaState, 'mealy': MealyState, 'moore': MooreState}
