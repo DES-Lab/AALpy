@@ -78,7 +78,6 @@ def generate_random_deterministic_automata(automaton_type,
         random.shuffle(output_list)
 
     states = [state_class_map[automaton_type](state_id=f's{i + 1}') for i in range(num_states)]
-    state_id_state_map = {state.state_id: state for state in states}
 
     # define an output function
     for state_index, state in enumerate(states):
@@ -90,31 +89,19 @@ def generate_random_deterministic_automata(automaton_type,
             for i in input_alphabet:
                 state.output_fun[i] = output_list.pop(0)
 
-    state_buffer = [state.state_id for state in states]
-    queue = [states[0]]
-    state_buffer.remove(states[0].state_id)
-    visited_states = set()
+    state_buffer = []
 
-    while queue:
-        state = queue.pop(0)
-        visited_states.add(state.state_id)
+    state_buffer.extend(states)
+    while len(state_buffer) < num_states * input_alphabet_size:
+        state_buffer.append(random.choice(states))
+
+    random.shuffle(state_buffer)
+
+    transition_index = 0
+    for state in states:
         for i in input_alphabet:
-            # states from which to choose next state (while all states have not be reached)
-            if state_buffer:
-                new_state_candidates = [state_id_state_map[state_id] for state_id in state_buffer]
-            else:
-                new_state_candidates = states
-
-            new_state = random.choice(new_state_candidates)
-
-            if new_state.state_id in state_buffer:
-                state_buffer.remove(new_state.state_id)
-
-            state.transitions[i] = new_state
-
-        for child in state.transitions.values():
-            if child.state_id not in visited_states and child not in queue:
-                queue.append(child)
+            state.transitions[i] = state_buffer[transition_index]
+            transition_index += 1
 
     random_automaton = automaton_class_map[automaton_type](states[0], states)
 
@@ -126,7 +113,8 @@ def generate_random_deterministic_automata(automaton_type,
 
     if ensure_minimality:
         minimality_iterations = 1
-        while not random_automaton.is_minimal() and random_automaton.size != num_states:
+        while not random_automaton.is_minimal() or random_automaton.size != num_states:
+            print('NON MINIMAL', random_automaton.size)
             # to avoid infinite loops
             if minimality_iterations == 100:
                 warnings.warn(f'Non-minimal automaton ({automaton_type}, num_states : {num_states}) returned.')
