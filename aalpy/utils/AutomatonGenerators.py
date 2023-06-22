@@ -1,5 +1,6 @@
 import random
 import warnings
+from itertools import cycle
 
 from aalpy.automata import Dfa, DfaState, MdpState, Mdp, MealyMachine, MealyState, \
     MooreMachine, MooreState, OnfsmState, Onfsm, MarkovChain, McState, StochasticMealyState, StochasticMealyMachine
@@ -256,31 +257,41 @@ def generate_random_mdp(num_states, input_size, output_size, possible_probabilit
         max_prob_num = min(num_states, input_size)
         possible_probabilities = [p for p in possible_probabilities if len(p) <= max_prob_num]
 
-    state_outputs = outputs.copy()
+    state_outputs = []
+    state_outputs.extend(outputs)
+    while len(state_outputs) < num_states:
+        state_outputs.append(random.choice(outputs))
+    random.shuffle(state_outputs)
+
     states = []
     for i in range(num_states):
-        curr_output = state_outputs.pop(0) if state_outputs else random.choice(outputs)
-        states.append(MdpState(f'q{i}', curr_output))
+        states.append(MdpState(f'q{i}', state_outputs[i]))
 
-    state_buffer = list(states)
+    random.shuffle(states)
+
+    state_cycle = cycle(states)
+
     for state in states:
         for i in inputs:
             prob = random.choice(possible_probabilities)
             reached_states = []
             for _ in prob:
                 while True:
-                    new_state = random.choice(state_buffer) if state_buffer else random.choice(states)
+                    new_state = next(state_cycle)
 
                     # ensure determinism
                     if new_state.output not in {s.output for s in reached_states}:
-                        if state_buffer:
-                            state_buffer.remove(new_state)
                         break
 
                 reached_states.append(new_state)
 
             for prob, reached_state in zip(prob, reached_states):
                 state.transitions[i].append((reached_state, prob))
+
+    for state in states:
+        for _, transition_values in state.transitions.items():
+            reached_outputs = [s.output for s, _ in transition_values]
+            assert len(reached_outputs) == len(set(reached_outputs))
 
     return Mdp(states[0], states)
 
