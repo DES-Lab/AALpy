@@ -10,7 +10,6 @@ def generate_random_deterministic_automata(automaton_type,
                                            num_states,
                                            input_alphabet_size,
                                            output_alphabet_size=None,
-                                           compute_prefixes=False,
                                            ensure_minimality=True,
                                            **kwargs
                                            ):
@@ -96,26 +95,32 @@ def generate_random_deterministic_automata(automaton_type,
     while len(state_buffer) < num_states * input_alphabet_size:
         state_buffer.append(random.choice(states))
 
-    random.shuffle(state_buffer)
+    random_automaton = None
 
-    transition_index = 0
-    for state in states:
-        for i in input_alphabet:
-            state.transitions[i] = state_buffer[transition_index]
-            transition_index += 1
+    # keep changing transitions until all states are reachable (update in future )
+    all_states_reachable = False
+    while not all_states_reachable:
+        random.shuffle(state_buffer)
 
-    random_automaton = automaton_class_map[automaton_type](states[0], states)
+        transition_index = 0
+        for state in states:
+            for i in input_alphabet:
+                state.transitions[i] = state_buffer[transition_index]
+                transition_index += 1
 
-    if compute_prefixes:
+        random_automaton = automaton_class_map[automaton_type](states[0], states)
+
+        unreachable_state_exits = False
         for state in random_automaton.states:
             state.prefix = random_automaton.get_shortest_path(random_automaton.initial_state, state)
             if state != random_automaton.initial_state and not state.prefix:
-                print('Non-reachable state:', state.state_id)
+                unreachable_state_exits = True
+                break
+        all_states_reachable = not unreachable_state_exits
 
     if ensure_minimality:
         minimality_iterations = 1
         while not random_automaton.is_minimal() or random_automaton.size != num_states:
-            print('NON MINIMAL', random_automaton.size)
             # to avoid infinite loops
             if minimality_iterations == 100:
                 warnings.warn(f'Non-minimal automaton ({automaton_type}, num_states : {num_states}) returned.')
@@ -133,7 +138,6 @@ def generate_random_deterministic_automata(automaton_type,
                                                                       num_states,
                                                                       input_alphabet_size,
                                                                       output_alphabet_size,
-                                                                      compute_prefixes,  # compute prefixes
                                                                       False,  # ensure minimality
                                                                       **custom_args)
 
