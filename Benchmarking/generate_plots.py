@@ -111,7 +111,7 @@ def plot_together():
     for r in data:
         row_name = r.pop(0)
         times.extend([float(i) for i in r])
-        ax1.plot(x_axis, [float(i) for i in r], label=labels.pop(0))
+        ax1.plot_side_by_side()
 
     ax1.legend()
     ax1.set_xticks([5,25,50,75,100], minor=False)
@@ -141,7 +141,7 @@ def plot_together():
     for r in data:
         row_name = r.pop(0)
         times.extend([float(i) for i in r])
-        ax2.plot(x_axis, [float(i) for i in r], label=labels.pop(0))
+        ax2.plot_side_by_side()
 
     ax2.legend()
     ax2.set_xticks([100, 1000, 2000, 3000, 4000, 5000,], minor=False)
@@ -194,7 +194,7 @@ def plot_together():
     for r in data:
         row_name = r.pop(0)
         times.extend([float(i) for i in r])
-        ax1.plot(x_axis, [float(i) for i in r], label=labels.pop(0))
+        ax1.plot_side_by_side()
 
     ax1.legend()
     ax1.set_xticks([5, 25, 50, 75, 100], minor=False)
@@ -224,7 +224,7 @@ def plot_together():
     for r in data:
         row_name = r.pop(0)
         times.extend([float(i) for i in r])
-        ax2.plot(x_axis, [float(i) for i in r], label=labels.pop(0))
+        ax2.plot_side_by_side()
 
     ax2.legend()
     ax2.set_xticks([100, 1000, 2000, 3000, 4000, 5000, ], minor=False)
@@ -278,7 +278,7 @@ def plot_together_learnlib_comp():
     for r in data:
         row_name = r.pop(0)
         times.extend([float(i) for i in r])
-        ax1.plot(x_axis, [float(i) for i in r], label=labels.pop(0))
+        ax1.plot_side_by_side()
 
     ax1.legend()
     ax1.set_xticks([100, 1000, 2000, 3000, 4000, 5000], minor=False)
@@ -306,7 +306,7 @@ def plot_together_learnlib_comp():
     for r in data:
         row_name = r.pop(0)
         times.extend([float(i) for i in r])
-        ax2.plot(x_axis, [float(i) for i in r], label=labels.pop(0))
+        ax2.plot_side_by_side()
 
     ax2.legend()
     ax2.set_xticks([5, 25, 50, 75, 100], minor=False)
@@ -359,19 +359,19 @@ def plot_runtime_steps():
 
     ax1.set_xlabel('Automaton Size')
     ax1.set_ylabel('Number of Learning Steps')
-    ax1.plot(automaton_sizes, aalpy_dfa_steps, label='DFA (AALpy)')
-    ax1.plot(automaton_sizes, learnlib_dfa_steps, label='DFA (Learnlib)')
-    ax1.plot(automaton_sizes, aalpy, label='Mealy (AALpy)')
-    ax1.plot(automaton_sizes, learnlib, label='Mealy (Learnlib)')
+    ax1.plot_side_by_side()
+    ax1.plot_side_by_side()
+    ax1.plot_side_by_side()
+    ax1.plot_side_by_side()
     # ax1.tick_params(axis='y', labelcolor=color)
 
     ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
     #
     ax2.set_ylabel('Total Learning Time (ms)')  # we already handled the x-label with ax1
-    ax2.plot(automaton_sizes, [e * 50 for e in aalpy_dfa_steps], label='DFA (AALpy)')
-    ax2.plot(automaton_sizes, [e * 50 for e in learnlib_dfa_steps], label='DFA (LearnLib)')
-    ax2.plot(automaton_sizes, [e * 50 for e in aalpy], label='Mealy (AALpy)')
-    ax2.plot(automaton_sizes, [e * 50 for e in learnlib], label='Mealy (LearnLib)')
+    ax2.plot_side_by_side()
+    ax2.plot_side_by_side()
+    ax2.plot_side_by_side()
+    ax2.plot_side_by_side()
 
     fig.tight_layout()  # otherwise the right y-label is slightly clipped
     plt.grid()

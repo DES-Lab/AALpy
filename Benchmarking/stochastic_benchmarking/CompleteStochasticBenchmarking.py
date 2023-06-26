@@ -13,15 +13,16 @@ from aalpy.automata.StochasticMealyMachine import smm_to_mdp_conversion
 seeds = [29334,1554,9430459,92344168,55451679,569315,7776892,3875261,811,51,766603,778438967,9819877,6755560,52903,5257,4635,358,1441,838]
 
 path_to_dir = '../DotModels/MDPs/'
-#files = ['first_grid.dot', 'second_grid.dot', 'slot_machine.dot', 'mqtt.dot', 'tcp.dot'] # 'slot_machine.dot' ,'shared_coin.dot'
+# files = ['first_grid.dot', 'second_grid.dot', 'slot_machine.dot', 'mqtt.dot', 'tcp.dot'] # 'slot_machine.dot' ,
+# 'shared_coin.dot'
 files = ['second_grid.dot', 'mqtt.dot'] # 'slot_machine.dot' ,'shared_coin.dot'
 
-prop_folder = 'prism_eval_props/'
+prop_folder = '../prism_eval_props/'
 
 # TODO Change the path to your PRIMS executable
 
 aalpy.paths.path_to_prism =      "C:/Program Files/prism-4.6/bin/prism.bat"
-aalpy.paths.path_to_properties = "prism_eval_props/"
+aalpy.paths.path_to_properties = "../prism_eval_props/"
 
 n_c = 10
 n_resample = 1000
