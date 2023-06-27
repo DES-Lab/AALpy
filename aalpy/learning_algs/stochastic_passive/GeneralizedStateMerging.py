@@ -7,6 +7,7 @@ from typing import Dict, Tuple, Callable, Any, Literal
 
 from aalpy.learning_algs.stochastic_passive.rpni_helper_functions import Node, OutputBehavior, TransitionBehavior
 
+# TODO make non-mutual exclusive
 CompatibilityBehavior = Literal["future", "partition", "merge"]
 
 Score = bool
@@ -87,7 +88,7 @@ class GeneralizedStateMerging:
             print(f'\nLearning Time: {round(time.time() - start_time, 2)}')
             print(f'Learned {len(red_states)} state automaton.')
             if 1 < self.lvl:
-                self.instance.root.visualize("model.pdf",self.instance.output_behavior)
+                self.instance.root.visualize("model",self.instance.output_behavior)
 
     def __init__(self, data, output_behavior : OutputBehavior = "moore",
                  transition_behavior : TransitionBehavior = "deterministic",
@@ -128,6 +129,7 @@ class GeneralizedStateMerging:
         self.debug.pta_construction_done(pta_construction_start)
 
         if self.compatibility_behavior == "future":
+            # TODO decouple from "future" -> option "compatibility_on_original_data"
             self.pta_state_dictionary = {node : node.shallow_copy() for node in self.root.get_all_nodes()}
 
         if transition_behavior == "deterministic":

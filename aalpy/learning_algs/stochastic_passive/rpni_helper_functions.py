@@ -15,6 +15,7 @@ Prefix = List[TransitionID]
 OutputBehavior = Literal["moore", "mealy"]
 TransitionBehavior = Literal["deterministic", "nondeterministic", "stochastic"]
 
+# Separate functions to allow pickling Nodes
 def zero():
     return 0
 def create_count_dict():
@@ -22,9 +23,18 @@ def create_count_dict():
 
 @total_ordering
 class Node:
+    """
+    Generic class for observably deterministic automata.
+
+    The prefix is given as (minimal) list of IO pairs leading to that state.
+    We assume an initial transition to the initial state, which has to be reflected in the prefix.
+    This way, the output of the initial state for Moore machines can be encoded in its prefix.
+
+    Transition count is preferred over state count as it allows to easily count transitions for non-tree-shaped automata
+    """
     __slots__ = ['transitions', 'prefix', "transition_count"]
 
-    def __init__(self, prefix):
+    def __init__(self, prefix : Prefix):
         self.transitions = defaultdict[Any, Dict[Any,Node]](dict)
         self.transition_count = defaultdict[Any, defaultdict[Any, int]](create_count_dict)
         self.prefix : Prefix = prefix
@@ -89,6 +99,7 @@ class Node:
 
         Machine, State = type_dict[(output_behavior, transition_behavior)]
 
+        # create states
         state_map = dict()
         for i, node in enumerate(nodes):
             state_id = f's{i}'
@@ -100,6 +111,7 @@ class Node:
 
         initial_state = state_map[self]
 
+        # add transitions
         for node in nodes:
             state = state_map[node]
             for in_sym, transitions in node.transitions.items():
