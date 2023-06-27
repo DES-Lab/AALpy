@@ -7,7 +7,7 @@ from typing import Dict, Tuple, Callable, Any, Literal
 
 from aalpy.learning_algs.stochastic_passive.rpni_helper_functions import Node, OutputBehavior, TransitionBehavior
 
-CompatibilityBehavior = Literal["future", "partition"]
+CompatibilityBehavior = Literal["future", "partition", "merge"]
 
 Score = bool
 ScoreFunction = Callable[[Node,Node,Any], Score]
@@ -158,8 +158,8 @@ class GeneralizedStateMerging:
 
             for red_state in red_states:
                 match self.compatibility_behavior:
-                    case "partition": score, partition = self._partition_from_merge(red_state, blue_state)
                     case "future": score = self._check_futures(red_state, blue_state)
+                    case "partition" | "merge": score, partition = self._partition_from_merge(red_state, blue_state)
                 if score:
                     break
 
@@ -170,7 +170,7 @@ class GeneralizedStateMerging:
                 self.debug.log_merge(red_state, blue_state)
                 match self.compatibility_behavior:
                     case "future": self._partition_from_merge(red_state, blue_state)
-                    case "partition":
+                    case "partition" | "merge":
                         # use the partition for merging
                         for node, block in partition.items():
                             node.transitions = block.transitions
@@ -231,9 +231,10 @@ class GeneralizedStateMerging:
             red, blue, info = q.get()
             partition = update_partition(red, blue)
 
-            info = self.info_update(partition, blue, info)
-            if self.compatibility_behavior == "partition" and not self.local_merge_score(partition, blue, info) :
-                return False, dict()
+            if self.compatibility_behavior == "partition":
+                info = self.info_update(partition, blue, info)
+                if not self.local_merge_score(partition, blue, info) :
+                    return False, dict()
 
             for in_sym, blue_transitions in blue.transitions.items():
                 partition_transitions = partition.transitions[in_sym]
@@ -244,4 +245,9 @@ class GeneralizedStateMerging:
                         # blue_child is blue after merging if there is a red state in the partition
                         partition_transitions[out_sym] = blue_child
                     partition.transition_count[in_sym][out_sym] += blue.transition_count[in_sym][out_sym]
+        if self.compatibility_behavior == "merge":
+            for new_node, old_node in partitions.items():
+                info = self.info_update(new_node, old_node, None)
+                if not self.local_merge_score(new_node, old_node, info):
+                    return False, dict()
         return True, remaining_nodes
