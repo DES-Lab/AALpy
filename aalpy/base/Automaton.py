@@ -2,7 +2,7 @@ import copy
 import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from typing import Union, TypeVar, Generic, List, Tuple, Dict
+from typing import Union, TypeVar, Generic, List
 
 
 class AutomatonState(ABC):
@@ -40,17 +40,19 @@ class AutomatonState(ABC):
         all_trans = set(self.transitions.keys())
         return [t for t in all_trans if t not in dst]
 
+
 AutomatonStateType = TypeVar("AutomatonStateType", bound=AutomatonState)
 
 OutputType = TypeVar("OutputType")
 InputType = TypeVar("InputType")
+
 
 class Automaton(ABC, Generic[AutomatonStateType]):
     """
     Abstract class representing an automaton.
     """
 
-    def __init__(self, initial_state : AutomatonStateType, states: List[AutomatonStateType]):
+    def __init__(self, initial_state: AutomatonStateType, states: List[AutomatonStateType]):
         """
         Args:
 
@@ -58,10 +60,10 @@ class Automaton(ABC, Generic[AutomatonStateType]):
             states (list) : list containing all states of the automaton
 
         """
-        self.initial_state : AutomatonStateType = initial_state
-        self.states : List[AutomatonStateType] = states
+        self.initial_state: AutomatonStateType = initial_state
+        self.states: List[AutomatonStateType] = states
         self.characterization_set: list = []
-        self.current_state : AutomatonStateType = initial_state
+        self.current_state: AutomatonStateType = initial_state
 
     @property
     def size(self):
@@ -158,7 +160,8 @@ class DeterministicAutomaton(Automaton[AutomatonStateType]):
     def step(self, letter):
         pass
 
-    def get_shortest_path(self, origin_state: AutomatonStateType, target_state: AutomatonStateType) -> Union[tuple, None]:
+    def get_shortest_path(self, origin_state: AutomatonStateType, target_state: AutomatonStateType) -> Union[
+        tuple, None]:
         """
         Breath First Search over the automaton
 
