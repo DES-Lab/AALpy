@@ -256,16 +256,18 @@ def bisimilar(a1: DeterministicAutomaton, a2: DeterministicAutomaton, return_cex
 
     while not to_check.empty():
         s1, s2 = to_check.get()
-        if (isinstance(s1, DfaState)) and s1.is_accepting != s2.is_accepting or \
-                (isinstance(s1, MooreState) and s1.output != s2.output) or \
-                (isinstance(s1, MealyState) and s1.output_fun != s2.output_fun):
+
+        # check output equivalence for Dfa / Moore
+        if (isinstance(s1, DfaState)) and s1.is_accepting != s2.is_accepting:
+            return requirements[(s1, s2)] if return_cex else False
+        if (isinstance(s1, MooreState) and s1.output != s2.output):
             return requirements[(s1, s2)] if return_cex else False
 
+        # check whether the same inputs are enabled + output equivalence for Mealy
         t1, t2 = s1.transitions, s2.transitions
-        # not using sets -> deterministic but inefficient
-        # could use set to detect and slow only if detection?
-        for t in it.chain(t1.keys(), t2.keys()):
-            if (t in t1.keys()) != (t in t2.keys()):
+        for t in it.chain(t1.keys(), filter(lambda x : x not in t1.keys(), t2.keys())):
+            common = t in t1.keys() and t in t2.keys()
+            if (not common) or (isinstance(s1, MealyState) and s1.output_fun[t] != s2.output_fun[t]) :
                 return requirements[(s1, s2)] + [t] if return_cex else False
 
         for t in t1.keys():
