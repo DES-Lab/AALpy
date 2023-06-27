@@ -1,8 +1,10 @@
 import pickle
 import queue
+from functools import total_ordering
 from typing import Set
 
 
+@total_ordering
 class RpniNode:
     __slots__ = ['output', 'children', 'prefix', "type"]
 
@@ -24,10 +26,7 @@ class RpniNode:
         return pickle.loads(pickle.dumps(self, -1))
 
     def __lt__(self, other):
-        return len(self.prefix) < len(other.prefix)
-
-    def __le__(self, other):
-        return len(self.prefix) <= len(other.prefix)
+        return (len(self.prefix), self.prefix) < (len(other.prefix), other.prefix)
 
     def __eq__(self, other):
         return self.prefix == other.prefix

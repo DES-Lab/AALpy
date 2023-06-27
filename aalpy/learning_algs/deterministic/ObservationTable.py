@@ -31,7 +31,7 @@ class ObservationTable:
         self.A = [tuple([a]) for a in alphabet]
         self.S = list()  # prefixes of S
         # DFA's can also take whole alphabet in E, this convention follows Angluin's paper
-        self.E = [] if self.automaton_type == 'dfa' else [tuple([a]) for a in alphabet]
+        self.E = [] if self.automaton_type != 'mealy' else [tuple([a]) for a in alphabet]
         # For performance reasons, the T function maps S to a tuple where element at index i is the element of the E
         # set of index i. Therefore it is important to keep E set ordered and ask membership queries only when needed
         # and in correct order. It would make more sense to implement it as a defaultdict(dict) where you can access

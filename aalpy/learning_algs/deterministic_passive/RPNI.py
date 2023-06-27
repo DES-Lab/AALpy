@@ -27,7 +27,7 @@ class RPNI:
         red = [self.root_node]
         blue = list(red[0].children.values())
         while blue:
-            lex_min_blue = min(list(blue), key=lambda x: len(x.prefix))
+            lex_min_blue = min(list(blue))
             merged = False
 
             for red_state in red:

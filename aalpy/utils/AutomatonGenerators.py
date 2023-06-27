@@ -1,5 +1,6 @@
 import random
 import warnings
+from itertools import cycle
 
 from aalpy.automata import Dfa, DfaState, MdpState, Mdp, MealyMachine, MealyState, \
     MooreMachine, MooreState, OnfsmState, Onfsm, MarkovChain, McState, StochasticMealyState, StochasticMealyMachine
@@ -8,8 +9,7 @@ from aalpy.automata import Dfa, DfaState, MdpState, Mdp, MealyMachine, MealyStat
 def generate_random_deterministic_automata(automaton_type,
                                            num_states,
                                            input_alphabet_size,
-                                           output_alphabet_size,
-                                           compute_prefixes=False,
+                                           output_alphabet_size=None,
                                            ensure_minimality=True,
                                            **kwargs
                                            ):
@@ -20,13 +20,11 @@ def generate_random_deterministic_automata(automaton_type,
         automaton_type: type of automaton, either 'dfa', 'mealy', or 'moore'
         num_states: number of states
         input_alphabet_size: size of input alphabet
-        output_alphabet_size: size of output alphabet (ignored for DFAs)
-        compute_prefixes: compute prefixes leading to each state
+        output_alphabet_size: size of output alphabet. (ignored for DFAs)
         ensure_minimality: ensure that the automaton is minimal
         **kwargs:
-            : 'custom_input_alphabet'  a list of custom input alphabet values
-            : 'custom_output_alphabet' a list of custom output alphabet values
-            : 'num_accepting_states' number of accepting states for DFA generation
+            : 'num_accepting_states' number of accepting states for DFA generation. If not defined, half of states will
+            be accepting
 
     Returns:
 
@@ -36,7 +34,7 @@ def generate_random_deterministic_automata(automaton_type,
     """
 
     assert automaton_type in {'dfa', 'mealy', 'moore'}
-    if output_alphabet_size < 2 or output_alphabet_size is None:
+    if output_alphabet_size and output_alphabet_size < 2 or output_alphabet_size is None:
         output_alphabet_size = 2
 
     state_class_map = {'dfa': DfaState, 'mealy': MealyState, 'moore': MooreState}
@@ -48,66 +46,80 @@ def generate_random_deterministic_automata(automaton_type,
     # For backwards comparability or if uses passes custom input output functions
     if 'custom_input_alphabet' in kwargs:
         input_alphabet = kwargs.get('custom_input_alphabet')
+        if len(input_alphabet) != input_alphabet_size:
+            assert False, 'Lenght of input_alphabet_size and custom input alphabet should be equal.'
     if 'custom_output_alphabet' in kwargs:
         output_alphabet = kwargs.get('custom_output_alphabet')
-    accepting_state_ids = None
+        if len(output_alphabet) != output_alphabet_size:
+            assert False, 'Lenght of output_alphabet_size and custom output alphabet should be equal.'
+
+    num_accepting_states = None
     if 'num_accepting_states' in kwargs:
         num_accepting_states = kwargs.get('num_accepting_states')
-        accepting_state_ids = [f's{i + 1}' for i in random.sample(list(range(num_states)), k=num_accepting_states)]
+    if num_accepting_states is None:
+        num_accepting_states = num_states // 2
+
+    num_random_outputs = num_states if automaton_type != 'mealy' else num_states * input_alphabet_size
+
+    output_list = []
+    output_al_copy = output_alphabet.copy()
+
+    if automaton_type != 'dfa':
+        for _ in range(num_random_outputs):
+            if output_al_copy:
+                o = random.choice(output_al_copy)
+                output_al_copy.remove(o)
+            else:
+                o = random.choice(output_alphabet)
+            output_list.append(o)
+    else:
+        output_list = [True] * num_accepting_states + [False] * (num_states - num_accepting_states)
+        random.shuffle(output_list)
 
     states = [state_class_map[automaton_type](state_id=f's{i + 1}') for i in range(num_states)]
-    state_id_state_map = {state.state_id: state for state in states}
 
-    if automaton_type != 'mealy':
+    # define an output function
+    for state_index, state in enumerate(states):
+        if automaton_type == 'dfa':
+            state.is_accepting = output_list[state_index]
+        if automaton_type == 'moore':
+            state.output = output_list[state_index]
+        if automaton_type == 'mealy':
+            for i in input_alphabet:
+                state.output_fun[i] = output_list.pop(0)
+
+    state_buffer = []
+
+    state_buffer.extend(states)
+    while len(state_buffer) < num_states * input_alphabet_size:
+        state_buffer.append(random.choice(states))
+
+    random_automaton = None
+
+    # keep changing transitions until all states are reachable (update in future )
+    all_states_reachable = False
+    while not all_states_reachable:
+        random.shuffle(state_buffer)
+
+        transition_index = 0
         for state in states:
-            output = random.choice(output_alphabet)
-            if automaton_type == 'dfa':
-                if accepting_state_ids is not None:
-                    output = state.state_id in accepting_state_ids
-                state.is_accepting = output
-            else:
-                state.output = output
+            for i in input_alphabet:
+                state.transitions[i] = state_buffer[transition_index]
+                transition_index += 1
 
-    state_buffer = [state.state_id for state in states]
-    queue = [states[0]]
-    state_buffer.remove(states[0].state_id)
-    visited_states = set()
+        random_automaton = automaton_class_map[automaton_type](states[0], states)
 
-    while queue:
-        state = queue.pop(0)
-        visited_states.add(state.state_id)
-        for i in input_alphabet:
-            # states from which to choose next state (while all states have not be reached)
-            if state_buffer:
-                new_state_candidates = [state_id_state_map[state_id] for state_id in state_buffer]
-            else:
-                new_state_candidates = states
-
-            new_state = random.choice(new_state_candidates)
-
-            if new_state.state_id in state_buffer:
-                state_buffer.remove(new_state.state_id)
-
-            state.transitions[i] = new_state
-
-            if automaton_type == 'mealy':
-                state.output_fun[i] = random.choice(output_alphabet)
-
-        for child in state.transitions.values():
-            if child.state_id not in visited_states and child not in queue:
-                queue.append(child)
-
-    random_automaton = automaton_class_map[automaton_type](states[0], states)
-
-    if compute_prefixes:
+        unreachable_state_exits = False
         for state in random_automaton.states:
             state.prefix = random_automaton.get_shortest_path(random_automaton.initial_state, state)
             if state != random_automaton.initial_state and not state.prefix:
-                print('Non-reachable state:', state.state_id)
+                unreachable_state_exits = True
+                break
+        all_states_reachable = not unreachable_state_exits
 
     if ensure_minimality:
         minimality_iterations = 1
-        while not random_automaton.is_minimal():
+        while not random_automaton.is_minimal() or random_automaton.size != num_states:
             # to avoid infinite loops
             if minimality_iterations == 100:
                 warnings.warn(f'Non-minimal automaton ({automaton_type}, num_states : {num_states}) returned.')
@@ -125,7 +137,6 @@ def generate_random_deterministic_automata(automaton_type,
                                                                       num_states,
                                                                       input_alphabet_size,
                                                                       output_alphabet_size,
-                                                                      compute_prefixes,  # compute prefixes
                                                                       False,  # ensure minimality
                                                                       **custom_args)
 
@@ -209,7 +220,7 @@ def generate_random_dfa(num_states, alphabet, num_accepting_states=1,
 
     """
     if num_states <= num_accepting_states:
-        num_accepting_states = num_states - 1
+        num_accepting_states = num_states // 2
 
     random_dfa = generate_random_deterministic_automata('dfa', num_states,
                                                         input_alphabet_size=len(alphabet),
@@ -239,8 +250,7 @@ def generate_random_mdp(num_states, input_size, output_size, possible_probabilit
 
     """
 
-    inputs = [f'i{i + 1}' for i in range(input_size)]
-    outputs = [f'o{i + 1}' for i in range(output_size)]
+    deterministic_model = generate_random_deterministic_automata('moore', num_states, input_size, output_size)
 
     if not possible_probabilities:
         possible_probabilities = [(1.,), (1.,), (1.,), (0.9, 0.1),
@@ -249,39 +259,46 @@ def generate_random_mdp(num_states, input_size, output_size, possible_probabilit
         max_prob_num = min(num_states, input_size)
         possible_probabilities = [p for p in possible_probabilities if len(p) <= max_prob_num]
 
-    state_outputs = outputs.copy()
-    states = []
-    for i in range(num_states):
-        curr_output = state_outputs.pop(0) if state_outputs else random.choice(outputs)
-        states.append(MdpState(f'q{i}', curr_output))
+    mdp_states = []
+    state_id_state_map = {}
+    for state in deterministic_model.states:
+        mdp_state = MdpState(state.state_id, state.output)
+        state_id_state_map[state.state_id] = mdp_state
+        mdp_states.append(mdp_state)
 
-    state_buffer = list(states)
-    for state in states:
-        for i in inputs:
+    input_al = deterministic_model.get_input_alphabet()
+    for deterministic_state in deterministic_model.states:
+        for i in input_al:
+            state_from_det_model = state_id_state_map[deterministic_state.transitions[i].state_id]
             prob = random.choice(possible_probabilities)
-            reached_states = []
-            for _ in prob:
+
+            reached_states = [state_from_det_model]
+            for _ in range(len(prob) - 1):
                 while True:
-                    new_state = random.choice(state_buffer) if state_buffer else random.choice(states)
+                    new_state = random.choice(mdp_states)
 
                     # ensure determinism
                     if new_state.output not in {s.output for s in reached_states}:
                         break
 
-                    if state_buffer:
-                        state_buffer.remove(new_state)
-
                 reached_states.append(new_state)
 
             for prob, reached_state in zip(prob, reached_states):
-                state.transitions[i].append((reached_state, prob))
+                mdp_origin_state = state_id_state_map[deterministic_state.state_id]
+                mdp_origin_state.transitions[i].append((reached_state, prob))
 
-    return Mdp(states[0], states)
+    # deterministically labeled check
+    for state in mdp_states:
+        for _, transition_values in state.transitions.items():
+            reached_outputs = [s.output for s, _ in transition_values]
+            assert len(reached_outputs) == len(set(reached_outputs))
+
+    return Mdp(mdp_states[0], mdp_states)
 
 
 def generate_random_smm(num_states, input_size, output_size, possible_probabilities=None):
     """
-    Generates random MDP.
+    Generates random SMM.
 
     Args:
 
@@ -296,8 +313,10 @@ def generate_random_smm(num_states, input_size, output_size, possible_probabilit
 
     """
 
-    inputs = [f'i{i + 1}' for i in range(input_size)]
-    outputs = [f'o{i + 1}' for i in range(output_size)]
+    deterministic_model = generate_random_deterministic_automata('mealy', num_states, input_size, output_size)
+    input_al = deterministic_model.get_input_alphabet()
+    output_al = list(set([o for state in deterministic_model.states for o in state.output_fun.values()]))
+    output_al.sort()
 
     if not possible_probabilities:
         possible_probabilities = [(1.,), (1.,), (1.,), (0.9, 0.1),
@@ -306,38 +325,36 @@ def generate_random_smm(num_states, input_size, output_size, possible_probabilit
         max_prob_num = min(num_states, input_size)
         possible_probabilities = [p for p in possible_probabilities if len(p) <= max_prob_num]
 
-    states = []
-    for i in range(num_states):
-        states.append(StochasticMealyState(f'q{i}'))
+    smm_states = []
+    state_id_state_map = {}
+    for state in deterministic_model.states:
+        smm_state = StochasticMealyState(state.state_id)
+        state_id_state_map[state.state_id] = smm_state
+        smm_states.append(smm_state)
 
-    state_buffer = list(states)
-    output_buffer = outputs.copy()
-    for state in states:
-        for i in inputs:
+    for deterministic_state in deterministic_model.states:
+        for i in input_al:
+            state_from_det_model = state_id_state_map[deterministic_state.transitions[i].state_id]
+            output_from_det_model = deterministic_state.output_fun[i]
+
             prob = random.choice(possible_probabilities)
-            reached_states = []
-            transition_outputs = []
-            for _ in prob:
+
+            state_id_state_map[deterministic_state.state_id].transitions[i].append(
+                (state_from_det_model, output_from_det_model, prob[0]))
+
+            observed_outputs = [output_from_det_model]
+            for prob_index in range(1, len(prob)):
                 while True:
-                    o = random.choice(output_buffer) if output_buffer else random.choice(outputs)
-                    new_state = random.choice(state_buffer) if state_buffer else random.choice(states)
+                    new_state = random.choice(smm_states)
+                    new_output = random.choice(output_al)
 
                     # ensure determinism
-                    if o not in transition_outputs:
+                    if new_output not in observed_outputs:
+                        state_id_state_map[deterministic_state.state_id].transitions[i].append(
+                            (new_state, new_output, prob[prob_index]))
                         break
 
-                    if output_buffer:
-                        output_buffer.remove(o)
-                    if state_buffer:
-                        state_buffer.remove(new_state)
-
-                reached_states.append(new_state)
-                transition_outputs.append(o)
-
-            for index in range(len(prob)):
-                state.transitions[i].append((reached_states[index], transition_outputs[index], prob[index]))
-
-    return StochasticMealyMachine(states[0], states)
+    return StochasticMealyMachine(smm_states[0], smm_states)
 
 
 def generate_random_ONFSM(num_states, num_inputs, num_outputs, multiple_out_prob=0.33):

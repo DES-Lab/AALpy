@@ -27,7 +27,7 @@ class GeneralizedStateMerging:
         blue_states = list(red_states[0].children.values())
 
         while blue_states:
-            blue_state = min(list(blue_states), key=lambda x: len(x.prefix))
+            blue_state = min(list(blue_states))
 
             partition = None
             for red_state in red_states:
