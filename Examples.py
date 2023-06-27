@@ -5,6 +5,8 @@ def random_deterministic_model_example():
     from aalpy.learning_algs import run_KV
 
     model_type = 'mealy'  # or 'moore', 'dfa'
+
+    # for random dfa's you can also define num_accepting_states
     random_model = generate_random_deterministic_automata(automaton_type=model_type, num_states=100,
                                                           input_alphabet_size=3, output_alphabet_size=4)
 
@@ -87,7 +89,7 @@ def regex_example(regex, alphabet):
 
 def learn_date_validator():
     from aalpy.base import SUL
-    from aalpy.utils import visualize_automaton, DateValidator
+    from aalpy.utils import DateValidator
     from aalpy.oracles import StatePrefixEqOracle
     from aalpy.learning_algs import run_Lstar
 
@@ -135,19 +137,20 @@ def learn_date_validator():
 
     learned_model = run_Lstar(alphabet, sul, eq_oracle, automaton_type='dfa')
     # visualize the automaton
-    visualize_automaton(learned_model)
+    learned_model.visualize()
 
 
 def random_deterministic_example_with_provided_sequences():
     from random import choice, randint
-
-    input_alphabet = [f'i{i + 1}' for i in range(2)]
-    output_alphabet = [f'o{i + 1}' for i in range(4)]
-
-    from aalpy.utils import generate_random_mealy_machine
-    random_mealy = generate_random_mealy_machine(10, input_alphabet, output_alphabet)
-
     from aalpy.SULs import MealySUL
+    from aalpy.learning_algs import run_Lstar
+    from aalpy.utils import generate_random_deterministic_automata
+
+    random_mealy = generate_random_deterministic_automata('mealy', num_states=10,
+                                                          input_alphabet_size=4, output_alphabet_size=3)
+
+    input_alphabet = random_mealy.get_input_alphabet()
+
     sul_mealy = MealySUL(random_mealy)
 
     # samples obtained form somewhere else
@@ -161,7 +164,6 @@ def random_deterministic_example_with_provided_sequences():
     from aalpy.oracles import RandomWalkEqOracle
     random_walk_eq_oracle = RandomWalkEqOracle(input_alphabet, sul_mealy, 5000)
 
-    from aalpy.learning_algs import run_Lstar
     learned_mealy = run_Lstar(input_alphabet, sul_mealy, random_walk_eq_oracle, automaton_type='mealy',
                               samples=samples)
 
@@ -276,7 +278,7 @@ def learn_python_class():
     from aalpy.SULs import PyClassSUL, FunctionDecorator
     from aalpy.oracles import StatePrefixEqOracle
     from aalpy.learning_algs import run_Lstar
-    from aalpy.utils import MockMqttExample, visualize_automaton
+    from aalpy.utils import MockMqttExample
 
     mqtt = MockMqttExample
 
@@ -290,14 +292,14 @@ def learn_python_class():
 
     mealy = run_Lstar(input_al, sul, eq_oracle=eq_oracle, automaton_type='mealy', cache_and_non_det_check=True)
 
-    visualize_automaton(mealy)
+    mealy.visualize()
 
 
 def mqtt_example():
     from aalpy.base import SUL
     from aalpy.oracles import RandomWalkEqOracle
     from aalpy.learning_algs import run_Lstar
-    from aalpy.utils import visualize_automaton, MockMqttExample
+    from aalpy.utils import MockMqttExample
 
     class MQTT_SUL(SUL):
         def __init__(self):
@@ -330,7 +332,7 @@ def mqtt_example():
     mealy = run_Lstar(input_al, sul, eq_oracle=eq_oracle, automaton_type='mealy', cache_and_non_det_check=True,
                       print_level=3)
 
-    visualize_automaton(mealy)
+    mealy.visualize()
 
 
 def onfsm_mealy_paper_example():
@@ -644,16 +646,17 @@ def alergia_mdp_example():
     from aalpy.SULs import MdpSUL
     from random import randint, choice
     from aalpy.learning_algs import run_Alergia
-    from aalpy.utils import visualize_automaton, generate_random_mdp
+    from aalpy.utils import generate_random_mdp
 
     mdp = generate_random_mdp(5, 2, 5)
-    visualize_automaton(mdp, path='Original')
+    mdp.visualize(path='Original')
     sul = MdpSUL(mdp)
     inputs = mdp.get_input_alphabet()
 
     data = []
     for _ in range(100000):
         str_len = randint(5, 12)
+        # add the initial output
         seq = [sul.pre()]
         for _ in range(str_len):
             i = choice(inputs)
@@ -665,18 +668,17 @@ def alergia_mdp_example():
     # run alergia with the data and automaton_type set to 'mdp' to True to learn a MDP
     model = run_Alergia(data, automaton_type='mdp', eps=0.005, print_info=True)
 
-    visualize_automaton(model)
-    return model
+    model.visualize()
 
 
 def alergia_smm_example():
     from aalpy.SULs import StochasticMealySUL
     from random import randint, choice
     from aalpy.learning_algs import run_Alergia
-    from aalpy.utils import visualize_automaton, generate_random_smm
+    from aalpy.utils import generate_random_smm
 
     smm = generate_random_smm(5, 2, 5)
-    visualize_automaton(smm, path='Original')
+    smm.visualize('Original')
     sul = StochasticMealySUL(smm)
     inputs = smm.get_input_alphabet()
 
@@ -695,7 +697,7 @@ def alergia_smm_example():
     # run alergia with the data and automaton_type set to 'mdp' to True to learn a MDP
     model = run_Alergia(data, automaton_type='smm', eps=0.005, print_info=True)
 
-    visualize_automaton(model)
+    model.visualize()
     return model
 
 
@@ -704,11 +706,11 @@ def alergia_mc_example():
     from aalpy.SULs import McSUL
     from random import randint
     from aalpy.learning_algs import run_Alergia
-    from aalpy.utils import visualize_automaton, generate_random_markov_chain
+    from aalpy.utils import generate_random_markov_chain
     from aalpy.utils import CharacterTokenizer
 
     mc = generate_random_markov_chain(10)
-    visualize_automaton(mc, path='Original')
+    mc.visualize('Original')
 
     sul = McSUL(mc)
 
@@ -738,26 +740,25 @@ def alergia_mc_example():
     model = run_Alergia(data, automaton_type='mc', eps=0.005, print_info=True)
     # print(model)
 
-    visualize_automaton(model)
+    model.visualize()
     remove('mcData.txt')
     return model
 
 
 def jAlergiaExample():
     from aalpy.learning_algs import run_JAlergia
-    from aalpy.utils import visualize_automaton
 
     # if you need more heap space check
     model = run_JAlergia(path_to_data_file='jAlergia/exampleMdpData.txt', automaton_type='mdp', eps=0.005,
                          path_to_jAlergia_jar='jAlergia/alergia.jar', optimize_for='memory')
 
-    # # alternatively pass the data in following form
+    # # alternatively pass the data in following format
     # mc_data = [[1,2,3,4,5], [1,2,3,4,2,1], [1,3,5,2,3]]
     # mdp_data = [[1,2,3,1,2], [1,3,6,4,2]]
     # model = run_JAlergia(path_to_data_file=mc_data, automaton_type='mdp', eps=0.005,
     #                      path_to_jAlergia_jar='jAlergia/alergia.jar', optimize_for='memory')
 
-    visualize_automaton(model)
+    model.visualize()
     return model
 
 
@@ -839,12 +840,14 @@ def rpni_check_model_example():
 def rpni_mealy_example():
     import random
     from aalpy.learning_algs import run_RPNI
-    from aalpy.utils import generate_random_mealy_machine, load_automaton_from_file
+    from aalpy.utils import generate_random_deterministic_automata
     from aalpy.utils.HelperFunctions import all_prefixes
+    # make reproducible
     random.seed(1)
 
-    model = generate_random_mealy_machine(num_states=5, input_alphabet=[1, 2, 3], output_alphabet=['a', 'b'])
-    model = load_automaton_from_file('DotModels/Bluetooth/bluetooth_model.dot', automaton_type='mealy')
+    model = generate_random_deterministic_automata(automaton_type='mealy', num_states=5,
+                                                   input_alphabet_size=3, output_alphabet_size=4)
+    # model = load_automaton_from_file('DotModels/Bluetooth/bluetooth_model.dot', automaton_type='mealy')
 
     input_al = model.get_input_alphabet()
     num_sequences = 1000
