@@ -30,7 +30,8 @@ class Node:
         self.prefix : Prefix = prefix
 
     def __lt__(self, other):
-        s_prefix, o_prefix = (x.prefix[1:] for x in [self, other])
+        # TODO maybe check whether inputs / outputs implement __lt__
+        s_prefix, o_prefix = ([(str(i), str(o)) for i,o in x.prefix[1:]] for x in [self, other])
         return (len(s_prefix), s_prefix) < (len(o_prefix), o_prefix)
 
     def __eq__(self, other):
