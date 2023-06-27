@@ -118,7 +118,7 @@ class Automaton(ABC, Generic[AutomatonStateType]):
                     alphabet.append(i)
         return list(alphabet)
 
-    def get_state_by_id(self, state_id) -> AutomatonStateType:
+    def get_state_by_id(self, state_id) -> Union[AutomatonStateType, None]:
         for state in self.states:
             if state.state_id == state_id:
                 return state
@@ -160,10 +160,9 @@ class DeterministicAutomaton(Automaton[AutomatonStateType]):
     def step(self, letter):
         pass
 
-    def get_shortest_path(self, origin_state: AutomatonStateType, target_state: AutomatonStateType) -> Union[
-        tuple, None]:
+    def get_shortest_path(self, origin_state: AutomatonStateType, target_state: AutomatonStateType) -> Union[tuple, None]:
         """
-        Breath First Search over the automaton
+        Breath First Search over the automaton to find the shortest path
 
         Args:
 
@@ -177,8 +176,8 @@ class DeterministicAutomaton(Automaton[AutomatonStateType]):
 
         """
         if origin_state not in self.states or target_state not in self.states:
-            warnings.warn('Origin or target state not in automaton. Returning empty path.')
-            return ()
+            warnings.warn('Origin or target state not in automaton. Returning None.')
+            return None
 
         explored = []
         queue = [[origin_state]]
@@ -223,7 +222,7 @@ class DeterministicAutomaton(Automaton[AutomatonStateType]):
 
         state_comb_list = itertools.permutations(self.states, 2)
         for state_comb in state_comb_list:
-            if not self.get_shortest_path(state_comb[0], state_comb[1]):
+            if self.get_shortest_path(state_comb[0], state_comb[1]) is None:
                 return False
         return True
 

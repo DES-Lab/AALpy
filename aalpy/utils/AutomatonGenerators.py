@@ -112,7 +112,7 @@ def generate_random_deterministic_automata(automaton_type,
         unreachable_state_exits = False
         for state in random_automaton.states:
             state.prefix = random_automaton.get_shortest_path(random_automaton.initial_state, state)
-            if state != random_automaton.initial_state and not state.prefix:
+            if state != random_automaton.initial_state and state.prefix is None:
                 unreachable_state_exits = True
                 break
         all_states_reachable = not unreachable_state_exits
