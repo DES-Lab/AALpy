@@ -40,12 +40,12 @@ class hLearning:
 
     def find_counterexample(self, hypothesis, initial_round=False):
 
-        if not initial_round:
-            current_hs = self.execute_homing_sequence()
-            for state in hypothesis.states:
-                if state.prefix == current_hs:
-                    hypothesis.current_state = state
-                    break
+        # if not initial_round:
+        #     current_hs = self.execute_homing_sequence()
+        #     for state in hypothesis.states:
+        #         if state.prefix == current_hs:
+        #             hypothesis.current_state = state
+        #             break
 
         cex = []
 
@@ -117,6 +117,11 @@ class hLearning:
                     print(state.prefix, undefined_input, transition_output, transition_destination)
 
                     current_hs = self.execute_homing_sequence()
+
+                    if current_hs not in hs_to_state_map.keys():
+                        hs_to_state_map[current_hs] = MealyState(f's{len(hs_to_state_map)}')
+                        hs_to_state_map[current_hs].prefix = current_hs
+
                     transition_found = True
                     break
 
@@ -145,7 +150,7 @@ class hLearning:
                 break
 
         hypothesis = MealyMachine(MealyState('dummy'), list(hs_to_state_map.values()))
-        hypothesis.current_state = hs_to_state_map[current_hs]
+        hypothesis.current_state = hs_to_state_map[self.execute_homing_sequence()]
         if has_unreachable_states:
             hypothesis.make_input_complete(missing_transition_go_to='sink_state')
 
@@ -159,20 +164,24 @@ class hLearning:
         counter_example = self.find_counterexample(initial_model, initial_round=True)
         # potential issue
 
-        #self.homing_sequence = counter_example
+        # self.homing_sequence = counter_example
         self.homing_sequence.extend(counter_example)
 
         while True:
             hypothesis = self.create_hypothesis()
-            # print(hypothesis)
+            print(hypothesis)
+
             counter_example = self.find_counterexample(hypothesis)
             if counter_example is None:
                 break
 
-            # self.homing_sequence.extend(counter_example)
+            input()
+            print(counter_example)
 
-            # self.homing_sequence.extend(counter_example)
-            self.homing_sequence = counter_example
+            #self.homing_sequence.append(counter_example[-1])
+            self.homing_sequence.extend(counter_example)
+            print(self.homing_sequence)
+            #self.homing_sequence = counter_example
 
         if self.query_for_initial_state:
             # reset
@@ -194,15 +203,15 @@ class hLearning:
         return hypothesis
 
 
-model = load_automaton_from_file('DotModels/Angluin_Mealy.dot', 'mealy')
-# model = load_automaton_from_file('DotModels/Small_Mealy.dot', 'mealy')
-
+#model = load_automaton_from_file('DotModels/Angluin_Mealy.dot', 'mealy')
+model = load_automaton_from_file('DotModels/Small_Mealy.dot', 'mealy')
+print(model.compute_charaterization_set())
 from random import seed
 
-seed(2)
-model = generate_random_deterministic_automata('mealy', num_states=10, input_alphabet_size=2, output_alphabet_size=2)
+seed(1)
+#model = generate_random_deterministic_automata('mealy', num_states=10, input_alphabet_size=2, output_alphabet_size=2)
 #print(model)
-#seed(2)
+seed()
 # exit()
 assert model.is_strongly_connected()
 
