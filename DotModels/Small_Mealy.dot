@@ -1,0 +1,13 @@
+digraph learnedModel {
+s1 [label="s1"];
+s2 [label="s2"];
+s3 [label="s3"];
+s1 -> s3  [label="a/T"];
+s1 -> s2  [label="b/F"];
+s2 -> s3  [label="a/F"];
+s2 -> s2  [label="b/T"];
+s3 -> s1  [label="a/F"];
+s3 -> s2  [label="b/F"];
+__start0 [label="", shape=none];
+__start0 -> s1  [label=""];
+}
