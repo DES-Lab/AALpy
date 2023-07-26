@@ -164,7 +164,7 @@ class Node:
 
         return Machine(initial_state, list(state_map.values()))
 
-    def visualize(self, path : str | pathlib.Path, output_behavior : OutputBehavior = "mealy", produce_pdf : bool = False, *,
+    def visualize(self, path : str | pathlib.Path, output_behavior : OutputBehavior = "mealy", produce_pdf : bool = False, engine = "dot", *,
                   state_label : StateFunction = None, state_color : StateFunction = None,
                   trans_label : TransitionFunction = None, trans_color : TransitionFunction = None,
                   state_props : dict[str,StateFunction] = None,
@@ -217,7 +217,7 @@ class Node:
 
         format = 'pdf' if produce_pdf else 'raw'
         file_ext = 'pdf' if produce_pdf else 'dot'
-        graph.write(path=str(path) + "." + file_ext, format=format)
+        graph.write(path=str(path) + "." + file_ext, prog=engine, format=format)
 
     def add_data(self, data):
         for seq in data:
