@@ -1,19 +1,26 @@
 import copy
+import pathlib
 from collections import defaultdict
 from functools import total_ordering
 from queue import Queue
-from typing import Set, Dict, Any, List, Tuple, Literal
+from typing import Set, Dict, Any, List, Tuple, Literal, Iterable, Callable, NamedTuple
 import pydot
 
 from aalpy.automata import StochasticMealyMachine, StochasticMealyState, MooreState, MooreMachine, NDMooreState, \
     NDMooreMachine, Mdp, MdpState, MealyMachine, MealyState, Onfsm, OnfsmState
 from aalpy.base import Automaton
 
-TransitionID = Tuple[Any, Any]
-Prefix = List[TransitionID]
-
 OutputBehavior = Literal["moore", "mealy"]
 TransitionBehavior = Literal["deterministic", "nondeterministic", "stochastic"]
+
+IOPair = NamedTuple("IOPair", [("input", Any), ("output",Any)])
+Prefix = List[IOPair]
+
+IOTrace = Iterable[IOPair]
+IOExample = Tuple[Iterable[Any], Any]
+
+StateFunction = Callable[['Node'], str]
+TransitionFunction = Callable[['Node', Any, Any], str]
 
 # Separate functions to allow pickling Nodes
 def zero():
@@ -41,14 +48,27 @@ class Node:
 
     def __lt__(self, other):
         # TODO maybe check whether inputs / outputs implement __lt__
-        s_prefix, o_prefix = ([(str(i), str(o)) for i,o in x.prefix[1:]] for x in [self, other])
-        return (len(s_prefix), s_prefix) < (len(o_prefix), o_prefix)
+        if len(self.prefix) != len(other.prefix):
+            return len(self.prefix) < len(other.prefix)
+
+        class SafeCmp:
+            def __init__(self, val):
+                self.val = val
+
+            def __lt__(self, other):
+                try:
+                    return self.val < other.val
+                except TypeError:
+                    return str(self.val) < str(other.val)
+
+        s_prefix, o_prefix = ([(SafeCmp(i), SafeCmp(o)) for i,o in x.prefix] for x in [self, other])
+        return s_prefix < o_prefix
 
     def __eq__(self, other):
         return self.prefix == other.prefix
 
     def __hash__(self):
-        return id(self)  # TODO This is a hack
+        return id(self) # TODO This is a hack
 
     def count(self):
         return sum((sum(items.values()) for items in self.transition_count.values()))
@@ -85,8 +105,14 @@ class Node:
                     nodes.add(child)
         return nodes
 
-    def to_automaton(self, output_behavior : OutputBehavior, transition_behavior : TransitionBehavior) -> Automaton:
+    def to_automaton(self, output_behavior : OutputBehavior, transition_behavior : TransitionBehavior, check_behavior = False) -> Automaton:
         nodes = self.get_all_nodes()
+
+        if check_behavior:
+            if output_behavior == "moore" and not self.is_moore():
+                raise ValueError("Tried to obtain Moore machine from non-Moore structure")
+            if transition_behavior == "deterministic" and not self.is_deterministic():
+                raise ValueError("Tried to obtain deterministic automaton from non-deterministic structure")
 
         type_dict = {
             ("moore","deterministic") : (MooreMachine, MooreState),
@@ -105,9 +131,11 @@ class Node:
             state_id = f's{i}'
             match output_behavior:
                 case "mealy" : state = State(state_id)
-                case "moore" : state = State(state_id, node.prefix[-1][1])
+                case "moore" : state = State(state_id, node.prefix[-1].output)
             state_map[node] = state
-            state.prefix = node.prefix
+            match transition_behavior:
+                case "deterministic": state.prefix = tuple(p.input for p in node.prefix)
+                case _: state.prefix = tuple(node.prefix)
 
         initial_state = state_map[self]
 
@@ -136,55 +164,93 @@ class Node:
 
         return Machine(initial_state, list(state_map.values()))
 
-    def visualize(self, path : str, output_behavior : OutputBehavior, produce_pdf : bool = False):
+    def visualize(self, path : str | pathlib.Path, output_behavior : OutputBehavior = "mealy", produce_pdf : bool = False, *,
+                  state_label : StateFunction = None, state_color : StateFunction = None,
+                  trans_label : TransitionFunction = None, trans_color : TransitionFunction = None,
+                  state_props : dict[str,StateFunction] = None,
+                  trans_props : dict[str,TransitionFunction] = None):
+
+        # handle default parameters
+        if output_behavior not in ["moore", "mealy", None]:
+            raise ValueError(f"Invalid OutputBehavior {output_behavior}")
+        if state_props is None:
+            state_props = dict()
+        if trans_props is None:
+            trans_props = dict()
+        if state_label is None:
+            match output_behavior:
+                case "moore": state_label = lambda node : f'{node.prefix[-1][1]} {node.count()}'
+                case _: state_label = lambda node: f'{node.count()}'
+        if trans_label is None and "label" not in trans_props:
+            match output_behavior:
+                case "moore": trans_label = lambda node, in_sym, out_sym : f'{in_sym} [{node.transition_count[in_sym][out_sym]}]'
+                case _: trans_label = lambda node, in_sym, out_sym : f'{in_sym} / {out_sym} [{node.transition_count[in_sym][out_sym]}]'
+        if state_color is None:
+            state_color = lambda x : "black"
+        if trans_color is None:
+            trans_color = lambda x, y, z : "black"
+        state_props = {"label" : state_label, "color" : state_color , "fontcolor" : state_color, **state_props}
+        trans_props = {"label" : trans_label, "color" : trans_color, "fontcolor" : trans_color, **trans_props}
+
+        # create new graph
         graph = pydot.Dot('fpta', graph_type='digraph')
 
-        match output_behavior:
-            case "moore":
-                state_label = lambda node : f'{node.prefix[-1][1]} {node.count()}'
-                transition_label = lambda node, in_sym, out_sym : f'{in_sym} [{node.transition_count[in_sym][out_sym]}]'
-            case "mealy":
-                state_label = lambda node: f'{node.count()}'
-                transition_label = lambda node, in_sym, out_sym : f'{in_sym} / {out_sym} [{node.transition_count[in_sym][out_sym]}]'
-
-        graph.add_node(pydot.Node(str(self.prefix), label=state_label(self)))
-
+        #graph.add_node(pydot.Node(str(self.prefix), label=state_label(self)))
         nodes = self.get_all_nodes()
 
+        # add nodes
         for node in nodes:
-            graph.add_node(pydot.Node(str(node.prefix), label=state_label(node)))
+            arg_dict = {key : fun(node) for key, fun in state_props.items()}
+            graph.add_node(pydot.Node(str(node.prefix), **arg_dict))
 
+        # add transitions
         for node in nodes:
             for in_sym, options in node.transitions.items():
-                if 1 < len(options) :
-                    color = 'red'
-                else:
-                    color = 'black'
-
                 for out_sym, c in options.items():
-                    graph.add_edge(pydot.Edge(str(node.prefix), str(c.prefix), label=transition_label(node,in_sym,out_sym), color=color, fontcolor=color))
+                    arg_dict = {key : fun(node, in_sym, out_sym) for key, fun in trans_props.items()}
+                    graph.add_edge(pydot.Edge(str(node.prefix), str(c.prefix), **arg_dict))
 
+        # add initial state
+        # TODO maybe add option to parameterize this
         graph.add_node(pydot.Node('__start0', shape='none', label=''))
         graph.add_edge(pydot.Edge('__start0', str(self.prefix), label=''))
 
         format = 'pdf' if produce_pdf else 'raw'
-        graph.write(path=path, format=format)
+        file_ext = 'pdf' if produce_pdf else 'dot'
+        graph.write(path=str(path) + "." + file_ext, format=format)
 
     def add_data(self, data):
         for seq in data:
-            curr_node : Node = self
-            for in_sym, out_sym in seq:
-                curr_node.transition_count[in_sym][out_sym] += 1
-                transitions = curr_node.transitions[in_sym]
-                if out_sym not in transitions:
-                    node = Node(curr_node.prefix + [(in_sym, out_sym)])
-                    transitions[out_sym] = node
-                else:
-                    node = transitions[out_sym]
-                curr_node = node
+            self.add_trace(seq)
+
+    def add_trace(self, data : IOTrace):
+        curr_node : Node = self
+        for in_sym, out_sym in data:
+            curr_node.transition_count[in_sym][out_sym] += 1
+            transitions = curr_node.transitions[in_sym]
+            if out_sym not in transitions:
+                node = Node(curr_node.prefix + [IOPair(in_sym, out_sym)])
+                transitions[out_sym] = node
+            else:
+                node = transitions[out_sym]
+            curr_node = node
+
+    def add_example(self, data : IOExample):
+        # TODO add support for example based algorithms
+        raise NotImplementedError("This is a work in progress")
+        seq, output = data
+        curr_node : Node = self
+        for sym in seq:
+            curr_node.transition_count[sym][None] += 1
+            t = curr_node.transitions[sym]
+            if None not in t:
+                t[None] = Node(curr_node.prefix + [IOPair(sym, None)])
+            curr_node = t[None]
+        curr_node.prefix[-1] = IOPair(seq[-1] if len(seq) != 0 else None, output)
+
     @staticmethod
     def createPTA(data, initial_output = None) :
-        root_node = Node([(None, initial_output)])
+        root_node = Node([IOPair(None, initial_output)])
         root_node.add_data(data)
         return root_node
 
