@@ -96,6 +96,7 @@ class hW:
 
                             # reset the homing sequence output dictionary
                             self.current_homing_sequence_outputs.clear()
+                            self.state_map.clear()
 
                             # add h to W if not already present
                             prefix_already_in_W = False
@@ -209,7 +210,9 @@ class hW:
                 for w in self.W:
                     if w not in self.current_homing_sequence_outputs[hs_response]:
                         w_response = self.execute_sequence(w)
-                        self.current_homing_sequence_outputs[hs_response][w] = w_response
+
+                        if self.current_homing_sequence_outputs:
+                            self.current_homing_sequence_outputs[hs_response][w] = w_response
                         break
             # state is defined
             else:
@@ -226,7 +229,6 @@ class hW:
                 if not incomplete_states:
                     break
 
-                # TODO
                 alpha, reached_state = self.get_paths_to_reachable_states(hypothesis,
                                                                           mealy_state_map,
                                                                           hs_response,
@@ -235,11 +237,13 @@ class hW:
                 x = incomplete_transitions[reached_state][0][0]
                 w = incomplete_transitions[reached_state][0][1]
 
+                self.execute_sequence(alpha)
                 output = self.step_wrapper(x)
                 w_response = self.execute_sequence(w)
 
-                self.state_map[hs_response].defined_transitions_with_w[(x, w)] = w_response
-                self.state_map[hs_response].output_fun[x] = output
+                if self.state_map:
+                    self.state_map[reached_state].defined_transitions_with_w[(x, w)] = w_response
+                    self.state_map[reached_state].output_fun[x] = output
 
         return hypothesis
 
@@ -300,12 +304,13 @@ class hW:
         return hypothesis
 
 
-# model = load_automaton_from_file('DotModels/Angluin_Mealy.dot', 'mealy')
+#model = load_automaton_from_file('DotModels/Angluin_Mealy.dot', 'mealy')
 model = load_automaton_from_file('DotModels/Small_Mealy.dot', 'mealy')
+#model = get_Angluin_dfa()
 # print(model.compute_charaterization_set())
 from random import seed
 
-seed(0)
+seed(3)
 # model = generate_random_deterministic_automata('mealy', num_states=10, input_alphabet_size=2, output_alphabet_size=2)
 # print(model)
 # exit()
