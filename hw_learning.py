@@ -7,6 +7,7 @@ from aalpy.utils import get_Angluin_dfa, load_automaton_from_file, generate_rand
 from aalpy.utils.HelperFunctions import all_suffixes
 from aalpy.utils.ModelChecking import bisimilar
 
+
 class hW:
     def __init__(self, input_al, sul, query_for_initial_state=False):
         self.input_alphabet = input_al
@@ -112,7 +113,7 @@ class hW:
         self.sul.num_steps += 1
         if self.homing_sequence:
             self.check_h_ND_consistency()
-        #self.check_w_ND_consistency()
+        # self.check_w_ND_consistency()
         return output
 
     def find_counterexample(self, hypothesis):
@@ -193,6 +194,7 @@ class hW:
                 # learn transitions from current state
                 transition_learned = False
                 for i in input_alphabet:
+                # ALL ELEMENTS OF W HERE HAU BADAHAUL
                     if i not in self.state_map[hs_response].transitions.keys():
                         output = self.step_wrapper(i)
                         reached_state = self.execute_homing_sequence()
@@ -208,6 +210,9 @@ class hW:
 
                 if transition_learned:
                     continue
+
+                states_with_partial_W = self.get_incomplete_states_with_w()
+
 
                 # if transitions form current state are learned, go to state with undefined items
 
@@ -262,8 +267,6 @@ class hW:
             #
             # if self.state_map and not self.get_undefined_transitions(self.state_map.values()) and self.get_incomplete_states() is None:
             #     break
-
-
 
         hypothesis = MealyMachine(MealyState('dummy'), list(self.state_map.values()))
 
@@ -326,8 +329,6 @@ class hW:
         print(f'Num Steps : {self.sul.sul.num_steps}')
 
         return hypothesis
-
-
 
 
 # model = load_automaton_from_file('DotModels/Angluin_Mealy.dot', 'mealy')
