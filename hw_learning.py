@@ -8,6 +8,16 @@ from aalpy.utils.HelperFunctions import all_suffixes
 from aalpy.utils.ModelChecking import bisimilar
 
 
+class ModelState:
+    def __init__(self, hs, w_values):
+        self.hs = hs
+        self.w_values = w_values
+        self.transitions = dict()
+        self.output_fun = dict()
+
+        self.defined_transitions_with_w = defaultdict(dict)
+
+
 class hW:
     def __init__(self, input_al, sul, query_for_initial_state=False):
         self.input_alphabet = input_al
@@ -21,6 +31,8 @@ class hW:
         self.current_homing_sequence_outputs = dict()
 
         self.state_map = dict()
+        self.transition_map = defaultdict(dict)
+        self.output_map = defaultdict(dict)
 
         # TODO remove at the end
         sul.pre()
@@ -61,6 +73,10 @@ class hW:
                 if not cont_inputs:
                     continue
                 same_output_hs_continuations[prefix_outputs].append((cont_inputs, cont_outputs))
+
+        for hs_output in same_output_hs_continuations.keys():
+            if hs_output not in self.current_homing_sequence_outputs:
+                self.current_homing_sequence_outputs[hs_output] = dict()
 
         for hs_continuations in same_output_hs_continuations.values():
             if len(hs_continuations) <= 1:
@@ -133,146 +149,98 @@ class hW:
     def process_counterexample(self, hypothesis, cex):
         pass
 
-    def get_paths_to_reachable_states(self, states, current_state, target_states):
-        mm = MealyMachine(MealyState('dummy'), states)
-
+    def get_paths_to_reachable_states(self, model, state_map, current_state, target_states):
         paths = []
         for t in target_states:
-            path = mm.get_shortest_path(current_state, t)
+            if current_state == t:
+                paths.append(((), current_state))
+                break
+            path = model.get_shortest_path(state_map[current_state], state_map[t])
             if path is not None:
-                paths.append(path)
-        paths.sort(key=len)
+                paths.append((path, t))
+        paths.sort(key=lambda x: len(x[0]))
         return paths
 
-    def get_undefined_transitions(self, states):
-        undefined_transitions = list()
-        for state in states:
+    def get_incomplete_transitions(self):
+        incomplete_transitions = defaultdict(list)
+        for hs, state in self.state_map.items():
             for i in self.input_alphabet:
-                if i not in state.transitions.keys():
-                    undefined_transitions.append((state, i))
+                for w in self.W:
+                    if (i, w) not in state.defined_transitions_with_w.keys():
+                        incomplete_transitions[hs].append((i, w))
 
-        return undefined_transitions
+        return incomplete_transitions
 
-    def get_incomplete_states_with_w(self):
-        incomplete_states = dict()
-        for hs_response, w_responses in self.current_homing_sequence_outputs.items():
-            for w in self.W:
-                if w not in w_responses.keys():
-                    incomplete_states[hs_response] = w
-                    break
+    def create_intermediate_model(self, current_hs_response):
+        mealy_state_map = dict()
 
-        return incomplete_states
+        for hs, state in self.state_map.items():
+            mealy_state_map[hs] = MealyState(f's{len(mealy_state_map)}')
+            if tuple(self.homing_sequence) in self.current_homing_sequence_outputs[hs].keys():
+                mealy_state_map[hs].prefix = self.current_homing_sequence_outputs[hs][tuple(self.homing_sequence)]
 
-    @property
+        for hs, state in self.state_map.items():
+            for i in self.input_alphabet:
+                w_for_input = {w: output for (ii, w), output in state.defined_transitions_with_w.items() if ii == i}
+                # match to element from state definition
+                if len(w_for_input.keys()) == len(self.W):
+                    for _, destination_state in self.state_map.items():
+                        if w_for_input == destination_state.w_values:
+                            mealy_state_map[hs].transitions[i] = mealy_state_map[destination_state.hs]
+                            mealy_state_map[hs].output_fun[i] = state.output_fun[i]
+
+        mm = MealyMachine(MealyState('dummy'), list(mealy_state_map.values()))
+        mm.current_state = mealy_state_map[current_hs_response]
+        return mm, mealy_state_map
+
     def create_hypothesis(self):
 
         while True:
-
             # line 6
             hs_response = self.execute_homing_sequence()
 
             if hs_response not in self.current_homing_sequence_outputs.keys():
                 self.current_homing_sequence_outputs[hs_response] = dict()
 
-            print(hs_response)
             print(self.current_homing_sequence_outputs)
-            # if hs_response is undefined for some w
-            print('RE')
 
+            # if hs_response is undefined for some w
             if len(self.current_homing_sequence_outputs[hs_response].keys()) != len(self.W):
                 for w in self.W:
                     if w not in self.current_homing_sequence_outputs[hs_response]:
                         w_response = self.execute_sequence(w)
                         self.current_homing_sequence_outputs[hs_response][w] = w_response
                         break
-            # state if defined
-
+            # state is defined
             else:
-                tail = self.current_homing_sequence_outputs[hs_response][tuple(self.homing_sequence)]
-                self.state_map[hs_response] = MealyState(f's{len(self.state_map)}')
+                if hs_response not in self.state_map:
+                    self.state_map[hs_response] = ModelState(hs_response,
+                                                             self.current_homing_sequence_outputs[hs_response])
 
-                # learn transitions from current state
-                transition_learned = False
-                for i in input_alphabet:
-                # ALL ELEMENTS OF W HERE HAU BADAHAUL
-                    if i not in self.state_map[hs_response].transitions.keys():
-                        output = self.step_wrapper(i)
-                        reached_state = self.execute_homing_sequence()
+                hypothesis, mealy_state_map = self.create_intermediate_model(hs_response)
 
-                        if reached_state not in self.state_map.keys():
-                            self.state_map[reached_state] = MealyState(f's{len(self.state_map)}')
-                        if reached_state not in self.current_homing_sequence_outputs.keys():
-                            self.current_homing_sequence_outputs[reached_state] = dict()
+                incomplete_transitions = self.get_incomplete_transitions()
 
-                        self.state_map[hs_response].transitions[i] = self.state_map[reached_state]
-                        self.state_map[hs_response].output_fun[i] = output
-                        transition_learned = True
+                incomplete_states = [incomplete_h for incomplete_h in incomplete_transitions.keys()]
 
-                if transition_learned:
-                    continue
+                if not incomplete_states:
+                    break
 
-                states_with_partial_W = self.get_incomplete_states_with_w()
+                # TODO
+                alpha, reached_state = self.get_paths_to_reachable_states(hypothesis,
+                                                                          mealy_state_map,
+                                                                          hs_response,
+                                                                          incomplete_states)[0]
 
+                x = incomplete_transitions[reached_state][0][0]
+                w = incomplete_transitions[reached_state][0][1]
 
-                # if transitions form current state are learned, go to state with undefined items
+                output = self.step_wrapper(x)
+                w_response = self.execute_sequence(w)
 
-                incomplete_states = self.get_incomplete_states_with_w()
-                break
-            #
-            #     for r in self.current_homing_sequence_outputs.keys():
-            #         tail = self.current_homing_sequence_outputs[r][tuple(self.homing_sequence)]
-            #         # self.state_map[tail] = MealyState(f's{len(self.state_map.keys())}')
-            #         self.state_map[r] = MealyState(f'{tail}')
-            #
-            #     undefined_transitions = self.get_undefined_transitions(self.state_map.values())
-            #
-            #     tail_state = self.state_map[
-            #         self.current_homing_sequence_outputs[hs_response][tuple(self.homing_sequence)]]
-            #
-            #     reachable_states = self.get_paths_to_reachable_states(self.state_map.values(), tail_state,
-            #                                                           [s[0] for s in undefined_transitions])
-            #
-            #     # go to state with undefined transition
-            #     interruption = False
-            #     if reachable_states:
-            #         for i in reachable_states[0]:
-            #             self.step_wrapper(i)
-            #             tail_state = tail_state.transitions[i]
-            #             # TODO CHECK
-            #             if not self.current_homing_sequence_outputs.keys():
-            #                 interruption = True
-            #                 break
-            #
-            #     if interruption:
-            #         continue
-            #
-            #     # lines 12 and 13
-            #     transition_learned = False
-            #     # learn transition
-            #     for i in self.input_alphabet:
-            #         if (tail_state, i) in undefined_transitions:
-            #             undefined_transition_output = self.step_wrapper(i)
-            #             reached_homing_sequence = self.execute_homing_sequence() # WRONG
-            #
-            #             if reached_homing_sequence not in self.state_map.keys():
-            #                 self.state_map[reached_homing_sequence] = MealyState(f'{reached_homing_sequence}')
-            #
-            #             tail_state.transitions[i] = self.state_map[reached_homing_sequence]
-            #             tail_state.output_fun[i] = undefined_transition_output
-            #             transition_learned = True
-            #             break
-            #
-            #     if transition_learned:
-            #         continue
-            #
-            # if self.state_map and not self.get_undefined_transitions(self.state_map.values()) and self.get_incomplete_states() is None:
-            #     break
+                self.state_map[hs_response].defined_transitions_with_w[(x, w)] = w_response
+                self.state_map[hs_response].output_fun[x] = output
 
-        hypothesis = MealyMachine(MealyState('dummy'), list(self.state_map.values()))
-
-        last_hs = tuple([o for _, o in self.global_trace[-len(self.homing_sequence):]])
-        hypothesis.current_state = self.state_map[last_hs]
-        print('complete', self.current_homing_sequence_outputs)
         return hypothesis
 
     def main_loop(self):
@@ -290,9 +258,7 @@ class hW:
         self.sul.h = self.homing_sequence
 
         while True:
-            hypothesis = self.create_hypothesis
-            print(hypothesis)
-
+            hypothesis = self.create_hypothesis()
             counter_example = self.find_counterexample(hypothesis)
 
             if counter_example is None:
@@ -318,15 +284,18 @@ class hW:
         if self.query_for_initial_state:
             # reset
             self.sul.pre()
-            self.sul.sul.num_queries += 1
+            self.sul.num_queries += 1
 
-            # reset would mess up the global trace
-            initial_state = tuple(self.sul.sul.query(self.homing_sequence))
-            hypothesis.initial_state = self.state_map[initial_state]
+            # call query as reset would mess up the global trace
+            initial_state_hs = tuple(self.sul.query(self.homing_sequence))
+            for s in hypothesis.states:
+                if s.prefix == initial_state_hs:
+                    hypothesis.initial_state = s
+                    break
 
         print(f'h-Learning learned {hypothesis.size} states.')
-        print(f'Num Resets: {self.sul.sul.num_queries}')
-        print(f'Num Steps : {self.sul.sul.num_steps}')
+        print(f'Num Resets: {self.sul.num_queries}')
+        print(f'Num Steps : {self.sul.num_steps}')
 
         return hypothesis
 
@@ -347,5 +316,4 @@ input_alphabet = model.get_input_alphabet()
 
 learner = hW(input_alphabet, sul, query_for_initial_state=True)
 learned_model = learner.main_loop()
-# learned_model.visualize()
 assert bisimilar(model, learned_model)
