@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict, deque
 from random import choice
 
 from aalpy.SULs import MealySUL
@@ -16,6 +16,37 @@ class ModelState:
         self.output_fun = dict()
 
         self.defined_transitions_with_w = defaultdict(dict)
+
+
+class GraphNode:
+    def __init__(self, hs):
+        self.hs = hs
+        self.transitions = dict()
+
+    def find_shortest_path(self, target_state):
+        if self.hs == target_state:
+            return ()
+
+        # Queue stores tuples of (current_node, path_taken)
+        queue = deque([(self, ())])
+        visited = set()
+
+        while queue:
+            current_node, path_taken = queue.popleft()
+
+            if current_node.hs == target_state:
+                return path_taken
+
+            if current_node in visited:
+                continue
+
+            visited.add(current_node)
+
+            for input_sequence, next_node in current_node.transitions.items():
+                new_path = path_taken + input_sequence
+                queue.append((next_node, new_path))
+
+        return None
 
 
 class hW:
@@ -121,7 +152,7 @@ class hW:
 
         return True
 
-    def check_w_ND_consistency(self):
+    def check_W_ND_consistency(self):
         pass
 
     def step_wrapper(self, letter):
@@ -147,18 +178,22 @@ class hW:
 
         return None
 
+    def all_states_defined(self):
+        for observed_w_seq in self.current_homing_sequence_outputs.values():
+            if len(observed_w_seq.keys()) != len(self.W):
+                return False
+        return True
+
     def process_counterexample(self, hypothesis, cex):
         pass
 
-    def get_paths_to_reachable_states(self, model, state_map, current_state, target_states):
+    def get_paths_to_reachable_states(self, current_node, target_states):
         paths = []
         for t in target_states:
-            if current_state == t:
-                paths.append(((), current_state))
-                break
-            path = model.get_shortest_path(state_map[current_state], state_map[t])
+            path = current_node.find_shortest_path(t)
             if path is not None:
                 paths.append((path, t))
+
         paths.sort(key=lambda x: len(x[0]))
         return paths
 
@@ -170,7 +205,18 @@ class hW:
                     if (i, w) not in state.defined_transitions_with_w.keys():
                         incomplete_transitions[hs].append((i, w))
 
+        for hs, observed_w_seq in self.current_homing_sequence_outputs.items():
+            for w in self.W:
+                if w not in observed_w_seq.keys():
+                    incomplete_transitions[hs].append((None, w))
         return incomplete_transitions
+
+    # def get_undefined_states(self):
+    #     undefined_states = []
+    #     for hs, observed_w_seq in self.current_homing_sequence_outputs.items():
+    #         if len(observed_w_seq.keys()) != len(self.W):
+    #             undefined_states.append(hs)
+    #     return undefined_states
 
     def create_intermediate_model(self, current_hs_response):
         mealy_state_map = dict()
@@ -186,6 +232,8 @@ class hW:
                 # match to element from state definition
                 if len(w_for_input.keys()) == len(self.W):
                     for _, destination_state in self.state_map.items():
+                        if i == 'b':
+                            print(w_for_input, destination_state.w_values)
                         if w_for_input == destination_state.w_values:
                             mealy_state_map[hs].transitions[i] = mealy_state_map[destination_state.hs]
                             mealy_state_map[hs].output_fun[i] = state.output_fun[i]
@@ -193,6 +241,30 @@ class hW:
         mm = MealyMachine(MealyState('dummy'), list(mealy_state_map.values()))
         mm.current_state = mealy_state_map[current_hs_response]
         return mm, mealy_state_map
+
+    def create_connectivity_graph(self):
+        nodes = dict()
+
+        # include also undefined nodes
+        for hs, state in self.current_homing_sequence_outputs.items():
+            nodes[hs] = GraphNode(hs)
+
+        for hs, state in self.state_map.items():
+            for i in self.input_alphabet:
+                w_for_input = {w: output for (ii, w), output in state.defined_transitions_with_w.items() if ii == i}
+                # match to element from state definition
+                if len(w_for_input.keys()) == len(self.W):
+                    for _, destination_state in self.state_map.items():
+                        if w_for_input == destination_state.w_values:
+                            nodes[hs].transitions[tuple([i,])] = nodes[destination_state.hs]
+
+            for (x, w), destination in state.defined_transitions_with_w.items():
+                # why is this needed, angluin with seed 3 breaks it
+                if destination not in nodes:
+                    continue
+                nodes[hs].transitions[tuple([x,]) + w] = nodes[destination]
+
+        return nodes
 
     def create_hypothesis(self):
 
@@ -220,7 +292,13 @@ class hW:
                     self.state_map[hs_response] = ModelState(hs_response,
                                                              self.current_homing_sequence_outputs[hs_response])
 
-                hypothesis, mealy_state_map = self.create_intermediate_model(hs_response)
+                # why here, ugly
+                for hs, defined_w in self.current_homing_sequence_outputs.items():
+                    if len(defined_w.keys()) == len(self.W) and hs not in self.state_map.keys():
+                        self.state_map[hs] = ModelState(hs, defined_w)
+
+                connectivity_graph = self.create_connectivity_graph()
+                current_node = connectivity_graph[hs_response]
 
                 incomplete_transitions = self.get_incomplete_transitions()
 
@@ -229,22 +307,28 @@ class hW:
                 if not incomplete_states:
                     break
 
-                alpha, reached_state = self.get_paths_to_reachable_states(hypothesis,
-                                                                          mealy_state_map,
-                                                                          hs_response,
-                                                                          incomplete_states)[0]
+                alpha, reached_state = self.get_paths_to_reachable_states(current_node, incomplete_states)[0]
 
                 x = incomplete_transitions[reached_state][0][0]
                 w = incomplete_transitions[reached_state][0][1]
 
+                # execute sequance to reach a state
                 self.execute_sequence(alpha)
-                output = self.step_wrapper(x)
+
+                output = None
+
+                if x is not None:
+                    output = self.step_wrapper(x)
                 w_response = self.execute_sequence(w)
 
-                if self.state_map:
+                if self.state_map and x is not None:
                     self.state_map[reached_state].defined_transitions_with_w[(x, w)] = w_response
                     self.state_map[reached_state].output_fun[x] = output
+                else:
+                    if self.current_homing_sequence_outputs:
+                        self.current_homing_sequence_outputs[reached_state][w] = w_response
 
+        hypothesis, mealy_state_map = self.create_intermediate_model(hs_response)
         return hypothesis
 
     def main_loop(self):
@@ -304,14 +388,16 @@ class hW:
         return hypothesis
 
 
-#model = load_automaton_from_file('DotModels/Angluin_Mealy.dot', 'mealy')
+# model = load_automaton_from_file('DotModels/Angluin_Mealy.dot', 'mealy')
+# model = load_automaton_from_file('DotModels/hw_model.dot', 'mealy')
+
 model = load_automaton_from_file('DotModels/Small_Mealy.dot', 'mealy')
-#model = get_Angluin_dfa()
+# model = get_Angluin_dfa()
 # print(model.compute_charaterization_set())
 from random import seed
 
 seed(3)
-# model = generate_random_deterministic_automata('mealy', num_states=10, input_alphabet_size=2, output_alphabet_size=2)
+# model = generate_random_deterministic_automata('mealy', num_states=6, input_alphabet_size=2, output_alphabet_size=3)
 # print(model)
 # exit()
 assert model.is_strongly_connected()
