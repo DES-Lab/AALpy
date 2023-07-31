@@ -354,7 +354,8 @@ class hW:
                 connectivity_graph = self.create_connectivity_graph()
                 self.check_w_ND_consistency(connectivity_graph)
 
-                current_node = connectivity_graph[hs_response]
+                current_node = connectivity_graph[self.get_tail(hs_response)] # TODO here is supposed to be tail
+                # current_node = self.get_tail(hs_response)
 
                 incomplete_transitions = self.get_incomplete_transitions()
 
