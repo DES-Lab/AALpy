@@ -247,7 +247,7 @@ class hW:
                 if len(w_for_input.keys()) == len(self.W):
                     for _, destination_state in self.state_map.items():
                         if w_for_input == destination_state.state_w_values:
-                            state.transitions[i] = destination_state
+                            state.transitions[i] = destination_state.tail
                             break
 
     def create_model(self, current_hs):
@@ -318,9 +318,11 @@ class hW:
                     print(h, state.state_w_values)
 
                 # ensure tails is defined
-                for state in self.state_map.values():
-                    if state.tail is None:
-                        state.tail = self.state_map[self.get_tail(state.hs)]
+                if self.state_map[hs_response].tail is None:
+                    self.state_map[hs_response].tail = self.state_map[self.get_tail(hs_response)]
+                # for state in self.state_map.values():
+                #     if state.tail is None:
+                #         state.tail = self.state_map[self.get_tail(state.hs)]
 
                 # self.check_w_ND_consistency(connectivity_graph)
 
@@ -426,8 +428,8 @@ class hW:
 
 
 # model = load_automaton_from_file('DotModels/Angluin_Mealy.dot', 'mealy')
-model = load_automaton_from_file('DotModels/hw_model.dot', 'mealy')
-# model = load_automaton_from_file('DotModels/Small_Mealy.dot', 'mealy')
+# model = load_automaton_from_file('DotModels/hw_model.dot', 'mealy')
+model = load_automaton_from_file('DotModels/Small_Mealy.dot', 'mealy')
 # model = get_Angluin_dfa()
 # print(model.compute_charaterization_set())
 from random import seed
