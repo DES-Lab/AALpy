@@ -249,40 +249,69 @@ class hW:
             for w in self.W:
                 if w not in observed_w_seq.keys():
                     incomplete_transitions[hs].append((None, w))
+
         return incomplete_transitions
 
-    def create_connectivity_graph_and_model(self, current_hs):
+    def create_connectivity_graph(self):
         nodes = dict()
-        automata_states = dict()
 
         # include also undefined nodes
         for hs, state in self.current_homing_sequence_outputs.items():
+
             nodes[hs] = GraphNode(hs)
-            automata_states[hs] = MealyState(f's{len(automata_states)}')
-            if self.homing_sequence in self.current_homing_sequence_outputs[hs].keys():
-                automata_states[hs].prefix = self.current_homing_sequence_outputs[hs][self.homing_sequence]
 
         for hs, state in self.state_map.items():
             for i in self.input_alphabet:
                 w_for_input = {w: output for (ii, w), output in state.defined_transitions_with_w.items() if ii == i}
                 # match to element from state definition
-                print(f'Origin: {hs}, {i}, Target: {w_for_input}')
                 if len(w_for_input.keys()) == len(self.W):
                     for _, destination_state in self.state_map.items():
                         if w_for_input == destination_state.w_values:
                             nodes[hs].transitions[tuple([i, ])] = nodes[destination_state.hs]
-                            automata_states[hs].transitions[i] = automata_states[destination_state.hs]
-                            automata_states[hs].output_fun[i] = state.output_fun[i]
 
             for (x, w), destination in state.defined_transitions_with_w.items():
-                # why is this needed, angluin with seed 3 breaks it
-                if destination not in nodes:
-                    continue
-                nodes[hs].transitions[tuple([x, ]) + w] = nodes[destination]
+                if w == self.homing_sequence:
+                    # why is this needed, angluin with seed 3 breaks it
+                    if destination not in nodes and tuple([x, ]) not in nodes[hs].transitions.keys():
+                        continue
+                    if self.homing_sequence not in self.current_homing_sequence_outputs[destination]:
+                        continue
+                    nodes[hs].transitions[tuple([x, ])] = nodes[destination]
+
+        return nodes
+
+    def get_tail(self, x):
+        return self.current_homing_sequence_outputs[x][self.homing_sequence]
+
+    def create_model(self, current_hs):
+        automata_states = dict()
+
+        # include also undefined nodes
+        for hs, state in self.current_homing_sequence_outputs.items():
+            tail = self.get_tail(hs)
+
+            automata_states[tail] = MealyState(f's{len(automata_states)}')
+            if self.homing_sequence in self.current_homing_sequence_outputs[hs].keys():
+                automata_states[tail].prefix = tail
+
+        for hs, state in self.state_map.items():
+            tail = self.get_tail(hs)
+
+            for i in self.input_alphabet:
+                w_for_input = {w: output for (ii, w), output in state.defined_transitions_with_w.items() if ii == i}
+                # match to element from state definition
+                print(f'Origin: {tail}, {i}, Target: {w_for_input}')
+                if len(w_for_input.keys()) == len(self.W):
+                    for _, destination_state in self.state_map.items():
+                        if w_for_input == destination_state.w_values:
+                            automata_states[tail].transitions[i] = automata_states[self.get_tail(destination_state.hs)]
+                            automata_states[tail].output_fun[i] = state.output_fun[i]
+                            break
 
         mm = MealyMachine(MealyState('dummy'), list(automata_states.values()))
-        mm.current_state = automata_states[current_hs]
-        return nodes, mm
+        mm.current_state = automata_states[self.get_tail(current_hs)]
+
+        return mm
 
     def create_hypothesis(self):
 
@@ -322,7 +351,7 @@ class hW:
                     if len(defined_w.keys()) == len(self.W) and hs not in self.state_map.keys():
                         self.state_map[hs] = ModelState(hs, defined_w)
 
-                connectivity_graph, hypothesis = self.create_connectivity_graph_and_model(hs_response)
+                connectivity_graph = self.create_connectivity_graph()
                 self.check_w_ND_consistency(connectivity_graph)
 
                 current_node = connectivity_graph[hs_response]
@@ -361,7 +390,8 @@ class hW:
 
         print('State definitions')
         print(self.current_homing_sequence_outputs)
-        print(hypothesis)
+
+        hypothesis = self.create_model(hs_response)
 
         return hypothesis
 
@@ -422,15 +452,13 @@ class hW:
         return hypothesis
 
 
-#model = load_automaton_from_file('DotModels/Angluin_Mealy.dot', 'mealy')
-#model = load_automaton_from_file('DotModels/hw_model.dot', 'mealy')
-
-model = load_automaton_from_file('DotModels/Small_Mealy.dot', 'mealy')
+model = load_automaton_from_file('DotModels/Angluin_Mealy.dot', 'mealy')
+# model = load_automaton_from_file('DotModels/hw_model.dot', 'mealy')
+# model = load_automaton_from_file('DotModels/Small_Mealy.dot', 'mealy')
 # model = get_Angluin_dfa()
 # print(model.compute_charaterization_set())
 from random import seed
 
-#for i in range(100):
 seed(3)
 # model = generate_random_deterministic_automata('mealy', num_states=20, input_alphabet_size=2, output_alphabet_size=3)
 # print(model)
