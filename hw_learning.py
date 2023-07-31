@@ -48,6 +48,16 @@ class GraphNode:
 
         return None
 
+    def get_paths_to_reachable_states(self, target_states):
+        paths = []
+        for t in target_states:
+            path = self.find_shortest_path(t)
+            if path is not None:
+                paths.append((path, t))
+
+        paths.sort(key=lambda x: len(x[0]))
+        return paths
+
 
 class hW:
     def __init__(self, input_al, sul, query_for_initial_state=False):
@@ -55,11 +65,13 @@ class hW:
         self.sul = sul
         self.query_for_initial_state = query_for_initial_state
 
-        self.homing_sequence = []
+        self.homing_sequence = ()
         self.W = []
 
         self.global_trace = []
         self.current_homing_sequence_outputs = dict()
+
+        self.interrupt = False
 
         self.state_map = dict()
         self.transition_map = defaultdict(dict)
@@ -70,6 +82,7 @@ class hW:
 
     def execute_homing_sequence(self):
         observed_output = []
+
         for i in self.homing_sequence:
             observed_output.append(self.step_wrapper(i))
 
@@ -80,7 +93,13 @@ class hW:
         for i in seq_under_test:
             observed_output.append(self.step_wrapper(i))
 
-        return tuple(observed_output)
+        observed_output = tuple(observed_output)
+
+        if tuple(seq_under_test) == self.homing_sequence and \
+                observed_output not in self.current_homing_sequence_outputs.keys():
+            self.current_homing_sequence_outputs[observed_output] = dict()
+
+        return observed_output
 
     def create_daisy_hypothesis(self):
         state = MealyState('s0')
@@ -96,7 +115,7 @@ class hW:
         same_output_hs_continuations = defaultdict(list)
         # extract all continuations
         for i in range(len(self.global_trace)):
-            prefix_inputs = [i for i, _ in self.global_trace[i:i + len(self.homing_sequence)]]
+            prefix_inputs = tuple([i for i, _ in self.global_trace[i:i + len(self.homing_sequence)]])
             if prefix_inputs == self.homing_sequence:
                 prefix_outputs = tuple([o for _, o in self.global_trace[i:i + len(self.homing_sequence)]])
                 cont_inputs = tuple([i for i, _ in self.global_trace[i + len(self.homing_sequence):]])
@@ -123,7 +142,10 @@ class hW:
                         if cont_1[1][diff_index] != cont_2[1][diff_index]:
 
                             # extend the homing sequence
-                            self.homing_sequence.extend(cont_1[0][:diff_index + 1])
+                            # self.homing_sequence.extend(cont_1[0][:diff_index + 1])
+                            self.homing_sequence += tuple(cont_1[0][:diff_index + 1])
+
+                            self.interrupt = True
 
                             # reset the homing sequence output dictionary
                             self.current_homing_sequence_outputs.clear()
@@ -132,17 +154,17 @@ class hW:
                             # add h to W if not already present
                             prefix_already_in_W = False
                             for w in self.W:
-                                if tuple(self.homing_sequence) == w[:len(self.homing_sequence)]:
+                                if self.homing_sequence == tuple(w[:len(self.homing_sequence)]):
                                     prefix_already_in_W = True
                                     break
 
                             if not prefix_already_in_W:
-                                self.W.append(tuple(self.homing_sequence))
+                                self.W.append(self.homing_sequence)
 
                                 # clean W set of any prefix of h
                                 w_to_remove = []
                                 for w in self.W:
-                                    if w != tuple(self.homing_sequence) and w == tuple(self.homing_sequence[:len(w)]):
+                                    if w != self.homing_sequence and w == tuple(self.homing_sequence[:len(w)]):
                                         w_to_remove.append(w)
 
                                 for w in w_to_remove:
@@ -152,8 +174,40 @@ class hW:
 
         return True
 
-    def check_W_ND_consistency(self):
-        pass
+    def check_w_ND_consistency(self, connectivity_graph):
+        same_states = []
+        graph_nodes = list(connectivity_graph.items())
+        state_continuations = defaultdict(list)
+
+        for ind, (h, graph_node) in enumerate(graph_nodes):
+            for h_prime, graph_node_prime in graph_nodes[ind + 1:]:
+                if graph_node.transitions and graph_node.transitions == graph_node_prime.transitions:
+                    s1, s2 = tuple(zip(self.homing_sequence, h)), tuple(zip(self.homing_sequence, h_prime))
+                    same_states.append((s1, s2))
+
+                    # extract continuation sequances for states
+                    for s in [s1, s2]:
+                        for i in range(len(self.global_trace)):
+                            if tuple(self.global_trace[i:i + len(s)]) == s:
+                                state_continuations[s].append(self.global_trace[i + len(s):])
+
+        for s1, s2 in same_states:
+            for s1_cont in state_continuations[s1]:
+                for s2_cont in state_continuations[s2]:
+                    disagreement_index = -1
+                    for i in range(min(len(s1_cont), len(s2_cont))):
+                        # if inputs are not the same break
+                        if s1_cont[i][0] != s2_cont[i][0]:
+                            break
+                        if s1_cont[i] != s2_cont[i]:
+                            disagreement_index = i
+                            break
+
+                    if disagreement_index >= 0:
+                        print(s1_cont[disagreement_index:])
+                        print(s2_cont[disagreement_index:])
+                        print('REEE')
+                        exit(523)
 
     def step_wrapper(self, letter):
         output = self.sul.step(letter)
@@ -161,7 +215,6 @@ class hW:
         self.sul.num_steps += 1
         if self.homing_sequence:
             self.check_h_ND_consistency()
-        # self.check_w_ND_consistency()
         return output
 
     def find_counterexample(self, hypothesis):
@@ -184,19 +237,6 @@ class hW:
                 return False
         return True
 
-    def process_counterexample(self, hypothesis, cex):
-        pass
-
-    def get_paths_to_reachable_states(self, current_node, target_states):
-        paths = []
-        for t in target_states:
-            path = current_node.find_shortest_path(t)
-            if path is not None:
-                paths.append((path, t))
-
-        paths.sort(key=lambda x: len(x[0]))
-        return paths
-
     def get_incomplete_transitions(self):
         incomplete_transitions = defaultdict(list)
         for hs, state in self.state_map.items():
@@ -211,60 +251,38 @@ class hW:
                     incomplete_transitions[hs].append((None, w))
         return incomplete_transitions
 
-    # def get_undefined_states(self):
-    #     undefined_states = []
-    #     for hs, observed_w_seq in self.current_homing_sequence_outputs.items():
-    #         if len(observed_w_seq.keys()) != len(self.W):
-    #             undefined_states.append(hs)
-    #     return undefined_states
-
-    def create_intermediate_model(self, current_hs_response):
-        mealy_state_map = dict()
-
-        for hs, state in self.state_map.items():
-            mealy_state_map[hs] = MealyState(f's{len(mealy_state_map)}')
-            if tuple(self.homing_sequence) in self.current_homing_sequence_outputs[hs].keys():
-                mealy_state_map[hs].prefix = self.current_homing_sequence_outputs[hs][tuple(self.homing_sequence)]
-
-        for hs, state in self.state_map.items():
-            for i in self.input_alphabet:
-                w_for_input = {w: output for (ii, w), output in state.defined_transitions_with_w.items() if ii == i}
-                # match to element from state definition
-                if len(w_for_input.keys()) == len(self.W):
-                    for _, destination_state in self.state_map.items():
-                        if i == 'b':
-                            print(w_for_input, destination_state.w_values)
-                        if w_for_input == destination_state.w_values:
-                            mealy_state_map[hs].transitions[i] = mealy_state_map[destination_state.hs]
-                            mealy_state_map[hs].output_fun[i] = state.output_fun[i]
-
-        mm = MealyMachine(MealyState('dummy'), list(mealy_state_map.values()))
-        mm.current_state = mealy_state_map[current_hs_response]
-        return mm, mealy_state_map
-
-    def create_connectivity_graph(self):
+    def create_connectivity_graph_and_model(self, current_hs):
         nodes = dict()
+        automata_states = dict()
 
         # include also undefined nodes
         for hs, state in self.current_homing_sequence_outputs.items():
             nodes[hs] = GraphNode(hs)
+            automata_states[hs] = MealyState(f's{len(automata_states)}')
+            if self.homing_sequence in self.current_homing_sequence_outputs[hs].keys():
+                automata_states[hs].prefix = self.current_homing_sequence_outputs[hs][self.homing_sequence]
 
         for hs, state in self.state_map.items():
             for i in self.input_alphabet:
                 w_for_input = {w: output for (ii, w), output in state.defined_transitions_with_w.items() if ii == i}
                 # match to element from state definition
+                print(f'Origin: {hs}, {i}, Target: {w_for_input}')
                 if len(w_for_input.keys()) == len(self.W):
                     for _, destination_state in self.state_map.items():
                         if w_for_input == destination_state.w_values:
-                            nodes[hs].transitions[tuple([i,])] = nodes[destination_state.hs]
+                            nodes[hs].transitions[tuple([i, ])] = nodes[destination_state.hs]
+                            automata_states[hs].transitions[i] = automata_states[destination_state.hs]
+                            automata_states[hs].output_fun[i] = state.output_fun[i]
 
             for (x, w), destination in state.defined_transitions_with_w.items():
                 # why is this needed, angluin with seed 3 breaks it
                 if destination not in nodes:
                     continue
-                nodes[hs].transitions[tuple([x,]) + w] = nodes[destination]
+                nodes[hs].transitions[tuple([x, ]) + w] = nodes[destination]
 
-        return nodes
+        mm = MealyMachine(MealyState('dummy'), list(automata_states.values()))
+        mm.current_state = automata_states[current_hs]
+        return nodes, mm
 
     def create_hypothesis(self):
 
@@ -272,10 +290,16 @@ class hW:
             # line 6
             hs_response = self.execute_homing_sequence()
 
+            # Check if querying a homing sequence yielded an interrupt
+            if self.interrupt:
+                self.interrupt = False
+                continue
+
             if hs_response not in self.current_homing_sequence_outputs.keys():
                 self.current_homing_sequence_outputs[hs_response] = dict()
 
-            print(self.current_homing_sequence_outputs)
+            for state in self.current_homing_sequence_outputs.items():
+                print(state)
 
             # if hs_response is undefined for some w
             if len(self.current_homing_sequence_outputs[hs_response].keys()) != len(self.W):
@@ -283,9 +307,10 @@ class hW:
                     if w not in self.current_homing_sequence_outputs[hs_response]:
                         w_response = self.execute_sequence(w)
 
-                        if self.current_homing_sequence_outputs:
+                        if not self.interrupt:
                             self.current_homing_sequence_outputs[hs_response][w] = w_response
                         break
+
             # state is defined
             else:
                 if hs_response not in self.state_map:
@@ -297,7 +322,9 @@ class hW:
                     if len(defined_w.keys()) == len(self.W) and hs not in self.state_map.keys():
                         self.state_map[hs] = ModelState(hs, defined_w)
 
-                connectivity_graph = self.create_connectivity_graph()
+                connectivity_graph, hypothesis = self.create_connectivity_graph_and_model(hs_response)
+                self.check_w_ND_consistency(connectivity_graph)
+
                 current_node = connectivity_graph[hs_response]
 
                 incomplete_transitions = self.get_incomplete_transitions()
@@ -307,12 +334,12 @@ class hW:
                 if not incomplete_states:
                     break
 
-                alpha, reached_state = self.get_paths_to_reachable_states(current_node, incomplete_states)[0]
+                alpha, reached_state = current_node.get_paths_to_reachable_states(incomplete_states)[0]
 
                 x = incomplete_transitions[reached_state][0][0]
                 w = incomplete_transitions[reached_state][0][1]
 
-                # execute sequance to reach a state
+                # execute sequence to reach a state
                 self.execute_sequence(alpha)
 
                 output = None
@@ -321,6 +348,10 @@ class hW:
                     output = self.step_wrapper(x)
                 w_response = self.execute_sequence(w)
 
+                if self.interrupt:
+                    self.interrupt = False
+                    continue
+
                 if self.state_map and x is not None:
                     self.state_map[reached_state].defined_transitions_with_w[(x, w)] = w_response
                     self.state_map[reached_state].output_fun[x] = output
@@ -328,7 +359,10 @@ class hW:
                     if self.current_homing_sequence_outputs:
                         self.current_homing_sequence_outputs[reached_state][w] = w_response
 
-        hypothesis, mealy_state_map = self.create_intermediate_model(hs_response)
+        print('State definitions')
+        print(self.current_homing_sequence_outputs)
+        print(hypothesis)
+
         return hypothesis
 
     def main_loop(self):
@@ -336,11 +370,11 @@ class hW:
         initial_model = self.create_daisy_hypothesis()
 
         counter_example = self.find_counterexample(initial_model)
-        last_cex_input = [counter_example[-1]]
+        last_cex_input = tuple([counter_example[-1]])
 
         # set HS and W to the first counterexample
         self.homing_sequence = last_cex_input
-        self.W.append(tuple(last_cex_input))
+        self.W.append(last_cex_input)
 
         # add reference of homing sequance to SUL wrapper
         self.sul.h = self.homing_sequence
@@ -388,16 +422,17 @@ class hW:
         return hypothesis
 
 
-# model = load_automaton_from_file('DotModels/Angluin_Mealy.dot', 'mealy')
-# model = load_automaton_from_file('DotModels/hw_model.dot', 'mealy')
+#model = load_automaton_from_file('DotModels/Angluin_Mealy.dot', 'mealy')
+#model = load_automaton_from_file('DotModels/hw_model.dot', 'mealy')
 
 model = load_automaton_from_file('DotModels/Small_Mealy.dot', 'mealy')
 # model = get_Angluin_dfa()
 # print(model.compute_charaterization_set())
 from random import seed
 
+#for i in range(100):
 seed(3)
-# model = generate_random_deterministic_automata('mealy', num_states=6, input_alphabet_size=2, output_alphabet_size=3)
+# model = generate_random_deterministic_automata('mealy', num_states=20, input_alphabet_size=2, output_alphabet_size=3)
 # print(model)
 # exit()
 assert model.is_strongly_connected()
@@ -407,4 +442,5 @@ input_alphabet = model.get_input_alphabet()
 
 learner = hW(input_alphabet, sul, query_for_initial_state=True)
 learned_model = learner.main_loop()
+assert learned_model.is_minimal()
 assert bisimilar(model, learned_model)
