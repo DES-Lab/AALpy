@@ -175,7 +175,7 @@ class hW:
                     s1, s2 = tuple(zip(self.homing_sequence, h)), tuple(zip(self.homing_sequence, h_prime))
                     same_states.append((s1, s2))
 
-                    # extract continuation sequances for states
+                    # extract continuation sequences for states
                     for s in [s1, s2]:
                         for i in range(len(self.global_trace)):
                             if tuple(self.global_trace[i:i + len(s)]) == s:
@@ -313,6 +313,10 @@ class hW:
                         break
             # state is defined
             else:
+                print('State Definition')
+                for h, state in self.state_map.items():
+                    print(h, state.state_w_values)
+
                 # ensure tail is defined
                 if self.state_map[hs_response].tail is None:
                     self.state_map[hs_response].tail = self.state_map[self.get_tail(hs_response)]
@@ -349,13 +353,15 @@ class hW:
                     self.interrupt = False
                     continue
 
-                if w == self.homing_sequence:
-                    self.state_map[reached_state].transitions[x] = self.state_map[w_response]
+                # This should not be here, but without it it does not work
+                # if w == self.homing_sequence:
+                #     self.state_map[reached_state].transitions[x] = self.state_map[w_response]
 
                 self.state_map[reached_state].transition_w_values[(x, w)] = w_response
                 self.state_map[reached_state].output_fun[x] = output
 
-        self.update_model_transitions()
+                self.update_model_transitions()
+
         hypothesis = self.create_model(hs_response)
 
         return hypothesis
@@ -417,8 +423,8 @@ class hW:
         return hypothesis
 
 
-model = load_automaton_from_file('DotModels/Angluin_Mealy.dot', 'mealy')
-# model = load_automaton_from_file('DotModels/hw_model.dot', 'mealy')
+# model = load_automaton_from_file('DotModels/Angluin_Mealy.dot', 'mealy')
+model = load_automaton_from_file('DotModels/hw_model.dot', 'mealy')
 # model = load_automaton_from_file('DotModels/Small_Mealy.dot', 'mealy')
 # model = get_Angluin_dfa()
 # print(model.compute_charaterization_set())
