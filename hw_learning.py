@@ -317,9 +317,10 @@ class hW:
                 for h, state in self.state_map.items():
                     print(h, state.state_w_values)
 
-                # ensure tail is defined
-                if self.state_map[hs_response].tail is None:
-                    self.state_map[hs_response].tail = self.state_map[self.get_tail(hs_response)]
+                # ensure tails is defined
+                for state in self.state_map.values():
+                    if state.tail is None:
+                        state.tail = self.state_map[self.get_tail(state.hs)]
 
                 # self.check_w_ND_consistency(connectivity_graph)
 
@@ -354,9 +355,10 @@ class hW:
                     continue
 
                 # This should not be here, but without it it does not work
-                # if w == self.homing_sequence:
+                #if w == self.homing_sequence:
                 #     self.state_map[reached_state].transitions[x] = self.state_map[w_response]
 
+                # TODO TAILS MIGHT BE A PROBLEM!
                 self.state_map[reached_state].transition_w_values[(x, w)] = w_response
                 self.state_map[reached_state].output_fun[x] = output
 
