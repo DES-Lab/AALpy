@@ -251,15 +251,21 @@ class hW:
                             break
 
     def create_model(self, current_hs):
+        dummy_state = MealyState('dummy')
+
         automata_states = dict()
         for hs, state in self.state_map.items():
             automata_states[hs] = MealyState(f's{len(automata_states)}')
-            automata_states[hs].prefix = self.get_tail(hs)
+            automata_states[hs].prefix = hs
 
         for hs, state in self.state_map.items():
             for i in self.input_alphabet:
-                automata_states[hs].transitions[i] = automata_states[state.transitions[i].hs]
-                automata_states[hs].output_fun[i] = state.output_fun[i]
+                if i not in state.transitions.keys():
+                    automata_states[hs].transitions[i] = dummy_state
+                    automata_states[hs].output_fun[i] = 'dummy_output'
+                else:
+                    automata_states[hs].transitions[i] = automata_states[state.transitions[i].hs]
+                    automata_states[hs].output_fun[i] = state.output_fun[i]
                 # w_for_input = {w: output for (ii, w), output in state.transition_w_values.items() if ii == i}
                 # # match to element from state definition
                 # print(f'Origin: {hs}, {i}, Target: {w_for_input}')
@@ -275,7 +281,7 @@ class hW:
                 #     else:
                 #         break
 
-        mm = MealyMachine(MealyState('dummy'), list(automata_states.values()))
+        mm = MealyMachine(dummy_state, list(automata_states.values()))
         mm.current_state = automata_states[self.get_tail(current_hs)]
         print(mm)
         return mm
@@ -323,7 +329,12 @@ class hW:
                 if not incomplete_states:
                     break
 
-                alpha, reached_state = tail_node.get_paths_to_reachable_states(incomplete_states)[0]
+                paths_to_reachable_states = tail_node.get_paths_to_reachable_states(incomplete_states)
+
+                if not paths_to_reachable_states:
+                    break
+
+                alpha, reached_state = paths_to_reachable_states[0]
 
                 x = incomplete_transitions[reached_state][0][0]
                 w = incomplete_transitions[reached_state][0][1]
@@ -344,7 +355,7 @@ class hW:
                 self.state_map[reached_state].transition_w_values[(x, w)] = w_response
                 self.state_map[reached_state].output_fun[x] = output
 
-        # self.update_model_transitions()
+        self.update_model_transitions()
         hypothesis = self.create_model(hs_response)
 
         return hypothesis
@@ -406,15 +417,15 @@ class hW:
         return hypothesis
 
 
-# model = load_automaton_from_file('DotModels/Angluin_Mealy.dot', 'mealy')
-model = load_automaton_from_file('DotModels/hw_model.dot', 'mealy')
+model = load_automaton_from_file('DotModels/Angluin_Mealy.dot', 'mealy')
+# model = load_automaton_from_file('DotModels/hw_model.dot', 'mealy')
 # model = load_automaton_from_file('DotModels/Small_Mealy.dot', 'mealy')
 # model = get_Angluin_dfa()
 # print(model.compute_charaterization_set())
 from random import seed
 
-seed(3)
-# model = generate_random_deterministic_automata('mealy', num_states=20, input_alphabet_size=2, output_alphabet_size=3)
+seed(1)
+# model = generate_random_deterministic_automata('mealy', num_states=7, input_alphabet_size=3, output_alphabet_size=3)
 # print(model)
 # exit()
 assert model.is_strongly_connected()
