@@ -40,7 +40,6 @@ class WMethodEqOracle(Oracle):
         for seq in product(transition_cover, middle, hypothesis.characterization_set):
             inp_seq = tuple([i for sub in seq for i in sub])
             if inp_seq not in self.cache:
-                print("processing test case")
                 self.reset_hyp_and_sul(hypothesis)
                 outputs = []
 
