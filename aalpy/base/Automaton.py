@@ -2,7 +2,7 @@ import copy
 import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from typing import Union, TypeVar, Generic, List, Self
+from typing import Union, TypeVar, Generic, List
 
 
 class AutomatonState(ABC):
@@ -162,7 +162,8 @@ class Automaton(ABC, Generic[AutomatonStateType]):
     def to_state_setup(self):
         pass
 
-    def copy(self) -> Self:
+    # TODO Annotate with -> Self on 3.11
+    def copy(self):
         return self.from_state_setup(self.to_state_setup())
 
     def __reduce__(self):
