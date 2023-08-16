@@ -2,7 +2,7 @@ import copy
 import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from typing import Union, TypeVar, Generic, List
+from typing import Union, TypeVar, Generic, List, Self
 
 
 class AutomatonState(ABC):
@@ -153,6 +153,20 @@ class Automaton(ABC, Generic[AutomatonStateType]):
         from aalpy.utils import visualize_automaton
         visualize_automaton(self, path, file_type, display_same_state_transitions)
 
+    @staticmethod
+    @abstractmethod
+    def from_state_setup(state_setup : dict):
+        pass
+
+    @abstractmethod
+    def to_state_setup(self):
+        pass
+
+    def copy(self) -> Self:
+        return self.from_state_setup(self.to_state_setup())
+
+    def __reduce__(self):
+        return self.from_state_setup, (self.to_state_setup(),)
 
 class DeterministicAutomaton(Automaton[AutomatonStateType]):
 
@@ -424,7 +438,3 @@ class DeterministicAutomaton(Automaton[AutomatonStateType]):
             s1, s2 = self.compute_characterization_set(return_same_states=True)
 
         self.compute_prefixes()
-
-    @abstractmethod
-    def copy(self):
-        return
