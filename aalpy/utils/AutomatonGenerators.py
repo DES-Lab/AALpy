@@ -1,6 +1,5 @@
 import random
 import warnings
-from itertools import cycle
 
 from aalpy.automata import Dfa, DfaState, MdpState, Mdp, MealyMachine, MealyState, \
     MooreMachine, MooreState, OnfsmState, Onfsm, MarkovChain, McState, StochasticMealyState, StochasticMealyMachine
@@ -425,9 +424,4 @@ def generate_random_markov_chain(num_states):
 
     return MarkovChain(states[0], states)
 
-# TODO get rid of this?
-dfa_from_state_setup = Dfa.from_state_setup
-moore_from_state_setup = MooreMachine.from_state_setup
-mealy_from_state_setup = MealyMachine.from_state_setup
-mdp_from_state_setup = Mdp.from_state_setup
-smm_from_state_setup = StochasticMealyMachine.from_state_setup
+

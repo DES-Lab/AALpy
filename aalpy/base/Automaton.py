@@ -155,19 +155,19 @@ class Automaton(ABC, Generic[AutomatonStateType]):
 
     @staticmethod
     @abstractmethod
-    def from_state_setup(state_setup : dict):
+    def from_state_setup(state_setup: dict):
         pass
 
     @abstractmethod
     def to_state_setup(self):
         pass
 
-    # TODO Annotate with -> Self on 3.11
     def copy(self):
         return self.from_state_setup(self.to_state_setup())
 
     def __reduce__(self):
         return self.from_state_setup, (self.to_state_setup(),)
+
 
 class DeterministicAutomaton(Automaton[AutomatonStateType]):
 
@@ -175,7 +175,8 @@ class DeterministicAutomaton(Automaton[AutomatonStateType]):
     def step(self, letter):
         pass
 
-    def get_shortest_path(self, origin_state: AutomatonStateType, target_state: AutomatonStateType) -> Union[tuple, None]:
+    def get_shortest_path(self, origin_state: AutomatonStateType, target_state: AutomatonStateType) -> Union[
+        tuple, None]:
         """
         Breath First Search over the automaton to find the shortest path
 
