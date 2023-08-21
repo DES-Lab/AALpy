@@ -100,3 +100,10 @@ class Onfsm(Automaton[OnfsmState[InputType, OutputType]]):
                 self.current_state = new_state[1]
                 return out
         return None
+
+    @staticmethod
+    def from_state_setup(state_setup : dict):
+        raise NotImplementedError() # TODO implement
+
+    def to_state_setup(self):
+        raise NotImplementedError # TODO implement

@@ -60,6 +60,44 @@ class MooreMachine(DeterministicAutomaton[MooreState[InputType, OutputType]]):
 
         return state_setup_dict
 
-    def copy(self):
-        from aalpy.utils import moore_from_state_setup
-        return moore_from_state_setup(self.to_state_setup())
+    @staticmethod
+    def from_state_setup(state_setup : dict):
+        """
+        First state in the state setup is the initial state.
+        Example state setup:
+        state_setup = {
+                "a": ("a", {"x": "b1", "y": "a"}),
+                "b1": ("b", {"x": "b2", "y": "a"}),
+                "b2": ("b", {"x": "b3", "y": "a"}),
+                "b3": ("b", {"x": "b4", "y": "a"}),
+                "b4": ("b", {"x": "c", "y": "a"}),
+                "c": ("c", {"x": "a", "y": "a"}),
+            }
+
+        Args:
+
+            state_setup: map from state_id to tuple(output and transitions_dict)
+
+        Returns:
+
+            Moore machine
+        """
+
+        # build states with state_id and output
+        states = {key: MooreState(key, val[0]) for key, val in state_setup.items()}
+
+        # add transitions to states
+        for state_id, state in states.items():
+            for _input, target_state_id in state_setup[state_id][1].items():
+                state.transitions[_input] = states[target_state_id]
+
+        # states to list
+        states = [state for state in states.values()]
+
+        # build moore machine with first state as starting state
+        mm = MooreMachine(states[0], states)
+
+        for state in states:
+            state.prefix = mm.get_shortest_path(mm.initial_state, state)
+
+        return mm
