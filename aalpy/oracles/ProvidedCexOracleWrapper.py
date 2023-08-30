@@ -35,5 +35,12 @@ class ProvidedCexOracleWrapper(Oracle):
 
             self.provided_counterexamples.remove(provided_cex)
 
-        return self.oracle.find_cex(hypothesis)
+        cex = self.oracle.find_cex(hypothesis)
+
+        # to account for steps statistics from actual oracle
+        if cex is None:
+            self.num_queries += self.oracle.num_queries
+            self.num_steps += self.oracle.num_steps
+
+        return cex
 
