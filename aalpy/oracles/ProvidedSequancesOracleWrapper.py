@@ -1,7 +1,7 @@
 from aalpy.base import Oracle, SUL
 
 
-class ProvidedCexOracleWrapper(Oracle):
+class ProvidedSequencesOracleWrapper(Oracle):
     def __init__(self, alphabet: list, sul: SUL, oracle: Oracle, provided_counterexamples: list):
         """
         Oracle wrapper which first executes provided sequences (possible counterexamples) and then switches to another
