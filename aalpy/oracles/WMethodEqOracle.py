@@ -37,31 +37,23 @@ class WMethodEqOracle(Oracle):
         for i in range(self.m + 1 - len(hypothesis.states)):
             middle.extend(list(product(self.alphabet, repeat=i)))
 
-        test_set = []
         for seq in product(transition_cover, middle, hypothesis.characterization_set):
             inp_seq = tuple([i for sub in seq for i in sub])
             if inp_seq not in self.cache:
-                test_set.append(inp_seq)
+                self.reset_hyp_and_sul(hypothesis)
+                outputs = []
 
-        if self.shuffle:
-            shuffle(test_set)
-        else:
-            test_set.sort(key=len, reverse=True)
+                for ind, letter in enumerate(inp_seq):
+                    out_hyp = hypothesis.step(letter)
+                    out_sul = self.sul.step(letter)
+                    self.num_steps += 1
 
-        for seq in test_set:
-            self.reset_hyp_and_sul(hypothesis)
-            outputs = []
-
-            for ind, letter in enumerate(seq):
-                out_hyp = hypothesis.step(letter)
-                out_sul = self.sul.step(letter)
-                self.num_steps += 1
-
-                outputs.append(out_sul)
-                if out_hyp != out_sul:
-                    self.sul.post()
-                    return seq[:ind + 1]
-            self.cache.add(seq)
+                    outputs.append(out_sul)
+                    if out_hyp != out_sul:
+                        self.sul.post()
+                        return inp_seq[:ind + 1]
+                self.cache.add(inp_seq)
+            
 
         return None
 

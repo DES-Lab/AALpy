@@ -7,6 +7,19 @@ from aalpy.base import Automaton, AutomatonState
 from aalpy.base.Automaton import OutputType, InputType
 
 
+def from_state_setup(state_setup: dict):
+    states_map = {key: MdpState(key, output=value[0]) for key, value in state_setup.items()}
+
+    for key, values in state_setup.items():
+        source = states_map[key]
+        for i, transitions in values[1].items():
+            for node, prob in transitions:
+                source.transitions[i].append((states_map[node], prob))
+
+    initial_state = states_map[list(state_setup.keys())[0]]
+    return Mdp(initial_state, list(states_map.values()))
+
+
 class MdpState(AutomatonState, Generic[InputType, OutputType]):
     def __init__(self, state_id, output=None):
         super().__init__(state_id)
@@ -78,6 +91,15 @@ class Mdp(Automaton[MdpState[InputType, OutputType]]):
 
         return state_setup_dict
 
-    def copy(self):
-        from aalpy.utils import mdp_from_state_setup
-        return mdp_from_state_setup(self.to_state_setup())
+    @staticmethod
+    def from_state_setup(state_setup : dict):
+        states_map = {key: MdpState(key, output=value[0]) for key, value in state_setup.items()}
+
+        for key, values in state_setup.items():
+            source = states_map[key]
+            for i, transitions in values[1].items():
+                for node, prob in transitions:
+                    source.transitions[i].append((states_map[node], prob))
+
+        initial_state = states_map[list(state_setup.keys())[0]]
+        return Mdp(initial_state, list(states_map.values()))

@@ -60,6 +60,45 @@ class Dfa(DeterministicAutomaton[DfaState[InputType]]):
 
         return state_setup_dict
 
-    def copy(self):
-        from aalpy.utils import dfa_from_state_setup
-        return dfa_from_state_setup(self.to_state_setup())
+    @staticmethod
+    def from_state_setup(state_setup : dict):
+        """
+            First state in the state setup is the initial state.
+            Example state setup:
+            state_setup = {
+                    "a": (True, {"x": "b1", "y": "a"}),
+                    "b1": (False, {"x": "b2", "y": "a"}),
+                    "b2": (True, {"x": "b3", "y": "a"}),
+                    "b3": (False, {"x": "b4", "y": "a"}),
+                    "b4": (False, {"x": "c", "y": "a"}),
+                    "c": (True, {"x": "a", "y": "a"}),
+                }
+
+            Args:
+
+                state_setup: map from state_id to tuple(output and transitions_dict)
+
+            Returns:
+
+                DFA
+            """
+        # state_setup should map from state_id to tuple(is_accepting and transitions_dict)
+
+        # build states with state_id and output
+        states = {key: DfaState(key, val[0]) for key, val in state_setup.items()}
+
+        # add transitions to states
+        for state_id, state in states.items():
+            for _input, target_state_id in state_setup[state_id][1].items():
+                state.transitions[_input] = states[target_state_id]
+
+        # states to list
+        states = [state for state in states.values()]
+
+        # build moore machine with first state as starting state
+        dfa = Dfa(states[0], states)
+
+        for state in states:
+            state.prefix = dfa.get_shortest_path(dfa.initial_state, state)
+
+        return dfa

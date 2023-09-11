@@ -60,3 +60,10 @@ class MarkovChain(Automaton[McState[OutputType]]):
                 self.current_state = s[0]
                 return self.current_state.output
         return None
+
+    @staticmethod
+    def from_state_setup(state_setup : dict):
+        raise NotImplementedError() # TODO implement
+
+    def to_state_setup(self):
+        raise NotImplementedError() # TODO implement

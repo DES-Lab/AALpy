@@ -13,7 +13,7 @@ class StochasticMealyState(AutomatonState, Generic[InputType, OutputType]):
     def __init__(self, state_id):
         super().__init__(state_id)
         # each child is a tuple (newNode, output, probability)
-        self.transitions : Dict[InputType, List[Tuple[StochasticMealyState, OutputType, float]]] = defaultdict(list)
+        self.transitions: Dict[InputType, List[Tuple[StochasticMealyState, OutputType, float]]] = defaultdict(list)
 
 
 class StochasticMealyMachine(Automaton[StochasticMealyState[InputType, OutputType]]):
@@ -85,9 +85,18 @@ class StochasticMealyMachine(Automaton[StochasticMealyState[InputType, OutputTyp
 
         return state_setup_dict
 
-    def copy(self):
-        from aalpy.utils import smm_from_state_setup
-        return smm_from_state_setup(self.to_state_setup())
+    @staticmethod
+    def from_state_setup(state_setup: dict):
+        states_map = {key: StochasticMealyState(key) for key in state_setup.keys()}
+
+        for key, values in state_setup.items():
+            source = states_map[key]
+            for i, transitions in values.items():
+                for node, output, prob in transitions:
+                    source.transitions[i].append((states_map[node], output, prob))
+
+        initial_state = states_map[list(state_setup.keys())[0]]
+        return StochasticMealyMachine(initial_state, list(states_map.values()))
 
 
 def smm_to_mdp_conversion(smm: StochasticMealyMachine):
