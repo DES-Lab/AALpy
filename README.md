@@ -46,8 +46,7 @@ Use the package manager [pip](https://pip.pypa.io/en/stable/) to install the lat
 ```bash
 pip install aalpy
 ```
-To install current version of the master branch. 
-It might contain bugfixes and added functionalities between releases.
+To install current version of the master branch (it might contain bugfixes and added functionalities between releases):
 ```bash
 pip install https://github.com/DES-Lab/AALpy/archive/master.zip
 ```
