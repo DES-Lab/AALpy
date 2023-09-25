@@ -256,3 +256,6 @@ class GeneralizedStateMerging:
                 if not self.local_merge_score(new_node, old_node, info):
                     return False, dict()
         return True, remaining_nodes
+
+def runAlergia(data, output_behavior : OutputBehavior = "moore", epsilon : float = 0.005) :
+    return GeneralizedStateMerging(data, output_behavior, "stochastic", "future", hoeffding_compatibility(epsilon)).run()
