@@ -57,7 +57,7 @@ class GeneralizedStateMerging:
         def learning_done(self, red_states, start_time):
             print(f'\nRPNI-GSM Learning Time: {round(time.time() - start_time, 2)}')
             print(f'RPNI-GSM Learned {len(red_states)} state automaton.')
-            self.instance.root.visualize("wee", self.instance.data, self.pta)
+            self.instance.root.visualize("model", self.instance.data, self.pta)
             #self.pta.visualize("pta")
 
     def __init__(self, data, debug_lvl=0):

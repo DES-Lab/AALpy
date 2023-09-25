@@ -8,6 +8,9 @@ from typing import Dict, Tuple, Callable, Any, Literal
 from aalpy.learning_algs.stochastic_passive.rpni_helper_functions import Node, OutputBehavior, TransitionBehavior
 
 # TODO make non-mutual exclusive
+# future: Only compare futures of states
+# partition: Check compatibility while partition is created
+# merge: Check compatibility after partition is created
 CompatibilityBehavior = Literal["future", "partition", "merge"]
 
 Score = bool
