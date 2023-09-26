@@ -32,6 +32,7 @@ class Pda(Automaton):
         self.initial_state = initial_state
         self.states = states
         self.current_state = None
+        self.call_balance = 0
         self.stack = []
 
     def reset_to_initial(self):
@@ -41,6 +42,7 @@ class Pda(Automaton):
     def reset(self):
         self.current_state = self.initial_state
         self.stack = [self.empty]
+        self.call_balance = 0
         return self.current_state.is_accepting and self.top() == self.empty
 
     def top(self):
@@ -63,7 +65,10 @@ class Pda(Automaton):
         return False
 
     def step(self, letter):
-        if self.current_state == Pda.error_state or not self.possible(letter):
+        if self.current_state == Pda.error_state:
+            return False
+        if not self.possible(letter):
+            self.current_state = Pda.error_state
             return False
         if letter is not None:
             transitions = self.current_state.transitions[letter]
@@ -143,73 +148,74 @@ class Pda(Automaton):
         return pda
 
 
-# def generate_data_from_pda(automaton, num_examples, lens=None, classify_states=False, stack_limit=None,
-#                            break_on_impossible=False, possible_prob=0.75):
-#     input_al = automaton.get_input_alphabet()
-#     output_al = [False, True]
-#     if classify_states:
-#         output_al = [s.state_id for s in automaton.states]
-#
-#     if lens is None:
-#         lens = list(range(1, 15))
-#
-#     sum_lens = sum(lens)
-#     # key is length, value is number of examples for said length
-#     ex_per_len = dict()
-#
-#     additional_seq = 0
-#     for l in lens:
-#         ex_per_len[l] = int(num_examples * (l / sum_lens)) + 1
-#         if ex_per_len[l] > pow(len(input_al), l):
-#             additional_seq += ex_per_len[l] - pow(len(input_al), l)
-#             ex_per_len[l] = 'comb'
-#
-#     additional_seq = additional_seq // len([i for i in ex_per_len.values() if i != 'comb'])
-#
-#     training_data = []
-#     for l in ex_per_len.keys():
-#         seqs = []
-#         if ex_per_len[l] == 'comb':
-#             seqs = list(product(input_al, repeat=l))
-#             for seq in seqs:
-#
-#                 out = automaton.reset()
-#                 nr_steps = 0
-#                 for inp in seq:
-#                     if automaton.possible(inp) or not break_on_impossible:
-#                         nr_steps += 1
-#                     if stack_limit and len(automaton.stack) > stack_limit:
-#                         break
-#                     if break_on_impossible and not automaton.possible(inp):
-#                         break
-#                     out = automaton.step(inp)
-#                 seq = seq[:nr_steps]
-#                 training_data.append((tuple(seq), out if not classify_states else automaton.current_state.state_id))
-#
-#         else:
-#             for _ in range(ex_per_len[l] + additional_seq):
-#                 # seq = [random.choice(input_al) for _ in range(l)]
-#                 out = automaton.reset()
-#                 nr_steps = 0
-#                 seq = []
-#                 for i in range(l):
-#                     possible_inp = [inp for inp in input_al if automaton.possible(inp)]
-#                     if len(possible_inp) == 0:
-#                         inp = random.choice(input_al)
-#                     else:
-#                         if random.random() <= possible_prob:
-#                             inp = random.choice(possible_inp)
-#                         else:
-#                             inp = random.choice(input_al)
-#                     seq.append(inp)
-#                     if automaton.possible(inp) or not break_on_impossible:
-#                         nr_steps += 1
-#                     if stack_limit and len(automaton.stack) > stack_limit:
-#                         break
-#                     if break_on_impossible and not automaton.possible(inp):
-#                         break
-#                     out = automaton.step(inp)
-#                 seq = seq[:nr_steps]
-#                 training_data.append((tuple(seq), out if not classify_states else automaton.current_state.state_id))
-#
-#     return training_data, input_al, output_al
+def generate_data_from_pda(automaton, num_examples, lens=None, classify_states=False, stack_limit=None,
+                           break_on_impossible=False, possible_prob=0.75):
+    import random
+    from itertools import product
+
+    input_al = automaton.get_input_alphabet()
+
+    if lens is None:
+        lens = list(range(1, 15))
+
+    sum_lens = sum(lens)
+    # key is length, value is number of examples for said length
+    ex_per_len = dict()
+
+    additional_seq = 0
+    for l in lens:
+        ex_per_len[l] = int(num_examples * (l / sum_lens)) + 1
+        if ex_per_len[l] > pow(len(input_al), l):
+            additional_seq += ex_per_len[l] - pow(len(input_al), l)
+            ex_per_len[l] = 'comb'
+
+    additional_seq = additional_seq // len([i for i in ex_per_len.values() if i != 'comb'])
+
+    training_data = []
+    for l in ex_per_len.keys():
+        seqs = []
+        if ex_per_len[l] == 'comb':
+
+            seqs = list(product(input_al, repeat=l))
+            for seq in seqs:
+
+                out = automaton.reset()
+                nr_steps = 0
+                for inp in seq:
+                    if automaton.possible(inp) or not break_on_impossible:
+                        nr_steps += 1
+                    if stack_limit and len(automaton.stack) > stack_limit:
+                        break
+                    if break_on_impossible and not automaton.possible(inp):
+                        break
+                    out = automaton.step(inp)
+                seq = seq[:nr_steps]
+                training_data.append((tuple(seq), out if not classify_states else automaton.current_state.state_id))
+
+        else:
+            for _ in range(ex_per_len[l] + additional_seq):
+                # seq = [random.choice(input_al) for _ in range(l)]
+                out = automaton.reset()
+                nr_steps = 0
+                seq = []
+                for i in range(l):
+                    possible_inp = [inp for inp in input_al if automaton.possible(inp)]
+                    if len(possible_inp) == 0:
+                        inp = random.choice(input_al)
+                    else:
+                        if random.random() <= possible_prob:
+                            inp = random.choice(possible_inp)
+                        else:
+                            inp = random.choice(input_al)
+                    seq.append(inp)
+                    if automaton.possible(inp) or not break_on_impossible:
+                        nr_steps += 1
+                    if stack_limit and len(automaton.stack) > stack_limit:
+                        break
+                    if break_on_impossible and not automaton.possible(inp):
+                        break
+                    out = automaton.step(inp)
+                seq = seq[:nr_steps]
+                training_data.append((tuple(seq), out))
+
+    return training_data
