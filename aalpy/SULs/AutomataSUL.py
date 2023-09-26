@@ -1,5 +1,5 @@
 from aalpy.base import SUL
-from aalpy.automata import Dfa, MealyMachine, MooreMachine, Onfsm, Mdp, StochasticMealyMachine, MarkovChain
+from aalpy.automata import Dfa, MealyMachine, MooreMachine, Onfsm, Mdp, StochasticMealyMachine, MarkovChain, Pda
 
 
 class DfaSUL(SUL):
@@ -164,3 +164,23 @@ class StochasticMealySUL(SUL):
 
     def step(self, letter):
         return self.smm.step(letter)
+
+
+class PdaSUL(SUL):
+    def __init__(self, pda: Pda, include_top=True):
+        super().__init__()
+        self.pda = pda
+        self.include_top = include_top
+
+    def pre(self):
+        self.pda.reset_to_initial()
+
+    def post(self):
+        pass
+
+    def step(self, letter):
+        output = self.pda.step(letter)
+        top = self.pda.top()
+        if self.include_top:
+            return output, top
+        return output

@@ -1,5 +1,5 @@
 def get_Angluin_dfa():
-    from aalpy.utils.AutomatonGenerators import dfa_from_state_setup
+    from aalpy.utils import dfa_from_state_setup
 
     anguin_dfa = {
         'q0': (True, {'a': 'q1', 'b': 'q2'}),

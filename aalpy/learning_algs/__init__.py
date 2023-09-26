@@ -8,3 +8,4 @@ from .stochastic_passive.Alergia import run_Alergia, run_JAlergia
 from .stochastic_passive.ActiveAleriga import run_active_Alergia
 from .deterministic_passive.RPNI import run_RPNI
 from .deterministic_passive.active_RPNI import run_active_RPNI
+from .vpda.VpdaLStar import run_vpda_Lstar

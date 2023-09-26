@@ -6,11 +6,11 @@ from pathlib import Path
 from pydot import Dot, Node, Edge, graph_from_dot_file
 
 from aalpy.automata import Dfa, MooreMachine, Mdp, Onfsm, MealyState, DfaState, MooreState, MealyMachine, \
-    MdpState, StochasticMealyMachine, StochasticMealyState, OnfsmState, MarkovChain, McState
+    MdpState, StochasticMealyMachine, StochasticMealyState, OnfsmState, MarkovChain, McState, Pda
 
 file_types = ['dot', 'png', 'svg', 'pdf', 'string']
 automaton_types = {Dfa: 'dfa', MealyMachine: 'mealy', MooreMachine: 'moore', Mdp: 'mdp',
-                   StochasticMealyMachine: 'smm', Onfsm: 'onfsm', MarkovChain: 'mc'}
+                   StochasticMealyMachine: 'smm', Onfsm: 'onfsm', MarkovChain: 'mc', Pda: 'pda'}
 
 
 def _wrap_label(label):
@@ -30,7 +30,8 @@ def _get_node(state, automaton_type):
     if automaton_type == 'mealy':
         return Node(state.state_id, label=_wrap_label(state.state_id))
     if automaton_type == 'moore':
-        return Node(state.state_id, label=_wrap_label(f'{state.state_id}|{state.output}'), shape='record', style='rounded')
+        return Node(state.state_id, label=_wrap_label(f'{state.state_id}|{state.output}'), shape='record',
+                    style='rounded')
     if automaton_type == 'onfsm':
         return Node(state.state_id, label=_wrap_label(state.state_id))
     if automaton_type == 'mc':
@@ -38,6 +39,10 @@ def _get_node(state, automaton_type):
     if automaton_type == 'mdp':
         return Node(state.state_id, label=_wrap_label(f'{state.output}'))
     if automaton_type == 'smm':
+        return Node(state.state_id, label=_wrap_label(state.state_id))
+    if automaton_type == 'pda':
+        if state.is_accepting:
+            return Node(state.state_id, label=_wrap_label(state.state_id), shape='doublecircle')
         return Node(state.state_id, label=_wrap_label(state.state_id))
 
 
@@ -81,6 +86,21 @@ def _add_transition_to_graph(graph, state, automaton_type, display_same_state_tr
                     continue
                 prob = round(s[2], round_floats) if round_floats else s[2]
                 graph.add_edge(Edge(state.state_id, s[0].state_id, label=_wrap_label(f'{i}/{s[1]}:{prob}')))
+    if automaton_type == 'pda':
+        for i in state.transitions.keys():
+            transitions_list = state.transitions[i]
+            for transition in transitions_list:
+                if transition.action is None:
+                    graph.add_edge(Edge(transition.start.state_id, transition.target.state_id,
+                                        label=_wrap_label(f'{transition.symbol}')))
+                if transition.action == 'push':
+                    graph.add_edge(Edge(transition.start.state_id, transition.target.state_id,
+                                        label=_wrap_label(f'{transition.symbol}/push(\'{transition.symbol}\')')))
+                if transition.action == 'pop':
+                    graph.add_edge(Edge(transition.start.state_id, transition.target.state_id,
+                                        label=_wrap_label(f'{transition.symbol}/pop(\'{transition.stack_guard}\')')))
+
+
 
 
 def visualize_automaton(automaton, path="LearnedModel", file_type="pdf", display_same_state_trans=True):
@@ -146,6 +166,8 @@ def save_automaton_to_file(automaton, path="LearnedModel", file_type="dot",
 
     graph = Dot(path.stem, graph_type='digraph')
     for state in automaton.states:
+        if automaton_type == 'pda' and state.state_id == 'ErrorSinkState':
+            continue
         graph.add_node(_get_node(state, automaton_type))
 
     for state in automaton.states:
