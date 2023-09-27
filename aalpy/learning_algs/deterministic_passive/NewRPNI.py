@@ -4,7 +4,7 @@ import time
 from aalpy.learning_algs.deterministic_passive.rpni_helper_functions import to_automaton, RpniNode, createPTA
 
 
-class GeneralizedStateMerging:
+class NewRPNI:
     def __init__(self, data, automaton_type, print_info=True):
         self.data = data
         self.final_automaton_type = automaton_type
@@ -12,7 +12,7 @@ class GeneralizedStateMerging:
         self.print_info = print_info
 
         pta_construction_start = time.time()
-        self.root = createPTA(data, self.automaton_type)
+        self.root_node = createPTA(data, self.automaton_type)
         self.log = []
 
         if self.print_info:
@@ -22,7 +22,7 @@ class GeneralizedStateMerging:
         start_time = time.time()
 
         # sorted list of states already considered
-        red_states = [self.root]
+        red_states = [self.root_node]
         # used to get the minimal non-red state
         blue_states = list(red_states[0].children.values())
 
@@ -50,7 +50,7 @@ class GeneralizedStateMerging:
                     node.output = block.output
                     node.children = block.children
 
-                node = self.root.get_child_by_prefix(blue_state.prefix[:-1])
+                node = self.root_node.get_child_by_prefix(blue_state.prefix[:-1])
                 node.children[blue_state.prefix[-1]] = red_state
 
             blue_states.clear()
