@@ -51,7 +51,6 @@ class Alergia:
         return True
 
     def merge(self, q_r, q_b):
-        t_q_b = self.get_blue_node(q_b)
         b_prefix = q_b.getPrefix()
         to_update = self.mutableTreeRoot
         for p in b_prefix[:-1]:
@@ -59,16 +58,16 @@ class Alergia:
 
         to_update.children[b_prefix[-1]] = q_r
 
-        self.fold(q_r, q_b, t_q_b)
+        self.fold(q_r, q_b)
 
-    def fold(self, red, blue, blue_tree_node):
+    def fold(self, red, blue):
         for i, c in blue.children.items():
             if i in red.children.keys():
-                red.input_frequency[i] += blue_tree_node.input_frequency[i]
-                self.fold(red.children[i], blue.children[i], self.get_blue_node(blue.children[i]))
+                red.input_frequency[i] += blue.input_frequency[i]
+                self.fold(red.children[i], blue.children[i])
             else:
                 red.children[i] = blue.children[i]
-                red.input_frequency[i] = blue_tree_node.input_frequency[i]
+                red.input_frequency[i] = blue.input_frequency[i]
 
     def run(self):
         start_time = time.time()

@@ -8,7 +8,7 @@ class AlergiaPtaNode:
 
     def __init__(self, output):
         self.output = output
-        self.input_frequency = defaultdict(int)
+        self.input_frequency = dict()
         self.children = dict()
         self.parent_io = None
         # # for visualization
@@ -70,6 +70,9 @@ def create_fpta(data, automaton_type, optimize_for='accuracy'):
 
                 curr_node.children[el] = node
                 curr_copy.children[el] = node_copy
+
+                curr_node.input_frequency[el] = 0
+                curr_copy.input_frequency[el] = 0
 
             curr_node.input_frequency[el] += 1
             curr_node = curr_node.children[el]
