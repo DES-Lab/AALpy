@@ -5,7 +5,7 @@ from queue import Queue
 import time
 from typing import Dict, Tuple, Callable, Any, Literal
 
-from aalpy.learning_algs.stochastic_passive.rpni_helper_functions import Node, OutputBehavior, TransitionBehavior
+from aalpy.learning_algs.stochastic_passive.helpers import Node, OutputBehavior, TransitionBehavior
 
 # TODO make non-mutual exclusive
 # future: Only compare futures of states
