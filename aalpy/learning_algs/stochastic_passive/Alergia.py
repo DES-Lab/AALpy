@@ -12,7 +12,7 @@ state_automaton_map = {'mc': (McState, MarkovChain), 'mdp': (MdpState, Mdp),
 
 
 class Alergia:
-    def __init__(self, data, automaton_type, eps=0.005, compatibility_checker=None, optimize_for='accuracy',
+    def __init__(self, data, automaton_type, eps=0.05, compatibility_checker=None, optimize_for='accuracy',
                  print_info=False):
         assert eps == 'auto' or 0 < eps <= 2
         assert optimize_for in {'memory', 'accuracy'}
