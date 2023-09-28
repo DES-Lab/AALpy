@@ -12,16 +12,10 @@ class CompatibilityChecker(ABC):
         pass
 
 
-def get_two_stage_dict(input_dict: dict):
-    ret = defaultdict(dict)
-    for (in_sym, out_sym), value in input_dict.items():
-        ret[in_sym][out_sym] = value
-    return ret
-
-
 class HoeffdingCompatibility(CompatibilityChecker):
     def __init__(self, eps):
         self.eps = eps
+        self.log_term = sqrt(0.5 * log(2 / self.eps))
 
     def hoeffding_bound(self, a: dict, b: dict):
         n1 = sum(a.values())
@@ -30,11 +24,13 @@ class HoeffdingCompatibility(CompatibilityChecker):
         if n1 * n2 == 0:
             return False
 
+        bound = (sqrt(1 / n1) + sqrt(1 / n2)) * self.log_term
+
         for o in set(a.keys()).union(b.keys()):
             a_freq = a[o] if o in a else 0
             b_freq = b[o] if o in b else 0
 
-            if abs(a_freq / n1 - b_freq / n2) > ((sqrt(1 / n1) + sqrt(1 / n2)) * sqrt(0.5 * log(2 / self.eps))):
+            if abs(a_freq / n1 - b_freq / n2) > bound:
                 return True
         return False
 
@@ -48,9 +44,7 @@ class HoeffdingCompatibility(CompatibilityChecker):
             return self.hoeffding_bound(a.input_frequency, b.input_frequency)
 
         # IOAlergia: check hoeffding bound conditioned on inputs
-        a_dict, b_dict = (get_two_stage_dict(x.input_frequency) for x in [a, b])
-
-        for key in filter(lambda x: x in a_dict.keys(), b_dict.keys()):
-            if self.hoeffding_bound(a_dict[key], b_dict[key]):
+        for i in a.get_inputs().intersection(b.get_inputs()):
+            if self.hoeffding_bound(a.get_output_frequencies(i), b.get_output_frequencies(i)):
                 return True
         return False

@@ -1,5 +1,6 @@
 import time
 from bisect import insort
+from collections import deque
 
 from aalpy.automata import MarkovChain, MdpState, Mdp, McState, StochasticMealyState, \
     StochasticMealyMachine
@@ -27,7 +28,7 @@ class Alergia:
 
         pta_start = time.time()
 
-        self.immutableTreeRoot, self.mutableTreeRoot = create_fpta(data, automaton_type, optimize_for)
+        self.mutableTreeRoot, self.immutableTreeRoot = create_fpta(data, automaton_type, optimize_for)
 
         pta_time = round(time.time() - pta_start, 2)
         if self.print_info:
@@ -62,6 +63,7 @@ class Alergia:
         to_update.children[b_prefix[-1]] = red_state
 
         self.fold(red_state, blue_state)
+        # self.fold_iterative(red_state, blue_state)
 
     # recursive version
     def fold(self, red, blue):
@@ -74,19 +76,19 @@ class Alergia:
                 red.input_frequency[i] = blue.input_frequency[i]
 
     # iterative fold alternative to recursive fold
-    # def fold_iterative(self, red, blue):
-    #     queue = deque([(red, blue)])
-    #
-    #     while queue:
-    #         red_node, blue_node = queue.popleft()
-    #
-    #         for i, blue_child in blue_node.children.items():
-    #             if i in red_node.children:
-    #                 red_node.input_frequency[i] += blue_node.input_frequency[i]
-    #                 queue.append((red_node.children[i], blue_child))
-    #             else:
-    #                 red_node.children[i] = blue_child
-    #                 red_node.input_frequency[i] = blue_node.input_frequency[i]
+    def fold_iterative(self, red, blue):
+        queue = deque([(red, blue)])
+
+        while queue:
+            red_node, blue_node = queue.popleft()
+
+            for i, blue_child in blue_node.children.items():
+                if i in red_node.children:
+                    red_node.input_frequency[i] += blue_node.input_frequency[i]
+                    queue.append((red_node.children[i], blue_child))
+                else:
+                    red_node.children[i] = blue_child
+                    red_node.input_frequency[i] = blue_node.input_frequency[i]
 
     def run(self):
         start_time = time.time()
@@ -189,7 +191,7 @@ class Alergia:
         return a_c(initial_state, states)
 
 
-def run_Alergia(data, automaton_type, eps=0.005, compatibility_checker=None, optimize_for='accuracy', print_info=False):
+def run_Alergia(data, automaton_type, eps=0.05, compatibility_checker=None, optimize_for='accuracy', print_info=False):
     """
     Run Alergia or IOAlergia on provided data.
 
