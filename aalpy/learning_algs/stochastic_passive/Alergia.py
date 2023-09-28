@@ -227,7 +227,7 @@ def run_Alergia(data, automaton_type, eps=0.05, compatibility_checker=None, opti
     return model
 
 
-def run_JAlergia(path_to_data_file, automaton_type, path_to_jAlergia_jar, eps=0.005,
+def run_JAlergia(path_to_data_file, automaton_type, path_to_jAlergia_jar, eps=0.05,
                  heap_memory='-Xmx2048M', optimize_for='accuracy'):
     """
     Run Alergia or IOAlergia on provided data.
