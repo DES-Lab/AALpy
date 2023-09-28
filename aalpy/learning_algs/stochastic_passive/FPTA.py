@@ -60,7 +60,7 @@ def create_fpta(data, automaton_type, optimize_for='accuracy'):
                 out = None
                 if automaton_type == 'mc':
                     out = el
-                if automaton_type == 'mdp':
+                elif automaton_type == 'mdp':
                     out = el[1]
 
                 reached_node = AlergiaPtaNode(out, curr_node.prefix + (el,))
