@@ -1,5 +1,4 @@
 import time
-from collections import defaultdict
 from bisect import insort
 
 from aalpy.automata import MarkovChain, MdpState, Mdp, McState, StochasticMealyState, \
@@ -35,30 +34,34 @@ class Alergia:
             print(f'PTA Construction Time:  {pta_time}')
 
     def compatibility_test(self, a, b):
+        # for MDPs and MC output of the state needs to be the same
         if self.automaton_type != 'smm' and a.output != b.output:
             return False
 
+        # leaf nodes are merged
         if not a.children.values() or not b.children.values():
             return True
 
+        # if states are statistically different, do not merge
         if self.diff_checker.are_states_different(a, b):
             return False
 
+        # check future for compatibility
         for el in set(a.children.keys()).intersection(b.children.keys()):
             if not self.compatibility_test(a.children[el], b.children[el]):
                 return False
 
         return True
 
-    def merge(self, q_r, q_b):
-        b_prefix = q_b.getPrefix()
+    def merge(self, red_state, blue_state):
+        b_prefix = blue_state.getPrefix()
         to_update = self.mutableTreeRoot
         for p in b_prefix[:-1]:
             to_update = to_update.children[p]
 
-        to_update.children[b_prefix[-1]] = q_r
+        to_update.children[b_prefix[-1]] = red_state
 
-        self.fold(q_r, q_b)
+        self.fold(red_state, blue_state)
 
     def fold(self, red, blue):
         for i, c in blue.children.items():
@@ -72,16 +75,20 @@ class Alergia:
     def run(self):
         start_time = time.time()
 
-        red = [self.mutableTreeRoot]  # representative nodes and will be included in the final output model
-        blue = self.mutableTreeRoot.successors()  # intermediate successors scheduled for testing
+        # representative nodes that will be included in the final output model
+        red = [self.mutableTreeRoot]
+        # intermediate successors scheduled for testing
+        blue = self.mutableTreeRoot.successors()
 
         while blue:
+            # get lexicographically minimal blue node (one with the shortest prefix)
             lex_min_blue = min(list(blue))
             merged = False
 
-            for q_r in red:
-                if self.compatibility_test(self.get_blue_node(q_r), self.get_blue_node(lex_min_blue)):
-                    self.merge(q_r, lex_min_blue)
+            for red_state in red:
+                if self.compatibility_test(self.get_node_for_statistical_check(red_state),
+                                           self.get_node_for_statistical_check(lex_min_blue)):
+                    self.merge(red_state, lex_min_blue)
                     merged = True
                     break
 
@@ -111,19 +118,17 @@ class Alergia:
     def normalize(self, red):
         red_sorted = sorted(list(red), key=lambda x: len(x.getPrefix()))
         for r in red_sorted:
-            r.children_prob = dict()  # Initializing in here saves many unnecessary initializations
+            # Initializing in here saves many unnecessary initializations
+            r.children_prob = dict()
             if self.automaton_type == 'mc':
                 total_output = sum(r.input_frequency.values())
                 for i in r.input_frequency.keys():
                     r.children_prob[i] = r.input_frequency[i] / total_output
             else:
-                outputs_per_input = defaultdict(int)
-                for io, freq in r.input_frequency.items():
-                    outputs_per_input[io[0]] += freq
-                for io in r.input_frequency.keys():
-                    r.children_prob[io] = r.input_frequency[io] / outputs_per_input[io[0]]
+                for i, o in r.input_frequency.keys():
+                    r.children_prob[(i, o)] = r.input_frequency[(i, o)] / r.get_input_frequency(i)
 
-    def get_blue_node(self, red_node):
+    def get_node_for_statistical_check(self, red_node):
         if self.optimize_for == 'memory':
             return red_node
         blue = self.immutableTreeRoot
@@ -211,16 +216,16 @@ def run_JAlergia(path_to_data_file, automaton_type, path_to_jAlergia_jar, eps=0.
 
     Args:
 
-        path_to_data_file: either a data in a list of lists or a path to file containing data. 
+        path_to_data_file: either a data in a list of lists or a path to file containing data.
         Form [[I,I,I],[I,I,I],...] if learning Markov Chains or
         [[O,I,O,I,O...], [O,I,O_,...],..,] if learning MDPs (I represents input, O output), or
         [[I,O,I,O...], [I,O_,...],..,] if learning SMMs.
         Note that in whole data first symbol of each entry should be the same (Initial output of the MDP/MC).
 
         eps: epsilon value
-        
+
         heap_memory: java heap memory flag, increase if heap is full
-        
+
         optimize_for: either 'memory' or 'accuracy'. memory will use 50% less memory, but will be more inaccurate.
 
         automaton_type: either 'mdp' if you wish to learn an MDP, 'mc' if you want to learn Markov Chain,
@@ -261,7 +266,7 @@ def run_JAlergia(path_to_data_file, automaton_type, path_to_jAlergia_jar, eps=0.
             print('Data should be either a list of sequences or a path to the data file.')
         with open('jAlergiaInputs.txt', 'w') as f:
             for seq in path_to_data_file:
-                f.write(','.join([str(s) for s in seq])+'\n')
+                f.write(','.join([str(s) for s in seq]) + '\n')
         delete_tmp_file = True
         abs_path = os.path.abspath('jAlergiaInputs.txt')
 

@@ -26,6 +26,9 @@ class AlergiaPtaNode:
     def successors(self):
         return list(self.children.values())
 
+    def get_input_frequency(self, target_input):
+        return sum(freq for (i, o), freq in self.input_frequency.items() if i == target_input)
+
     def __lt__(self, other):
         s_prefix, o_prefix = self.getPrefix(), other.getPrefix()
         return (len(s_prefix), s_prefix) < (len(o_prefix), o_prefix)
