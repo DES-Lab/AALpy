@@ -139,7 +139,7 @@
 
     <span class="k">def</span> <span class="nf">merge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q_r</span><span class="p">,</span> <span class="n">q_b</span><span class="p">):</span>
         <span class="n">t_q_b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_blue_node</span><span class="p">(</span><span class="n">q_b</span><span class="p">)</span>
-        <span class="n">b_prefix</span> <span class="o">=</span> <span class="n">q_b</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">()</span>
+        <span class="n">b_prefix</span> <span class="o">=</span> <span class="n">q_b</span><span class="o">.</span><span class="n">get_prefix</span><span class="p">()</span>
         <span class="n">to_update</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mutableTreeRoot</span>
         <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">b_prefix</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
             <span class="n">to_update</span> <span class="o">=</span> <span class="n">to_update</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">p</span><span class="p">]</span>
@@ -164,7 +164,7 @@
         <span class="n">blue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mutableTreeRoot</span><span class="o">.</span><span class="n">successors</span><span class="p">()</span>  <span class="c1"># intermediate successors scheduled for testing</span>
 
         <span class="k">while</span> <span class="n">blue</span><span class="p">:</span>
-            <span class="n">lex_min_blue</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">blue</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">()))</span>
+            <span class="n">lex_min_blue</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">blue</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">get_prefix</span><span class="p">()))</span>
             <span class="n">merged</span> <span class="o">=</span> <span class="kc">False</span>
 
             <span class="k">for</span> <span class="n">q_r</span> <span class="ow">in</span> <span class="n">red</span><span class="p">:</span>
@@ -183,7 +183,7 @@
                     <span class="k">if</span> <span class="n">s</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">red</span><span class="p">:</span>
                         <span class="n">blue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
 
-        <span class="k">assert</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">red</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">()))</span> <span class="o">==</span> <span class="n">red</span>
+        <span class="k">assert</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">red</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">get_prefix</span><span class="p">()))</span> <span class="o">==</span> <span class="n">red</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="n">red</span><span class="p">)</span>
 
@@ -197,7 +197,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_automaton</span><span class="p">(</span><span class="n">red</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">red</span><span class="p">):</span>
-        <span class="n">red_sorted</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">red</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">()))</span>
+        <span class="n">red_sorted</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">red</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">get_prefix</span><span class="p">()))</span>
         <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">red_sorted</span><span class="p">:</span>
             <span class="n">r</span><span class="o">.</span><span class="n">children_prob</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>  <span class="c1"># Initializing in here saves many unnecessary initializations</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mc&#39;</span><span class="p">:</span>
@@ -215,7 +215,7 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimize_for</span> <span class="o">==</span> <span class="s1">&#39;memory&#39;</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">red_node</span>
         <span class="n">blue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">immutableTreeRoot</span>
-        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">red_node</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">red_node</span><span class="o">.</span><span class="n">get_prefix</span><span class="p">():</span>
             <span class="n">blue</span> <span class="o">=</span> <span class="n">blue</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">p</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">blue</span>
 
@@ -232,17 +232,17 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">automaton_state</span> <span class="o">=</span> <span class="n">s_c</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">state_id</span><span class="p">)</span>
 
-            <span class="n">automaton_state</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">()</span>
+            <span class="n">automaton_state</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">get_prefix</span><span class="p">()</span>
             <span class="n">states</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">automaton_state</span><span class="p">)</span>
-            <span class="n">red_mdp_map</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">())]</span> <span class="o">=</span> <span class="n">automaton_state</span>
+            <span class="n">red_mdp_map</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">get_prefix</span><span class="p">())]</span> <span class="o">=</span> <span class="n">automaton_state</span>
             <span class="n">red_mdp_map</span><span class="p">[</span><span class="n">automaton_state</span><span class="o">.</span><span class="n">state_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">s</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">s</span><span class="o">.</span><span class="n">get_prefix</span><span class="p">():</span>
                 <span class="n">initial_state</span> <span class="o">=</span> <span class="n">automaton_state</span>
 
         <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">states</span><span class="p">:</span>
             <span class="n">red_eq</span> <span class="o">=</span> <span class="n">red_mdp_map</span><span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">state_id</span><span class="p">]</span>
             <span class="k">for</span> <span class="n">io</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">red_eq</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="n">destination</span> <span class="o">=</span> <span class="n">red_mdp_map</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">())]</span>
+                <span class="n">destination</span> <span class="o">=</span> <span class="n">red_mdp_map</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">get_prefix</span><span class="p">())]</span>
                 <span class="n">i</span> <span class="o">=</span> <span class="n">io</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mc&#39;</span> <span class="k">else</span> <span class="n">io</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
                     <span class="n">s</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">destination</span><span class="p">,</span> <span class="n">red_eq</span><span class="o">.</span><span class="n">children_prob</span><span class="p">[</span><span class="n">io</span><span class="p">]))</span>
@@ -424,7 +424,7 @@
 
     <span class="k">def</span> <span class="nf">merge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q_r</span><span class="p">,</span> <span class="n">q_b</span><span class="p">):</span>
         <span class="n">t_q_b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_blue_node</span><span class="p">(</span><span class="n">q_b</span><span class="p">)</span>
-        <span class="n">b_prefix</span> <span class="o">=</span> <span class="n">q_b</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">()</span>
+        <span class="n">b_prefix</span> <span class="o">=</span> <span class="n">q_b</span><span class="o">.</span><span class="n">get_prefix</span><span class="p">()</span>
         <span class="n">to_update</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mutableTreeRoot</span>
         <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">b_prefix</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
             <span class="n">to_update</span> <span class="o">=</span> <span class="n">to_update</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">p</span><span class="p">]</span>
@@ -449,7 +449,7 @@
         <span class="n">blue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mutableTreeRoot</span><span class="o">.</span><span class="n">successors</span><span class="p">()</span>  <span class="c1"># intermediate successors scheduled for testing</span>
 
         <span class="k">while</span> <span class="n">blue</span><span class="p">:</span>
-            <span class="n">lex_min_blue</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">blue</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">()))</span>
+            <span class="n">lex_min_blue</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">blue</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">get_prefix</span><span class="p">()))</span>
             <span class="n">merged</span> <span class="o">=</span> <span class="kc">False</span>
 
             <span class="k">for</span> <span class="n">q_r</span> <span class="ow">in</span> <span class="n">red</span><span class="p">:</span>
@@ -468,7 +468,7 @@
                     <span class="k">if</span> <span class="n">s</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">red</span><span class="p">:</span>
                         <span class="n">blue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
 
-        <span class="k">assert</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">red</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">()))</span> <span class="o">==</span> <span class="n">red</span>
+        <span class="k">assert</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">red</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">get_prefix</span><span class="p">()))</span> <span class="o">==</span> <span class="n">red</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="n">red</span><span class="p">)</span>
 
@@ -482,7 +482,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_automaton</span><span class="p">(</span><span class="n">red</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">red</span><span class="p">):</span>
-        <span class="n">red_sorted</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">red</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">()))</span>
+        <span class="n">red_sorted</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">red</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">get_prefix</span><span class="p">()))</span>
         <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">red_sorted</span><span class="p">:</span>
             <span class="n">r</span><span class="o">.</span><span class="n">children_prob</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>  <span class="c1"># Initializing in here saves many unnecessary initializations</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mc&#39;</span><span class="p">:</span>
@@ -500,7 +500,7 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimize_for</span> <span class="o">==</span> <span class="s1">&#39;memory&#39;</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">red_node</span>
         <span class="n">blue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">immutableTreeRoot</span>
-        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">red_node</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">red_node</span><span class="o">.</span><span class="n">get_prefix</span><span class="p">():</span>
             <span class="n">blue</span> <span class="o">=</span> <span class="n">blue</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">p</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">blue</span>
 
@@ -517,17 +517,17 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">automaton_state</span> <span class="o">=</span> <span class="n">s_c</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">state_id</span><span class="p">)</span>
 
-            <span class="n">automaton_state</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">()</span>
+            <span class="n">automaton_state</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">get_prefix</span><span class="p">()</span>
             <span class="n">states</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">automaton_state</span><span class="p">)</span>
-            <span class="n">red_mdp_map</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">())]</span> <span class="o">=</span> <span class="n">automaton_state</span>
+            <span class="n">red_mdp_map</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">get_prefix</span><span class="p">())]</span> <span class="o">=</span> <span class="n">automaton_state</span>
             <span class="n">red_mdp_map</span><span class="p">[</span><span class="n">automaton_state</span><span class="o">.</span><span class="n">state_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">s</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">s</span><span class="o">.</span><span class="n">get_prefix</span><span class="p">():</span>
                 <span class="n">initial_state</span> <span class="o">=</span> <span class="n">automaton_state</span>
 
         <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">states</span><span class="p">:</span>
             <span class="n">red_eq</span> <span class="o">=</span> <span class="n">red_mdp_map</span><span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">state_id</span><span class="p">]</span>
             <span class="k">for</span> <span class="n">io</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">red_eq</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="n">destination</span> <span class="o">=</span> <span class="n">red_mdp_map</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">())]</span>
+                <span class="n">destination</span> <span class="o">=</span> <span class="n">red_mdp_map</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">get_prefix</span><span class="p">())]</span>
                 <span class="n">i</span> <span class="o">=</span> <span class="n">io</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mc&#39;</span> <span class="k">else</span> <span class="n">io</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
                     <span class="n">s</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">destination</span><span class="p">,</span> <span class="n">red_eq</span><span class="o">.</span><span class="n">children_prob</span><span class="p">[</span><span class="n">io</span><span class="p">]))</span>
@@ -633,7 +633,7 @@
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">merge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q_r</span><span class="p">,</span> <span class="n">q_b</span><span class="p">):</span>
         <span class="n">t_q_b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_blue_node</span><span class="p">(</span><span class="n">q_b</span><span class="p">)</span>
-        <span class="n">b_prefix</span> <span class="o">=</span> <span class="n">q_b</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">()</span>
+        <span class="n">b_prefix</span> <span class="o">=</span> <span class="n">q_b</span><span class="o">.</span><span class="n">get_prefix</span><span class="p">()</span>
         <span class="n">to_update</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mutableTreeRoot</span>
         <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">b_prefix</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
             <span class="n">to_update</span> <span class="o">=</span> <span class="n">to_update</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">p</span><span class="p">]</span>
@@ -690,7 +690,7 @@
         <span class="n">blue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mutableTreeRoot</span><span class="o">.</span><span class="n">successors</span><span class="p">()</span>  <span class="c1"># intermediate successors scheduled for testing</span>
 
         <span class="k">while</span> <span class="n">blue</span><span class="p">:</span>
-            <span class="n">lex_min_blue</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">blue</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">()))</span>
+            <span class="n">lex_min_blue</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">blue</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">get_prefix</span><span class="p">()))</span>
             <span class="n">merged</span> <span class="o">=</span> <span class="kc">False</span>
 
             <span class="k">for</span> <span class="n">q_r</span> <span class="ow">in</span> <span class="n">red</span><span class="p">:</span>
@@ -709,7 +709,7 @@
                     <span class="k">if</span> <span class="n">s</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">red</span><span class="p">:</span>
                         <span class="n">blue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
 
-        <span class="k">assert</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">red</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">()))</span> <span class="o">==</span> <span class="n">red</span>
+        <span class="k">assert</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">red</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">get_prefix</span><span class="p">()))</span> <span class="o">==</span> <span class="n">red</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="n">red</span><span class="p">)</span>
 
@@ -739,7 +739,7 @@
                 <details>
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">red</span><span class="p">):</span>
-        <span class="n">red_sorted</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">red</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">()))</span>
+        <span class="n">red_sorted</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">red</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">get_prefix</span><span class="p">()))</span>
         <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">red_sorted</span><span class="p">:</span>
             <span class="n">r</span><span class="o">.</span><span class="n">children_prob</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>  <span class="c1"># Initializing in here saves many unnecessary initializations</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mc&#39;</span><span class="p">:</span>
@@ -773,7 +773,7 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimize_for</span> <span class="o">==</span> <span class="s1">&#39;memory&#39;</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">red_node</span>
         <span class="n">blue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">immutableTreeRoot</span>
-        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">red_node</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">red_node</span><span class="o">.</span><span class="n">get_prefix</span><span class="p">():</span>
             <span class="n">blue</span> <span class="o">=</span> <span class="n">blue</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">p</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">blue</span>
 </pre></div>
@@ -806,17 +806,17 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">automaton_state</span> <span class="o">=</span> <span class="n">s_c</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">state_id</span><span class="p">)</span>
 
-            <span class="n">automaton_state</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">()</span>
+            <span class="n">automaton_state</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">get_prefix</span><span class="p">()</span>
             <span class="n">states</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">automaton_state</span><span class="p">)</span>
-            <span class="n">red_mdp_map</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">())]</span> <span class="o">=</span> <span class="n">automaton_state</span>
+            <span class="n">red_mdp_map</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">get_prefix</span><span class="p">())]</span> <span class="o">=</span> <span class="n">automaton_state</span>
             <span class="n">red_mdp_map</span><span class="p">[</span><span class="n">automaton_state</span><span class="o">.</span><span class="n">state_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">s</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">s</span><span class="o">.</span><span class="n">get_prefix</span><span class="p">():</span>
                 <span class="n">initial_state</span> <span class="o">=</span> <span class="n">automaton_state</span>
 
         <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">states</span><span class="p">:</span>
             <span class="n">red_eq</span> <span class="o">=</span> <span class="n">red_mdp_map</span><span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">state_id</span><span class="p">]</span>
             <span class="k">for</span> <span class="n">io</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">red_eq</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="n">destination</span> <span class="o">=</span> <span class="n">red_mdp_map</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">getPrefix</span><span class="p">())]</span>
+                <span class="n">destination</span> <span class="o">=</span> <span class="n">red_mdp_map</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">get_prefix</span><span class="p">())]</span>
                 <span class="n">i</span> <span class="o">=</span> <span class="n">io</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mc&#39;</span> <span class="k">else</span> <span class="n">io</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">automaton_type</span> <span class="o">==</span> <span class="s1">&#39;mdp&#39;</span><span class="p">:</span>
                     <span class="n">s</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">destination</span><span class="p">,</span> <span class="n">red_eq</span><span class="o">.</span><span class="n">children_prob</span><span class="p">[</span><span class="n">io</span><span class="p">]))</span>

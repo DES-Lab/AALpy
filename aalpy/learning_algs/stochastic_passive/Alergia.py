@@ -54,7 +54,7 @@ class Alergia:
         return True
 
     def merge(self, red_state, blue_state):
-        b_prefix = blue_state.getPrefix()
+        b_prefix = blue_state.prefix
         to_update = self.mutableTreeRoot
         for p in b_prefix[:-1]:
             to_update = to_update.children[p]
@@ -63,14 +63,30 @@ class Alergia:
 
         self.fold(red_state, blue_state)
 
+    # recursive version
     def fold(self, red, blue):
-        for i, c in blue.children.items():
-            if i in red.children.keys():
+        for i, blue_child in blue.children.items():
+            if i in red.children:
                 red.input_frequency[i] += blue.input_frequency[i]
-                self.fold(red.children[i], blue.children[i])
+                self.fold(red.children[i], blue_child)
             else:
                 red.children[i] = blue.children[i]
                 red.input_frequency[i] = blue.input_frequency[i]
+
+    # iterative fold alternative to recursive fold
+    # def fold_iterative(self, red, blue):
+    #     queue = deque([(red, blue)])
+    #
+    #     while queue:
+    #         red_node, blue_node = queue.popleft()
+    #
+    #         for i, blue_child in blue_node.children.items():
+    #             if i in red_node.children:
+    #                 red_node.input_frequency[i] += blue_node.input_frequency[i]
+    #                 queue.append((red_node.children[i], blue_child))
+    #             else:
+    #                 red_node.children[i] = blue_child
+    #                 red_node.input_frequency[i] = blue_node.input_frequency[i]
 
     def run(self):
         start_time = time.time()
@@ -102,7 +118,7 @@ class Alergia:
                     if s not in red:
                         blue.append(s)
 
-        assert sorted(red, key=lambda x: len(x.getPrefix())) == red
+        assert sorted(red, key=lambda x: len(x.prefix)) == red
 
         self.normalize(red)
 
@@ -116,7 +132,7 @@ class Alergia:
         return self.to_automaton(red)
 
     def normalize(self, red):
-        red_sorted = sorted(list(red), key=lambda x: len(x.getPrefix()))
+        red_sorted = sorted(list(red), key=lambda x: len(x.prefix))
         for r in red_sorted:
             # Initializing in here saves many unnecessary initializations
             r.children_prob = dict()
@@ -132,7 +148,7 @@ class Alergia:
         if self.optimize_for == 'memory':
             return red_node
         blue = self.immutableTreeRoot
-        for p in red_node.getPrefix():
+        for p in red_node.prefix:
             blue = blue.children[p]
         return blue
 
@@ -149,17 +165,17 @@ class Alergia:
             else:
                 automaton_state = s_c(s.state_id)
 
-            automaton_state.prefix = s.getPrefix()
+            automaton_state.prefix = s.prefix
             states.append(automaton_state)
-            red_mdp_map[tuple(s.getPrefix())] = automaton_state
+            red_mdp_map[tuple(s.prefix)] = automaton_state
             red_mdp_map[automaton_state.state_id] = s
-            if not s.getPrefix():
+            if not s.prefix:
                 initial_state = automaton_state
 
         for s in states:
             red_eq = red_mdp_map[s.state_id]
             for io, c in red_eq.children.items():
-                destination = red_mdp_map[tuple(c.getPrefix())]
+                destination = red_mdp_map[tuple(c.prefix)]
                 i = io if self.automaton_type == 'mc' else io[0]
                 if self.automaton_type == 'mdp':
                     s.transitions[i].append((destination, red_eq.children_prob[io]))
