@@ -1,10 +1,10 @@
 import random
-import os
+
 import aalpy.paths
 from aalpy.SULs import MdpSUL
 from aalpy.automata.StochasticMealyMachine import smm_to_mdp_conversion
-from aalpy.learning_algs import run_Alergia, run_JAlergia
-from aalpy.utils import load_automaton_from_file, get_correct_prop_values, get_properties_file, visualize_automaton
+from aalpy.learning_algs import run_Alergia
+from aalpy.utils import load_automaton_from_file, get_correct_prop_values, get_properties_file
 from aalpy.utils import model_check_experiment
 
 path_to_dir = '../DotModels/MDPs/'

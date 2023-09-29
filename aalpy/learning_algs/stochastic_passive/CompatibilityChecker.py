@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from collections import defaultdict
 from math import sqrt, log
 
 from aalpy.learning_algs.stochastic_passive.FPTA import AlergiaPtaNode

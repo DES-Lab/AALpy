@@ -52,7 +52,7 @@ class RandomWordSampler(Sampler):
         return samples
 
 
-def run_active_Alergia(data, sul, sampler, n_iter, eps=0.005, compatibility_checker=None, automaton_type='mdp',
+def run_active_Alergia(data, sul, sampler, n_iter, eps=0.05, compatibility_checker=None, automaton_type='mdp',
                        print_info=True):
     """
     Active version of IOAlergia algorithm. Based on intermediate hypothesis sampling on the system is performed.
