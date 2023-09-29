@@ -38,7 +38,7 @@ class Alergia:
             return False
 
         # leaf nodes are merged
-        if not a.original_children or not b.original_children:
+        if not a.original_children.keys() or not b.original_children.keys():
             return True
 
         # if states are statistically different, do not merge
@@ -46,8 +46,8 @@ class Alergia:
             return False
 
         # check future for compatibility
-        for el in set(a.original_children).intersection(b.original_children):
-            if not self.compatibility_test(a.children[el], b.children[el]):
+        for el in set(a.original_children.keys()).intersection(b.original_children.keys()):
+            if not self.compatibility_test(a.original_children[el], b.original_children[el]):
                 return False
 
         return True

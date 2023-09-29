@@ -14,7 +14,7 @@ class AlergiaPtaNode:
         self.children = dict()
         # immutable values used for statistical computability check
         self.original_input_frequency = dict()
-        self.original_children = set()
+        self.original_children = dict()
         # # for visualization
         self.state_id = None
         self.children_prob = None
@@ -32,14 +32,13 @@ class AlergiaPtaNode:
         return {o: freq for (i, o), freq in self.input_frequency.items() if i == target_input}
 
     def get_immutable_inputs(self):
-        return {i for i, _ in self.original_children}
+        return {i for i, _ in self.original_children.keys()}
 
     def get_immutable_input_frequency(self, target_input):
         return sum(freq for (i, _), freq in self.original_input_frequency.items() if i == target_input)
 
     def get_original_output_frequencies(self, target_input):
         return {o: freq for (i, o), freq in self.original_input_frequency.items() if i == target_input}
-
 
     def __lt__(self, other):
         return (len(self.prefix), self.prefix) < (len(other.prefix), other.prefix)
@@ -52,7 +51,6 @@ class AlergiaPtaNode:
 
 
 def create_fpta(data, automaton_type):
-
     # in case of SMM, there is no initial input
     seq_iter_index = 0 if automaton_type == 'smm' else 1
 
@@ -78,7 +76,7 @@ def create_fpta(data, automaton_type):
 
                 reached_node = AlergiaPtaNode(out, curr_node.prefix + (el,))
                 curr_node.children[el] = reached_node
-                curr_node.original_children.add(el)
+                curr_node.original_children[el] = reached_node
 
                 curr_node.input_frequency[el] = 0
                 curr_node.original_input_frequency[el] = 0
