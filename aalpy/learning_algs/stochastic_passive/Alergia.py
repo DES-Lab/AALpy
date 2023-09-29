@@ -12,14 +12,11 @@ state_automaton_map = {'mc': (McState, MarkovChain), 'mdp': (MdpState, Mdp),
 
 
 class Alergia:
-    def __init__(self, data, automaton_type, eps=0.05, compatibility_checker=None, optimize_for='accuracy',
-                 print_info=False):
+    def __init__(self, data, automaton_type, eps=0.05, compatibility_checker=None, print_info=False):
         assert eps == 'auto' or 0 < eps <= 2
-        assert optimize_for in {'memory', 'accuracy'}
 
         self.automaton_type = automaton_type
         self.print_info = print_info
-        self.optimize_for = optimize_for
 
         if eps == 'auto':
             eps = 10 / sum(len(d) - 1 for d in data)  # len - 1 to ignore initial output
@@ -28,19 +25,20 @@ class Alergia:
 
         pta_start = time.time()
 
-        self.mutableTreeRoot, self.immutableTreeRoot = create_fpta(data, automaton_type, optimize_for)
+        self.fpta = create_fpta(data, automaton_type)
 
         pta_time = round(time.time() - pta_start, 2)
         if self.print_info:
             print(f'PTA Construction Time:  {pta_time}')
 
     def compatibility_test(self, a, b):
+
         # for MDPs and MC output of the state needs to be the same
         if self.automaton_type != 'smm' and a.output != b.output:
             return False
 
         # leaf nodes are merged
-        if not a.children.values() or not b.children.values():
+        if not a.original_children or not b.original_children:
             return True
 
         # if states are statistically different, do not merge
@@ -48,7 +46,7 @@ class Alergia:
             return False
 
         # check future for compatibility
-        for el in set(a.children.keys()).intersection(b.children.keys()):
+        for el in set(a.original_children).intersection(b.original_children):
             if not self.compatibility_test(a.children[el], b.children[el]):
                 return False
 
@@ -56,7 +54,7 @@ class Alergia:
 
     def merge(self, red_state, blue_state):
         b_prefix = blue_state.prefix
-        to_update = self.mutableTreeRoot
+        to_update = self.fpta
         for p in b_prefix[:-1]:
             to_update = to_update.children[p]
 
@@ -94,9 +92,9 @@ class Alergia:
         start_time = time.time()
 
         # representative nodes that will be included in the final output model
-        red = [self.mutableTreeRoot]
+        red = [self.fpta]
         # intermediate successors scheduled for testing
-        blue = self.mutableTreeRoot.successors()
+        blue = self.fpta.successors()
 
         while blue:
             # get lexicographically minimal blue node (one with the shortest prefix)
@@ -104,8 +102,7 @@ class Alergia:
             merged = False
 
             for red_state in red:
-                if self.compatibility_test(self.get_node_for_statistical_check(red_state),
-                                           self.get_node_for_statistical_check(lex_min_blue)):
+                if self.compatibility_test(red_state, lex_min_blue):
                     self.merge(red_state, lex_min_blue)
                     merged = True
                     break
@@ -146,14 +143,6 @@ class Alergia:
                 for i, o in r.input_frequency.keys():
                     r.children_prob[(i, o)] = r.input_frequency[(i, o)] / r.get_input_frequency(i)
 
-    def get_node_for_statistical_check(self, red_node):
-        if self.optimize_for == 'memory':
-            return red_node
-        blue = self.immutableTreeRoot
-        for p in red_node.prefix:
-            blue = blue.children[p]
-        return blue
-
     def to_automaton(self, red):
         s_c = state_automaton_map[self.automaton_type][0]
         a_c = state_automaton_map[self.automaton_type][1]
@@ -191,7 +180,7 @@ class Alergia:
         return a_c(initial_state, states)
 
 
-def run_Alergia(data, automaton_type, eps=0.05, compatibility_checker=None, optimize_for='accuracy', print_info=False):
+def run_Alergia(data, automaton_type, eps=0.05, compatibility_checker=None, print_info=False):
     """
     Run Alergia or IOAlergia on provided data.
 
@@ -208,8 +197,6 @@ def run_Alergia(data, automaton_type, eps=0.05, compatibility_checker=None, opti
         automaton_type: either 'mdp' if you wish to learn an MDP, 'mc' if you want to learn Markov Chain, or 'smm' if
         you want to learn stochastic Mealy machine
 
-        optimize_for: either 'memory' or 'accuracy'. memory will use 50% less memory, but will be more inaccurate.
-
         compatibility_checker: impl. of class CompatibilityChecker, HoeffdingCompatibility with eps value by default
 
         (note: not interchangeable, depends on data)
@@ -220,10 +207,10 @@ def run_Alergia(data, automaton_type, eps=0.05, compatibility_checker=None, opti
         mdp, smm, or markov chain
     """
     assert automaton_type in {'mdp', 'mc', 'smm'}
-    alergia = Alergia(data, eps=eps, automaton_type=automaton_type, optimize_for=optimize_for,
+    alergia = Alergia(data, eps=eps, automaton_type=automaton_type,
                       compatibility_checker=compatibility_checker, print_info=print_info)
     model = alergia.run()
-    del alergia.mutableTreeRoot, alergia.immutableTreeRoot, alergia
+    del alergia.fpta, alergia
     return model
 
 
