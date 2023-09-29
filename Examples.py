@@ -648,8 +648,7 @@ def alergia_mdp_example():
     from aalpy.learning_algs import run_Alergia
     from aalpy.utils import generate_random_mdp
 
-    mdp = generate_random_mdp(5, 2, 5)
-    mdp.visualize(path='Original')
+    mdp = generate_random_mdp(5, 2, 3)
     sul = MdpSUL(mdp)
     inputs = mdp.get_input_alphabet()
 
@@ -677,8 +676,7 @@ def alergia_smm_example():
     from aalpy.learning_algs import run_Alergia
     from aalpy.utils import generate_random_smm
 
-    smm = generate_random_smm(5, 2, 5)
-    smm.visualize('Original')
+    smm = generate_random_smm(5, 2, 2)
     sul = StochasticMealySUL(smm)
     inputs = smm.get_input_alphabet()
 
