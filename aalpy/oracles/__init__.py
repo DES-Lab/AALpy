@@ -10,3 +10,4 @@ from .UserInputEqOracle import UserInputEqOracle
 from .WMethodEqOracle import RandomWMethodEqOracle, WMethodEqOracle
 from .PacOracle import PacOracle
 from .ProvidedSequencesOracleWrapper import ProvidedSequencesOracleWrapper
+from .PerfectKnowledgeEqOracle import PerfectKnowledgeEqOracle
