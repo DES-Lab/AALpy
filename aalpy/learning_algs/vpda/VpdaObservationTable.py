@@ -1,9 +1,10 @@
 from collections import defaultdict
 
+from aalpy.automata.Vpa import VpaTransition
 from aalpy.base import Automaton, SUL
-from aalpy.automata import Dfa, DfaState, MealyState, MealyMachine, MooreMachine, MooreState
+from aalpy.automata import Vpa, VpaState
 
-aut_type = ['dfa', 'mealy', 'moore', 'pda']
+aut_type = ['pda', 'vpa']
 closing_options = ['shortest_first', 'longest_first', 'single', 'single_longest']
 
 
@@ -21,17 +22,31 @@ class VpdaObservationTable:
         Returns:
 
         """
+
         assert automaton_type in aut_type
         assert alphabet is not None and sul is not None
         self.automaton_type = automaton_type
 
+        if self.automaton_type == 'vpa':
+            self.call_set = alphabet[0]
+            self.return_set = alphabet[1]
+            self.internal_set = alphabet[2]
+            self.merged_alphabet = list()
+            self.merged_alphabet.extend(alphabet[0])
+            self.merged_alphabet.extend(alphabet[1])
+            self.merged_alphabet.extend(alphabet[2])
+
         # If True add prefixes of each element of E set to a cell, else only add the output
         self.prefixes_in_cell = prefixes_in_cell
 
-        self.A = [tuple([a]) for a in alphabet]
+        if automaton_type == 'vpa':
+            self.A = [tuple(a) for a in self.merged_alphabet]
+        else:
+            self.A = [tuple([a]) for a in alphabet]
+
         self.S = list()  # prefixes of S
         # DFA's can also take whole alphabet in E, this convention follows Angluin's paper
-        self.E = [] if self.automaton_type != 'mealy' else [tuple([a]) for a in alphabet]
+        self.E = []
         # For performance reasons, the T function maps S to a tuple where element at index i is the element of the E
         # set of index i. Therefore it is important to keep E set ordered and ask membership queries only when needed
         # and in correct order. It would make more sense to implement it as a defaultdict(dict) where you can access
@@ -43,8 +58,7 @@ class VpdaObservationTable:
         self.S.append(empty_word)
 
         # DFAs and Moore machines use empty word for identification of accepting states/state outputs
-        if self.automaton_type == 'dfa' or self.automaton_type == 'moore':
-            self.E.insert(0, empty_word)
+        self.E.insert(0, empty_word)
 
     def get_rows_to_close(self, closing_strategy='longest_first'):
         """
@@ -147,11 +161,36 @@ class VpdaObservationTable:
             for e in update_E:
                 if len(self.T[s]) != len(self.E):
                     output = tuple(self.sul.query(s + e))
+                    # print(f'Output ({s} + {e}): {output}')
                     if self.prefixes_in_cell and len(e) > 1:
                         obs_table_entry = tuple([output[-len(e):]],)
                     else:
                         obs_table_entry = (output[-1],)
                     self.T[s] += obs_table_entry
+
+    def get_action_type(self, letter) -> str:
+        if letter in self.call_set:
+            return 'push'
+        elif letter in self.return_set:
+            return 'pop'
+        elif letter in self.internal_set:
+            return ''
+        else:
+            assert False
+
+    def get_stack_guard(self, prefix, letter, action):
+        """
+
+        TODO: Finish this
+
+        """
+        out = self.sul.query(prefix + letter)
+        # if action == 'push':
+        #     print(f'Push {out}')
+        # elif action == 'pop':
+        #     out_pre = self.sul.query(prefix)
+        #     print(f'Out Pre: {out_pre} + Out Now: {out}')
+        return '?'
 
     def gen_hypothesis(self, no_cex_processing_used=False) -> Automaton:
         """
@@ -170,7 +209,7 @@ class VpdaObservationTable:
         state_distinguish = dict()
         states_dict = dict()
         initial_state = None
-        automaton_class = {'dfa': Dfa, 'mealy': MealyMachine, 'moore': MooreMachine}
+        automaton_class = {'vpa': Vpa}
 
         s_set = self.S
         # Added check for the algorithm without counterexample processing
@@ -182,13 +221,17 @@ class VpdaObservationTable:
         for prefix in s_set:
             state_id = f's{stateCounter}'
 
-            if self.automaton_type == 'dfa':
-                states_dict[prefix] = DfaState(state_id)
+            # if self.automaton_type == 'dfa':
+            #     states_dict[prefix] = DfaState(state_id)
+            #     states_dict[prefix].is_accepting = self.T[prefix][0]
+            # elif self.automaton_type == 'moore':
+            #     states_dict[prefix] = MooreState(state_id, output=self.T[prefix][0])
+            # else:
+            #     states_dict[prefix] = MealyState(state_id)
+
+            if self.automaton_type == 'vpa':
+                states_dict[prefix] = VpaState(state_id)
                 states_dict[prefix].is_accepting = self.T[prefix][0]
-            elif self.automaton_type == 'moore':
-                states_dict[prefix] = MooreState(state_id, output=self.T[prefix][0])
-            else:
-                states_dict[prefix] = MealyState(state_id)
 
             states_dict[prefix].prefix = prefix
             state_distinguish[tuple(self.T[prefix])] = states_dict[prefix]
@@ -198,14 +241,31 @@ class VpdaObservationTable:
             stateCounter += 1
 
         # add transitions based on extended S set
+        # print("--- Creating Transitions for Hypothesis ---")
         for prefix in s_set:
             for a in self.A:
-                state_in_S = state_distinguish[self.T[prefix + a]]
-                states_dict[prefix].transitions[a[0]] = state_in_S
-                if self.automaton_type == 'mealy':
-                    states_dict[prefix].output_fun[a[0]] = self.T[prefix][self.E.index(a)]
+                prev_state = state_distinguish[self.T[prefix]]
+                target_state = state_distinguish[self.T[prefix + a]]
+                action = self.get_action_type(a[0])
+                stack_guard = self.get_stack_guard(prefix, a, action)
+                # print(f'Transition : {prefix} + {a[0]} --> {target_state.state_id}')
 
-        automaton = automaton_class[self.automaton_type](initial_state, list(states_dict.values()))
+                trans = VpaTransition(start=prev_state, target=target_state, symbol=a[0], action=action, stack_guard=stack_guard)
+
+                # trans = VpaTransition(start=state, target=states[target_state_id], symbol=_input, action=action,
+                #                       stack_guard=stack_guard)
+                # state.transitions[_input].append(trans)
+
+                states_dict[prefix].transitions[a[0]].append(trans)
+
+                # if self.automaton_type == 'mealy':
+                #     states_dict[prefix].output_fun[a[0]] = self.T[prefix][self.E.index(a)]
+
+        if self.automaton_type == 'vpa':
+            automaton = automaton_class[self.automaton_type](initial_state, list(states_dict.values()), self.call_set, self.return_set, self.internal_set)
+        else:
+            automaton = automaton_class[self.automaton_type](initial_state, list(states_dict.values()))
+
         automaton.characterization_set = self.E
 
         return automaton

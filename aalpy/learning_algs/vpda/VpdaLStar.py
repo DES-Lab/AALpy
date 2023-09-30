@@ -64,6 +64,11 @@ def run_vpda_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, 
     assert cex_processing in counterexample_processing_strategy
     assert print_level in print_options
 
+    merged_alphabet = list()
+    merged_alphabet.extend(alphabet[0])
+    merged_alphabet.extend(alphabet[1])
+    merged_alphabet.extend(alphabet[2])
+
     if cache_and_non_det_check or samples is not None:
         # Wrap the sul in the CacheSUL, so that all steps/queries are cached
         sul = CacheSUL(sul)
@@ -102,7 +107,7 @@ def run_vpda_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, 
             rows_to_query = []
             for row in rows_to_close:
                 observation_table.S.append(row)
-                rows_to_query.extend([row + (a,) for a in alphabet])
+                rows_to_query.extend([row + (a,) for a in merged_alphabet])
             observation_table.update_obs_table(s_set=rows_to_query)
             rows_to_close = observation_table.get_rows_to_close(closing_strategy)
 
@@ -139,7 +144,7 @@ def run_vpda_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, 
             added_rows = extend_set(observation_table.S, all_prefixes(cex))
             s_to_update.extend(added_rows)
             for p in added_rows:
-                s_to_update.extend([p + (a,) for a in alphabet])
+                s_to_update.extend([p + (a,) for a in merged_alphabet])
 
             observation_table.update_obs_table(s_set=s_to_update)
             continue

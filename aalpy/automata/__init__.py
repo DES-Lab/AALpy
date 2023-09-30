@@ -6,3 +6,4 @@ from .Onfsm import Onfsm, OnfsmState
 from .StochasticMealyMachine import StochasticMealyMachine, StochasticMealyState
 from .MarkovChain import MarkovChain, McState
 from .Pda import Pda
+from .Vpa import Vpa, VpaState

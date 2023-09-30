@@ -1,5 +1,5 @@
 from aalpy.base import SUL
-from aalpy.automata import Dfa, MealyMachine, MooreMachine, Onfsm, Mdp, StochasticMealyMachine, MarkovChain, Pda
+from aalpy.automata import Dfa, MealyMachine, MooreMachine, Onfsm, Mdp, StochasticMealyMachine, MarkovChain, Pda, Vpa
 
 
 class DfaSUL(SUL):
@@ -184,6 +184,29 @@ class PdaSUL(SUL):
         top = self.pda.top()
         if self.include_top:
             if self.check_balance and self.pda.call_balance < 0:
+                return output, '-'
+            return output, top
+        return output
+
+
+class VpaSUL(SUL):
+    def __init__(self, vpa: Vpa, include_top=True, check_balance=True):
+        super().__init__()
+        self.vpa = vpa
+        self.include_top = include_top
+        self.check_balance = check_balance
+
+    def pre(self):
+        self.vpa.reset_to_initial()
+
+    def post(self):
+        pass
+
+    def step(self, letter):
+        output = self.vpa.step(letter)
+        top = self.vpa.top()
+        if self.include_top:
+            if self.check_balance and self.vpa.call_balance < 0:
                 return output, '-'
             return output, top
         return output
