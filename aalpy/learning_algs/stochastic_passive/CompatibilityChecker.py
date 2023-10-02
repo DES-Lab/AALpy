@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from collections import defaultdict
 from math import sqrt, log
 
 from aalpy.learning_algs.stochastic_passive.FPTA import AlergiaPtaNode
@@ -35,16 +34,17 @@ class HoeffdingCompatibility(CompatibilityChecker):
         return False
 
     def are_states_different(self, a: AlergiaPtaNode, b: AlergiaPtaNode, **kwargs):
+
         # no data available for any node
-        if len(a.input_frequency) * len(b.input_frequency) == 0:
+        if len(a.original_input_frequency) * len(b.original_children) == 0:
             return False
 
         # assuming tuples are used for IOAlergia and not as Alergia outputs
-        if not isinstance(list(a.input_frequency.keys())[0], tuple):
-            return self.hoeffding_bound(a.input_frequency, b.input_frequency)
+        if not isinstance(list(a.original_input_frequency.keys())[0], tuple):
+            return self.hoeffding_bound(a.original_input_frequency, b.original_input_frequency)
 
         # IOAlergia: check hoeffding bound conditioned on inputs
-        for i in a.get_inputs().intersection(b.get_inputs()):
-            if self.hoeffding_bound(a.get_output_frequencies(i), b.get_output_frequencies(i)):
+        for i in a.get_immutable_inputs().intersection(b.get_immutable_inputs()):
+            if self.hoeffding_bound(a.get_original_output_frequencies(i), b.get_original_output_frequencies(i)):
                 return True
         return False
