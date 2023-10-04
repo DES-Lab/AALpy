@@ -161,7 +161,6 @@ class VpdaObservationTable:
             for e in update_E:
                 if len(self.T[s]) != len(self.E):
                     output = tuple(self.sul.query(s + e))
-                    # print(f'Output ({s} + {e}): {output}')
                     if self.prefixes_in_cell and len(e) > 1:
                         obs_table_entry = tuple([output[-len(e):]],)
                     else:
@@ -181,16 +180,26 @@ class VpdaObservationTable:
     def get_stack_guard(self, prefix, letter, action):
         """
 
-        TODO: Finish this
+        Gets the stack guard based on the action and word (prefix + letter)
 
         """
         out = self.sul.query(prefix + letter)
-        # if action == 'push':
-        #     print(f'Push {out}')
-        # elif action == 'pop':
-        #     out_pre = self.sul.query(prefix)
-        #     print(f'Out Pre: {out_pre} + Out Now: {out}')
-        return '?'
+        out_pre = self.sul.query(prefix)
+        if action == 'push':
+            if out_pre[-1][1] == out[-1][1] and out_pre[-1][1] == '_':  # stack doesn't change on push action
+                stack_guard = '?'
+            else:                           # stack changed so we know the push action worked
+                stack_guard = out[-1][1]
+        elif action == 'pop':
+            if out_pre[-1][1] == out[-1][1]:  # stack doesn't change on pop action
+                stack_guard = '?'
+            else:                           # stack changed so we know the pop operation worked
+                stack_guard = out_pre[-1][1]
+        else:
+            stack_guard = ''
+
+        return stack_guard
+
 
     def gen_hypothesis(self, no_cex_processing_used=False) -> Automaton:
         """
@@ -221,17 +230,8 @@ class VpdaObservationTable:
         for prefix in s_set:
             state_id = f's{stateCounter}'
 
-            # if self.automaton_type == 'dfa':
-            #     states_dict[prefix] = DfaState(state_id)
-            #     states_dict[prefix].is_accepting = self.T[prefix][0]
-            # elif self.automaton_type == 'moore':
-            #     states_dict[prefix] = MooreState(state_id, output=self.T[prefix][0])
-            # else:
-            #     states_dict[prefix] = MealyState(state_id)
-
-            if self.automaton_type == 'vpa':
-                states_dict[prefix] = VpaState(state_id)
-                states_dict[prefix].is_accepting = self.T[prefix][0]
+            states_dict[prefix] = VpaState(state_id)
+            states_dict[prefix].is_accepting = self.T[prefix][0][0]
 
             states_dict[prefix].prefix = prefix
             state_distinguish[tuple(self.T[prefix])] = states_dict[prefix]
@@ -240,26 +240,16 @@ class VpdaObservationTable:
                 initial_state = states_dict[prefix]
             stateCounter += 1
 
-        # add transitions based on extended S set
-        # print("--- Creating Transitions for Hypothesis ---")
         for prefix in s_set:
             for a in self.A:
                 prev_state = state_distinguish[self.T[prefix]]
                 target_state = state_distinguish[self.T[prefix + a]]
                 action = self.get_action_type(a[0])
                 stack_guard = self.get_stack_guard(prefix, a, action)
-                # print(f'Transition : {prefix} + {a[0]} --> {target_state.state_id}')
-
+                if stack_guard == '?':
+                    target_state = Vpa.error_state
                 trans = VpaTransition(start=prev_state, target=target_state, symbol=a[0], action=action, stack_guard=stack_guard)
-
-                # trans = VpaTransition(start=state, target=states[target_state_id], symbol=_input, action=action,
-                #                       stack_guard=stack_guard)
-                # state.transitions[_input].append(trans)
-
                 states_dict[prefix].transitions[a[0]].append(trans)
-
-                # if self.automaton_type == 'mealy':
-                #     states_dict[prefix].output_fun[a[0]] = self.T[prefix][self.E.index(a)]
 
         if self.automaton_type == 'vpa':
             automaton = automaton_class[self.automaton_type](initial_state, list(states_dict.values()), self.call_set, self.return_set, self.internal_set)

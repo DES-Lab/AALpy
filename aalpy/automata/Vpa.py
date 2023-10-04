@@ -67,9 +67,20 @@ class Vpa(Automaton):
             return True
         if letter is not None:
             transitions = self.current_state.transitions[letter]
-            trans = [t for t in transitions if t.stack_guard is None or self.top() == t.stack_guard]
-            assert len(trans) < 2
-            if len(trans) == 0:
+            possible_trans = []
+            for t in transitions:
+                if t.symbol in self.call_set:
+                    possible_trans.append(t)
+                elif t.symbol in self.return_set:
+                    if t.stack_guard == self.top():
+                        possible_trans.append(t)
+                elif t.symbol in self.internal_set:
+                    possible_trans.append(t)
+                else:
+                    assert False
+            # trans = [t for t in transitions if t.stack_guard is None or self.top() == t.stack_guard]
+            assert len(possible_trans) < 2
+            if len(possible_trans) == 0:
                 return False
             else:
                 return True
@@ -83,11 +94,24 @@ class Vpa(Automaton):
             return False
         if letter is not None:
             transitions = self.current_state.transitions[letter]
-            trans = [t for t in transitions if t.stack_guard is None or self.top() == t.stack_guard][0]
+            possible_trans = []
+            for t in transitions:
+                if t.symbol in self.call_set:
+                    possible_trans.append(t)
+                elif t.symbol in self.return_set:
+                    if t.stack_guard == self.top():
+                        possible_trans.append(t)
+                elif t.symbol in self.internal_set:
+                    possible_trans.append(t)
+                else:
+                    assert False
+
+            assert len(possible_trans) < 2
+            trans = possible_trans[0]
             self.current_state = trans.target
             if trans.action == 'push':
                 assert(letter in self.call_set)     # push letters must be in call set
-                self.stack.append(letter)
+                self.stack.append(trans.stack_guard)
             elif trans.action == 'pop':
                 assert(letter in self.return_set)     # pop letters must be in return set
                 if len(self.stack) <= 1:  # empty stack elem should always be there

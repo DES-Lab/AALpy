@@ -107,15 +107,17 @@ def _add_transition_to_graph(graph, state, automaton_type, display_same_state_tr
         for i in state.transitions.keys():
             transitions_list = state.transitions[i]
             for transition in transitions_list:
-                if transition.action is None:
-                    graph.add_edge(Edge(transition.start.state_id, transition.target.state_id,
-                                        label=_wrap_label(f'{transition.symbol}')))
                 if transition.action == 'push':
-                    graph.add_edge(Edge(transition.start.state_id, transition.target.state_id,
-                                        label=_wrap_label(f'{transition.symbol} | push({transition.stack_guard})')))
-                if transition.action == 'pop':
-                    graph.add_edge(Edge(transition.start.state_id, transition.target.state_id,
-                                        label=_wrap_label(f'{transition.symbol} | pop({transition.stack_guard})')))
+                    edge = Edge(transition.start.state_id, transition.target.state_id, label=_wrap_label(f'{transition.symbol} | push({transition.stack_guard})'))
+                elif transition.action == 'pop':
+                    edge = Edge(transition.start.state_id, transition.target.state_id, label=_wrap_label(f'{transition.symbol} | pop({transition.stack_guard})'))
+                else:
+                    edge = Edge(transition.start.state_id, transition.target.state_id, label=_wrap_label(f'{transition.symbol}'))
+
+                if transition.target == Vpa.error_state:
+                    edge.set_style('dashed')
+
+                graph.add_edge(edge)
 
 
 def visualize_automaton(automaton, path="LearnedModel", file_type="pdf", display_same_state_trans=True):
@@ -183,8 +185,8 @@ def save_automaton_to_file(automaton, path="LearnedModel", file_type="dot",
     for state in automaton.states:
         if automaton_type == 'pda' and state.state_id == 'ErrorSinkState':
             continue
-        elif automaton_type == 'vpa' and state.state_id == 'ErrorSinkState':
-            continue
+        # elif automaton_type == 'vpa' and state.state_id == 'ErrorSinkState':
+        #     continue
         graph.add_node(_get_node(state, automaton_type))
 
     for state in automaton.states:

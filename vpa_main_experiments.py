@@ -15,6 +15,7 @@ merged_input_alphabet = vpa.get_input_alphabet_merged()
 # print("Call: " + str(input_alphabet[0]) + "\nReturn: " + str(input_alphabet[1]) + "\nInternal: " + str(input_alphabet[2]))
 
 sul = VpaSUL(vpa, include_top=True, check_balance=True)
+out = sul.query('a')
 
 # pda_sequences = generate_data_from_pda(vpa, 10000)
 # accepting_seq, rejecting_seq = [x[0] for x in pda_sequences if x[1]], [x[0] for x in pda_sequences if not x[1]]
