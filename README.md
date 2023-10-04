@@ -88,7 +88,8 @@ For more detailed examples, check out:
 
 The following snippet demonstrates a short example in which an automaton is either [loaded](https://github.com/DES-Lab/AALpy/wiki/Loading,Saving,-Syntax-and-Visualization-of-Automata) or [randomly generated](https://github.com/DES-Lab/AALpy/wiki/Generation-of-Random-Automata) and then [learned](https://github.com/DES-Lab/AALpy/wiki/Setting-Up-Learning).
 ```python
-from aalpy.utils import load_automaton_from_file, save_automaton_to_file, visualize_automaton, generate_random_dfa, dfa_from_state_setup
+from aalpy.utils import load_automaton_from_file, save_automaton_to_file, visualize_automaton, generate_random_dfa
+from aalpy.automata import Dfa
 from aalpy.SULs import DfaSUL
 from aalpy.oracles import RandomWalkEqOracle
 from aalpy.learning_algs import run_Lstar, run_KV
@@ -104,8 +105,7 @@ dfa_state_setup = {
     'q3': (False, {'a': 'q2', 'b': 'q1'})
 }
 
-small_dfa = dfa_from_state_setup(dfa_state_setup)
-
+small_dfa = Dfa.from_state_setup(dfa_state_setup)
 # or randomly generate one
 random_dfa = generate_random_dfa(alphabet=[1,2,3,4,5],num_states=20, num_accepting_states=8)
 big_random_dfa = generate_random_dfa(alphabet=[1,2,3,4,5],num_states=2000, num_accepting_states=500)
