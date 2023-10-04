@@ -56,7 +56,6 @@ def create_fpta(data, automaton_type):
 
     initial_output = None if automaton_type == 'smm' else data[0][0]
 
-    # NOTE: This approach with _copy is not optimal, but a big time save from doing deep copy at the end
     root_node = AlergiaPtaNode(initial_output, ())
 
     for seq in data:
