@@ -59,7 +59,7 @@ class Node:
     __slots__ = ['transitions', 'prefix', 'transition_count']
 
     def __init__(self, prefix : Prefix):
-        self.transitions = defaultdict[Any, Dict[Any,Node]](dict)
+        self.transitions : dict[Any, Dict[Any,Node]] = dict()
         self.transition_count = defaultdict[Any, defaultdict[Any, int]](create_count_dict)
         self.prefix : Prefix = prefix
 
@@ -86,6 +86,12 @@ class Node:
 
     def __hash__(self):
         return id(self) # TODO This is a hack
+
+    def get_transitions_safe(self, in_sym):
+        if in_sym in self.transitions:
+            return self.transitions[in_sym]
+        t = self.transitions[in_sym] = dict()
+        return t
 
     def count(self):
         return sum((sum(items.values()) for items in self.transition_count.values()))
@@ -243,7 +249,7 @@ class Node:
         curr_node : Node = self
         for in_sym, out_sym in data:
             curr_node.transition_count[in_sym][out_sym] += 1
-            transitions = curr_node.transitions[in_sym]
+            transitions = curr_node.get_transitions_safe(in_sym)
             if out_sym not in transitions:
                 node = Node(curr_node.prefix + [IOPair(in_sym, out_sym)])
                 transitions[out_sym] = node
@@ -258,7 +264,7 @@ class Node:
         curr_node : Node = self
         for sym in seq:
             curr_node.transition_count[sym][None] += 1
-            t = curr_node.transitions[sym]
+            t = curr_node.get_transitions_safe(sym)
             if None not in t:
                 t[None] = Node(curr_node.prefix + [IOPair(sym, None)])
             curr_node = t[None]

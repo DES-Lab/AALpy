@@ -131,7 +131,7 @@ class GeneralizedStateMerging:
 
         if self.compatibility_behavior == "future":
             # TODO decouple from "future" -> option "compatibility_on_original_data"
-            self.pta_state_dictionary = {node : node.shallow_copy() for node in self.root.get_all_nodes()}
+            self.pta_state_dictionary : Dict[Node, Node] = {node : node.shallow_copy() for node in self.root.get_all_nodes()}
         self.debug.pta_construction_done(pta_construction_start)
 
         if transition_behavior == "deterministic":
@@ -185,18 +185,20 @@ class GeneralizedStateMerging:
         return self.root.to_automaton(self.output_behavior, self.transition_behavior)
 
     def _check_futures(self, red: Node, blue: Node) -> bool:
-        q = [(red,blue,None)]
+        q : List[Tuple[Node, Node, Any]]= [(red,blue,None)]
 
         while len(q) != 0:
             red, blue, info = q.pop(0)
-            red_to_compare, blue_to_compare = (self.pta_state_dictionary[x] for x in [red, blue])
+
+            red_to_compare = self.pta_state_dictionary[red]
+            blue_to_compare = self.pta_state_dictionary[blue]
 
             info = self.info_update(red_to_compare, blue_to_compare, info)
             if not self.local_merge_score(red_to_compare, blue_to_compare, info):
                 return False
 
             for in_sym, blue_transitions in blue_to_compare.transitions.items():
-                red_transitions = red_to_compare.transitions[in_sym]
+                red_transitions = red_to_compare.get_transitions_safe(in_sym)
                 for out_sym, blue_child in blue_transitions.items():
                     if out_sym in red_transitions.keys():
                         q.append((red_transitions[out_sym], blue_child, info))
@@ -224,8 +226,9 @@ class GeneralizedStateMerging:
                 partitions[blue_node] = p
             return p
 
-        node = update_partition(self.root.get_by_prefix(blue.prefix[:-1]), None)
-        node.transitions[blue.prefix[-1][0]][blue.prefix[-1][1]] = red
+        # rewire the blue node's parent
+        blue_parent = update_partition(self.root.get_by_prefix(blue.prefix[:-1]), None)
+        blue_parent.transitions[blue.prefix[-1][0]][blue.prefix[-1][1]] = red
 
         q : List[Tuple[Node,Node,Any]] = [(red, blue, None)]
 
@@ -239,7 +242,7 @@ class GeneralizedStateMerging:
                     return False, dict()
 
             for in_sym, blue_transitions in blue.transitions.items():
-                partition_transitions = partition.transitions[in_sym]
+                partition_transitions = partition.get_transitions_safe(in_sym)
                 for out_sym, blue_child in blue_transitions.items():
                     if out_sym in partition_transitions:
                         q.append((partition_transitions[out_sym], blue_child, info))
