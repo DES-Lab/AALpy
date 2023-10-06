@@ -2,8 +2,7 @@ import copy
 import pathlib
 from collections import defaultdict
 from functools import total_ordering
-from queue import Queue
-from typing import Set, Dict, Any, List, Tuple, Literal, Iterable, Callable, NamedTuple
+from typing import Dict, Any, List, Tuple, Literal, Iterable, Callable, NamedTuple
 import pydot
 
 from aalpy.automata import StochasticMealyMachine, StochasticMealyState, MooreState, MooreMachine, NDMooreState, \
@@ -28,6 +27,24 @@ def zero():
 def create_count_dict():
     return defaultdict(zero)
 
+def generate_values(base : list, step : Callable, backing_set=True):
+    if backing_set:
+        result = list(base)
+        control = set(base)
+        for val in result:
+            for new_val in step(val):
+                if new_val not in control:
+                    control.add(new_val)
+                    result.append(new_val)
+        return result
+    else:
+        result = list(base)
+        for val in result:
+            for new_val in step(val):
+                if new_val not in result:
+                    result.append(new_val)
+        return result
+
 @total_ordering
 class Node:
     """
@@ -39,7 +56,7 @@ class Node:
 
     Transition count is preferred over state count as it allows to easily count transitions for non-tree-shaped automata
     """
-    __slots__ = ['transitions', 'prefix', "transition_count"]
+    __slots__ = ['transitions', 'prefix', 'transition_count']
 
     def __init__(self, prefix : Prefix):
         self.transitions = defaultdict[Any, Dict[Any,Node]](dict)
@@ -82,7 +99,12 @@ class Node:
         node = Node(self.prefix)
         for in_sym, t in self.transitions.items():
             node.transitions[in_sym] = dict(t)
-        node.transition_count = copy.deepcopy(self.transition_count)
+
+        # Version 1
+        #node.transition_count = copy.deepcopy(self.transition_count)
+        # Version 2
+        for k,v in self.transition_count.items():
+            node.transition_count[k].update(v)
         return node
 
     def get_by_prefix(self, seq : Prefix) -> 'Node':
@@ -94,18 +116,10 @@ class Node:
         return node
 
     def get_all_nodes(self) -> List['Node']:
-        qu = Queue[Node]()
-        qu.put(self)
-        nodes_set = {self}
-        nodes = [self]
-        while not qu.empty():
-            state = qu.get()
+        def generator(state : Node):
             for _, child in state.transition_iterator():
-                if child not in nodes_set:
-                    qu.put(child)
-                    nodes_set.add(child)
-                    nodes.append(child)
-        return nodes
+                yield child
+        return generate_values([self], generator)
 
     def to_automaton(self, output_behavior : OutputBehavior, transition_behavior : TransitionBehavior, check_behavior = False) -> Automaton:
         nodes = self.get_all_nodes()

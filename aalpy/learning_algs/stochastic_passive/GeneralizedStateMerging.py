@@ -1,9 +1,7 @@
-import copy
 import typing
 from math import sqrt, log
-from queue import Queue
 import time
-from typing import Dict, Tuple, Callable, Any, Literal
+from typing import Dict, Tuple, Callable, Any, Literal, List
 
 from aalpy.learning_algs.stochastic_passive.helpers import Node, OutputBehavior, TransitionBehavior
 
@@ -186,11 +184,10 @@ class GeneralizedStateMerging:
         return self.root.to_automaton(self.output_behavior, self.transition_behavior)
 
     def _check_futures(self, red: Node, blue: Node) -> bool:
-        q = Queue[Tuple[Node, Node, Any]]()
-        q.put((red,blue,None))
+        q = [(red,blue,None)]
 
-        while not q.empty():
-            red, blue, info = q.get()
+        while len(q) != 0:
+            red, blue, info = q.pop(0)
             red_to_compare, blue_to_compare = (self.pta_state_dictionary[x] for x in [red, blue])
 
             info = self.info_update(red_to_compare, blue_to_compare, info)
@@ -201,7 +198,7 @@ class GeneralizedStateMerging:
                 red_transitions = red_to_compare.transitions[in_sym]
                 for out_sym, blue_child in blue_transitions.items():
                     if out_sym in red_transitions.keys():
-                        q.put((red_transitions[out_sym], blue_child, info))
+                        q.append((red_transitions[out_sym], blue_child, info))
         return True
 
     def _partition_from_merge(self, red: Node, blue: Node) -> Tuple[bool,Dict[Node, Node]] :
@@ -229,11 +226,10 @@ class GeneralizedStateMerging:
         node = update_partition(self.root.get_by_prefix(blue.prefix[:-1]), None)
         node.transitions[blue.prefix[-1][0]][blue.prefix[-1][1]] = red
 
-        q = Queue[Tuple[Node,Node,Any]]()
-        q.put((red, blue, None))
+        q : List[Tuple[Node,Node,Any]] = [(red, blue, None)]
 
-        while not q.empty():
-            red, blue, info = q.get()
+        while len(q) != 0:
+            red, blue, info = q.pop(0)
             partition = update_partition(red, blue)
 
             if self.compatibility_behavior == "partition":
@@ -245,7 +241,7 @@ class GeneralizedStateMerging:
                 partition_transitions = partition.transitions[in_sym]
                 for out_sym, blue_child in blue_transitions.items():
                     if out_sym in partition_transitions:
-                        q.put((partition_transitions[out_sym], blue_child, info))
+                        q.append((partition_transitions[out_sym], blue_child, info))
                     else:
                         # blue_child is blue after merging if there is a red state in the partition
                         partition_transitions[out_sym] = blue_child
