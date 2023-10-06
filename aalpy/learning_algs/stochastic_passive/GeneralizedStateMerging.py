@@ -69,11 +69,12 @@ class GeneralizedStateMerging:
         @lvl_required(1)
         def pta_construction_done(self, start_time):
             print(f'PTA Construction Time: {round(time.time() - start_time, 2)}')
-            states = self.instance.root.get_all_nodes()
-            leafs = [state for state in states if len(state.transitions.keys()) == 0]
-            depth = [len(state.prefix) for state in leafs]
-            print(f'PTA has {len(states)} states leading to {len(leafs)} leafs')
-            print(f'min / avg / max depth : {min(depth)} / {sum(depth) / len(depth)} / {max(depth)}')
+            if self.lvl != 1:
+                states = self.instance.root.get_all_nodes()
+                leafs = [state for state in states if len(state.transitions.keys()) == 0]
+                depth = [len(state.prefix) for state in leafs]
+                print(f'PTA has {len(states)} states leading to {len(leafs)} leafs')
+                print(f'min / avg / max depth : {min(depth)} / {sum(depth) / len(depth)} / {max(depth)}')
 
         @lvl_required(1)
         def log_promote(self, node : Node, red_states):
@@ -122,16 +123,16 @@ class GeneralizedStateMerging:
         pta_construction_start = time.time()
         self.root: Node
         if isinstance(data, Node):
-            self.root = data#copy.deepcopy(data)
+            self.root = data
         elif output_behavior == "moore":
             self.root = Node.createPTA([d[1:] for d in data], data[0][0])
         else :
             self.root = Node.createPTA(data)
-        self.debug.pta_construction_done(pta_construction_start)
 
         if self.compatibility_behavior == "future":
             # TODO decouple from "future" -> option "compatibility_on_original_data"
             self.pta_state_dictionary = {node : node.shallow_copy() for node in self.root.get_all_nodes()}
+        self.debug.pta_construction_done(pta_construction_start)
 
         if transition_behavior == "deterministic":
             if not self.root.is_deterministic():
@@ -254,4 +255,4 @@ class GeneralizedStateMerging:
         return True, remaining_nodes
 
 def runAlergia(data, output_behavior : OutputBehavior = "moore", epsilon : float = 0.005) :
-    return GeneralizedStateMerging(data, output_behavior, "stochastic", "future", hoeffding_compatibility(epsilon)).run()
+    return GeneralizedStateMerging(data, output_behavior, "stochastic", "future", hoeffding_compatibility(epsilon), debug_lvl=1).run()
