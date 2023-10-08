@@ -207,9 +207,9 @@ class GeneralizedStateMerging:
             for in_sym, blue_transitions in blue.transitions.items():
                 red_transitions = red.get_transitions_safe(in_sym)
                 for out_sym, blue_child in blue_transitions.items():
-                    if out_sym not in red_transitions.keys():
+                    red_child = red_transitions.get(out_sym)
+                    if red_child is None:
                         continue
-                    red_child = red_transitions[out_sym]
                     if self.eval_compat_on_pta:
                         if blue_child.original_count == 0 or red_child.original_count == 0:
                             continue
@@ -259,8 +259,8 @@ class GeneralizedStateMerging:
             for in_sym, blue_transitions in blue.transitions.items():
                 partition_transitions = partition.get_transitions_safe(in_sym)
                 for out_sym, blue_transition in blue_transitions.items():
-                    if out_sym in partition_transitions.keys():
-                        partition_transition = partition_transitions[out_sym]
+                    partition_transition = partition_transitions.get(out_sym)
+                    if partition_transition is not None:
                         q.append((partition_transition.target, blue_transition.target, info))
                         partition_transition.count += blue_transition.count
                     else:

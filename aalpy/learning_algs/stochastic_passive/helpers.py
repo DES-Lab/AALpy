@@ -89,9 +89,10 @@ class Node:
         return id(self) # TODO This is a hack
 
     def get_transitions_safe(self, in_sym) -> Dict[Any, TransitionInfo]:
-        if in_sym in self.transitions:
-            return self.transitions[in_sym]
-        t = self.transitions[in_sym] = dict()
+        t = self.transitions.get(in_sym)
+        if t is None:
+            t = dict()
+            self.transitions[in_sym] = t
         return t
 
     def transition_iterator(self) -> Iterable[Tuple[Tuple[Any, Any], TransitionInfo]]:
@@ -257,11 +258,11 @@ class Node:
         curr_node : Node = self
         for in_sym, out_sym in data:
             transitions = curr_node.get_transitions_safe(in_sym)
-            if out_sym not in transitions:
+            info = transitions.get(out_sym)
+            if info is None:
                 node = Node(curr_node.prefix + [IOPair(in_sym, out_sym)])
                 transitions[out_sym] = TransitionInfo(node,1, node, 1)
             else:
-                info = transitions[out_sym]
                 info.count += 1
                 info.original_count += 1
                 node = info.target
@@ -284,7 +285,7 @@ class Node:
         return all(node.is_locally_deterministic() for node in self.get_all_nodes())
 
     def deterministic_compatible(self, other : 'Node'):
-        common_keys = (key for key in self.transitions.keys() if key in other.transitions.keys())
+        common_keys = filter(lambda key: key in self.transitions.keys(), other.transitions.keys())
         return all(list(self.transitions[key].keys()) == list(other.transitions[key].keys()) for key in common_keys)
 
     def is_moore(self):
