@@ -12,17 +12,24 @@ from aalpy.learning_algs.stochastic_passive.helpers import Node, OutputBehavior,
 CompatibilityBehavior = Literal["future", "partition", "merge"]
 
 Score = bool
-ScoreFunction = Callable[[Node,Node,Any], Score]
+ScoreFunction = Callable[[Node,Node,Any,bool], Score]
+
 def hoeffding_compatibility(eps) -> ScoreFunction:
-    def similar(a: Node, b: Node, _: Any):
+    def similar(a: Node, b: Node, _: Any, compare_original):
         for in_sym in filter(lambda x : x in a.transitions.keys(), b.transitions.keys()):
             a_trans, b_trans = (x.transitions[in_sym] for x in [a,b])
-            a_total, b_total = (sum(x.count for x in x.values()) for x in (a_trans, b_trans))
+            if compare_original:
+                a_total, b_total = (sum(x.original_count for x in x.values()) for x in (a_trans, b_trans))
+            else:
+                a_total, b_total = (sum(x.count for x in x.values()) for x in (a_trans, b_trans))
             if a_total == 0 or b_total == 0:
                 continue
             threshold = ((sqrt(1 / a_total) + sqrt(1 / b_total)) * sqrt(0.5 * log(2 / eps)))
-            for out_sym in set(a.transitions[in_sym].keys()).union(b.transitions[in_sym].keys()):
-                ac, bc = (x[out_sym].count if out_sym in x else 0 for x in (a_trans, b_trans))
+            for out_sym in set(a_trans.keys()).union(b_trans.keys()):
+                if compare_original:
+                    ac, bc = (x[out_sym].original_count if out_sym in x else 0 for x in (a_trans, b_trans))
+                else:
+                    ac, bc = (x[out_sym].count if out_sym in x else 0 for x in (a_trans, b_trans))
                 if abs(ac / a_total - bc / b_total) > threshold:
                     return False
         return True
@@ -30,7 +37,9 @@ def hoeffding_compatibility(eps) -> ScoreFunction:
 
 def non_det_compatibility(eps) -> ScoreFunction:
     print("Warning: using experimental compatibility criterion for nondeterministic automata")
-    def similar(a: Node, b: Node, _: Any):
+    def similar(a: Node, b: Node, _: Any, compare_original : bool):
+        if compare_original:
+            raise NotImplementedError()
         for in_sym in filter(lambda x : x in a.transitions.keys(), b.transitions.keys()):
             a_trans, b_trans = (x.transitions[in_sym] for x in [a,b])
             a_total, b_total = (sum(x.count for x in x.values()) for x in (a_trans, b_trans))
@@ -97,7 +106,9 @@ class GeneralizedStateMerging:
     def __init__(self, data, output_behavior : OutputBehavior = "moore",
                  transition_behavior : TransitionBehavior = "deterministic",
                  compatibility_behavior : CompatibilityBehavior = "partition",
-                 local_score : ScoreFunction = None, info_update : Callable[[Node, Node, Any],Any] = None, debug_lvl=0):
+                 local_score : ScoreFunction = None, info_update : Callable[[Node, Node, Any],Any] = None,
+                 eval_compat_on_pta : bool = False, debug_lvl=0):
+        self.eval_compat_on_pta = eval_compat_on_pta
         self.data = data
         self.debug = GeneralizedStateMerging.DebugInfo(debug_lvl, self)
 
@@ -131,21 +142,18 @@ class GeneralizedStateMerging:
         else :
             self.root = Node.createPTA(data)
 
-        if self.compatibility_behavior == "future":
-            # TODO decouple from "future" -> option "compatibility_on_original_data"
-            self.pta_state_dictionary : Dict[Node, Node] = {node : node.shallow_copy() for node in self.root.get_all_nodes()}
         self.debug.pta_construction_done(pta_construction_start)
 
         if transition_behavior == "deterministic":
             if not self.root.is_deterministic():
                 raise ValueError("required deterministic automaton but input data is nondeterministic")
 
-    def local_merge_score(self, a : Node, b : Node, info : Any):
+    def compute_local_score(self, a : Node, b : Node, info : Any):
         if self.output_behavior == "moore" and not Node.moore_compatible(a,b):
             return False
         if self.transition_behavior == "deterministic" and not Node.deterministic_compatible(a,b):
             return False
-        return self.local_score(a,b,info)
+        return self.local_score(a, b, info, self.eval_compat_on_pta)
 
     def run(self):
         start_time = time.time()
@@ -162,8 +170,6 @@ class GeneralizedStateMerging:
                         blue_state = c
             if blue_state is None:
                 break
-
-            # TODO there is a bug that leads to red_states containing nodes that are not reachable from the root, leading to infinite loops
 
             for red_state in red_states:
                 match self.compatibility_behavior:
@@ -189,23 +195,27 @@ class GeneralizedStateMerging:
         return self.root.to_automaton(self.output_behavior, self.transition_behavior)
 
     def _check_futures(self, red: Node, blue: Node) -> bool:
-        q : List[Tuple[Node, Node, Any]]= [(red,blue,None)]
+        q : List[Tuple[Node, Node, Any]] = [(red, blue, None)]
 
         while len(q) != 0:
             red, blue, info = q.pop(0)
 
-            red_to_compare = self.pta_state_dictionary[red]
-            blue_to_compare = self.pta_state_dictionary[blue]
-
-            info = self.info_update(red_to_compare, blue_to_compare, info)
-            if not self.local_merge_score(red_to_compare, blue_to_compare, info):
+            info = self.info_update(red, blue, info)
+            if not self.compute_local_score(red, blue, info):
                 return False
 
-            for in_sym, blue_transitions in blue_to_compare.transitions.items():
-                red_transitions = red_to_compare.get_transitions_safe(in_sym)
+            for in_sym, blue_transitions in blue.transitions.items():
+                red_transitions = red.get_transitions_safe(in_sym)
                 for out_sym, blue_child in blue_transitions.items():
-                    if out_sym in red_transitions.keys():
-                        q.append((red_transitions[out_sym].target, blue_child.target, info))
+                    if out_sym not in red_transitions.keys():
+                        continue
+                    red_child = red_transitions[out_sym]
+                    if self.eval_compat_on_pta:
+                        if blue_child.original_count == 0 or red_child.original_count == 0:
+                            continue
+                        q.append((red_child.original_target, blue_child.original_target, info))
+                    else:
+                        q.append((red_child.target, blue_child.target, info))
 
         return True
 
@@ -243,7 +253,7 @@ class GeneralizedStateMerging:
 
             if self.compatibility_behavior == "partition":
                 info = self.info_update(partition, blue, info)
-                if not self.local_merge_score(partition, blue, info) :
+                if not self.compute_local_score(partition, blue, info) :
                     return False, dict()
 
             for in_sym, blue_transitions in blue.transitions.items():
@@ -255,15 +265,18 @@ class GeneralizedStateMerging:
                         partition_transition.count += blue_transition.count
                     else:
                         # blue_child is blue after merging if there is a red state in the partition
-                        partition_transition = TransitionInfo(blue_transition.target, blue_transition.count)
+                        partition_transition = TransitionInfo(blue_transition.target, blue_transition.count, None, 0)
                         partition_transitions[out_sym] = partition_transition
 
         if self.compatibility_behavior == "merge":
             for new_node, old_node in partitions.items():
                 info = self.info_update(new_node, old_node, None)
-                if not self.local_merge_score(new_node, old_node, info):
+                if not self.compute_local_score(new_node, old_node, info):
                     return False, dict()
         return True, remaining_nodes
 
 def runAlergia(data, output_behavior : OutputBehavior = "moore", epsilon : float = 0.005) :
-    return GeneralizedStateMerging(data, output_behavior, "stochastic", "future", hoeffding_compatibility(epsilon), debug_lvl=1).run()
+    return GeneralizedStateMerging(
+        data, output_behavior, "stochastic", "future",
+        hoeffding_compatibility(epsilon), eval_compat_on_pta=True, debug_lvl=1
+    ).run()

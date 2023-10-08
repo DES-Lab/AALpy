@@ -1,6 +1,4 @@
-import copy
 import pathlib
-from collections import defaultdict
 from functools import total_ordering
 from typing import Dict, Any, List, Tuple, Literal, Iterable, Callable, NamedTuple
 import pydot
@@ -21,12 +19,6 @@ IOExample = Tuple[Iterable[Any], Any]
 StateFunction = Callable[['Node'], str]
 TransitionFunction = Callable[['Node', Any, Any], str]
 
-# Separate functions to allow pickling Nodes
-def zero():
-    return 0
-def create_count_dict():
-    return defaultdict(zero)
-
 def generate_values(base : list, step : Callable, backing_set=True):
     if backing_set:
         result = list(base)
@@ -45,10 +37,15 @@ def generate_values(base : list, step : Callable, backing_set=True):
                     result.append(new_val)
         return result
 
+# TODO maybe split this for maintainability (and perfomance?)
 class TransitionInfo:
-    def __init__(self, target, count):
+    __slots__ = ["target", "count", "original_target", "original_count"]
+
+    def __init__(self, target, count, orig_target, orig_count):
         self.target : 'Node' = target
         self.count : int = count
+        self.original_target : 'Node' = orig_target
+        self.original_count : int = orig_count
 
 @total_ordering
 class Node:
@@ -97,9 +94,6 @@ class Node:
         t = self.transitions[in_sym] = dict()
         return t
 
-    def count(self):
-        return sum(t.count for trans in self.transitions.values() for t in trans.values())
-
     def transition_iterator(self) -> Iterable[Tuple[Tuple[Any, Any], TransitionInfo]]:
         for in_sym, transitions in self.transitions.items():
             for out_sym, node in transitions.items():
@@ -110,7 +104,7 @@ class Node:
         for in_sym, t in self.transitions.items():
             d = dict()
             for out_sym, v in t.items():
-                d[out_sym] = TransitionInfo(v.target, v.count)
+                d[out_sym] = TransitionInfo(v.target, v.count, v.original_target, v.original_count)
             node.transitions[in_sym] = d
         return node
 
@@ -265,10 +259,12 @@ class Node:
             transitions = curr_node.get_transitions_safe(in_sym)
             if out_sym not in transitions:
                 node = Node(curr_node.prefix + [IOPair(in_sym, out_sym)])
-                transitions[out_sym] = TransitionInfo(node,1)
+                transitions[out_sym] = TransitionInfo(node,1, node, 1)
             else:
-                node = transitions[out_sym].target
-                transitions[out_sym].count += 1
+                info = transitions[out_sym]
+                info.count += 1
+                info.original_count += 1
+                node = info.target
             curr_node = node
 
     def add_example(self, data : IOExample):
