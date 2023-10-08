@@ -3,7 +3,7 @@ from math import sqrt, log
 import time
 from typing import Dict, Tuple, Callable, Any, Literal, List
 
-from aalpy.learning_algs.stochastic_passive.helpers import Node, OutputBehavior, TransitionBehavior
+from aalpy.learning_algs.stochastic_passive.helpers import Node, OutputBehavior, TransitionBehavior, TransitionInfo
 
 # TODO make non-mutual exclusive
 # future: Only compare futures of states
@@ -16,12 +16,14 @@ ScoreFunction = Callable[[Node,Node,Any], Score]
 def hoeffding_compatibility(eps) -> ScoreFunction:
     def similar(a: Node, b: Node, _: Any):
         for in_sym in filter(lambda x : x in a.transitions.keys(), b.transitions.keys()):
-            a_count, b_count = (x.transition_count[in_sym] for x in [a,b])
-            a_total, b_total = (sum(x.values()) for x in [a_count, b_count])
+            a_trans, b_trans = (x.transitions[in_sym] for x in [a,b])
+            a_total, b_total = (sum(x.count for x in x.values()) for x in (a_trans, b_trans))
             if a_total == 0 or b_total == 0:
                 continue
+            threshold = ((sqrt(1 / a_total) + sqrt(1 / b_total)) * sqrt(0.5 * log(2 / eps)))
             for out_sym in set(a.transitions[in_sym].keys()).union(b.transitions[in_sym].keys()):
-                if abs(a_count[out_sym] / a_total - b_count[out_sym] / b_total) > ((sqrt(1 / a_total) + sqrt(1 / b_total)) * sqrt(0.5 * log(2 / eps))):
+                ac, bc = (x[out_sym].count if out_sym in x else 0 for x in (a_trans, b_trans))
+                if abs(ac / a_total - bc / b_total) > threshold:
                     return False
         return True
     return similar
@@ -30,11 +32,11 @@ def non_det_compatibility(eps) -> ScoreFunction:
     print("Warning: using experimental compatibility criterion for nondeterministic automata")
     def similar(a: Node, b: Node, _: Any):
         for in_sym in filter(lambda x : x in a.transitions.keys(), b.transitions.keys()):
-            a_count, b_count = (x.transition_count[in_sym] for x in [a,b])
-            a_total, b_total = (sum(x.values()) for x in [a_count, b_count])
+            a_trans, b_trans = (x.transitions[in_sym] for x in [a,b])
+            a_total, b_total = (sum(x.count for x in x.values()) for x in (a_trans, b_trans))
             if a_total < eps or b_total < eps:
                 continue
-            if set(a_count.keys()) != set(b_count.keys()):
+            if set(a_trans.keys()) != set(b_trans.keys()):
                 return False
         return True
     return similar
@@ -154,11 +156,14 @@ class GeneralizedStateMerging:
         while True:
             blue_state = None
             for r in red_states:
-                for _, c in r.transition_iterator():
+                for _, t in r.transition_iterator():
+                    c = t.target
                     if c not in red_states and (blue_state is None or c < blue_state):
                         blue_state = c
             if blue_state is None:
                 break
+
+            # TODO there is a bug that leads to red_states containing nodes that are not reachable from the root, leading to infinite loops
 
             for red_state in red_states:
                 match self.compatibility_behavior:
@@ -168,17 +173,16 @@ class GeneralizedStateMerging:
                     break
 
             if not score:
-                self.debug.log_promote(blue_state, red_states)
                 red_states.append(blue_state)
+                self.debug.log_promote(blue_state, red_states)
             else:
-                self.debug.log_merge(red_state, blue_state)
                 match self.compatibility_behavior:
                     case "future": self._partition_from_merge(red_state, blue_state)
                     case "partition" | "merge":
                         # use the partition for merging
                         for node, block in partition.items():
                             node.transitions = block.transitions
-                            node.transition_count = block.transition_count
+                self.debug.log_merge(red_state, blue_state)
 
         self.debug.learning_done(red_states, start_time)
 
@@ -201,7 +205,8 @@ class GeneralizedStateMerging:
                 red_transitions = red_to_compare.get_transitions_safe(in_sym)
                 for out_sym, blue_child in blue_transitions.items():
                     if out_sym in red_transitions.keys():
-                        q.append((red_transitions[out_sym], blue_child, info))
+                        q.append((red_transitions[out_sym].target, blue_child.target, info))
+
         return True
 
     def _partition_from_merge(self, red: Node, blue: Node) -> Tuple[bool,Dict[Node, Node]] :
@@ -228,7 +233,7 @@ class GeneralizedStateMerging:
 
         # rewire the blue node's parent
         blue_parent = update_partition(self.root.get_by_prefix(blue.prefix[:-1]), None)
-        blue_parent.transitions[blue.prefix[-1][0]][blue.prefix[-1][1]] = red
+        blue_parent.transitions[blue.prefix[-1][0]][blue.prefix[-1][1]].target = red
 
         q : List[Tuple[Node,Node,Any]] = [(red, blue, None)]
 
@@ -243,13 +248,16 @@ class GeneralizedStateMerging:
 
             for in_sym, blue_transitions in blue.transitions.items():
                 partition_transitions = partition.get_transitions_safe(in_sym)
-                for out_sym, blue_child in blue_transitions.items():
-                    if out_sym in partition_transitions:
-                        q.append((partition_transitions[out_sym], blue_child, info))
+                for out_sym, blue_transition in blue_transitions.items():
+                    if out_sym in partition_transitions.keys():
+                        partition_transition = partition_transitions[out_sym]
+                        q.append((partition_transition.target, blue_transition.target, info))
+                        partition_transition.count += blue_transition.count
                     else:
                         # blue_child is blue after merging if there is a red state in the partition
-                        partition_transitions[out_sym] = blue_child
-                    partition.transition_count[in_sym][out_sym] += blue.transition_count[in_sym][out_sym]
+                        partition_transition = TransitionInfo(blue_transition.target, blue_transition.count)
+                        partition_transitions[out_sym] = partition_transition
+
         if self.compatibility_behavior == "merge":
             for new_node, old_node in partitions.items():
                 info = self.info_update(new_node, old_node, None)

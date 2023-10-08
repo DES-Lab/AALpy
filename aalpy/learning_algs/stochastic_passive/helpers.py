@@ -45,6 +45,11 @@ def generate_values(base : list, step : Callable, backing_set=True):
                     result.append(new_val)
         return result
 
+class TransitionInfo:
+    def __init__(self, target, count):
+        self.target : 'Node' = target
+        self.count : int = count
+
 @total_ordering
 class Node:
     """
@@ -56,11 +61,10 @@ class Node:
 
     Transition count is preferred over state count as it allows to easily count transitions for non-tree-shaped automata
     """
-    __slots__ = ['transitions', 'prefix', 'transition_count']
+    __slots__ = ['transitions', 'prefix']
 
     def __init__(self, prefix : Prefix):
-        self.transitions : dict[Any, Dict[Any,Node]] = dict()
-        self.transition_count = defaultdict[Any, defaultdict[Any, int]](create_count_dict)
+        self.transitions : Dict[Any, Dict[Any, TransitionInfo]] = dict()
         self.prefix : Prefix = prefix
 
     def __lt__(self, other):
@@ -87,16 +91,16 @@ class Node:
     def __hash__(self):
         return id(self) # TODO This is a hack
 
-    def get_transitions_safe(self, in_sym):
+    def get_transitions_safe(self, in_sym) -> Dict[Any, TransitionInfo]:
         if in_sym in self.transitions:
             return self.transitions[in_sym]
         t = self.transitions[in_sym] = dict()
         return t
 
     def count(self):
-        return sum((sum(items.values()) for items in self.transition_count.values()))
+        return sum(t.count for trans in self.transitions.values() for t in trans.values())
 
-    def transition_iterator(self):
+    def transition_iterator(self) -> Iterable[Tuple[Tuple[Any, Any], TransitionInfo]]:
         for in_sym, transitions in self.transitions.items():
             for out_sym, node in transitions.items():
                 yield (in_sym, out_sym), node
@@ -104,28 +108,38 @@ class Node:
     def shallow_copy(self) -> 'Node':
         node = Node(self.prefix)
         for in_sym, t in self.transitions.items():
-            node.transitions[in_sym] = dict(t)
-
-        # Version 1
-        #node.transition_count = copy.deepcopy(self.transition_count)
-        # Version 2
-        for k,v in self.transition_count.items():
-            node.transition_count[k].update(v)
+            d = dict()
+            for out_sym, v in t.items():
+                d[out_sym] = TransitionInfo(v.target, v.count)
+            node.transitions[in_sym] = d
         return node
 
     def get_by_prefix(self, seq : Prefix) -> 'Node':
-        node = self
+        node : Node = self
         for in_sym, out_sym in seq:
             if in_sym is None:
                 continue
-            node = node.transitions[in_sym][out_sym]
+            node = node.transitions[in_sym][out_sym].target
         return node
 
     def get_all_nodes(self) -> List['Node']:
         def generator(state : Node):
             for _, child in state.transition_iterator():
-                yield child
+                yield child.target
         return generate_values([self], generator)
+
+    def is_tree(self):
+        q : List['Node'] = [self]
+        backing_set = set()
+        while len(q) != 0:
+            current = q.pop(0)
+            for _, child in current.transition_iterator():
+                t = child.target
+                if t in backing_set:
+                    return False
+                q.append(t)
+                backing_set.add(t)
+        return True
 
     def to_automaton(self, output_behavior : OutputBehavior, transition_behavior : TransitionBehavior, check_behavior = False) -> Automaton:
         nodes = self.get_all_nodes()
@@ -165,10 +179,10 @@ class Node:
         for node in nodes:
             state = state_map[node]
             for in_sym, transitions in node.transitions.items():
-                count = node.transition_count[in_sym]
-                total = sum(count.values())
+                total = sum(t.count for t in transitions.values())
                 for out_sym, target_node in transitions.items():
-                    target_state = state_map[target_node]
+                    target_state = state_map[target_node.target]
+                    count = target_node.count
                     match (output_behavior, transition_behavior):
                         case ("moore","deterministic") :
                             state.transitions[in_sym] = target_state
@@ -180,9 +194,9 @@ class Node:
                         case ("mealy","nondeterministic"):
                             state.transitions[in_sym].append((out_sym, target_state))
                         case ("moore","stochastic"):
-                            state.transitions[in_sym].append((target_state, count[out_sym] / total))
+                            state.transitions[in_sym].append((target_state, count / total))
                         case ("mealy","stochastic"):
-                            state.transitions[in_sym].append((target_state, out_sym, count[out_sym] / total))
+                            state.transitions[in_sym].append((target_state, out_sym, count / total))
 
         return Machine(initial_state, list(state_map.values()))
 
@@ -205,8 +219,8 @@ class Node:
                 case _: state_label = lambda node: f'{node.count()}'
         if trans_label is None and "label" not in trans_props:
             match output_behavior:
-                case "moore": trans_label = lambda node, in_sym, out_sym : f'{in_sym} [{node.transition_count[in_sym][out_sym]}]'
-                case _: trans_label = lambda node, in_sym, out_sym : f'{in_sym} / {out_sym} [{node.transition_count[in_sym][out_sym]}]'
+                case "moore": trans_label = lambda node, in_sym, out_sym : f'{in_sym} [{node.transitions[in_sym][out_sym].count}]'
+                case _: trans_label = lambda node, in_sym, out_sym : f'{in_sym} / {out_sym} [{node.transitions[in_sym][out_sym].count}]'
         if state_color is None:
             state_color = lambda x : "black"
         if trans_color is None:
@@ -230,7 +244,7 @@ class Node:
             for in_sym, options in node.transitions.items():
                 for out_sym, c in options.items():
                     arg_dict = {key : fun(node, in_sym, out_sym) for key, fun in trans_props.items()}
-                    graph.add_edge(pydot.Edge(str(node.prefix), str(c.prefix), **arg_dict))
+                    graph.add_edge(pydot.Edge(str(node.prefix), str(c.target.prefix), **arg_dict))
 
         # add initial state
         # TODO maybe add option to parameterize this
@@ -248,27 +262,18 @@ class Node:
     def add_trace(self, data : IOTrace):
         curr_node : Node = self
         for in_sym, out_sym in data:
-            curr_node.transition_count[in_sym][out_sym] += 1
             transitions = curr_node.get_transitions_safe(in_sym)
             if out_sym not in transitions:
                 node = Node(curr_node.prefix + [IOPair(in_sym, out_sym)])
-                transitions[out_sym] = node
+                transitions[out_sym] = TransitionInfo(node,1)
             else:
-                node = transitions[out_sym]
+                node = transitions[out_sym].target
+                transitions[out_sym].count += 1
             curr_node = node
 
     def add_example(self, data : IOExample):
         # TODO add support for example based algorithms
-        raise NotImplementedError("This is a work in progress")
-        seq, output = data
-        curr_node : Node = self
-        for sym in seq:
-            curr_node.transition_count[sym][None] += 1
-            t = curr_node.get_transitions_safe(sym)
-            if None not in t:
-                t[None] = Node(curr_node.prefix + [IOPair(sym, None)])
-            curr_node = t[None]
-        curr_node.prefix[-1] = IOPair(seq[-1] if len(seq) != 0 else None, output)
+        raise NotImplementedError()
 
     @staticmethod
     def createPTA(data, initial_output = None) :
@@ -289,7 +294,8 @@ class Node:
     def is_moore(self):
         output_dict = dict()
         for node in self.get_all_nodes():
-            for (in_sym, out_sym), child in node.transition_iterator():
+            for (in_sym, out_sym), transition in node.transition_iterator():
+                child = transition.target
                 if child in output_dict.keys() and output_dict[child] != out_sym:
                     return False
                 else:
