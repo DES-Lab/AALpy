@@ -211,7 +211,7 @@ class Node:
         if state_label is None:
             match output_behavior:
                 case "moore": state_label = lambda node : f'{node.prefix[-1][1]} {node.count()}'
-                case _: state_label = lambda node: f'{node.count()}'
+                case _: state_label = lambda node: f'{sum(t.count for _, t in node.transition_iterator())}'
         if trans_label is None and "label" not in trans_props:
             match output_behavior:
                 case "moore": trans_label = lambda node, in_sym, out_sym : f'{in_sym} [{node.transitions[in_sym][out_sym].count}]'
