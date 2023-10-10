@@ -17,6 +17,7 @@ ScoreFunction = Callable[[Node,Node,Any,bool], Score]
 def hoeffding_compatibility(eps) -> ScoreFunction:
     def similar(a: Node, b: Node, _: Any, compare_original):
         for in_sym in filter(lambda x : x in a.transitions.keys(), b.transitions.keys()):
+            # could create appropriate dict here
             a_trans, b_trans = (x.transitions[in_sym] for x in [a,b])
             if compare_original:
                 a_total, b_total = (sum(x.original_count for x in x.values()) for x in (a_trans, b_trans))

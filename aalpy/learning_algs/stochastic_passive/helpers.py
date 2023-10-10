@@ -61,6 +61,7 @@ class Node:
     __slots__ = ['transitions', 'prefix']
 
     def __init__(self, prefix : Prefix):
+        # TODO try single dict
         self.transitions : Dict[Any, Dict[Any, TransitionInfo]] = dict()
         self.prefix : Prefix = prefix
 
