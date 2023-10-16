@@ -7,6 +7,7 @@ from aalpy.utils.BenchmarkPdaModels import *
 
 
 pda = pda_for_L12()
+pda.visualize()
 
 input_alphabet = pda.get_input_alphabet()
 sul = PdaSUL(pda, include_top=True, check_balance=True)

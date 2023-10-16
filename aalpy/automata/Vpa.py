@@ -195,8 +195,8 @@ class Vpa(Automaton):
         # states to list
         states = [state for state in states.values()]
 
-        pda = Vpa(init_state, states, call_set, return_set, internal_set)
-        return pda
+        vpa = Vpa(init_state, states, call_set, return_set, internal_set)
+        return vpa
 
 
 def generate_data_from_pda(automaton, num_examples, lens=None, classify_states=False, stack_limit=None,

@@ -8,7 +8,7 @@ from aalpy.utils.BenchmarkVpaModels import *
 
 vpa = vpa_for_L1()
 
-# vpa.visualize()
+vpa.visualize()
 
 input_alphabet = vpa.get_input_alphabet()
 merged_input_alphabet = vpa.get_input_alphabet_merged()

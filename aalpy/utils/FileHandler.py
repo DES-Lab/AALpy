@@ -6,11 +6,11 @@ from pathlib import Path
 from pydot import Dot, Node, Edge, graph_from_dot_file
 
 from aalpy.automata import Dfa, MooreMachine, Mdp, Onfsm, MealyState, DfaState, MooreState, MealyMachine, \
-    MdpState, StochasticMealyMachine, StochasticMealyState, OnfsmState, MarkovChain, McState, Pda, Vpa
+    MdpState, StochasticMealyMachine, StochasticMealyState, OnfsmState, MarkovChain, McState, Pda, Vpa, Sevpa
 
 file_types = ['dot', 'png', 'svg', 'pdf', 'string']
 automaton_types = {Dfa: 'dfa', MealyMachine: 'mealy', MooreMachine: 'moore', Mdp: 'mdp',
-                   StochasticMealyMachine: 'smm', Onfsm: 'onfsm', MarkovChain: 'mc', Pda: 'pda', Vpa: 'vpa'}
+                   StochasticMealyMachine: 'smm', Onfsm: 'onfsm', MarkovChain: 'mc', Pda: 'pda', Vpa: 'vpa', Sevpa: 'vpa'}
 
 
 def _wrap_label(label):

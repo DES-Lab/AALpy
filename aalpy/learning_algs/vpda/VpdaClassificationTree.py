@@ -1,6 +1,6 @@
 from collections import defaultdict
 
-from aalpy.automata import DfaState, Dfa, MealyState, MealyMachine, MooreState, MooreMachine
+from aalpy.automata import SevpaState, SevpaAlphabet, SevpaTransition, Sevpa
 from aalpy.base import SUL
 
 
@@ -16,11 +16,11 @@ class CTNode:
 
 
 class CTInternalNode(CTNode):
-    __slots__ = ['context_pair', 'children']
+    __slots__ = ['distinguishing_string', 'children']
 
-    def __init__(self, context_pair: tuple, parent, path_to_node):
+    def __init__(self, distinguishing_string: tuple, parent, path_to_node):
         super().__init__(parent, path_to_node)
-        self.context_pair = context_pair
+        self.distinguishing_string = distinguishing_string
         self.children = defaultdict(None)  # {True: None, False: None}
 
     def is_leaf(self):
@@ -54,7 +54,7 @@ class CTLeafNode(CTNode):
 
 class VpdaClassificationTree:
     # TODO replace all dist. strings with context pairs appropriately
-    def __init__(self, alphabet: list, sul: SUL, cex: tuple):
+    def __init__(self, alphabet: SevpaAlphabet, sul: SUL, cex: tuple):
         self.sul = sul
         self.alphabet = alphabet
 
@@ -68,7 +68,7 @@ class VpdaClassificationTree:
 
         self.query_cache[()] = initial_output
 
-        self.root = CTInternalNode(context_pair=tuple([(), ()]), parent=None, path_to_node=None)
+        self.root = CTInternalNode(distinguishing_string=tuple([(), ()]), parent=None, path_to_node=None)
 
         initial_output_node = CTLeafNode(access_string=tuple(), parent=self.root, path_to_node=initial_output)
         cex_output_node = CTLeafNode(access_string=cex, parent=self.root, path_to_node=cex_output)
@@ -78,6 +78,7 @@ class VpdaClassificationTree:
 
         self.leaf_nodes[tuple()] = initial_output_node
         self.leaf_nodes[cex] = cex_output_node
+
 
     def _sift(self, word):
         """
@@ -96,7 +97,7 @@ class VpdaClassificationTree:
             the CTLeafNode that is reached by the sifting operation.
         """
         for letter in word:
-            assert letter is None or letter in self.alphabet
+            assert letter is None or letter in self.alphabet.get_merged_alphabet()
 
         if word in self.sifting_cache:
             return self.sifting_cache[word]
@@ -104,7 +105,7 @@ class VpdaClassificationTree:
         node = self.root
         while not node.is_leaf():
 
-            query = node.context_pair[0] + word + node.context_pair[1]
+            query = node.distinguishing_string[0] + word + node.distinguishing_string[1]
 
             if query not in self.query_cache.keys():
                 mq_result = self.sul.query(query)
@@ -132,7 +133,65 @@ class VpdaClassificationTree:
 
         # TODO take a look at kv how it is done
 
-        return None
+        states = dict()
+        initial_state = None
+        state_counter = 0
+        for node in self.leaf_nodes.values():
+
+            new_state = SevpaState(state_id=f'q{state_counter}', is_accepting=node.output)
+
+            new_state.prefix = node.access_string
+            if new_state.prefix == ():
+                initial_state = new_state
+            states[new_state.prefix] = new_state
+            state_counter += 1
+        assert initial_state is not None
+
+        # for each state
+        #     open
+        #     internals = > state.acc + internal
+        # open
+        # returns
+        # for all call
+        #     for all other_state
+        #         for all return
+        #         open -> other_state.acc + call + state.acc +
+        #         return
+        #         if other_state != state
+        #             open -> state.acc + call + other_state.acc + ret
+
+        states_for_transitions = list(states.values())
+        for state in states_for_transitions:
+            # Check internal transitions
+            for internal_letter in self.alphabet.internal_alphabet:
+                transition_target_node = self._sift(state.prefix + (internal_letter, ))
+                transition_target_access_string = transition_target_node.access_string
+
+                assert transition_target_access_string in states    # TODO: trigger this
+                trans = SevpaTransition(start=state, target=states[transition_target_access_string], symbol=internal_letter, action=None)
+                state.transitions[internal_letter].append(trans)
+
+            # Add call transitions
+            for call_letter in self.alphabet.call_alphabet:
+                trans = SevpaTransition(start=state, target=initial_state, symbol=call_letter, action='push', stack_guard=f'{state.state_id}{call_letter}')
+                state.transitions[call_letter].append(trans)
+                for other_state in states_for_transitions:
+                # Add return transitions
+                    for return_letter in self.alphabet.return_alphabet:
+                        transition_target_node = self._sift(other_state.prefix + (call_letter, ) + state.prefix + (return_letter, ))
+                        transition_target_access_string = transition_target_node.access_string
+                        # call_letter_node = self._sift((call_letter,))
+                        # call_letter_access_string = call_letter_node.access_string
+                        stack_guard = f'{other_state.state_id}{call_letter}'
+                        trans = SevpaTransition(start=state, target=states[transition_target_access_string], symbol=return_letter,
+                                                action='pop', stack_guard=stack_guard)
+                        state.transitions[return_letter].append(trans)
+
+
+
+        states = [state for state in states.values()]
+
+        return Sevpa(initial_state=initial_state, states=states, input_alphabet=self.alphabet)
 
     def _least_common_ancestor(self, node_1_id, node_2_id):
         """

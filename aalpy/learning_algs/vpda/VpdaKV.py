@@ -1,8 +1,8 @@
 import time
 
-from aalpy.automata import Dfa, DfaState, MealyState, MealyMachine, MooreState, MooreMachine
+from aalpy.automata import Sevpa, SevpaState
 from aalpy.base import Oracle, SUL
-from aalpy.utils.HelperFunctions import print_learning_info
+from aalpy.utils.HelperFunctions import print_learning_info, visualize_classification_tree
 from .VpdaClassificationTree import VpdaClassificationTree
 from ..deterministic.CounterExampleProcessing import counterexample_successfully_processed
 from ...base.SUL import CacheSUL
@@ -57,7 +57,7 @@ def run_KV_vpda(alphabet: list, sul: SUL, eq_oracle: Oracle, cex_processing='rs'
 
     empty_string_mq = sul.query(tuple())[-1]
 
-    initial_state = DfaState(state_id='s0', is_accepting=empty_string_mq)
+    initial_state = SevpaState(state_id='s0', is_accepting=empty_string_mq)
 
     initial_state.prefix = tuple()
 
@@ -70,10 +70,12 @@ def run_KV_vpda(alphabet: list, sul: SUL, eq_oracle: Oracle, cex_processing='rs'
     # Either -> one state and then procedure is same like in default KV (add cex later)
     # Discover a new state
 
-    hypothesis = None
+    hypothesis = Sevpa(initial_state=initial_state, states=[], input_alphabet=alphabet)
     # Perform an equivalence query on this automaton
     eq_query_start = time.time()
     cex = eq_oracle.find_cex(hypothesis)
+
+    print(f'Counterexample: {cex}')
 
     eq_query_time += time.time() - eq_query_start
     if cex is not None:
@@ -83,6 +85,7 @@ def run_KV_vpda(alphabet: list, sul: SUL, eq_oracle: Oracle, cex_processing='rs'
         # labeled with the empty word as the distinguishing string
         # and two leaves labeled with access strings cex and empty word
         classification_tree = VpdaClassificationTree(alphabet=alphabet, sul=sul, cex=cex)
+        visualize_classification_tree(classification_tree.root)
 
         while True:
             learning_rounds += 1
@@ -90,6 +93,7 @@ def run_KV_vpda(alphabet: list, sul: SUL, eq_oracle: Oracle, cex_processing='rs'
                 break
 
             hypothesis = classification_tree.gen_hypothesis()
+            return hypothesis
 
             if print_level == 2:
                 print(f'\rHypothesis {learning_rounds}: {hypothesis.size} states.', end="")
@@ -105,6 +109,8 @@ def run_KV_vpda(alphabet: list, sul: SUL, eq_oracle: Oracle, cex_processing='rs'
                 eq_query_time += time.time() - eq_query_start
 
                 if cex is None:
+                    if print_level == 3:
+                        visualize_classification_tree(classification_tree.root)
                     break
                 else:
                     cex = tuple(cex)

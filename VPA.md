@@ -37,7 +37,7 @@ The set of call matched words is called MC(&Sigma;)
 The set of well matched words is called MW(&Sigma;)
 
 ### Context pairs (CP)
-Furthermore we want to introduce the context pairs, the set of context pairs is CP(&Sigma;). Context pairs are well matched words of the form u*v.  
+Furthermore we want to introduce context pairs, the set of context pairs is CP(&Sigma;). Context pairs are well matched words having the form of u*v.  
 - u has the form of MR(&Sigma;) * &Sigma;<sub>call</sub> or is the empty word &epsilon;  
 This means if u is of the form MR(&Sigma;) * &Sigma;<sub>call</sub> it has at least a &beta; >= 1
 - v is of the form MC(&Sigma;)
@@ -52,3 +52,15 @@ If we get back at our last language with the following split:
 We have could have this types of context pairs:
 - u = aa | v = cc
 - u = aca | v = d
+
+### Output functions 
+As Malte Isberner described in his paper we want to introduce the definition of output functions as they are used for several relations and congruences.  
+The intuitive meaning of the output function is if the word is part of the language respectively if the automata accepts or rejects the input.  
+The output function is of the form:  
+&lambda;: &Sigma;* --> B  
+Generally it will be assumed that the output function is a well-matched output function, which is of the form:  
+**&lambda;: WM(&Sigma;*) --> B**
+
+### Important Congruences
+
+#### Nerode-congruence
