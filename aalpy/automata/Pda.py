@@ -75,7 +75,7 @@ class Pda(Automaton):
             trans = [t for t in transitions if t.stack_guard is None or self.top() == t.stack_guard][0]
             self.current_state = trans.target
             if trans.action == 'push':
-                self.stack.append(trans.stack_guard)
+                self.stack.append(letter)
             elif trans.action == 'pop':
                 if len(self.stack) <= 1:  # empty stack elem should always be there
                     self.current_state = Pda.error_state

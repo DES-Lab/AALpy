@@ -8,8 +8,8 @@ def vpa_for_L1():
     internal_set = {}
 
     state_setup = {
-        "q0": (False, {"a": [("q1", 'push', None)], "b": [(Vpa.error_state.state_id, None, None)]}),
-        "q1": (False, {"a": [("q1", 'push', None)], "b": [("q2", 'pop', "a")]}),
+        "q0": (False, {"a": [("q1", 'push', "a")], "b": [(Vpa.error_state.state_id, None, None)]}),
+        "q1": (False, {"a": [("q1", 'push', "a")], "b": [("q2", 'pop', "a")]}),
         "q2": (True, {"a": [(Vpa.error_state.state_id, None, None)], "b": [("q2", 'pop', "a")]}),
     }
     vpa = Vpa.from_state_setup(state_setup, "q0", call_set, return_set, internal_set)
@@ -23,10 +23,10 @@ def vpa_for_L2():
     internal_set = {}
 
     state_setup = {
-        "q0": (False, {"a": [("q1", 'push', None)], "b": [("q1", 'push', None)],
+        "q0": (False, {"a": [("q1", 'push', "a")], "b": [("q1", 'push', "b")],
                        "c": [(Vpa.error_state.state_id, None, None)],
                        "d": [(Vpa.error_state.state_id, None, None)]}),
-        "q1": (False, {"a": [("q1", 'push', None)], "b": [("q1", 'push', None)],
+        "q1": (False, {"a": [("q1", 'push', "a")], "b": [("q1", 'push', "b")],
                        "c": [("q2", 'pop', "a"), ("q2", 'pop', "b")],
                        "d": [("q2", 'pop', "a"), ("q2", 'pop', "b")]}),
         "q2": (True, {"a": [(Vpa.error_state.state_id, None, None)],
@@ -45,18 +45,18 @@ def vpa_for_L3():
     internal_set = {}
 
     state_setup = {
-        "q0": (False, {"a": [("q0a", 'push', None)],
-                       "c": [("q0c", 'push', None)],
+        "q0": (False, {"a": [("q0a", 'push', "a")],
+                       "c": [("q0c", 'push', "c")],
                        }),
-        "q0a": (False, {"b": [("q1", 'push', None)]}),
-        "q0c": (False, {"d": [("q1", 'push', None)]}),
-        "q1": (False, {"a": [("q1a", 'push', None)],
-                       "c": [("q1c", 'push', None)],
+        "q0a": (False, {"b": [("q1", 'push', "b")]}),
+        "q0c": (False, {"d": [("q1", 'push', "d")]}),
+        "q1": (False, {"a": [("q1a", 'push', "a")],
+                       "c": [("q1c", 'push', "c")],
                        "e": [("q2e", 'pop', "b"), ("q2e", 'pop', "d")],
                        "g": [("q2g", 'pop', "b"), ("q2g", 'pop', "d")],  # stack should actually be redundant
                        }),
-        "q1a": (False, {"b": [("q1", 'push', None)]}),
-        "q1c": (False, {"d": [("q1", 'push', None)]}),
+        "q1a": (False, {"b": [("q1", 'push', "b")]}),
+        "q1c": (False, {"d": [("q1", 'push', "d")]}),
         "q2e": (False, {"f": [("q2", 'pop', "a"), ("q2", 'pop', "c")]}),
         "q2g": (False, {"h": [("q2", 'pop', "a"), ("q2", 'pop', "c")]}),
         "q2": (True, {"e": [("q2e", 'pop', "b"), ("q2e", 'pop', "d")],
@@ -73,12 +73,12 @@ def vpa_for_L4():
     internal_set = {}
 
     state_setup = {
-        "q0": (False, {"a": [("q01", 'push', None)], "b": [(Vpa.error_state.state_id, None, None)]}),
-        "q01": (False, {"b": [("q1", 'push', None)], "a": [(Vpa.error_state.state_id, None, None)]}),
+        "q0": (False, {"a": [("q01", 'push', "a")], "b": [(Vpa.error_state.state_id, None, None)]}),
+        "q01": (False, {"b": [("q1", 'push', "b")], "a": [(Vpa.error_state.state_id, None, None)]}),
 
-        "q1": (False, {"a": [("q11", 'push', None)], "b": [(Vpa.error_state.state_id, None, None)],
+        "q1": (False, {"a": [("q11", 'push', "a")], "b": [(Vpa.error_state.state_id, None, None)],
                        "c": [("q21", 'pop', "b")]}),
-        "q11": (False, {"b": [("q1", 'push', None)], "a": [(Vpa.error_state.state_id, None, None)]}),
+        "q11": (False, {"b": [("q1", 'push', "b")], "a": [(Vpa.error_state.state_id, None, None)]}),
         "q21": (False, {"d": [("q2", 'pop', "a")]}),
         "q2": (True, {"c": [("q21", 'pop', "b")]}),
     }
@@ -93,13 +93,13 @@ def vpa_for_L5():
     internal_set = {}
 
     state_setup = {
-        "q0": (False, {"a": [("q01", 'push', None)]}),
-        "q01": (False, {"b": [("q02", 'push', None)]}),
-        "q02": (False, {"c": [("q1", 'push', None)]}),
-        "q1": (False, {"a": [("q11", 'push', None)],
+        "q0": (False, {"a": [("q01", 'push', "a")]}),
+        "q01": (False, {"b": [("q02", 'push', "b")]}),
+        "q02": (False, {"c": [("q1", 'push', "c")]}),
+        "q1": (False, {"a": [("q11", 'push', "a")],
                        "d": [("q21", 'pop', "c")]}),
-        "q11": (False, {"b": [("q12", 'push', None)]}),
-        "q12": (False, {"c": [("q1", 'push', None)]}),
+        "q11": (False, {"b": [("q12", 'push', "b")]}),
+        "q12": (False, {"c": [("q1", 'push', "c")]}),
         "q21": (False, {"e": [("q22", 'pop', "b")]}),
         "q22": (False, {"f": [("q2", 'pop', "a")]}),
         "q2": (True, {"d": [("q21", 'pop', "c")]}),
@@ -116,11 +116,11 @@ def vpa_for_L7():
     internal_set = {}
 
     state_setup = {
-        "q0": (False, {"(": [("q1", 'push', None)],
-                       "[": [("q1", 'push', None)],  # exclude empty seq
+        "q0": (False, {"(": [("q1", 'push', '(')],
+                       "[": [("q1", 'push', '[')],  # exclude empty seq
                        }),
-        "q1": (True, {"(": [("q1", 'push', None)],
-                      "[": [("q1", 'push', None)],
+        "q1": (True, {"(": [("q1", 'push', '(')],
+                      "[": [("q1", 'push', '[')],
                       ")": [("q1", 'pop', "(")],
                       "]": [("q1", 'pop', "[")]
                       }),
@@ -137,13 +137,13 @@ def vpa_for_L8():
     internal_set = {}
 
     state_setup = {
-        "q0": (False, {"(": [("q1", 'push', None)],
-                       "[": [("q1", 'push', None)],
-                       "{": [("q1", 'push', None)],
+        "q0": (False, {"(": [("q1", 'push', '(')],
+                       "[": [("q1", 'push', '[')],
+                       "{": [("q1", 'push', '{')],
                        }),
-        "q1": (True, {"(": [("q1", 'push', None)],
-                      "[": [("q1", 'push', None)],
-                      "{": [("q1", 'push', None)],
+        "q1": (True, {"(": [("q1", 'push', '(')],
+                      "[": [("q1", 'push', '[')],
+                      "{": [("q1", 'push', '{')],
                       ")": [("q1", 'pop', "(")],
                       "]": [("q1", 'pop', "[")],
                       "}": [("q1", 'pop', "{")],
@@ -161,19 +161,19 @@ def vpa_for_L9():
     internal_set = {}
 
     state_setup = {
-        "q0": (False, {"(": [("q1", 'push', None)],
-                       "[": [("q1", 'push', None)],
-                       "{": [("q1", 'push', None)],
-                       "<": [("q1", 'push', None)],
+        "q0": (False, {"(": [("q1", 'push', '(')],
+                       "[": [("q1", 'push', '[')],
+                       "{": [("q1", 'push', '{')],
+                       "<": [("q1", 'push', '<')],
                        }),
-        "q1": (True, {"(": [("q1", 'push', None)],
-                      "[": [("q1", 'push', None)],
-                      "{": [("q1", 'push', None)],
-                      "<": [("q1", 'push', None)],
+        "q1": (True, {"(": [("q1", 'push', '(')],
+                      "[": [("q1", 'push', '[')],
+                      "{": [("q1", 'push', '{')],
+                      "<": [("q1", 'push', '<')],
                       ")": [("q1", 'pop', "(")],
                       "]": [("q1", 'pop', "[")],
                       "}": [("q1", 'pop', "{")],
-                      ">": [("q1", 'pop', "{")],
+                      ">": [("q1", 'pop', ">")],
                       }),
     }
     vpa = Vpa.from_state_setup(state_setup, "q0", call_set, return_set, internal_set)
@@ -188,7 +188,7 @@ def vpa_for_L10():
     internal_set = {'b', 'c', 'd', ' e', 'w', 'x', 'y', 'z'}
 
     state_setup = {
-        "q0": (False, {"a": [("qa", 'push', None)],
+        "q0": (False, {"a": [("qa", 'push', "a")],
                        }),
         "qa": (False, {"b": [("qb", None, None)],
                        }),
@@ -198,7 +198,7 @@ def vpa_for_L10():
                        }),
         "qd": (False, {"e": [("q1", None, None)],
                        }),
-        "q1": (True, {"a": [("qa", 'push', None)],
+        "q1": (True, {"a": [("qa", 'push', "a")],
                       "v": [("qv", 'pop', "a")]}),
         "qv": (False, {"w": [("qw", None, None)]}),
         "qw": (False, {"x": [("qx", None, None)]}),
@@ -217,13 +217,13 @@ def vpa_for_L11():
     internal_set = {'b', 'e'}
 
     state_setup = {
-        "q0": (False, {"a": [("qa", 'push', None)],
-                       "c": [("q1", 'push', None)],
+        "q0": (False, {"a": [("qa", 'push', "a")],
+                       "c": [("q1", 'push', "c")],
                        }),
         "qa": (False, {"b": [("q1", None, None)],
                        }),
-        "q1": (True, {"a": [("qa", 'push', None)],
-                      "c": [("q1", 'push', None)],
+        "q1": (True, {"a": [("qa", 'push', "a")],
+                      "c": [("q1", 'push', "c")],
                       "d": [("qd", 'pop', "a"), ("qd", 'pop', "c")],
                       "f": [("q1", 'pop', "a"), ("q1", 'pop', "c")]}),
         "qd": (False, {"e": [("q1", None, None)]})
@@ -240,11 +240,11 @@ def vpa_for_L12():
     internal_set = {}
 
     state_setup = {
-        "q0": (False, {"(": [("q1", 'push', None)],
-                       "[": [("q1", 'push', None)],  # exclude empty seq
+        "q0": (False, {"(": [("q1", 'push', "(")],
+                       "[": [("q1", 'push', "[")],  # exclude empty seq
                        }),
-        "q1": (False, {"(": [("q1", 'push', None)],
-                       "[": [("q1", 'push', None)],
+        "q1": (False, {"(": [("q1", 'push', "(")],
+                       "[": [("q1", 'push', "[")],
                        ")": [("q2", 'pop', "(")],
                        "]": [("q2", 'pop', "[")]}),
         "q2": (True, {
@@ -264,12 +264,12 @@ def vpa_for_L13():
     internal_set = {'a', 'b', 'c'}
 
     state_setup = {
-        "q0": (False, {"(": [("q1", 'push', None)],
+        "q0": (False, {"(": [("q1", 'push', "(")],
                        "a": [("q1", None, None)],
                        "b": [("q1", None, None)],
                        "c": [("q1", None, None)],  # exclude empty seq
                        }),
-        "q1": (True, {"(": [("q1", 'push', None)],
+        "q1": (True, {"(": [("q1", 'push', "(")],
                       ")": [("q1", 'pop', "(")],
                       "a": [("q1", None, None)],
                       "b": [("q1", None, None)],
@@ -288,14 +288,14 @@ def vpa_for_L14():
     internal_set = {'a', 'b', 'c'}
 
     state_setup = {
-        "q0": (False, {"(": [("q1", 'push', None)],
-                       "[": [("q1", 'push', None)],
+        "q0": (False, {"(": [("q1", 'push', "(")],
+                       "[": [("q1", 'push', "[")],
                        "a": [("q1", None, None)],
                        "b": [("q1", None, None)],
                        "c": [("q1", None, None)],  # exclude empty seq
                        }),
-        "q1": (True, {"(": [("q1", 'push', None)],
-                      "[": [("q1", 'push', None)],
+        "q1": (True, {"(": [("q1", 'push', "(")],
+                      "[": [("q1", 'push', "[")],
                       ")": [("q1", 'pop', "(")],
                       "]": [("q1", 'pop', "[")],
                       "a": [("q1", None, None)],
@@ -315,11 +315,11 @@ def vpa_for_L15():
     internal_set = {'a', 'b', 'c', 'd'}
 
     state_setup = {
-        "q0": (False, {"(": [("q1", 'push', None)],
+        "q0": (False, {"(": [("q1", 'push', "(")],
                        "a": [("qa", None, None)],
                        "d": [("q1", None, None)],  # exclude empty seq
                        }),
-        "q1": (True, {"(": [("q1", 'push', None)],
+        "q1": (True, {"(": [("q1", 'push', "(")],
                       ")": [("q1", 'pop', "(")],
                       "a": [("qa", None, None)],
                       "d": [("q1", None, None)],

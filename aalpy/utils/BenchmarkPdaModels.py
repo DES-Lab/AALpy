@@ -134,7 +134,7 @@ def pda_for_L9():
                       ")": [("q1", 'pop', "(")],
                       "]": [("q1", 'pop', "[")],
                       "}": [("q1", 'pop', "{")],
-                      ">": [("q1", 'pop', "{")],
+                      ">": [("q1", 'pop', ">")],
                       }),
     }
     pda = Pda.from_state_setup(state_setup, "q0")

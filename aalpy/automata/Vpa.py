@@ -77,7 +77,7 @@ class Vpa(Automaton):
                 elif t.symbol in self.internal_set:
                     possible_trans.append(t)
                 else:
-                    assert False
+                    assert False and print(f'Letter {letter} is not part of any alphabet')
             # trans = [t for t in transitions if t.stack_guard is None or self.top() == t.stack_guard]
             assert len(possible_trans) < 2
             if len(possible_trans) == 0:
