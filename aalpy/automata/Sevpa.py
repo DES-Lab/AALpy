@@ -47,7 +47,7 @@ class Sevpa(Automaton):
     empty = "_"
     error_state = SevpaState("ErrorSinkState", False)
 
-    def __init__(self, initial_state: SevpaState, states, input_alphabet: SevpaAlphabet):
+    def __init__(self, initial_state: SevpaState, states: list[SevpaState], input_alphabet: SevpaAlphabet):
         super().__init__(initial_state, states)
         self.initial_state = initial_state
         self.states = states
@@ -136,6 +136,13 @@ class Sevpa(Automaton):
 
         return self.current_state.is_accepting and self.top() == self.empty
 
+    def get_state_by_id(self, state_id) -> SevpaState:
+        for state in self.states:
+            if state.state_id == state_id:
+                return state
+            else:
+                return None
+
     def to_state_setup(self):
         state_setup_dict = {}
 
@@ -207,6 +214,12 @@ class Sevpa(Automaton):
 
         sevpa = Sevpa(init_state, states, input_alphabet)
         return sevpa
+
+
+def generate_random_sevpa(alphabet: SevpaAlphabet, amount_states, acceptance_prob, ):
+
+    return None
+
 
 
 def generate_data_from_pda(automaton, num_examples, lens=None, classify_states=False, stack_limit=None,

@@ -4,7 +4,7 @@ from aalpy.automata import Sevpa, SevpaState
 from aalpy.base import Oracle, SUL
 from aalpy.utils.HelperFunctions import print_learning_info, visualize_classification_tree
 from .VpdaClassificationTree import VpdaClassificationTree
-from ..deterministic.CounterExampleProcessing import counterexample_successfully_processed
+from aalpy.learning_algs.vpda.VpdaCounterExampleProcessing import counterexample_successfully_processed
 from ...base.SUL import CacheSUL
 
 print_options = [0, 1, 2, 3]
@@ -93,7 +93,7 @@ def run_KV_vpda(alphabet: list, sul: SUL, eq_oracle: Oracle, cex_processing='rs'
                 break
 
             hypothesis = classification_tree.gen_hypothesis()
-            return hypothesis
+            hypothesis.reset_to_initial()
 
             if print_level == 2:
                 print(f'\rHypothesis {learning_rounds}: {hypothesis.size} states.', end="")

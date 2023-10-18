@@ -187,8 +187,6 @@ class VpdaClassificationTree:
                                                 action='pop', stack_guard=stack_guard)
                         state.transitions[return_letter].append(trans)
 
-
-
         states = [state for state in states.values()]
 
         return Sevpa(initial_state=initial_state, states=states, input_alphabet=self.alphabet)
@@ -292,7 +290,7 @@ class VpdaClassificationTree:
             hypothesis: the former (wrong) hypothesis
 
         """
-        from aalpy.learning_algs.deterministic.CounterExampleProcessing import rs_cex_processing
+        from aalpy.learning_algs.vpda.VpdaCounterExampleProcessing import rs_cex_processing
         v = max(rs_cex_processing(self.sul, cex, hypothesis, suffix_closedness=True), key=len)
         a = cex[len(cex) - len(v) - 1]
         u = cex[:len(cex) - len(v) - 1]
@@ -336,7 +334,7 @@ class VpdaClassificationTree:
 
         # create an internal node at the same position as the old leaf node
         # TODO is this context pair??
-        discriminator_node = CTInternalNode(context_pair=discriminator,
+        discriminator_node = CTInternalNode(distinguishing_string=discriminator,
                                             parent=old_leaf.parent, path_to_node=old_leaf.path_to_node)
 
         # create the new leaf node and add it as child of the internal node

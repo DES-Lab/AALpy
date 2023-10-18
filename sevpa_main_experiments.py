@@ -38,12 +38,12 @@ print(sul.query(('[', '(', ')', ']')))
 
 
 eq_oracle = RandomWordEqOracle(alphabet=merged_input_alphabet, sul=sul)
-model = run_KV_vpda(alphabet=sevpa.input_alphabet, sul=sul, eq_oracle=eq_oracle, print_level=3, max_learning_rounds=1)
+model = run_KV_vpda(alphabet=sevpa.input_alphabet, sul=sul, eq_oracle=eq_oracle, print_level=3, max_learning_rounds=10)
 
 model_sul = SevpaSUL(model, include_top=True, check_balance=True)
 print(model_sul.query(('(', ')')))
 print(model_sul.query(('[', ')')))
 print(model_sul.query(('[', '(', ')', ']')))
 
-# model.visualize()
+model.visualize()
 
