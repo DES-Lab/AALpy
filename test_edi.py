@@ -21,17 +21,20 @@ for i, vpa in enumerate([vpa_for_L1(), vpa_for_L2(), vpa_for_L3(), vpa_for_L4(),
             vpa_for_L9(), vpa_for_L10(), vpa_for_L11(), vpa_for_L12(),vpa_for_L13(), vpa_for_L14(), vpa_for_L15()]):
 
     print(f'VPA {i + 1 if i < 6 else i + 2}')
-    model_under_learning = vpa_for_L12()
+    for i in range(1000):
+        seed(i)
+        print(i)
+        model_under_learning = vpa_for_L15()
 
-    alphabet = SevpaAlphabet(list(model_under_learning.internal_set),
-                             list(model_under_learning.call_set),
-                             list(model_under_learning.return_set))
+        alphabet = SevpaAlphabet(list(model_under_learning.internal_set),
+                                 list(model_under_learning.call_set),
+                                 list(model_under_learning.return_set))
 
-    sul = VpaSUL(model_under_learning, include_top=False, check_balance=False)
+        sul = VpaSUL(model_under_learning, include_top=False, check_balance=False)
 
-    eq_oracle = RandomWordEqOracle(alphabet=alphabet.get_merged_alphabet(), sul=sul, num_walks=10000)
-    # model = run_KV_vpda(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, print_level=3,)
-    model = run_KV(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, automaton_type='vpa',
-                   print_level=3,)
+        eq_oracle = RandomWordEqOracle(alphabet=alphabet.get_merged_alphabet(), sul=sul, num_walks=1000)
+        # model = run_KV_vpda(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, print_level=3,)
+        model = run_KV(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, automaton_type='vpa',
+                       print_level=3, cex_processing='rs')
 
     exit()

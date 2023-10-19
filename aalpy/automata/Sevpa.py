@@ -222,22 +222,21 @@ class Sevpa(Automaton):
         sevpa = Sevpa(init_state, states, input_alphabet)
         return sevpa
 
-    def transform_access_sequance(self, stack: []) -> list[str]:
+    def transform_access_sequance(self) -> list[str]:
 
         word = []
+        calling_state = self.current_state
 
-        for i in range(1, len(stack)):  # skip the first element because it's the start of the stack '_
-            stack_elem = stack[i]
+        for i in range(1, len(self.stack)):  # skip the first element because it's the start of the stack '_
+            stack_elem = self.stack[i]
             from_state_id = stack_elem[0]  # the corresponding state where the stack element got pushed from
             call_letter = stack_elem[1]  # the call letter that was pushed on the stack
-            print("From state:", from_state_id)
-            print("Call letter:", call_letter)
             from_state = self.get_state_by_id(from_state_id)
             if from_state.prefix != ():
-                word.append(from_state.prefix)
+                word.extend(from_state.prefix)
             word.append(call_letter)
 
-            # word.append(self.initial_state.prefix)
+        word.extend(calling_state.prefix)
         return word
 
 

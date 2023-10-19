@@ -212,9 +212,9 @@ def vpa_for_L10():
 def vpa_for_L11():
     # RE Dyck order 1
 
-    call_set = {'a', 'c'}
-    return_set = {'d', 'f'}
-    internal_set = {'b', 'e'}
+    call_set = ['a', 'c']
+    return_set = ['d', 'f']
+    internal_set = ['b', 'e']
 
     state_setup = {
         "q0": (False, {"a": [("qa", 'push', "a")],
@@ -283,9 +283,9 @@ def vpa_for_L13():
 def vpa_for_L14():
     # Dyck order 2
 
-    call_set = {'(', '['}
-    return_set = {')', ']'}
-    internal_set = {'a', 'b', 'c'}
+    call_set = ['(', '[']
+    return_set = [')', ']']
+    internal_set = ['a', 'b', 'c']
 
     state_setup = {
         "q0": (False, {"(": [("q1", 'push', "(")],
@@ -310,9 +310,9 @@ def vpa_for_L14():
 def vpa_for_L15():
     # Dyck order 1
 
-    call_set = {'('}
-    return_set = {')'}
-    internal_set = {'a', 'b', 'c', 'd'}
+    call_set = ['(']
+    return_set = [')']
+    internal_set = ['a', 'b', 'c', 'd']
 
     state_setup = {
         "q0": (False, {"(": [("q1", 'push', "(")],

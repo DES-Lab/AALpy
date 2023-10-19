@@ -43,7 +43,8 @@ def longest_prefix_cex_processing(s_union_s_dot_a: list, cex: tuple, closedness=
     return suffixes
 
 
-def rs_cex_processing(sul: SUL, cex: tuple, hypothesis, suffix_closedness=True, closedness='suffix'):
+def rs_cex_processing(sul: SUL, cex: tuple, hypothesis, suffix_closedness=True, closedness='suffix',
+                      is_vpa=False):
     """Riverst-Schapire counter example processing.
 
     Args:
@@ -55,6 +56,7 @@ def rs_cex_processing(sul: SUL, cex: tuple, hypothesis, suffix_closedness=True, 
         closedness: either 'suffix' or 'prefix'. (Default value = 'suffix')
         sul: SUL: system under learning
         cex: tuple: counterexample
+        is_vpa: system under learning behaves as a context free language
 
     Returns:
 
@@ -76,7 +78,11 @@ def rs_cex_processing(sul: SUL, cex: tuple, hypothesis, suffix_closedness=True, 
 
         for s_p in cex_input[:mid]:
             hypothesis.step(s_p)
-        s_bracket = hypothesis.current_state.prefix
+
+        if not is_vpa:
+            s_bracket = hypothesis.current_state.prefix
+        else:
+            s_bracket = tuple(hypothesis.transform_access_sequance())
 
         d = tuple(cex_input[mid:])
         mq = sul.query(s_bracket + d)

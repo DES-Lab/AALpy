@@ -131,7 +131,6 @@ class ClassificationTree:
                 query = word + node.distinguishing_string
             else:
                 query = node.distinguishing_string[0] + word + node.distinguishing_string[1]
-
             if query not in self.query_cache.keys():
                 mq_result = self.sul.query(query)
                 # keep track of transitions (this might miss some due to other caching, but rest can be obtained from
@@ -322,7 +321,7 @@ class ClassificationTree:
         hypothesis.execute_sequence(hypothesis.initial_state, cex[:j - 1] or tuple())
 
         if self.automaton_type == 'vpa':
-            discriminator = (tuple(hypothesis.transform_access_sequance(hypothesis.stack)), (cex[j - 1], *d))
+            discriminator = (tuple(hypothesis.transform_access_sequance()), (cex[j - 1], *d))
         else:
             discriminator = (cex[j - 1], *d)
 
@@ -347,7 +346,7 @@ class ClassificationTree:
             hypothesis: the former (wrong) hypothesis
 
         """
-        v = max(rs_cex_processing(self.sul, cex, hypothesis, suffix_closedness=True), key=len)
+        v = max(rs_cex_processing(self.sul, cex, hypothesis, is_vpa=self.automaton_type == 'vpa'), key=len)
         a = cex[len(cex) - len(v) - 1]
         u = cex[:len(cex) - len(v) - 1]
         assert (*u, a, *v) == cex
@@ -361,7 +360,7 @@ class ClassificationTree:
         ua_state = hypothesis.current_state
 
         if self.automaton_type == 'vpa':
-            v = (tuple(hypothesis.transform_access_sequance(hypothesis.stack)), tuple(v))
+            v = (tuple(hypothesis.transform_access_sequance()), tuple(v))
 
             if a in self.alphabet.internal_alphabet:
                 new_access_string = (*u_state.prefix, a)
@@ -370,6 +369,7 @@ class ClassificationTree:
                 assert a in self.alphabet.return_alphabet
                 l_prime, call = hypothesis.get_state_by_id(top_of_stack[0]), top_of_stack[1]
                 new_access_string = l_prime.prefix + (call,) + u_state.prefix + (a,)
+                print('Ret acc', new_access_string)
         else:
             new_access_string = (*u_state.prefix, a)
 
@@ -431,6 +431,10 @@ class ClassificationTree:
         # set the two nodes as children of the internal node
         discriminator_node.children[new_leaf_position] = new_leaf
         discriminator_node.children[other_leaf_position] = old_leaf
+
+        # from aalpy.utils.HelperFunctions import visualize_classification_tree
+        # visualize_classification_tree(self.root)
+        # input('inp')
 
         # sifting cache update
         sifting_cache_outdated = []
