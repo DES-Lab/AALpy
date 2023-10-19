@@ -82,7 +82,8 @@ def rs_cex_processing(sul: SUL, cex: tuple, hypothesis, suffix_closedness=True, 
         if not is_vpa:
             s_bracket = hypothesis.current_state.prefix
         else:
-            s_bracket = tuple(hypothesis.transform_access_sequance())
+            print('cex', cex_input[:mid])
+            s_bracket = tuple(hypothesis.transform_access_sequance(hypothesis.current_state))
 
         d = tuple(cex_input[mid:])
         mq = sul.query(s_bracket + d)
