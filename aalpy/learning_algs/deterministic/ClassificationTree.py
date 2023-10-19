@@ -368,7 +368,8 @@ class ClassificationTree:
                 new_access_string = (*u_state.prefix, a)
             else:
                 if a not in self.alphabet.return_alphabet:
-                    i = 123312321
+                    v = max(rs_cex_processing(self.sul, cex, hypothesis, is_vpa=self.automaton_type == 'vpa'), key=len)
+                    exit()
                 assert a in self.alphabet.return_alphabet
                 l_prime, call = hypothesis.get_state_by_id(top_of_stack[0]), top_of_stack[1]
                 new_access_string = l_prime.prefix + (call,) + u_state.prefix + (a,)

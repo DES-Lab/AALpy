@@ -234,8 +234,10 @@ class Sevpa(Automaton):
         calling_state = self.initial_state if not state else state
         stack = self.stack if not stack_content else stack_content
 
-        for i in range(1, len(stack)):  # skip the first element because it's the start of the stack '_
-            stack_elem = stack[i]
+        for index, stack_elem in enumerate(stack):
+            # skip the first element because it's the start of the stack '_
+            if index == 0:
+                continue
             from_state_id = stack_elem[0]  # the corresponding state where the stack element got pushed from
             call_letter = stack_elem[1]  # the call letter that was pushed on the stack
             from_state = self.get_state_by_id(from_state_id)
@@ -243,7 +245,7 @@ class Sevpa(Automaton):
                 word.extend(from_state.prefix)
             word.append(call_letter)
         word.extend(calling_state.prefix)
-        print('TRANS', word)
+        print('TRANS', word, calling_state.prefix)
         return word
 
     def is_balanced(self, x):
