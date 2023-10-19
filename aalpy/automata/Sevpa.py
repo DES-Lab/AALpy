@@ -1,4 +1,5 @@
 from collections import defaultdict
+import re
 
 from aalpy.base import Automaton, AutomatonState
 
@@ -142,6 +143,13 @@ class Sevpa(Automaton):
                 return state
         return None
 
+    def execute_sequence(self, origin_state, seq):
+        if origin_state.prefix != self.initial_state.prefix:
+            assert False, 'execute_sequance for Sevpa only is only supported from the initial state.'
+        self.reset_to_initial()
+        self.current_state = origin_state
+        return [self.step(s) for s in seq]
+
     def to_state_setup(self):
         state_setup_dict = {}
 
@@ -191,7 +199,7 @@ class Sevpa(Automaton):
                     if action == 'pop':
                         assert stack_guard[0] in states
                         assert stack_guard[1] in input_alphabet.call_alphabet
-                        stack_guard = f'{stack_guard[0]}{stack_guard[1]}'
+                        stack_guard = (stack_guard[0], stack_guard[1])
                         trans = SevpaTransition(start=state, target=states[target_state_id], symbol=_input,
                                                 action=action, stack_guard=stack_guard)
                     elif action == 'push':  # In SEVPA you can only define return transitions and internal transitions
@@ -214,9 +222,29 @@ class Sevpa(Automaton):
         sevpa = Sevpa(init_state, states, input_alphabet)
         return sevpa
 
+    def transform_access_sequance(self, stack: []) -> list[str]:
+
+        word = []
+
+        for i in range(1, len(stack)):  # skip the first element because it's the start of the stack '_
+            stack_elem = stack[i]
+            from_state_id = stack_elem[0]  # the corresponding state where the stack element got pushed from
+            call_letter = stack_elem[1]  # the call letter that was pushed on the stack
+            print("From state:", from_state_id)
+            print("Call letter:", call_letter)
+            from_state = self.get_state_by_id(from_state_id)
+            if from_state.prefix != ():
+                word.append(from_state.prefix)
+            word.append(call_letter)
+
+            # word.append(self.initial_state.prefix)
+        return word
+
+
+
+
 
 def generate_random_sevpa(alphabet: SevpaAlphabet, amount_states, acceptance_prob, ):
 
     return None
-
 

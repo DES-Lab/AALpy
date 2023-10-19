@@ -1,6 +1,8 @@
 import time
+from typing import Union
 
-from aalpy.automata import Dfa, DfaState, MealyState, MealyMachine, MooreState, MooreMachine
+from aalpy.automata import Dfa, DfaState, MealyState, MealyMachine, MooreState, MooreMachine, \
+    Sevpa, SevpaState, SevpaAlphabet
 from aalpy.base import Oracle, SUL
 from aalpy.utils.HelperFunctions import print_learning_info, visualize_classification_tree
 from .ClassificationTree import ClassificationTree
@@ -9,10 +11,10 @@ from ...base.SUL import CacheSUL
 
 print_options = [0, 1, 2, 3]
 counterexample_processing_strategy = [None, 'rs']
-automaton_class = {'dfa': Dfa, 'mealy': MealyMachine, 'moore': MooreMachine}
+automaton_class = {'dfa': Dfa, 'mealy': MealyMachine, 'moore': MooreMachine, 'vpa': Sevpa}
 
 
-def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, cex_processing='rs',
+def run_KV(alphabet: Union[list, SevpaAlphabet], sul: SUL, eq_oracle: Oracle, automaton_type, cex_processing='rs',
            max_learning_rounds=None, cache_and_non_det_check=True, return_data=False, print_level=2):
     """
     Executes the KV algorithm.
@@ -49,6 +51,7 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, cex_proc
     assert print_level in print_options
     assert cex_processing in counterexample_processing_strategy
     assert automaton_type in [*automaton_class]
+    assert automaton_type != 'vpa' and isinstance(alphabet, list) or isinstance(alphabet, SevpaAlphabet)
 
     start_time = time.time()
     eq_query_time = 0
@@ -69,19 +72,30 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, cex_proc
         # all transitions.
         if automaton_type == 'dfa':
             initial_state = DfaState(state_id='s0', is_accepting=empty_string_mq)
-        else:
+        elif automaton_type == 'moore':
             initial_state = MooreState(state_id='s0', output=empty_string_mq)
+        else:
+            initial_state = SevpaState(state_id='s0', is_accepting=empty_string_mq)
     else:
         initial_state = MealyState(state_id='s0')
 
     initial_state.prefix = tuple()
 
-    for a in alphabet:
-        initial_state.transitions[a] = initial_state
-        if automaton_type == 'mealy':
-            initial_state.output_fun[a] = sul.query((a,))[-1]
+    # TODO there should be static function in SEVPA class that creates a daisy hypothesis,
+    #  where all transitions are self loops, and all return transitions are self loops with initial state being stack guard
+    # then we just call SEVPA.create_daisy_hypothesis(empty_string_mq)
+    if automaton_type != 'vpa':
+        for a in alphabet:
+            initial_state.transitions[a] = initial_state
+            if automaton_type == 'mealy':
+                initial_state.output_fun[a] = sul.query((a,))[-1]
 
-    hypothesis = automaton_class[automaton_type](initial_state, [initial_state])
+    # TODO this is quite ugly... do we need input alphbabet in the constructur of SEVPA?
+    # Input alphbaet for SVEPA/VPA should not be in a constructor, but you can get it with get_input_alphabet()
+    if automaton_type != 'vpa':
+        hypothesis = automaton_class[automaton_type](initial_state, [initial_state])
+    else:
+        hypothesis = Sevpa(initial_state, [initial_state], alphabet)
 
     # Perform an equivalence query on this automaton
     eq_query_start = time.time()
@@ -102,6 +116,8 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, cex_proc
                 break
 
             hypothesis = classification_tree.gen_hypothesis()
+            # TODO this is needed for SEVPA for stack, leave for now, but ugly
+            # hypothesis.reset_to_initial()
 
             if print_level == 2:
                 print(f'\rHypothesis {learning_rounds}: {hypothesis.size} states.', end="")

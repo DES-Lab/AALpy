@@ -235,9 +235,9 @@ def vpa_for_L11():
 def vpa_for_L12():
     # Dyck order 2 (single-nested)
 
-    call_set = {'(', '['}
-    return_set = {')', ']'}
-    internal_set = {}
+    call_set = ['(', '[']
+    return_set = [')', ']']
+    internal_set = []
 
     state_setup = {
         "q0": (False, {"(": [("q1", 'push', "(")],
