@@ -5,6 +5,7 @@ from aalpy.automata import DfaState, Dfa, MealyState, MealyMachine, MooreState, 
     SevpaTransition, Sevpa
 from aalpy.base import SUL
 from aalpy.learning_algs.deterministic.CounterExampleProcessing import rs_cex_processing
+from aalpy.utils.HelperFunctions import visualize_classification_tree
 
 automaton_class = {'dfa': Dfa, 'mealy': MealyMachine, 'moore': MooreMachine}
 
@@ -217,11 +218,11 @@ class ClassificationTree:
 
                 # Add call transitions
                 for call_letter in self.alphabet.call_alphabet:
-                    # TODO This should not be here, but without it it breaks the algorithm as SEVPA incorrectly
-                    # deals with call transitions I think. Important!
-                    trans = SevpaTransition(start=state, target=initial_state, symbol=call_letter, action='push',
-                                            stack_guard=(state.state_id, call_letter))
-                    state.transitions[call_letter].append(trans)
+                    # # TODO This should not be here, but without it it breaks the algorithm as SEVPA incorrectly
+                    # # deals with call transitions I think. Important!
+                    # trans = SevpaTransition(start=state, target=initial_state, symbol=call_letter, action='push',
+                    #                         stack_guard=(state.state_id, call_letter))
+                    # state.transitions[call_letter].append(trans)
 
                     for other_state in states_for_transitions:
                         # Add return transitions
@@ -309,6 +310,7 @@ class ClassificationTree:
             s_i = self._sift(cex[:i]).access_string
             hypothesis.execute_sequence(hypothesis.initial_state, cex[:i])
             s_star_i = hypothesis.current_state.prefix
+
             if s_i != s_star_i:
                 j = i
                 d = self._least_common_ancestor(s_i, s_star_i)
@@ -360,17 +362,19 @@ class ClassificationTree:
         ua_state = hypothesis.current_state
 
         if self.automaton_type == 'vpa':
-            v = (tuple(hypothesis.transform_access_sequance()), tuple(v))
+            discriminator = (tuple(hypothesis.transform_access_sequance()), tuple(v))
 
             if a in self.alphabet.internal_alphabet:
                 new_access_string = (*u_state.prefix, a)
             else:
-                # TODO ?????
+                if a not in self.alphabet.return_alphabet:
+                    v = max(rs_cex_processing(self.sul, cex, hypothesis, is_vpa=self.automaton_type == 'vpa'), key=len)
+                    exit()
                 assert a in self.alphabet.return_alphabet
                 l_prime, call = hypothesis.get_state_by_id(top_of_stack[0]), top_of_stack[1]
                 new_access_string = l_prime.prefix + (call,) + u_state.prefix + (a,)
-                print('Ret acc', new_access_string)
         else:
+            discriminator = v
             new_access_string = (*u_state.prefix, a)
 
         if self.automaton_type == 'dfa' or self.automaton_type == 'vpa':
@@ -378,9 +382,9 @@ class ClassificationTree:
         else:
             new_leaf_position = self.sul.query(cex)[-1]
 
-        self._insert_new_leaf(discriminator=v,
+        self._insert_new_leaf(discriminator=discriminator,
                               old_leaf_access_string=ua_state.prefix,
-                              new_leaf_access_string=new_access_string, # TODO WRONG
+                              new_leaf_access_string=new_access_string,
                               new_leaf_position=new_leaf_position)
 
     def _insert_new_leaf(self, discriminator, old_leaf_access_string, new_leaf_access_string, new_leaf_position):

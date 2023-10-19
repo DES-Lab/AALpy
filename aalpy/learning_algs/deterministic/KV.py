@@ -116,8 +116,6 @@ def run_KV(alphabet: Union[list, SevpaAlphabet], sul: SUL, eq_oracle: Oracle, au
                 break
 
             hypothesis = classification_tree.gen_hypothesis()
-            # TODO this is needed for SEVPA for stack, leave for now, but ugly
-            # hypothesis.reset_to_initial()
 
             if print_level == 2:
                 print(f'\rHypothesis {learning_rounds}: {hypothesis.size} states.', end="")
@@ -133,9 +131,7 @@ def run_KV(alphabet: Union[list, SevpaAlphabet], sul: SUL, eq_oracle: Oracle, au
                 eq_query_time += time.time() - eq_query_start
 
                 if cex is None:
-                    if print_level == 3:
-                        visualize_classification_tree(classification_tree.root)
-                        break
+                    break
                 else:
                     cex = tuple(cex)
 

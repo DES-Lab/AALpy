@@ -80,6 +80,9 @@ class Sevpa(Automaton):
         """
         if self.current_state == Sevpa.error_state:
             return True
+        # push is always possible
+        if letter in self.input_alphabet.call_alphabet:
+            return True
         if letter is not None:
             transitions = self.current_state.transitions[letter]
             possible_trans = []
@@ -121,14 +124,17 @@ class Sevpa(Automaton):
                 else:
                     assert False
 
+            if letter in self.input_alphabet.call_alphabet:
+                assert(letter in self.input_alphabet.call_alphabet)     # push letters must be in call set
+                self.stack.append((self.current_state.state_id, letter))
+                return self.current_state.is_accepting and self.top() == self.empty
+
             assert len(possible_trans) < 2
             trans = possible_trans[0]
             self.current_state = trans.target
-            if trans.action == 'push':
-                assert (letter in self.input_alphabet.call_alphabet)  # push letters must be in call set
-                self.stack.append(trans.stack_guard)
-            elif trans.action == 'pop':
-                assert (letter in self.input_alphabet.return_alphabet)  # pop letters must be in return set
+
+            if trans.action == 'pop':
+                assert(letter in self.input_alphabet.return_alphabet)     # pop letters must be in return set
                 if len(self.stack) <= 1:  # empty stack elem should always be there
                     self.current_state = Sevpa.error_state
                     return False
@@ -222,22 +228,36 @@ class Sevpa(Automaton):
         sevpa = Sevpa(init_state, states, input_alphabet)
         return sevpa
 
-    def transform_access_sequance(self) -> list[str]:
-        word = []
-        calling_state = self.current_state
+    def transform_access_sequance(self, state=None, stack_content=None) -> list[str]:
 
-        for i in range(1, len(self.stack)):  # skip the first element because it's the start of the stack '_'
-            stack_elem = self.stack[i]
+        word = []
+        calling_state = self.initial_state if not state else state
+        stack = self.stack if not stack_content else stack_content
+
+        for index, stack_elem in enumerate(stack):
+            # skip the first element because it's the start of the stack '_
+            if index == 0:
+                continue
             from_state_id = stack_elem[0]  # the corresponding state where the stack element got pushed from
             call_letter = stack_elem[1]  # the call letter that was pushed on the stack
             from_state = self.get_state_by_id(from_state_id)
             if from_state.prefix != ():
                 word.extend(from_state.prefix)
             word.append(call_letter)
-
         word.extend(calling_state.prefix)
+        print('TRANS', word, calling_state.prefix)
         return word
 
+    def is_balanced(self, x):
+        counter = 0
+        for i in x:
+            if i in self.input_alphabet.call_alphabet:
+                counter += 1
+            if i in self.input_alphabet.return_alphabet:
+                counter -= 1
+            if counter < 0:
+                return False
+        return counter == 0
 
 def has_transition(state: SevpaState, transition_letter, stack_guard) -> bool:
     transitions = state.transitions[transition_letter]
