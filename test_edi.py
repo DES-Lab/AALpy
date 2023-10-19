@@ -14,7 +14,7 @@ from aalpy.utils.BenchmarkSevpaModels import *
 #
 # print(sevpa.input_alphabet)
 
-model_under_learning = vpa_for_L12()
+model_under_learning = vpa_for_L15()
 
 merged_input_alphabet = SevpaAlphabet(list(model_under_learning.internal_set),
                                       list(model_under_learning.call_set),
@@ -22,9 +22,7 @@ merged_input_alphabet = SevpaAlphabet(list(model_under_learning.internal_set),
 
 sul = VpaSUL(model_under_learning, include_top=False, check_balance=False)
 
-assert sul.query(('(', ')'))[-1] == True
-
-eq_oracle = RandomWordEqOracle(alphabet=merged_input_alphabet.get_merged_alphabet(), sul=sul, num_walks=1000)
+eq_oracle = RandomWordEqOracle(alphabet=merged_input_alphabet.get_merged_alphabet(), sul=sul, num_walks=10000)
 model = run_KV_vpda(alphabet=merged_input_alphabet, sul=sul, eq_oracle=eq_oracle, print_level=3, max_learning_rounds=3)
 
 model_sul = SevpaSUL(model, include_top=True, check_balance=True)

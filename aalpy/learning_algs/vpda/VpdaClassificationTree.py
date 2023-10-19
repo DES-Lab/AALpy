@@ -1,7 +1,9 @@
+import re
 from collections import defaultdict
 
 from aalpy.automata import SevpaState, SevpaAlphabet, SevpaTransition, Sevpa
 from aalpy.base import SUL
+from aalpy.learning_algs.deterministic.CounterExampleProcessing import rs_cex_processing
 
 
 class CTNode:
@@ -290,7 +292,7 @@ class VpdaClassificationTree:
             hypothesis: the former (wrong) hypothesis
 
         """
-        from aalpy.learning_algs.vpda.VpdaCounterExampleProcessing import rs_cex_processing
+
         v = max(rs_cex_processing(self.sul, cex, hypothesis, suffix_closedness=True), key=len)
         a = cex[len(cex) - len(v) - 1]
         u = cex[:len(cex) - len(v) - 1]
@@ -303,7 +305,9 @@ class VpdaClassificationTree:
 
         new_leaf_position = not hypothesis.execute_sequence(hypothesis.initial_state, cex)[-1]
 
-        self._insert_new_leaf(discriminator=v,
+        discriminator = (tuple(transform_access_seq(hypothesis, hypothesis.stack)), tuple(v))
+
+        self._insert_new_leaf(discriminator=discriminator,
                               old_leaf_access_string=ua_state,
                               new_leaf_access_string=(*u_state, a),
                               new_leaf_position=new_leaf_position)
@@ -333,7 +337,7 @@ class VpdaClassificationTree:
         old_leaf = self.leaf_nodes[old_leaf_access_string]
 
         # create an internal node at the same position as the old leaf node
-        # TODO is this context pair??
+
         discriminator_node = CTInternalNode(distinguishing_string=discriminator,
                                             parent=old_leaf.parent, path_to_node=old_leaf.path_to_node)
 
@@ -371,3 +375,25 @@ class VpdaClassificationTree:
             output = self.sul.query(word)[-1]
             self.query_cache[word] = output
         return output
+
+def transform_access_seq(hypothesis: Sevpa, stack: []) -> list[str]:
+
+    word = []
+    pattern = r"(q\d+)(.*)"
+
+    for i in range(1, len(stack)):  # skip the first element because it's the start of the stack '_
+        stack_elem = stack[i]
+        match = re.search(pattern, stack_elem)
+        if match:
+            from_state_id = match.group(1)  # the corresponding state where the stack element got pushed from
+            call_letter = match.group(2)  # the call letter that was pushed on the stack
+            print("From state:", from_state_id)
+            print("Call letter:", call_letter)
+            from_state = hypothesis.get_state_by_id(from_state_id)
+            word.append(from_state.prefix)  # .prefix is the access sequence of the node in the classificationTree
+            word.append(call_letter)
+        else:
+            assert False and print("Stack content does not follow convention")
+
+        word.append(hypothesis.initial_state.prefix)
+    return word
