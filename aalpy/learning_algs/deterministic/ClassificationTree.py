@@ -361,9 +361,13 @@ class ClassificationTree:
 
         if self.automaton_type == 'vpa':
             v = (tuple(hypothesis.transform_access_sequance()), tuple(v))
+            assert hypothesis.is_balanced(v)
 
             if a in self.alphabet.internal_alphabet:
-                new_access_string = (*u_state.prefix, a)
+                new_access_string = (*u_state.prefix, a,)
+                print('Int acc', new_access_string)
+                if new_access_string in self.leaf_nodes.keys():
+                    assert False
             else:
                 # TODO ?????
                 assert a in self.alphabet.return_alphabet
@@ -434,9 +438,9 @@ class ClassificationTree:
 
         # from aalpy.utils.HelperFunctions import visualize_classification_tree
         # visualize_classification_tree(self.root)
-        # input('inp')
 
         # sifting cache update
+
         sifting_cache_outdated = []
         if old_leaf in self.sifting_cache.values():
             for prefix, node in self.sifting_cache.items():

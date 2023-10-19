@@ -239,6 +239,19 @@ class Sevpa(Automaton):
         word.extend(calling_state.prefix)
         return word
 
+    # TODO  move
+    def is_balanced(self, x):
+        call_counter = 0
+        for i in x:
+            if i in self.input_alphabet.call_alphabet:
+                call_counter += 1
+            if i in self.input_alphabet.return_alphabet:
+                call_counter -= 1
+            if call_counter < 0:
+                return False
+
+        return call_counter == 0
+
 
 
 

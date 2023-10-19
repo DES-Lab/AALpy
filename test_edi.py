@@ -32,7 +32,7 @@ for i, vpa in enumerate([vpa_for_L1(), vpa_for_L2(), vpa_for_L3(), vpa_for_L4(),
 
         sul = VpaSUL(model_under_learning, include_top=False, check_balance=False)
 
-        eq_oracle = RandomWordEqOracle(alphabet=alphabet.get_merged_alphabet(), sul=sul, num_walks=1000)
+        eq_oracle = RandomWordEqOracle(alphabet=alphabet.get_merged_alphabet(), sul=sul, num_walks=5000)
         # model = run_KV_vpda(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, print_level=3,)
         model = run_KV(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, automaton_type='vpa',
                        print_level=3, cex_processing='rs')
