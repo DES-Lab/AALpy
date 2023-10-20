@@ -4,7 +4,7 @@ from typing import Union
 from aalpy.automata import Dfa, DfaState, MealyState, MealyMachine, MooreState, MooreMachine, \
     Sevpa, SevpaState, SevpaAlphabet
 from aalpy.base import Oracle, SUL
-from aalpy.utils.HelperFunctions import print_learning_info, visualize_classification_tree
+from aalpy.utils.HelperFunctions import print_learning_info
 from .ClassificationTree import ClassificationTree
 from .CounterExampleProcessing import counterexample_successfully_processed
 from ...base.SUL import CacheSUL
@@ -87,8 +87,6 @@ def run_KV(alphabet: Union[list, SevpaAlphabet], sul: SUL, eq_oracle: Oracle, au
             if automaton_type == 'mealy':
                 initial_state.output_fun[a] = sul.query((a,))[-1]
 
-    # TODO this is quite ugly... do we need input alphbabet in the constructur of SEVPA?
-    # Input alphbaet for SVEPA/VPA should not be in a constructor, but you can get it with get_input_alphabet()
     if automaton_type != 'vpa':
         hypothesis = automaton_class[automaton_type](initial_state, [initial_state])
     else:

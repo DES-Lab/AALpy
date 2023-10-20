@@ -1,8 +1,8 @@
 from collections import defaultdict
 from typing import Union
 
-from aalpy.automata import DfaState, Dfa, MealyState, MealyMachine, MooreState, MooreMachine, SevpaAlphabet, SevpaState, \
-    SevpaTransition, Sevpa
+from aalpy.automata import DfaState, Dfa, MealyState, MealyMachine, MooreState, MooreMachine, \
+    SevpaAlphabet, SevpaState, SevpaTransition, Sevpa
 from aalpy.base import SUL
 from aalpy.learning_algs.deterministic.CounterExampleProcessing import rs_cex_processing
 
