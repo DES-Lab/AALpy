@@ -212,21 +212,21 @@ def vpa_for_L10():
 def vpa_for_L11():
     # RE Dyck order 1
 
-    call_set = ['a', 'c']
-    return_set = ['d', 'f']
-    internal_set = ['b', 'e']
+    call_set = ['c1', 'c2']
+    return_set = ['r1', 'r2']
+    internal_set = ['i1', 'i2']
 
     state_setup = {
-        "q0": (False, {"a": [("qa", 'push', "a")],
-                       "c": [("q1", 'push', "c")],
+        "q0": (False, {"c1": [("qa", 'push', "c1")],
+                       "c2": [("q1", 'push', "c2")],
                        }),
-        "qa": (False, {"b": [("q1", None, None)],
+        "qa": (False, {"i1": [("q1", None, None)],
                        }),
-        "q1": (True, {"a": [("qa", 'push', "a")],
-                      "c": [("q1", 'push', "c")],
-                      "d": [("qd", 'pop', "a"), ("qd", 'pop', "c")],
-                      "f": [("q1", 'pop', "a"), ("q1", 'pop', "c")]}),
-        "qd": (False, {"e": [("q1", None, None)]})
+        "q1": (True, {"c1": [("qa", 'push', "c1")],
+                      "c2": [("q1", 'push', "c2")],
+                      "r1": [("qd", 'pop', "c1"), ("qd", 'pop', "c2")],
+                      "r2": [("q1", 'pop', "c1"), ("q1", 'pop', "c2")]}),
+        "qd": (False, {"i2": [("q1", None, None)]})
     }
     vpa = Vpa.from_state_setup(state_setup, "q0", call_set, return_set, internal_set)
     return vpa

@@ -1,5 +1,6 @@
 from aalpy.SULs.AutomataSUL import SevpaSUL, DfaSUL
 from aalpy.automata.Pda import generate_data_from_pda
+from aalpy.automata.Sevpa import generate_random_sevpa
 from aalpy.learning_algs import run_KV_vpda, run_KV
 from aalpy.oracles import RandomWordEqOracle, RandomWalkEqOracle
 from aalpy.utils import visualize_automaton, get_Angluin_dfa
@@ -24,9 +25,17 @@ from aalpy.utils.BenchmarkSevpaModels import *
 
 ########################################
 
+call_set = {'(', '['}
+return_set = {')', ']'}
+internal_set = {'x'}
+input_alphabet = SevpaAlphabet(internal_alphabet=internal_set, call_alphabet=call_set, return_alphabet=return_set)
+
+random_sevpa = generate_random_sevpa(input_alphabet, 3, 0.5, 0.1)
+visualize_automaton(random_sevpa, path="Random Sevpa")
+
 sevpa = sevpa_for_L12_refined()
 
-# visualize_automaton(sevpa, path="InitialModel")
+visualize_automaton(sevpa, path="InitialModel")
 
 print(sevpa.input_alphabet)
 merged_input_alphabet = sevpa.input_alphabet.get_merged_alphabet()

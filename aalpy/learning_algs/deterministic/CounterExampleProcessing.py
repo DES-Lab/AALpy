@@ -43,8 +43,7 @@ def longest_prefix_cex_processing(s_union_s_dot_a: list, cex: tuple, closedness=
     return suffixes
 
 
-def rs_cex_processing(sul: SUL, cex: tuple, hypothesis, suffix_closedness=True, closedness='suffix',
-                      is_vpa=False):
+def rs_cex_processing(sul: SUL, cex: tuple, hypothesis, suffix_closedness=True, closedness='suffix', is_vpa=False):
     """Riverst-Schapire counter example processing.
 
     Args:
@@ -82,7 +81,7 @@ def rs_cex_processing(sul: SUL, cex: tuple, hypothesis, suffix_closedness=True, 
         if not is_vpa:
             s_bracket = hypothesis.current_state.prefix
         else:
-            s_bracket = tuple(hypothesis.transform_access_sequance())
+            s_bracket = tuple(hypothesis.transform_access_sequance(hypothesis.current_state))
 
         d = tuple(cex_input[mid:])
         mq = sul.query(s_bracket + d)

@@ -21,10 +21,10 @@ for i, vpa in enumerate([vpa_for_L1(), vpa_for_L2(), vpa_for_L3(), vpa_for_L4(),
             vpa_for_L9(), vpa_for_L10(), vpa_for_L11(), vpa_for_L12(),vpa_for_L13(), vpa_for_L14(), vpa_for_L15()]):
 
     print(f'VPA {i + 1 if i < 6 else i + 2}')
-    for i in range(1000):
-        seed(i)
+    for i in range(10):
+        seed(4)
         print(i)
-        model_under_learning = vpa_for_L15()
+        model_under_learning = vpa_for_L11()
 
         alphabet = SevpaAlphabet(list(model_under_learning.internal_set),
                                  list(model_under_learning.call_set),
@@ -37,4 +37,3 @@ for i, vpa in enumerate([vpa_for_L1(), vpa_for_L2(), vpa_for_L3(), vpa_for_L4(),
         model = run_KV(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, automaton_type='vpa',
                        print_level=3, cex_processing='rs')
 
-    exit()
