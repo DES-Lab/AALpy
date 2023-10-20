@@ -1,10 +1,8 @@
 from Examples import learning_context_free_grammar_example
 from aalpy.SULs.AutomataSUL import SevpaSUL, VpaSUL
-from aalpy.automata.Pda import generate_data_from_pda
-from aalpy.learning_algs import run_KV_vpda, run_KV
+from aalpy.learning_algs import run_KV
 from aalpy.oracles import RandomWordEqOracle, RandomWalkEqOracle
 from aalpy.utils import visualize_automaton, get_Angluin_dfa
-from aalpy.utils.BenchmarkPdaModels import *
 from aalpy.utils.BenchmarkVpaModels import *
 from aalpy.utils.BenchmarkSevpaModels import *
 
@@ -16,9 +14,9 @@ from aalpy.utils.BenchmarkSevpaModels import *
 # test test test
 
 
-learning_context_free_grammar_example()
+# learning_context_free_grammar_example()
 
-exit()
+# exit()
 
 from random import seed
 
@@ -27,10 +25,7 @@ for i, vpa in enumerate([vpa_for_L1(), vpa_for_L2(), vpa_for_L3(), vpa_for_L4(),
 
     print(f'VPA {i + 1 if i < 6 else i + 2}')
     # 16 works
-    for i in range(100):
-        if i < 9:
-            continue
-        seed(i)
+    for i in range(10):
         print(i)
         model_under_learning = vpa
 
@@ -44,6 +39,8 @@ for i, vpa in enumerate([vpa_for_L1(), vpa_for_L2(), vpa_for_L3(), vpa_for_L4(),
         # model = run_KV_vpda(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, print_level=3,)
         model = run_KV(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, automaton_type='vpa',
                        print_level=2, cex_processing='rs')
+
+        e = 1
 
         # exit()
 

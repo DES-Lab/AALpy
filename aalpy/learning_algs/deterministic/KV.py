@@ -71,19 +71,16 @@ def run_KV(alphabet: Union[list, SevpaAlphabet], sul: SUL, eq_oracle: Oracle, au
         # single (accepting or rejecting) state with self-loops for
         # all transitions.
         if automaton_type == 'dfa':
-            initial_state = DfaState(state_id='s0', is_accepting=empty_string_mq)
+            initial_state = DfaState(state_id='q0', is_accepting=empty_string_mq)
         elif automaton_type == 'moore':
-            initial_state = MooreState(state_id='s0', output=empty_string_mq)
+            initial_state = MooreState(state_id='q0', output=empty_string_mq)
         else:
-            initial_state = SevpaState(state_id='s0', is_accepting=empty_string_mq)
+            initial_state = SevpaState(state_id='q0', is_accepting=empty_string_mq)
     else:
-        initial_state = MealyState(state_id='s0')
+        initial_state = MealyState(state_id='q0')
 
     initial_state.prefix = tuple()
 
-    # TODO there should be static function in SEVPA class that creates a daisy hypothesis,
-    #  where all transitions are self loops, and all return transitions are self loops with initial state being stack guard
-    # then we just call SEVPA.create_daisy_hypothesis(empty_string_mq)
     if automaton_type != 'vpa':
         for a in alphabet:
             initial_state.transitions[a] = initial_state
@@ -95,7 +92,7 @@ def run_KV(alphabet: Union[list, SevpaAlphabet], sul: SUL, eq_oracle: Oracle, au
     if automaton_type != 'vpa':
         hypothesis = automaton_class[automaton_type](initial_state, [initial_state])
     else:
-        hypothesis = Sevpa(initial_state, [initial_state], alphabet)
+        hypothesis = Sevpa.create_daisy_hypothesis(initial_state, alphabet)
 
     # Perform an equivalence query on this automaton
     eq_query_start = time.time()

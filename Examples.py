@@ -947,7 +947,7 @@ def learning_context_free_grammar_example():
     from aalpy.utils.BenchmarkSULs import get_balanced_string_sul
 
     call_return_map = {'(': ')', '[': ']'}
-    balanced_string_sul = get_balanced_string_sul(call_return_map)
+    balanced_string_sul = get_balanced_string_sul(call_return_map, allow_empty_string=True)
 
     sevpa_alphabet = SevpaAlphabet([], list(call_return_map.keys()), list(call_return_map.values()))
     eq_oracle = RandomWordEqOracle(sevpa_alphabet.get_merged_alphabet(), balanced_string_sul, num_walks=1000)

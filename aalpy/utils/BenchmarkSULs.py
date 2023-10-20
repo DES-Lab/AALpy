@@ -388,7 +388,7 @@ def get_small_pomdp():
     return Mdp(q0, [q0, q1, q2, q3, q4])
 
 
-def is_balanced(test_string, call_return_map):
+def is_balanced(test_string, call_return_map, allow_empty_string):
     stack = []
     # Create a set of open and close characters for faster lookup
     open_chars = set(call_return_map.keys())
@@ -406,16 +406,17 @@ def is_balanced(test_string, call_return_map):
             if call_return_map[last_open] != char:
                 return False
 
-    return not stack and len(test_string) > 0
+    return not stack if allow_empty_string else not stack and len(test_string) > 0
 
 
-def get_balanced_string_sul(call_return_map):
+def get_balanced_string_sul(call_return_map, allow_empty_string):
     from aalpy.base import SUL
 
     class BalancedStringSUL(SUL):
-        def __init__(self, call_return_map):
+        def __init__(self, call_return_map, allow_empty_string):
             super(BalancedStringSUL, self).__init__()
             self.call_return_map = call_return_map
+            self.allow_empty_string = allow_empty_string
             self.sting_under_test = []
 
         def pre(self):
@@ -427,7 +428,6 @@ def get_balanced_string_sul(call_return_map):
         def step(self, letter):
             if letter:
                 self.sting_under_test += letter
-            return is_balanced(self.sting_under_test, self.call_return_map)
+            return is_balanced(self.sting_under_test, self.call_return_map, self.allow_empty_string)
 
-    return BalancedStringSUL(call_return_map)
-
+    return BalancedStringSUL(call_return_map, allow_empty_string)

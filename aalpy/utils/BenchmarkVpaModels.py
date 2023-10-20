@@ -1,5 +1,6 @@
 from aalpy.automata.Vpa import Vpa
 
+
 def vpa_for_L1():
     # we always ensure that n >= 1
 
@@ -17,7 +18,6 @@ def vpa_for_L1():
 
 
 def vpa_for_L2():
-
     call_set = {'a', 'b'}
     return_set = {'c', 'd'}
     internal_set = {}
@@ -39,7 +39,6 @@ def vpa_for_L2():
 
 
 def vpa_for_L3():
-
     call_set = {'a', 'c', 'b', 'd'}
     return_set = {'e', 'g', 'f', 'h'}
     internal_set = {}
@@ -67,7 +66,6 @@ def vpa_for_L3():
 
 
 def vpa_for_L4():
-
     call_set = {'a', 'b'}
     return_set = {'c', 'd'}
     internal_set = {}
@@ -87,7 +85,6 @@ def vpa_for_L4():
 
 
 def vpa_for_L5():
-
     call_set = {'a', 'b', 'c'}
     return_set = {'d', 'e', 'f'}
     internal_set = {}
@@ -348,6 +345,3 @@ def vpa_for_L16():
     }
     vpa = Vpa.from_state_setup(state_setup, "q0", call_set, return_set, internal_set)
     return vpa
-
-
-
