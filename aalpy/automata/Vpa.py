@@ -230,7 +230,7 @@ def generate_data_from_pda(automaton, num_examples, lens=None, classify_states=F
             seqs = list(product(input_al, repeat=l))
             for seq in seqs:
 
-                out = automaton.reset()
+                out = automaton.reset_to_initial()
                 nr_steps = 0
                 for inp in seq:
                     if automaton.possible(inp) or not break_on_impossible:

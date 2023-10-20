@@ -118,9 +118,6 @@ class ClassificationTree:
 
             the CTLeafNode that is reached by the sifting operation.
         """
-        for letter in word:
-            alphabet = self.alphabet if self.automaton_type != 'vpa' else self.alphabet.get_merged_alphabet()
-            assert letter is None or letter in alphabet
 
         if word in self.sifting_cache:
             return self.sifting_cache[word]

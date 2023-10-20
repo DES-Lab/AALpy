@@ -1,4 +1,3 @@
-import random
 from collections import defaultdict
 from typing import Union
 
@@ -11,15 +10,15 @@ class SevpaAlphabet:
         self.call_alphabet = call_alphabet
         self.return_alphabet = return_alphabet
 
-    def __str__(self):
-        return f'Internal: {self.internal_alphabet} Call: {self.call_alphabet} Return: {self.return_alphabet}'
-
     def get_merged_alphabet(self) -> list:
         alphabet = list()
         alphabet.extend(self.internal_alphabet)
         alphabet.extend(self.call_alphabet)
         alphabet.extend(self.return_alphabet)
         return alphabet
+
+    def __str__(self):
+        return f'Internal: {self.internal_alphabet} Call: {self.call_alphabet} Return: {self.return_alphabet}'
 
 
 class SevpaState(AutomatonState):
@@ -47,7 +46,6 @@ class SevpaTransition:
 
 class Sevpa(Automaton):
     empty = "_"
-    error_state = SevpaState("ErrorSinkState", False)
 
     def __init__(self, initial_state: SevpaState, states: list[SevpaState], input_alphabet: SevpaAlphabet):
         super().__init__(initial_state, states)
@@ -56,65 +54,61 @@ class Sevpa(Automaton):
         self.input_alphabet = input_alphabet
         self.current_state = None
         self.stack = []
+        self.error_state_reached = False
+
+        # alphabet sets for faster inclusion checks (as in SevpaAlphabet we have lists, for reproducibility)
+        self.internal_set = set(self.input_alphabet.internal_alphabet)
+        self.call_set = set(self.input_alphabet.call_alphabet)
+        self.return_set = set(self.input_alphabet.return_alphabet)
 
     def reset_to_initial(self):
         super().reset_to_initial()
-        self.reset()
-
-    def reset(self):
         self.current_state = self.initial_state
         self.stack = [self.empty]
-        return self.current_state.is_accepting and self.top() == self.empty
-
-    def top(self):
-        return self.stack[-1]
-
-    def pop(self):
-        return self.stack.pop()
+        self.error_state_reached = False
+        return self.current_state.is_accepting and self.stack[-1] == self.empty
 
     def step(self, letter):
-        if self.current_state == Sevpa.error_state:
+        if self.error_state_reached:
             return False
 
         if letter is None:
-            return self.current_state.is_accepting and self.top() == self.empty
+            return self.current_state.is_accepting and self.stack[-1] == self.empty
 
-        if letter in self.input_alphabet.call_alphabet:
+        if letter in self.call_set:
             self.stack.append((self.current_state.state_id, letter))
             self.current_state = self.initial_state
-            return self.current_state.is_accepting and self.top() == self.empty
+            return self.current_state.is_accepting and self.stack[-1] == self.empty
 
         # get possible transitions
         transitions = self.current_state.transitions[letter]
-        possible_transitions = []
+        taken_transition = None
         for t in transitions:
-            if t.symbol in self.input_alphabet.return_alphabet:
-                if t.stack_guard == self.top():
-                    possible_transitions.append(t)
-            elif t.symbol in self.input_alphabet.internal_alphabet:
-                possible_transitions.append(t)
+            if t.symbol in self.return_set:
+                if t.stack_guard == self.stack[-1]:
+                    taken_transition = t
+                    break
+            elif t.symbol in self.internal_set:
+                taken_transition = t
+                break
             else:
                 assert False
 
-        assert len(possible_transitions) < 2
         # No transition is possible
-        if len(possible_transitions) == 0:
-            self.current_state = Sevpa.error_state
+        if not taken_transition:
+            self.error_state_reached = True
             return False
 
-        taken_transition = possible_transitions[0]
         self.current_state = taken_transition.target
 
         if taken_transition.action == 'pop':
-            # pop letters must be in return set
-            assert (letter in self.input_alphabet.return_alphabet)
             # empty stack elem should always be on the stack
             if len(self.stack) <= 1:
-                self.current_state = Sevpa.error_state
+                self.error_state_reached = True
                 return False
             self.stack.pop()
 
-        return self.current_state.is_accepting and self.top() == self.empty
+        return self.current_state.is_accepting and self.stack[-1] == self.empty
 
     def get_state_by_id(self, state_id) -> Union[SevpaState, None]:
         for state in self.states:
