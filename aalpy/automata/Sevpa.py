@@ -127,6 +127,7 @@ class Sevpa(Automaton):
             if letter in self.input_alphabet.call_alphabet:
                 assert(letter in self.input_alphabet.call_alphabet)     # push letters must be in call set
                 self.stack.append((self.current_state.state_id, letter))
+                self.current_state = self.initial_state
                 return self.current_state.is_accepting and self.top() == self.empty
 
             assert len(possible_trans) < 2
@@ -245,7 +246,6 @@ class Sevpa(Automaton):
                 word.extend(from_state.prefix)
             word.append(call_letter)
         word.extend(calling_state.prefix)
-        print('TRANS', word, calling_state.prefix)
         return word
 
     def is_balanced(self, x):

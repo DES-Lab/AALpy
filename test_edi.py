@@ -1,3 +1,4 @@
+from Examples import learning_context_free_grammar_example
 from aalpy.SULs.AutomataSUL import SevpaSUL, VpaSUL
 from aalpy.automata.Pda import generate_data_from_pda
 from aalpy.learning_algs import run_KV_vpda, run_KV
@@ -14,17 +15,24 @@ from aalpy.utils.BenchmarkSevpaModels import *
 # random generation of SEVPA as done in learnlib
 # test test test
 
+
+learning_context_free_grammar_example()
+
+exit()
+
 from random import seed
-seed(12)
 
 for i, vpa in enumerate([vpa_for_L1(), vpa_for_L2(), vpa_for_L3(), vpa_for_L4(), vpa_for_L5(), vpa_for_L7(), vpa_for_L8(),
             vpa_for_L9(), vpa_for_L10(), vpa_for_L11(), vpa_for_L12(),vpa_for_L13(), vpa_for_L14(), vpa_for_L15()]):
 
     print(f'VPA {i + 1 if i < 6 else i + 2}')
-    for i in range(10):
-        seed(4)
+    # 16 works
+    for i in range(100):
+        if i < 9:
+            continue
+        seed(i)
         print(i)
-        model_under_learning = vpa_for_L11()
+        model_under_learning = vpa
 
         alphabet = SevpaAlphabet(list(model_under_learning.internal_set),
                                  list(model_under_learning.call_set),
@@ -32,8 +40,10 @@ for i, vpa in enumerate([vpa_for_L1(), vpa_for_L2(), vpa_for_L3(), vpa_for_L4(),
 
         sul = VpaSUL(model_under_learning, include_top=False, check_balance=False)
 
-        eq_oracle = RandomWordEqOracle(alphabet=alphabet.get_merged_alphabet(), sul=sul, num_walks=5000)
+        eq_oracle = RandomWordEqOracle(alphabet=alphabet.get_merged_alphabet(), sul=sul, num_walks=10000)
         # model = run_KV_vpda(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, print_level=3,)
         model = run_KV(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, automaton_type='vpa',
-                       print_level=3, cex_processing='rs')
+                       print_level=2, cex_processing='rs')
+
+        # exit()
 

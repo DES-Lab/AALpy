@@ -938,3 +938,19 @@ def compare_stochastic_and_non_deterministic_learning(example='first_grid'):
 
     print(model_type)
     print('Error for each property:', [round(d * 100, 2) for d in diff.values()])
+
+
+def learning_context_free_grammar_example():
+    from aalpy.automata import SevpaAlphabet
+    from aalpy.learning_algs import run_KV
+    from aalpy.oracles import RandomWordEqOracle
+    from aalpy.utils.BenchmarkSULs import get_balanced_string_sul
+
+    call_return_map = {'(': ')', '[': ']'}
+    balanced_string_sul = get_balanced_string_sul(call_return_map)
+
+    sevpa_alphabet = SevpaAlphabet([], list(call_return_map.keys()), list(call_return_map.values()))
+    eq_oracle = RandomWordEqOracle(sevpa_alphabet.get_merged_alphabet(), balanced_string_sul, num_walks=1000)
+
+    learned_model = run_KV(sevpa_alphabet, balanced_string_sul, eq_oracle, automaton_type='vpa')
+    learned_model.visualize()
