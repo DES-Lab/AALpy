@@ -1,6 +1,6 @@
 from .AutomatonGenerators import generate_random_dfa, generate_random_mealy_machine, generate_random_smm, \
     generate_random_moore_machine, generate_random_markov_chain, generate_random_deterministic_automata
-from .AutomatonGenerators import generate_random_mdp, generate_random_ONFSM
+from .AutomatonGenerators import generate_random_mdp, generate_random_ONFSM, generate_random_sevpa
 from .BenchmarkSULs import *
 from .DataHandler import DataHandler, CharacterTokenizer, DelimiterTokenizer, IODelimiterTokenizer
 from .FileHandler import save_automaton_to_file, load_automaton_from_file, visualize_automaton

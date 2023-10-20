@@ -2,7 +2,8 @@ import random
 import warnings
 
 from aalpy.automata import Dfa, DfaState, MdpState, Mdp, MealyMachine, MealyState, \
-    MooreMachine, MooreState, OnfsmState, Onfsm, MarkovChain, McState, StochasticMealyState, StochasticMealyMachine
+    MooreMachine, MooreState, OnfsmState, Onfsm, MarkovChain, McState, StochasticMealyState, StochasticMealyMachine, \
+    Sevpa, SevpaState, SevpaAlphabet, SevpaTransition
 
 
 def generate_random_deterministic_automata(automaton_type,
@@ -425,3 +426,87 @@ def generate_random_markov_chain(num_states):
     return MarkovChain(states[0], states)
 
 
+def _has_transition(state: SevpaState, transition_letter, stack_guard) -> bool:
+    transitions = state.transitions[transition_letter]
+    if transitions is not None:
+        if stack_guard is None:  # internal transition
+            for transition in transitions:
+                if transition.symbol == transition_letter:
+                    return True
+        else:  # return transition
+            for transition in transitions:
+                if transition.stack_guard == stack_guard and transition.symbol == transition_letter:
+                    return True
+
+    return False
+
+
+def generate_random_sevpa(num_states, internal_alphabet_size, call_alphabet_size, return_alphabet_size
+                          , acceptance_prob, return_transition_prob):
+
+    internal_alphabet = [f'i{i}' for i in range(internal_alphabet_size)]
+    call_alphabet = [f'c{i}' for i in range(call_alphabet_size)]
+    return_alphabet = [f'r{i}' for i in range(return_alphabet_size)]
+
+    sevpa_alphabet = SevpaAlphabet(internal_alphabet, call_alphabet, return_alphabet)
+
+    states = [SevpaState(f'q{i}', random.random() < acceptance_prob) for i in range(num_states)]
+    state_buffer = states.copy()
+
+    for state in states:
+        if not internal_alphabet or random.uniform(0.0, 1.0) < return_transition_prob:
+            while True:
+                return_letter = random.choice(return_alphabet)
+                stack_state = random.choice(states) if not state_buffer else random.choice(state_buffer)
+                if stack_state in state_buffer:
+                    state_buffer.remove(stack_state)
+
+                call_letter = random.choice(call_alphabet)
+                stack_guard = (stack_state.state_id, call_letter)
+
+                if not _has_transition(state, return_letter, stack_guard):
+                    break
+
+            target_state = random.choice(states)
+            state.transitions[return_letter].append(
+                SevpaTransition(state, target_state, return_letter, 'pop', stack_guard))
+        else:
+            # add an internal transition
+            while True:
+                internal_letter = random.choice(internal_alphabet)
+                if not _has_transition(state, internal_letter, None):
+                    break
+
+            target_state = random.choice(states) if not state_buffer else random.choice(state_buffer)
+            if target_state in state_buffer:
+                state_buffer.remove(target_state)
+
+            state.transitions[internal_letter].append(
+                SevpaTransition(state, target_state, internal_letter, None, None))
+
+    assert len(states) == num_states
+    initial_state = random.choice(states)
+
+    for state in states:
+        for internal_letter in internal_alphabet:
+            if state.transitions[internal_letter] is None:
+                target_state = random.choice(states)
+                state.transitions[internal_letter].append(
+                    SevpaTransition(state, target_state, internal_letter, None, None))
+
+        for call_letter in call_alphabet:
+            for stack_state in states:
+                stack_guard = (stack_state.state_id, call_letter)
+                for return_letter in return_alphabet:
+                    if not _has_transition(state, return_letter, stack_guard):
+                        target_state = states[random.randint(0, len(states) - 1)]
+                        state.transitions[return_letter].append(
+                            SevpaTransition(state, target_state, return_letter, 'pop', stack_guard))
+
+        # add call transitions
+        for call_letter in call_alphabet:
+            trans = SevpaTransition(start=state, target=initial_state, symbol=call_letter, action='push',
+                                    stack_guard=f'{state.state_id}{call_letter}')
+            state.transitions[call_letter].append(trans)
+
+    return Sevpa(initial_state, states, sevpa_alphabet)

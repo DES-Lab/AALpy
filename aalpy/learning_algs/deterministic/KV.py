@@ -27,7 +27,7 @@ def run_KV(alphabet: Union[list, SevpaAlphabet], sul: SUL, eq_oracle: Oracle, au
 
         eq_oracle: equivalence oracle
 
-        automaton_type: type of automaton to be learned. One of 'dfa', 'mealy', 'moore'
+        automaton_type: type of automaton to be learned. One of 'dfa', 'mealy', 'moore', 'vpa'
 
         cex_processing: None for no counterexample processing, or 'rs' for Rivest & Schapire counterexample processing
 
