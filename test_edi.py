@@ -25,7 +25,7 @@ for i, vpa in enumerate([vpa_for_L1(), vpa_for_L2(), vpa_for_L3(), vpa_for_L4(),
 
     print(f'VPA {i + 1 if i < 6 else i + 2}')
     # 16 works
-    for i in range(10):
+    for i in range(1):
         print(i)
         model_under_learning = vpa
 

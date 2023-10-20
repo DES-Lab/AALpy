@@ -4,9 +4,9 @@ from aalpy.automata.Sevpa import Sevpa, SevpaAlphabet
 def sevpa_for_L12_refined():
     # Like L12 Language (Balanced parathesis) but the state setup is different
 
-    call_set = {'(', '['}
-    return_set = {')', ']'}
-    internal_set = {'x'}
+    call_set = ['(', '[']
+    return_set = [')', ']']
+    internal_set = ['x']
 
     input_alphabet = SevpaAlphabet(internal_alphabet=internal_set, call_alphabet=call_set, return_alphabet=return_set)
 
@@ -20,8 +20,7 @@ def sevpa_for_L12_refined():
                       "x": [("q0", None, None)]
                       }),
     }
-    sevpa = Sevpa.from_state_setup(state_setup, "q0", input_alphabet)
-    return sevpa
+    return Sevpa.from_state_setup(state_setup, "q0", input_alphabet)
 
 
 def sevpa_congruence_for_vpa_paper():

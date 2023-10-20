@@ -24,7 +24,7 @@ class SevpaAlphabet:
 
 class SevpaState(AutomatonState):
     """
-    Single state of a deterministic finite automaton.
+    Single state of a 1-SEVPA.
     """
 
     def __init__(self, state_id, is_accepting=False):
@@ -55,7 +55,6 @@ class Sevpa(Automaton):
         self.states = states
         self.input_alphabet = input_alphabet
         self.current_state = None
-        self.call_balance = 0
         self.stack = []
 
     def reset_to_initial(self):
@@ -65,7 +64,6 @@ class Sevpa(Automaton):
     def reset(self):
         self.current_state = self.initial_state
         self.stack = [self.empty]
-        self.call_balance = 0
         return self.current_state.is_accepting and self.top() == self.empty
 
     def top(self):
@@ -74,74 +72,47 @@ class Sevpa(Automaton):
     def pop(self):
         return self.stack.pop()
 
-    def possible(self, letter):
-        """
-        Checks if a certain step on the automaton is possible
-
-        TODO: Adaptation for Stack content ?
-        """
-        if self.current_state == Sevpa.error_state:
-            return True
-        # push is always possible
-        if letter in self.input_alphabet.call_alphabet:
-            return True
-        if letter is not None:
-            transitions = self.current_state.transitions[letter]
-            possible_trans = []
-            for t in transitions:
-                if t.symbol in self.input_alphabet.call_alphabet:
-                    possible_trans.append(t)
-                elif t.symbol in self.input_alphabet.return_alphabet:
-                    if t.stack_guard == self.top():
-                        possible_trans.append(t)
-                elif t.symbol in self.input_alphabet.internal_alphabet:
-                    possible_trans.append(t)
-                else:
-                    assert False
-            # trans = [t for t in transitions if t.stack_guard is None or self.top() == t.stack_guard]
-            assert len(possible_trans) < 2
-            if len(possible_trans) == 0:
-                return False
-            else:
-                return True
-        return False
-
     def step(self, letter):
         if self.current_state == Sevpa.error_state:
             return False
-        if not self.possible(letter):
+
+        if letter is None:
+            return self.current_state.is_accepting and self.top() == self.empty
+
+        if letter in self.input_alphabet.call_alphabet:
+            self.stack.append((self.current_state.state_id, letter))
+            self.current_state = self.initial_state
+            return self.current_state.is_accepting and self.top() == self.empty
+
+        # get possible transitions
+        transitions = self.current_state.transitions[letter]
+        possible_transitions = []
+        for t in transitions:
+            if t.symbol in self.input_alphabet.return_alphabet:
+                if t.stack_guard == self.top():
+                    possible_transitions.append(t)
+            elif t.symbol in self.input_alphabet.internal_alphabet:
+                possible_transitions.append(t)
+            else:
+                assert False
+
+        assert len(possible_transitions) < 2
+        # No transition is possible
+        if len(possible_transitions) == 0:
             self.current_state = Sevpa.error_state
             return False
-        if letter is not None:
-            transitions = self.current_state.transitions[letter]
-            possible_trans = []
-            for t in transitions:
-                if t.symbol in self.input_alphabet.call_alphabet:
-                    possible_trans.append(t)
-                elif t.symbol in self.input_alphabet.return_alphabet:
-                    if t.stack_guard == self.top():
-                        possible_trans.append(t)
-                elif t.symbol in self.input_alphabet.internal_alphabet:
-                    possible_trans.append(t)
-                else:
-                    assert False
 
-            if letter in self.input_alphabet.call_alphabet:
-                assert (letter in self.input_alphabet.call_alphabet)  # push letters must be in call set
-                self.stack.append((self.current_state.state_id, letter))
-                self.current_state = self.initial_state
-                return self.current_state.is_accepting and self.top() == self.empty
+        taken_transition = possible_transitions[0]
+        self.current_state = taken_transition.target
 
-            assert len(possible_trans) < 2
-            trans = possible_trans[0]
-            self.current_state = trans.target
-
-            if trans.action == 'pop':
-                assert (letter in self.input_alphabet.return_alphabet)  # pop letters must be in return set
-                if len(self.stack) <= 1:  # empty stack elem should always be there
-                    self.current_state = Sevpa.error_state
-                    return False
-                self.stack.pop()
+        if taken_transition.action == 'pop':
+            # pop letters must be in return set
+            assert (letter in self.input_alphabet.return_alphabet)
+            # empty stack elem should always be on the stack
+            if len(self.stack) <= 1:
+                self.current_state = Sevpa.error_state
+                return False
+            self.stack.pop()
 
         return self.current_state.is_accepting and self.top() == self.empty
 
@@ -163,8 +134,8 @@ class Sevpa(Automaton):
 
         # ensure prefixes are computed
         # self.compute_prefixes()
-
-        sorted_states = sorted(self.states, key=lambda x: len(x.prefix))
+        # TODO
+        sorted_states = sorted(self.states, key=lambda x: len(x.state_id))
         for s in sorted_states:
             state_setup_dict[s.state_id] = (
                 s.is_accepting, {k: (v.target.state_id, v.action) for k, v in s.transitions.items()})
@@ -173,31 +144,11 @@ class Sevpa(Automaton):
 
     @staticmethod
     def from_state_setup(state_setup: dict, init_state_id, input_alphabet: SevpaAlphabet):
-        """
-            First state in the state setup is the initial state.
-            Example state setup:
-            state_setup = {
-                    "a": (True, {"x": ("b1",PUSH), "y": ("a", NONE)}),
-                    "b1": (False, {"x": ("b2", PUSH), "y": "a"}),
-                    "b2": (True, {"x": "b3", "y": "a"}),
-                    "b3": (False, {"x": "b4", "y": "a"}),
-                    "b4": (False, {"x": "c", "y": "a"}),
-                    "c": (True, {"x": "a", "y": "a"}),
-                }
-
-            Args:
-
-                state_setup: map from state_id to tuple(output and transitions_dict)
-
-            Returns:
-
-                PDA
-            """
-        # state_setup should map from state_id to tuple(is_accepting and transitions_dict)
 
         # build states with state_id and output
         states = {key: SevpaState(key, val[0]) for key, val in state_setup.items()}
         states[Sevpa.error_state.state_id] = Sevpa.error_state  # PdaState(Pda.error_state,False)
+
         # add transitions to states
         for state_id, state in states.items():
             if state_id == Sevpa.error_state.state_id:
@@ -210,26 +161,17 @@ class Sevpa(Automaton):
                         stack_guard = (stack_guard[0], stack_guard[1])
                         trans = SevpaTransition(start=state, target=states[target_state_id], symbol=_input,
                                                 action=action, stack_guard=stack_guard)
-                    elif action == 'push':  # In SEVPA you can only define return transitions and internal transitions
-                        assert False
-                    else:
+                    elif action is None:
                         trans = SevpaTransition(start=state, target=states[target_state_id], symbol=_input,
                                                 action=None, stack_guard=None)
+                    else:
+                        assert False, 'Action must either be "pop" or None, note that there are no push actions ' \
+                                      'definitions in SEVPA'
 
                     state.transitions[_input].append(trans)
 
-            # add call transitions
-            for call_letter in input_alphabet.call_alphabet:
-                trans = SevpaTransition(start=state, target=states[init_state_id], symbol=call_letter, action='push',
-                                        stack_guard=f'{state_id}{call_letter}')
-                state.transitions[call_letter].append(trans)
-
         init_state = states[init_state_id]
-        # states to list
-        states = [state for state in states.values()]
-
-        sevpa = Sevpa(init_state, states, input_alphabet)
-        return sevpa
+        return Sevpa(init_state, [state for state in states.values()], input_alphabet)
 
     def transform_access_sequance(self, state=None, stack_content=None) -> list[str]:
 
