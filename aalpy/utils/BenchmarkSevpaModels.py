@@ -28,9 +28,9 @@ def sevpa_congruence_for_vpa_paper():
     # L1 is a regular language which has an even number of a's
     # L2 is a regular language which has an even number of b's
 
-    call_set = {'(', '['}
-    return_set = {')', ']'}
-    internal_set = {'x'}
+    call_set = ['(', '[']
+    return_set = [')', ']']
+    internal_set = ['x']
 
     input_alphabet = SevpaAlphabet(internal_alphabet=internal_set, call_alphabet=call_set, return_alphabet=return_set)
 

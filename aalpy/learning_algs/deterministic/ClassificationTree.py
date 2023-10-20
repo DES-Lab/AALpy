@@ -313,6 +313,8 @@ class ClassificationTree:
             d = []
         assert j is not None and d is not None
 
+        # TODO adapt for VPAs
+
         self._insert_new_leaf(discriminator=(cex[j - 1], *d),
                               old_leaf_access_string=hypothesis.current_state.prefix,
                               new_leaf_access_string=tuple(cex[:j - 1]) or tuple(),
