@@ -5,10 +5,12 @@ from aalpy.base import Automaton, AutomatonState
 
 
 class SevpaAlphabet:
-    def __init__(self, internal_alphabet: list, call_alphabet: list, return_alphabet: list):
+    def __init__(self, internal_alphabet: list, call_alphabet: list, return_alphabet: list,
+                 exclusive_call_return_pairs: dict = None):
         self.internal_alphabet = internal_alphabet
         self.call_alphabet = call_alphabet
         self.return_alphabet = return_alphabet
+        self.exclusive_call_return_pairs = exclusive_call_return_pairs
 
     def get_merged_alphabet(self) -> list:
         alphabet = list()
@@ -200,4 +202,3 @@ class Sevpa(Automaton):
                 initial_state.transitions[r].append(trans)
 
         return Sevpa(initial_state, [initial_state], alphabet)
-
