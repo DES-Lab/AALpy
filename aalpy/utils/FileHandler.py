@@ -10,7 +10,7 @@ from aalpy.automata import Dfa, MooreMachine, Mdp, Onfsm, MealyState, DfaState, 
 
 file_types = ['dot', 'png', 'svg', 'pdf', 'string']
 automaton_types = {Dfa: 'dfa', MealyMachine: 'mealy', MooreMachine: 'moore', Mdp: 'mdp',
-                   StochasticMealyMachine: 'smm', Onfsm: 'onfsm', MarkovChain: 'mc', Vpa: 'vpa', Sevpa: 'vpa'}
+                   StochasticMealyMachine: 'smm', Onfsm: 'onfsm', MarkovChain: 'mc', Vpa: 'vpa', Sevpa: 'sevpa'}
 
 
 def _wrap_label(label):
@@ -40,11 +40,11 @@ def _get_node(state, automaton_type):
         return Node(state.state_id, label=_wrap_label(f'{state.output}'))
     if automaton_type == 'smm':
         return Node(state.state_id, label=_wrap_label(state.state_id))
-    if automaton_type == 'pda':
+    if automaton_type == 'vpa':
         if state.is_accepting:
             return Node(state.state_id, label=_wrap_label(state.state_id), shape='doublecircle')
         return Node(state.state_id, label=_wrap_label(state.state_id))
-    if automaton_type == 'vpa':
+    if automaton_type == 'sevpa':
         if state.is_accepting:
             return Node(state.state_id, label=_wrap_label(state.state_id), shape='doublecircle')
         return Node(state.state_id, label=_wrap_label(state.state_id))
@@ -90,19 +90,6 @@ def _add_transition_to_graph(graph, state, automaton_type, display_same_state_tr
                     continue
                 prob = round(s[2], round_floats) if round_floats else s[2]
                 graph.add_edge(Edge(state.state_id, s[0].state_id, label=_wrap_label(f'{i}/{s[1]}:{prob}')))
-    if automaton_type == 'pda':
-        for i in state.transitions.keys():
-            transitions_list = state.transitions[i]
-            for transition in transitions_list:
-                if transition.action is None:
-                    graph.add_edge(Edge(transition.start.state_id, transition.target.state_id,
-                                        label=_wrap_label(f'{transition.symbol}')))
-                if transition.action == 'push':
-                    graph.add_edge(Edge(transition.start.state_id, transition.target.state_id,
-                                        label=_wrap_label(f'{transition.symbol}/push(\'{transition.stack_guard}\')')))
-                if transition.action == 'pop':
-                    graph.add_edge(Edge(transition.start.state_id, transition.target.state_id,
-                                        label=_wrap_label(f'{transition.symbol}/pop(\'{transition.stack_guard}\')')))
     if automaton_type == 'vpa':
         for i in state.transitions.keys():
             transitions_list = state.transitions[i]
@@ -116,7 +103,19 @@ def _add_transition_to_graph(graph, state, automaton_type, display_same_state_tr
 
                 if transition.target == Vpa.error_state:
                     edge.set_style('dashed')
-
+                graph.add_edge(edge)
+    if automaton_type == 'sevpa':
+        for i in state.transitions.keys():
+            transitions_list = state.transitions[i]
+            for transition in transitions_list:
+                if transition.action == 'pop':
+                    edge = Edge(transition.start.state_id, transition.target.state_id,
+                                label=_wrap_label(f'{transition.symbol} / {transition.stack_guard}'))
+                elif transition.action is None:
+                    edge = Edge(transition.start.state_id, transition.target.state_id,
+                                label=_wrap_label(f'{transition.symbol}'))
+                else:
+                    assert False
                 graph.add_edge(edge)
 
 
