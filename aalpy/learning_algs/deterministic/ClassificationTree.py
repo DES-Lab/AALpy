@@ -216,9 +216,14 @@ class ClassificationTree:
 
                 # Add call transitions
                 for call_letter in self.alphabet.call_alphabet:
-                    for other_state in states_for_transitions:
-                        # Add return transitions
-                        for return_letter in self.alphabet.return_alphabet:
+                    # Add return transitions
+                    for return_letter in self.alphabet.return_alphabet:
+                        # check if exclusive pairs of call and return letters are defined in an alphabets
+                        if self.alphabet.exclusive_call_return_pairs and \
+                                self.alphabet.exclusive_call_return_pairs[call_letter] != return_letter:
+                            continue
+
+                        for other_state in states_for_transitions:
                             transition_target_node = self._sift(
                                 other_state.prefix + (call_letter,) + state.prefix + (return_letter,))
                             transition_target_access_string = transition_target_node.access_string

@@ -34,6 +34,7 @@ def test_on_random_svepa():
     model = run_KV(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, automaton_type='vpa',
                    print_level=2, cex_processing='rs')
 
+
 # import cProfile
 # pr = cProfile.Profile()
 # pr.enable()
@@ -49,13 +50,17 @@ for i, vpa in enumerate(
 
     print(f'VPA {i + 1 if i < 6 else i + 2}')
     # 16 works
-    for i in range(10):
-        print(i)
+    for s in range(10):
+        print(s)
+        seed(s)
         model_under_learning = vpa
 
         alphabet = SevpaAlphabet(list(model_under_learning.internal_set),
                                  list(model_under_learning.call_set),
                                  list(model_under_learning.return_set))
+
+        if i == 9:
+            alphabet.exclusive_call_return_pairs = {'(': ')', '[': ']', '{': '}', '<': '>'}
 
         sul = VpaSUL(model_under_learning, include_top=False, check_balance=False)
 
@@ -63,6 +68,5 @@ for i, vpa in enumerate(
         # model = run_KV_vpda(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, print_level=3,)
         model = run_KV(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, automaton_type='vpa',
                        print_level=2, cex_processing='rs')
-
 
         # exit()
