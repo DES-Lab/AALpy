@@ -1,5 +1,8 @@
+import ast
+
 from Examples import learning_context_free_grammar_example
 from aalpy.SULs.AutomataSUL import SevpaSUL, VpaSUL
+from aalpy.base import SUL
 from aalpy.learning_algs import run_KV
 from aalpy.oracles import RandomWordEqOracle, RandomWalkEqOracle, StatePrefixEqOracle
 from aalpy.utils import visualize_automaton, get_Angluin_dfa, generate_random_sevpa
@@ -12,10 +15,45 @@ from random import seed
 
 # TODOs
 # 1. Make update function of KV work, update_rs works and most likely should be similar
-# 2. Create VpaStateCoverageOracle, that behaves like StatePrefix oracle but for VPAs
-# 3. Add all 15 langs as SVEPA
-# 4. Implement to state setup
-# 5. Create an active interface to learn a grammar of some language, like simple C or Java
+# 2. Create a SEVPA function that generates random positive strings - model.generate_random_positive_string()
+# 2. Add all 15 langs as SVEPA
+# 4. Implement to state setup, test saving and loading to/from file
+# 5. Create an active interface to learn a grammar of some language, like simplified C or Java
+
+def test_arithmetic_expression():
+    import warnings
+    warnings.filterwarnings("ignore")
+
+    class ArithmeticSUL(SUL):
+        def __init__(self):
+            super().__init__()
+            self.string_under_test = ''
+
+        def pre(self):
+            self.string_under_test = ''
+
+        def post(self):
+            pass
+
+        def step(self, letter):
+            if letter:
+                self.string_under_test += ' ' + letter
+
+            try:
+                eval(self.string_under_test)
+                return True
+            except (SyntaxError, TypeError):
+                return False
+
+    sul = ArithmeticSUL()
+    alphabet = SevpaAlphabet(internal_alphabet=['1', '+'], call_alphabet=['('], return_alphabet=[')'])
+    eq_oracle = RandomWordEqOracle(alphabet.get_merged_alphabet(), sul, min_walk_len=5,
+                                   max_walk_len=20, num_walks=20000)
+
+    learned_model = run_KV(alphabet, sul, eq_oracle, automaton_type='vpa')
+    learned_model.visualize()
+    exit()
+
 
 def test_on_random_svepa():
     random_svepa = generate_random_sevpa(num_states=50, internal_alphabet_size=3,
@@ -35,6 +73,7 @@ def test_on_random_svepa():
                    print_level=2, cex_processing='rs')
 
 
+test_arithmetic_expression()
 # import cProfile
 # pr = cProfile.Profile()
 # pr.enable()
