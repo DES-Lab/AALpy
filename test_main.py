@@ -14,10 +14,10 @@ from random import seed
 # learning_context_free_grammar_example()
 
 # TODOs
-# 1. Make update function of KV work, update_rs works and most likely should be similar
+# 1. exponential cex processing in CounterExampleProcessing.py
 # 2. Create a SEVPA function that generates random positive strings - model.generate_random_positive_string()
 # 2. Add all 15 langs as SVEPA
-# 4. Implement to state setup, test saving and loading to/from file
+# 4. Implement and test to_state_setup, test saving and loading to/from file
 # 5. Create an active interface to learn a grammar of some language, like simplified C or Java
 
 def test_arithmetic_expression():
@@ -98,8 +98,8 @@ for i, vpa in enumerate(
                                  list(model_under_learning.call_set),
                                  list(model_under_learning.return_set))
 
-        if i == 9:
-            alphabet.exclusive_call_return_pairs = {'(': ')', '[': ']', '{': '}', '<': '>'}
+        #if i == 9:
+        #    alphabet.exclusive_call_return_pairs = {'(': ')', '[': ']', '{': '}', '<': '>'}
 
         sul = VpaSUL(model_under_learning, include_top=False, check_balance=False)
 
