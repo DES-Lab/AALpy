@@ -182,7 +182,7 @@
                 <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Counterexample&#39;</span><span class="p">,</span> <span class="n">cex</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">cex_processing</span> <span class="o">==</span> <span class="s1">&#39;rs&#39;</span><span class="p">:</span>
-            <span class="n">classification_tree</span><span class="o">.</span><span class="n">update_rs</span><span class="p">(</span><span class="n">cex</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">)</span>
+            <span class="n">classification_tree</span><span class="o">.</span><span class="n">process_counterexample</span><span class="p">(</span><span class="n">cex</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">classification_tree</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">cex</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">)</span>
 
@@ -358,7 +358,7 @@
                 <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Counterexample&#39;</span><span class="p">,</span> <span class="n">cex</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">cex_processing</span> <span class="o">==</span> <span class="s1">&#39;rs&#39;</span><span class="p">:</span>
-            <span class="n">classification_tree</span><span class="o">.</span><span class="n">update_rs</span><span class="p">(</span><span class="n">cex</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">)</span>
+            <span class="n">classification_tree</span><span class="o">.</span><span class="n">process_counterexample</span><span class="p">(</span><span class="n">cex</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">classification_tree</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">cex</span><span class="p">,</span> <span class="n">hypothesis</span><span class="p">)</span>
 

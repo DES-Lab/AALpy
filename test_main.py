@@ -73,7 +73,7 @@ def test_on_random_svepa():
                    print_level=2, cex_processing='rs')
 
 
-test_arithmetic_expression()
+# test_arithmetic_expression()
 # import cProfile
 # pr = cProfile.Profile()
 # pr.enable()
@@ -106,6 +106,6 @@ for i, vpa in enumerate(
         eq_oracle = RandomWordEqOracle(alphabet=alphabet.get_merged_alphabet(), sul=sul, num_walks=10000)
         # model = run_KV_vpda(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, print_level=3,)
         model = run_KV(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, automaton_type='vpa',
-                       print_level=2, cex_processing='rs')
+                       print_level=2, cex_processing='linear_bwd')
 
         # exit()

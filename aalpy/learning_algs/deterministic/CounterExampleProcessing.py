@@ -104,3 +104,56 @@ def rs_cex_processing(sul: SUL, cex: tuple, hypothesis, suffix_closedness=True, 
     else:
         suffix_to_query = [suffix]
     return suffix_to_query
+
+
+def linear_cex_processing(sul: SUL, cex: tuple, hypothesis, suffix_closedness=True, closedness='suffix',
+                          direction='fwd', is_vpa=False):
+    assert direction in {'fwd', 'bwd'}
+
+    direction = 'fwd'
+
+    distinguishing_suffix = None
+    previous_output = None
+
+    for i in range(0, len(cex)):
+        bp = i if direction == 'fwd' else -i - 1
+        prefix = cex[:bp]
+        suffix = cex[bp:]
+        assert cex == prefix + suffix
+
+        hypothesis.reset_to_initial()
+        hypothesis.execute_sequence(hypothesis.initial_state, prefix)
+
+        if not is_vpa:
+            s_bracket = hypothesis.current_state.prefix
+        else:
+            s_bracket = tuple(hypothesis.transform_access_sequance(hypothesis.current_state))
+
+        sul_out = sul.query(s_bracket + suffix)[-1]
+
+        if previous_output is None:
+            previous_output = sul_out
+            continue
+
+        if sul_out != previous_output:
+            distinguishing_suffix = suffix if direction == 'fwd' else cex[bp + 1:]
+            break
+
+        previous_output = sul_out
+
+    assert distinguishing_suffix
+    if suffix_closedness:
+        suffixes = all_suffixes(distinguishing_suffix) if closedness == 'suffix' else all_prefixes(
+            distinguishing_suffix)
+        suffixes.reverse()
+        suffix_to_query = suffixes
+    else:
+        suffix_to_query = [distinguishing_suffix]
+
+    return suffix_to_query
+
+
+def exponential_cex_processing(sul: SUL, cex: tuple, hypothesis, suffix_closedness=True, closedness='suffix',
+                               direction='fwd', is_vpa=False):
+    assert direction in {'fwd', 'bwd'}
+    pass
