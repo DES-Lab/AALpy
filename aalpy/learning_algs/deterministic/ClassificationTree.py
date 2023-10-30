@@ -305,7 +305,6 @@ class ClassificationTree:
             s_i = self._sift(cex[:i]).access_string
             hypothesis.execute_sequence(hypothesis.initial_state, cex[:i])
             s_star_i = hypothesis.current_state.prefix
-
             if s_i != s_star_i:
                 j = i
                 d = self._least_common_ancestor(s_i, s_star_i)
@@ -315,7 +314,7 @@ class ClassificationTree:
             d = []
         assert j is not None and d is not None
 
-        # TODO adapt for VPAs
+        hypothesis.execute_sequence(hypothesis.initial_state, cex[:j - 1] or tuple())
 
         self._insert_new_leaf(discriminator=(cex[j - 1], *d),
                               old_leaf_access_string=hypothesis.current_state.prefix,
@@ -354,7 +353,7 @@ class ClassificationTree:
 
         # get discriminator and new_leaf_access_string
         if self.automaton_type == 'vpa':
-            discriminator = (tuple(hypothesis.transform_access_sequance()), tuple(v))
+            discriminator = (tuple(hypothesis.transform_access_string()), tuple(v))
 
             if a in self.alphabet.internal_alphabet:
                 new_leaf_access_string = (*u_state.prefix, a)

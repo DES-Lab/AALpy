@@ -1,13 +1,53 @@
 from collections import defaultdict
+from typing import List, Dict
 
 from aalpy.base import Automaton, AutomatonState
 
 
-class VpaState(AutomatonState):
+class VpaAlphabet:
     """
-    Single state of a deterministic finite automaton.
+    The Alphabet of a VPA.
+
+    Attributes:
+        internal_alphabet (List[str]): Letters for internal transitions.
+        call_alphabet (List[str]): Letters for push transitions.
+        return_alphabet (List[str]): Letters for pop transitions.
+        exclusive_call_return_pairs (Dict[str, str]): A dictionary representing exclusive pairs
+            of call and return symbols.
     """
 
+    def __init__(self, internal_alphabet: List[str], call_alphabet: List[str], return_alphabet: List[str],
+                 exclusive_call_return_pairs: Dict[str, str] = None):
+        self.internal_alphabet = internal_alphabet
+        self.call_alphabet = call_alphabet
+        self.return_alphabet = return_alphabet
+        self.exclusive_call_return_pairs = exclusive_call_return_pairs
+
+    def get_merged_alphabet(self) -> List[str]:
+        """
+        Get the merged alphabet, including internal, call, and return symbols.
+
+        Returns:
+            List[str]: A list of all symbols in the alphabet.
+        """
+        alphabet = list()
+        alphabet.extend(self.internal_alphabet)
+        alphabet.extend(self.call_alphabet)
+        alphabet.extend(self.return_alphabet)
+        return alphabet
+
+    def __str__(self) -> str:
+        """
+        Returns:
+            str: A string representation of the alphabet.
+        """
+        return f'Internal: {self.internal_alphabet} Call: {self.call_alphabet} Return: {self.return_alphabet}'
+
+
+class VpaState(AutomatonState):
+    """
+    Single state of a VPA.
+    """
     def __init__(self, state_id, is_accepting=False):
         super().__init__(state_id)
         self.transitions = defaultdict(list)
@@ -15,6 +55,16 @@ class VpaState(AutomatonState):
 
 
 class VpaTransition:
+    """
+    Represents a transition in a VPA.
+
+    Attributes:
+        start (VpaState): The starting state of the transition.
+        target (VpaState): The target state of the transition.
+        symbol: The symbol associated with the transition.
+        action: The action performed during the transition (push | pop | None).
+        stack_guard: The stack symbol to be pushed/popped.
+    """
     def __init__(self, start: VpaState, target: VpaState, symbol, action, stack_guard=None):
         self.start = start
         self.target = target
@@ -27,19 +77,25 @@ class VpaTransition:
 
 
 class Vpa(Automaton):
+    """
+    Visibly Pushdown Automaton.
+    """
     empty = "_"
     error_state = VpaState("ErrorSinkState", False)
 
-    def __init__(self, initial_state: VpaState, states, call_set, return_set, internal_set):
+    def __init__(self, initial_state: VpaState, states, input_alphabet: VpaAlphabet):
         super().__init__(initial_state, states)
         self.initial_state = initial_state
         self.states = states
-        self.call_set = call_set
-        self.return_set = return_set
-        self.internal_set = internal_set
+        self.input_alphabet = input_alphabet
         self.current_state = None
         self.call_balance = 0
         self.stack = []
+
+        # alphabet sets for faster inclusion checks (as in VpaAlphabet we have lists, for reproducibility)
+        self.internal_set = set(self.input_alphabet.internal_alphabet)
+        self.call_set = set(self.input_alphabet.call_alphabet)
+        self.return_set = set(self.input_alphabet.return_alphabet)
 
     def reset_to_initial(self):
         super().reset_to_initial()
@@ -60,8 +116,6 @@ class Vpa(Automaton):
     def possible(self, letter):
         """
         Checks if a certain step on the automaton is possible
-
-        TODO: Adaptation for Stack content ?
         """
         if self.current_state == Vpa.error_state:
             return True
@@ -78,7 +132,6 @@ class Vpa(Automaton):
                     possible_trans.append(t)
                 else:
                     assert False and print(f'Letter {letter} is not part of any alphabet')
-            # trans = [t for t in transitions if t.stack_guard is None or self.top() == t.stack_guard]
             assert len(possible_trans) < 2
             if len(possible_trans) == 0:
                 return False
@@ -87,6 +140,15 @@ class Vpa(Automaton):
         return False
 
     def step(self, letter):
+        """
+        Perform a single step on the VPA by transitioning with the given input letter.
+
+        Args:
+            letter: A single input that is looked up in the transition table of the VpaState.
+
+        Returns:
+            bool: True if the reached state is an accepting state and the stack is empty, False otherwise.
+        """
         if self.current_state == Vpa.error_state:
             return False
         if not self.possible(letter):
@@ -121,25 +183,6 @@ class Vpa(Automaton):
 
         return self.current_state.is_accepting and self.top() == self.empty
 
-    # def compute_output_seq(self, state, sequence):
-    #     if not sequence:
-    #         return [state.is_accepting]
-    #     return super(Dfa, self).compute_output_seq(state, sequence)
-
-    def get_input_alphabet(self) -> list:
-        alphabet_list = list()
-        alphabet_list.append(self.call_set)
-        alphabet_list.append(self.return_set)
-        alphabet_list.append(self.internal_set)
-        return alphabet_list
-
-    def get_input_alphabet_merged(self) -> list:
-        alphabet = list()
-        alphabet.extend(self.call_set)
-        alphabet.extend(self.return_set)
-        alphabet.extend(self.internal_set)
-        return alphabet
-
     def to_state_setup(self):
         state_setup_dict = {}
 
@@ -154,26 +197,33 @@ class Vpa(Automaton):
         return state_setup_dict
 
     @staticmethod
-    def from_state_setup(state_setup: dict, init_state_id, call_set, return_set, internal_set):
+    def from_state_setup(state_setup: dict, init_state_id: str, input_alphabet: VpaAlphabet):
         """
-            First state in the state setup is the initial state.
-            Example state setup:
+        Create a VPA from a state setup.
+
+        Example state setup:
             state_setup = {
-                    "a": (True, {"x": ("b1",PUSH), "y": ("a", NONE)}),
-                    "b1": (False, {"x": ("b2", PUSH), "y": "a"}),
-                    "b2": (True, {"x": "b3", "y": "a"}),
-                    "b3": (False, {"x": "b4", "y": "a"}),
-                    "b4": (False, {"x": "c", "y": "a"}),
-                    "c": (True, {"x": "a", "y": "a"}),
-                }
+                "q0": (False, {"(": [("q1", 'push', "(")],
+                               "[": [("q1", 'push', "[")],  # exclude empty seq
+                               }),
+                "q1": (False, {"(": [("q1", 'push', "(")],
+                               "[": [("q1", 'push', "[")],
+                               ")": [("q2", 'pop', "(")],
+                               "]": [("q2", 'pop', "[")]}),
+                "q2": (True, {
+                    ")": [("q2", 'pop', "(")],
+                    "]": [("q2", 'pop', "[")]
+                }),
 
             Args:
-
-                state_setup: map from state_id to tuple(output and transitions_dict)
+                state_setup (dict): A dictionary mapping from state IDs to tuples containing
+                    (is_accepting: bool, transitions_dict: dict), where transitions_dict maps input symbols to
+                    lists of tuples (target_state_id, action, stack_guard).
+                init_state_id (str): The state ID for the initial state of the VPA.
+                input_alphabet (VpaAlphabet): The alphabet for the VPA.
 
             Returns:
-
-                PDA
+                Vpa: The constructed Variable Pushdown Automaton.
             """
         # state_setup should map from state_id to tuple(is_accepting and transitions_dict)
 
@@ -186,7 +236,6 @@ class Vpa(Automaton):
                 continue
             for _input, trans_spec in state_setup[state_id][1].items():
                 for (target_state_id, action, stack_guard) in trans_spec:
-                    # action = Action[action_string]
                     trans = VpaTransition(start=state, target=states[target_state_id], symbol=_input, action=action,
                                           stack_guard=stack_guard)
                     state.transitions[_input].append(trans)
@@ -195,78 +244,5 @@ class Vpa(Automaton):
         # states to list
         states = [state for state in states.values()]
 
-        vpa = Vpa(init_state, states, call_set, return_set, internal_set)
+        vpa = Vpa(init_state, states, input_alphabet)
         return vpa
-
-
-def generate_data_from_pda(automaton, num_examples, lens=None, classify_states=False, stack_limit=None,
-                           break_on_impossible=False, possible_prob=0.75):
-    import random
-    from itertools import product
-
-    input_al = automaton.get_input_alphabet()
-
-    if lens is None:
-        lens = list(range(1, 15))
-
-    sum_lens = sum(lens)
-    # key is length, value is number of examples for said length
-    ex_per_len = dict()
-
-    additional_seq = 0
-    for l in lens:
-        ex_per_len[l] = int(num_examples * (l / sum_lens)) + 1
-        if ex_per_len[l] > pow(len(input_al), l):
-            additional_seq += ex_per_len[l] - pow(len(input_al), l)
-            ex_per_len[l] = 'comb'
-
-    additional_seq = additional_seq // len([i for i in ex_per_len.values() if i != 'comb'])
-
-    training_data = []
-    for l in ex_per_len.keys():
-        seqs = []
-        if ex_per_len[l] == 'comb':
-
-            seqs = list(product(input_al, repeat=l))
-            for seq in seqs:
-
-                out = automaton.reset_to_initial()
-                nr_steps = 0
-                for inp in seq:
-                    if automaton.possible(inp) or not break_on_impossible:
-                        nr_steps += 1
-                    if stack_limit and len(automaton.stack) > stack_limit:
-                        break
-                    if break_on_impossible and not automaton.possible(inp):
-                        break
-                    out = automaton.step(inp)
-                seq = seq[:nr_steps]
-                training_data.append((tuple(seq), out if not classify_states else automaton.current_state.state_id))
-
-        else:
-            for _ in range(ex_per_len[l] + additional_seq):
-                # seq = [random.choice(input_al) for _ in range(l)]
-                out = automaton.reset()
-                nr_steps = 0
-                seq = []
-                for i in range(l):
-                    possible_inp = [inp for inp in input_al if automaton.possible(inp)]
-                    if len(possible_inp) == 0:
-                        inp = random.choice(input_al)
-                    else:
-                        if random.random() <= possible_prob:
-                            inp = random.choice(possible_inp)
-                        else:
-                            inp = random.choice(input_al)
-                    seq.append(inp)
-                    if automaton.possible(inp) or not break_on_impossible:
-                        nr_steps += 1
-                    if stack_limit and len(automaton.stack) > stack_limit:
-                        break
-                    if break_on_impossible and not automaton.possible(inp):
-                        break
-                    out = automaton.step(inp)
-                seq = seq[:nr_steps]
-                training_data.append((tuple(seq), out))
-
-    return training_data

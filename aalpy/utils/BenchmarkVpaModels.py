@@ -1,26 +1,30 @@
-from aalpy.automata.Vpa import Vpa
+from aalpy.automata.Vpa import Vpa, VpaAlphabet
 
 
 def vpa_for_L1():
     # we always ensure that n >= 1
 
-    call_set = {'a'}
-    return_set = {'b'}
-    internal_set = {}
+    call_set = ['a']
+    return_set = ['b']
+    internal_set = []
+
+    input_alphabet = VpaAlphabet(internal_alphabet=internal_set, call_alphabet=call_set, return_alphabet=return_set)
 
     state_setup = {
         "q0": (False, {"a": [("q1", 'push', "a")], "b": [(Vpa.error_state.state_id, None, None)]}),
         "q1": (False, {"a": [("q1", 'push', "a")], "b": [("q2", 'pop', "a")]}),
         "q2": (True, {"a": [(Vpa.error_state.state_id, None, None)], "b": [("q2", 'pop', "a")]}),
     }
-    vpa = Vpa.from_state_setup(state_setup, "q0", call_set, return_set, internal_set)
+    vpa = Vpa.from_state_setup(state_setup, "q0", input_alphabet)
     return vpa
 
 
 def vpa_for_L2():
-    call_set = {'a', 'b'}
-    return_set = {'c', 'd'}
-    internal_set = {}
+    call_set = ['a', 'b']
+    return_set = ['c', 'd']
+    internal_set = []
+
+    input_alphabet = VpaAlphabet(internal_alphabet=internal_set, call_alphabet=call_set, return_alphabet=return_set)
 
     state_setup = {
         "q0": (False, {"a": [("q1", 'push', "a")], "b": [("q1", 'push', "b")],
@@ -34,14 +38,16 @@ def vpa_for_L2():
                       "c": [("q2", 'pop', "a"), ("q2", 'pop', "b")],
                       "d": [("q2", 'pop', "a"), ("q2", 'pop', "b")]}),
     }
-    vpa = Vpa.from_state_setup(state_setup, "q0", call_set, return_set, internal_set)
+    vpa = Vpa.from_state_setup(state_setup, "q0", input_alphabet)
     return vpa
 
 
 def vpa_for_L3():
-    call_set = {'a', 'c', 'b', 'd'}
-    return_set = {'e', 'g', 'f', 'h'}
-    internal_set = {}
+    call_set = ['a', 'c', 'b', 'd']
+    return_set = ['e', 'g', 'f', 'h']
+    internal_set = []
+
+    input_alphabet = VpaAlphabet(internal_alphabet=internal_set, call_alphabet=call_set, return_alphabet=return_set)
 
     state_setup = {
         "q0": (False, {"a": [("q0a", 'push', "a")],
@@ -61,14 +67,16 @@ def vpa_for_L3():
         "q2": (True, {"e": [("q2e", 'pop', "b"), ("q2e", 'pop', "d")],
                       "g": [("q2g", 'pop', "b"), ("q2g", 'pop', "d")]})
     }
-    vpa = Vpa.from_state_setup(state_setup, "q0", call_set, return_set, internal_set)
+    vpa = Vpa.from_state_setup(state_setup, "q0", input_alphabet)
     return vpa
 
 
 def vpa_for_L4():
-    call_set = {'a', 'b'}
-    return_set = {'c', 'd'}
-    internal_set = {}
+    call_set = ['a', 'b']
+    return_set = ['c', 'd']
+    internal_set = []
+
+    input_alphabet = VpaAlphabet(internal_alphabet=internal_set, call_alphabet=call_set, return_alphabet=return_set)
 
     state_setup = {
         "q0": (False, {"a": [("q01", 'push', "a")], "b": [(Vpa.error_state.state_id, None, None)]}),
@@ -80,14 +88,16 @@ def vpa_for_L4():
         "q21": (False, {"d": [("q2", 'pop', "a")]}),
         "q2": (True, {"c": [("q21", 'pop', "b")]}),
     }
-    vpa = Vpa.from_state_setup(state_setup, "q0", call_set, return_set, internal_set)
+    vpa = Vpa.from_state_setup(state_setup, "q0", input_alphabet)
     return vpa
 
 
 def vpa_for_L5():
-    call_set = {'a', 'b', 'c'}
-    return_set = {'d', 'e', 'f'}
-    internal_set = {}
+    call_set = ['a', 'b', 'c']
+    return_set = ['d', 'e', 'f']
+    internal_set = []
+
+    input_alphabet = VpaAlphabet(internal_alphabet=internal_set, call_alphabet=call_set, return_alphabet=return_set)
 
     state_setup = {
         "q0": (False, {"a": [("q01", 'push', "a")]}),
@@ -101,16 +111,18 @@ def vpa_for_L5():
         "q22": (False, {"f": [("q2", 'pop', "a")]}),
         "q2": (True, {"d": [("q21", 'pop', "c")]}),
     }
-    vpa = Vpa.from_state_setup(state_setup, "q0", call_set, return_set, internal_set)
+    vpa = Vpa.from_state_setup(state_setup, "q0", input_alphabet)
     return vpa
 
 
 def vpa_for_L7():
     # Dyck order 2
 
-    call_set = {'(', '['}
-    return_set = {')', ']'}
-    internal_set = {}
+    call_set = ['(', '[']
+    return_set = [')', ']']
+    internal_set = []
+
+    input_alphabet = VpaAlphabet(internal_alphabet=internal_set, call_alphabet=call_set, return_alphabet=return_set)
 
     state_setup = {
         "q0": (False, {"(": [("q1", 'push', '(')],
@@ -122,16 +134,18 @@ def vpa_for_L7():
                       "]": [("q1", 'pop', "[")]
                       }),
     }
-    vpa = Vpa.from_state_setup(state_setup, "q0", call_set, return_set, internal_set)
+    vpa = Vpa.from_state_setup(state_setup, "q0", input_alphabet)
     return vpa
 
 
 def vpa_for_L8():
     # Dyck order 3
 
-    call_set = {'(', '[', '{'}
-    return_set = {')', ']', '}'}
-    internal_set = {}
+    call_set = ['(', '[', '{']
+    return_set = [')', ']', '}']
+    internal_set = []
+
+    input_alphabet = VpaAlphabet(internal_alphabet=internal_set, call_alphabet=call_set, return_alphabet=return_set)
 
     state_setup = {
         "q0": (False, {"(": [("q1", 'push', '(')],
@@ -146,16 +160,18 @@ def vpa_for_L8():
                       "}": [("q1", 'pop', "{")],
                       }),
     }
-    vpa = Vpa.from_state_setup(state_setup, "q0", call_set, return_set, internal_set)
+    vpa = Vpa.from_state_setup(state_setup, "q0", input_alphabet)
     return vpa
 
 
 def vpa_for_L9():
     # Dyck order 4
 
-    call_set = {'(', '[', '{', '<'}
-    return_set = {')', ']', '}', '>'}
-    internal_set = {}
+    call_set = ['(', '[', '{', '<']
+    return_set = [')', ']', '}', '>']
+    internal_set = []
+
+    input_alphabet = VpaAlphabet(internal_alphabet=internal_set, call_alphabet=call_set, return_alphabet=return_set)
 
     state_setup = {
         "q0": (False, {"(": [("q1", 'push', '(')],
@@ -173,16 +189,18 @@ def vpa_for_L9():
                       ">": [("q1", 'pop', ">")],
                       }),
     }
-    vpa = Vpa.from_state_setup(state_setup, "q0", call_set, return_set, internal_set)
+    vpa = Vpa.from_state_setup(state_setup, "q0", input_alphabet)
     return vpa
 
 
 def vpa_for_L10():
     # RE Dyck order 1
 
-    call_set = {'a'}
-    return_set = {'v'}
-    internal_set = {'b', 'c', 'd', ' e', 'w', 'x', 'y', 'z'}
+    call_set = ['a']
+    return_set = ['v']
+    internal_set = ['b', 'c', 'd', 'e', 'w', 'x', 'y', 'z']
+
+    input_alphabet = VpaAlphabet(internal_alphabet=internal_set, call_alphabet=call_set, return_alphabet=return_set)
 
     state_setup = {
         "q0": (False, {"a": [("qa", 'push', "a")],
@@ -202,7 +220,7 @@ def vpa_for_L10():
         "qx": (False, {"y": [("qy", None, None)]}),
         "qy": (False, {"z": [("q1", None, None)]})
     }
-    vpa = Vpa.from_state_setup(state_setup, "q0", call_set, return_set, internal_set)
+    vpa = Vpa.from_state_setup(state_setup, "q0", input_alphabet)
     return vpa
 
 
@@ -212,6 +230,8 @@ def vpa_for_L11():
     call_set = ['c1', 'c2']
     return_set = ['r1', 'r2']
     internal_set = ['i1', 'i2']
+
+    input_alphabet = VpaAlphabet(internal_alphabet=internal_set, call_alphabet=call_set, return_alphabet=return_set)
 
     state_setup = {
         "q0": (False, {"c1": [("qa", 'push', "c1")],
@@ -225,7 +245,7 @@ def vpa_for_L11():
                       "r2": [("q1", 'pop', "c1"), ("q1", 'pop', "c2")]}),
         "qd": (False, {"i2": [("q1", None, None)]})
     }
-    vpa = Vpa.from_state_setup(state_setup, "q0", call_set, return_set, internal_set)
+    vpa = Vpa.from_state_setup(state_setup, "q0", input_alphabet)
     return vpa
 
 
@@ -235,6 +255,8 @@ def vpa_for_L12():
     call_set = ['(', '[']
     return_set = [')', ']']
     internal_set = []
+
+    input_alphabet = VpaAlphabet(internal_alphabet=internal_set, call_alphabet=call_set, return_alphabet=return_set)
 
     state_setup = {
         "q0": (False, {"(": [("q1", 'push', "(")],
@@ -249,16 +271,18 @@ def vpa_for_L12():
             "]": [("q2", 'pop', "[")]
         }),
     }
-    vpa = Vpa.from_state_setup(state_setup, "q0", call_set, return_set, internal_set)
+    vpa = Vpa.from_state_setup(state_setup, "q0", input_alphabet)
     return vpa
 
 
 def vpa_for_L13():
     # Dyck order 1
 
-    call_set = {'('}
-    return_set = {')'}
-    internal_set = {'a', 'b', 'c'}
+    call_set = ['(']
+    return_set = [')']
+    internal_set = ['a', 'b', 'c']
+
+    input_alphabet = VpaAlphabet(internal_alphabet=internal_set, call_alphabet=call_set, return_alphabet=return_set)
 
     state_setup = {
         "q0": (False, {"(": [("q1", 'push', "(")],
@@ -273,7 +297,7 @@ def vpa_for_L13():
                       "c": [("q1", None, None)]
                       }),
     }
-    vpa = Vpa.from_state_setup(state_setup, "q0", call_set, return_set, internal_set)
+    vpa = Vpa.from_state_setup(state_setup, "q0", input_alphabet)
     return vpa
 
 
@@ -283,6 +307,8 @@ def vpa_for_L14():
     call_set = ['(', '[']
     return_set = [')', ']']
     internal_set = ['a', 'b', 'c']
+
+    input_alphabet = VpaAlphabet(internal_alphabet=internal_set, call_alphabet=call_set, return_alphabet=return_set)
 
     state_setup = {
         "q0": (False, {"(": [("q1", 'push', "(")],
@@ -300,7 +326,7 @@ def vpa_for_L14():
                       "c": [("q1", None, None)]
                       }),
     }
-    vpa = Vpa.from_state_setup(state_setup, "q0", call_set, return_set, internal_set)
+    vpa = Vpa.from_state_setup(state_setup, "q0", input_alphabet)
     return vpa
 
 
@@ -310,6 +336,8 @@ def vpa_for_L15():
     call_set = ['(']
     return_set = [')']
     internal_set = ['a', 'b', 'c', 'd']
+
+    input_alphabet = VpaAlphabet(internal_alphabet=internal_set, call_alphabet=call_set, return_alphabet=return_set)
 
     state_setup = {
         "q0": (False, {"(": [("q1", 'push', "(")],
@@ -326,15 +354,18 @@ def vpa_for_L15():
         "qb": (False, {"c": [("q1", None, None)],
                        })
     }
-    vpa = Vpa.from_state_setup(state_setup, "q0", call_set, return_set, internal_set)
+    vpa = Vpa.from_state_setup(state_setup, "q0", input_alphabet)
     return vpa
 
 
 def vpa_for_L16():
     # just a testing language
-    call_set = {'a'}
-    return_set = {'b'}
-    internal_set = {}
+
+    call_set = ['a']
+    return_set = ['b']
+    internal_set = []
+
+    input_alphabet = VpaAlphabet(internal_alphabet=internal_set, call_alphabet=call_set, return_alphabet=return_set)
 
     state_setup = {
         "q0": (False, {"a": [("q1", 'push', "$")]}),
@@ -343,5 +374,5 @@ def vpa_for_L16():
                        }),
         "q2": (True, {})
     }
-    vpa = Vpa.from_state_setup(state_setup, "q0", call_set, return_set, internal_set)
+    vpa = Vpa.from_state_setup(state_setup, "q0", input_alphabet)
     return vpa
