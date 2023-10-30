@@ -4,7 +4,7 @@ from typing import Union
 from aalpy.automata import DfaState, Dfa, MealyState, MealyMachine, MooreState, MooreMachine, \
     SevpaAlphabet, SevpaState, SevpaTransition, Sevpa
 from aalpy.base import SUL
-from aalpy.learning_algs.deterministic.CounterExampleProcessing import rs_cex_processing
+from aalpy.learning_algs.deterministic.CounterExampleProcessing import rs_cex_processing, linear_cex_processing
 
 automaton_class = {'dfa': Dfa, 'mealy': MealyMachine, 'moore': MooreMachine}
 
@@ -305,6 +305,7 @@ class ClassificationTree:
             s_i = self._sift(cex[:i]).access_string
             hypothesis.execute_sequence(hypothesis.initial_state, cex[:i])
             s_star_i = hypothesis.current_state.prefix
+
             if s_i != s_star_i:
                 j = i
                 d = self._least_common_ancestor(s_i, s_star_i)
@@ -321,7 +322,7 @@ class ClassificationTree:
                               new_leaf_access_string=tuple(cex[:j - 1]) or tuple(),
                               new_leaf_position=self.sul.query((*cex[:j - 1], *(cex[j - 1], *d)))[-1])
 
-    def update_rs(self, cex: tuple, hypothesis):
+    def process_counterexample(self, cex: tuple, hypothesis, cex_processing_fun):
         """
         Updates the classification tree based on a counterexample,
         using Rivest & Schapire's counterexample processing
@@ -335,9 +336,19 @@ class ClassificationTree:
         Args:
             cex: the counterexample used to update the tree
             hypothesis: the former (wrong) hypothesis
+            cex_processing_fun: string choosing which cex_processing to use
 
         """
-        v = max(rs_cex_processing(self.sul, cex, hypothesis, is_vpa=self.automaton_type == 'vpa'), key=len)
+        v = None
+        if 'linear' in cex_processing_fun:
+            direction = cex_processing_fun[-3:]
+            v = linear_cex_processing(self.sul, cex, hypothesis, is_vpa=self.automaton_type == 'vpa',
+                                      direction=direction, suffix_closedness=False)[0]
+        if cex_processing_fun == 'rs':
+            v = rs_cex_processing(self.sul, cex, hypothesis, is_vpa=self.automaton_type == 'vpa',
+                                  suffix_closedness=False)[0]
+
+        assert v
         a = cex[len(cex) - len(v) - 1]
         u = cex[:len(cex) - len(v) - 1]
         assert (*u, a, *v) == cex

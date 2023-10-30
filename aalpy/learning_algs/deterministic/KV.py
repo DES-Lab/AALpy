@@ -10,7 +10,7 @@ from .CounterExampleProcessing import counterexample_successfully_processed
 from ...base.SUL import CacheSUL
 
 print_options = [0, 1, 2, 3]
-counterexample_processing_strategy = [None, 'rs']
+counterexample_processing_strategy = ['rs', 'linear_fwd', 'linear_bwd']
 automaton_class = {'dfa': Dfa, 'mealy': MealyMachine, 'moore': MooreMachine, 'vpa': Sevpa}
 
 
@@ -133,10 +133,7 @@ def run_KV(alphabet: Union[list, SevpaAlphabet], sul: SUL, eq_oracle: Oracle, au
                 if print_level == 3:
                     print('Counterexample', cex)
 
-            if cex_processing == 'rs':
-                classification_tree.update_rs(cex, hypothesis)
-            else:
-                classification_tree.update(cex, hypothesis)
+            classification_tree.process_counterexample(cex, hypothesis, cex_processing)
 
     total_time = round(time.time() - start_time, 2)
     eq_query_time = round(eq_query_time, 2)
