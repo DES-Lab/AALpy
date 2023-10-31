@@ -127,7 +127,7 @@ def linear_cex_processing(sul: SUL, cex: tuple, hypothesis, suffix_closedness=Tr
         if not is_vpa:
             s_bracket = hypothesis.current_state.prefix
         else:
-            s_bracket = tuple(hypothesis.transform_access_sequance(hypothesis.current_state))
+            s_bracket = tuple(hypothesis.transform_access_string(hypothesis.current_state))
 
         sul_out = sul.query(s_bracket + suffix)[-1]
 
