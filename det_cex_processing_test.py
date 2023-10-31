@@ -1,7 +1,7 @@
-from aalpy.utils import generate_random_deterministic_automata
+from aalpy.utils import generate_random_deterministic_automata, bisimilar
 from aalpy.SULs import MealySUL
 from aalpy.oracles import RandomWMethodEqOracle
-from aalpy.learning_algs import run_KV
+from aalpy.learning_algs import run_KV, run_Lstar
 
 for x in ['linear_fwd', 'linear_bwd']:
     for i in range(100):
@@ -18,4 +18,5 @@ for x in ['linear_fwd', 'linear_bwd']:
         # select any of the oracles
         eq_oracle = RandomWMethodEqOracle(input_alphabet, sul, walks_per_state=10, walk_len=20)
 
-        learned_model = run_KV(input_alphabet, sul, eq_oracle, model_type, cex_processing=x, print_level=0)
+        learned_model = run_Lstar(input_alphabet, sul, eq_oracle, model_type, cex_processing=x, print_level=0)
+        assert bisimilar(random_model, learned_model)
