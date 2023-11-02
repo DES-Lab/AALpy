@@ -1,3 +1,4 @@
+import random
 from collections import defaultdict
 from typing import List, Dict
 
@@ -246,3 +247,81 @@ class Vpa(Automaton):
 
         vpa = Vpa(init_state, states, input_alphabet)
         return vpa
+
+
+    def gen_random_accepting_word(self, return_letter_prob: float = 0.0, call_letter_prob: float = 0.0,
+                                  early_finish: bool = True):
+        """
+        Create a random word that gets accepted by the automaton.
+
+        Args:
+
+        Returns:
+        """
+        assert return_letter_prob + call_letter_prob <= 1.0
+        word = []
+        if return_letter_prob == 0.0 and call_letter_prob == 0.0:
+            return_letter_prob = 0.34
+            call_letter_prob = 0.33
+        elif return_letter_prob == 0.0 and call_letter_prob != 0.0:
+            return_letter_prob = (1.0 - call_letter_prob) / 2
+        elif return_letter_prob != 0.0 and call_letter_prob == 0.0:
+            call_letter_prob = (1.0 - return_letter_prob) / 2
+
+        if len(self.input_alphabet.internal_alphabet) != 0:
+            internal_letter_prob = 1.0 - return_letter_prob - call_letter_prob
+        else:
+            internal_letter_prob = 0.0
+            if return_letter_prob == 0.0 and call_letter_prob == 0.0:
+                return_letter_prob = 0.5
+                call_letter_prob = 0.5
+            elif return_letter_prob == 0.0 and call_letter_prob != 0.0:
+                return_letter_prob = (1.0 - call_letter_prob)
+            elif return_letter_prob != 0.0 and call_letter_prob == 0.0:
+                call_letter_prob = (1.0 - return_letter_prob)
+
+        assert (call_letter_prob + return_letter_prob + internal_letter_prob) == 1.0
+
+        call_letter_boarder = call_letter_prob
+        return_letter_boarder = call_letter_boarder + return_letter_prob
+        internal_letter_boarder = return_letter_boarder + internal_letter_prob
+
+        self.reset_to_initial()
+        while True:
+            letter_type = random.uniform(0.0, 1.0)
+            if 0.0 <= letter_type <= call_letter_boarder:
+                possible_letters = self.input_alphabet.call_alphabet
+            elif call_letter_boarder < letter_type <= return_letter_boarder:
+                # skip return letters if stack is empty or if the word is empty
+                if self.stack[-1] == self.empty or word == []:
+                    continue
+                possible_letters = self.input_alphabet.return_alphabet
+            elif return_letter_boarder < letter_type <= internal_letter_boarder:
+                possible_letters = self.input_alphabet.internal_alphabet
+            else:
+                assert False
+
+            assert len(possible_letters) > 0
+
+            letter = ''
+            if early_finish:
+                for l in possible_letters:
+                    for transition in self.current_state.transitions[l]:
+                        if transition.target.is_accepting:
+                            letter = l
+                            break
+                    break
+            if letter == '':
+                random_trans_letter_index = random.randint(0, len(possible_letters) - 1)
+                letter = possible_letters[random_trans_letter_index]
+            self.step(letter)
+            if not self.current_state == self.error_state:
+                word.append(letter)
+            else:
+                self.reset_to_initial()
+                self.execute_sequence(self.initial_state, word)
+
+            if self.current_state.is_accepting and self.stack[-1] == self.empty:
+                break
+
+        return word

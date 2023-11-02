@@ -346,7 +346,6 @@ class ClassificationTree:
             v = linear_cex_processing(self.sul, cex, hypothesis, is_vpa=self.automaton_type == 'vpa',
                                       direction=direction, suffix_closedness=False)[0]
         elif 'exponential' in cex_processing_fun:
-            print(f'\nCex is {cex}')
             direction = cex_processing_fun[-3:]
             v = exponential_cex_processing(self.sul, cex, hypothesis, is_vpa=self.automaton_type == 'vpa',
                                            direction=direction, suffix_closedness=False)[0]

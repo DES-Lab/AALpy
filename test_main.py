@@ -73,6 +73,54 @@ def test_on_random_svepa():
                    print_level=2, cex_processing='rs')
 
 
+def test_random_word_gen():
+    model_under_learning = vpa_for_L11()
+    model_under_learning.visualize('InitialModel')
+
+    # Learn Model
+    alphabet = SevpaAlphabet(list(model_under_learning.internal_set),
+                             list(model_under_learning.call_set),
+                             list(model_under_learning.return_set))
+
+    sul = VpaSUL(model_under_learning, include_top=False, check_balance=False)
+
+    eq_oracle = RandomWordEqOracle(alphabet=alphabet.get_merged_alphabet(), sul=sul, num_walks=100000)
+    model = run_KV(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, automaton_type='vpa',
+                   print_level=2, cex_processing='exponential_fwd')
+
+    sul_model = SevpaSUL(model, include_top=False, check_balance=False)
+
+    total_len = 0
+    for i in range(0, 100):
+        random_word = model_under_learning.gen_random_accepting_word(return_letter_prob=0.5)
+        total_len += len(random_word)
+        out_model = sul_model.query(random_word)[-1]
+        out_sul = sul.query(random_word)[-1]
+        assert out_model == out_sul and out_model
+
+    print(f'All tests passed average word length: {total_len/100}')
+
+    total_len = 0
+    for i in range(0, 100):
+        random_word = model_under_learning.gen_random_accepting_word(return_letter_prob=0.5, early_finish=False)
+        total_len += len(random_word)
+        out_model = sul_model.query(random_word)[-1]
+        out_sul = sul.query(random_word)[-1]
+        assert out_model == out_sul and out_model
+
+    print(f'All tests passed average word length: {total_len/100}')
+
+    total_len = 0
+    for i in range(0, 100):
+        random_word = model_under_learning.gen_random_accepting_word(early_finish=False)
+        total_len += len(random_word)
+        out_model = sul_model.query(random_word)[-1]
+        out_sul = sul.query(random_word)[-1]
+        assert out_model == out_sul and out_model
+
+    print(f'All tests passed average word length: {total_len/100}')
+
+
 # test_arithmetic_expression()
 # import cProfile
 # pr = cProfile.Profile()
