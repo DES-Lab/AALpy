@@ -4,7 +4,8 @@ from typing import Union
 from aalpy.automata import DfaState, Dfa, MealyState, MealyMachine, MooreState, MooreMachine, \
     SevpaAlphabet, SevpaState, SevpaTransition, Sevpa
 from aalpy.base import SUL
-from aalpy.learning_algs.deterministic.CounterExampleProcessing import rs_cex_processing, linear_cex_processing
+from aalpy.learning_algs.deterministic.CounterExampleProcessing import rs_cex_processing, linear_cex_processing, \
+    exponential_cex_processing
 
 automaton_class = {'dfa': Dfa, 'mealy': MealyMachine, 'moore': MooreMachine}
 
@@ -344,7 +345,12 @@ class ClassificationTree:
             direction = cex_processing_fun[-3:]
             v = linear_cex_processing(self.sul, cex, hypothesis, is_vpa=self.automaton_type == 'vpa',
                                       direction=direction, suffix_closedness=False)[0]
-        if cex_processing_fun == 'rs':
+        elif 'exponential' in cex_processing_fun:
+            print(f'\nCex is {cex}')
+            direction = cex_processing_fun[-3:]
+            v = exponential_cex_processing(self.sul, cex, hypothesis, is_vpa=self.automaton_type == 'vpa',
+                                           direction=direction, suffix_closedness=False)[0]
+        elif cex_processing_fun == 'rs':
             v = rs_cex_processing(self.sul, cex, hypothesis, is_vpa=self.automaton_type == 'vpa',
                                   suffix_closedness=False)[0]
 

@@ -43,11 +43,14 @@ def longest_prefix_cex_processing(s_union_s_dot_a: list, cex: tuple, closedness=
     return suffixes
 
 
-def rs_cex_processing(sul: SUL, cex: tuple, hypothesis, suffix_closedness=True, closedness='suffix', is_vpa=False):
+def rs_cex_processing(sul: SUL, cex: tuple, hypothesis, suffix_closedness=True, closedness='suffix', is_vpa=False,
+                      lower=0, upper=0):
     """Riverst-Schapire counter example processing.
 
     Args:
 
+        upper: upper boarder for cex (from preprocessing)
+        lower: lower boarder for cex (from preprocessing)
         sul: system under learning
         cex: found counterexample
         hypothesis: hypothesis on which counterexample was found
@@ -65,8 +68,11 @@ def rs_cex_processing(sul: SUL, cex: tuple, hypothesis, suffix_closedness=True, 
     cex_out = sul.query(cex)
     cex_input = list(cex)
 
-    lower = 1
-    upper = len(cex_input) - 2
+    if lower == 0:
+        lower = 1
+
+    if upper == 0:
+        upper = len(cex_input) - 2
 
     while True:
         hypothesis.reset_to_initial()
@@ -156,4 +162,41 @@ def linear_cex_processing(sul: SUL, cex: tuple, hypothesis, suffix_closedness=Tr
 def exponential_cex_processing(sul: SUL, cex: tuple, hypothesis, suffix_closedness=True, closedness='suffix',
                                direction='fwd', is_vpa=False):
     assert direction in {'fwd', 'bwd'}
-    pass
+
+    direction = 'fwd'
+
+    cex_out = sul.query(cex)
+
+    bp = 1
+    bp_recent = 0
+    while True:
+        if bp > len(cex):
+            bp = len(cex)
+            break
+        prefix = cex[:bp]
+        suffix = cex[bp:]
+        assert cex == prefix + suffix
+
+        hypothesis.reset_to_initial()
+        hypothesis.execute_sequence(hypothesis.initial_state, prefix)
+
+        if not is_vpa:
+            s_bracket = hypothesis.current_state.prefix
+        else:
+            s_bracket = tuple(hypothesis.transform_access_string(hypothesis.current_state))
+
+        sul_out = sul.query(s_bracket + suffix)
+
+        if sul_out[-1] != cex_out[-1]:
+            break
+
+        bp_recent = bp
+        bp *= 2
+
+    if (bp - bp_recent) == 1:
+        return [suffix]
+    else:
+        return rs_cex_processing(sul, cex, hypothesis, suffix_closedness, closedness, is_vpa, lower=bp_recent)
+
+
+

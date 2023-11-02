@@ -10,7 +10,7 @@ from .CounterExampleProcessing import counterexample_successfully_processed
 from ...base.SUL import CacheSUL
 
 print_options = [0, 1, 2, 3]
-counterexample_processing_strategy = ['rs', 'linear_fwd', 'linear_bwd']
+counterexample_processing_strategy = ['rs', 'linear_fwd', 'linear_bwd', 'exponential_fwd', 'exponential_bwd']
 automaton_class = {'dfa': Dfa, 'mealy': MealyMachine, 'moore': MooreMachine, 'vpa': Sevpa}
 
 
