@@ -75,7 +75,6 @@ def test_on_random_svepa():
 
 def test_random_word_gen():
     model_under_learning = vpa_for_L11()
-    model_under_learning.visualize('InitialModel')
 
     # Learn Model
     alphabet = SevpaAlphabet(list(model_under_learning.internal_set),

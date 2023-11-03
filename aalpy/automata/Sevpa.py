@@ -1,5 +1,5 @@
 import random
-from collections import defaultdict
+from collections import defaultdict, deque
 from typing import Union
 
 from aalpy.base import Automaton, AutomatonState
@@ -279,6 +279,37 @@ class Sevpa(Automaton):
                 initial_state.transitions[r].append(trans)
 
         return Sevpa(initial_state, [initial_state], alphabet)
+
+    def gen_random_accepting_word_bfs(self, min_word_length: int = 0):
+        """
+        Create a random word that gets accepted by the automaton with the breadth-first search approach.
+
+        Args:
+
+        Returns:
+        """
+        self.reset_to_initial()
+        queue = deque()
+        shuffled_alphabet = self.input_alphabet.get_merged_alphabet()
+        random.shuffle(shuffled_alphabet)
+        for letter in shuffled_alphabet:
+            queue.append([letter])
+
+        while queue:
+            word = queue.popleft()
+            if len(word) >= min_word_length:
+                self.reset_to_initial()
+                self.execute_sequence(self.initial_state, word)
+                # skipping words that lead into the error state will also shorten growth of the queue
+                if self.error_state_reached:
+                    continue
+                if self.current_state.is_accepting and self.stack[-1] == self.empty:
+                    return word
+            shuffled_alphabet = self.input_alphabet.get_merged_alphabet()
+            random.shuffle(shuffled_alphabet)
+            for letter in shuffled_alphabet:
+                new_word = word + [letter]
+                queue.append(new_word)
 
     def gen_random_accepting_word(self, return_letter_prob: float = 0.0, call_letter_prob: float = 0.0,
                                   early_finish: bool = True):
