@@ -280,6 +280,111 @@ class Sevpa(Automaton):
 
         return Sevpa(initial_state, [initial_state], alphabet)
 
+    def find_error_states(self):
+        """
+        - if all transitions self loop to itself
+        - if the pop transitions from the corresponding stack symbol lead to the same state
+        - for example:
+            - all q2 transitions lead to q2
+            - the pop transitions from the initial state which pop the q2+call-symbol from the stack lead to q2 as well
+
+        - do not do if the state is the initial state or an accepting state
+        """
+        error_states = []
+        for state in self.states:
+            error_state = True
+            if state.is_accepting or state == self.initial_state:
+                continue
+
+            state_target = None
+            # check internal and return transitions
+            ret_int_al = []
+            ret_int_al.extend(self.input_alphabet.internal_alphabet)
+            ret_int_al.extend(self.input_alphabet.return_alphabet)
+            for letter in ret_int_al:
+                for transition in state.transitions[letter]:
+                    if state_target is None:
+                        state_target = transition.target
+                    else:
+                        if state_target != transition.target:
+                            error_state = False
+                            break
+                if not error_state:
+                    break
+
+            # check call transitions
+            if error_state:
+                for return_letter in self.input_alphabet.return_alphabet:
+                    for transition in self.initial_state.transitions[return_letter]:
+                        if transition.stack_guard[0] == state_target.state_id:
+                            if transition.target != state_target:
+                                error_state = False
+                                break
+                    if not error_state:
+                        break
+            else:
+                continue
+
+            if error_state:
+                error_states.append(state.state_id)
+
+            return error_states
+
+    def find_error_states_unfinished(self):
+        """
+        TODO: This is an unfinished idea and might be finished or deleted
+
+        - if the initial state with an empty stack can be reached the state is valid
+        - if an accepting state with an empty stack can be reached all states inbetween are valid
+        - store the valid states with the respective stack setting in a dict with a list of valid stack settings
+
+        - new states we reach are getting added to the suspicious list (with the stack setting)
+        - if a valid state + stack setting is reached we don't care about it anymore (no more words are getting generated)
+        - if a state leads into another suspicious state we don't care about that state any more as well
+        - stop if all transitions lead to a non-valid state ?
+
+        criteria to be an error state:
+            - jumping between the initial state and the supposed error state
+            - if all target states are the same for internal/return transitions (there are no call transitions anyway)
+
+        """
+        valid_states = defaultdict(set)
+        error_states = defaultdict(set)
+        valid_states[self.initial_state.state_id].add(self.stack)
+        self.reset_to_initial()
+        queue = deque()
+        for letter in self.input_alphabet.get_merged_alphabet():
+            queue.append([letter])
+
+        while queue:
+            if len(valid_states) + len(error_states) == len(self.states):
+                return error_states
+            word = queue.popleft()
+            self.reset_to_initial()
+            self.execute_sequence(self.initial_state, word)
+            if self.error_state_reached:
+                continue
+
+            for letter in word:
+                self.step(letter)
+                if self.current_state.state_id in valid_states:
+                    if self.stack in valid_states[self.current_state.state_id]:
+                        for letter_ in word:
+                            self.step(letter_)
+                            valid_states[self.current_state.state_id].add(self.stack)
+                        continue
+
+            # if an accepting state or the initial state + empty stack can be reached all states inbetween are valid
+            if (self.current_state.is_accepting or self.current_state == self.initial_state) and self.stack[-1] == self.empty:
+                self.reset_to_initial()
+                for letter in word:
+                    self.step(letter)
+                    valid_states[self.current_state.state_id].add(self.stack)
+
+            for letter in self.input_alphabet.get_merged_alphabet():
+                new_word = word + [letter]
+                queue.append(new_word)
+
     def gen_random_accepting_word_bfs(self, min_word_length: int = 0):
         """
         Create a random word that gets accepted by the automaton with the breadth-first search approach.
