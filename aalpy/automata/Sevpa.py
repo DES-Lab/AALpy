@@ -312,7 +312,7 @@ class Sevpa(Automaton):
                 if not error_state:
                     break
 
-            # check call transitions
+            # check return transitions from the initial state
             if error_state:
                 for return_letter in self.input_alphabet.return_alphabet:
                     for transition in self.initial_state.transitions[return_letter]:
@@ -329,6 +329,34 @@ class Sevpa(Automaton):
                 error_states.append(state.state_id)
 
             return error_states
+
+    def delete_state(self, state_id):
+        state = self.get_state_by_id(state_id)
+
+        if state is not None:
+            self.states.remove(state)
+        else:
+            assert False and f'State {state_id} does not exist'
+
+        for state in self.states:
+            ret_int_al = []
+            ret_int_al.extend(self.input_alphabet.internal_alphabet)
+            ret_int_al.extend(self.input_alphabet.return_alphabet)
+            for letter in ret_int_al:
+                cleaned_transitions = []
+                for transition in state.transitions[letter]:
+                    if transition.stack_guard is not None:
+                        if transition.stack_guard[0] == state_id:
+                            continue
+                    if transition.target.state_id == state_id:
+                        continue
+
+                    cleaned_transitions.append(transition)
+                del state.transitions[letter]
+                state.transitions[letter] = cleaned_transitions
+
+
+
 
     def find_error_states_unfinished(self):
         """
@@ -402,14 +430,13 @@ class Sevpa(Automaton):
 
         while queue:
             word = queue.popleft()
-            if len(word) >= min_word_length:
-                self.reset_to_initial()
-                self.execute_sequence(self.initial_state, word)
-                # skipping words that lead into the error state will also shorten growth of the queue
-                if self.error_state_reached:
-                    continue
-                if self.current_state.is_accepting and self.stack[-1] == self.empty:
-                    return word
+            self.reset_to_initial()
+            self.execute_sequence(self.initial_state, word)
+            # skipping words that lead into the error state will also shorten growth of the queue
+            if self.error_state_reached:
+                continue
+            if self.current_state.is_accepting and self.stack[-1] == self.empty and len(word) >= min_word_length:
+                return word
             shuffled_alphabet = self.input_alphabet.get_merged_alphabet()
             random.shuffle(shuffled_alphabet)
             for letter in shuffled_alphabet:
