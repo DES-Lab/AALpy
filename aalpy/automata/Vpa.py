@@ -248,7 +248,6 @@ class Vpa(Automaton):
         vpa = Vpa(init_state, states, input_alphabet)
         return vpa
 
-
     def gen_random_accepting_word(self, return_letter_prob: float = 0.0, call_letter_prob: float = 0.0,
                                   early_finish: bool = True):
         """

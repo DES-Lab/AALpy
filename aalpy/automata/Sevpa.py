@@ -178,13 +178,12 @@ class Sevpa(Automaton):
     def to_state_setup(self):
         state_setup_dict = {}
 
-        # ensure prefixes are computed
-        # self.compute_prefixes()
-        # TODO
         sorted_states = sorted(self.states, key=lambda x: len(x.state_id))
-        for s in sorted_states:
-            state_setup_dict[s.state_id] = (
-                s.is_accepting, {k: (v.target.state_id, v.action) for k, v in s.transitions.items()})
+        for state in sorted_states:
+            state_setup_dict[state.state_id] = (
+                state.is_accepting, {symbol: (trans.target.state_id, trans.action, trans.stack_guard)
+                                     for symbol, transitions in state.transitions.items()
+                                     for trans in transitions})
 
         return state_setup_dict
 
