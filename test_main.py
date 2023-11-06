@@ -90,6 +90,14 @@ def test_random_word_gen():
 
     sul_model = SevpaSUL(model, include_top=False, check_balance=False)
 
+    random_word_list = model.gen_random_accepting_word_bfs(min_word_length=3, amount_words=10)
+    for random_word in random_word_list:
+        out_model = sul_model.query(random_word)[-1]
+        out_sul = sul.query(random_word)[-1]
+        assert out_model == out_sul and out_model
+
+    print(f'All tests passed for gen_random_accepting_word_bfs')
+
     total_len = 0
     for i in range(0, 100):
         random_word = model_under_learning.gen_random_accepting_word(return_letter_prob=0.5)
@@ -190,7 +198,7 @@ def test_cex_processing_strategies_vpa():
                     break
 
 
-test_cex_processing_strategies_vpa()
+test_random_word_gen()
 exit()
 
 # test_arithmetic_expression()

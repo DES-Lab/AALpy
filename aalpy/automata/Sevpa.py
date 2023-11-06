@@ -420,7 +420,7 @@ class Sevpa(Automaton):
                 new_word = word + [letter]
                 queue.append(new_word)
 
-    def gen_random_accepting_word_bfs(self, min_word_length: int = 0):
+    def gen_random_accepting_word_bfs(self, min_word_length: int = 0, amount_words: int = 1):
         """
         Create a random word that gets accepted by the automaton with the breadth-first search approach.
 
@@ -435,6 +435,7 @@ class Sevpa(Automaton):
         for letter in shuffled_alphabet:
             queue.append([letter])
 
+        found_words = set()
         while queue:
             word = queue.popleft()
             self.reset_to_initial()
@@ -443,7 +444,9 @@ class Sevpa(Automaton):
             if self.error_state_reached:
                 continue
             if self.current_state.is_accepting and self.stack[-1] == self.empty and len(word) >= min_word_length:
-                return word
+                found_words.add(tuple(word))
+            if len(found_words) >= amount_words:
+                return found_words
             shuffled_alphabet = self.input_alphabet.get_merged_alphabet()
             random.shuffle(shuffled_alphabet)
             for letter in shuffled_alphabet:
