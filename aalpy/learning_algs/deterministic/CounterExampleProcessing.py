@@ -163,16 +163,25 @@ def exponential_cex_processing(sul: SUL, cex: tuple, hypothesis, suffix_closedne
                                direction='fwd', is_vpa=False):
     assert direction in {'fwd', 'bwd'}
 
-    direction = 'fwd'
-
     cex_out = sul.query(cex)
 
-    bp = 1
-    bp_recent = 0
+    bwd_subtrahend = 1
+    if direction == 'fwd':
+        bp_recent = 0
+        bp = 1
+    else:
+        bp_recent = len(cex)
+        bp = len(cex)-1
     while True:
-        if bp > len(cex):
-            bp = len(cex)
-            break
+        if direction == 'fwd':
+            if bp > len(cex):
+                bp = len(cex)
+                break
+        else:
+            if bp < 1:
+                bp = 1
+                break
+
         prefix = cex[:bp]
         suffix = cex[bp:]
         assert cex == prefix + suffix
@@ -187,16 +196,24 @@ def exponential_cex_processing(sul: SUL, cex: tuple, hypothesis, suffix_closedne
 
         sul_out = sul.query(s_bracket + suffix)
 
-        if sul_out[-1] != cex_out[-1]:
+        if sul_out[-1] != cex_out[-1] and direction == 'fwd':
+            break
+        elif sul_out[-1] == cex_out[-1] and direction == 'bwd':
             break
 
         bp_recent = bp
-        bp *= 2
+        if direction == 'fwd':
+            bp *= 2
+        else:
+            bp -= bwd_subtrahend
+            bwd_subtrahend *= 2
 
     if (bp - bp_recent) == 1:
         return [suffix]
     else:
-        return rs_cex_processing(sul, cex, hypothesis, suffix_closedness, closedness, is_vpa, lower=bp_recent)
-
+        if direction == 'fwd':
+            return rs_cex_processing(sul, cex, hypothesis, suffix_closedness, closedness, is_vpa, lower=bp_recent)
+        else:
+            return rs_cex_processing(sul, cex, hypothesis, suffix_closedness, closedness, is_vpa, upper=bp_recent)
 
 

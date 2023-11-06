@@ -1,4 +1,5 @@
 import ast
+import random
 
 from Examples import learning_context_free_grammar_example
 from aalpy.SULs.AutomataSUL import SevpaSUL, VpaSUL
@@ -141,6 +142,56 @@ def visual_test_to_state_setup_sevpa():
     model_from_setup = Sevpa.from_state_setup(state_setup_dict, "q0", alphabet)
     visualize_automaton(model_from_setup, 'ModelFromSetup')
 
+
+def test_cex_processing_strategies_vpa():
+
+    cex_processing_strategies = ['linear_fwd', 'linear_bwd', 'exponential_fwd', 'exponential_bwd', 'rs']
+
+    for i, vpa in enumerate(
+            [vpa_for_L1(), vpa_for_L2(), vpa_for_L3(), vpa_for_L4(), vpa_for_L5(), vpa_for_L7(), vpa_for_L8(),
+             vpa_for_L9(), vpa_for_L10(), vpa_for_L11(), vpa_for_L12(), vpa_for_L13(), vpa_for_L14(), vpa_for_L15()]):
+
+        print(f'VPA {i + 1 if i < 6 else i + 2}')
+
+        model_under_learning = vpa
+
+        alphabet = SevpaAlphabet(list(model_under_learning.internal_set),
+                                 list(model_under_learning.call_set),
+                                 list(model_under_learning.return_set))
+
+
+        for cex_processing in cex_processing_strategies:
+            sul = VpaSUL(model_under_learning, include_top=False, check_balance=False)
+            eq_oracle = RandomWordEqOracle(alphabet=alphabet.get_merged_alphabet(), sul=sul, num_walks=100000)
+            model = run_KV(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, automaton_type='vpa',
+                           print_level=1, cex_processing=cex_processing)
+
+            error_states = model.find_error_states()
+            if error_states:
+                model.delete_state(error_states[0])
+            sul_learned_model = SevpaSUL(model, include_top=False, check_balance=False)
+
+            print(f'Checking {cex_processing}')
+            for i in range(0, 500000):
+                word_length = random.randint(1, 100)
+                word = []
+                for j in range(0, word_length):
+                    word.append(random.choice(alphabet.get_merged_alphabet()))
+
+                vpa_out = sul.query(tuple(word))
+                learned_model_out = sul_learned_model.query(tuple(word))
+
+                if vpa_out == learned_model_out:
+                    continue
+                else:
+                    print(f'{cex_processing} failed on following test:')
+                    print(f'Input: {word}')
+                    print(f'Vpa out: {vpa_out} \nLearned vpa out: {learned_model_out}')
+                    break
+
+
+test_cex_processing_strategies_vpa()
+exit()
 
 # test_arithmetic_expression()
 # import cProfile
