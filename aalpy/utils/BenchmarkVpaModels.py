@@ -186,7 +186,7 @@ def vpa_for_L9():
                       ")": [("q1", 'pop', "(")],
                       "]": [("q1", 'pop', "[")],
                       "}": [("q1", 'pop', "{")],
-                      ">": [("q1", 'pop', ">")],
+                      ">": [("q1", 'pop', "<")],
                       }),
     }
     vpa = Vpa.from_state_setup(state_setup, "q0", input_alphabet)

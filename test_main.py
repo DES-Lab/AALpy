@@ -120,6 +120,28 @@ def test_random_word_gen():
     print(f'All tests passed average word length: {total_len/100}')
 
 
+def visual_test_to_state_setup_sevpa():
+    vpa = vpa_for_L11()
+
+    alphabet = SevpaAlphabet(list(vpa.internal_set),
+                             list(vpa.call_set),
+                             list(vpa.return_set))
+    sul = VpaSUL(vpa, include_top=False, check_balance=False)
+    eq_oracle = RandomWordEqOracle(alphabet=alphabet.get_merged_alphabet(), sul=sul, num_walks=100000)
+    model = run_KV(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, automaton_type='vpa',
+                   print_level=2, cex_processing='rs')
+
+    error_states = model.find_error_states()
+    if error_states is not None:
+        model.delete_state(error_states[0])
+
+    # for visual comparison
+    model.visualize()
+    state_setup_dict = model.to_state_setup()
+    model_from_setup = Sevpa.from_state_setup(state_setup_dict, "q0", alphabet)
+    visualize_automaton(model_from_setup, 'ModelFromSetup')
+
+
 # test_arithmetic_expression()
 # import cProfile
 # pr = cProfile.Profile()

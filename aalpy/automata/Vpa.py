@@ -90,7 +90,7 @@ class Vpa(Automaton):
         self.states = states
         self.input_alphabet = input_alphabet
         self.current_state = None
-        self.call_balance = 0
+        self.call_balance = 0 # TODO: we don't use that
         self.stack = []
 
         # alphabet sets for faster inclusion checks (as in VpaAlphabet we have lists, for reproducibility)

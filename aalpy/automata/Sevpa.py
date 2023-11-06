@@ -180,10 +180,20 @@ class Sevpa(Automaton):
 
         sorted_states = sorted(self.states, key=lambda x: len(x.state_id))
         for state in sorted_states:
-            state_setup_dict[state.state_id] = (
-                state.is_accepting, {symbol: (trans.target.state_id, trans.action, trans.stack_guard)
-                                     for symbol, transitions in state.transitions.items()
-                                     for trans in transitions})
+            transitions_for_symbol = {}
+            for symbol, trans_list in state.transitions.items():
+                trans_list_for_setup = []
+                for trans in trans_list:
+                    trans_list_for_setup.append((trans.target.state_id, trans.action, trans.stack_guard))
+                if trans_list_for_setup:
+                    transitions_for_symbol[symbol] = trans_list_for_setup
+            state_setup_dict[state.state_id] = (state.is_accepting, transitions_for_symbol)
+
+
+        # for state in sorted_states:
+        #     state_setup_dict[state.state_id] = (
+        #         state.is_accepting, {symbol: trans_list
+        #                              for symbol, trans_list in state.transitions.items()})
 
         return state_setup_dict
 
@@ -192,12 +202,10 @@ class Sevpa(Automaton):
 
         # build states with state_id and output
         states = {key: SevpaState(key, val[0]) for key, val in state_setup.items()}
-        states[Sevpa.error_state.state_id] = Sevpa.error_state  # PdaState(Pda.error_state,False)
+        # states[Sevpa.error_state.state_id] = Sevpa.error_state  # PdaState(Pda.error_state,False)
 
         # add transitions to states
         for state_id, state in states.items():
-            if state_id == Sevpa.error_state.state_id:
-                continue
             for _input, trans_spec in state_setup[state_id][1].items():
                 for (target_state_id, action, stack_guard) in trans_spec:
                     if action == 'pop':
