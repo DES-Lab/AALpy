@@ -335,7 +335,7 @@ class Sevpa(Automaton):
             if error_state:
                 error_states.append(state.state_id)
 
-            return error_states
+        return error_states
 
     def delete_state(self, state_id):
         state = self.get_state_by_id(state_id)
