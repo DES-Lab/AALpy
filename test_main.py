@@ -21,6 +21,24 @@ from random import seed
 # 4. Implement and test to_state_setup, test saving and loading to/from file
 # 5. Create an active interface to learn a grammar of some language, like simplified C or Java
 
+# Thesis
+# 1. Intro
+# 2. Preliminaries (very important)
+# 2.1 CFG, context pairs, well matched words
+# 2.2 What are SEVPA and why we use those instead of VPAs
+# 2.3 Example SEVPA and how to read/interpret it (Important on a small example)
+# 2.4 Automata Learning and KV
+# ...
+# 3. KV for CFG inference (intuition behind everything and how it fits with preliminaries)
+# 3.1 Explain alg in detail, like Maxi
+# 3.2 Explain CEX processing/transform access string, also on example and intuition
+# 3.3 Important: Run of the algorithm, visualize classification tree...
+# 4. Evaluation
+# - number of steps/queries for models of growing alphabet, state size, ...
+# - on 15 languages
+# - on random languages
+# - on something cool
+
 def test_arithmetic_expression():
     import warnings
     warnings.filterwarnings("ignore")
