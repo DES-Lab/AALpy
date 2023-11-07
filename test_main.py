@@ -106,7 +106,7 @@ def test_random_word_gen():
         out_sul = sul.query(random_word)[-1]
         assert out_model == out_sul and out_model
 
-    print(f'All tests passed average word length: {total_len/100}')
+    print(f'All tests passed average word length: {total_len / 100}')
 
     total_len = 0
     for i in range(0, 100):
@@ -116,7 +116,7 @@ def test_random_word_gen():
         out_sul = sul.query(random_word)[-1]
         assert out_model == out_sul and out_model
 
-    print(f'All tests passed average word length: {total_len/100}')
+    print(f'All tests passed average word length: {total_len / 100}')
 
     total_len = 0
     for i in range(0, 100):
@@ -126,7 +126,7 @@ def test_random_word_gen():
         out_sul = sul.query(random_word)[-1]
         assert out_model == out_sul and out_model
 
-    print(f'All tests passed average word length: {total_len/100}')
+    print(f'All tests passed average word length: {total_len / 100}')
 
 
 def visual_test_to_state_setup_sevpa():
@@ -152,7 +152,6 @@ def visual_test_to_state_setup_sevpa():
 
 
 def test_cex_processing_strategies_vpa():
-
     cex_processing_strategies = ['linear_fwd', 'linear_bwd', 'exponential_fwd', 'exponential_bwd', 'rs']
 
     for i, vpa in enumerate(
@@ -166,7 +165,6 @@ def test_cex_processing_strategies_vpa():
         alphabet = SevpaAlphabet(list(model_under_learning.internal_set),
                                  list(model_under_learning.call_set),
                                  list(model_under_learning.return_set))
-
 
         for cex_processing in cex_processing_strategies:
             sul = VpaSUL(model_under_learning, include_top=False, check_balance=False)
@@ -226,7 +224,7 @@ for i, vpa in enumerate(
                                  list(model_under_learning.call_set),
                                  list(model_under_learning.return_set))
 
-        #if i == 9:
+        # if i == 9:
         #    alphabet.exclusive_call_return_pairs = {'(': ')', '[': ']', '{': '}', '<': '>'}
 
         sul = VpaSUL(model_under_learning, include_top=False, check_balance=False)
@@ -236,4 +234,8 @@ for i, vpa in enumerate(
         model = run_KV(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, automaton_type='vpa',
                        print_level=2, cex_processing='linear_bwd')
 
-        # exit()
+        e = model.gen_random_accepting_word_bfs(min_word_length=5, amount_words=100)
+        print(e[:25])
+        print('generate random acc')
+        for _ in range(10):
+            print(model.gen_random_accepting_word())
