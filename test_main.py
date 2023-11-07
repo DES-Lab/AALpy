@@ -34,7 +34,7 @@ from random import seed
 # 3.2 Explain CEX processing/transform access string, also on example and intuition
 # 3.3 Important: Run of the algorithm, visualize classification tree...
 # 4. Evaluation
-# - number of steps/queries for models of growing alphabet, state size, ...
+# - number of steps/queries for models of growing alphabet, state size, ...]
 # - on 15 languages
 # - on random languages
 # - on something cool
@@ -214,9 +214,6 @@ def test_cex_processing_strategies_vpa():
                     break
 
 
-test_random_word_gen()
-exit()
-
 # test_arithmetic_expression()
 # import cProfile
 # pr = cProfile.Profile()
@@ -252,8 +249,3 @@ for i, vpa in enumerate(
         model = run_KV(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, automaton_type='vpa',
                        print_level=2, cex_processing='linear_bwd')
 
-        e = model.gen_random_accepting_word_bfs(min_word_length=5, amount_words=100)
-        print(e[:25])
-        print('generate random acc')
-        for _ in range(10):
-            print(model.gen_random_accepting_word())

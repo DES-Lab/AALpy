@@ -69,6 +69,9 @@ class ClassificationTree:
 
         self.sifting_cache = {}
 
+        # prefix of identified error state in VPDA learning
+        self.error_state_prefix = None
+
         if self.automaton_type != 'mealy':
             initial_output = sul.query(())[-1]
             cex_output = sul.query(cex)[-1]
@@ -225,6 +228,8 @@ class ClassificationTree:
                             continue
 
                         for other_state in states_for_transitions:
+                            if other_state.prefix == self.error_state_prefix: # TODO WIP
+                                continue
                             transition_target_node = self._sift(
                                 other_state.prefix + (call_letter,) + state.prefix + (return_letter,))
                             transition_target_access_string = transition_target_node.access_string
@@ -235,7 +240,14 @@ class ClassificationTree:
                             state.transitions[return_letter].append(trans)
 
         if self.automaton_type == 'vpa':
-            return Sevpa(initial_state=initial_state, states=list(states.values()), input_alphabet=self.alphabet)
+            hypothesis = Sevpa(initial_state=initial_state, states=list(states.values()), input_alphabet=self.alphabet)
+            # WIP
+            error_states = hypothesis.find_error_states()
+            if error_states:
+                self.error_state_prefix = next((state.prefix for state in hypothesis.states
+                                                if state.state_id == error_states[0]), None)
+            assert len(error_states) <= 1
+            return hypothesis
 
         return automaton_class[self.automaton_type](initial_state=initial_state, states=list(states.values()))
 
