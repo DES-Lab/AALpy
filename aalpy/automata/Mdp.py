@@ -7,10 +7,13 @@ from aalpy.base.Automaton import OutputType, InputType
 
 
 class MdpState(AutomatonState, Generic[InputType, OutputType]):
+    """
+    For transitions, each transition is a tuple (Node(output), probability)
+    """
     def __init__(self, state_id, output=None):
         super().__init__(state_id)
         self.output: OutputType = output
-        # each child is a tuple (Node(output), probability)
+        # each transition is a tuple (Node(output), probability)
         self.transitions: Dict[InputType, List[Tuple[MdpState, float]]] = defaultdict(list)
 
 

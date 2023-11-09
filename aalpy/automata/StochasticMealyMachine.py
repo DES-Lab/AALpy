@@ -8,11 +8,10 @@ from aalpy.base.Automaton import OutputType, InputType
 
 
 class StochasticMealyState(AutomatonState, Generic[InputType, OutputType]):
-    """ """
 
     def __init__(self, state_id):
         super().__init__(state_id)
-        # each child is a tuple (newNode, output, probability)
+        # Each transition is a tuple (newNode, output, probability)
         self.transitions: Dict[InputType, List[Tuple[StochasticMealyState, OutputType, float]]] = defaultdict(list)
 
 
