@@ -155,14 +155,14 @@ class Automaton(ABC, Generic[AutomatonStateType]):
 
     @staticmethod
     @abstractmethod
-    def from_state_setup(state_setup: dict):
+    def from_state_setup(state_setup: dict) -> 'Automaton':
         pass
 
     @abstractmethod
     def to_state_setup(self):
         pass
 
-    def copy(self):
+    def copy(self) -> 'Automaton':
         return self.from_state_setup(self.to_state_setup())
 
     def __reduce__(self):
