@@ -6,10 +6,11 @@ class AutomatonSUL(SUL):
     def __init__(self, automaton: Automaton):
         super().__init__()
         self.automaton: Automaton = automaton
+        self.include_initial_output = isinstance(self.automaton, (MarkovChain, Mdp))
 
     def pre(self):
         self.automaton.reset_to_initial()
-        if isinstance(self.automaton, (MarkovChain, Mdp)):
+        if self.include_initial_output:
             return self.automaton.initial_state.output
 
     def step(self, letter=None):
@@ -19,10 +20,12 @@ class AutomatonSUL(SUL):
         pass
 
     def query(self, word: tuple) -> list:
-        output = super().query(word)
-        if isinstance(self.automaton, (MarkovChain, Mdp)):
-            output.insert(0, self.automaton.initial_state.output)
-        return output
+        initial_output = self.pre()
+        out = [self.step(i) for i in word]
+        if initial_output:
+            out.insert(0, initial_output)
+        self.post()
+        return out
 
 
 MealySUL = OnfsmSUL = StochasticMealySUL = DfaSUL = MooreSUL = MdpSUL = McSUL = AutomatonSUL
