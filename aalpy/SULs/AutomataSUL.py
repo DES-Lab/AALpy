@@ -1,13 +1,16 @@
-from aalpy.automata import MooreMachine, Dfa, MarkovChain, Mdp
 from aalpy.base import SUL, Automaton
+from aalpy.automata import MarkovChain, Mdp
+
 
 class AutomatonSUL(SUL):
-    def __init__(self, automaton : Automaton):
+    def __init__(self, automaton: Automaton):
         super().__init__()
-        self.automaton : Automaton = automaton
+        self.automaton: Automaton = automaton
 
     def pre(self):
         self.automaton.reset_to_initial()
+        if isinstance(self.automaton, (MarkovChain, Mdp)):
+            return self.automaton.initial_state.output
 
     def step(self, letter=None):
         return self.automaton.step(letter)
@@ -20,5 +23,6 @@ class AutomatonSUL(SUL):
         if isinstance(self.automaton, (MarkovChain, Mdp)):
             output.insert(0, self.automaton.initial_state.output)
         return output
+
 
 MealySUL = OnfsmSUL = StochasticMealySUL = DfaSUL = MooreSUL = MdpSUL = McSUL = AutomatonSUL
