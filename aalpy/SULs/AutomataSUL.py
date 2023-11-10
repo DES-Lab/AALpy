@@ -17,7 +17,7 @@ class AutomatonSUL(SUL):
 
     def query(self, word: tuple) -> list:
         output = super().query(word)
-        if isinstance(self.automaton, (MooreMachine, Dfa, MarkovChain, Mdp)):
+        if isinstance(self.automaton, (MarkovChain, Mdp)):
             output.insert(0, self.automaton.initial_state.output)
         return output
 

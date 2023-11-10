@@ -1,6 +1,6 @@
 import random
 
-from aalpy.SULs import MdpSUL, StochasticMealySUL
+from aalpy.SULs import AutomatonSUL
 from aalpy.base import SUL
 from aalpy.automata import Mdp, MdpState, StochasticMealyState, StochasticMealyMachine
 from aalpy.learning_algs import run_Lstar, run_stochastic_Lstar
@@ -113,7 +113,7 @@ mdp = to_smm()
 # exit()
 # mdp.make_input_complete('self_loop')
 # mdp_sul = StochasticMealySUL(mdp)
-mdp_sul = MdpSUL(mdp.to_mdp())
+mdp_sul = AutomatonSUL(mdp.to_mdp())
 eq_oracle = RandomWordEqOracle(alphabet, model_sul, num_walks=10000, min_walk_len=10, max_walk_len=100)
 
 stochastic_model = run_stochastic_Lstar(alphabet, mdp_sul, eq_oracle, automaton_type='mdp')

@@ -2,7 +2,7 @@ import random
 
 import aalpy.paths
 
-from aalpy.SULs import MdpSUL
+from aalpy.SULs import AutomatonSUL
 from aalpy.learning_algs import run_stochastic_Lstar
 from aalpy.oracles.RandomWalkEqOracle import RandomWalkEqOracle
 from aalpy.utils import load_automaton_from_file, get_correct_prop_values, get_properties_file
@@ -65,7 +65,7 @@ for seed in range(1, 4):
         original_mdp = load_automaton_from_file(path_to_dir + file, automaton_type='mdp')
         input_alphabet = original_mdp.get_input_alphabet()
 
-        mdp_sul = MdpSUL(original_mdp)
+        mdp_sul = AutomatonSUL(original_mdp)
 
         eq_oracle = RandomWalkEqOracle(input_alphabet, mdp_sul, num_steps=n_resample * (1 / 0.25),
                                                    reset_after_cex=True, reset_prob=0.25)

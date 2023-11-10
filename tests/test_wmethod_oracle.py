@@ -4,7 +4,7 @@ try:
     from aalpy.automata import MooreMachine, MooreState
     from aalpy.learning_algs import run_Lstar
     from aalpy.oracles.WMethodEqOracle import WMethodEqOracle
-    from aalpy.SULs import MooreSUL
+    from aalpy.SULs import AutomatonSUL
     from aalpy.utils import visualize_automaton
 except ImportError:
     import sys
@@ -18,7 +18,7 @@ except ImportError:
     from aalpy.automata import MooreMachine, MooreState
     from aalpy.learning_algs import run_Lstar
     from aalpy.oracles.WMethodEqOracle import WMethodEqOracle
-    from aalpy.SULs import MooreSUL
+    from aalpy.SULs import AutomatonSUL
     from aalpy.utils import visualize_automaton
 
 
@@ -83,7 +83,7 @@ class TestWMethodOracle(unittest.TestCase):
         assert len(hyp.states) == 2
         alphabet = real.get_input_alphabet()
         oracle = WMethodEqOracle(
-            alphabet, MooreSUL(real), len(real.states) + 1, shuffle_test_set=False
+            alphabet, AutomatonSUL(real), len(real.states) + 1, shuffle_test_set=False
         )
         cex = oracle.find_cex(hyp)
         assert cex is not None, "Expected a counterexample, but got None"
@@ -99,9 +99,9 @@ class TestWMethodOracle(unittest.TestCase):
         assert len(hyp.states) == 2
         alphabet = real.get_input_alphabet()
         oracle = WMethodEqOracle(
-            alphabet, MooreSUL(real), len(real.states) + 1, shuffle_test_set=False
+            alphabet, AutomatonSUL(real), len(real.states) + 1, shuffle_test_set=False
         )
-        lstar_hyp = run_Lstar(alphabet, MooreSUL(real), oracle, "moore")
+        lstar_hyp = run_Lstar(alphabet, AutomatonSUL(real), oracle, "moore")
         # print(lstar_hyp)
         # visualize_automaton(lstar_hyp)
         assert (

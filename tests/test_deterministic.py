@@ -1,7 +1,7 @@
 import random
 import unittest
 
-from aalpy.SULs import DfaSUL, MealySUL, MooreSUL
+from aalpy.SULs import AutomatonSUL
 from aalpy.automata import Dfa, MealyMachine, MooreMachine
 from aalpy.learning_algs import run_Lstar
 from aalpy.learning_algs.deterministic_passive.rpni_helper_functions import createPTA
@@ -16,11 +16,6 @@ correct_automata = {Dfa: get_Angluin_dfa(),
                     MealyMachine: load_automaton_from_file('../DotModels/Angluin_Mealy.dot', automaton_type='mealy'),
                     MooreMachine: load_automaton_from_file('../DotModels/Angluin_Moore.dot', automaton_type='moore')}
 
-suls = {Dfa: DfaSUL,
-        MealyMachine: MealySUL,
-        MooreMachine: MooreSUL}
-
-
 class DeterministicTest(unittest.TestCase):
 
     def prove_equivalence(self, learned_automaton):
@@ -33,7 +28,7 @@ class DeterministicTest(unittest.TestCase):
             return False
 
         alphabet = learned_automaton.get_input_alphabet()
-        sul = suls[learned_automaton.__class__](correct_automaton)
+        sul = AutomatonSUL(correct_automaton)
 
         # + 2 for good measure
         self.eq_oracle = WMethodEqOracle(alphabet, sul, max_number_of_states=len(correct_automaton.states) + 2)
@@ -55,7 +50,7 @@ class DeterministicTest(unittest.TestCase):
 
         for automata in automata_type:
             for closing in closing_strategies:
-                sul = DfaSUL(dfa)
+                sul = AutomatonSUL(dfa)
                 eq_oracle = RandomWalkEqOracle(alphabet, sul, 1000)
 
                 learned_dfa = run_Lstar(alphabet, sul, eq_oracle, automaton_type=automata, closing_strategy=closing,
@@ -78,7 +73,7 @@ class DeterministicTest(unittest.TestCase):
 
         for automata in automata_type:
             for s_closed in suffix_closedness:
-                sul = DfaSUL(angluin_example)
+                sul = AutomatonSUL(angluin_example)
                 eq_oracle = RandomWalkEqOracle(alphabet, sul, 500)
 
                 learned_dfa = run_Lstar(alphabet, sul, eq_oracle, automaton_type=automata,
@@ -102,7 +97,7 @@ class DeterministicTest(unittest.TestCase):
 
         for automata in automata_type:
             for cex in cex_processing:
-                sul = DfaSUL(angluin_example)
+                sul = AutomatonSUL(angluin_example)
                 eq_oracle = RandomWalkEqOracle(alphabet, sul, 500)
 
                 learned_dfa = run_Lstar(alphabet, sul, eq_oracle, automaton_type=automata,
@@ -122,7 +117,7 @@ class DeterministicTest(unittest.TestCase):
         automata_type = ['dfa', 'mealy', 'moore']
 
         for automata in automata_type:
-            sul = DfaSUL(angluin_example)
+            sul = AutomatonSUL(angluin_example)
 
             random_walk_eq_oracle = RandomWalkEqOracle(alphabet, sul, 5000, reset_after_cex=True)
             state_origin_eq_oracle = StatePrefixEqOracle(alphabet, sul, walks_per_state=10, walk_len=50)
@@ -140,7 +135,7 @@ class DeterministicTest(unittest.TestCase):
                        state_origin_eq_oracle]
 
             for oracle in oracles:
-                sul = DfaSUL(angluin_example)
+                sul = AutomatonSUL(angluin_example)
                 oracle.sul = sul
 
                 learned_model = run_Lstar(alphabet, sul, oracle, automaton_type=automata,
@@ -170,7 +165,7 @@ class DeterministicTest(unittest.TestCase):
                 for cex in cex_processing:
                     for suffix in suffix_closedness:
                         for cache in caching:
-                            sul = DfaSUL(angluin_example)
+                            sul = AutomatonSUL(angluin_example)
 
                             random_walk_eq_oracle = RandomWalkEqOracle(alphabet, sul, 5000, reset_after_cex=True)
                             state_origin_eq_oracle = StatePrefixEqOracle(alphabet, sul, walks_per_state=10, walk_len=50)
@@ -193,7 +188,7 @@ class DeterministicTest(unittest.TestCase):
                                 oracles.remove(cache_based_eq_oracle)
 
                             for oracle in oracles:
-                                sul = DfaSUL(angluin_example)
+                                sul = AutomatonSUL(angluin_example)
                                 oracle.sul = sul
 
                                 learned_model = run_Lstar(alphabet, sul, oracle, automaton_type=automata,
