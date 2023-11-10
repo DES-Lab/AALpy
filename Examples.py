@@ -1,6 +1,6 @@
 def random_deterministic_model_example():
     from aalpy.utils import generate_random_deterministic_automata
-    from aalpy.SULs import MealySUL
+    from aalpy.SULs import AutomatonSUL
     from aalpy.oracles import RandomWMethodEqOracle
     from aalpy.learning_algs import run_KV
 
@@ -10,7 +10,7 @@ def random_deterministic_model_example():
     random_model = generate_random_deterministic_automata(automaton_type=model_type, num_states=100,
                                                           input_alphabet_size=3, output_alphabet_size=4)
 
-    sul = MealySUL(random_model)
+    sul = AutomatonSUL(random_model)
     input_alphabet = random_model.get_input_alphabet()
 
     # select any of the oracles
@@ -26,7 +26,7 @@ def angluin_seminal_example():
     Example automaton from Angluin's seminal paper.
     :return: learned DFA
     """
-    from aalpy.SULs import DfaSUL
+    from aalpy.SULs import AutomatonSUL
     from aalpy.oracles import RandomWalkEqOracle
     from aalpy.learning_algs import run_Lstar
     from aalpy.utils import get_Angluin_dfa
@@ -35,7 +35,7 @@ def angluin_seminal_example():
 
     alphabet = dfa.get_input_alphabet()
 
-    sul = DfaSUL(dfa)
+    sul = AutomatonSUL(dfa)
     eq_oracle = RandomWalkEqOracle(alphabet, sul, 500)
 
     learned_dfa = run_Lstar(alphabet, sul, eq_oracle, automaton_type='dfa',
@@ -142,7 +142,7 @@ def learn_date_validator():
 
 def random_deterministic_example_with_provided_sequences():
     from random import choice, randint
-    from aalpy.SULs import MealySUL
+    from aalpy.SULs import AutomatonSUL
     from aalpy.learning_algs import run_Lstar
     from aalpy.utils import generate_random_deterministic_automata
 
@@ -151,7 +151,7 @@ def random_deterministic_example_with_provided_sequences():
 
     input_alphabet = random_mealy.get_input_alphabet()
 
-    sul_mealy = MealySUL(random_mealy)
+    sul_mealy = AutomatonSUL(random_mealy)
 
     # samples obtained form somewhere else
     samples = []
@@ -223,7 +223,7 @@ def random_onfsm_example(num_states, input_size, output_size, n_sampling):
     observed
     :return: learned ONFSM
     """
-    from aalpy.SULs import OnfsmSUL
+    from aalpy.SULs import AutomatonSUL
     from aalpy.utils import generate_random_ONFSM
     from aalpy.oracles import RandomWalkEqOracle, RandomWordEqOracle
     from aalpy.learning_algs import run_non_det_Lstar
@@ -231,7 +231,7 @@ def random_onfsm_example(num_states, input_size, output_size, n_sampling):
     onfsm = generate_random_ONFSM(num_states=num_states, num_inputs=input_size, num_outputs=output_size)
     alphabet = onfsm.get_input_alphabet()
 
-    sul = OnfsmSUL(onfsm)
+    sul = AutomatonSUL(onfsm)
     eq_oracle = RandomWalkEqOracle(alphabet, sul, num_steps=500, reset_prob=0.15, reset_after_cex=True)
     eq_oracle = RandomWordEqOracle(alphabet, sul, num_walks=500, min_walk_len=8, max_walk_len=20)
 
@@ -251,14 +251,14 @@ def random_mdp_example(num_states, input_len, num_outputs, n_c=20, n_resample=10
     :param max_rounds: maximum number of learning rounds
     :return: learned MDP
     """
-    from aalpy.SULs import MdpSUL
+    from aalpy.SULs import AutomatonSUL
     from aalpy.oracles import RandomWalkEqOracle
     from aalpy.learning_algs import run_stochastic_Lstar
     from aalpy.utils import generate_random_mdp
 
     mdp = generate_random_mdp(num_states, input_len, num_outputs)
     input_alphabet = mdp.get_input_alphabet()
-    sul = MdpSUL(mdp)
+    sul = AutomatonSUL(mdp)
     eq_oracle = RandomWalkEqOracle(input_alphabet, sul=sul, num_steps=5000, reset_prob=0.11,
                                    reset_after_cex=False)
 
@@ -342,7 +342,7 @@ def onfsm_mealy_paper_example():
     :return: learned ONFSM
     """
 
-    from aalpy.SULs import OnfsmSUL
+    from aalpy.SULs import AutomatonSUL
     from aalpy.oracles import RandomWordEqOracle
     from aalpy.learning_algs import run_non_det_Lstar
     from aalpy.utils import get_benchmark_ONFSM
@@ -350,7 +350,7 @@ def onfsm_mealy_paper_example():
     onfsm = get_benchmark_ONFSM()
     alphabet = onfsm.get_input_alphabet()
 
-    sul = OnfsmSUL(onfsm)
+    sul = AutomatonSUL(onfsm)
     eq_oracle = RandomWordEqOracle(alphabet, sul, num_walks=500, min_walk_len=5, max_walk_len=12)
 
     learned_onfsm = run_non_det_Lstar(alphabet, sul, eq_oracle, n_sampling=10, print_level=2)
@@ -372,7 +372,7 @@ def multi_client_mqtt_example():
     from aalpy.base import SUL
     from aalpy.oracles import RandomWalkEqOracle
     from aalpy.learning_algs import run_abstracted_ONFSM_Lstar
-    from aalpy.SULs import MealySUL
+    from aalpy.SULs import AutomatonSUL
     from aalpy.utils import load_automaton_from_file
 
     class Multi_Client_MQTT_Mapper(SUL):
@@ -381,7 +381,7 @@ def multi_client_mqtt_example():
 
             five_clients_mqtt_mealy = load_automaton_from_file('DotModels/five_clients_mqtt_abstracted_onfsm.dot',
                                                                automaton_type='mealy')
-            self.five_client_mqtt = MealySUL(five_clients_mqtt_mealy)
+            self.five_client_mqtt = AutomatonSUL(five_clients_mqtt_mealy)
             self.connected_clients = set()
             self.subscribed_clients = set()
 
@@ -469,7 +469,7 @@ def abstracted_onfsm_example():
 
     :return: learned abstracted ONFSM
     """
-    from aalpy.SULs import OnfsmSUL
+    from aalpy.SULs import AutomatonSUL
     from aalpy.oracles import RandomWordEqOracle
     from aalpy.learning_algs import run_abstracted_ONFSM_Lstar
     from aalpy.utils import get_ONFSM
@@ -478,7 +478,7 @@ def abstracted_onfsm_example():
 
     alphabet = onfsm.get_input_alphabet()
 
-    sul = OnfsmSUL(onfsm)
+    sul = AutomatonSUL(onfsm)
     eq_oracle = RandomWordEqOracle(alphabet, sul, num_walks=500, min_walk_len=4, max_walk_len=8, reset_after_cex=True)
 
     abstraction_mapping = {0: 0, 'O': 0}
@@ -496,14 +496,14 @@ def faulty_coffee_machine_mdp_example(automaton_type='mdp'):
     :automaton_type either mdp or smm
     :return learned MDP
     """
-    from aalpy.SULs import MdpSUL
+    from aalpy.SULs import AutomatonSUL
     from aalpy.oracles import RandomWalkEqOracle
     from aalpy.learning_algs import run_stochastic_Lstar
     from aalpy.utils import get_faulty_coffee_machine_MDP
 
     mdp = get_faulty_coffee_machine_MDP()
     input_alphabet = mdp.get_input_alphabet()
-    sul = MdpSUL(mdp)
+    sul = AutomatonSUL(mdp)
 
     eq_oracle = RandomWalkEqOracle(input_alphabet, sul=sul, num_steps=500, reset_prob=0.11,
                                    reset_after_cex=False)
@@ -521,14 +521,14 @@ def weird_coffee_machine_mdp_example():
     Learning faulty coffee machine that can be found in Chapter 5 and Chapter 7 of Martin's Tappler PhD thesis.
     :return learned MDP
     """
-    from aalpy.SULs import MdpSUL
+    from aalpy.SULs import AutomatonSUL
     from aalpy.oracles import RandomWordEqOracle
     from aalpy.learning_algs import run_stochastic_Lstar
     from aalpy.utils import get_weird_coffee_machine_MDP
 
     mdp = get_weird_coffee_machine_MDP()
     input_alphabet = mdp.get_input_alphabet()
-    sul = MdpSUL(mdp)
+    sul = AutomatonSUL(mdp)
 
     eq_oracle = RandomWordEqOracle(input_alphabet, sul=sul, num_walks=2000, min_walk_len=4, max_walk_len=10,
                                    reset_after_cex=True)
@@ -559,7 +559,7 @@ def benchmark_stochastic_example(example, automaton_type='smm', n_c=20, n_resamp
     :return: learned SMM
 
     """
-    from aalpy.SULs import MdpSUL
+    from aalpy.SULs import AutomatonSUL
     from aalpy.oracles import RandomWalkEqOracle, RandomWordEqOracle
     from aalpy.learning_algs import run_stochastic_Lstar
     from aalpy.utils import load_automaton_from_file
@@ -568,7 +568,7 @@ def benchmark_stochastic_example(example, automaton_type='smm', n_c=20, n_resamp
     mdp = load_automaton_from_file(f'./DotModels/MDPs/{example}.dot', automaton_type='mdp')
     input_alphabet = mdp.get_input_alphabet()
 
-    sul = MdpSUL(mdp)
+    sul = AutomatonSUL(mdp)
     eq_oracle = RandomWordEqOracle(input_alphabet, sul, num_walks=100, min_walk_len=5, max_walk_len=15,
                                    reset_after_cex=True)
     eq_oracle = RandomWalkEqOracle(input_alphabet, sul=sul, num_steps=2000, reset_prob=0.25,
@@ -592,17 +592,13 @@ def custom_stochastic_example(stochastic_machine, learning_type='smm', min_round
     :param max_rounds: maximum number of learning rounds
     :return: learned model
     """
-    from aalpy.SULs import MdpSUL, StochasticMealySUL
-    from aalpy.automata import Mdp
+    from aalpy.SULs import AutomatonSUL
     from aalpy.oracles import RandomWordEqOracle
     from aalpy.learning_algs import run_stochastic_Lstar
 
     input_al = stochastic_machine.get_input_alphabet()
 
-    if isinstance(stochastic_machine, Mdp):
-        sul = MdpSUL(stochastic_machine)
-    else:
-        sul = StochasticMealySUL(stochastic_machine)
+    sul = AutomatonSUL(stochastic_machine)
 
     eq_oracle = RandomWordEqOracle(alphabet=input_al, sul=sul, num_walks=1000, min_walk_len=10, max_walk_len=30,
                                    reset_after_cex=True)
@@ -643,13 +639,13 @@ def learn_stochastic_system_and_do_model_checking(example, automaton_type='smm',
 
 
 def alergia_mdp_example():
-    from aalpy.SULs import MdpSUL
+    from aalpy.SULs import AutomatonSUL
     from random import randint, choice
     from aalpy.learning_algs import run_Alergia
     from aalpy.utils import generate_random_mdp
 
     mdp = generate_random_mdp(5, 2, 3)
-    sul = MdpSUL(mdp)
+    sul = AutomatonSUL(mdp)
     inputs = mdp.get_input_alphabet()
 
     data = []
@@ -671,13 +667,13 @@ def alergia_mdp_example():
 
 
 def alergia_smm_example():
-    from aalpy.SULs import StochasticMealySUL
+    from aalpy.SULs import AutomatonSUL
     from random import randint, choice
     from aalpy.learning_algs import run_Alergia
     from aalpy.utils import generate_random_smm
 
     smm = generate_random_smm(5, 2, 2)
-    sul = StochasticMealySUL(smm)
+    sul = AutomatonSUL(smm)
     inputs = smm.get_input_alphabet()
 
     data = []
@@ -701,7 +697,7 @@ def alergia_smm_example():
 
 def alergia_mc_example():
     from os import remove
-    from aalpy.SULs import McSUL
+    from aalpy.SULs import AutomatonSUL
     from random import randint
     from aalpy.learning_algs import run_Alergia
     from aalpy.utils import generate_random_markov_chain
@@ -710,7 +706,7 @@ def alergia_mc_example():
     mc = generate_random_markov_chain(10)
     mc.visualize('Original')
 
-    sul = McSUL(mc)
+    sul = AutomatonSUL(mc)
 
     # note that this example shows writing to file just to show how tokenizer is used...
     # this step can ofc be skipped and lists passed to alergia
@@ -762,7 +758,7 @@ def jAlergiaExample():
 
 def active_alergia_example(example='first_grid'):
     from random import choice, randint
-    from aalpy.SULs import MdpSUL
+    from aalpy.SULs import AutomatonSUL
     from aalpy.utils import load_automaton_from_file
     from aalpy.learning_algs import run_active_Alergia
     from aalpy.learning_algs.stochastic_passive.ActiveAleriga import RandomWordSampler
@@ -770,7 +766,7 @@ def active_alergia_example(example='first_grid'):
     mdp = load_automaton_from_file(f'./DotModels/MDPs/{example}.dot', automaton_type='mdp')
     input_alphabet = mdp.get_input_alphabet()
 
-    sul = MdpSUL(mdp)
+    sul = AutomatonSUL(mdp)
 
     data = []
     for _ in range(50000):
@@ -805,7 +801,7 @@ def rpni_example():
 
 def rpni_check_model_example():
     import random
-    from aalpy.SULs import MooreSUL
+    from aalpy.SULs import AutomatonSUL
     from aalpy.learning_algs import run_RPNI
     from aalpy.oracles import StatePrefixEqOracle
     from aalpy.utils import generate_random_moore_machine, generate_random_dfa
@@ -826,7 +822,7 @@ def rpni_check_model_example():
     rpni_model = run_RPNI(data, automaton_type='moore', print_info=True)
 
     rpni_model.make_input_complete('sink_state')
-    sul = MooreSUL(model)
+    sul = AutomatonSUL(model)
     eq_oracle_2 = StatePrefixEqOracle(input_al, sul, walks_per_state=100)
     cex = eq_oracle_2.find_cex(rpni_model)
     if cex is None:
@@ -869,7 +865,7 @@ def random_active_rpni_example():
     from aalpy.learning_algs.deterministic_passive.active_RPNI import RandomWordSampler
     from aalpy.utils import generate_random_deterministic_automata
     from aalpy.utils.HelperFunctions import all_prefixes
-    from aalpy.SULs import MealySUL
+    from aalpy.SULs import AutomatonSUL
 
     model = generate_random_deterministic_automata('mealy', num_states=50,
                                                    input_alphabet_size=3, output_alphabet_size=5)
@@ -886,7 +882,7 @@ def random_active_rpni_example():
             data.append((prefix, output))
 
     sampler = RandomWordSampler(500, 5, 25)
-    sul = MealySUL(model)
+    sul = AutomatonSUL(model)
     active_rpni_model = run_active_RPNI(data, sul, sampler=sampler, n_iter=5,
                                         automaton_type='mealy', print_info=True)
 
@@ -898,7 +894,7 @@ def compare_stochastic_and_non_deterministic_learning(example='first_grid'):
     aalpy.paths.path_to_prism = "C:/Program Files/prism-4.6/bin/prism.bat"
     aalpy.paths.path_to_properties = "Benchmarking/prism_eval_props/"
 
-    from aalpy.SULs import MdpSUL, OnfsmSUL
+    from aalpy.SULs import AutomatonSUL
     from aalpy.automata import StochasticMealyMachine
     from aalpy.automata.StochasticMealyMachine import smm_to_mdp_conversion
     from aalpy.learning_algs import run_stochastic_Lstar, run_non_det_Lstar
@@ -911,7 +907,7 @@ def compare_stochastic_and_non_deterministic_learning(example='first_grid'):
 
     # Stochastic Learning
     print("Stochastic Learning")
-    sul = MdpSUL(mdp)
+    sul = AutomatonSUL(mdp)
     eq_oracle = RandomWordEqOracle(input_alphabet, sul, num_walks=100, min_walk_len=5, max_walk_len=15,
                                    reset_after_cex=True)
     stochastic_learned_model = run_stochastic_Lstar(input_alphabet=input_alphabet, eq_oracle=eq_oracle, sul=sul,
@@ -919,7 +915,7 @@ def compare_stochastic_and_non_deterministic_learning(example='first_grid'):
 
     # Non Deterministic Learning
     print("Non-deterministic Learning")
-    sul = OnfsmSUL(mdp)
+    sul = AutomatonSUL(mdp)
     eq_oracle = RandomWordEqOracle(input_alphabet, sul, num_walks=100, min_walk_len=5, max_walk_len=15,
                                    reset_after_cex=True)
     non_det_model = run_non_det_Lstar(alphabet=input_alphabet, eq_oracle=eq_oracle, sul=sul, n_sampling=5,

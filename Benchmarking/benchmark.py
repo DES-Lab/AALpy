@@ -1,7 +1,7 @@
 import os
 from statistics import mean
 
-from aalpy.SULs import DfaSUL
+from aalpy.SULs import AutomatonSUL
 from aalpy.learning_algs import run_Lstar
 from aalpy.oracles import StatePrefixEqOracle
 from aalpy.utils import load_automaton_from_file
@@ -13,7 +13,7 @@ moore_2000_states_10_inputs = '../DotModels/Moore_2000_states_10_inp_out'
 run_times = []
 
 # change on which folder to perform experiments
-exp, sul = dfa_2000_states_10_inputs, DfaSUL
+exp = dfa_2000_states_10_inputs
 
 benchmarks = os.listdir(exp)
 benchmarks = benchmarks[:10]
@@ -28,7 +28,7 @@ for b in benchmarks:
     automaton = load_automaton_from_file(f'{exp}/{b}', automaton_type='dfa')
     input_al = automaton.get_input_alphabet()
 
-    sul_dfa = sul(automaton)
+    sul_dfa = AutomatonSUL(automaton)
 
     state_origin_eq_oracle = StatePrefixEqOracle(input_al, sul_dfa, walks_per_state=5, walk_len=25)
 

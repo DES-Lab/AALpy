@@ -1,7 +1,7 @@
 import unittest
 
 import aalpy.paths
-from aalpy.SULs import StochasticMealySUL, MdpSUL
+from aalpy.SULs import AutomatonSUL
 from aalpy.learning_algs import run_stochastic_Lstar
 from aalpy.oracles import RandomWalkEqOracle
 from aalpy.utils import load_automaton_from_file
@@ -39,7 +39,7 @@ class StochasticTest(unittest.TestCase):
                 for cex in cex_processing:
                     for sample_cex in samples_cex_strategy:
 
-                        sul = StochasticMealySUL(mdp) if aut_type == 'smm' else MdpSUL(mdp)
+                        sul = AutomatonSUL(mdp)
 
                         eq_oracle = RandomWalkEqOracle(input_alphabet, sul=sul, num_steps=200,
                                                                    reset_prob=0.25,

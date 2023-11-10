@@ -1,6 +1,6 @@
 import unittest
 
-from aalpy.SULs import DfaSUL
+from aalpy.SULs import AutomatonSUL
 from aalpy.learning_algs import run_Lstar
 from aalpy.oracles import WMethodEqOracle
 from aalpy.utils import generate_random_dfa
@@ -27,8 +27,8 @@ class BaseOracleTests(unittest.TestCase):
 
         dfa = generate_random_dfa(number_of_states, alphabet, num_accepting_states)
 
-        learning_sul = DfaSUL(dfa)
-        validation_sul = DfaSUL(dfa)
+        learning_sul = AutomatonSUL(dfa)
+        validation_sul = AutomatonSUL(dfa)
 
         return learning_sul, validation_sul, alphabet
 
