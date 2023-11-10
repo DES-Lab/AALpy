@@ -2,7 +2,7 @@ import time
 
 from aalpy.automata import Dfa, DfaState, MealyState, MealyMachine, MooreState, MooreMachine
 from aalpy.base import Oracle, SUL
-from aalpy.utils.HelperFunctions import print_learning_info
+from aalpy.utils.HelperFunctions import print_learning_info, visualize_classification_tree
 from .ClassificationTree import ClassificationTree
 from .CounterExampleProcessing import counterexample_successfully_processed
 from ...base.SUL import CacheSUL
@@ -88,6 +88,8 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, cex_proc
     cex = eq_oracle.find_cex(hypothesis)
 
     eq_query_time += time.time() - eq_query_start
+
+    classification_tree = None
     if cex is not None:
         cex = tuple(cex)
 
@@ -150,6 +152,10 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, cex_proc
         if print_level == 2:
             print("")
         print_learning_info(info)
+
+        if print_level == 3 and classification_tree:
+            print('Visualization of classification tree saved to classification_tree.pdf')
+            visualize_classification_tree(classification_tree.root, 'classification_tree.pdf')
 
     if return_data:
         return hypothesis, info
