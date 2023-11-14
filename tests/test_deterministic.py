@@ -1,7 +1,7 @@
 import random
 import unittest
 
-from aalpy.SULs import DfaSUL, MealySUL, MooreSUL
+from aalpy.SULs import DfaSUL
 from aalpy.automata import Dfa, MealyMachine, MooreMachine
 from aalpy.learning_algs import run_Lstar
 from aalpy.learning_algs.deterministic_passive.rpni_helper_functions import createPTA
@@ -16,10 +16,6 @@ correct_automata = {Dfa: get_Angluin_dfa(),
                     MealyMachine: load_automaton_from_file('../DotModels/Angluin_Mealy.dot', automaton_type='mealy'),
                     MooreMachine: load_automaton_from_file('../DotModels/Angluin_Moore.dot', automaton_type='moore')}
 
-suls = {Dfa: DfaSUL,
-        MealyMachine: MealySUL,
-        MooreMachine: MooreSUL}
-
 
 class DeterministicTest(unittest.TestCase):
 
@@ -32,17 +28,7 @@ class DeterministicTest(unittest.TestCase):
             print(len(learned_automaton.states), len(correct_automaton.states))
             return False
 
-        alphabet = learned_automaton.get_input_alphabet()
-        sul = suls[learned_automaton.__class__](correct_automaton)
-
-        # + 2 for good measure
-        self.eq_oracle = WMethodEqOracle(alphabet, sul, max_number_of_states=len(correct_automaton.states) + 2)
-
-        cex = self.eq_oracle.find_cex(learned_automaton)
-
-        if cex:
-            return False
-        return True
+        return bisimilar(correct_automaton, learned_automaton)
 
     def test_closing_strategies(self):
 
