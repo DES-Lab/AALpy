@@ -276,6 +276,18 @@ class GeneralizedStateMerging:
                     return False, dict()
         return True, remaining_nodes
 
+
+# TODO nicer interface?
+def runGSM(
+        data, output_behavior : OutputBehavior = "moore",
+        transition_behavior : TransitionBehavior = "deterministic",
+        compatibility_behavior : CompatibilityBehavior = "partition",
+        local_score : ScoreFunction = None, info_update : Callable[[Node, Node, Any],Any] = None,
+        eval_compat_on_pta : bool = False, debug_lvl=0
+    ) :
+    return GeneralizedStateMerging(data, output_behavior, transition_behavior, compatibility_behavior, local_score, info_update, eval_compat_on_pta, debug_lvl).run()
+
+
 def runAlergia(data, output_behavior : OutputBehavior = "moore", epsilon : float = 0.005) :
     return GeneralizedStateMerging(
         data, output_behavior, "stochastic", "future",
