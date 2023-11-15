@@ -56,7 +56,7 @@ class DebugInfo:
         self.lvl = lvl
 
     @staticmethod
-    def level_required(lvl):
+    def min_lvl(lvl):
         def decorator(fn):
             from functools import wraps
             @wraps(fn)
@@ -68,7 +68,7 @@ class DebugInfo:
         return decorator
 
 class DebugInfoGSM(DebugInfo):
-    lvl_required = DebugInfo.level_required
+    min_lvl = DebugInfo.min_lvl
 
     def __init__(self, lvl, instance : 'GeneralizedStateMerging'):
         super().__init__(lvl)
@@ -77,7 +77,7 @@ class DebugInfoGSM(DebugInfo):
         self.instance = instance
         self.log = []
 
-    @lvl_required(1)
+    @min_lvl(1)
     def pta_construction_done(self, start_time):
         print(f'PTA Construction Time: {round(time.time() - start_time, 2)}')
         if self.lvl != 1:
@@ -87,16 +87,16 @@ class DebugInfoGSM(DebugInfo):
             print(f'PTA has {len(states)} states leading to {len(leafs)} leafs')
             print(f'min / avg / max depth : {min(depth)} / {sum(depth) / len(depth)} / {max(depth)}')
 
-    @lvl_required(1)
+    @min_lvl(1)
     def log_promote(self, node : Node, red_states):
         self.log.append(["promote", (node.prefix,)])
         print(f'\rCurrent automaton size: {len(red_states)}', end="")
 
-    @lvl_required(1)
+    @min_lvl(1)
     def log_merge(self, a : Node, b : Node):
         self.log.append(["merge", (a.prefix, b.prefix)])
 
-    @lvl_required(1)
+    @min_lvl(1)
     def learning_done(self, red_states, start_time):
         print(f'\nLearning Time: {round(time.time() - start_time, 2)}')
         print(f'Learned {len(red_states)} state automaton.')
