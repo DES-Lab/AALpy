@@ -67,43 +67,43 @@ class DebugInfo:
             return wrapper
         return decorator
 
+class DebugInfoGSM(DebugInfo):
+    lvl_required = DebugInfo.level_required
+
+    def __init__(self, lvl, instance : 'GeneralizedStateMerging'):
+        super().__init__(lvl)
+        if lvl < 1:
+            return
+        self.instance = instance
+        self.log = []
+
+    @lvl_required(1)
+    def pta_construction_done(self, start_time):
+        print(f'PTA Construction Time: {round(time.time() - start_time, 2)}')
+        if self.lvl != 1:
+            states = self.instance.root.get_all_nodes()
+            leafs = [state for state in states if len(state.transitions.keys()) == 0]
+            depth = [len(state.prefix) for state in leafs]
+            print(f'PTA has {len(states)} states leading to {len(leafs)} leafs')
+            print(f'min / avg / max depth : {min(depth)} / {sum(depth) / len(depth)} / {max(depth)}')
+
+    @lvl_required(1)
+    def log_promote(self, node : Node, red_states):
+        self.log.append(["promote", (node.prefix,)])
+        print(f'\rCurrent automaton size: {len(red_states)}', end="")
+
+    @lvl_required(1)
+    def log_merge(self, a : Node, b : Node):
+        self.log.append(["merge", (a.prefix, b.prefix)])
+
+    @lvl_required(1)
+    def learning_done(self, red_states, start_time):
+        print(f'\nLearning Time: {round(time.time() - start_time, 2)}')
+        print(f'Learned {len(red_states)} state automaton.')
+        if 1 < self.lvl:
+            self.instance.root.visualize("model",self.instance.output_behavior)
+
 class GeneralizedStateMerging:
-    class DebugInfo(DebugInfo):
-        lvl_required = DebugInfo.level_required
-
-        def __init__(self, lvl, instance):
-            super().__init__(lvl)
-            if lvl < 1:
-                return
-            self.instance = instance
-            self.log = []
-
-        @lvl_required(1)
-        def pta_construction_done(self, start_time):
-            print(f'PTA Construction Time: {round(time.time() - start_time, 2)}')
-            if self.lvl != 1:
-                states = self.instance.root.get_all_nodes()
-                leafs = [state for state in states if len(state.transitions.keys()) == 0]
-                depth = [len(state.prefix) for state in leafs]
-                print(f'PTA has {len(states)} states leading to {len(leafs)} leafs')
-                print(f'min / avg / max depth : {min(depth)} / {sum(depth) / len(depth)} / {max(depth)}')
-
-        @lvl_required(1)
-        def log_promote(self, node : Node, red_states):
-            self.log.append(["promote", (node.prefix,)])
-            print(f'\rCurrent automaton size: {len(red_states)}', end="")
-
-        @lvl_required(1)
-        def log_merge(self, a : Node, b : Node):
-            self.log.append(["merge", (a.prefix, b.prefix)])
-
-        @lvl_required(1)
-        def learning_done(self, red_states, start_time):
-            print(f'\nLearning Time: {round(time.time() - start_time, 2)}')
-            print(f'Learned {len(red_states)} state automaton.')
-            if 1 < self.lvl:
-                self.instance.root.visualize("model",self.instance.output_behavior)
-
     def __init__(self, data, output_behavior : OutputBehavior = "moore",
                  transition_behavior : TransitionBehavior = "deterministic",
                  compatibility_behavior : CompatibilityBehavior = "partition",
@@ -111,7 +111,7 @@ class GeneralizedStateMerging:
                  eval_compat_on_pta : bool = False, debug_lvl=0):
         self.eval_compat_on_pta = eval_compat_on_pta
         self.data = data
-        self.debug = GeneralizedStateMerging.DebugInfo(debug_lvl, self)
+        self.debug = DebugInfoGSM(debug_lvl, self)
 
         if output_behavior not in typing.get_args(OutputBehavior):
             raise ValueError(f"invalid output behavior {output_behavior}")
