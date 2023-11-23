@@ -362,71 +362,16 @@ class Sevpa(Automaton):
                 del state.transitions[letter]
                 state.transitions[letter] = cleaned_transitions
 
-
-
-
-    def find_error_states_unfinished(self):
+    def gen_random_accepting_word_bfs(self, min_word_length: int = 0, amount_words: int = 1) -> set:
         """
-        TODO: This is an unfinished idea and might be finished or deleted
-
-        - if the initial state with an empty stack can be reached the state is valid
-        - if an accepting state with an empty stack can be reached all states inbetween are valid
-        - store the valid states with the respective stack setting in a dict with a list of valid stack settings
-
-        - new states we reach are getting added to the suspicious list (with the stack setting)
-        - if a valid state + stack setting is reached we don't care about it anymore (no more words are getting generated)
-        - if a state leads into another suspicious state we don't care about that state any more as well
-        - stop if all transitions lead to a non-valid state ?
-
-        criteria to be an error state:
-            - jumping between the initial state and the supposed error state
-            - if all target states are the same for internal/return transitions (there are no call transitions anyway)
-
-        """
-        valid_states = defaultdict(set)
-        error_states = defaultdict(set)
-        valid_states[self.initial_state.state_id].add(self.stack)
-        self.reset_to_initial()
-        queue = deque()
-        for letter in self.input_alphabet.get_merged_alphabet():
-            queue.append([letter])
-
-        while queue:
-            if len(valid_states) + len(error_states) == len(self.states):
-                return error_states
-            word = queue.popleft()
-            self.reset_to_initial()
-            self.execute_sequence(self.initial_state, word)
-            if self.error_state_reached:
-                continue
-
-            for letter in word:
-                self.step(letter)
-                if self.current_state.state_id in valid_states:
-                    if self.stack in valid_states[self.current_state.state_id]:
-                        for letter_ in word:
-                            self.step(letter_)
-                            valid_states[self.current_state.state_id].add(self.stack)
-                        continue
-
-            # if an accepting state or the initial state + empty stack can be reached all states inbetween are valid
-            if (self.current_state.is_accepting or self.current_state == self.initial_state) and self.stack[-1] == self.empty:
-                self.reset_to_initial()
-                for letter in word:
-                    self.step(letter)
-                    valid_states[self.current_state.state_id].add(self.stack)
-
-            for letter in self.input_alphabet.get_merged_alphabet():
-                new_word = word + [letter]
-                queue.append(new_word)
-
-    def gen_random_accepting_word_bfs(self, min_word_length: int = 0, amount_words: int = 1):
-        """
-        Create a random word that gets accepted by the automaton with the breadth-first search approach.
+        Generate a list of random words that are accepted by the automaton using the breadth-first search approach.
 
         Args:
+        - min_word_length (int): Minimum length of the generated words.
+        - amount_words (int): Number of words to generate.
 
         Returns:
+        - set: A set of randomly generated words that are accepted by the automaton.
         """
         self.reset_to_initial()
         queue = deque()
@@ -453,8 +398,132 @@ class Sevpa(Automaton):
                 new_word = word + [letter]
                 queue.append(new_word)
 
-    def gen_random_accepting_word(self, return_letter_prob: float = 0.0, call_letter_prob: float = 0.0,
-                                  early_finish: bool = True):
+    def get_allowed_call_transitions(self):
+        """
+        Returns a dict of states that are allowed to push a call letters on the stack.
+
+        For all states that are connected via internal transitions from the initial state on, the state_id and
+        call_letter of the stack_guard from every return transition is used.
+
+        States are not allowed to push something somthing on the stack if there is no possibility to pop the
+        stack guard, where their state_id is used, from the stack, which would lead into a dead-end otherwise.
+
+        Returns:
+        - dict: A dictionary where keys are the state_id and values are sets of the call_letters.
+        """
+
+        # get all states that are connected via internal transitions by using BFS
+        connected_states = set()
+        queue = deque([self.initial_state])
+        while queue:
+            current_state = queue.popleft()
+            connected_states.add(current_state)
+
+            for internal_letter in self.input_alphabet.internal_alphabet:
+                for internal_trans in current_state.transitions[internal_letter]:
+                    target_state = internal_trans.target
+                    if target_state not in connected_states:
+                        queue.append(target_state)
+
+        allowed_call_transitions = defaultdict(set)
+        for state in connected_states:
+            for return_letter in self.input_alphabet.return_alphabet:
+                for trans in state.transitions[return_letter]:
+                    allowed_call_transitions[trans.stack_guard[1]].add(trans.stack_guard[0])
+
+        return allowed_call_transitions
+
+    def gen_random_accepting_word(self, return_letter_prob: float = 0.5, min_length: int = 0) -> list:
+        """
+        Generate a random word that is accepted by the automaton.
+
+        Only internal letters and return letters will be chosen. If a return letter is randomly chosen a random
+        stack guard will be selected. Then the stack needed stack configuration will bne searched by using BFS
+
+        Args:
+        - return_letter_prob (float): Probability for selecting a letter from the return alphabet.
+        - min_length (int): Minimum length of the generated word.
+
+        Returns:
+        - list: A randomly generated word that gets accepted by the automaton.
+        """
+        assert return_letter_prob <= 1.0
+        word = []
+
+        internal_letter_prob = 0.0
+        if len(self.input_alphabet.internal_alphabet) != 0:
+            internal_letter_prob = 1.0 - return_letter_prob
+
+        assert (return_letter_prob + internal_letter_prob) == 1.0
+
+        return_letter_boarder = return_letter_prob
+        internal_letter_boarder = return_letter_boarder + internal_letter_prob
+
+        self.reset_to_initial()
+
+        while True:
+            letter_type = random.uniform(0.0, 1.0)
+            is_return_letter = False
+            if letter_type <= return_letter_boarder:
+                possible_letters = self.input_alphabet.return_alphabet
+                is_return_letter = True
+            elif return_letter_boarder < letter_type <= internal_letter_boarder:
+                possible_letters = self.input_alphabet.internal_alphabet
+            else:
+                assert False
+
+            assert len(possible_letters) > 0
+
+            random_trans_letter_index = random.randint(0, len(possible_letters) - 1)
+            letter = possible_letters[random_trans_letter_index]
+
+            # find the sub-word so the right stack guard
+            if is_return_letter:
+                # randomly select one of the return transitions with the respective return symbol
+                random_stack_guard_index = random.randint(0, len(self.current_state.transitions[letter]) - 1)
+                random_stack_guard = self.current_state.transitions[letter][random_stack_guard_index].stack_guard
+
+                sub_word = []
+                needed_stack = self.stack.copy()
+                needed_stack.append(random_stack_guard)
+                queue = deque()
+                for letter in self.input_alphabet.get_merged_alphabet():
+                    queue.append([letter])
+
+                while queue:
+                    sub_word = queue.popleft()
+                    self.reset_to_initial()
+                    self.execute_sequence(self.initial_state, word + sub_word)
+                    if self.error_state_reached:
+                        continue
+                    if self.stack == needed_stack:
+                        break
+
+                    for letter in self.input_alphabet.get_merged_alphabet():
+                        new_word = sub_word + [letter]
+                        queue.append(new_word)
+
+                self.step(letter)
+                if not self.error_state_reached:
+                    sub_word.append(letter)
+                    word = word + sub_word
+                else:
+                    self.execute_sequence(self.initial_state, word)
+
+            else:
+                self.step(letter)
+                if not self.error_state_reached:
+                    word.append(letter)
+                else:
+                    self.execute_sequence(self.initial_state, word)
+
+            if self.current_state.is_accepting and self.stack[-1] == self.empty and len(word) >= min_length:
+                break
+
+        return word
+
+    def gen_random_accepting_word_2(self, return_letter_prob: float = 0.0, call_letter_prob: float = 0.0,
+                                    early_finish: bool = True):
         """
         Create a random word that gets accepted by the automaton.
 
@@ -491,10 +560,13 @@ class Sevpa(Automaton):
         internal_letter_boarder = return_letter_boarder + internal_letter_prob
 
         self.reset_to_initial()
+        allowed_call_transitions = self.get_allowed_call_transitions()
         while True:
             letter_type = random.uniform(0.0, 1.0)
+            is_call_letter = False
             if 0.0 <= letter_type <= call_letter_boarder:
                 possible_letters = self.input_alphabet.call_alphabet
+                is_call_letter = True
             elif call_letter_boarder < letter_type <= return_letter_boarder:
                 # skip return letters if stack is empty or if the word is empty
                 if self.stack[-1] == self.empty or word == []:
@@ -518,6 +590,12 @@ class Sevpa(Automaton):
             if letter == '':
                 random_trans_letter_index = random.randint(0, len(possible_letters) - 1)
                 letter = possible_letters[random_trans_letter_index]
+
+            # check if it is allowed to make push the selected letter on the stack from the current position
+            if is_call_letter:
+                if self.current_state.state_id not in allowed_call_transitions[letter]:
+                    continue
+
             self.step(letter)
             if not self.error_state_reached:
                 word.append(letter)
