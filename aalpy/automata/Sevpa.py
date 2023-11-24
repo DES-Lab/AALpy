@@ -189,12 +189,6 @@ class Sevpa(Automaton):
                     transitions_for_symbol[symbol] = trans_list_for_setup
             state_setup_dict[state.state_id] = (state.is_accepting, transitions_for_symbol)
 
-
-        # for state in sorted_states:
-        #     state_setup_dict[state.state_id] = (
-        #         state.is_accepting, {symbol: trans_list
-        #                              for symbol, trans_list in state.transitions.items()})
-
         return state_setup_dict
 
     @staticmethod

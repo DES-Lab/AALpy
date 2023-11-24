@@ -174,11 +174,11 @@ def exponential_cex_processing(sul: SUL, cex: tuple, hypothesis, suffix_closedne
         bp = len(cex)-1
     while True:
         if direction == 'fwd':
-            if bp > len(cex):
+            if bp >= len(cex):
                 bp = len(cex)
                 break
         else:
-            if bp < 1:
+            if bp <= 1:
                 bp = 1
                 break
 
