@@ -3,29 +3,15 @@ from collections import defaultdict
 from typing import Dict, Generic, List, Tuple
 
 from aalpy.base import Automaton, AutomatonState
-# TODO edit setup to include this in base?
 from aalpy.base.Automaton import OutputType, InputType
-
-
-def from_state_setup(state_setup: dict):
-    states_map = {key: MdpState(key, output=value[0]) for key, value in state_setup.items()}
-
-    for key, values in state_setup.items():
-        source = states_map[key]
-        for i, transitions in values[1].items():
-            for node, prob in transitions:
-                source.transitions[i].append((states_map[node], prob))
-
-    initial_state = states_map[list(state_setup.keys())[0]]
-    return Mdp(initial_state, list(states_map.values()))
 
 
 class MdpState(AutomatonState, Generic[InputType, OutputType]):
     def __init__(self, state_id, output=None):
         super().__init__(state_id)
-        self.output : OutputType = output
+        self.output: OutputType = output
         # each child is a tuple (Node(output), probability)
-        self.transitions : Dict[InputType, List[Tuple[MdpState, float]]] = defaultdict(list)
+        self.transitions: Dict[InputType, List[Tuple[MdpState, float]]] = defaultdict(list)
 
 
 class Mdp(Automaton[MdpState[InputType, OutputType]]):
@@ -92,7 +78,7 @@ class Mdp(Automaton[MdpState[InputType, OutputType]]):
         return state_setup_dict
 
     @staticmethod
-    def from_state_setup(state_setup : dict):
+    def from_state_setup(state_setup: dict, **kwargs):
         states_map = {key: MdpState(key, output=value[0]) for key, value in state_setup.items()}
 
         for key, values in state_setup.items():

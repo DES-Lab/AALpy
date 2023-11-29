@@ -192,7 +192,10 @@ class Sevpa(Automaton):
         return state_setup_dict
 
     @staticmethod
-    def from_state_setup(state_setup: dict, init_state_id, input_alphabet: SevpaAlphabet):
+    def from_state_setup(state_setup: dict, **kwargs):
+
+        init_state_id = kwargs['init_state_id']
+        input_alphabet = kwargs['input_alphabet']
 
         # build states with state_id and output
         states = {key: SevpaState(key, val[0]) for key, val in state_setup.items()}

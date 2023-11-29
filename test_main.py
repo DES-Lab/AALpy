@@ -71,7 +71,6 @@ def test_arithmetic_expression():
 
     learned_model = run_KV(alphabet, sul, eq_oracle, automaton_type='vpa')
     learned_model.visualize()
-    exit()
 
 
 def test_on_random_svepa():
@@ -201,7 +200,7 @@ def test_cex_processing_strategies_vpa():
                     assert False
 
 # test_cex_processing_strategies_vpa()
-test_arithmetic_expression()
+# test_arithmetic_expression()
 # test_on_random_svepa()
 # import cProfile
 # pr = cProfile.Profile()

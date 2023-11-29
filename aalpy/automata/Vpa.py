@@ -198,7 +198,7 @@ class Vpa(Automaton):
         return state_setup_dict
 
     @staticmethod
-    def from_state_setup(state_setup: dict, init_state_id: str, input_alphabet: VpaAlphabet):
+    def from_state_setup(state_setup: dict, **kwargs):
         """
         Create a VPA from a state setup.
 
@@ -227,6 +227,9 @@ class Vpa(Automaton):
                 Vpa: The constructed Variable Pushdown Automaton.
             """
         # state_setup should map from state_id to tuple(is_accepting and transitions_dict)
+
+        init_state_id = kwargs['init_state_id']
+        input_alphabet = kwargs['input_alphabet']
 
         # build states with state_id and output
         states = {key: VpaState(key, val[0]) for key, val in state_setup.items()}

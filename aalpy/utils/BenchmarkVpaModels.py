@@ -15,7 +15,7 @@ def vpa_for_L1():
         "q1": (False, {"a": [("q1", 'push', "a")], "b": [("q2", 'pop', "a")]}),
         "q2": (True, {"a": [(Vpa.error_state.state_id, None, None)], "b": [("q2", 'pop', "a")]}),
     }
-    vpa = Vpa.from_state_setup(state_setup, "q0", input_alphabet)
+    vpa = Vpa.from_state_setup(state_setup, init_state_id="q0", input_alphabet=input_alphabet)
     return vpa
 
 
@@ -38,7 +38,7 @@ def vpa_for_L2():
                       "c": [("q2", 'pop', "a"), ("q2", 'pop', "b")],
                       "d": [("q2", 'pop', "a"), ("q2", 'pop', "b")]}),
     }
-    vpa = Vpa.from_state_setup(state_setup, "q0", input_alphabet)
+    vpa = Vpa.from_state_setup(state_setup, init_state_id="q0", input_alphabet=input_alphabet)
     return vpa
 
 
@@ -67,7 +67,7 @@ def vpa_for_L3():
         "q2": (True, {"e": [("q2e", 'pop', "b"), ("q2e", 'pop', "d")],
                       "g": [("q2g", 'pop', "b"), ("q2g", 'pop', "d")]})
     }
-    vpa = Vpa.from_state_setup(state_setup, "q0", input_alphabet)
+    vpa = Vpa.from_state_setup(state_setup, init_state_id="q0", input_alphabet=input_alphabet)
     return vpa
 
 
@@ -88,7 +88,7 @@ def vpa_for_L4():
         "q21": (False, {"d": [("q2", 'pop', "a")]}),
         "q2": (True, {"c": [("q21", 'pop', "b")]}),
     }
-    vpa = Vpa.from_state_setup(state_setup, "q0", input_alphabet)
+    vpa = Vpa.from_state_setup(state_setup, init_state_id="q0", input_alphabet=input_alphabet)
     return vpa
 
 
@@ -111,7 +111,7 @@ def vpa_for_L5():
         "q22": (False, {"f": [("q2", 'pop', "a")]}),
         "q2": (True, {"d": [("q21", 'pop', "c")]}),
     }
-    vpa = Vpa.from_state_setup(state_setup, "q0", input_alphabet)
+    vpa = Vpa.from_state_setup(state_setup, init_state_id="q0", input_alphabet=input_alphabet)
     return vpa
 
 
@@ -134,7 +134,7 @@ def vpa_for_L7():
                       "]": [("q1", 'pop', "[")]
                       }),
     }
-    vpa = Vpa.from_state_setup(state_setup, "q0", input_alphabet)
+    vpa = Vpa.from_state_setup(state_setup, init_state_id="q0", input_alphabet=input_alphabet)
     return vpa
 
 
@@ -160,7 +160,7 @@ def vpa_for_L8():
                       "}": [("q1", 'pop', "{")],
                       }),
     }
-    vpa = Vpa.from_state_setup(state_setup, "q0", input_alphabet)
+    vpa = Vpa.from_state_setup(state_setup, init_state_id="q0", input_alphabet=input_alphabet)
     return vpa
 
 
@@ -189,7 +189,7 @@ def vpa_for_L9():
                       ">": [("q1", 'pop', "<")],
                       }),
     }
-    vpa = Vpa.from_state_setup(state_setup, "q0", input_alphabet)
+    vpa = Vpa.from_state_setup(state_setup, init_state_id="q0", input_alphabet=input_alphabet)
     return vpa
 
 
@@ -220,7 +220,7 @@ def vpa_for_L10():
         "qx": (False, {"y": [("qy", None, None)]}),
         "qy": (False, {"z": [("q1", None, None)]})
     }
-    vpa = Vpa.from_state_setup(state_setup, "q0", input_alphabet)
+    vpa = Vpa.from_state_setup(state_setup, init_state_id="q0", input_alphabet=input_alphabet)
     return vpa
 
 
@@ -245,7 +245,7 @@ def vpa_for_L11():
                       "r2": [("q1", 'pop', "c1"), ("q1", 'pop', "c2")]}),
         "qd": (False, {"i2": [("q1", None, None)]})
     }
-    vpa = Vpa.from_state_setup(state_setup, "q0", input_alphabet)
+    vpa = Vpa.from_state_setup(state_setup, init_state_id="q0", input_alphabet=input_alphabet)
     return vpa
 
 
@@ -271,7 +271,7 @@ def vpa_for_L12():
             "]": [("q2", 'pop', "[")]
         }),
     }
-    vpa = Vpa.from_state_setup(state_setup, "q0", input_alphabet)
+    vpa = Vpa.from_state_setup(state_setup, init_state_id="q0", input_alphabet=input_alphabet)
     return vpa
 
 
@@ -297,7 +297,7 @@ def vpa_for_L13():
                       "c": [("q1", None, None)]
                       }),
     }
-    vpa = Vpa.from_state_setup(state_setup, "q0", input_alphabet)
+    vpa = Vpa.from_state_setup(state_setup, init_state_id="q0", input_alphabet=input_alphabet)
     return vpa
 
 
@@ -326,7 +326,7 @@ def vpa_for_L14():
                       "c": [("q1", None, None)]
                       }),
     }
-    vpa = Vpa.from_state_setup(state_setup, "q0", input_alphabet)
+    vpa = Vpa.from_state_setup(state_setup, init_state_id="q0", input_alphabet=input_alphabet)
     return vpa
 
 
@@ -354,7 +354,7 @@ def vpa_for_L15():
         "qb": (False, {"c": [("q1", None, None)],
                        })
     }
-    vpa = Vpa.from_state_setup(state_setup, "q0", input_alphabet)
+    vpa = Vpa.from_state_setup(state_setup, init_state_id="q0", input_alphabet=input_alphabet)
     return vpa
 
 
@@ -374,5 +374,5 @@ def vpa_for_L16():
                        }),
         "q2": (True, {})
     }
-    vpa = Vpa.from_state_setup(state_setup, "q0", input_alphabet)
+    vpa = Vpa.from_state_setup(state_setup, init_state_id="q0", input_alphabet=input_alphabet)
     return vpa
