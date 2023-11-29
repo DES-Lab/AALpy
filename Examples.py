@@ -648,8 +648,7 @@ def alergia_mdp_example():
     from aalpy.learning_algs import run_Alergia
     from aalpy.utils import generate_random_mdp
 
-    mdp = generate_random_mdp(5, 2, 5)
-    mdp.visualize(path='Original')
+    mdp = generate_random_mdp(5, 2, 3)
     sul = MdpSUL(mdp)
     inputs = mdp.get_input_alphabet()
 
@@ -666,7 +665,7 @@ def alergia_mdp_example():
         data.append(seq)
 
     # run alergia with the data and automaton_type set to 'mdp' to True to learn a MDP
-    model = run_Alergia(data, automaton_type='mdp', eps=0.005, print_info=True)
+    model = run_Alergia(data, automaton_type='mdp', eps=0.05, print_info=True)
 
     model.visualize()
 
@@ -677,8 +676,7 @@ def alergia_smm_example():
     from aalpy.learning_algs import run_Alergia
     from aalpy.utils import generate_random_smm
 
-    smm = generate_random_smm(5, 2, 5)
-    smm.visualize('Original')
+    smm = generate_random_smm(5, 2, 2)
     sul = StochasticMealySUL(smm)
     inputs = smm.get_input_alphabet()
 
@@ -695,7 +693,7 @@ def alergia_smm_example():
         data.append(seq)
 
     # run alergia with the data and automaton_type set to 'mdp' to True to learn a MDP
-    model = run_Alergia(data, automaton_type='smm', eps=0.005, print_info=True)
+    model = run_Alergia(data, automaton_type='smm', eps=0.05, print_info=True)
 
     model.visualize()
     return model
@@ -737,7 +735,7 @@ def alergia_mc_example():
     # parse data
     data = tokenizer.tokenize_data('mcData.txt')
     # run alergia with the data and automaton_type set to 'mc' to learn a Markov Chain
-    model = run_Alergia(data, automaton_type='mc', eps=0.005, print_info=True)
+    model = run_Alergia(data, automaton_type='mc', eps=0.05, print_info=True)
     # print(model)
 
     model.visualize()
@@ -749,13 +747,13 @@ def jAlergiaExample():
     from aalpy.learning_algs import run_JAlergia
 
     # if you need more heap space check
-    model = run_JAlergia(path_to_data_file='jAlergia/exampleMdpData.txt', automaton_type='mdp', eps=0.005,
-                         path_to_jAlergia_jar='jAlergia/alergia.jar', optimize_for='memory')
+    model = run_JAlergia(path_to_data_file='jAlergia/exampleMdpData.txt', automaton_type='mdp', eps=0.05,
+                         path_to_jAlergia_jar='jAlergia/alergia.jar')
 
     # # alternatively pass the data in following format
     # mc_data = [[1,2,3,4,5], [1,2,3,4,2,1], [1,3,5,2,3]]
     # mdp_data = [[1,2,3,1,2], [1,3,6,4,2]]
-    # model = run_JAlergia(path_to_data_file=mc_data, automaton_type='mdp', eps=0.005,
+    # model = run_JAlergia(path_to_data_file=mc_data, automaton_type='mdp', eps=0.05,
     #                      path_to_jAlergia_jar='jAlergia/alergia.jar', optimize_for='memory')
 
     model.visualize()

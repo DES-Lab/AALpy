@@ -162,7 +162,7 @@ class Automaton(ABC, Generic[AutomatonStateType]):
     def to_state_setup(self):
         pass
 
-    def copy(self):
+    def copy(self) -> 'Automaton':
         return self.from_state_setup(self.to_state_setup())
 
     def __reduce__(self):
