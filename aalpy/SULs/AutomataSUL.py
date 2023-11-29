@@ -168,11 +168,9 @@ class StochasticMealySUL(SUL):
 
 
 class VpaSUL(SUL):
-    def __init__(self, vpa: Vpa, include_top=True, check_balance=True):
+    def __init__(self, vpa: Vpa):
         super().__init__()
         self.vpa = vpa
-        self.include_top = include_top
-        self.check_balance = check_balance
 
     def pre(self):
         self.vpa.reset_to_initial()
@@ -181,21 +179,13 @@ class VpaSUL(SUL):
         pass
 
     def step(self, letter):
-        output = self.vpa.step(letter)
-        top = self.vpa.top()
-        if self.include_top:
-            if self.check_balance and self.vpa.call_balance < 0:
-                return output, '-'
-            return output, top
-        return output
+        return self.vpa.step(letter)
 
 
 class SevpaSUL(SUL):
-    def __init__(self, sevpa: Sevpa, include_top=True, check_balance=True):
+    def __init__(self, sevpa: Sevpa):
         super().__init__()
         self.sevpa = sevpa
-        self.include_top = include_top
-        self.check_balance = check_balance
 
     def pre(self):
         self.sevpa.reset_to_initial()
@@ -204,10 +194,4 @@ class SevpaSUL(SUL):
         pass
 
     def step(self, letter):
-        output = self.sevpa.step(letter)
-        # top = self.sevpa.top()
-        if self.include_top:
-            if self.check_balance and self.sevpa.call_balance < 0:
-                return output, '-'
-            return output
-        return output
+        return self.sevpa.step(letter)

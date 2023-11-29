@@ -281,19 +281,21 @@ class Sevpa(Automaton):
 
         return Sevpa(initial_state, [initial_state], alphabet)
 
-    def find_error_states(self):
+    def get_error_state(self):
         """
-        - if all transitions self loop to itself
-        - if the pop transitions from the corresponding stack symbol lead to the same state
-        - for example:
-            - all q2 transitions lead to q2
-            - the pop transitions from the initial state which pop the q2+call-symbol from the stack lead to q2 as well
+        A state is an error state iff:
+            - if all transitions self loop to itself
+            - if the pop transitions from the corresponding stack symbol lead to the same state
+            - for example:
+                - all q2 transitions lead to q2
+                - the pop transitions from the initial state which pop the q2+call-symbol from the stack lead to q2 as well
 
-        - do not do if the state is the initial state or an accepting state
+            - Not an error state if it is the initial state or an accepting state
         """
-        error_states = []
+
         for state in self.states:
-            error_state = True
+
+            is_error_state = True
             if state.is_accepting or state == self.initial_state:
                 continue
 
@@ -308,36 +310,35 @@ class Sevpa(Automaton):
                         state_target = transition.target
                     else:
                         if state_target != transition.target:
-                            error_state = False
+                            is_error_state = False
                             break
-                if not error_state:
+                if not is_error_state:
                     break
 
             # check return transitions from the initial state
-            if error_state:
+            if is_error_state:
                 for return_letter in self.input_alphabet.return_alphabet:
                     for transition in self.initial_state.transitions[return_letter]:
                         if transition.stack_guard[0] == state_target.state_id:
                             if transition.target != state_target:
-                                error_state = False
+                                is_error_state = False
                                 break
-                    if not error_state:
+                    if not is_error_state:
                         break
             else:
                 continue
 
-            if error_state:
-                error_states.append(state.state_id)
+            if is_error_state:
+                return state
 
-        return error_states
+        return None
 
-    def delete_state(self, state_id):
-        state = self.get_state_by_id(state_id)
+    def delete_state(self, state_to_remove):
 
-        if state is not None:
-            self.states.remove(state)
+        if state_to_remove is not None:
+            self.states.remove(state_to_remove)
         else:
-            assert False and f'State {state_id} does not exist'
+            return
 
         for state in self.states:
             ret_int_al = []
@@ -347,9 +348,9 @@ class Sevpa(Automaton):
                 cleaned_transitions = []
                 for transition in state.transitions[letter]:
                     if transition.stack_guard is not None:
-                        if transition.stack_guard[0] == state_id:
+                        if transition.stack_guard[0] == state_to_remove.state_id:
                             continue
-                    if transition.target.state_id == state_id:
+                    if transition.target.state_id == state_to_remove.state_id:
                         continue
 
                     cleaned_transitions.append(transition)

@@ -135,6 +135,9 @@ def run_KV(alphabet: Union[list, SevpaAlphabet], sul: SUL, eq_oracle: Oracle, au
 
             classification_tree.process_counterexample(cex, hypothesis, cex_processing)
 
+    if automaton_type == 'vpa':
+        hypothesis.delete_state(hypothesis.get_error_state())
+
     total_time = round(time.time() - start_time, 2)
     eq_query_time = round(eq_query_time, 2)
     learning_time = round(total_time - eq_query_time, 2)

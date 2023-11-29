@@ -43,14 +43,13 @@ def longest_prefix_cex_processing(s_union_s_dot_a: list, cex: tuple, closedness=
     return suffixes
 
 
-def rs_cex_processing(sul: SUL, cex: tuple, hypothesis, suffix_closedness=True, closedness='suffix', is_vpa=False,
-                      lower=0, upper=0):
-    """Riverst-Schapire counter example processing.
+def rs_cex_processing(sul: SUL, cex: tuple, hypothesis, suffix_closedness=True, closedness='suffix',
+                      is_vpa=False, lower=None, upper=None):
+    """
+    Riverst-Schapire counter example processing.
 
     Args:
 
-        upper: upper boarder for cex (from preprocessing)
-        lower: lower boarder for cex (from preprocessing)
         sul: system under learning
         cex: found counterexample
         hypothesis: hypothesis on which counterexample was found
@@ -59,6 +58,8 @@ def rs_cex_processing(sul: SUL, cex: tuple, hypothesis, suffix_closedness=True, 
         sul: SUL: system under learning
         cex: tuple: counterexample
         is_vpa: system under learning behaves as a context free language
+        upper: upper boarder for cex (from preprocessing), None will set it to 1
+        lower: lower boarder for cex (from preprocessing), None will set it to  len(cex_input) - 2
 
     Returns:
 
@@ -68,11 +69,8 @@ def rs_cex_processing(sul: SUL, cex: tuple, hypothesis, suffix_closedness=True, 
     cex_out = sul.query(cex)
     cex_input = list(cex)
 
-    if lower == 0:
-        lower = 1
-
-    if upper == 0:
-        upper = len(cex_input) - 2
+    lower = 1 if lower is None else lower
+    upper = len(cex_input) - 2 if upper is None else upper
 
     while True:
         hypothesis.reset_to_initial()
@@ -172,6 +170,8 @@ def exponential_cex_processing(sul: SUL, cex: tuple, hypothesis, suffix_closedne
     else:
         bp_recent = len(cex)
         bp = len(cex)-1
+
+    suffix = None
     while True:
         if direction == 'fwd':
             if bp >= len(cex):

@@ -228,7 +228,8 @@ class ClassificationTree:
                             continue
 
                         for other_state in states_for_transitions:
-                            if other_state.prefix == self.error_state_prefix: # TODO WIP
+                            # ignore other state if other state is error state
+                            if other_state.prefix == self.error_state_prefix:
                                 continue
                             transition_target_node = self._sift(
                                 other_state.prefix + (call_letter,) + state.prefix + (return_letter,))
@@ -241,12 +242,10 @@ class ClassificationTree:
 
         if self.automaton_type == 'vpa':
             hypothesis = Sevpa(initial_state=initial_state, states=list(states.values()), input_alphabet=self.alphabet)
-            # WIP
-            error_states = hypothesis.find_error_states()
-            if error_states:
-                self.error_state_prefix = next((state.prefix for state in hypothesis.states
-                                                if state.state_id == error_states[0]), None)
-            assert len(error_states) <= 1
+            if not self.error_state_prefix:
+                error_state = hypothesis.get_error_state()
+                if error_state:
+                    self.error_state_prefix = error_state.prefix
             return hypothesis
 
         return automaton_class[self.automaton_type](initial_state=initial_state, states=list(states.values()))

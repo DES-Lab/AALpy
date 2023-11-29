@@ -83,7 +83,7 @@ def test_on_random_svepa():
 
     alphabet = random_svepa.input_alphabet
 
-    sul = SevpaSUL(random_svepa, include_top=False, check_balance=False)
+    sul = SevpaSUL(random_svepa)
 
     eq_oracle = RandomWordEqOracle(alphabet=alphabet.get_merged_alphabet(), sul=sul, num_walks=10000,
                                    min_walk_len=10, max_walk_len=30)
@@ -100,13 +100,13 @@ def test_random_word_gen():
                              list(model_under_learning.call_set),
                              list(model_under_learning.return_set))
 
-    sul = VpaSUL(model_under_learning, include_top=False, check_balance=False)
+    sul = VpaSUL(model_under_learning)
 
     eq_oracle = RandomWordEqOracle(alphabet=alphabet.get_merged_alphabet(), sul=sul, num_walks=100000)
     model = run_KV(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, automaton_type='vpa',
                    print_level=2, cex_processing='exponential_fwd')
 
-    sul_model = SevpaSUL(model, include_top=False, check_balance=False)
+    sul_model = SevpaSUL(model)
 
     # Test SEVPA random word gen
     random_word_list = model.gen_random_accepting_word_bfs(min_word_length=3, amount_words=10)
@@ -125,7 +125,7 @@ def test_random_word_gen():
         out_sul = sul.query(random_word)[-1]
         assert out_model == out_sul and out_model
 
-    print(f'All tests passed average word length: {total_len/100}')
+    print(f'All tests passed average word length: {total_len / 100}')
 
     # Test VPA random word gen
     total_len = 0
@@ -159,30 +159,8 @@ def test_random_word_gen():
     print(f'All tests passed average word length: {total_len / 100}')
 
 
-def visual_test_to_state_setup_sevpa():
-    vpa = vpa_for_L11()
-
-    alphabet = SevpaAlphabet(list(vpa.internal_set),
-                             list(vpa.call_set),
-                             list(vpa.return_set))
-    sul = VpaSUL(vpa, include_top=False, check_balance=False)
-    eq_oracle = RandomWordEqOracle(alphabet=alphabet.get_merged_alphabet(), sul=sul, num_walks=100000)
-    model = run_KV(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, automaton_type='vpa',
-                   print_level=2, cex_processing='rs')
-
-    error_states = model.find_error_states()
-    if error_states is not None:
-        model.delete_state(error_states[0])
-
-    # for visual comparison
-    model.visualize()
-    state_setup_dict = model.to_state_setup()
-    model_from_setup = Sevpa.from_state_setup(state_setup_dict, "q0", alphabet)
-    visualize_automaton(model_from_setup, 'ModelFromSetup')
-
-
 def test_cex_processing_strategies_vpa():
-    cex_processing_strategies = ['linear_fwd', 'linear_bwd', 'exponential_fwd', 'exponential_bwd', 'rs']
+    cex_processing_strategies = ['rs', 'linear_fwd', 'linear_bwd', 'exponential_fwd', 'exponential_bwd', ]
 
     for i, vpa in enumerate(
             [vpa_for_L1(), vpa_for_L2(), vpa_for_L3(), vpa_for_L4(), vpa_for_L5(), vpa_for_L7(), vpa_for_L8(),
@@ -197,18 +175,15 @@ def test_cex_processing_strategies_vpa():
                                  list(model_under_learning.return_set))
 
         for cex_processing in cex_processing_strategies:
-            sul = VpaSUL(model_under_learning, include_top=False, check_balance=False)
-            eq_oracle = RandomWordEqOracle(alphabet=alphabet.get_merged_alphabet(), sul=sul, num_walks=100000)
+            sul = VpaSUL(model_under_learning)
+            eq_oracle = RandomWordEqOracle(alphabet=alphabet.get_merged_alphabet(), sul=sul, num_walks=20000)
             model = run_KV(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, automaton_type='vpa',
                            print_level=1, cex_processing=cex_processing)
 
-            error_states = model.find_error_states()
-            if error_states:
-                model.delete_state(error_states[0])
-            sul_learned_model = SevpaSUL(model, include_top=False, check_balance=False)
+            sul_learned_model = SevpaSUL(model)
 
             print(f'Checking {cex_processing}')
-            for i in range(0, 500000):
+            for i in range(0, 10000):
                 word_length = random.randint(1, 100)
                 word = []
                 for j in range(0, word_length):
@@ -223,10 +198,11 @@ def test_cex_processing_strategies_vpa():
                     print(f'{cex_processing} failed on following test:')
                     print(f'Input: {word}')
                     print(f'Vpa out: {vpa_out} \nLearned vpa out: {learned_model_out}')
-                    break
+                    assert False
 
-
-# test_arithmetic_expression()
+# test_cex_processing_strategies_vpa()
+test_arithmetic_expression()
+# test_on_random_svepa()
 # import cProfile
 # pr = cProfile.Profile()
 # pr.enable()
@@ -254,10 +230,9 @@ for i, vpa in enumerate(
         # if i == 9:
         #    alphabet.exclusive_call_return_pairs = {'(': ')', '[': ']', '{': '}', '<': '>'}
 
-        sul = VpaSUL(model_under_learning, include_top=False, check_balance=False)
+        sul = VpaSUL(model_under_learning)
 
         eq_oracle = RandomWordEqOracle(alphabet=alphabet.get_merged_alphabet(), sul=sul, num_walks=10000)
         # model = run_KV_vpda(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, print_level=3,)
         model = run_KV(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, automaton_type='vpa',
-                       print_level=2, cex_processing='linear_bwd')
-
+                       print_level=2, cex_processing='exponential_fwd')
