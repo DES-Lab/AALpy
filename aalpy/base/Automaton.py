@@ -155,7 +155,7 @@ class Automaton(ABC, Generic[AutomatonStateType]):
 
     @staticmethod
     @abstractmethod
-    def from_state_setup(state_setup: dict, **kwargs):
+    def from_state_setup(state_setup: dict, **kwargs) -> 'Automaton':
         pass
 
     @abstractmethod
