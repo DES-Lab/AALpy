@@ -163,6 +163,7 @@ class GeneralizedStateMerging:
         red_states = [self.root]
 
         while True:
+            # TODO support for loop over blue states?
             blue_state = None
             for r in red_states:
                 for _, t in r.transition_iterator():
@@ -172,6 +173,8 @@ class GeneralizedStateMerging:
             if blue_state is None:
                 break
 
+            # Parallelize when using EDSM
+            # Save partitions?
             for red_state in red_states:
                 match self.compatibility_behavior:
                     case "future": score = self._check_futures(red_state, blue_state)
