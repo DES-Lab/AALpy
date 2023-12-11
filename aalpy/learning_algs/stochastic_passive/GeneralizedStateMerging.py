@@ -108,7 +108,9 @@ class GeneralizedStateMerging:
                  transition_behavior : TransitionBehavior = "deterministic",
                  compatibility_behavior : CompatibilityBehavior = "partition",
                  local_score : ScoreFunction = None, info_update : Callable[[Node, Node, Any],Any] = None,
-                 eval_compat_on_pta : bool = False, debug_lvl=0):
+                 eval_compat_on_pta : bool = False,
+                 node_order : Callable[[Node,Node],bool] = None,
+                 debug_lvl=0):
         self.eval_compat_on_pta = eval_compat_on_pta
         self.data = data
         self.debug = DebugInfoGSM(debug_lvl, self)
@@ -133,6 +135,8 @@ class GeneralizedStateMerging:
                 case "nondeterministic" : local_score = non_det_compatibility(20)
                 case "stochastic" : local_score = hoeffding_compatibility(0.005)
         self.local_score : ScoreFunction = local_score
+
+        self.node_order = node_order or Node.__lt__
 
         pta_construction_start = time.time()
         self.root: Node
@@ -168,7 +172,9 @@ class GeneralizedStateMerging:
             for r in red_states:
                 for _, t in r.transition_iterator():
                     c = t.target
-                    if c not in red_states and (blue_state is None or c < blue_state):
+                    if c in red_states:
+                        continue
+                    if blue_state is None or self.node_order(c, blue_state):
                         blue_state = c
             if blue_state is None:
                 break
@@ -286,9 +292,9 @@ def runGSM(
         transition_behavior : TransitionBehavior = "deterministic",
         compatibility_behavior : CompatibilityBehavior = "partition",
         local_score : ScoreFunction = None, info_update : Callable[[Node, Node, Any],Any] = None,
-        eval_compat_on_pta : bool = False, debug_lvl=0
+        eval_compat_on_pta : bool = False, node_order : Callable[[Node, Node], bool] = None, debug_lvl=0
     ) :
-    return GeneralizedStateMerging(data, output_behavior, transition_behavior, compatibility_behavior, local_score, info_update, eval_compat_on_pta, debug_lvl).run()
+    return GeneralizedStateMerging(data, output_behavior, transition_behavior, compatibility_behavior, local_score, info_update, eval_compat_on_pta, node_order, debug_lvl).run()
 
 
 def runAlergia(data, output_behavior : OutputBehavior = "moore", epsilon : float = 0.005) :
