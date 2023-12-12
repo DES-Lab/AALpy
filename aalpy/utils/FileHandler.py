@@ -14,6 +14,7 @@ file_types = ['dot', 'png', 'svg', 'pdf', 'string']
 automaton_types = {Dfa: 'dfa', MealyMachine: 'mealy', MooreMachine: 'moore', Mdp: 'mdp',
                    StochasticMealyMachine: 'smm', Onfsm: 'onfsm', MarkovChain: 'mc', Sevpa: 'vpa'}
 
+sevpa_transition_regex = r"(\S+)\s*/\s*\(\s*'(\S+)'\s*,\s*'(\S+)'\s*\)"
 
 def _wrap_label(label):
     """
@@ -226,9 +227,10 @@ def _process_label(label, source, destination, automaton_type):
         source.transitions[inp].append((destination, out, float(prob)))
     if automaton_type == 'vpa':
         # TODO work with string representations in transitions
-        match = re.match(r"(\S+)\s*/\s*\(\s*'(\S+)'\s*,\s*'(\S+)'\s*\)", label)
+        match = re.match(sevpa_transition_regex, label)
         if match:
-            print(match.group())
+            a,b,c, = re.match()
+            print(a,b,c)
         else:
             internal_transition = SevpaTransition(label, destination, None, None)
             source.transitions[label].append(internal_transition)
@@ -312,12 +314,8 @@ def load_automaton_from_file(path, automaton_type, compute_prefixes=False):
             continue
 
         source = node_label_dict[edge.get_source()]
-        if automaton_type != 'vpa':
-            destination = node_label_dict[edge.get_destination()]
-        else:
-            # TODO
-            exit()
-
+        destination = node_label_dict[edge.get_destination()]
+        #WIP
         label = edge.get_attributes()['label']
         label = _strip_label(label)
         _process_label(label, source, destination, automaton_type)

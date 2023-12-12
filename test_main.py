@@ -143,6 +143,27 @@ def test_cex_processing_strategies_vpa():
 # exit()
 
 
+import re
+
+expression = "baadsf / ('q1', '(fasfas')"
+
+# Define the regex pattern
+pattern = r"(\S+)\s*/\s*\(\s*'(\S+)'\s*,\s*'(\S+)'\s*\)"
+
+# Match the pattern in the expression
+match = re.match(r"(\S+)\s*/\s*\(\s*'(\S+)'\s*,\s*'(\S+)'\s*\)", expression)
+
+# Extract groups if there is a match
+if match:
+    a, b, c = match.groups()
+    print("a:", a)
+    print("b:", b)
+    print("c:", c)
+else:
+    print("No match found.")
+
+exit()
+
 for i, vpa in enumerate(
         [sevpa_for_L1(), sevpa_for_L2(), sevpa_for_L3(), sevpa_for_L4(), sevpa_for_L5(), sevpa_for_L7(), sevpa_for_L8(),
          sevpa_for_L9(), sevpa_for_L10(), sevpa_for_L11(), sevpa_for_L12(), sevpa_for_L13(), sevpa_for_L14(),
