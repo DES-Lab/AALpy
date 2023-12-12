@@ -492,7 +492,7 @@ def generate_random_sevpa(num_states, internal_alphabet_size, call_alphabet_size
 
             target_state = random.choice(states)
             state.transitions[return_letter].append(
-                SevpaTransition(state, target_state, return_letter, 'pop', stack_guard))
+                SevpaTransition(target_state, return_letter, 'pop', stack_guard))
         else:
             # add an internal transition
             while True:
@@ -504,7 +504,7 @@ def generate_random_sevpa(num_states, internal_alphabet_size, call_alphabet_size
             if target_state in state_buffer:
                 state_buffer.remove(target_state)
             state.transitions[internal_letter].append(
-                SevpaTransition(state, target_state, internal_letter, None, None))
+                SevpaTransition(target_state, internal_letter, None, None))
 
     assert len(states) == num_states
     initial_state = random.choice(states)
@@ -514,7 +514,7 @@ def generate_random_sevpa(num_states, internal_alphabet_size, call_alphabet_size
             if state.transitions[internal_letter] is None:
                 target_state = random.choice(states)
                 state.transitions[internal_letter].append(
-                    SevpaTransition(state, target_state, internal_letter, None, None))
+                    SevpaTransition(target_state, internal_letter, None, None))
 
         for call_letter in call_alphabet:
             for stack_state in states:
@@ -523,6 +523,6 @@ def generate_random_sevpa(num_states, internal_alphabet_size, call_alphabet_size
                     if not _has_transition(state, return_letter, stack_guard):
                         target_state = states[random.randint(0, len(states) - 1)]
                         state.transitions[return_letter].append(
-                            SevpaTransition(state, target_state, return_letter, 'pop', stack_guard))
+                            SevpaTransition(target_state, return_letter, 'pop', stack_guard))
 
-    return Sevpa(initial_state, states, sevpa_alphabet)
+    return Sevpa(initial_state, states)

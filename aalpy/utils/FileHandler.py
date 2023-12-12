@@ -1,3 +1,4 @@
+import re
 import sys
 import sys
 import traceback
@@ -6,7 +7,8 @@ from pathlib import Path
 from pydot import Dot, Node, Edge, graph_from_dot_file
 
 from aalpy.automata import Dfa, MooreMachine, Mdp, Onfsm, MealyState, DfaState, MooreState, MealyMachine, \
-    MdpState, StochasticMealyMachine, StochasticMealyState, OnfsmState, MarkovChain, McState, Sevpa, SevpaState
+    MdpState, StochasticMealyMachine, StochasticMealyState, OnfsmState, MarkovChain, McState, Sevpa, SevpaState, \
+    SevpaTransition
 
 file_types = ['dot', 'png', 'svg', 'pdf', 'string']
 automaton_types = {Dfa: 'dfa', MealyMachine: 'mealy', MooreMachine: 'moore', Mdp: 'mdp',
@@ -91,10 +93,10 @@ def _add_transition_to_graph(graph, state, automaton_type, display_same_state_tr
             transitions_list = state.transitions[i]
             for transition in transitions_list:
                 if transition.action == 'pop':
-                    edge = Edge(transition.start.state_id, transition.target.state_id,
+                    edge = Edge(state.state_id, transition.target.state_id,
                                 label=_wrap_label(f'{transition.symbol} / {transition.stack_guard}'))
                 elif transition.action is None:
-                    edge = Edge(transition.start.state_id, transition.target.state_id,
+                    edge = Edge(state.state_id, transition.target.state_id,
                                 label=_wrap_label(f'{transition.symbol}'))
                 else:
                     assert False
@@ -223,6 +225,14 @@ def _process_label(label, source, destination, automaton_type):
         out = int(out) if out.isdigit() else out
         source.transitions[inp].append((destination, out, float(prob)))
     if automaton_type == 'vpa':
+        # TODO work with string representations in transitions
+        match = re.match(r"(\S+)\s*/\s*\(\s*'(\S+)'\s*,\s*'(\S+)'\s*\)", label)
+        if match:
+            print(match.group())
+        else:
+            internal_transition = SevpaTransition(label, destination, None, None)
+            source.transitions[label].append(internal_transition)
+            print(internal_transition)
         pass
 
 
@@ -302,7 +312,11 @@ def load_automaton_from_file(path, automaton_type, compute_prefixes=False):
             continue
 
         source = node_label_dict[edge.get_source()]
-        destination = node_label_dict[edge.get_destination()]
+        if automaton_type != 'vpa':
+            destination = node_label_dict[edge.get_destination()]
+        else:
+            # TODO
+            exit()
 
         label = edge.get_attributes()['label']
         label = _strip_label(label)

@@ -214,7 +214,7 @@ class ClassificationTree:
                     transition_target_access_string = transition_target_node.access_string
 
                     assert transition_target_access_string in states
-                    trans = SevpaTransition(start=state, target=states[transition_target_access_string],
+                    trans = SevpaTransition(target=states[transition_target_access_string],
                                             symbol=internal_letter, action=None)
                     state.transitions[internal_letter].append(trans)
 
@@ -235,13 +235,13 @@ class ClassificationTree:
                                 other_state.prefix + (call_letter,) + state.prefix + (return_letter,))
                             transition_target_access_string = transition_target_node.access_string
 
-                            trans = SevpaTransition(start=state, target=states[transition_target_access_string],
+                            trans = SevpaTransition(target=states[transition_target_access_string],
                                                     symbol=return_letter,
                                                     action='pop', stack_guard=(other_state.state_id, call_letter))
                             state.transitions[return_letter].append(trans)
 
         if self.automaton_type == 'vpa':
-            hypothesis = Sevpa(initial_state=initial_state, states=list(states.values()), input_alphabet=self.alphabet)
+            hypothesis = Sevpa(initial_state=initial_state, states=list(states.values()))
             if not self.error_state_prefix:
                 error_state = hypothesis.get_error_state()
                 if error_state:

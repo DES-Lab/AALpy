@@ -69,8 +69,7 @@ class SevpaTransition:
         action: The action performed during the transition (pop | None).
         stack_guard: The stack symbol to be pushed/popped.
     """
-    def __init__(self, start: SevpaState, target: SevpaState, symbol, action, stack_guard=None):
-        self.start = start
+    def __init__(self, target: SevpaState, symbol, action, stack_guard=None):
         self.target = target
         self.symbol = symbol
         self.action = action
@@ -81,7 +80,7 @@ class SevpaTransition:
         Returns:
             str: A string representation of the transition.
         """
-        return f"{self.symbol}: {self.start.state_id} --> {self.target.state_id} | {self.action}: {self.stack_guard}"
+        return f"{self.symbol} --> {self.target.state_id} | {self.action}: {self.stack_guard}"
 
 
 class Sevpa(Automaton):
@@ -195,7 +194,6 @@ class Sevpa(Automaton):
     def from_state_setup(state_setup: dict, **kwargs):
 
         init_state_id = kwargs['init_state_id']
-        input_alphabet = kwargs['input_alphabet']
 
         # build states with state_id and output
         states = {key: SevpaState(key, val[0]) for key, val in state_setup.items()}
@@ -206,13 +204,11 @@ class Sevpa(Automaton):
             for _input, trans_spec in state_setup[state_id][1].items():
                 for (target_state_id, action, stack_guard) in trans_spec:
                     if action == 'pop':
-                        assert stack_guard[0] in states
-                        assert stack_guard[1] in input_alphabet.call_alphabet
                         stack_guard = (stack_guard[0], stack_guard[1])
-                        trans = SevpaTransition(start=state, target=states[target_state_id], symbol=_input,
+                        trans = SevpaTransition(target=states[target_state_id], symbol=_input,
                                                 action=action, stack_guard=stack_guard)
                     elif action is None:
-                        trans = SevpaTransition(start=state, target=states[target_state_id], symbol=_input,
+                        trans = SevpaTransition(target=states[target_state_id], symbol=_input,
                                                 action=None, stack_guard=None)
                     else:
                         assert False, 'Action must either be "pop" or None, note that there are no push actions ' \
@@ -221,7 +217,7 @@ class Sevpa(Automaton):
                     state.transitions[_input].append(trans)
 
         init_state = states[init_state_id]
-        return Sevpa(init_state, [state for state in states.values()], input_alphabet)
+        return Sevpa(init_state, [state for state in states.values()])
 
     def transform_access_string(self, state=None, stack_content=None) -> List[str]:
         """
@@ -273,31 +269,31 @@ class Sevpa(Automaton):
             Sevpa: The created 1-SEVPA with the specified initial state and alphabet.
         """
         for i in alphabet.internal_alphabet:
-            trans = SevpaTransition(start=initial_state, target=initial_state, symbol=i, action=None)
+            trans = SevpaTransition(target=initial_state, symbol=i, action=None)
             initial_state.transitions[i].append(trans)
 
         for c in alphabet.call_alphabet:
             for r in alphabet.return_alphabet:
-                trans = SevpaTransition(start=initial_state, target=initial_state, symbol=r, action='pop',
+                trans = SevpaTransition(target=initial_state, symbol=r, action='pop',
                                         stack_guard=(initial_state.state_id, c))
                 initial_state.transitions[r].append(trans)
 
-        return Sevpa(initial_state, [initial_state], alphabet)
+        return Sevpa(initial_state, [initial_state])
 
     def get_input_alphabet(self):
-        if self.input_alphabet:
-            return self.input_alphabet
 
         internal, ret, call = [], [], []
         for state in self.states:
-            for transition in state.transitions:
-                if transition.action == 'pop':
-                    if transition.symbol not in ret:
-                        ret.append(transition.symbol)
-                    if transition.stack_guard[1] not in call:
-                        call.append(transition.stack_guard[1])
-                else:
-                    internal.append(transition.symbol)
+            for transition_list in state.transitions.values():
+                for transition in transition_list:
+                    if transition.action == 'pop':
+                        if transition.symbol not in ret:
+                            ret.append(transition.symbol)
+                        if transition.stack_guard[1] not in call:
+                            call.append(transition.stack_guard[1])
+                    else:
+                        if transition.symbol not in internal:
+                            internal.append(transition.symbol)
 
         return SevpaAlphabet(internal, call, ret)
 
