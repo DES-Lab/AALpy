@@ -301,6 +301,6 @@ if __name__ == '__main__':
     print(e.get_input_alphabet())
     e.save('test')
     m = load_automaton_from_file('test.dot', automaton_type='vpa')
-    m.visualize()
-
+    print('Loaded')
+    print(m)
 

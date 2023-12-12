@@ -229,12 +229,12 @@ def _process_label(label, source, destination, automaton_type):
         # TODO work with string representations in transitions
         match = re.match(sevpa_transition_regex, label)
         if match:
-            a,b,c, = re.match()
-            print(a,b,c)
+            ret, stack_guard, top_of_stack = match.groups()
+            return_transition = SevpaTransition(destination, ret, 'pop', (stack_guard, top_of_stack))
+            source.transitions[label].append(return_transition)
         else:
-            internal_transition = SevpaTransition(label, destination, None, None)
+            internal_transition = SevpaTransition(destination, label, None, None)
             source.transitions[label].append(internal_transition)
-            print(internal_transition)
         pass
 
 
@@ -327,9 +327,9 @@ def load_automaton_from_file(path, automaton_type, compute_prefixes=False):
         assert False
 
     automaton = aut_type(initial_node, list(node_label_dict.values()))
-    if automaton_type != 'mc' and not automaton.is_input_complete():
+    if automaton_type not in {'mc', 'vpa'} and not automaton.is_input_complete():
         print('Warning: Loaded automaton is not input complete.')
-    if compute_prefixes and not automaton_type == 'mc':
+    if compute_prefixes and not automaton_type not in {'mc', 'vpa'}:
         for state in automaton.states:
             state.prefix = automaton.get_shortest_path(automaton.initial_state, state)
     return automaton
