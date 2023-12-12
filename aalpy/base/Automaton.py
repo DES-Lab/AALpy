@@ -107,7 +107,8 @@ class Automaton(ABC, Generic[AutomatonStateType]):
                 return False
         return True
 
-    def get_input_alphabet(self) -> list:
+    # returns a list which is input alphabet, or a sevpa alphabet in case of VPAs
+    def get_input_alphabet(self):
         """
         Returns the input alphabet
         """

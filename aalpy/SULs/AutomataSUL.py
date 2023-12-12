@@ -1,5 +1,5 @@
 from aalpy.base import SUL
-from aalpy.automata import Dfa, MealyMachine, MooreMachine, Onfsm, Mdp, StochasticMealyMachine, MarkovChain, Vpa, Sevpa
+from aalpy.automata import Dfa, MealyMachine, MooreMachine, Onfsm, Mdp, StochasticMealyMachine, MarkovChain, Sevpa
 
 
 class DfaSUL(SUL):
@@ -164,22 +164,6 @@ class StochasticMealySUL(SUL):
 
     def step(self, letter):
         return self.smm.step(letter)
-
-
-
-class VpaSUL(SUL):
-    def __init__(self, vpa: Vpa):
-        super().__init__()
-        self.vpa = vpa
-
-    def pre(self):
-        self.vpa.reset_to_initial()
-
-    def post(self):
-        pass
-
-    def step(self, letter):
-        return self.vpa.step(letter)
 
 
 class SevpaSUL(SUL):

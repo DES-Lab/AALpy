@@ -1,4 +1,5 @@
 from aalpy.automata.Sevpa import Sevpa, SevpaAlphabet
+from aalpy.utils import load_automaton_from_file
 
 
 def sevpa_for_L1():
@@ -18,7 +19,7 @@ def sevpa_for_L1():
         'q1': (True, {'b': [('q1', 'pop', ('q0', 'a'))]
                       })
     }
-    sevpa = Sevpa.from_state_setup(state_setup, "q0", input_alphabet)
+    sevpa = Sevpa.from_state_setup(state_setup, init_state_id="q0", input_alphabet=input_alphabet)
     return sevpa
 
 
@@ -41,7 +42,7 @@ def sevpa_for_L2():
                       'c': [('q1', 'pop', ('q0', 'a')), ('q1', 'pop', ('q0', 'b'))]
                       })
     }
-    sevpa = Sevpa.from_state_setup(state_setup, "q0", input_alphabet)
+    sevpa = Sevpa.from_state_setup(state_setup, init_state_id="q0", input_alphabet=input_alphabet)
     return sevpa
 
 
@@ -76,7 +77,7 @@ def sevpa_for_L3():
         'q6': (False, {'h': [('q1', 'pop', ('q0', 'c'))]
                        })
     }
-    sevpa = Sevpa.from_state_setup(state_setup, "q0", input_alphabet)
+    sevpa = Sevpa.from_state_setup(state_setup, init_state_id="q0", input_alphabet=input_alphabet)
     return sevpa
 
 
@@ -99,7 +100,7 @@ def sevpa_for_L4():
         'q2': (False, {'d': [('q1', 'pop', ('q0', 'a'))]
                        })
     }
-    sevpa = Sevpa.from_state_setup(state_setup, "q0", input_alphabet)
+    sevpa = Sevpa.from_state_setup(state_setup, init_state_id="q0", input_alphabet=input_alphabet)
     return sevpa
 
 
@@ -124,7 +125,7 @@ def sevpa_for_L5():
         'q3': (False, {'f': [('q1', 'pop', ('q0', 'a'))]
                        })
     }
-    sevpa = Sevpa.from_state_setup(state_setup, "q0", input_alphabet)
+    sevpa = Sevpa.from_state_setup(state_setup, init_state_id="q0", input_alphabet=input_alphabet)
     return sevpa
 
 
@@ -152,7 +153,7 @@ def sevpa_for_L7():
                       })
 
     }
-    sevpa = Sevpa.from_state_setup(state_setup, "q0", input_alphabet)
+    sevpa = Sevpa.from_state_setup(state_setup, init_state_id="q0", input_alphabet=input_alphabet)
     return sevpa
 
 
@@ -183,7 +184,7 @@ def sevpa_for_L8():
                             ('q1', 'pop', ('q1', '['))]
                       })
     }
-    sevpa = Sevpa.from_state_setup(state_setup, "q0", input_alphabet)
+    sevpa = Sevpa.from_state_setup(state_setup, init_state_id="q0", input_alphabet=input_alphabet)
     return sevpa
 
 
@@ -219,7 +220,7 @@ def sevpa_for_L9():
                       })
     }
 
-    sevpa = Sevpa.from_state_setup(state_setup, "q0", input_alphabet)
+    sevpa = Sevpa.from_state_setup(state_setup, init_state_id="q0", input_alphabet=input_alphabet)
     return sevpa
 
 
@@ -260,7 +261,7 @@ def sevpa_for_L10():
                             ("qv", 'pop', ('q2', 'a'))]
                       })
     }
-    sevpa = Sevpa.from_state_setup(state_setup, "q0", input_alphabet)
+    sevpa = Sevpa.from_state_setup(state_setup, init_state_id="q0", input_alphabet=input_alphabet)
     return sevpa
 
 
@@ -304,7 +305,7 @@ def sevpa_for_L11():
                        })
     }
 
-    sevpa = Sevpa.from_state_setup(state_setup, "q0", input_alphabet)
+    sevpa = Sevpa.from_state_setup(state_setup, init_state_id="q0", input_alphabet=input_alphabet)
     return sevpa
 
 
@@ -327,7 +328,7 @@ def sevpa_for_L12():
                       ')': [('q1', 'pop', ('q0', '('))]
                       })
     }
-    sevpa = Sevpa.from_state_setup(state_setup, "q0", input_alphabet)
+    sevpa = Sevpa.from_state_setup(state_setup, init_state_id="q0", input_alphabet=input_alphabet)
     return sevpa
 
 
@@ -356,7 +357,7 @@ def sevpa_for_L13():
                             ('q1', 'pop', ('q1', '('))]
                       })
     }
-    sevpa = Sevpa.from_state_setup(state_setup, "q0", input_alphabet)
+    sevpa = Sevpa.from_state_setup(state_setup, init_state_id="q0", input_alphabet=input_alphabet)
     return sevpa
 
 
@@ -389,7 +390,7 @@ def sevpa_for_L14():
                             ('q1', 'pop', ('q1', '('))]
                       })
     }
-    sevpa = Sevpa.from_state_setup(state_setup, "q0", input_alphabet)
+    sevpa = Sevpa.from_state_setup(state_setup, init_state_id="q0", input_alphabet=input_alphabet)
     return sevpa
 
 
@@ -418,5 +419,16 @@ def sevpa_for_L15():
         'q3': (False, {'c': [('q1', None, None)]
                        })
     }
-    sevpa = Sevpa.from_state_setup(state_setup, "q0", input_alphabet)
+    sevpa = Sevpa.from_state_setup(state_setup, init_state_id="q0", input_alphabet=input_alphabet)
     return sevpa
+
+
+if __name__ == '__main__':
+    e = sevpa_for_L13()
+    print(e)
+
+    e.save('test')
+    m = load_automaton_from_file('test.dot', automaton_type='vpa')
+    m.visualize()
+
+

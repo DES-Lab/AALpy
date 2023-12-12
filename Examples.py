@@ -962,3 +962,69 @@ def learning_context_free_grammar_example():
                                    min_walk_len=5, max_walk_len=30)
     learned_model = run_KV(sevpa_alphabet, balanced_string_sul, eq_oracle, automaton_type='vpa')
     learned_model.visualize()
+
+
+def test_arithmetic_expression():
+    from aalpy.base import SUL
+    from aalpy.automata import SevpaAlphabet
+    from aalpy.oracles import RandomWordEqOracle
+    from aalpy.learning_algs import run_KV
+    import warnings
+    warnings.filterwarnings("ignore")
+
+    class ArithmeticSUL(SUL):
+        def __init__(self):
+            super().__init__()
+            self.string_under_test = ''
+
+        def pre(self):
+            self.string_under_test = ''
+
+        def post(self):
+            pass
+
+        def step(self, letter):
+            if letter:
+                self.string_under_test += ' ' + letter
+
+            try:
+                eval(self.string_under_test)
+                return True
+            except (SyntaxError, TypeError):
+                return False
+
+    sul = ArithmeticSUL()
+
+    alphabet = SevpaAlphabet(internal_alphabet=['1', '+'], call_alphabet=['('], return_alphabet=[')'])
+
+    eq_oracle = RandomWordEqOracle(alphabet.get_merged_alphabet(), sul, min_walk_len=5,
+                                   max_walk_len=20, num_walks=20000)
+
+    learned_model = run_KV(alphabet, sul, eq_oracle, automaton_type='vpa')
+    learned_model.visualize()
+
+
+def test_on_random_svepa():
+    from aalpy.SULs import SevpaSUL
+    from aalpy.oracles import RandomWordEqOracle
+    from aalpy.learning_algs import run_KV
+    from aalpy.utils import generate_random_sevpa
+
+    random_svepa = generate_random_sevpa(num_states=50, internal_alphabet_size=3,
+                                         call_alphabet_size=3,
+                                         return_alphabet_size=3,
+                                         acceptance_prob=0.4,
+                                         return_transition_prob=0.5)
+
+    # from aalpy.utils.BenchmarkVpaModels import vpa_for_L11
+    # balanced_parentheses = vpa_for_L11()
+
+    alphabet = random_svepa.input_alphabet
+
+    sul = SevpaSUL(random_svepa)
+
+    eq_oracle = RandomWordEqOracle(alphabet=alphabet.get_merged_alphabet(), sul=sul, num_walks=10000,
+                                   min_walk_len=10, max_walk_len=30)
+
+    model = run_KV(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, automaton_type='vpa',
+                   print_level=2, cex_processing='rs')

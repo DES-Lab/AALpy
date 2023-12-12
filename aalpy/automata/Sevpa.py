@@ -66,7 +66,7 @@ class SevpaTransition:
         start (SevpaState): The starting state of the transition.
         target (SevpaState): The target state of the transition.
         symbol: The symbol associated with the transition.
-        action: The action performed during the transition (push | pop | None).
+        action: The action performed during the transition (pop | None).
         stack_guard: The stack symbol to be pushed/popped.
     """
     def __init__(self, start: SevpaState, target: SevpaState, symbol, action, stack_guard=None):
@@ -90,11 +90,11 @@ class Sevpa(Automaton):
     """
     empty = "_"
 
-    def __init__(self, initial_state: SevpaState, states: list[SevpaState], input_alphabet: SevpaAlphabet):
+    def __init__(self, initial_state: SevpaState, states: list[SevpaState]):
         super().__init__(initial_state, states)
         self.initial_state = initial_state
         self.states = states
-        self.input_alphabet = input_alphabet
+        self.input_alphabet = self.get_input_alphabet()
         self.current_state = None
         self.stack = []
         self.error_state_reached = False
@@ -283,6 +283,23 @@ class Sevpa(Automaton):
                 initial_state.transitions[r].append(trans)
 
         return Sevpa(initial_state, [initial_state], alphabet)
+
+    def get_input_alphabet(self):
+        if self.input_alphabet:
+            return self.input_alphabet
+
+        internal, ret, call = [], [], []
+        for state in self.states:
+            for transition in state.transitions:
+                if transition.action == 'pop':
+                    if transition.symbol not in ret:
+                        ret.append(transition.symbol)
+                    if transition.stack_guard[1] not in call:
+                        call.append(transition.stack_guard[1])
+                else:
+                    internal.append(transition.symbol)
+
+        return SevpaAlphabet(internal, call, ret)
 
     def get_error_state(self):
         """
