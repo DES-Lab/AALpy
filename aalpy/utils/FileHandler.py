@@ -226,7 +226,6 @@ def _process_label(label, source, destination, automaton_type):
         out = int(out) if out.isdigit() else out
         source.transitions[inp].append((destination, out, float(prob)))
     if automaton_type == 'vpa':
-        # TODO work with string representations in transitions
         match = re.match(sevpa_transition_regex, label)
         if match:
             ret, stack_guard, top_of_stack = match.groups()
