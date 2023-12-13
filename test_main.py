@@ -143,30 +143,40 @@ def test_cex_processing_strategies_vpa():
 # exit()
 from Examples import test_on_benchmark_svepa
 
-test_on_benchmark_svepa()
+sevpa_for_L5().get_accepting_words_bfs(num_words=2)
 exit()
+
 for i, vpa in enumerate(
         [sevpa_for_L1(), sevpa_for_L2(), sevpa_for_L3(), sevpa_for_L4(), sevpa_for_L5(), sevpa_for_L7(), sevpa_for_L8(),
          sevpa_for_L9(), sevpa_for_L10(), sevpa_for_L11(), sevpa_for_L12(), sevpa_for_L13(), sevpa_for_L14(),
          sevpa_for_L15()]):
 
-    print(f'VPA {i + 1 if i < 6 else i + 2}')
-    # 16 works
-    for s in range(10):
-        print(s)
-        seed(s)
-        model_under_learning = vpa
+    print(i, '-----------------------------------------------')
+    e = vpa.get_accepting_words_bfs(num_words=2)
+    print(e)
+    continue
+    print('random')
+    for _ in range(20):
+        r = vpa.get_random_accepting_word()
+        print(r)
 
-        alphabet = SevpaAlphabet(list(model_under_learning.internal_set),
-                                 list(model_under_learning.call_set),
-                                 list(model_under_learning.return_set))
-
-        # if i == 9:
-        #    alphabet.exclusive_call_return_pairs = {'(': ')', '[': ']', '{': '}', '<': '>'}
-
-        sul = SevpaSUL(model_under_learning)
-
-        eq_oracle = RandomWordEqOracle(alphabet=alphabet.get_merged_alphabet(), sul=sul, num_walks=10000)
-        # model = run_KV_vpda(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, print_level=3,)
-        model = run_KV(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, automaton_type='vpa',
-                       print_level=2, cex_processing='exponential_fwd')
+    # print(f'VPA {i + 1 if i < 6 else i + 2}')
+    # # 16 works
+    # for s in range(10):
+    #     print(s)
+    #     seed(s)
+    #     model_under_learning = vpa
+    #
+    #     alphabet = SevpaAlphabet(list(model_under_learning.internal_set),
+    #                              list(model_under_learning.call_set),
+    #                              list(model_under_learning.return_set))
+    #
+    #     # if i == 9:
+    #     #    alphabet.exclusive_call_return_pairs = {'(': ')', '[': ']', '{': '}', '<': '>'}
+    #
+    #     sul = SevpaSUL(model_under_learning)
+    #
+    #     eq_oracle = RandomWordEqOracle(alphabet=alphabet.get_merged_alphabet(), sul=sul, num_walks=10000)
+    #     # model = run_KV_vpda(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, print_level=3,)
+    #     model = run_KV(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, automaton_type='vpa',
+    #                    print_level=2, cex_processing='exponential_fwd')

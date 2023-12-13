@@ -1027,7 +1027,7 @@ def test_on_benchmark_svepa():
         learned_model = run_KV(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, automaton_type='vpa',
                                print_level=2, cex_processing='rs')
 
-        print(learned_model.gen_random_accepting_word())
+        print(learned_model.get_random_accepting_word())
 
 def test_on_random_svepa():
     from aalpy.SULs import SevpaSUL

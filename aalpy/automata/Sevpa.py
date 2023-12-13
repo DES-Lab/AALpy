@@ -63,7 +63,6 @@ class SevpaTransition:
     Represents a transition in a 1-SEVPA.
 
     Attributes:
-        start (SevpaState): The starting state of the transition.
         target (SevpaState): The target state of the transition.
         letter: The symbol associated with the transition.
         action: The action performed during the transition (pop | None).
@@ -81,10 +80,8 @@ class SevpaTransition:
         Returns:
             str: A string representation of the transition.
         """
-        if self.stack_guard:
-            return f'{self.letter} --> {self.target_state.state_id} | {self.action}: {self.stack_guard}'
-        else:
-            return f'{self.letter} --> {self.target_state.state_id}'
+        return f'{self.letter} --> {self.target_state.state_id}' + \
+               f' | {self.action}: {self.stack_guard}' if self.stack_guard else ''
 
 
 class Sevpa(Automaton):
@@ -416,7 +413,7 @@ class Sevpa(Automaton):
 
         return allowed_call_transitions
 
-    def gen_random_accepting_word_bfs(self, min_word_length: int = 0, amount_words: int = 1) -> set:
+    def get_accepting_words_bfs(self, min_word_length: int = 0, num_words: int = 1) -> list:
         """
         Generate a list of random words that are accepted by the automaton using the breadth-first search approach.
 
@@ -445,10 +442,11 @@ class Sevpa(Automaton):
                 continue
             if self.current_state.is_accepting and self.stack[-1] == self.empty and len(word) >= min_word_length:
                 found_words.add(tuple(word))
-            if len(found_words) >= amount_words:
+            if len(found_words) >= num_words:
+                found_words = list(found_words)
+                found_words.sort(key=len)
                 return found_words
             shuffled_alphabet = self.input_alphabet.get_merged_alphabet()
-            random.shuffle(shuffled_alphabet)
             for letter in shuffled_alphabet:
                 if letter in allowed_call_trans:
                     # skip words where it's not possible to pop the stack_guard
@@ -457,7 +455,7 @@ class Sevpa(Automaton):
                 new_word = word + [letter]
                 queue.append(new_word)
 
-    def gen_random_accepting_word(self, return_letter_prob: float = 0.5, min_length: int = 0) -> list:
+    def get_random_accepting_word(self, return_letter_prob: float = 0.5, min_length: int = 0) -> list:
         """
         Generate a random word that is accepted by the automaton.
 
@@ -477,6 +475,8 @@ class Sevpa(Automaton):
         internal_letter_prob = 0.0
         if len(self.input_alphabet.internal_alphabet) != 0:
             internal_letter_prob = 1.0 - return_letter_prob
+        else:
+            return_letter_prob = 1.0
 
         assert (return_letter_prob + internal_letter_prob) == 1.0
 
@@ -560,7 +560,8 @@ class Sevpa(Automaton):
                 else:
                     self.execute_sequence(self.initial_state, word)
 
-            if self.current_state.is_accepting and self.stack[-1] == self.empty and len(word) >= min_length:
+            if self.current_state.is_accepting and self.stack[-1] == self.empty and len(word) >= min_length \
+                and random.random() < 0.2:
                 break
 
         self.reset_to_initial()
