@@ -1,20 +1,18 @@
-import random
 import unittest
 
 from aalpy.SULs import AutomatonSUL
 from aalpy.automata import Dfa, MealyMachine, MooreMachine
 from aalpy.learning_algs import run_Lstar
-from aalpy.learning_algs.deterministic_passive.rpni_helper_functions import createPTA
 from aalpy.oracles import WMethodEqOracle, RandomWalkEqOracle, StatePrefixEqOracle, TransitionFocusOracle, \
     RandomWMethodEqOracle, BreadthFirstExplorationEqOracle, RandomWordEqOracle, CacheBasedEqOracle, \
     KWayStateCoverageEqOracle
-from aalpy.utils import get_Angluin_dfa, load_automaton_from_file, save_automaton_to_file
+from aalpy.utils import get_Angluin_dfa, load_automaton_from_file
 from aalpy.utils.ModelChecking import bisimilar
-from aalpy.utils.AutomatonGenerators import generate_random_deterministic_automata
 
 correct_automata = {Dfa: get_Angluin_dfa(),
                     MealyMachine: load_automaton_from_file('../DotModels/Angluin_Mealy.dot', automaton_type='mealy'),
                     MooreMachine: load_automaton_from_file('../DotModels/Angluin_Moore.dot', automaton_type='moore')}
+
 
 class DeterministicTest(unittest.TestCase):
 
@@ -27,17 +25,7 @@ class DeterministicTest(unittest.TestCase):
             print(len(learned_automaton.states), len(correct_automaton.states))
             return False
 
-        alphabet = learned_automaton.get_input_alphabet()
-        sul = AutomatonSUL(correct_automaton)
-
-        # + 2 for good measure
-        self.eq_oracle = WMethodEqOracle(alphabet, sul, max_number_of_states=len(correct_automaton.states) + 2)
-
-        cex = self.eq_oracle.find_cex(learned_automaton)
-
-        if cex:
-            return False
-        return True
+        return bisimilar(correct_automaton, learned_automaton)
 
     def test_closing_strategies(self):
 

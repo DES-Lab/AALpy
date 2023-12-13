@@ -646,6 +646,7 @@ def alergia_mdp_example():
     from aalpy.utils import generate_random_mdp
 
     mdp = generate_random_mdp(5, 2, 3)
+    initial_output = mdp.initial_state.output
     sul = AutomatonSUL(mdp)
     inputs = mdp.get_input_alphabet()
 
@@ -653,7 +654,8 @@ def alergia_mdp_example():
     for _ in range(100000):
         str_len = randint(5, 12)
         # add the initial output
-        seq = [sul.pre()]
+        sul.pre()
+        seq = [initial_output]
         for _ in range(str_len):
             i = choice(inputs)
             o = sul.step(i)
@@ -705,6 +707,7 @@ def alergia_mc_example():
     from aalpy.utils import CharacterTokenizer
 
     mc = generate_random_markov_chain(10)
+    initial_output = mc.initial_state.output
     mc.visualize('Original')
 
     sul = AutomatonSUL(mc)
@@ -713,8 +716,9 @@ def alergia_mc_example():
     # this step can ofc be skipped and lists passed to alergia
     data = []
     for _ in range(20000):
+        sul.pre()
         str_len = randint(4, 12)
-        seq = [f'{sul.pre()}']
+        seq = [f'{initial_output}']
         for _ in range(str_len):
             o = sul.step()
             seq.append(f'{o}')
