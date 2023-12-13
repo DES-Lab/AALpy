@@ -1,7 +1,11 @@
 from collections import defaultdict
+from typing import Union
 
-from aalpy.automata import DfaState, Dfa, MealyState, MealyMachine, MooreState, MooreMachine
+from aalpy.automata import DfaState, Dfa, MealyState, MealyMachine, MooreState, MooreMachine, \
+    SevpaAlphabet, SevpaState, SevpaTransition, Sevpa
 from aalpy.base import SUL
+from aalpy.learning_algs.deterministic.CounterExampleProcessing import rs_cex_processing, linear_cex_processing, \
+    exponential_cex_processing
 
 automaton_class = {'dfa': Dfa, 'mealy': MealyMachine, 'moore': MooreMachine}
 
@@ -55,7 +59,7 @@ class CTLeafNode(CTNode):
 
 
 class ClassificationTree:
-    def __init__(self, alphabet: list, sul: SUL, automaton_type: str, cex: tuple):
+    def __init__(self, alphabet: Union[list, SevpaAlphabet], sul: SUL, automaton_type: str, cex: tuple):
         self.sul = sul
         self.alphabet = alphabet
         self.automaton_type = automaton_type
@@ -65,13 +69,18 @@ class ClassificationTree:
 
         self.sifting_cache = {}
 
-        if self.automaton_type == "dfa" or self.automaton_type == 'moore':
+        # prefix of identified error state in VPDA learning
+        self.error_state_prefix = None
+
+        if self.automaton_type != 'mealy':
             initial_output = sul.query(())[-1]
             cex_output = sul.query(cex)[-1]
 
             self.query_cache[()] = initial_output
 
-            self.root = CTInternalNode(distinguishing_string=tuple(), parent=None, path_to_node=None)
+            root_distinguishing_string = () if automaton_type != 'vpa' else ([(), ()])
+
+            self.root = CTInternalNode(distinguishing_string=root_distinguishing_string, parent=None, path_to_node=None)
 
             initial_output_node = CTLeafNode(access_string=tuple(), parent=self.root, path_to_node=initial_output)
             cex_output_node = CTLeafNode(access_string=cex, parent=self.root, path_to_node=cex_output)
@@ -113,15 +122,17 @@ class ClassificationTree:
 
             the CTLeafNode that is reached by the sifting operation.
         """
-        for letter in word:
-            assert letter is None or letter in self.alphabet
 
         if word in self.sifting_cache:
             return self.sifting_cache[word]
 
         node = self.root
         while not node.is_leaf():
-            query = word + node.distinguishing_string
+
+            if self.automaton_type != 'vpa':
+                query = word + node.distinguishing_string
+            else:
+                query = node.distinguishing_string[0] + word + node.distinguishing_string[1]
 
             if query not in self.query_cache.keys():
                 mq_result = self.sul.query(query)
@@ -155,12 +166,12 @@ class ClassificationTree:
         state_counter = 0
         for node in self.leaf_nodes.values():
 
-            if self.automaton_type != "mealy":
-                # output = self._query_and_update_cache(node.access_string)
-                if self.automaton_type == 'dfa':
-                    new_state = DfaState(state_id=f's{state_counter}', is_accepting=node.output)
-                else:
-                    new_state = MooreState(state_id=f's{state_counter}', output=node.output)
+            if self.automaton_type == 'dfa':
+                new_state = DfaState(state_id=f's{state_counter}', is_accepting=node.output)
+            elif self.automaton_type == 'moore':
+                new_state = MooreState(state_id=f's{state_counter}', output=node.output)
+            elif self.automaton_type == 'vpa':
+                new_state = SevpaState(state_id=f'q{state_counter}', is_accepting=node.output)
             else:
                 new_state = MealyState(state_id=f's{state_counter}')
 
@@ -175,26 +186,67 @@ class ClassificationTree:
         # alphabet, compute the b-transition out of state s by sifting s.state_id*b
         states_for_transitions = list(states.values())
         for state in states_for_transitions:
-            for letter in self.alphabet:
-                transition_target_node = self._sift(state.prefix + (letter,))
-                transition_target_access_string = transition_target_node.access_string
+            if self.automaton_type != 'vpa':
+                for letter in self.alphabet:
+                    transition_target_node = self._sift(state.prefix + (letter,))
+                    transition_target_access_string = transition_target_node.access_string
 
-                if self.automaton_type != "dfa" and transition_target_access_string not in states:
-                    if self.automaton_type == 'mealy':
-                        new_state = MealyState(state_id=f's{state_counter}')
-                    else:
-                        output = self._query_and_update_cache(transition_target_access_string)
-                        new_state = MooreState(state_id=f's{state_counter}', output=output)
+                    if self.automaton_type != "dfa" and transition_target_access_string not in states:
+                        if self.automaton_type == 'mealy':
+                            new_state = MealyState(state_id=f's{state_counter}')
+                        else:
+                            output = self._query_and_update_cache(transition_target_access_string)
+                            new_state = MooreState(state_id=f's{state_counter}', output=output)
 
-                    new_state.prefix = transition_target_access_string
-                    states_for_transitions.append(new_state)
-                    states[new_state.prefix] = new_state
-                    state_counter += 1
+                        new_state.prefix = transition_target_access_string
+                        states_for_transitions.append(new_state)
+                        states[new_state.prefix] = new_state
+                        state_counter += 1
 
-                state.transitions[letter] = states[transition_target_access_string]
+                    state.transitions[letter] = states[transition_target_access_string]
 
-                if self.automaton_type == "mealy":
-                    state.output_fun[letter] = self._query_and_update_cache(state.prefix + (letter,))
+                    if self.automaton_type == "mealy":
+                        state.output_fun[letter] = self._query_and_update_cache(state.prefix + (letter,))
+            else:
+                # internal transitions
+                for internal_letter in self.alphabet.internal_alphabet:
+                    transition_target_node = self._sift(state.prefix + (internal_letter,))
+                    transition_target_access_string = transition_target_node.access_string
+
+                    assert transition_target_access_string in states
+                    trans = SevpaTransition(target=states[transition_target_access_string],
+                                            letter=internal_letter, action=None)
+                    state.transitions[internal_letter].append(trans)
+
+                # Add call transitions
+                for call_letter in self.alphabet.call_alphabet:
+                    # Add return transitions
+                    for return_letter in self.alphabet.return_alphabet:
+                        # check if exclusive pairs of call and return letters are defined in an alphabets
+                        if self.alphabet.exclusive_call_return_pairs and \
+                                self.alphabet.exclusive_call_return_pairs[call_letter] != return_letter:
+                            continue
+
+                        for other_state in states_for_transitions:
+                            # ignore other state if other state is error state
+                            if other_state.prefix == self.error_state_prefix:
+                                continue
+                            transition_target_node = self._sift(
+                                other_state.prefix + (call_letter,) + state.prefix + (return_letter,))
+                            transition_target_access_string = transition_target_node.access_string
+
+                            trans = SevpaTransition(target=states[transition_target_access_string],
+                                                    letter=return_letter,
+                                                    action='pop', stack_guard=(other_state.state_id, call_letter))
+                            state.transitions[return_letter].append(trans)
+
+        if self.automaton_type == 'vpa':
+            hypothesis = Sevpa(initial_state=initial_state, states=list(states.values()))
+            if not self.error_state_prefix:
+                error_state = hypothesis.get_error_state()
+                if error_state:
+                    self.error_state_prefix = error_state.prefix
+            return hypothesis
 
         return automaton_class[self.automaton_type](initial_state=initial_state, states=list(states.values()))
 
@@ -265,6 +317,7 @@ class ClassificationTree:
             s_i = self._sift(cex[:i]).access_string
             hypothesis.execute_sequence(hypothesis.initial_state, cex[:i])
             s_star_i = hypothesis.current_state.prefix
+
             if s_i != s_star_i:
                 j = i
                 d = self._least_common_ancestor(s_i, s_star_i)
@@ -281,7 +334,7 @@ class ClassificationTree:
                               new_leaf_access_string=tuple(cex[:j - 1]) or tuple(),
                               new_leaf_position=self.sul.query((*cex[:j - 1], *(cex[j - 1], *d)))[-1])
 
-    def update_rs(self, cex: tuple, hypothesis):
+    def process_counterexample(self, cex: tuple, hypothesis, cex_processing_fun):
         """
         Updates the classification tree based on a counterexample,
         using Rivest & Schapire's counterexample processing
@@ -295,27 +348,58 @@ class ClassificationTree:
         Args:
             cex: the counterexample used to update the tree
             hypothesis: the former (wrong) hypothesis
+            cex_processing_fun: string choosing which cex_processing to use
 
         """
-        from aalpy.learning_algs.deterministic.CounterExampleProcessing import rs_cex_processing
-        v = max(rs_cex_processing(self.sul, cex, hypothesis, suffix_closedness=True), key=len)
+        v = None
+        if 'linear' in cex_processing_fun:
+            direction = cex_processing_fun[-3:]
+            v = linear_cex_processing(self.sul, cex, hypothesis, is_vpa=self.automaton_type == 'vpa',
+                                      direction=direction, suffix_closedness=False)[0]
+        elif 'exponential' in cex_processing_fun:
+            direction = cex_processing_fun[-3:]
+            v = exponential_cex_processing(self.sul, cex, hypothesis, is_vpa=self.automaton_type == 'vpa',
+                                           direction=direction, suffix_closedness=False)[0]
+        elif cex_processing_fun == 'rs':
+            v = rs_cex_processing(self.sul, cex, hypothesis, is_vpa=self.automaton_type == 'vpa',
+                                  suffix_closedness=False)[0]
+
+        assert v
         a = cex[len(cex) - len(v) - 1]
         u = cex[:len(cex) - len(v) - 1]
         assert (*u, a, *v) == cex
 
         hypothesis.execute_sequence(hypothesis.initial_state, u)
-        u_state = hypothesis.current_state.prefix
-        hypothesis.step(a)
-        ua_state = hypothesis.current_state.prefix
+        u_state = hypothesis.current_state
 
-        if self.automaton_type == 'dfa':
+        top_of_stack = hypothesis.stack[-1] if self.automaton_type == 'vpa' else None
+
+        # get state reached after executing last action => old leaf
+        hypothesis.step(a)
+        ua_state = hypothesis.current_state
+
+        # get discriminator and new_leaf_access_string
+        if self.automaton_type == 'vpa':
+            discriminator = (tuple(hypothesis.transform_access_string()), tuple(v))
+
+            if a in self.alphabet.internal_alphabet:
+                new_leaf_access_string = (*u_state.prefix, a)
+            else:
+                assert a in self.alphabet.return_alphabet
+                l_prime, call = hypothesis.get_state_by_id(top_of_stack[0]), top_of_stack[1]
+                new_leaf_access_string = l_prime.prefix + (call,) + u_state.prefix + (a,)
+        else:
+            discriminator = v
+            new_leaf_access_string = (*u_state.prefix, a)
+
+        if self.automaton_type == 'dfa' or self.automaton_type == 'vpa':
             new_leaf_position = not hypothesis.execute_sequence(hypothesis.initial_state, cex)[-1]
         else:
             new_leaf_position = self.sul.query(cex)[-1]
 
-        self._insert_new_leaf(discriminator=v,
-                              old_leaf_access_string=ua_state,
-                              new_leaf_access_string=(*u_state, a),
+        self._insert_new_leaf(discriminator=discriminator,
+                              old_leaf_access_string=ua_state.prefix,
+                              new_leaf_access_string=new_leaf_access_string,
                               new_leaf_position=new_leaf_position)
 
     def _insert_new_leaf(self, discriminator, old_leaf_access_string, new_leaf_access_string, new_leaf_position):
@@ -323,7 +407,7 @@ class ClassificationTree:
         Inserts a new leaf in the classification tree by:
         - moving the leaf node specified by <old_leaf_access_string> down one level
         - inserting an internal node  at the former position of the old node (i.e. as the parent of the old node)
-        - adding a new leaf node with <new_leaf_access_string> as child of the new internal node / sibling of the old node
+        - adding a new leaf node with <new_leaf_access_string> as child of the new internal node/sibling of the old node
         Could also be thought of as 'splitting' the old node into two (one of which keeps the old access string and one
         of which gets the new one) with <discriminator> as the distinguishing string between the two.
 
@@ -338,7 +422,7 @@ class ClassificationTree:
         Returns:
 
         """
-        if self.automaton_type == "dfa":
+        if self.automaton_type == "dfa" or self.automaton_type == 'vpa':
             other_leaf_position = not new_leaf_position
         else:
             # check if this query is in the node cache

@@ -102,7 +102,7 @@ class Onfsm(Automaton[OnfsmState[InputType, OutputType]]):
         return None
 
     @staticmethod
-    def from_state_setup(state_setup : dict):
+    def from_state_setup(state_setup : dict, **kwargs):
         raise NotImplementedError() # TODO implement
 
     def to_state_setup(self):

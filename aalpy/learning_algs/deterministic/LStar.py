@@ -3,11 +3,12 @@ import time
 from aalpy.base import Oracle, SUL
 from aalpy.utils.HelperFunctions import extend_set, print_learning_info, print_observation_table, all_prefixes
 from .CounterExampleProcessing import longest_prefix_cex_processing, rs_cex_processing, \
-    counterexample_successfully_processed
+    counterexample_successfully_processed, linear_cex_processing, exponential_cex_processing
 from .ObservationTable import ObservationTable
 from ...base.SUL import CacheSUL
 
-counterexample_processing_strategy = [None, 'rs', 'longest_prefix']
+counterexample_processing_strategy = [None, 'rs', 'longest_prefix', 'linear_fwd', 'linear_bwd', 'exponential_fwd',
+                                      'exponential_bwd']
 closedness_options = ['suffix_all', 'suffix_single']
 print_options = [0, 1, 2, 3]
 
@@ -147,8 +148,16 @@ def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, sampl
         elif cex_processing == 'longest_prefix':
             cex_suffixes = longest_prefix_cex_processing(observation_table.S + list(observation_table.s_dot_a()),
                                                          cex, closedness='suffix')
-        else:
+        elif cex_processing == 'rs':
             cex_suffixes = rs_cex_processing(sul, cex, hypothesis, e_set_suffix_closed, closedness='suffix')
+        else:
+            direction = cex_processing[-3:]
+            if 'linear' in cex_processing:
+                cex_suffixes = linear_cex_processing(sul, cex, hypothesis, e_set_suffix_closed,
+                                                     direction=direction, closedness='suffix')
+            else:
+                cex_suffixes = exponential_cex_processing(sul, cex, hypothesis, e_set_suffix_closed,
+                                                          direction=direction, closedness='suffix')
 
         added_suffixes = extend_set(observation_table.E, cex_suffixes)
         observation_table.update_obs_table(e_set=added_suffixes)

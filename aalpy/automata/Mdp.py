@@ -81,7 +81,7 @@ class Mdp(Automaton[MdpState[InputType, OutputType]]):
         return state_setup_dict
 
     @staticmethod
-    def from_state_setup(state_setup: dict):
+    def from_state_setup(state_setup: dict, **kwargs):
         states_map = {key: MdpState(key, output=value[0]) for key, value in state_setup.items()}
 
         for key, values in state_setup.items():
