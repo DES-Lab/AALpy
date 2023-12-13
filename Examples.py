@@ -933,3 +933,122 @@ def compare_stochastic_and_non_deterministic_learning(example='first_grid'):
 
     print(model_type)
     print('Error for each property:', [round(d * 100, 2) for d in diff.values()])
+
+
+def learning_context_free_grammar_example():
+    from aalpy.automata import SevpaAlphabet
+    from aalpy.learning_algs import run_KV
+    from aalpy.oracles import RandomWordEqOracle
+    from aalpy.utils.BenchmarkSULs import get_balanced_string_sul
+
+    call_return_map = {'(': ')', '[': ']'}
+
+    sevpa_alphabet = SevpaAlphabet([], list(call_return_map.keys()), list(call_return_map.values()))
+
+    # bounded deterministic approximation
+    balanced_string_sul = get_balanced_string_sul(call_return_map, allow_empty_string=False)
+    eq_oracle = RandomWordEqOracle(sevpa_alphabet.get_merged_alphabet(), balanced_string_sul, num_walks=1000,
+                                   min_walk_len=5, max_walk_len=30)
+
+    learned_deterministic_approximation = run_KV(sevpa_alphabet.get_merged_alphabet(),
+                                                 balanced_string_sul, eq_oracle, automaton_type='dfa',
+                                                 max_learning_rounds=20)
+
+    balanced_string_sul = get_balanced_string_sul(call_return_map, allow_empty_string=False)
+    eq_oracle = RandomWordEqOracle(sevpa_alphabet.get_merged_alphabet(), balanced_string_sul, num_walks=1000,
+                                   min_walk_len=5, max_walk_len=30)
+    learned_model = run_KV(sevpa_alphabet, balanced_string_sul, eq_oracle, automaton_type='vpa')
+    learned_model.visualize()
+
+
+def arithmetic_expression_sevpa_learning():
+    from aalpy.base import SUL
+    from aalpy.automata import SevpaAlphabet
+    from aalpy.oracles import RandomWordEqOracle
+    from aalpy.learning_algs import run_KV
+    import warnings
+    warnings.filterwarnings("ignore")
+
+    class ArithmeticSUL(SUL):
+        def __init__(self):
+            super().__init__()
+            self.string_under_test = ''
+
+        def pre(self):
+            self.string_under_test = ''
+
+        def post(self):
+            pass
+
+        def step(self, letter):
+            if letter:
+                self.string_under_test += ' ' + letter
+
+            try:
+                eval(self.string_under_test)
+                return True
+            except (SyntaxError, TypeError):
+                return False
+
+    sul = ArithmeticSUL()
+
+    alphabet = SevpaAlphabet(internal_alphabet=['1', '+'], call_alphabet=['('], return_alphabet=[')'])
+
+    eq_oracle = RandomWordEqOracle(alphabet.get_merged_alphabet(), sul, min_walk_len=5,
+                                   max_walk_len=20, num_walks=20000)
+
+    learned_model = run_KV(alphabet, sul, eq_oracle, automaton_type='vpa')
+    learned_model.visualize()
+
+
+def benchmark_sevpa_learning():
+    from aalpy.SULs import SevpaSUL
+    from aalpy.oracles import RandomWordEqOracle
+    from aalpy.learning_algs import run_KV
+    from aalpy.utils.BenchmarkSevpaModels import sevpa_for_L1, sevpa_for_L2, sevpa_for_L11, sevpa_for_L12, sevpa_for_L14
+
+    models = [sevpa_for_L1(), sevpa_for_L2(), sevpa_for_L11(), sevpa_for_L12(), sevpa_for_L14()]
+
+    for inx, model in enumerate(models):
+
+        alphabet = model.get_input_alphabet()
+
+        sul = SevpaSUL(model)
+
+        if inx == 4:
+            alphabet.exclusive_call_return_pairs = {'(': ')', '[': ']'}
+
+        eq_oracle = RandomWordEqOracle(alphabet=alphabet.get_merged_alphabet(), sul=sul, num_walks=10000,
+                                       min_walk_len=10, max_walk_len=30)
+
+        learned_model = run_KV(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, automaton_type='vpa',
+                               print_level=2, cex_processing='rs')
+
+        print(learned_model.get_random_accepting_word())
+
+
+def random_sevpa_learning():
+    from aalpy.SULs import SevpaSUL
+    from aalpy.oracles import RandomWordEqOracle
+    from aalpy.learning_algs import run_KV
+    from aalpy.utils import generate_random_sevpa
+
+    random_svepa = generate_random_sevpa(num_states=50, internal_alphabet_size=3,
+                                         call_alphabet_size=3,
+                                         return_alphabet_size=3,
+                                         acceptance_prob=0.4,
+                                         return_transition_prob=0.5)
+
+    # from aalpy.utils.BenchmarkVpaModels import vpa_for_L11
+    # balanced_parentheses = vpa_for_L11()
+
+    alphabet = random_svepa.input_alphabet
+
+    sul = SevpaSUL(random_svepa)
+
+    eq_oracle = RandomWordEqOracle(alphabet=alphabet.get_merged_alphabet(), sul=sul, num_walks=10000,
+                                   min_walk_len=10, max_walk_len=30)
+
+    model = run_KV(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, automaton_type='vpa',
+                   print_level=2, cex_processing='rs')
+

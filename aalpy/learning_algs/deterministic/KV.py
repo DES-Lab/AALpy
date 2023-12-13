@@ -1,6 +1,8 @@
 import time
+from typing import Union
 
-from aalpy.automata import Dfa, DfaState, MealyState, MealyMachine, MooreState, MooreMachine
+from aalpy.automata import Dfa, DfaState, MealyState, MealyMachine, MooreState, MooreMachine, \
+    Sevpa, SevpaState, SevpaAlphabet
 from aalpy.base import Oracle, SUL
 from aalpy.utils.HelperFunctions import print_learning_info, visualize_classification_tree
 from .ClassificationTree import ClassificationTree
@@ -8,11 +10,11 @@ from .CounterExampleProcessing import counterexample_successfully_processed
 from ...base.SUL import CacheSUL
 
 print_options = [0, 1, 2, 3]
-counterexample_processing_strategy = [None, 'rs']
-automaton_class = {'dfa': Dfa, 'mealy': MealyMachine, 'moore': MooreMachine}
+counterexample_processing_strategy = ['rs', 'linear_fwd', 'linear_bwd', 'exponential_fwd', 'exponential_bwd']
+automaton_class = {'dfa': Dfa, 'mealy': MealyMachine, 'moore': MooreMachine, 'vpa': Sevpa}
 
 
-def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, cex_processing='rs',
+def run_KV(alphabet: Union[list, SevpaAlphabet], sul: SUL, eq_oracle: Oracle, automaton_type, cex_processing='rs',
            max_learning_rounds=None, cache_and_non_det_check=True, return_data=False, print_level=2):
     """
     Executes the KV algorithm.
@@ -25,7 +27,7 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, cex_proc
 
         eq_oracle: equivalence oracle
 
-        automaton_type: type of automaton to be learned. One of 'dfa', 'mealy', 'moore'
+        automaton_type: type of automaton to be learned. One of 'dfa', 'mealy', 'moore', 'vpa'
 
         cex_processing: None for no counterexample processing, or 'rs' for Rivest & Schapire counterexample processing
 
@@ -49,6 +51,7 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, cex_proc
     assert print_level in print_options
     assert cex_processing in counterexample_processing_strategy
     assert automaton_type in [*automaton_class]
+    assert automaton_type != 'vpa' and isinstance(alphabet, list) or isinstance(alphabet, SevpaAlphabet)
 
     start_time = time.time()
     eq_query_time = 0
@@ -68,20 +71,26 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, cex_proc
         # single (accepting or rejecting) state with self-loops for
         # all transitions.
         if automaton_type == 'dfa':
-            initial_state = DfaState(state_id='s0', is_accepting=empty_string_mq)
+            initial_state = DfaState(state_id='q0', is_accepting=empty_string_mq)
+        elif automaton_type == 'moore':
+            initial_state = MooreState(state_id='q0', output=empty_string_mq)
         else:
-            initial_state = MooreState(state_id='s0', output=empty_string_mq)
+            initial_state = SevpaState(state_id='q0', is_accepting=empty_string_mq)
     else:
-        initial_state = MealyState(state_id='s0')
+        initial_state = MealyState(state_id='q0')
 
     initial_state.prefix = tuple()
 
-    for a in alphabet:
-        initial_state.transitions[a] = initial_state
-        if automaton_type == 'mealy':
-            initial_state.output_fun[a] = sul.query((a,))[-1]
+    if automaton_type != 'vpa':
+        for a in alphabet:
+            initial_state.transitions[a] = initial_state
+            if automaton_type == 'mealy':
+                initial_state.output_fun[a] = sul.query((a,))[-1]
 
-    hypothesis = automaton_class[automaton_type](initial_state, [initial_state])
+    if automaton_type != 'vpa':
+        hypothesis = automaton_class[automaton_type](initial_state, [initial_state])
+    else:
+        hypothesis = Sevpa.create_daisy_hypothesis(initial_state, alphabet)
 
     # Perform an equivalence query on this automaton
     eq_query_start = time.time()
@@ -126,10 +135,10 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, cex_proc
                 if print_level == 3:
                     print('Counterexample', cex)
 
-            if cex_processing == 'rs':
-                classification_tree.update_rs(cex, hypothesis)
-            else:
-                classification_tree.update(cex, hypothesis)
+            classification_tree.process_counterexample(cex, hypothesis, cex_processing)
+
+    if automaton_type == 'vpa':
+        hypothesis.delete_state(hypothesis.get_error_state())
 
     total_time = round(time.time() - start_time, 2)
     eq_query_time = round(eq_query_time, 2)
@@ -161,4 +170,3 @@ def run_KV(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, cex_proc
         return hypothesis, info
 
     return hypothesis
-
