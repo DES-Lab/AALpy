@@ -4,7 +4,7 @@ from aalpy.learning_algs.stochastic.DifferenceChecker import AdvancedHoeffdingCh
 
 import aalpy.paths
 
-from aalpy.SULs import MdpSUL
+from aalpy.SULs import AutomatonSUL
 from aalpy.learning_algs import run_stochastic_Lstar
 
 from aalpy.oracles import RandomWordEqOracle
@@ -22,7 +22,7 @@ strategies = [AdvancedHoeffdingChecker(alpha=0.001), 'chi2']
 
 def learn(strategy):
     input_al = mdp.get_input_alphabet()
-    sul = MdpSUL(mdp)
+    sul = AutomatonSUL(mdp)
     eq_oracle = RandomWordEqOracle(input_al, sul, num_walks=1000, min_walk_len=4, max_walk_len=20)
     model, data = run_stochastic_Lstar(input_al, sul, eq_oracle, automaton_type='smm', strategy=strategy,
                                        cex_processing=None, print_level=0, return_data=True)

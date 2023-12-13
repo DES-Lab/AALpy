@@ -1,7 +1,7 @@
 import random
 
 import aalpy.paths
-from aalpy.SULs import MdpSUL
+from aalpy.SULs import AutomatonSUL
 from aalpy.automata.StochasticMealyMachine import smm_to_mdp_conversion
 from aalpy.learning_algs import run_Alergia
 from aalpy.utils import load_automaton_from_file, get_correct_prop_values, get_properties_file
@@ -45,7 +45,7 @@ for file in ['first_grid.dot']:
     original_mdp = load_automaton_from_file(path_to_dir + file, automaton_type='mdp')
     input_alphabet = original_mdp.get_input_alphabet()
 
-    mdp_sul = MdpSUL(original_mdp)
+    mdp_sul = AutomatonSUL(original_mdp)
 
     for _ in range(1):
 

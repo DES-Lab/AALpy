@@ -3,7 +3,7 @@ from collections import defaultdict
 from random import seed
 from statistics import mean
 
-from aalpy.SULs import DfaSUL, MealySUL
+from aalpy.SULs import AutomatonSUL
 from aalpy.learning_algs import run_Lstar
 from aalpy.oracles import StatePrefixEqOracle, RandomWMethodEqOracle, RandomWalkEqOracle, RandomWordEqOracle
 from aalpy.utils import generate_random_deterministic_automata
@@ -40,7 +40,7 @@ for test_model in test_models:
                         tc += 1
                         print(round(tc / num_exp * 100, 2))
                         # seed(tc)
-                        sul = MealySUL(test_model)
+                        sul = AutomatonSUL(test_model)
                         eq_oracle = RandomWordEqOracle(input_al, sul, num_walks=5000, min_walk_len=10, max_walk_len=40)
                         model, info = run_Lstar(input_al, sul, eq_oracle, 'dfa',
                                                 closing_strategy=closing_strategy,

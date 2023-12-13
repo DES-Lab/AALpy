@@ -1,4 +1,4 @@
-from aalpy.SULs import DfaSUL
+from aalpy.SULs import AutomatonSUL
 from aalpy.learning_algs import run_Lstar, run_KV
 from aalpy.oracles import RandomWordEqOracle
 from aalpy.utils import generate_random_deterministic_automata
@@ -23,14 +23,14 @@ for model_type in automata_type:
                     print(f'Type: {model_type}, size: {size}, # inputs: {i}, # accepting: {size//8}')
 
                 # Lstar
-                sul = DfaSUL(random_model)
+                sul = AutomatonSUL(random_model)
                 eq_oracle = RandomWordEqOracle(input_al, sul, num_walks=5000, min_walk_len=10, max_walk_len=40)
                 l_star_model, l_star_info = run_Lstar(input_al, sul, eq_oracle, model_type, print_level=0, return_data=True)
 
                 l_star_steps, l_star_queries = l_star_info['steps_learning'], l_star_info['queries_learning']
 
                 # KV
-                sul = DfaSUL(random_model)
+                sul = AutomatonSUL(random_model)
                 eq_oracle = RandomWordEqOracle(input_al, sul, num_walks=5000, min_walk_len=10, max_walk_len=40)
                 kv_model, kv_info = run_KV(input_al, sul, eq_oracle, model_type, print_level=0, return_data=True)
 

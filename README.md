@@ -91,7 +91,7 @@ The following snippet demonstrates a short example in which an automaton is eith
 ```python
 from aalpy.utils import load_automaton_from_file, save_automaton_to_file, visualize_automaton, generate_random_dfa
 from aalpy.automata import Dfa
-from aalpy.SULs import DfaSUL
+from aalpy.SULs import AutomatonSUL
 from aalpy.oracles import RandomWalkEqOracle
 from aalpy.learning_algs import run_Lstar, run_KV
 
@@ -117,7 +117,7 @@ alphabet = random_dfa.get_input_alphabet()
 # loaded or randomly generated automata are considered as BLACK-BOX that is queried
 # learning algorithm has no knowledge about its structure
 # create a SUL instance for the automaton/system under learning
-sul = DfaSUL(random_dfa)
+sul = AutomatonSUL(random_dfa)
 
 # define the equivalence oracle
 eq_oracle = RandomWalkEqOracle(alphabet, sul, num_steps=5000, reset_prob=0.09)

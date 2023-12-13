@@ -8,23 +8,24 @@ class TestCharSet(unittest.TestCase):
 
     def get_test_automata(self):
         return {"angluin_dfa": get_Angluin_dfa(),
-            "angluin_mealy": load_automaton_from_file('../DotModels/Angluin_Mealy.dot', automaton_type='mealy'),
-            "angluin_moore": load_automaton_from_file('../DotModels/Angluin_Moore.dot', automaton_type='moore'),
-            "mqtt": load_automaton_from_file('../DotModels/MQTT/emqtt__two_client_will_retain.dot',
-                                             automaton_type='mealy'),
-            "openssl": load_automaton_from_file('../DotModels/TLS/OpenSSL_1.0.2_server_regular.dot',
-                                                automaton_type='mealy'),
-            "tcp_server": load_automaton_from_file('../DotModels/TCP/TCP_Linux_Server.dot',
-                                                automaton_type='mealy')}
+                "angluin_mealy": load_automaton_from_file('../DotModels/Angluin_Mealy.dot', automaton_type='mealy'),
+                "angluin_moore": load_automaton_from_file('../DotModels/Angluin_Moore.dot', automaton_type='moore'),
+                "mqtt": load_automaton_from_file('../DotModels/MQTT/emqtt__two_client_will_retain.dot',
+                                                 automaton_type='mealy'),
+                "openssl": load_automaton_from_file('../DotModels/TLS/OpenSSL_1.0.2_server_regular.dot',
+                                                    automaton_type='mealy'),
+                "tcp_server": load_automaton_from_file('../DotModels/TCP/TCP_Linux_Server.dot',
+                                                       automaton_type='mealy')}
 
     def test_can_differentiate(self):
         automata = self.get_test_automata()
-        for init_with_alphabet in [True,False]:
-            for (online_suffix_closure,split_all_blocks) in [(False, False),(False,True),(True,False),(True,True)]:
+        for init_with_alphabet in [True, False]:
+            for (online_suffix_closure, split_all_blocks) in [(False, False), (False, True), (True, False),
+                                                              (True, True)]:
                 for test_aut_name in automata:
                     print(f"Testing with {test_aut_name}")
                     test_aut = automata[test_aut_name]
-                    char_set_init = list(map(lambda input: tuple([input]),test_aut.get_input_alphabet())) \
+                    char_set_init = list(map(lambda input: tuple([input]), test_aut.get_input_alphabet())) \
                         if init_with_alphabet else None
                     if "dfa" in test_aut_name or "moore" in test_aut_name:
                         char_set_init = [] if char_set_init is None else char_set_init
@@ -37,7 +38,7 @@ class TestCharSet(unittest.TestCase):
                     for s in test_aut.states:
                         responses_from_s = []
                         for c in char_set:
-                            responses_from_s.append(tuple(test_aut.compute_output_seq(s,c)))
+                            responses_from_s.append(tuple(test_aut.compute_output_seq(s, c)))
                         all_responses.add(tuple(responses_from_s))
 
                     # every state must have a unique response to the whole characterization set
@@ -45,13 +46,13 @@ class TestCharSet(unittest.TestCase):
 
     def test_suffix_closed(self):
         automata = self.get_test_automata()
-        for init_with_alphabet in [True,False]:
+        for init_with_alphabet in [True, False]:
             online_suffix_closure = True
-            for split_all_blocks in [True,False]:
+            for split_all_blocks in [True, False]:
                 for test_aut_name in automata:
                     print(f"Testing with {test_aut_name}")
                     test_aut = automata[test_aut_name]
-                    char_set_init = list(map(lambda input: tuple([input]),test_aut.get_input_alphabet())) \
+                    char_set_init = list(map(lambda input: tuple([input]), test_aut.get_input_alphabet())) \
                         if init_with_alphabet else None
                     if "dfa" in test_aut_name or "moore" in test_aut_name:
                         char_set_init = [] if char_set_init is None else char_set_init
@@ -65,5 +66,3 @@ class TestCharSet(unittest.TestCase):
                             if suffix not in char_set:
                                 print(suffix)
                             assert suffix in char_set
-
-
