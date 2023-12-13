@@ -971,6 +971,7 @@ def arithmetic_expression_sevpa_learning():
     from aalpy.oracles import RandomWordEqOracle
     from aalpy.learning_algs import run_KV
     import warnings
+    import ast
     warnings.filterwarnings("ignore")
 
     class ArithmeticSUL(SUL):
@@ -986,22 +987,30 @@ def arithmetic_expression_sevpa_learning():
 
         def step(self, letter):
             if letter:
-                self.string_under_test += ' ' + letter
+                self.string_under_test += ' ' + letter if len(self.string_under_test) > 0 else letter
 
             try:
-                eval(self.string_under_test)
-                return True
-            except (SyntaxError, TypeError):
+                # Parse the expression using ast
+                parsed_expr = ast.parse(self.string_under_test, mode='eval')
+                # Check if the parsed expression is a valid arithmetic expression
+                is_valid = all(isinstance(node, (ast.Expression, ast.BinOp, ast.UnaryOp, ast.Num, ast.Name, ast.Load))
+                               or isinstance(node, ast.operator) or isinstance(node, ast.expr_context)
+                               or (isinstance(node, ast.BinOp) and isinstance(node.op, ast.operator))
+                               for node in ast.walk(parsed_expr))
+                return is_valid
+
+            except SyntaxError:
                 return False
 
     sul = ArithmeticSUL()
 
     alphabet = SevpaAlphabet(internal_alphabet=['1', '+'], call_alphabet=['('], return_alphabet=[')'])
 
-    eq_oracle = RandomWordEqOracle(alphabet.get_merged_alphabet(), sul, min_walk_len=5,
-                                   max_walk_len=20, num_walks=20000)
+    eq_oracle = RandomWordEqOracle(alphabet.get_merged_alphabet(), sul, min_walk_len=2,
+                                   max_walk_len=10, num_walks=2000)
 
     learned_model = run_KV(alphabet, sul, eq_oracle, automaton_type='vpa')
+
     learned_model.visualize()
 
 
