@@ -951,6 +951,7 @@ def learning_context_free_grammar_example():
 
     # bounded deterministic approximation
     balanced_string_sul = get_balanced_string_sul(call_return_map, allow_empty_string=False)
+
     eq_oracle = RandomWordEqOracle(sevpa_alphabet.get_merged_alphabet(), balanced_string_sul, num_walks=1000,
                                    min_walk_len=5, max_walk_len=30)
 
@@ -1015,7 +1016,7 @@ def arithmetic_expression_sevpa_learning():
 
 
 def benchmark_sevpa_learning():
-    from aalpy.SULs import SevpaSUL
+    from aalpy.SULs import AutomatonSUL
     from aalpy.oracles import RandomWordEqOracle
     from aalpy.learning_algs import run_KV
     from aalpy.utils.BenchmarkSevpaModels import sevpa_for_L1, sevpa_for_L2, sevpa_for_L11, sevpa_for_L12, sevpa_for_L14
@@ -1026,7 +1027,7 @@ def benchmark_sevpa_learning():
 
         alphabet = model.get_input_alphabet()
 
-        sul = SevpaSUL(model)
+        sul = AutomatonSUL(model)
 
         if inx == 4:
             alphabet.exclusive_call_return_pairs = {'(': ')', '[': ']'}
@@ -1041,7 +1042,7 @@ def benchmark_sevpa_learning():
 
 
 def random_sevpa_learning():
-    from aalpy.SULs import SevpaSUL
+    from aalpy.SULs import AutomatonSUL
     from aalpy.oracles import RandomWordEqOracle
     from aalpy.learning_algs import run_KV
     from aalpy.utils import generate_random_sevpa
@@ -1052,12 +1053,9 @@ def random_sevpa_learning():
                                          acceptance_prob=0.4,
                                          return_transition_prob=0.5)
 
-    # from aalpy.utils.BenchmarkVpaModels import vpa_for_L11
-    # balanced_parentheses = vpa_for_L11()
-
     alphabet = random_svepa.input_alphabet
 
-    sul = SevpaSUL(random_svepa)
+    sul = AutomatonSUL(random_svepa)
 
     eq_oracle = RandomWordEqOracle(alphabet=alphabet.get_merged_alphabet(), sul=sul, num_walks=10000,
                                    min_walk_len=10, max_walk_len=30)

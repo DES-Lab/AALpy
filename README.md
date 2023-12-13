@@ -30,7 +30,7 @@ as well as **deterministic context-free grammars/pushdown automata**.
 | Deterministic     |                 DFAs <br /> Mealy Machines <br /> Moore Machines                 |      L* <br /> KV <br /> RPNI      | Seamless Caching <br /> Counterexample Processing <br /> 13 Equivalence Oracles  |
 | Non-Deterministic |                      ONFSM <br /> Abstracted ONFSM                      |        L*<sub>ONFSM</sub>       |                                 Size Reduction  Trough Abstraction |
 | Stochastic        | Markov Decision Processes <br /> Stochastic Mealy Machines <br /> Markov Chains | L*<sub>MDP</sub> <br /> L*<sub>SMM</sub> <br /> ALERGIA |               Counterexample Processing <br /> Exportable to PRISM format  <br /> Bindings to jALERGIA|
-| Context-Free      |          VPDA/SEVPA                                                            | KV<sub>VPA</sub> | Specification of exclusive <br/> call-return pairs
+| Pushdown          |          VPDA/SEVPA                                                            | KV<sub>VPA</sub> | Specification of exclusive <br/> call-return pairs
 </div>
 
 AALpy enables efficient learning by providing a large set of equivalence oracles, implementing various conformance testing strategies. Active learning 
