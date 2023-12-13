@@ -287,20 +287,20 @@ class Sevpa(Automaton):
 
     def get_input_alphabet(self):
 
-        internal, ret, call = [], [], []
+        int_alphabet, ret_alphabet, call_alphabet = [], [], []
         for state in self.states:
             for transition_list in state.transitions.values():
                 for transition in transition_list:
                     if transition.action == 'pop':
-                        if transition.letter not in ret:
-                            ret.append(transition.letter)
-                        if transition.stack_guard[1] not in call:
-                            call.append(transition.stack_guard[1])
+                        if transition.letter not in ret_alphabet:
+                            ret_alphabet.append(transition.letter)
+                        if transition.stack_guard[1] not in call_alphabet:
+                            call_alphabet.append(transition.stack_guard[1])
                     else:
-                        if transition.letter not in internal:
-                            internal.append(transition.letter)
+                        if transition.letter not in int_alphabet:
+                            int_alphabet.append(transition.letter)
 
-        return SevpaAlphabet(internal, call, ret)
+        return SevpaAlphabet(int_alphabet, call_alphabet, ret_alphabet)
 
     def get_error_state(self):
         """
@@ -455,7 +455,7 @@ class Sevpa(Automaton):
                 new_word = word + [letter]
                 queue.append(new_word)
 
-    def get_random_accepting_word(self, return_letter_prob: float = 0.5, min_length: int = 0) -> list:
+    def get_random_accepting_word(self, return_letter_prob: float = 0.5, min_len: int = 2) -> list:
         """
         Generate a random word that is accepted by the automaton.
 
@@ -464,7 +464,7 @@ class Sevpa(Automaton):
 
         Args:
         - return_letter_prob (float): Probability for selecting a letter from the return alphabet.
-        - min_length (int): Minimum length of the generated word.
+        - min_len (int): Minimum length of the generated word.
 
         Returns:
         - list: A randomly generated word that gets accepted by the automaton.
@@ -560,8 +560,8 @@ class Sevpa(Automaton):
                 else:
                     self.execute_sequence(self.initial_state, word)
 
-            if self.current_state.is_accepting and self.stack[-1] == self.empty and len(word) >= min_length \
-                and random.random() < 0.2:
+            if self.current_state.is_accepting and self.stack[-1] == self.empty and len(word) >= min_len \
+                    and random.random() < 0.2:
                 break
 
         self.reset_to_initial()

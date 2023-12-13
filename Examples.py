@@ -964,7 +964,7 @@ def learning_context_free_grammar_example():
     learned_model.visualize()
 
 
-def test_arithmetic_expression():
+def arithmetic_expression_sevpa_learning():
     from aalpy.base import SUL
     from aalpy.automata import SevpaAlphabet
     from aalpy.oracles import RandomWordEqOracle
@@ -1004,7 +1004,7 @@ def test_arithmetic_expression():
     learned_model.visualize()
 
 
-def test_on_benchmark_svepa():
+def benchmark_sevpa_learning():
     from aalpy.SULs import SevpaSUL
     from aalpy.oracles import RandomWordEqOracle
     from aalpy.learning_algs import run_KV
@@ -1029,7 +1029,8 @@ def test_on_benchmark_svepa():
 
         print(learned_model.get_random_accepting_word())
 
-def test_on_random_svepa():
+
+def random_sevpa_learning():
     from aalpy.SULs import SevpaSUL
     from aalpy.oracles import RandomWordEqOracle
     from aalpy.learning_algs import run_KV
@@ -1053,3 +1054,4 @@ def test_on_random_svepa():
 
     model = run_KV(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, automaton_type='vpa',
                    print_level=2, cex_processing='rs')
+
