@@ -8,9 +8,10 @@ from aalpy.base.Automaton import OutputType
 class McState(AutomatonState, Generic[OutputType]):
     def __init__(self, state_id, output):
         super().__init__(state_id)
-        self.output : OutputType = output
+        self.output: OutputType = output
         # transitions is a list of tuples (Node(output), probability)
-        self.transitions : List[Tuple[McState, float]] = list()
+        self.transitions: List[Tuple[McState, float]] = list()
+
 
 class MarkovChain(Automaton[McState[OutputType]]):
     """Markov Decision Process."""
@@ -62,8 +63,8 @@ class MarkovChain(Automaton[McState[OutputType]]):
         return None
 
     @staticmethod
-    def from_state_setup(state_setup : dict, **kwargs):
-        raise NotImplementedError() # TODO implement
+    def from_state_setup(state_setup: dict, **kwargs):
+        raise NotImplementedError()  # TODO implement
 
     def to_state_setup(self):
-        raise NotImplementedError() # TODO implement
+        raise NotImplementedError()  # TODO implement

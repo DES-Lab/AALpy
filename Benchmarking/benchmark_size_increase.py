@@ -1,7 +1,7 @@
 from statistics import mean
 import csv
 
-from aalpy.SULs import DfaSUL, MealySUL, MooreSUL
+from aalpy.SULs import AutomatonSUL
 from aalpy.learning_algs import run_Lstar
 from aalpy.oracles import RandomWalkEqOracle
 from aalpy.utils import generate_random_dfa, generate_random_mealy_machine, generate_random_moore_machine
@@ -35,7 +35,7 @@ for i in range(num_increases):
 
     for _ in range(repeat):
         dfa = generate_random_dfa(num_states, alphabet=alphabet, num_accepting_states=num_states // 2)
-        sul = DfaSUL(dfa)
+        sul = AutomatonSUL(dfa)
 
         # eq_oracle = StatePrefixEqOracle(alphabet, sul, walks_per_state=5, walk_len=40)
         eq_oracle = RandomWalkEqOracle(alphabet, sul, num_steps=9000, reset_prob=0.09)
@@ -51,7 +51,7 @@ for i in range(num_increases):
         del dfa
 
         mealy = generate_random_mealy_machine(num_states, input_alphabet=alphabet, output_alphabet=alphabet)
-        sul_mealy = MealySUL(mealy)
+        sul_mealy = AutomatonSUL(mealy)
 
         # eq_oracle = StatePrefixEqOracle(alphabet, sul_mealy, walks_per_state=5, walk_len=40)
         eq_oracle = RandomWalkEqOracle(alphabet, sul_mealy, num_steps=9000, reset_prob=0.09)
@@ -68,7 +68,7 @@ for i in range(num_increases):
         del eq_oracle
 
         moore = generate_random_moore_machine(num_states, input_alphabet=alphabet, output_alphabet=alphabet)
-        moore_sul = MooreSUL(moore)
+        moore_sul = AutomatonSUL(moore)
 
         # eq_oracle = StatePrefixEqOracle(alphabet, moore_sul, walks_per_state=5, walk_len=40)
         eq_oracle = RandomWalkEqOracle(alphabet, moore_sul, num_steps=9000, reset_prob=0.09)
