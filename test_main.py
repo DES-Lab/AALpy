@@ -141,8 +141,10 @@ def test_cex_processing_strategies_vpa():
 # pr.disable()
 # pr.print_stats(sort='tottime')
 # exit()
+from Examples import test_on_benchmark_svepa
 
-
+test_on_benchmark_svepa()
+exit()
 for i, vpa in enumerate(
         [sevpa_for_L1(), sevpa_for_L2(), sevpa_for_L3(), sevpa_for_L4(), sevpa_for_L5(), sevpa_for_L7(), sevpa_for_L8(),
          sevpa_for_L9(), sevpa_for_L10(), sevpa_for_L11(), sevpa_for_L12(), sevpa_for_L13(), sevpa_for_L14(),

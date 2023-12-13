@@ -20,7 +20,8 @@ You can start learning automata in just a few lines of code.
 
 Whether you work with regular languages or you would like to learn models of 
 (black-box) reactive systems, AALpy supports a wide range of modeling formalisms, including 
-**deterministic**, **non-deterministic**, and **stochastic automata**. 
+**deterministic**, **non-deterministic**, and **stochastic automata**, 
+as well as **deterministic context-free grammars/pushdown automata**. 
 
 <div align="center">
 	
@@ -29,14 +30,14 @@ Whether you work with regular languages or you would like to learn models of
 | Deterministic     |                 DFAs <br /> Mealy Machines <br /> Moore Machines                 |      L* <br /> KV <br /> RPNI      | Seamless Caching <br /> Counterexample Processing <br /> 13 Equivalence Oracles  |
 | Non-Deterministic |                      ONFSM <br /> Abstracted ONFSM                      |        L*<sub>ONFSM</sub>       |                                 Size Reduction  Trough Abstraction |
 | Stochastic        | Markov Decision Processes <br /> Stochastic Mealy Machines <br /> Markov Chains | L*<sub>MDP</sub> <br /> L*<sub>SMM</sub> <br /> ALERGIA |               Counterexample Processing <br /> Exportable to PRISM format  <br /> Bindings to jALERGIA|
-
+| Context-Free      |          VPDA/SEVPA                                                            | KV<sub>VPA</sub> | Specification of exclusive <br/> call-return pairs
 </div>
 
 AALpy enables efficient learning by providing a large set of equivalence oracles, implementing various conformance testing strategies. Active learning 
 is mostly based on Angluin's [L* algorithm](https://people.eecs.berkeley.edu/~dawnsong/teaching/s10/papers/angluin87.pdf), for which AALpy supports a 
 selection of optimizations, including efficient counterexample processing caching. However, the recent addition of efficiently implemented 
 [KV](https://mitpress.mit.edu/9780262111935/an-introduction-to-computational-learning-theory/) algorithm
-requires (on average) much less interaction with the system under learning than L*.
+requires (on average) much less interaction with the system under learning than L*. In addition, KV can be used to learn Visibly Deterministic Pushdown Automata (VPDA).
 
 AALpy also includes **passive automata learning algorithms**, namely RPNI for deterministic and ALERGIA for stochastic models. Unlike active algorithms which learn by interaction with the system, passive learning algorithms construct a model based on provided data.
  

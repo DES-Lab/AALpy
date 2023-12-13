@@ -215,7 +215,7 @@ class ClassificationTree:
 
                     assert transition_target_access_string in states
                     trans = SevpaTransition(target=states[transition_target_access_string],
-                                            symbol=internal_letter, action=None)
+                                            letter=internal_letter, action=None)
                     state.transitions[internal_letter].append(trans)
 
                 # Add call transitions
@@ -236,7 +236,7 @@ class ClassificationTree:
                             transition_target_access_string = transition_target_node.access_string
 
                             trans = SevpaTransition(target=states[transition_target_access_string],
-                                                    symbol=return_letter,
+                                                    letter=return_letter,
                                                     action='pop', stack_guard=(other_state.state_id, call_letter))
                             state.transitions[return_letter].append(trans)
 
@@ -407,7 +407,7 @@ class ClassificationTree:
         Inserts a new leaf in the classification tree by:
         - moving the leaf node specified by <old_leaf_access_string> down one level
         - inserting an internal node  at the former position of the old node (i.e. as the parent of the old node)
-        - adding a new leaf node with <new_leaf_access_string> as child of the new internal node / sibling of the old node
+        - adding a new leaf node with <new_leaf_access_string> as child of the new internal node/sibling of the old node
         Could also be thought of as 'splitting' the old node into two (one of which keeps the old access string and one
         of which gets the new one) with <discriminator> as the distinguishing string between the two.
 

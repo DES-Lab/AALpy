@@ -1004,6 +1004,31 @@ def test_arithmetic_expression():
     learned_model.visualize()
 
 
+def test_on_benchmark_svepa():
+    from aalpy.SULs import SevpaSUL
+    from aalpy.oracles import RandomWordEqOracle
+    from aalpy.learning_algs import run_KV
+    from aalpy.utils.BenchmarkSevpaModels import sevpa_for_L1, sevpa_for_L2, sevpa_for_L11, sevpa_for_L12, sevpa_for_L14
+
+    models = [sevpa_for_L1(), sevpa_for_L2(), sevpa_for_L11(), sevpa_for_L12(), sevpa_for_L14()]
+
+    for inx, model in enumerate(models):
+
+        alphabet = model.get_input_alphabet()
+
+        sul = SevpaSUL(model)
+
+        if inx == 4:
+            alphabet.exclusive_call_return_pairs = {'(': ')', '[': ']'}
+
+        eq_oracle = RandomWordEqOracle(alphabet=alphabet.get_merged_alphabet(), sul=sul, num_walks=10000,
+                                       min_walk_len=10, max_walk_len=30)
+
+        learned_model = run_KV(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, automaton_type='vpa',
+                               print_level=2, cex_processing='rs')
+
+        print(learned_model.gen_random_accepting_word())
+
 def test_on_random_svepa():
     from aalpy.SULs import SevpaSUL
     from aalpy.oracles import RandomWordEqOracle

@@ -439,11 +439,11 @@ def _has_transition(state: SevpaState, transition_letter, stack_guard) -> bool:
     if transitions is not None:
         if stack_guard is None:  # internal transition
             for transition in transitions:
-                if transition.symbol == transition_letter:
+                if transition.letter == transition_letter:
                     return True
         else:  # return transition
             for transition in transitions:
-                if transition.stack_guard == stack_guard and transition.symbol == transition_letter:
+                if transition.stack_guard == stack_guard and transition.letter == transition_letter:
                     return True
 
     return False

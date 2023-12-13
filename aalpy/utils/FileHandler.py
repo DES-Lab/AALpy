@@ -94,11 +94,11 @@ def _add_transition_to_graph(graph, state, automaton_type, display_same_state_tr
             transitions_list = state.transitions[i]
             for transition in transitions_list:
                 if transition.action == 'pop':
-                    edge = Edge(state.state_id, transition.target.state_id,
-                                label=_wrap_label(f'{transition.symbol} / {transition.stack_guard}'))
+                    edge = Edge(state.state_id, transition.target_state.state_id,
+                                label=_wrap_label(f'{transition.letter} / {transition.stack_guard}'))
                 elif transition.action is None:
-                    edge = Edge(state.state_id, transition.target.state_id,
-                                label=_wrap_label(f'{transition.symbol}'))
+                    edge = Edge(state.state_id, transition.target_state.state_id,
+                                label=_wrap_label(f'{transition.letter}'))
                 else:
                     assert False
                 graph.add_edge(edge)
@@ -227,6 +227,8 @@ def _process_label(label, source, destination, automaton_type):
         source.transitions[inp].append((destination, out, float(prob)))
     if automaton_type == 'vpa':
         match = re.match(sevpa_transition_regex, label)
+        # cast to integer
+        label = int(label) if label.isdigit() else label
         if match:
             ret, stack_guard, top_of_stack = match.groups()
             return_transition = SevpaTransition(destination, ret, 'pop', (stack_guard, top_of_stack))
@@ -249,7 +251,7 @@ def _process_node_label(node, label, node_label_dict, node_type, automaton_type)
             node_label_dict[node_name] = node_type(label, output)
         else:
             node_label_dict[node_name] = node_type(label)
-        if automaton_type == 'dfa':
+        if automaton_type == 'dfa' or automaton_type == 'vpa':
             if 'shape' in node.get_attributes().keys() and 'doublecircle' in node.get_attributes()['shape']:
                 node_label_dict[node_name].is_accepting = True
 
@@ -314,7 +316,7 @@ def load_automaton_from_file(path, automaton_type, compute_prefixes=False):
 
         source = node_label_dict[edge.get_source()]
         destination = node_label_dict[edge.get_destination()]
-        #WIP
+
         label = edge.get_attributes()['label']
         label = _strip_label(label)
         _process_label(label, source, destination, automaton_type)
