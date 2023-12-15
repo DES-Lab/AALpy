@@ -164,7 +164,7 @@ def run_KV(alphabet: Union[list, SevpaAlphabet], sul: SUL, eq_oracle: Oracle, au
 
         if print_level == 3 and classification_tree:
             print('Visualization of classification tree saved to classification_tree.pdf')
-            visualize_classification_tree(classification_tree.root, 'classification_tree.pdf')
+            visualize_classification_tree(classification_tree.root)
 
     if return_data:
         return hypothesis, info
