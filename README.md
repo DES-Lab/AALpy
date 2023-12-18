@@ -24,7 +24,7 @@ Whether you work with regular languages or you would like to learn models of
 as well as **deterministic context-free grammars/pushdown automata**. 
 
 <div align="center">
-	
+   
 | **Automata Type** |                      **Supported Formalisms**                     | **Algorithms**        |                                                       **Features** |
 |-------------------|:-----------------------------------------------------------------:|-----------------------|-------------------------------------------------------------------:|
 | Deterministic     |                 DFAs <br /> Mealy Machines <br /> Moore Machines                 |      L* <br /> KV <br /> RPNI      | Seamless Caching <br /> Counterexample Processing <br /> 13 Equivalence Oracles  |
@@ -62,9 +62,6 @@ If you are interested in automata learning or would like to understand the autom
 please check out our **Wiki**. On Wiki, you will find more detailed examples on how to use AALpy.
 - <https://github.com/DES-Lab/AALpy/wiki>
 
-For the **official documentation** of all classes and methods, check out:
-- <https://des-lab.github.io/AALpy/documentation/index.html>
-
 ***[Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py)*** contains many examples and it is a great starting point. 
 
 ## Usage
@@ -81,7 +78,7 @@ For more detailed examples, check out:
 - [Interactive Examples](https://github.com/DES-Lab/AALpy/tree/master/notebooks)
 - [Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py)
 
-[Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py) contains examples covering almost the whole AALpy's functionality, and it is a great starting point/reference.
+[Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py) contains examples covering almost the whole of AALpy's functionality, and it is a great starting point/reference.
 [Wiki](https://github.com/DES-Lab/AALpy/wiki) has a step-by-step guide to using AALpy and can help you understand AALpy and automata learning in general. 
 
 <details>
