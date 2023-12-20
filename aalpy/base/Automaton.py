@@ -441,3 +441,7 @@ class DeterministicAutomaton(Automaton[AutomatonStateType]):
             s1, s2 = self.compute_characterization_set(return_same_states=True)
 
         self.compute_prefixes()
+
+    def __eq__(self, other):
+        from aalpy.utils import bisimilar
+        return bisimilar(self, other)

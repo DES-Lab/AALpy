@@ -18,6 +18,7 @@ def random_deterministic_model_example():
 
     learned_model = run_KV(input_alphabet, sul, eq_oracle, model_type)
 
+    assert learned_model == random_model
     return learned_model
 
 
@@ -41,6 +42,7 @@ def angluin_seminal_example():
     learned_dfa = run_Lstar(alphabet, sul, eq_oracle, automaton_type='dfa',
                             cache_and_non_det_check=True, cex_processing=None, print_level=3)
 
+    assert learned_dfa == dfa
     return learned_dfa
 
 
@@ -823,6 +825,8 @@ def rpni_check_model_example():
     eq_oracle_2 = StatePrefixEqOracle(input_al, sul, walks_per_state=100)
     cex = eq_oracle_2.find_cex(rpni_model)
 
+    # or simply do
+    # if rpni_model != model
     if cex is None:
         print("Could not find a counterexample between the RPNI-model and the original model.")
     else:

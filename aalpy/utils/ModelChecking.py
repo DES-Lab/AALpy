@@ -239,6 +239,9 @@ def bisimilar(a1: DeterministicAutomaton, a2: DeterministicAutomaton, return_cex
     """
     Checks whether the provided automata are bisimilar.
     If return_cex the function returns a counter example or None, otherwise a Boolean is returned.
+
+    Returns:
+        object:
     """
 
     # TODO allow states as inputs instead of automata
