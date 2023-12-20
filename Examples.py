@@ -168,7 +168,7 @@ def random_deterministic_example_with_provided_sequences():
                               samples=samples)
 
 
-def big_input_alphabet_example(input_alphabet_size=1000, automaton_depth=4):
+def big_input_alphabet_example():
     """
         Small example where input alphabet can be huge and outputs are just true and false (DFA).
 
@@ -182,6 +182,9 @@ def big_input_alphabet_example(input_alphabet_size=1000, automaton_depth=4):
     from aalpy.base import SUL
     from aalpy.learning_algs import run_Lstar
     from aalpy.oracles import RandomWMethodEqOracle
+
+    input_alphabet_size = 1000
+    automaton_depth = 4
 
     class alternatingSUL(SUL):
         def __init__(self):
@@ -239,32 +242,21 @@ def random_onfsm_example(num_states, input_size, output_size, n_sampling):
     return learned_model
 
 
-def random_mdp_example(num_states, input_len, num_outputs, n_c=20, n_resample=1000, min_rounds=10, max_rounds=1000):
-    """
-    Generate and learn random MDP.
-    :param num_states: number of states in generated MDP
-    :param input_len: size of input alphabet
-    :param n_c: cutoff for a state to be considered complete
-    :param n_resample: resampling size
-    :param num_outputs: size of output alphabet
-    :param min_rounds: minimum number of learning rounds
-    :param max_rounds: maximum number of learning rounds
-    :return: learned MDP
-    """
+def random_mdp_example():
     from aalpy.SULs import AutomatonSUL
     from aalpy.oracles import RandomWalkEqOracle
     from aalpy.learning_algs import run_stochastic_Lstar
     from aalpy.utils import generate_random_mdp
 
-    mdp = generate_random_mdp(num_states, input_len, num_outputs)
+    mdp = generate_random_mdp(num_states=10, input_size=3, output_size=3)
     input_alphabet = mdp.get_input_alphabet()
     sul = AutomatonSUL(mdp)
 
     eq_oracle = RandomWalkEqOracle(input_alphabet, sul=sul, num_steps=5000, reset_prob=0.11,
                                    reset_after_cex=False)
 
-    learned_mdp = run_stochastic_Lstar(input_alphabet, sul, eq_oracle, n_c=n_c, n_resample=n_resample,
-                                       min_rounds=min_rounds, max_rounds=max_rounds)
+    learned_mdp = run_stochastic_Lstar(input_alphabet, sul, eq_oracle,
+                                       min_rounds=5, max_rounds=50)
 
     return learned_mdp
 
@@ -698,7 +690,7 @@ def alergia_smm_example():
     return model
 
 
-def alergia_mc_example():
+def alergia_mc_example_with_loaded_data():
     from os import remove
     from aalpy.SULs import AutomatonSUL
     from random import randint
@@ -830,6 +822,7 @@ def rpni_check_model_example():
     sul = AutomatonSUL(model)
     eq_oracle_2 = StatePrefixEqOracle(input_al, sul, walks_per_state=100)
     cex = eq_oracle_2.find_cex(rpni_model)
+
     if cex is None:
         print("Could not find a counterexample between the RPNI-model and the original model.")
     else:
