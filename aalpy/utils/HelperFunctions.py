@@ -163,33 +163,6 @@ def print_observation_table(ot, table_type):
     print('-' * row_len)
 
 
-def visualize_classification_tree(root_node, save_path):
-    from pydot import Dot, Node, Edge
-    graph = Dot(save_path, graph_type='digraph')
-
-    graph.add_node(Node(f'{root_node.path_to_node}', shape='square',
-                        label=f'Distinguishing String:\n{root_node.distinguishing_string}'))
-    queue = [root_node]
-    while queue:
-        curr_node = queue.pop(0)
-        for output, destination in curr_node.children.items():
-            if destination.is_leaf():
-                graph.add_node(Node(f'{destination.access_string}',
-                                    label=f'Access String:\n{destination.access_string}'))
-                graph.add_edge(Edge(f'{curr_node.path_to_node}', f'{destination.access_string}', label=f'{output}'))
-            else:
-                graph.add_node(Node(f'{destination.path_to_node}', shape='square',
-                                    label=f'Distinguishing String:\n{destination.distinguishing_string}', ))
-                graph.add_edge(Edge(f'{curr_node.path_to_node}', f'{destination.path_to_node}', label=f'{output}'))
-
-                queue.append(destination)
-
-    try:
-        graph.write(path=save_path, format='pdf')
-    except OSError:
-        print('Could not write the classification tree to file.')
-
-
 def is_suffix_of(suffix, trace) -> bool:
     """
 
@@ -350,4 +323,3 @@ def visualize_classification_tree(root_node):
 
     # print(graph.to_string())
     graph.write(path='classification_tree.pdf', format='pdf')
-
