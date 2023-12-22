@@ -1,4 +1,6 @@
+import functools
 import typing
+from dataclasses import dataclass
 from math import sqrt, log
 import time
 from typing import Dict, Tuple, Callable, Any, Literal, List
@@ -11,8 +13,13 @@ from aalpy.learning_algs.stochastic_passive.helpers import Node, OutputBehavior,
 # merge: Check compatibility after partition is created
 CompatibilityBehavior = Literal["future", "partition", "merge"]
 
-Score = bool
+Score = bool | float
 ScoreFunction = Callable[[Node,Node,Any,bool], Score]
+
+@dataclass
+class Partitioning:
+    score : Score
+    partitions : dict[Node, Node]
 
 def hoeffding_compatibility(eps) -> ScoreFunction:
     def similar(a: Node, b: Node, _: Any, compare_original):
@@ -136,7 +143,9 @@ class GeneralizedStateMerging:
                 case "stochastic" : local_score = hoeffding_compatibility(0.005)
         self.local_score : ScoreFunction = local_score
 
-        self.node_order = node_order or Node.__lt__
+        if node_order is None:
+            node_order = Node.__lt__
+        self.node_order = functools.cmp_to_key(lambda a, b: -1 if node_order(a,b) else 1)
 
         pta_construction_start = time.time()
         self.root: Node
@@ -166,39 +175,70 @@ class GeneralizedStateMerging:
         # sorted list of states already considered
         red_states = [self.root]
 
+        partition_candidates : dict[tuple[Node, Node], Partitioning] = dict()
         while True:
-            # TODO support for loop over blue states?
-            blue_state = None
+            # get blue states
+            blue_states = []
             for r in red_states:
                 for _, t in r.transition_iterator():
                     c = t.target
                     if c in red_states:
                         continue
-                    if blue_state is None or self.node_order(c, blue_state):
-                        blue_state = c
-            if blue_state is None:
-                break
+                    blue_states.append(c)
+                    if True: # FUTURE support for loop over blue states?
+                        blue_states = [min(blue_states, key=self.node_order)]
 
-            # Parallelize when using EDSM
-            # Save partitions?
-            for red_state in red_states:
-                match self.compatibility_behavior:
-                    case "future": score = self._check_futures(red_state, blue_state)
-                    case "partition" | "merge": score, partition = self._partition_from_merge(red_state, blue_state)
-                if score:
+            # no blue states left -> done
+            if len(blue_states) == 0:
+                break
+            blue_states.sort(key=self.node_order)
+
+            # loop over blue states
+            promotion = False
+            for blue_state in blue_states:
+                # FUTURE: Parallelize
+                # FUTURE: Save partitions?
+
+                # calculate partitions resulting from merges with red states if necessary
+                current_candidates : dict[Node, Partitioning]= dict()
+                perfect_partitioning = None
+                for red_state in red_states:
+                    partition = partition_candidates.get((red_state, blue_state))
+                    if partition is None:
+                        partition = self._partition_from_merge(red_state, blue_state)
+                    if partition.score is True:
+                        perfect_partitioning = partition
+                        break
+                    current_candidates[red_state] = partition
+
+                # partition with perfect score found: don't consider anything else
+                if perfect_partitioning:
+                    partition_candidates = {(red_state, blue_state) : perfect_partitioning}
                     break
 
-            if not score:
-                red_states.append(blue_state)
-                self.debug.log_promote(blue_state, red_states)
-            else:
-                match self.compatibility_behavior:
-                    case "future": self._partition_from_merge(red_state, blue_state)
-                    case "partition" | "merge":
-                        # use the partition for merging
-                        for node, block in partition.items():
-                            node.transitions = block.transitions
-                self.debug.log_merge(red_state, blue_state)
+                # no merge candidates for this blue state -> promote
+                if all(part.score is not False for part in current_candidates.values()) == 0:
+                    red_states.append(blue_state)
+                    self.debug.log_promote(blue_state, red_states)
+                    promotion = True
+                    break
+
+                # update tracking dict with new candidates
+                new_candidates = (((red, blue_state), part) for red, part in current_candidates.items())
+                partition_candidates.update(new_candidates)
+
+            # a state was promoted -> don't clear candidates
+            if promotion:
+                continue
+
+            # find best partitioning and clear candidates
+            (red, blue), best_candidate = max(partition_candidates.items(), key = lambda part : part[1].score)
+            # FUTURE: optimizations for compatibility tests where merges can be orthogonal
+            # FUTURE: caching for aggregating compatibility tests
+            partition_candidates.clear()
+            for real_node, partition_node in best_candidate.partitions.items():
+                    real_node.transitions = partition_node.transitions
+            self.debug.log_merge(red, blue)
 
         self.debug.learning_done(red_states, start_time)
 
@@ -229,14 +269,19 @@ class GeneralizedStateMerging:
 
         return True
 
-    def _partition_from_merge(self, red: Node, blue: Node) -> Tuple[bool,Dict[Node, Node]] :
+    def _partition_from_merge(self, red: Node, blue: Node) -> Partitioning :
         """
         Compatibility check based on partitions.
         assumes that blue is a tree and red is not in blue
         """
 
         partitions = dict()
-        remaining_nodes = dict()
+        partitioning = Partitioning(False, dict())
+
+        if self.compatibility_behavior == "future":
+            score = self._check_futures(red, blue)
+            if score is False:
+                return partitioning
 
         def update_partition(red_node: Node, blue_node: Node) -> Node:
             if self.compatibility_behavior == "future":
@@ -244,7 +289,7 @@ class GeneralizedStateMerging:
             if red_node not in partitions:
                 p = red_node.shallow_copy()
                 partitions[red_node] = p
-                remaining_nodes[red_node] = p
+                partitioning.partitions[red_node] = p
             else:
                 p = partitions[red_node]
             if blue_node is not None:
@@ -264,7 +309,7 @@ class GeneralizedStateMerging:
             if self.compatibility_behavior == "partition":
                 info = self.info_update(partition, blue, info)
                 if not self.compute_local_score(partition, blue, info) :
-                    return False, dict()
+                    return partitioning
 
             for in_sym, blue_transitions in blue.transitions.items():
                 partition_transitions = partition.get_transitions_safe(in_sym)
@@ -274,7 +319,7 @@ class GeneralizedStateMerging:
                         q.append((partition_transition.target, blue_transition.target, info))
                         partition_transition.count += blue_transition.count
                     else:
-                        # blue_child is blue after merging if there is a red state in the partition
+                        # blue_child is blue after merging if there is a red state in blue's partition
                         partition_transition = TransitionInfo(blue_transition.target, blue_transition.count, None, 0)
                         partition_transitions[out_sym] = partition_transition
 
@@ -282,8 +327,9 @@ class GeneralizedStateMerging:
             for new_node, old_node in partitions.items():
                 info = self.info_update(new_node, old_node, None)
                 if not self.compute_local_score(new_node, old_node, info):
-                    return False, dict()
-        return True, remaining_nodes
+                    return partitioning
+        partitioning.score = True
+        return partitioning
 
 
 # TODO nicer interface?
