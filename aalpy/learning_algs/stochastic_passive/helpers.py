@@ -66,22 +66,12 @@ class Node:
         self.prefix : Prefix = prefix
 
     def __lt__(self, other):
-        # TODO maybe check whether inputs / outputs implement __lt__
         if len(self.prefix) != len(other.prefix):
             return len(self.prefix) < len(other.prefix)
-
-        class SafeCmp:
-            def __init__(self, val):
-                self.val = val
-
-            def __lt__(self, other):
-                try:
-                    return self.val < other.val
-                except TypeError:
-                    return str(self.val) < str(other.val)
-
-        s_prefix, o_prefix = ([(SafeCmp(i), SafeCmp(o)) for i,o in x.prefix] for x in [self, other])
-        return s_prefix < o_prefix
+        try:
+            return self.prefix < other.prefix
+        except TypeError:
+            return [str(x) for x in self.prefix] < [str(x) for x in other.prefix]
 
     def __eq__(self, other):
         return self.prefix == other.prefix
