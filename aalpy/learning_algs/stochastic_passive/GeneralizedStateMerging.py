@@ -212,7 +212,7 @@ class GeneralizedStateMerging:
             red, blue, info = q.popleft()
 
             info = self.info_update(red, blue, info)
-            if not self.compute_local_score(red, blue, info):
+            if self.compute_local_score(red, blue, info) is False:
                 return False
 
             for in_sym, blue_transitions in blue.transitions.items():
@@ -269,7 +269,7 @@ class GeneralizedStateMerging:
 
             if self.compatibility_behavior == "partition":
                 info = self.info_update(partition, blue, info)
-                if not self.compute_local_score(partition, blue, info) :
+                if self.compute_local_score(partition, blue, info) is False:
                     return partitioning
 
             for in_sym, blue_transitions in blue.transitions.items():
@@ -287,7 +287,7 @@ class GeneralizedStateMerging:
         if self.compatibility_behavior == "merge":
             for new_node, old_node in partitions.items():
                 info = self.info_update(new_node, old_node, None)
-                if not self.compute_local_score(new_node, old_node, info):
+                if self.compute_local_score(new_node, old_node, info) is False:
                     return partitioning
         partitioning.score = True
         return partitioning
