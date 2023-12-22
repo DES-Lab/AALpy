@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from math import sqrt, log
 import time
 from typing import Dict, Tuple, Callable, Any, Literal, List
+from collections import deque
 
 from aalpy.learning_algs.stochastic_passive.helpers import Node, OutputBehavior, TransitionBehavior, TransitionInfo
 
@@ -245,10 +246,10 @@ class GeneralizedStateMerging:
         return self.root.to_automaton(self.output_behavior, self.transition_behavior)
 
     def _check_futures(self, red: Node, blue: Node) -> bool:
-        q : List[Tuple[Node, Node, Any]] = [(red, blue, None)]
+        q : deque[Tuple[Node, Node, Any]] = deque([(red, blue, None)])
 
         while len(q) != 0:
-            red, blue, info = q.pop(0)
+            red, blue, info = q.popleft()
 
             info = self.info_update(red, blue, info)
             if not self.compute_local_score(red, blue, info):
@@ -300,10 +301,10 @@ class GeneralizedStateMerging:
         blue_parent = update_partition(self.root.get_by_prefix(blue.prefix[:-1]), None)
         blue_parent.transitions[blue.prefix[-1][0]][blue.prefix[-1][1]].target = red
 
-        q : List[Tuple[Node,Node,Any]] = [(red, blue, None)]
+        q : deque[Tuple[Node,Node,Any]] = deque([(red, blue, None)])
 
         while len(q) != 0:
-            red, blue, info = q.pop(0)
+            red, blue, info = q.popleft()
             partition = update_partition(red, blue)
 
             if self.compatibility_behavior == "partition":
