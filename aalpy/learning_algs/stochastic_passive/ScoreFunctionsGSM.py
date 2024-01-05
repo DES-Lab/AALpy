@@ -59,7 +59,7 @@ def differential_info(part : dict[Node, Node]):
     return partial_llh_old - partial_llh_new, num_params_old - num_params_new
 
 def threshold(value, thresh):
-    if isinstance(value, Callable): # can be applied to global score functions
+    if isinstance(value, Callable): # can be used to wrap global score functions
         return lambda part, info : threshold(value(part, info), thresh)
     return value if thresh < value else False
 
@@ -67,7 +67,7 @@ def likelihood_ratio_global_score(alpha : float) -> GlobalScoreFunction:
     def score_fun(part : dict[Node, Node], info : Any) :
         llh_diff, param_diff = differential_info(part)
         score = scipy.stats.chi2.pdf(2*(llh_diff), param_diff)
-        return threshold(score, alpha) # Not entirely if implemented correctly
+        return threshold(score, alpha) # Not entirely sure if implemented correctly
     return score_fun
 
 def AIC_global_score(alpha : float = 0) -> GlobalScoreFunction:

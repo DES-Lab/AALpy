@@ -125,7 +125,7 @@ class GeneralizedStateMerging:
         if isinstance(data, Node):
             self.root = data
         elif output_behavior == "moore":
-            self.root = Node.createPTA([d[1:] for d in data], data[0][0])
+            self.root = Node.createPTA((d[1:] for d in data), data[0][0])
         else :
             self.root = Node.createPTA(data)
 
@@ -262,18 +262,21 @@ class GeneralizedStateMerging:
             if score is False:
                 return partitioning
 
-        def update_partition(red_node: Node, blue_node: Node) -> Node:
-            if self.compatibility_behavior == "future" and self.global_score is self.default_global_score:
+        # when compatibility is determined only by future and scores are disabled, we need not create partitions.
+        if self.compatibility_behavior == "future" and self.global_score is self.default_global_score:
+            def update_partition(red_node: Node, blue_node: Node) -> Node:
                 return red_node
-            if red_node not in partitions:
-                p = red_node.shallow_copy()
-                partitions[red_node] = p
-                partitioning.partitions[red_node] = p
-            else:
-                p = partitions[red_node]
-            if blue_node is not None:
-                partitions[blue_node] = p
-            return p
+        else:
+            def update_partition(red_node: Node, blue_node: Node) -> Node:
+                if red_node not in partitions:
+                    p = red_node.shallow_copy()
+                    partitions[red_node] = p
+                    partitioning.partitions[red_node] = p
+                else:
+                    p = partitions[red_node]
+                if blue_node is not None:
+                    partitions[blue_node] = p
+                return p
 
         # rewire the blue node's parent
         blue_parent = update_partition(self.root.get_by_prefix(blue.prefix[:-1]), None)
