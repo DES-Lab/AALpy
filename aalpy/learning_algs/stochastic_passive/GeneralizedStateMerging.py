@@ -311,7 +311,7 @@ class GeneralizedStateMerging:
 
 
 # TODO nicer interface?
-def runGSM(data, *,
+def run_GSM(data, *,
            output_behavior : OutputBehavior = "moore",
            transition_behavior : TransitionBehavior = "deterministic",
            compatibility_behavior : CompatibilityBehavior = "partition",
@@ -324,7 +324,7 @@ def runGSM(data, *,
     return GeneralizedStateMerging(**locals()).run()
 
 
-def runAlergia(data, output_behavior : OutputBehavior = "moore", epsilon : float = 0.005, **kwargs) :
+def run_alergia(data, output_behavior : OutputBehavior = "moore", epsilon : float = 0.005, **kwargs) :
     return GeneralizedStateMerging(
         data,
         output_behavior=output_behavior,
