@@ -72,13 +72,16 @@ class DebugInfoGSM(DebugInfo):
             self.instance.root.visualize("model",self.instance.output_behavior)
 
 class GeneralizedStateMerging:
-    def __init__(self, data, output_behavior : OutputBehavior = "moore",
+    def __init__(self, data, *,
+                 output_behavior : OutputBehavior = "moore",
                  transition_behavior : TransitionBehavior = "deterministic",
                  compatibility_behavior : CompatibilityBehavior = "partition",
-                 local_score : ScoreFunction = None, info_update : Callable[[Node, Node, Any],Any] = None,
+                 local_score : LocalScoreFunction = None,
+                 info_init : Callable[[], Any] = None,
+                 global_score : GlobalScoreFunction = None,
                  eval_compat_on_pta : bool = False,
-                 node_order : Callable[[Node,Node],bool] = None,
-                 debug_lvl=0):
+                 node_order : Callable[[Node, Node], bool] = None,
+                 debug_lvl = 0):
         self.eval_compat_on_pta = eval_compat_on_pta
         self.data = data
         self.debug = DebugInfoGSM(debug_lvl, self)
@@ -93,16 +96,20 @@ class GeneralizedStateMerging:
             raise ValueError(f"invalid compatibility behavior {compatibility_behavior}")
         self.compatibility_behavior : CompatibilityBehavior = compatibility_behavior
 
-        if info_update is None:
-            info_update = lambda a, b, c : c
-        self.info_update = info_update
-
         if local_score is None:
             match transition_behavior:
                 case "deterministic" : local_score = lambda x,y,_ : True
                 case "nondeterministic" : local_score = non_det_compatibility(20)
                 case "stochastic" : local_score = hoeffding_compatibility(0.005)
-        self.local_score : ScoreFunction = local_score
+        self.local_score : LocalScoreFunction = local_score
+
+        if info_init is None:
+            info_init = lambda : None
+        self.info_init : Callable[[], Any] = info_init
+
+        if global_score is None:
+            global_score = self.default_global_score
+        self.global_score : GlobalScoreFunction = global_score
 
         if node_order is None:
             node_order = Node.__lt__
@@ -122,6 +129,10 @@ class GeneralizedStateMerging:
         if transition_behavior == "deterministic":
             if not self.root.is_deterministic():
                 raise ValueError("required deterministic automaton but input data is nondeterministic")
+
+    @staticmethod
+    def default_global_score(part : dict[Node, Node], info : Any):
+        return True
 
     def compute_local_score(self, a : Node, b : Node, info : Any):
         if self.output_behavior == "moore" and not Node.moore_compatible(a,b):
@@ -178,14 +189,14 @@ class GeneralizedStateMerging:
                     break
 
                 # no merge candidates for this blue state -> promote
-                if all(part.score is not False for part in current_candidates.values()) == 0:
+                if all(part.score is False for part in current_candidates.values()):
                     red_states.append(blue_state)
                     self.debug.log_promote(blue_state, red_states)
                     promotion = True
                     break
 
                 # update tracking dict with new candidates
-                new_candidates = (((red, blue_state), part) for red, part in current_candidates.items())
+                new_candidates = (((red, blue_state), part) for red, part in current_candidates.items() if part.score is not False)
                 partition_candidates.update(new_candidates)
 
             # a state was promoted -> don't clear candidates
@@ -198,7 +209,7 @@ class GeneralizedStateMerging:
             # FUTURE: caching for aggregating compatibility tests
             partition_candidates.clear()
             for real_node, partition_node in best_candidate.partitions.items():
-                    real_node.transitions = partition_node.transitions
+                real_node.transitions = partition_node.transitions
             self.debug.log_merge(red, blue)
 
         self.debug.learning_done(red_states, start_time)
@@ -206,12 +217,13 @@ class GeneralizedStateMerging:
         return self.root.to_automaton(self.output_behavior, self.transition_behavior)
 
     def _check_futures(self, red: Node, blue: Node) -> bool:
-        q : deque[Tuple[Node, Node, Any]] = deque([(red, blue, None)])
+        q : deque[Tuple[Node, Node]] = deque([(red, blue)])
+
+        info = self.info_init()
 
         while len(q) != 0:
-            red, blue, info = q.popleft()
+            red, blue = q.popleft()
 
-            info = self.info_update(red, blue, info)
             if self.compute_local_score(red, blue, info) is False:
                 return False
 
@@ -224,11 +236,11 @@ class GeneralizedStateMerging:
                     if self.eval_compat_on_pta:
                         if blue_child.original_count == 0 or red_child.original_count == 0:
                             continue
-                        q.append((red_child.original_target, blue_child.original_target, info))
+                        q.append((red_child.original_target, blue_child.original_target))
                     else:
-                        q.append((red_child.target, blue_child.target, info))
+                        q.append((red_child.target, blue_child.target))
 
-        return True
+        return self.global_score(dict(), info) # TODO include more information?
 
     def _partition_from_merge(self, red: Node, blue: Node) -> Partitioning :
         """
@@ -245,7 +257,7 @@ class GeneralizedStateMerging:
                 return partitioning
 
         def update_partition(red_node: Node, blue_node: Node) -> Node:
-            if self.compatibility_behavior == "future":
+            if self.compatibility_behavior == "future" and self.global_score is self.default_global_score:
                 return red_node
             if red_node not in partitions:
                 p = red_node.shallow_copy()
@@ -261,14 +273,19 @@ class GeneralizedStateMerging:
         blue_parent = update_partition(self.root.get_by_prefix(blue.prefix[:-1]), None)
         blue_parent.transitions[blue.prefix[-1][0]][blue.prefix[-1][1]].target = red
 
-        q : deque[Tuple[Node,Node,Any]] = deque([(red, blue, None)])
+        q : deque[Tuple[Node, Node]] = deque([(red, blue)])
+
+        info = self.info_init()
 
         while len(q) != 0:
-            red, blue, info = q.popleft()
+            # TODO does it hurt to switch from breadth first to depth first?
+            # if it were depth first, we could add a second pass for aggregating scores. we just need to
+            # 1) add a dict tracking scores.
+            # 2) enhance the queue by adding a flag for aggregation and push self after all children
+            red, blue = q.popleft()
             partition = update_partition(red, blue)
 
             if self.compatibility_behavior == "partition":
-                info = self.info_update(partition, blue, info)
                 if self.compute_local_score(partition, blue, info) is False:
                     return partitioning
 
@@ -277,7 +294,7 @@ class GeneralizedStateMerging:
                 for out_sym, blue_transition in blue_transitions.items():
                     partition_transition = partition_transitions.get(out_sym)
                     if partition_transition is not None:
-                        q.append((partition_transition.target, blue_transition.target, info))
+                        q.append((partition_transition.target, blue_transition.target))
                         partition_transition.count += blue_transition.count
                     else:
                         # blue_child is blue after merging if there is a red state in blue's partition
@@ -285,27 +302,35 @@ class GeneralizedStateMerging:
                         partition_transitions[out_sym] = partition_transition
 
         if self.compatibility_behavior == "merge":
-            for new_node, old_node in partitions.items():
-                info = self.info_update(new_node, old_node, None)
+            for old_node, new_node in partitions.items():
                 if self.compute_local_score(new_node, old_node, info) is False:
                     return partitioning
-        partitioning.score = True
+
+        partitioning.score = self.global_score(partitions, info)
         return partitioning
 
 
 # TODO nicer interface?
-def runGSM(
-        data, output_behavior : OutputBehavior = "moore",
-        transition_behavior : TransitionBehavior = "deterministic",
-        compatibility_behavior : CompatibilityBehavior = "partition",
-        local_score : ScoreFunction = None, info_update : Callable[[Node, Node, Any],Any] = None,
-        eval_compat_on_pta : bool = False, node_order : Callable[[Node, Node], bool] = None, debug_lvl=0
-    ) :
-    return GeneralizedStateMerging(data, output_behavior, transition_behavior, compatibility_behavior, local_score, info_update, eval_compat_on_pta, node_order, debug_lvl).run()
+def runGSM(data, *,
+           output_behavior : OutputBehavior = "moore",
+           transition_behavior : TransitionBehavior = "deterministic",
+           compatibility_behavior : CompatibilityBehavior = "partition",
+           local_score : LocalScoreFunction = None,
+           info_init : Callable[[], Any] = None,
+           global_score : GlobalScoreFunction = None,
+           eval_compat_on_pta : bool = False,
+           node_order : Callable[[Node, Node], bool] = None,
+           debug_lvl = 0):
+    return GeneralizedStateMerging(**locals()).run()
 
 
-def runAlergia(data, output_behavior : OutputBehavior = "moore", epsilon : float = 0.005) :
+def runAlergia(data, output_behavior : OutputBehavior = "moore", epsilon : float = 0.005, **kwargs) :
     return GeneralizedStateMerging(
-        data, output_behavior, "stochastic", "future",
-        hoeffding_compatibility(epsilon), eval_compat_on_pta=True, debug_lvl=1
+        data,
+        output_behavior=output_behavior,
+        transition_behavior="stochastic",
+        compatibility_behavior="future",
+        local_score=hoeffding_compatibility(epsilon),
+        eval_compat_on_pta=True,
+        **kwargs
     ).run()

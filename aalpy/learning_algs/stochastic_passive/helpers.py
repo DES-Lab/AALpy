@@ -1,3 +1,4 @@
+import math
 import pathlib
 from functools import total_ordering
 from typing import Dict, Any, List, Tuple, Literal, Iterable, Callable, NamedTuple
@@ -292,3 +293,16 @@ class Node:
 
     def moore_compatible(self, other : 'Node'):
         return self.prefix[-1][1] == other.prefix[-1][1]
+
+    def local_log_likelihood_contribution(self):
+        llc = 0
+        for in_sym, trans in self.transitions.items():
+            total_count = 0
+            for out_sym, info in trans.items():
+                total_count += info.count
+                llc += info.count * math.log(info.count)
+            llc -= total_count * math.log(total_count)
+        return llc
+
+    def local_count(self):
+        return sum(trans.count for _, trans in self.transition_iterator())
