@@ -81,6 +81,8 @@ class GeneralizedStateMerging:
                  global_score : GlobalScoreFunction = None,
                  eval_compat_on_pta : bool = False,
                  node_order : Callable[[Node, Node], bool] = None,
+                 consider_all_blue_states = False,
+                 depth_first = False,
                  debug_lvl = 0):
         self.eval_compat_on_pta = eval_compat_on_pta
         self.data = data
@@ -114,6 +116,9 @@ class GeneralizedStateMerging:
         if node_order is None:
             node_order = Node.__lt__
         self.node_order = functools.cmp_to_key(lambda a, b: -1 if node_order(a,b) else 1)
+
+        self.consider_all_blue_states = consider_all_blue_states
+        self.depth_first = depth_first
 
         pta_construction_start = time.time()
         self.root: Node
@@ -157,7 +162,7 @@ class GeneralizedStateMerging:
                     if c in red_states:
                         continue
                     blue_states.append(c)
-                    if True: # FUTURE support for loop over blue states?
+                    if not self.consider_all_blue_states:
                         blue_states = [min(blue_states, key=self.node_order)]
 
             # no blue states left -> done
@@ -218,11 +223,12 @@ class GeneralizedStateMerging:
 
     def _check_futures(self, red: Node, blue: Node) -> bool:
         q : deque[Tuple[Node, Node]] = deque([(red, blue)])
+        pop = q.pop if self.depth_first else q.popleft
 
         info = self.info_init()
 
         while len(q) != 0:
-            red, blue = q.popleft()
+            red, blue = pop()
 
             if self.compute_local_score(red, blue, info) is False:
                 return False
@@ -274,15 +280,12 @@ class GeneralizedStateMerging:
         blue_parent.transitions[blue.prefix[-1][0]][blue.prefix[-1][1]].target = red
 
         q : deque[Tuple[Node, Node]] = deque([(red, blue)])
+        pop = q.pop if self.depth_first else q.popleft
 
         info = self.info_init()
 
         while len(q) != 0:
-            # TODO does it hurt to switch from breadth first to depth first?
-            # if it were depth first, we could add a second pass for aggregating scores. we just need to
-            # 1) add a dict tracking scores.
-            # 2) enhance the queue by adding a flag for aggregation and push self after all children
-            red, blue = q.popleft()
+            red, blue = pop()
             partition = update_partition(red, blue)
 
             if self.compatibility_behavior == "partition":
@@ -320,6 +323,8 @@ def run_GSM(data, *,
            global_score : GlobalScoreFunction = None,
            eval_compat_on_pta : bool = False,
            node_order : Callable[[Node, Node], bool] = None,
+           consider_all_blue_states = False,
+           depth_first = False,
            debug_lvl = 0):
     return GeneralizedStateMerging(**locals()).run()
 
