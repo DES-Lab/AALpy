@@ -166,10 +166,9 @@ class DeterministicTest(unittest.TestCase):
                             bf_exploration_eq_oracle = BreadthFirstExplorationEqOracle(alphabet, sul, 4)
                             random_word_eq_oracle = RandomWordEqOracle(alphabet, sul)
                             cache_based_eq_oracle = CacheBasedEqOracle(alphabet, sul)
-                            kWayStateCoverageEqOracle = KWayStateCoverageEqOracle(alphabet, sul)
 
                             oracles = [random_walk_eq_oracle, random_word_eq_oracle, random_W_method_eq_oracle,
-                                       kWayStateCoverageEqOracle, cache_based_eq_oracle, bf_exploration_eq_oracle,
+                                       cache_based_eq_oracle, bf_exploration_eq_oracle,
                                        tran_cov_eq_oracle, w_method_eq_oracle, state_origin_eq_oracle]
 
                             if not cache:

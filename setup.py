@@ -7,7 +7,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='aalpy',
-    version='1.3.3',
+    version='1.4.0',
     packages=['aalpy', 'aalpy.base', 'aalpy.SULs', 'aalpy.utils', 'aalpy.oracles', 'aalpy.automata',
               'aalpy.learning_algs', 'aalpy.learning_algs.stochastic', 'aalpy.learning_algs.deterministic',
               'aalpy.learning_algs.non_deterministic',
@@ -15,15 +15,15 @@ setup(
     url='https://github.com/DES-Lab/AALpy',
     license='MIT',
     license_files=('LICENSE.txt',),
-    long_description = long_description,
+    long_description=long_description,
     long_description_content_type='text/markdown',
     author='Edi Muskardin',
     author_email='edi.muskardin@silicon-austria.com',
     description='An active automata learning library',
     classifiers=[
-            "Programming Language :: Python :: 3",
-            "License :: OSI Approved :: MIT License",
-            "Operating System :: OS Independent"
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent"
     ],
     install_requires=['pydot'],
     python_requires=">=3.6",
