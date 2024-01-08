@@ -11,8 +11,7 @@ from aalpy.learning_algs.stochastic_passive.ScoreFunctionsGSM import *
 # TODO make non-mutual exclusive
 # future: Only compare futures of states
 # partition: Check compatibility while partition is created
-# merge: Check compatibility after partition is created
-CompatibilityBehavior = Literal["future", "partition", "merge"]
+CompatibilityBehavior = Literal["future", "partition"]
 
 @dataclass
 class Partitioning:
@@ -76,7 +75,7 @@ class GeneralizedStateMerging:
                  output_behavior : OutputBehavior = "moore",
                  transition_behavior : TransitionBehavior = "deterministic",
                  compatibility_behavior : CompatibilityBehavior = "partition",
-                 local_score : LocalScoreFunction = None,
+                 local_score : LocalCompatibilityFunction = None,
                  info_init : Callable[[], Any] = None,
                  global_score : GlobalScoreFunction = None,
                  eval_compat_on_pta : bool = False,
@@ -102,8 +101,8 @@ class GeneralizedStateMerging:
             match transition_behavior:
                 case "deterministic" : local_score = lambda x,y,_ : True
                 case "nondeterministic" : local_score = non_det_compatibility(20)
-                case "stochastic" : local_score = hoeffding_compatibility(0.005)
-        self.local_score : LocalScoreFunction = local_score
+                case "stochastic" : local_score = hoeffding_compatibility(0.005, self.eval_compat_on_pta)
+        self.local_score : LocalCompatibilityFunction = local_score
 
         if info_init is None:
             info_init = lambda : None
@@ -144,7 +143,7 @@ class GeneralizedStateMerging:
             return False
         if self.transition_behavior == "deterministic" and not Node.deterministic_compatible(a,b):
             return False
-        return self.local_score(a, b, info, self.eval_compat_on_pta)
+        return self.local_score(a, b, info)
 
     def run(self):
         start_time = time.time()
@@ -246,7 +245,7 @@ class GeneralizedStateMerging:
                     else:
                         q.append((red_child.target, blue_child.target))
 
-        return self.global_score(dict(), info) # TODO include more information?
+        return True
 
     def _partition_from_merge(self, red: Node, blue: Node) -> Partitioning :
         """
@@ -307,28 +306,23 @@ class GeneralizedStateMerging:
                         partition_transition = TransitionInfo(blue_transition.target, blue_transition.count, None, 0)
                         partition_transitions[out_sym] = partition_transition
 
-        if self.compatibility_behavior == "merge":
-            for old_node, new_node in partitions.items():
-                if self.compute_local_score(new_node, old_node, info) is False:
-                    return partitioning
-
         partitioning.score = self.global_score(partitions, info)
         return partitioning
 
 
 # TODO nicer interface?
 def run_GSM(data, *,
-           output_behavior : OutputBehavior = "moore",
-           transition_behavior : TransitionBehavior = "deterministic",
-           compatibility_behavior : CompatibilityBehavior = "partition",
-           local_score : LocalScoreFunction = None,
-           info_init : Callable[[], Any] = None,
-           global_score : GlobalScoreFunction = None,
-           eval_compat_on_pta : bool = False,
-           node_order : Callable[[Node, Node], bool] = None,
-           consider_all_blue_states = False,
-           depth_first = False,
-           debug_lvl = 0):
+            output_behavior : OutputBehavior = "moore",
+            transition_behavior : TransitionBehavior = "deterministic",
+            compatibility_behavior : CompatibilityBehavior = "partition",
+            local_score : LocalCompatibilityFunction = None,
+            info_init : Callable[[], Any] = None,
+            global_score : GlobalScoreFunction = None,
+            eval_compat_on_pta : bool = False,
+            node_order : Callable[[Node, Node], bool] = None,
+            consider_all_blue_states = False,
+            depth_first = False,
+            debug_lvl = 0):
     return GeneralizedStateMerging(**locals()).run()
 
 
@@ -338,7 +332,7 @@ def run_alergia(data, output_behavior : OutputBehavior = "moore", epsilon : floa
         output_behavior=output_behavior,
         transition_behavior="stochastic",
         compatibility_behavior="future",
-        local_score=hoeffding_compatibility(epsilon),
+        local_score=hoeffding_compatibility(epsilon, True),
         eval_compat_on_pta=True,
         **kwargs
     ).run()

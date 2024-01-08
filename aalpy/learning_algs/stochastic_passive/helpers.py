@@ -1,8 +1,10 @@
 import math
 import pathlib
+from dataclasses import dataclass
 from functools import total_ordering
 from typing import Dict, Any, List, Tuple, Literal, Iterable, Callable, NamedTuple
 import pydot
+from copy import copy
 
 from aalpy.automata import StochasticMealyMachine, StochasticMealyState, MooreState, MooreMachine, NDMooreState, \
     NDMooreMachine, Mdp, MdpState, MealyMachine, MealyState, Onfsm, OnfsmState
@@ -38,15 +40,14 @@ def generate_values(base : list, step : Callable, backing_set=True):
                     result.append(new_val)
         return result
 
-# TODO maybe split this for maintainability (and perfomance?)
-class TransitionInfo:
-    __slots__ = ["target", "count", "original_target", "original_count"]
 
-    def __init__(self, target, count, orig_target, orig_count):
-        self.target : 'Node' = target
-        self.count : int = count
-        self.original_target : 'Node' = orig_target
-        self.original_count : int = orig_count
+# TODO maybe split this for maintainability (and perfomance?)
+@dataclass(slots=True)
+class TransitionInfo:
+    target : 'Node'
+    count : int
+    original_target : 'Node'
+    original_count : int
 
 @total_ordering
 class Node:
@@ -97,7 +98,7 @@ class Node:
         for in_sym, t in self.transitions.items():
             d = dict()
             for out_sym, v in t.items():
-                d[out_sym] = TransitionInfo(v.target, v.count, v.original_target, v.original_count)
+                d[out_sym] = copy(v)
             node.transitions[in_sym] = d
         return node
 
@@ -253,7 +254,7 @@ class Node:
             info = transitions.get(out_sym)
             if info is None:
                 node = Node(curr_node.prefix + [IOPair(in_sym, out_sym)])
-                transitions[out_sym] = TransitionInfo(node,1, node, 1)
+                transitions[out_sym] = TransitionInfo(node, 1, node, 1)
             else:
                 info.count += 1
                 info.original_count += 1

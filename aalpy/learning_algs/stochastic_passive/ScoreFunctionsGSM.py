@@ -6,36 +6,32 @@ import scipy
 from aalpy.learning_algs.stochastic_passive.helpers import Node
 
 Score = bool | float
-LocalScoreFunction = Callable[[Node, Node, Any, bool], Score]
+LocalCompatibilityFunction = Callable[[Node, Node, Any], bool]
 GlobalScoreFunction = Callable[[dict[Node, Node], Any], Score]
 
-def hoeffding_compatibility(eps) -> LocalScoreFunction:
-    def similar(a: Node, b: Node, _: Any, compare_original):
+def hoeffding_compatibility(eps, compare_original) -> LocalCompatibilityFunction:
+    eps_fact = sqrt(0.5 * log(2 / eps))
+    count_name = "original_count" if compare_original else "count"
+
+    def similar(a: Node, b: Node, _: Any):
+
         for in_sym in filter(lambda x : x in a.transitions.keys(), b.transitions.keys()):
             # could create appropriate dict here
             a_trans, b_trans = (x.transitions[in_sym] for x in [a,b])
-            if compare_original:
-                a_total, b_total = (sum(x.original_count for x in x.values()) for x in (a_trans, b_trans))
-            else:
-                a_total, b_total = (sum(x.count for x in x.values()) for x in (a_trans, b_trans))
+            a_total, b_total = (sum(getattr(x, count_name) for x in trans.values()) for trans in (a_trans, b_trans))
             if a_total == 0 or b_total == 0:
                 continue
-            threshold = ((sqrt(1 / a_total) + sqrt(1 / b_total)) * sqrt(0.5 * log(2 / eps)))
+            threshold = eps_fact * (sqrt(1 / a_total) + sqrt(1 / b_total))
             for out_sym in set(a_trans.keys()).union(b_trans.keys()):
-                if compare_original:
-                    ac, bc = (x[out_sym].original_count if out_sym in x else 0 for x in (a_trans, b_trans))
-                else:
-                    ac, bc = (x[out_sym].count if out_sym in x else 0 for x in (a_trans, b_trans))
+                ac, bc = (getattr(x[out_sym], count_name) if out_sym in x else 0 for x in (a_trans, b_trans))
                 if abs(ac / a_total - bc / b_total) > threshold:
                     return False
         return True
     return similar
 
-def non_det_compatibility(eps) -> LocalScoreFunction:
+def non_det_compatibility(eps) -> LocalCompatibilityFunction:
     print("Warning: using experimental compatibility criterion for nondeterministic automata")
-    def similar(a: Node, b: Node, _: Any, compare_original : bool):
-        if compare_original:
-            raise NotImplementedError()
+    def similar(a: Node, b: Node, _: Any):
         for in_sym in filter(lambda x : x in a.transitions.keys(), b.transitions.keys()):
             a_trans, b_trans = (x.transitions[in_sym] for x in [a,b])
             a_total, b_total = (sum(x.count for x in x.values()) for x in (a_trans, b_trans))
@@ -45,6 +41,14 @@ def non_det_compatibility(eps) -> LocalScoreFunction:
                 return False
         return True
     return similar
+
+def local_to_global_score(local_fun : LocalCompatibilityFunction) -> GlobalScoreFunction:
+    def fun(part : dict[Node, Node], info):
+        for old_node, new_node in part.items():
+            if local_fun(new_node, old_node, info) is False:
+                return False
+        return True
+    return fun
 
 def differential_info(part : dict[Node, Node]):
     relevant_nodes_old = list(part.keys())
@@ -59,8 +63,10 @@ def differential_info(part : dict[Node, Node]):
     return partial_llh_old - partial_llh_new, num_params_old - num_params_new
 
 def threshold(value, thresh):
-    if isinstance(value, Callable): # can be used to wrap global score functions
-        return lambda part, info : threshold(value(part, info), thresh)
+    if isinstance(value, Callable): # can be used to wrap score functions
+        def fun(*args, **kwargs):
+            return threshold(value(*args, **kwargs), thresh)
+        return fun
     return value if thresh < value else False
 
 def likelihood_ratio_global_score(alpha : float) -> GlobalScoreFunction:
