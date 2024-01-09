@@ -6,15 +6,42 @@ import scipy
 from aalpy.learning_algs.stochastic_passive.helpers import Node
 
 Score = bool | float
-LocalCompatibilityFunction = Callable[[Node, Node, Any], bool]
-GlobalScoreFunction = Callable[[dict[Node, Node], Any], Score]
+LocalScoreFunction = Callable[[Node, Node], Score]
+GlobalScoreFunction = Callable[[dict[Node, Node]], Score]
 
-def hoeffding_compatibility(eps, compare_original) -> LocalCompatibilityFunction:
+class ScoreCalculation:
+    def __init__(self, local_score : LocalScoreFunction = None, global_score : GlobalScoreFunction = None):
+        # This is a hack that gives an simple implementation where we can easily
+        # - determine whether the default is overridden (for optimization)
+        # - override behavior in a functional way by providing the functions as arguments (no extra class)
+        # - override behavior in a stateful way by implementing a new class
+        if not hasattr(self, "local_score"):
+            self.local_score = local_score or self.default_local_score
+        if not hasattr(self, "global_score"):
+            self.global_score = global_score or self.default_global_score
+
+    def reset(self):
+        pass
+
+    @staticmethod
+    def default_local_score(a, b):
+        return True
+
+    @staticmethod
+    def default_global_score(part):
+        return True
+
+    def has_default_global_score(self):
+        return self.global_score is self.default_global_score
+
+    def has_default_local_score(self):
+        return self.local_score is self.default_local_score
+
+def hoeffding_compatibility(eps, compare_original = True) -> LocalScoreFunction:
     eps_fact = sqrt(0.5 * log(2 / eps))
     count_name = "original_count" if compare_original else "count"
 
-    def similar(a: Node, b: Node, _: Any):
-
+    def similar(a: Node, b: Node):
         for in_sym in filter(lambda x : x in a.transitions.keys(), b.transitions.keys()):
             # could create appropriate dict here
             a_trans, b_trans = (x.transitions[in_sym] for x in [a,b])
@@ -29,7 +56,7 @@ def hoeffding_compatibility(eps, compare_original) -> LocalCompatibilityFunction
         return True
     return similar
 
-def non_det_compatibility(eps) -> LocalCompatibilityFunction:
+def non_det_compatibility(eps) -> LocalScoreFunction:
     print("Warning: using experimental compatibility criterion for nondeterministic automata")
     def similar(a: Node, b: Node, _: Any):
         for in_sym in filter(lambda x : x in a.transitions.keys(), b.transitions.keys()):
@@ -42,10 +69,10 @@ def non_det_compatibility(eps) -> LocalCompatibilityFunction:
         return True
     return similar
 
-def local_to_global_score(local_fun : LocalCompatibilityFunction) -> GlobalScoreFunction:
-    def fun(part : dict[Node, Node], info):
+def local_to_global_score(local_fun : LocalScoreFunction) -> GlobalScoreFunction:
+    def fun(part : dict[Node, Node]):
         for old_node, new_node in part.items():
-            if local_fun(new_node, old_node, info) is False:
+            if local_fun(new_node, old_node) is False:
                 return False
         return True
     return fun
@@ -62,28 +89,28 @@ def differential_info(part : dict[Node, Node]):
 
     return partial_llh_old - partial_llh_new, num_params_old - num_params_new
 
-def threshold(value, thresh):
+def lower_threshold(value, thresh):
     if isinstance(value, Callable): # can be used to wrap score functions
         def fun(*args, **kwargs):
-            return threshold(value(*args, **kwargs), thresh)
+            return lower_threshold(value(*args, **kwargs), thresh)
         return fun
     return value if thresh < value else False
 
 def likelihood_ratio_global_score(alpha : float) -> GlobalScoreFunction:
-    def score_fun(part : dict[Node, Node], info : Any) :
+    def score_fun(part : dict[Node, Node]) :
         llh_diff, param_diff = differential_info(part)
         score = scipy.stats.chi2.pdf(2*(llh_diff), param_diff)
-        return threshold(score, alpha) # Not entirely sure if implemented correctly
+        return lower_threshold(score, alpha) # Not entirely sure if implemented correctly
     return score_fun
 
 def AIC_global_score(alpha : float = 0) -> GlobalScoreFunction:
-    def score(part : dict[Node, Node], info : Any) :
+    def score(part : dict[Node, Node]) :
         llh_diff, param_diff = differential_info(part)
-        return threshold(param_diff - llh_diff, alpha)
+        return lower_threshold(param_diff - llh_diff, alpha)
     return score
 
 def EDSM_global_score(min_evidence = -1) -> GlobalScoreFunction:
-    def score(part : dict[Node, Node], info : Any):
+    def score(part : dict[Node, Node]):
         total_evidence = 0
         for old_node, new_node in part.items():
             for in_sym, trans_old in old_node.transitions.items():
@@ -93,5 +120,5 @@ def EDSM_global_score(min_evidence = -1) -> GlobalScoreFunction:
                 for out_sym, trans_info in trans_old.items():
                     if out_sym in trans_new:
                         total_evidence += trans_info.count
-        return threshold(total_evidence, min_evidence)
+        return lower_threshold(total_evidence, min_evidence)
     return score
