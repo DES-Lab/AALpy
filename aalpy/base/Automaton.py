@@ -107,7 +107,8 @@ class Automaton(ABC, Generic[AutomatonStateType]):
                 return False
         return True
 
-    def get_input_alphabet(self) -> list:
+    # returns a list which is input alphabet, or a sevpa alphabet in case of VPAs
+    def get_input_alphabet(self):
         """
         Returns the input alphabet
         """
@@ -155,14 +156,14 @@ class Automaton(ABC, Generic[AutomatonStateType]):
 
     @staticmethod
     @abstractmethod
-    def from_state_setup(state_setup: dict):
+    def from_state_setup(state_setup: dict, **kwargs) -> 'Automaton':
         pass
 
     @abstractmethod
     def to_state_setup(self):
         pass
 
-    def copy(self):
+    def copy(self) -> 'Automaton':
         return self.from_state_setup(self.to_state_setup())
 
     def __reduce__(self):
@@ -440,3 +441,7 @@ class DeterministicAutomaton(Automaton[AutomatonStateType]):
             s1, s2 = self.compute_characterization_set(return_same_states=True)
 
         self.compute_prefixes()
+
+    def __eq__(self, other):
+        from aalpy.utils import bisimilar
+        return bisimilar(self, other)

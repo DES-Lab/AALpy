@@ -49,7 +49,7 @@ class MealyMachine(DeterministicAutomaton[MealyState[InputType, OutputType]]):
         return state_setup_dict
 
     @staticmethod
-    def from_state_setup(state_setup : dict):
+    def from_state_setup(state_setup : dict, **kwargs):
         """
             First state in the state setup is the initial state.
             state_setup = {

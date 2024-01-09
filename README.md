@@ -20,23 +20,24 @@ You can start learning automata in just a few lines of code.
 
 Whether you work with regular languages or you would like to learn models of 
 (black-box) reactive systems, AALpy supports a wide range of modeling formalisms, including 
-**deterministic**, **non-deterministic**, and **stochastic automata**. 
+**deterministic**, **non-deterministic**, and **stochastic automata**, 
+as well as **deterministic context-free grammars/pushdown automata**. 
 
 <div align="center">
-	
+   
 | **Automata Type** |                      **Supported Formalisms**                     | **Algorithms**        |                                                       **Features** |
 |-------------------|:-----------------------------------------------------------------:|-----------------------|-------------------------------------------------------------------:|
-| Deterministic     |                 DFAs <br /> Mealy Machines <br /> Moore Machines                 |      L* <br /> KV <br /> RPNI      | Seamless Caching <br /> Counterexample Processing <br /> 11 Equivalence Oracles  |
+| Deterministic     |                 DFAs <br /> Mealy Machines <br /> Moore Machines                 |      L* <br /> KV <br /> RPNI      | Seamless Caching <br /> Counterexample Processing <br /> 13 Equivalence Oracles  |
 | Non-Deterministic |                      ONFSM <br /> Abstracted ONFSM                      |        L*<sub>ONFSM</sub>       |                                 Size Reduction  Trough Abstraction |
 | Stochastic        | Markov Decision Processes <br /> Stochastic Mealy Machines <br /> Markov Chains | L*<sub>MDP</sub> <br /> L*<sub>SMM</sub> <br /> ALERGIA |               Counterexample Processing <br /> Exportable to PRISM format  <br /> Bindings to jALERGIA|
-
+| Pushdown          |          VPDA/SEVPA                                                            | KV<sub>VPA</sub> | Specification of exclusive <br/> call-return pairs
 </div>
 
 AALpy enables efficient learning by providing a large set of equivalence oracles, implementing various conformance testing strategies. Active learning 
 is mostly based on Angluin's [L* algorithm](https://people.eecs.berkeley.edu/~dawnsong/teaching/s10/papers/angluin87.pdf), for which AALpy supports a 
 selection of optimizations, including efficient counterexample processing caching. However, the recent addition of efficiently implemented 
 [KV](https://mitpress.mit.edu/9780262111935/an-introduction-to-computational-learning-theory/) algorithm
-requires (on average) much less interaction with the system under learning than L*.
+requires (on average) much less interaction with the system under learning than L*. In addition, KV can be used to learn Visibly Deterministic Pushdown Automata (VPDA).
 
 AALpy also includes **passive automata learning algorithms**, namely RPNI for deterministic and ALERGIA for stochastic models. Unlike active algorithms which learn by interaction with the system, passive learning algorithms construct a model based on provided data.
  
@@ -61,9 +62,6 @@ If you are interested in automata learning or would like to understand the autom
 please check out our **Wiki**. On Wiki, you will find more detailed examples on how to use AALpy.
 - <https://github.com/DES-Lab/AALpy/wiki>
 
-For the **official documentation** of all classes and methods, check out:
-- <https://des-lab.github.io/AALpy/documentation/index.html>
-
 ***[Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py)*** contains many examples and it is a great starting point. 
 
 ## Usage
@@ -80,7 +78,7 @@ For more detailed examples, check out:
 - [Interactive Examples](https://github.com/DES-Lab/AALpy/tree/master/notebooks)
 - [Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py)
 
-[Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py) contains examples covering almost the whole AALpy's functionality, and it is a great starting point/reference.
+[Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py) contains examples covering almost the whole of AALpy's functionality, and it is a great starting point/reference.
 [Wiki](https://github.com/DES-Lab/AALpy/wiki) has a step-by-step guide to using AALpy and can help you understand AALpy and automata learning in general. 
 
 <details>
@@ -88,8 +86,9 @@ For more detailed examples, check out:
 
 The following snippet demonstrates a short example in which an automaton is either [loaded](https://github.com/DES-Lab/AALpy/wiki/Loading,Saving,-Syntax-and-Visualization-of-Automata) or [randomly generated](https://github.com/DES-Lab/AALpy/wiki/Generation-of-Random-Automata) and then [learned](https://github.com/DES-Lab/AALpy/wiki/Setting-Up-Learning).
 ```python
-from aalpy.utils import load_automaton_from_file, save_automaton_to_file, visualize_automaton, generate_random_dfa, dfa_from_state_setup
-from aalpy.SULs import DfaSUL
+from aalpy.utils import load_automaton_from_file, save_automaton_to_file, visualize_automaton, generate_random_dfa
+from aalpy.automata import Dfa
+from aalpy.SULs import AutomatonSUL
 from aalpy.oracles import RandomWalkEqOracle
 from aalpy.learning_algs import run_Lstar, run_KV
 
@@ -104,8 +103,7 @@ dfa_state_setup = {
     'q3': (False, {'a': 'q2', 'b': 'q1'})
 }
 
-small_dfa = dfa_from_state_setup(dfa_state_setup)
-
+small_dfa = Dfa.from_state_setup(dfa_state_setup)
 # or randomly generate one
 random_dfa = generate_random_dfa(alphabet=[1,2,3,4,5],num_states=20, num_accepting_states=8)
 big_random_dfa = generate_random_dfa(alphabet=[1,2,3,4,5],num_states=2000, num_accepting_states=500)
@@ -116,7 +114,7 @@ alphabet = random_dfa.get_input_alphabet()
 # loaded or randomly generated automata are considered as BLACK-BOX that is queried
 # learning algorithm has no knowledge about its structure
 # create a SUL instance for the automaton/system under learning
-sul = DfaSUL(random_dfa)
+sul = AutomatonSUL(random_dfa)
 
 # define the equivalence oracle
 eq_oracle = RandomWalkEqOracle(alphabet, sul, num_steps=5000, reset_prob=0.09)

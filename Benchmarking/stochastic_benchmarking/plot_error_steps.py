@@ -107,4 +107,4 @@ def side_by_side():
     # import tikzplotlib
     # tikzplotlib.save("properties_over_time.tex")
 
-side_by_side()
+crash_plot()

@@ -6,7 +6,7 @@ from statistics import mean
 
 import aalpy.paths
 
-from aalpy.SULs import MdpSUL
+from aalpy.SULs import AutomatonSUL
 from aalpy.learning_algs import run_stochastic_Lstar, run_Alergia
 from aalpy.oracles.RandomWordEqOracle import RandomWordEqOracle
 from aalpy.utils import load_automaton_from_file, get_properties_file, get_correct_prop_values, model_check_properties
@@ -43,7 +43,7 @@ res = defaultdict(list)
 #                 original_mdp = model_dict[exp_name]
 #                 input_alphabet = original_mdp.get_input_alphabet()
 #
-#                 mdp_sul = MdpSUL(original_mdp)
+#                 mdp_sul = AutomatonSUL(original_mdp)
 #
 #                 eq_oracle = RandomWordEqOracle(input_alphabet, mdp_sul, num_walks=500, min_walk_len=5,
 #                                                max_walk_len=15, reset_after_cex=True)

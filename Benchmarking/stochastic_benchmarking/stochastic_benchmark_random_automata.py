@@ -1,6 +1,6 @@
 from itertools import product
 
-from aalpy.SULs import MdpSUL
+from aalpy.SULs import AutomatonSUL
 from aalpy.learning_algs import run_stochastic_Lstar
 from aalpy.oracles import RandomWordEqOracle
 from aalpy.utils import generate_random_mdp, generate_random_smm
@@ -14,7 +14,7 @@ outputs_size = [15]
 
 def learn(mdp, type):
     input_al = mdp.get_input_alphabet()
-    sul = MdpSUL(mdp)
+    sul = AutomatonSUL(mdp)
     eq_oracle = RandomWordEqOracle(input_al, sul, num_walks=1000, min_walk_len=4, max_walk_len=20)
     return run_stochastic_Lstar(input_al, sul, eq_oracle, automaton_type=type, cex_processing=None, print_level=0,
                                 return_data=True)

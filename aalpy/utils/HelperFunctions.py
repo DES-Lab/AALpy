@@ -292,7 +292,34 @@ def convert_i_o_traces_for_RPNI(sequences):
 
     for s in sequences:
         for i in range(len(s)):
-            inputs = tuple([io[0] for io in s[:i+1]])
+            inputs = tuple([io[0] for io in s[:i + 1]])
             rpni_sequences.add((inputs, s[i][1]))
 
     return list(rpni_sequences)
+
+
+def visualize_classification_tree(root_node):
+    from pydot import Dot, Node, Edge
+
+    graph = Dot('classification_tree', graph_type='digraph')
+    root_node_dot = Node(id(root_node), shape='box',
+                         label=f'Distinguishing String:\n{root_node.distinguishing_string}')
+    graph.add_node(root_node_dot)
+
+    queue = [(root_node, root_node_dot)]
+
+    while queue:
+        origin_node, origin_node_dot = queue.pop(0)
+
+        for key, child in origin_node.children.items():
+            if child.is_leaf():
+                destination_dot = Node(id(child), label=f'Access String:\n{child.access_string}')
+            else:
+                destination_dot = Node(id(child), shape='box',
+                                       label=f'Distinguishing String:\n{child.distinguishing_string}')
+                queue.append((child, destination_dot))
+            graph.add_node(destination_dot)
+            graph.add_edge(Edge(origin_node_dot, destination_dot, label=key))
+
+    # print(graph.to_string())
+    graph.write(path='classification_tree.pdf', format='pdf')

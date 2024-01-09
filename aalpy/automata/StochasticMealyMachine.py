@@ -8,11 +8,10 @@ from aalpy.base.Automaton import OutputType, InputType
 
 
 class StochasticMealyState(AutomatonState, Generic[InputType, OutputType]):
-    """ """
 
     def __init__(self, state_id):
         super().__init__(state_id)
-        # each child is a tuple (newNode, output, probability)
+        # Each transition is a tuple (newNode, output, probability)
         self.transitions: Dict[InputType, List[Tuple[StochasticMealyState, OutputType, float]]] = defaultdict(list)
 
 
@@ -86,7 +85,7 @@ class StochasticMealyMachine(Automaton[StochasticMealyState[InputType, OutputTyp
         return state_setup_dict
 
     @staticmethod
-    def from_state_setup(state_setup: dict):
+    def from_state_setup(state_setup : dict, **kwargs):
         states_map = {key: StochasticMealyState(key) for key in state_setup.keys()}
 
         for key, values in state_setup.items():
