@@ -1,8 +1,7 @@
 import math
 import pathlib
-from dataclasses import dataclass
 from functools import total_ordering
-from typing import Dict, Any, List, Tuple, Literal, Iterable, Callable, NamedTuple
+from typing import Dict, Any, List, Tuple, Iterable, Callable, NamedTuple, Union
 import pydot
 from copy import copy
 
@@ -10,8 +9,11 @@ from aalpy.automata import StochasticMealyMachine, StochasticMealyState, MooreSt
     NDMooreMachine, Mdp, MdpState, MealyMachine, MealyState, Onfsm, OnfsmState
 from aalpy.base import Automaton
 
-OutputBehavior = Literal["moore", "mealy"]
-TransitionBehavior = Literal["deterministic", "nondeterministic", "stochastic"]
+OutputBehavior = str
+OutputBehaviorRange = ["moore", "mealy"]
+
+TransitionBehavior = str
+TransitionBehaviorRange = ["deterministic", "nondeterministic", "stochastic"]
 
 IOPair = NamedTuple("IOPair", [("input", Any), ("output",Any)])
 Prefix = List[IOPair]
@@ -42,12 +44,14 @@ def generate_values(base : list, step : Callable, backing_set=True):
 
 
 # TODO maybe split this for maintainability (and perfomance?)
-@dataclass(slots=True)
 class TransitionInfo:
-    target : 'Node'
-    count : int
-    original_target : 'Node'
-    original_count : int
+    __slots__ = ["target", "count", "original_target", "original_count"]
+
+    def __init__(self, target, count, original_target, original_count):
+        self.target : 'Node' = target
+        self.count : int = count
+        self.original_target : 'Node' = original_target
+        self.original_count : int = original_count
 
 @total_ordering
 class Node:
@@ -153,13 +157,15 @@ class Node:
         state_map = dict()
         for i, node in enumerate(nodes):
             state_id = f's{i}'
-            match output_behavior:
-                case "mealy" : state = State(state_id)
-                case "moore" : state = State(state_id, node.prefix[-1].output)
+            if output_behavior == "mealy":
+                state = State(state_id)
+            elif output_behavior == "moore":
+                state = State(state_id, node.prefix[-1].output)
             state_map[node] = state
-            match transition_behavior:
-                case "deterministic": state.prefix = tuple(p.input for p in node.prefix)
-                case _: state.prefix = tuple(node.prefix)
+            if transition_behavior == "deterministic":
+                state.prefix = tuple(p.input for p in node.prefix)
+            else:
+                state.prefix = tuple(node.prefix)
 
         initial_state = state_map[self]
 
@@ -171,28 +177,27 @@ class Node:
                 for out_sym, target_node in transitions.items():
                     target_state = state_map[target_node.target]
                     count = target_node.count
-                    match (output_behavior, transition_behavior):
-                        case ("moore","deterministic") :
-                            state.transitions[in_sym] = target_state
-                        case ("mealy","deterministic") :
-                            state.transitions[in_sym] = target_state
-                            state.output_fun[in_sym] = out_sym
-                        case ("moore","nondeterministic"):
-                            state.transitions[in_sym].append(target_state)
-                        case ("mealy","nondeterministic"):
-                            state.transitions[in_sym].append((out_sym, target_state))
-                        case ("moore","stochastic"):
-                            state.transitions[in_sym].append((target_state, count / total))
-                        case ("mealy","stochastic"):
-                            state.transitions[in_sym].append((target_state, out_sym, count / total))
+                    if Machine is MooreMachine:
+                        state.transitions[in_sym] = target_state
+                    elif Machine is MealyMachine :
+                        state.transitions[in_sym] = target_state
+                        state.output_fun[in_sym] = out_sym
+                    elif Machine is NDMooreMachine:
+                        state.transitions[in_sym].append(target_state)
+                    elif Machine is Onfsm:
+                        state.transitions[in_sym].append((out_sym, target_state))
+                    elif Machine is Mdp:
+                        state.transitions[in_sym].append((target_state, count / total))
+                    elif Machine is StochasticMealyMachine:
+                        state.transitions[in_sym].append((target_state, out_sym, count / total))
 
         return Machine(initial_state, list(state_map.values()))
 
-    def visualize(self, path : str | pathlib.Path, output_behavior : OutputBehavior = "mealy", produce_pdf : bool = False, engine = "dot", *,
+    def visualize(self, path : Union[str, pathlib.Path], output_behavior : OutputBehavior = "mealy", produce_pdf : bool = False, engine = "dot", *,
                   state_label : StateFunction = None, state_color : StateFunction = None,
                   trans_label : TransitionFunction = None, trans_color : TransitionFunction = None,
-                  state_props : dict[str,StateFunction] = None,
-                  trans_props : dict[str,TransitionFunction] = None):
+                  state_props : Dict[str,StateFunction] = None,
+                  trans_props : Dict[str,TransitionFunction] = None):
 
         # handle default parameters
         if output_behavior not in ["moore", "mealy", None]:
@@ -202,13 +207,15 @@ class Node:
         if trans_props is None:
             trans_props = dict()
         if state_label is None:
-            match output_behavior:
-                case "moore": state_label = lambda node : f'{node.prefix[-1][1]} {node.count()}'
-                case _: state_label = lambda node: f'{sum(t.count for _, t in node.transition_iterator())}'
+            if output_behavior == "moore":
+                state_label = lambda node : f'{node.prefix[-1][1]} {node.count()}'
+            else:
+                state_label = lambda node: f'{sum(t.count for _, t in node.transition_iterator())}'
         if trans_label is None and "label" not in trans_props:
-            match output_behavior:
-                case "moore": trans_label = lambda node, in_sym, out_sym : f'{in_sym} [{node.transitions[in_sym][out_sym].count}]'
-                case _: trans_label = lambda node, in_sym, out_sym : f'{in_sym} / {out_sym} [{node.transitions[in_sym][out_sym].count}]'
+            if output_behavior == "moore":
+                trans_label = lambda node, in_sym, out_sym : f'{in_sym} [{node.transitions[in_sym][out_sym].count}]'
+            else:
+                trans_label = lambda node, in_sym, out_sym : f'{in_sym} / {out_sym} [{node.transitions[in_sym][out_sym].count}]'
         if state_color is None:
             state_color = lambda x : "black"
         if trans_color is None:

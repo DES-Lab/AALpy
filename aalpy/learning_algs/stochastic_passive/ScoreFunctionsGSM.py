@@ -1,14 +1,12 @@
 from collections import defaultdict
-from math import sqrt, log
-from typing import Callable
-
-import scipy
+from math import sqrt, log, lgamma, exp
+from typing import Callable, Dict, Union
 
 from aalpy.learning_algs.stochastic_passive.helpers import Node
 
-Score = bool | float
+Score = Union[bool, float]
 LocalScoreFunction = Callable[[Node, Node], Score]
-GlobalScoreFunction = Callable[[dict[Node, Node]], Score]
+GlobalScoreFunction = Callable[[Dict[Node, Node]], Score]
 
 class ScoreCalculation:
     def __init__(self, local_score : LocalScoreFunction = None, global_score : GlobalScoreFunction = None):
@@ -58,7 +56,7 @@ def hoeffding_compatibility(eps, compare_original = True) -> LocalScoreFunction:
     return similar
 
 class NonDetScore(ScoreCalculation):
-    def __init__(self, thresh, p_min : dict | float):
+    def __init__(self, thresh, p_min : Union[dict, float]):
         super().__init__()
         print("Warning: using experimental compatibility criterion for nondeterministic automata")
         self.thresh = log(thresh)
@@ -85,19 +83,19 @@ class NonDetScore(ScoreCalculation):
 
         return self.thresh < self.score
 
-    def global_score(self, part: dict[Node, Node]) -> Score:
+    def global_score(self, part: Dict[Node, Node]) -> Score:
         # I don't think that we have to reevaluate on the full partition.
         return self.score if self.thresh < self.score else False
 
 def local_to_global_score(local_fun : LocalScoreFunction) -> GlobalScoreFunction:
-    def fun(part : dict[Node, Node]):
+    def fun(part : Dict[Node, Node]):
         for old_node, new_node in part.items():
             if local_fun(new_node, old_node) is False:
                 return False
         return True
     return fun
 
-def differential_info(part : dict[Node, Node]):
+def differential_info(part : Dict[Node, Node]):
     relevant_nodes_old = list(part.keys())
     relevant_nodes_new = set(part.values())
 
@@ -116,21 +114,25 @@ def lower_threshold(value, thresh):
         return fun
     return value if thresh < value else False
 
-def likelihood_ratio_global_score(alpha : float) -> GlobalScoreFunction:
-    def score_fun(part : dict[Node, Node]) :
+def likelihood_ratio_global_score(alpha) -> GlobalScoreFunction:
+    alpha = log(alpha)
+    def log_chi2(x, k):
+        return (k/2 - 1) * log(x) - (x/2) * 1 - (k/2) * log(2) - lgamma(k/2)
+
+    def score_fun(part : Dict[Node, Node]) :
         llh_diff, param_diff = differential_info(part)
-        score = scipy.stats.chi2.pdf(2*(llh_diff), param_diff)
+        score = log_chi2(2*(llh_diff), param_diff)
         return lower_threshold(score, alpha) # Not entirely sure if implemented correctly
     return score_fun
 
-def AIC_global_score(alpha : float = 0) -> GlobalScoreFunction:
-    def score(part : dict[Node, Node]) :
+def AIC_global_score(alpha = 0) -> GlobalScoreFunction:
+    def score(part : Dict[Node, Node]) :
         llh_diff, param_diff = differential_info(part)
         return lower_threshold(param_diff - llh_diff, alpha)
     return score
 
 def EDSM_global_score(min_evidence = -1) -> GlobalScoreFunction:
-    def score(part : dict[Node, Node]):
+    def score(part : Dict[Node, Node]):
         total_evidence = 0
         for old_node, new_node in part.items():
             for in_sym, trans_old in old_node.transitions.items():

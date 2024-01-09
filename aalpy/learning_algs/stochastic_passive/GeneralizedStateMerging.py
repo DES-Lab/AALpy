@@ -1,22 +1,23 @@
 import functools
-import typing
-from dataclasses import dataclass
 import time
-from typing import Dict, Tuple, Callable, Any, Literal, List
+from typing import Dict, Tuple, Callable
 from collections import deque
 
-from aalpy.learning_algs.stochastic_passive.helpers import Node, OutputBehavior, TransitionBehavior, TransitionInfo
-from aalpy.learning_algs.stochastic_passive.ScoreFunctionsGSM import *
+from aalpy.learning_algs.stochastic_passive.helpers import Node, OutputBehavior, TransitionBehavior, TransitionInfo, \
+    OutputBehaviorRange, TransitionBehaviorRange
+from aalpy.learning_algs.stochastic_passive.ScoreFunctionsGSM import ScoreCalculation, NonDetScore, \
+    hoeffding_compatibility, Score
 
-# TODO make non-mutual exclusive
+# TODO make non-mutual exclusive?
 # future: Only compare futures of states
 # partition: Check compatibility while partition is created
-CompatibilityBehavior = Literal["future", "partition"]
+CompatibilityBehavior = str
+CompatibilityBehaviorRange = ["future", "partition"]
 
-@dataclass
 class Partitioning:
-    score : Score
-    partitions : dict[Node, Node]
+    def __init__(self):
+        self.score : Score = False
+        self.partitions : Dict[Node, Node] = dict()
 
 class DebugInfo:
     def __init__(self, lvl):
@@ -85,21 +86,23 @@ class GeneralizedStateMerging:
         self.data = data
         self.debug = DebugInfoGSM(debug_lvl, self)
 
-        if output_behavior not in typing.get_args(OutputBehavior):
+        if output_behavior not in OutputBehaviorRange:
             raise ValueError(f"invalid output behavior {output_behavior}")
         self.output_behavior : OutputBehavior = output_behavior
-        if transition_behavior not in typing.get_args(TransitionBehavior):
+        if transition_behavior not in TransitionBehaviorRange:
             raise ValueError(f"invalid transition behavior {transition_behavior}")
         self.transition_behavior : TransitionBehavior = transition_behavior
-        if compatibility_behavior not in typing.get_args(CompatibilityBehavior):
+        if compatibility_behavior not in CompatibilityBehaviorRange:
             raise ValueError(f"invalid compatibility behavior {compatibility_behavior}")
         self.compatibility_behavior : CompatibilityBehavior = compatibility_behavior
 
         if score_calc is None:
-            match transition_behavior:
-                case "deterministic" : score_calc = ScoreCalculation()
-                case "nondeterministic" : score_calc = NonDetScore(0.05, 0.1)
-                case "stochastic" : score_calc = ScoreCalculation(hoeffding_compatibility(0.005, self.eval_compat_on_pta))
+            if transition_behavior == "deterministic" :
+                score_calc = ScoreCalculation()
+            elif transition_behavior == "nondeterministic" :
+                score_calc = NonDetScore(0.05, 0.1)
+            elif transition_behavior == "stochastic" :
+                score_calc = ScoreCalculation(hoeffding_compatibility(0.005, self.eval_compat_on_pta))
         self.score_calc : ScoreCalculation = score_calc
 
         if node_order is None:
@@ -137,7 +140,7 @@ class GeneralizedStateMerging:
         # sorted list of states already considered
         red_states = [self.root]
 
-        partition_candidates : dict[tuple[Node, Node], Partitioning] = dict()
+        partition_candidates : Dict[Tuple[Node, Node], Partitioning] = dict()
         while True:
             # get blue states
             blue_states = []
@@ -162,7 +165,7 @@ class GeneralizedStateMerging:
                 # FUTURE: Save partitions?
 
                 # calculate partitions resulting from merges with red states if necessary
-                current_candidates : dict[Node, Partitioning]= dict()
+                current_candidates : Dict[Node, Partitioning] = dict()
                 perfect_partitioning = None
                 for red_state in red_states:
                     partition = partition_candidates.get((red_state, blue_state))
@@ -238,7 +241,7 @@ class GeneralizedStateMerging:
         """
 
         partitions = dict()
-        partitioning = Partitioning(False, dict())
+        partitioning = Partitioning()
 
         if self.compatibility_behavior == "future":
             score = self._check_futures(red, blue)
