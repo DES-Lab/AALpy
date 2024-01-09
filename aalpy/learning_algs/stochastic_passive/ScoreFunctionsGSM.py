@@ -1,5 +1,6 @@
+from collections import defaultdict
 from math import sqrt, log
-from typing import Callable, Any
+from typing import Callable
 
 import scipy
 
@@ -56,18 +57,37 @@ def hoeffding_compatibility(eps, compare_original = True) -> LocalScoreFunction:
         return True
     return similar
 
-def non_det_compatibility(eps) -> LocalScoreFunction:
-    print("Warning: using experimental compatibility criterion for nondeterministic automata")
-    def similar(a: Node, b: Node, _: Any):
-        for in_sym in filter(lambda x : x in a.transitions.keys(), b.transitions.keys()):
-            a_trans, b_trans = (x.transitions[in_sym] for x in [a,b])
+class NonDetScore(ScoreCalculation):
+    def __init__(self, thresh, p_min : dict | float):
+        super().__init__()
+        print("Warning: using experimental compatibility criterion for nondeterministic automata")
+        self.thresh = log(thresh)
+        if isinstance(p_min, float):
+            cost = log(1 - p_min)
+            self.miss_dict = defaultdict(lambda: cost)
+        else:
+            self.miss_dict = {k: log(1 - v) for k, v in p_min.items()}
+        self.score = 0
+
+    def reset(self):
+        self.score = 0
+
+    def local_score(self, a: Node, b: Node):
+        for in_sym in filter(lambda x: x in a.transitions.keys(), b.transitions.keys()):
+            a_trans, b_trans = (x.transitions[in_sym] for x in [a, b])
             a_total, b_total = (sum(x.count for x in x.values()) for x in (a_trans, b_trans))
-            if a_total < eps or b_total < eps:
-                continue
-            if set(a_trans.keys()) != set(b_trans.keys()):
-                return False
-        return True
-    return similar
+            for key in set(a_trans.keys()).union(b_trans.keys()):
+                a_miss, b_miss = (key not in trans for trans in [a_trans, b_trans])
+                if a_miss:
+                    self.score += a_total * self.miss_dict[key]
+                if b_miss:
+                    self.score += b_total * self.miss_dict[key]
+
+        return self.thresh < self.score
+
+    def global_score(self, part: dict[Node, Node]) -> Score:
+        # I don't think that we have to reevaluate on the full partition.
+        return self.score if self.thresh < self.score else False
 
 def local_to_global_score(local_fun : LocalScoreFunction) -> GlobalScoreFunction:
     def fun(part : dict[Node, Node]):
