@@ -324,3 +324,12 @@ def run_alergia(data, output_behavior : OutputBehavior = "moore",
         eval_compat_on_pta=eval_compat_on_pta,
         **kwargs
     ).run()
+
+def run_RPNI(data, output_behavior : OutputBehavior = "moore", *args, **kwargs):
+    return GeneralizedStateMerging(
+        data,
+        output_behavior=output_behavior,
+        transition_behavior="deterministic",
+        compatibility_behavior="partition",
+        *args, **kwargs
+    ).run()
