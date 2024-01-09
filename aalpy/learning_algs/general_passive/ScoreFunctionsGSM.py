@@ -1,8 +1,8 @@
 from collections import defaultdict
-from math import sqrt, log, lgamma, exp
+from math import sqrt, log, lgamma
 from typing import Callable, Dict, Union
 
-from aalpy.learning_algs.stochastic_passive.helpers import Node
+from aalpy.learning_algs.general_passive.helpers import Node
 
 Score = Union[bool, float]
 LocalScoreFunction = Callable[[Node, Node], Score]

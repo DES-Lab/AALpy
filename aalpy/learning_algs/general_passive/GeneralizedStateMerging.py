@@ -3,9 +3,9 @@ import time
 from typing import Dict, Tuple, Callable
 from collections import deque
 
-from aalpy.learning_algs.stochastic_passive.helpers import Node, OutputBehavior, TransitionBehavior, TransitionInfo, \
+from aalpy.learning_algs.general_passive.helpers import Node, OutputBehavior, TransitionBehavior, TransitionInfo, \
     OutputBehaviorRange, TransitionBehaviorRange
-from aalpy.learning_algs.stochastic_passive.ScoreFunctionsGSM import ScoreCalculation, NonDetScore, \
+from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreCalculation, NonDetScore, \
     hoeffding_compatibility, Score
 
 # TODO make non-mutual exclusive?
