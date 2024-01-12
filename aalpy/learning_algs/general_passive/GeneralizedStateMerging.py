@@ -15,9 +15,12 @@ CompatibilityBehavior = str
 CompatibilityBehaviorRange = ["future", "partition"]
 
 class Partitioning:
-    def __init__(self):
+    def __init__(self, red : Node, blue : Node):
+        self.red : Node = red
+        self.blue : Node = blue
         self.score : Score = False
-        self.partitions : Dict[Node, Node] = dict()
+        self.red_mapping : Dict[Node, Node] = dict()
+        self.full_mapping : Dict[Node, Node] = dict()
 
 class DebugInfo:
     def __init__(self, lvl):
@@ -44,6 +47,9 @@ class DebugInfoGSM(DebugInfo):
             return
         self.instance = instance
         self.log = []
+        self.pta_size = None
+        self.nr_merged_states = 0
+        self.nr_red_states = 1
 
     @min_lvl(1)
     def pta_construction_done(self, start_time):
@@ -52,23 +58,33 @@ class DebugInfoGSM(DebugInfo):
             states = self.instance.root.get_all_nodes()
             leafs = [state for state in states if len(state.transitions.keys()) == 0]
             depth = [len(state.prefix) for state in leafs]
+            self.pta_size = len(states)
             print(f'PTA has {len(states)} states leading to {len(leafs)} leafs')
             print(f'min / avg / max depth : {min(depth)} / {sum(depth) / len(depth)} / {max(depth)}')
+
+    def print_status(self):
+        print_str = f'\rCurrent automaton size: {self.nr_red_states}'
+        if self.lvl != 1:
+            print_str += f' Merged: {self.nr_merged_states} Remaining: {self.pta_size - self.nr_red_states - self.nr_merged_states}'
+        print(print_str, end="")
 
     @min_lvl(1)
     def log_promote(self, node : Node, red_states):
         self.log.append(["promote", (node.prefix,)])
-        print(f'\rCurrent automaton size: {len(red_states)}', end="")
+        self.nr_red_states = len(red_states) # could be done incrementally, here for historic reasons
+        self.print_status()
 
     @min_lvl(1)
-    def log_merge(self, a : Node, b : Node):
-        self.log.append(["merge", (a.prefix, b.prefix)])
+    def log_merge(self, part : Partitioning):
+        self.log.append(["merge", (part.red.prefix, part.blue.prefix)])
+        self.nr_merged_states += len(part.full_mapping) - len(part.red_mapping)
+        self.print_status()
 
     @min_lvl(1)
     def learning_done(self, red_states, start_time):
         print(f'\nLearning Time: {round(time.time() - start_time, 2)}')
         print(f'Learned {len(red_states)} state automaton.')
-        if 1 < self.lvl:
+        if 2 < self.lvl:
             self.instance.root.visualize("model",self.instance.output_behavior)
 
 class GeneralizedStateMerging:
@@ -197,13 +213,13 @@ class GeneralizedStateMerging:
                 continue
 
             # find best partitioning and clear candidates
-            (red, blue), best_candidate = max(partition_candidates.items(), key = lambda part : part[1].score)
+            best_candidate = max(partition_candidates.values(), key = lambda part : part.score)
             # FUTURE: optimizations for compatibility tests where merges can be orthogonal
             # FUTURE: caching for aggregating compatibility tests
             partition_candidates.clear()
-            for real_node, partition_node in best_candidate.partitions.items():
+            for real_node, partition_node in best_candidate.red_mapping.items():
                 real_node.transitions = partition_node.transitions
-            self.debug.log_merge(red, blue)
+            self.debug.log_merge(best_candidate)
 
         self.debug.learning_done(red_states, start_time)
 
@@ -235,13 +251,12 @@ class GeneralizedStateMerging:
         return True
 
     def _partition_from_merge(self, red: Node, blue: Node) -> Partitioning :
-        """
-        Compatibility check based on partitions.
-        assumes that blue is a tree and red is not in blue
-        """
+        # Compatibility check based on partitions.
+        # assumes that blue is a tree and red is not in blue
 
-        partitions = dict()
-        partitioning = Partitioning()
+        partitioning = Partitioning(red, blue)
+
+        self.score_calc.reset()
 
         if self.compatibility_behavior == "future":
             score = self._check_futures(red, blue)
@@ -254,14 +269,14 @@ class GeneralizedStateMerging:
                 return red_node
         else:
             def update_partition(red_node: Node, blue_node: Node) -> Node:
-                if red_node not in partitions:
+                if red_node not in partitioning.full_mapping:
                     p = red_node.shallow_copy()
-                    partitions[red_node] = p
-                    partitioning.partitions[red_node] = p
+                    partitioning.full_mapping[red_node] = p
+                    partitioning.red_mapping[red_node] = p
                 else:
-                    p = partitions[red_node]
+                    p = partitioning.full_mapping[red_node]
                 if blue_node is not None:
-                    partitions[blue_node] = p
+                    partitioning.full_mapping[blue_node] = p
                 return p
 
         # rewire the blue node's parent
@@ -291,7 +306,7 @@ class GeneralizedStateMerging:
                         partition_transition = TransitionInfo(blue_transition.target, blue_transition.count, None, 0)
                         partition_transitions[out_sym] = partition_transition
 
-        partitioning.score = self.score_calc.global_score(partitions)
+        partitioning.score = self.score_calc.global_score(partitioning.full_mapping)
         return partitioning
 
 
