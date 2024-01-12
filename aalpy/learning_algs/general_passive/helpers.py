@@ -193,11 +193,12 @@ class Node:
 
         return Machine(initial_state, list(state_map.values()))
 
-    def visualize(self, path : Union[str, pathlib.Path], output_behavior : OutputBehavior = "mealy", produce_pdf : bool = False, engine = "dot", *,
+    def visualize(self, path : Union[str, pathlib.Path], output_behavior : OutputBehavior = "mealy", format : str = "dot", engine ="dot", *,
                   state_label : StateFunction = None, state_color : StateFunction = None,
                   trans_label : TransitionFunction = None, trans_color : TransitionFunction = None,
                   state_props : Dict[str,StateFunction] = None,
-                  trans_props : Dict[str,TransitionFunction] = None):
+                  trans_props : Dict[str,TransitionFunction] = None,
+                  node_naming : StateFunction = None):
 
         # handle default parameters
         if output_behavior not in ["moore", "mealy", None]:
@@ -220,6 +221,12 @@ class Node:
             state_color = lambda x : "black"
         if trans_color is None:
             trans_color = lambda x, y, z : "black"
+        if node_naming is None:
+            node_dict = dict()
+            def node_naming(node : Node):
+                if node not in node_dict:
+                    node_dict[node] = f"s{len(node_dict)}"
+                return node_dict[node]
         state_props = {"label" : state_label, "color" : state_color , "fontcolor" : state_color, **state_props}
         trans_props = {"label" : trans_label, "color" : trans_color, "fontcolor" : trans_color, **trans_props}
 
@@ -232,22 +239,25 @@ class Node:
         # add nodes
         for node in nodes:
             arg_dict = {key : fun(node) for key, fun in state_props.items()}
-            graph.add_node(pydot.Node(str(node.prefix), **arg_dict))
+            graph.add_node(pydot.Node(node_naming(node), **arg_dict))
 
         # add transitions
         for node in nodes:
             for in_sym, options in node.transitions.items():
                 for out_sym, c in options.items():
                     arg_dict = {key : fun(node, in_sym, out_sym) for key, fun in trans_props.items()}
-                    graph.add_edge(pydot.Edge(str(node.prefix), str(c.target.prefix), **arg_dict))
+                    graph.add_edge(pydot.Edge(node_naming(node), node_naming(c.target), **arg_dict))
 
         # add initial state
         # TODO maybe add option to parameterize this
         graph.add_node(pydot.Node('__start0', shape='none', label=''))
-        graph.add_edge(pydot.Edge('__start0', str(self.prefix), label=''))
+        graph.add_edge(pydot.Edge('__start0', node_naming(self), label=''))
 
-        format = 'pdf' if produce_pdf else 'raw'
-        file_ext = 'pdf' if produce_pdf else 'dot'
+        file_ext = format
+        if format == 'dot':
+            format = 'raw'
+        if format == 'raw':
+            file_ext = 'dot'
         graph.write(path=str(path) + "." + file_ext, prog=engine, format=format)
 
     def add_data(self, data):
@@ -312,5 +322,5 @@ class Node:
             llc -= total_count * math.log(total_count)
         return llc
 
-    def local_count(self):
+    def count(self):
         return sum(trans.count for _, trans in self.transition_iterator())
