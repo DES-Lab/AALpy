@@ -1,12 +1,13 @@
 from collections import defaultdict
 from math import sqrt, log, lgamma
-from typing import Callable, Dict, Union
+from typing import Callable, Dict, Union, List, Iterable
 
 from aalpy.learning_algs.general_passive.helpers import Node
 
 Score = Union[bool, float]
 LocalScoreFunction = Callable[[Node, Node], Score]
 GlobalScoreFunction = Callable[[Dict[Node, Node]], Score]
+AggregationFunction = Callable[[Iterable[Score]], Score]
 
 class ScoreCalculation:
     def __init__(self, local_score : LocalScoreFunction = None, global_score : GlobalScoreFunction = None):
@@ -15,9 +16,9 @@ class ScoreCalculation:
         # - override behavior in a functional way by providing the functions as arguments (no extra class)
         # - override behavior in a stateful way by implementing a new class
         if not hasattr(self, "local_score"):
-            self.local_score = local_score or self.default_local_score
+            self.local_score : LocalScoreFunction = local_score or self.default_local_score
         if not hasattr(self, "global_score"):
-            self.global_score = global_score or self.default_global_score
+            self.global_score : GlobalScoreFunction = global_score or self.default_global_score
 
     def reset(self):
         pass
@@ -56,7 +57,7 @@ def hoeffding_compatibility(eps, compare_original = True) -> LocalScoreFunction:
     return similar
 
 class NonDetScore(ScoreCalculation):
-    def __init__(self, thresh, p_min : Union[dict, float]):
+    def __init__(self, thresh, p_min : Union[dict, float], reject_local_score_only = False, no_global_score = False):
         super().__init__()
         print("Warning: using experimental compatibility criterion for nondeterministic automata")
         self.thresh = log(thresh)
@@ -66,28 +67,52 @@ class NonDetScore(ScoreCalculation):
         else:
             self.miss_dict = {k: log(1 - v) for k, v in p_min.items()}
         self.score = 0
+        self.reject_local_score_only = reject_local_score_only
+        if no_global_score:
+            self.global_score = self.default_global_score
 
     def reset(self):
         self.score = 0
 
     def local_score(self, a: Node, b: Node):
+        score_local = 0
         for in_sym in filter(lambda x: x in a.transitions.keys(), b.transitions.keys()):
             a_trans, b_trans = (x.transitions[in_sym] for x in [a, b])
             a_total, b_total = (sum(x.count for x in x.values()) for x in (a_trans, b_trans))
             for key in set(a_trans.keys()).union(b_trans.keys()):
                 a_miss, b_miss = (key not in trans for trans in [a_trans, b_trans])
                 if a_miss:
-                    self.score += a_total * self.miss_dict[key]
+                    score_local += a_total * self.miss_dict[key]
                 if b_miss:
-                    self.score += b_total * self.miss_dict[key]
+                    score_local += b_total * self.miss_dict[key]
 
+        self.score += score_local
+        if self.reject_local_score_only:
+            return self.thresh < score_local
         return self.thresh < self.score
 
     def global_score(self, part: Dict[Node, Node]) -> Score:
         # I don't think that we have to reevaluate on the full partition.
-        return self.score if self.thresh < self.score else False
+        return self.score
+
+class ScoreCombinator(ScoreCalculation):
+    def __init__(self, scores : List[ScoreCalculation], aggregate_local : AggregationFunction = None, aggregate_global : AggregationFunction = None):
+        super().__init__()
+        self.scores = scores
+        self.aggregate_local = aggregate_local or all
+        self.aggregate_global = aggregate_global or (lambda x : x)
+
+    def local_score(self, a : Node, b : Node):
+        return self.aggregate_local(score.local_score(a, b) for score in self.scores)
+
+    def global_score(self, part : Dict[Node, Node]):
+        return self.aggregate_global(score.global_score(part) for score in self.scores)
 
 def local_to_global_score(local_fun : LocalScoreFunction) -> GlobalScoreFunction:
+    """
+    Converts a local score function to a global score function.
+    This can be used to evaluate a local score function after the partitions are complete.
+    """
     def fun(part : Dict[Node, Node]):
         for old_node, new_node in part.items():
             if local_fun(new_node, old_node) is False:
