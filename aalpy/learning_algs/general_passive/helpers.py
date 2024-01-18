@@ -1,7 +1,9 @@
+import itertools
 import math
 import pathlib
+from collections import deque
 from functools import total_ordering
-from typing import Dict, Any, List, Tuple, Iterable, Callable, NamedTuple, Union
+from typing import Dict, Any, List, Tuple, Iterable, Callable, NamedTuple, Union, Set
 import pydot
 from copy import copy
 
@@ -324,3 +326,81 @@ class Node:
 
     def count(self):
         return sum(trans.count for _, trans in self.transition_iterator())
+
+class Partition:
+    def __init__(self, a_nodes = None, b_nodes = None):
+        self.a_nodes : Set[Node] = a_nodes or set()
+        self.b_nodes : Set[Node] = b_nodes or set()
+
+    def __len__(self):
+        return len(self.a_nodes) + len(self.b_nodes)
+
+class FoldResult:
+    def __init__(self):
+        self.partitions : Set[Partition] = set()
+        self.counter_examples = []
+
+
+def try_fold(a : 'Node', b : 'Node', compat : Callable[[Node, Node, Dict[Node, Partition]], Any], single_cex = False) -> FoldResult:
+    result = FoldResult()
+
+    partition_map : Dict[Node, Partition] = dict()
+    q : deque[Tuple[Node, Node, list]] = deque([(a, b, [])])
+    pair_set : Set[Tuple[Node, Node]] = {(a, b)}
+
+    while len(q) != 0:
+        a, b, prefix = q.popleft()
+
+        # get partitions
+        a_part = partition_map.get(a)
+        b_part = partition_map.get(b)
+
+        if a_part is None:
+            a_part = Partition({a}, set())
+            partition_map[a] = a_part
+            result.partitions.add(a_part)
+        if b_part is None:
+            b_part = Partition(set(), {b})
+            partition_map[b] = b_part
+            result.partitions.add(b_part)
+
+        # determine compatibility
+        compat_result = compat(a, b, partition_map)
+        if compat_result is not True:
+            if compat_result is not False:
+                error = (compat_result, prefix)
+            else:
+                error = prefix
+            result.counter_examples.append(error)
+            if single_cex:
+                break
+            else:
+                continue
+
+        # merge partitions
+        if len(a_part) < len(b_part):
+            other_part, part = a_part, b_part
+        else:
+            part, other_part = a_part, b_part
+
+        part.a_nodes.update(other_part.a_nodes)
+        part.b_nodes.update(other_part.b_nodes)
+
+        for node in itertools.chain(other_part.a_nodes, other_part.b_nodes):
+            partition_map[node] = part
+
+        result.partitions.remove(other_part)
+
+        # add children to work queue
+        for in_sym, a_trans in a.transitions.items():
+            b_trans = b.transitions.get(in_sym)
+            if b_trans is None:
+                continue
+            for out_sym, a_next in a_trans.items():
+                b_next = b_trans.get(out_sym)
+                if b_next is None or (a_next.target, b_next.target) in pair_set:
+                    continue
+                pair_set.add((a_next.target, b_next.target))
+                q.append((a_next.target, b_next.target, prefix + [(in_sym, out_sym)]))
+
+    return result
