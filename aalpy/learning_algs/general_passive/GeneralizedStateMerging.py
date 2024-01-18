@@ -48,6 +48,7 @@ class DebugInfoGSM(DebugInfo):
         self.instance = instance
         self.log = []
         self.pta_size = None
+        self.nr_merged_states_total = 0
         self.nr_merged_states = 0
         self.nr_red_states = 1
 
@@ -65,7 +66,7 @@ class DebugInfoGSM(DebugInfo):
     def print_status(self):
         print_str = f'\rCurrent automaton size: {self.nr_red_states}'
         if self.lvl != 1:
-            print_str += f' Merged: {self.nr_merged_states} Remaining: {self.pta_size - self.nr_red_states - self.nr_merged_states}'
+            print_str += f' Merged: {self.nr_merged_states_total} Remaining: {self.pta_size - self.nr_red_states - self.nr_merged_states_total}'
         print(print_str, end="")
 
     @min_lvl(1)
@@ -77,13 +78,14 @@ class DebugInfoGSM(DebugInfo):
     @min_lvl(1)
     def log_merge(self, part : Partitioning):
         self.log.append(["merge", (part.red.prefix, part.blue.prefix)])
-        self.nr_merged_states += len(part.full_mapping) - len(part.red_mapping)
+        self.nr_merged_states_total += len(part.full_mapping) - len(part.red_mapping)
+        self.nr_merged_states += 1
         self.print_status()
 
     @min_lvl(1)
     def learning_done(self, red_states, start_time):
         print(f'\nLearning Time: {round(time.time() - start_time, 2)}')
-        print(f'Learned {len(red_states)} state automaton.')
+        print(f'Learned {len(red_states)} state automaton via {self.nr_merged_states} merges.')
         if 2 < self.lvl:
             self.instance.root.visualize("model",self.instance.output_behavior)
 
