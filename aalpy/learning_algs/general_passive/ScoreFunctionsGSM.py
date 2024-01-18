@@ -56,7 +56,20 @@ def hoeffding_compatibility(eps, compare_original = True) -> LocalScoreFunction:
         return True
     return similar
 
-class NonDetScore(ScoreCalculation):
+def non_det_compatibility(allow_subset = False) -> LocalScoreFunction:
+    def compat(a : Node, b : Node):
+        for in_sym, a_trans in a.transitions.items():
+            b_trans = b.transitions.get(in_sym)
+            if b_trans is None:
+                continue
+            c1 = allow_subset and any(out_sym not in a_trans for out_sym in b_trans.keys())
+            c2 = not allow_subset and set(a_trans.keys()) != set(b_trans.keys())
+            if c1 or c2:
+                return False
+        return True
+    return compat
+
+class NoRareEventNonDetScore(ScoreCalculation):
     def __init__(self, thresh, p_min : Union[dict, float], reject_local_score_only = False, no_global_score = False):
         super().__init__()
         print("Warning: using experimental compatibility criterion for nondeterministic automata")
@@ -79,12 +92,12 @@ class NonDetScore(ScoreCalculation):
         for in_sym in filter(lambda x: x in a.transitions.keys(), b.transitions.keys()):
             a_trans, b_trans = (x.transitions[in_sym] for x in [a, b])
             a_total, b_total = (sum(x.count for x in x.values()) for x in (a_trans, b_trans))
-            for key in set(a_trans.keys()).union(b_trans.keys()):
-                a_miss, b_miss = (key not in trans for trans in [a_trans, b_trans])
+            for out_sym in set(a_trans.keys()).union(b_trans.keys()):
+                a_miss, b_miss = (out_sym not in trans for trans in [a_trans, b_trans])
                 if a_miss:
-                    score_local += a_total * self.miss_dict[key]
+                    score_local += a_total * self.miss_dict[in_sym, out_sym]
                 if b_miss:
-                    score_local += b_total * self.miss_dict[key]
+                    score_local += b_total * self.miss_dict[in_sym, out_sym]
 
         self.score += score_local
         if self.reject_local_score_only:
@@ -95,12 +108,32 @@ class NonDetScore(ScoreCalculation):
         # I don't think that we have to reevaluate on the full partition.
         return self.score
 
+class KTailCondition(ScoreCalculation):
+    def __init__(self, k):
+        super().__init__()
+        self.depth_offset = None
+        self.k = k
+
+    def reset(self):
+        self.depth_offset = None
+
+    def local_score(self, a : Node, b : Node):
+        # assuming b is tree shaped.
+        if self.depth_offset is None:
+            self.depth_offset = len(b.prefix)
+        depth = len(b.prefix) - self.depth_offset
+        return self.k <= depth
+
 class ScoreCombinator(ScoreCalculation):
     def __init__(self, scores : List[ScoreCalculation], aggregate_local : AggregationFunction = None, aggregate_global : AggregationFunction = None):
         super().__init__()
         self.scores = scores
         self.aggregate_local = aggregate_local or all
-        self.aggregate_global = aggregate_global or (lambda x : x)
+        self.aggregate_global = aggregate_global or (lambda x : list(x))
+
+    def reset(self):
+        for score in self.scores:
+            score.reset()
 
     def local_score(self, a : Node, b : Node):
         return self.aggregate_local(score.local_score(a, b) for score in self.scores)

@@ -5,7 +5,7 @@ from collections import deque
 
 from aalpy.learning_algs.general_passive.helpers import Node, OutputBehavior, TransitionBehavior, TransitionInfo, \
     OutputBehaviorRange, TransitionBehaviorRange
-from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreCalculation, NonDetScore, \
+from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreCalculation, NoRareEventNonDetScore, \
     hoeffding_compatibility, Score
 
 # TODO make non-mutual exclusive?
@@ -116,7 +116,7 @@ class GeneralizedStateMerging:
             if transition_behavior == "deterministic" :
                 score_calc = ScoreCalculation()
             elif transition_behavior == "nondeterministic" :
-                score_calc = NonDetScore(0.05, 0.1)
+                score_calc = NoRareEventNonDetScore(0.5, 0.001)
             elif transition_behavior == "stochastic" :
                 score_calc = ScoreCalculation(hoeffding_compatibility(0.005, self.eval_compat_on_pta))
         self.score_calc : ScoreCalculation = score_calc
