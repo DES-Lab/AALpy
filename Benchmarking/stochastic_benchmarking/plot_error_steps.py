@@ -15,6 +15,37 @@ steps = [3, 5, 8, 11, 14, 17, 20]
 #
 # print(statistical_tests)
 
+def t_tests():
+    from scipy.stats import ttest_ind
+    original_values_no_response = [0.36000000000000004, 0.5904, 0.7902848, 0.8926258176000001,
+                                   0.9450244186112, 0.9718525023289344, 0.9855884811924145]
+
+    mdp_no_response = [0.3993, 0.6407, 0.8315, 0.921, 0.9629, 0.9826, 0.9918]
+    smm_no_response = [0.3652, 0.5966, 0.7956, 0.8965, 0.9476, 0.9734, 0.9865]
+
+    # smm learning took 34k queries
+    original_values_crash = [0, 0.16800000000000004, 0.3926480000000001, 0.5572338000000001, 0.6772233874640001,
+                             0.7646958490393682, 0.8284632739463244]
+    smm_crash_property = [0, 0.174, 0.4046, 0.5714, 0.6915, 0.778, 0.8402, ]
+    # mdp learning 180k queries
+    mdp_crash_property = [0, 0.1899, 0.4624, 0.6471, 0.7684, 0.848, 0.9002, ]
+
+    print('No Response')
+    mdp_no_response_abs_diff = [abs(original_values_no_response[i] - mdp_no_response[i]) for i in range(len(original_values_no_response))]
+    smm_no_response_abs_diff = [abs(original_values_no_response[i] - smm_no_response[i]) for i in range(len(original_values_no_response))]
+
+    _, p = ttest_ind(mdp_no_response_abs_diff, smm_no_response_abs_diff, alternative='two-sided')
+
+    print(p)
+    print('Crash')
+    mdp_crash_abs_diff = [abs(original_values_crash[i] - mdp_crash_property[i]) for i in
+                                range(len(original_values_crash))]
+    smm_crash_abs_diff = [abs(original_values_crash[i] - smm_crash_property[i]) for i in
+                                range(len(original_values_crash))]
+
+    _, p = ttest_ind(mdp_crash_abs_diff, smm_crash_abs_diff, alternative='two-sided')
+    print(p)
+
 def crash_plot():
     original_values_crash = [0, 0.16800000000000004, 0.3926480000000001, 0.5572338000000001, 0.6772233874640001,
                              0.7646958490393682, 0.8284632739463244]
@@ -107,4 +138,5 @@ def side_by_side():
     # import tikzplotlib
     # tikzplotlib.save("properties_over_time.tex")
 
-side_by_side()
+# side_by_side()
+t_tests()
