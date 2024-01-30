@@ -8,7 +8,7 @@ from aalpy.learning_algs.general_passive.helpers import Node, OutputBehavior, Tr
 from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreCalculation, NoRareEventNonDetScore, \
     hoeffding_compatibility, Score
 
-# TODO make non-mutual exclusive?
+# TODO make non-mutual exclusive? Easiest done by adding a new method / field to ScoreCalculation
 # future: Only compare futures of states
 # partition: Check compatibility while partition is created
 CompatibilityBehavior = str
@@ -261,8 +261,7 @@ class GeneralizedStateMerging:
         self.score_calc.reset()
 
         if self.compatibility_behavior == "future":
-            score = self._check_futures(red, blue)
-            if score is False:
+            if self._check_futures(red, blue) is False:
                 return partitioning
 
         # when compatibility is determined only by future and scores are disabled, we need not create partitions.

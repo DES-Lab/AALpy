@@ -233,7 +233,7 @@ class Node:
         trans_props = {"label" : trans_label, "color" : trans_color, "fontcolor" : trans_color, **trans_props}
 
         # create new graph
-        graph = pydot.Dot('fpta', graph_type='digraph')
+        graph = pydot.Dot('automaton', graph_type='digraph')
 
         #graph.add_node(pydot.Node(str(self.prefix), label=state_label(self)))
         nodes = self.get_all_nodes()
