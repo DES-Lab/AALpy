@@ -145,12 +145,12 @@ class GeneralizedStateMerging:
             if not self.root.is_deterministic():
                 raise ValueError("required deterministic automaton but input data is nondeterministic")
 
-    def compute_local_score(self, a : Node, b : Node):
+    def compute_local_compatibility(self, a : Node, b : Node):
         if self.output_behavior == "moore" and not Node.moore_compatible(a,b):
             return False
         if self.transition_behavior == "deterministic" and not Node.deterministic_compatible(a,b):
             return False
-        return self.score_calc.local_score(a, b)
+        return self.score_calc.local_compatibility(a, b)
 
     def run(self):
         start_time = time.time()
@@ -234,7 +234,7 @@ class GeneralizedStateMerging:
         while len(q) != 0:
             red, blue = pop()
 
-            if self.compute_local_score(red, blue) is False:
+            if self.compute_local_compatibility(red, blue) is False:
                 return False
 
             for in_sym, blue_transitions in blue.transitions.items():
@@ -266,7 +266,7 @@ class GeneralizedStateMerging:
                 return partitioning
 
         # when compatibility is determined only by future and scores are disabled, we need not create partitions.
-        if self.compatibility_behavior == "future" and self.score_calc.has_default_global_score():
+        if self.compatibility_behavior == "future" and not self.score_calc.has_score_function():
             def update_partition(red_node: Node, blue_node: Node) -> Node:
                 return red_node
         else:
@@ -293,7 +293,7 @@ class GeneralizedStateMerging:
             partition = update_partition(red, blue)
 
             if self.compatibility_behavior == "partition":
-                if self.compute_local_score(partition, blue) is False:
+                if self.compute_local_compatibility(partition, blue) is False:
                     return partitioning
 
             for in_sym, blue_transitions in blue.transitions.items():
@@ -308,7 +308,7 @@ class GeneralizedStateMerging:
                         partition_transition = TransitionInfo(blue_transition.target, blue_transition.count, None, 0)
                         partition_transitions[out_sym] = partition_transition
 
-        partitioning.score = self.score_calc.global_score(partitioning.full_mapping)
+        partitioning.score = self.score_calc.score_function(partitioning.full_mapping)
         return partitioning
 
 

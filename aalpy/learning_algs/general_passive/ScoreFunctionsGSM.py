@@ -5,39 +5,39 @@ from typing import Callable, Dict, Union, List, Iterable
 from aalpy.learning_algs.general_passive.helpers import Node
 
 Score = Union[bool, float]
-LocalScoreFunction = Callable[[Node, Node], Score]
-GlobalScoreFunction = Callable[[Dict[Node, Node]], Score]
+LocalCompatibilityFunction = Callable[[Node, Node], bool]
+ScoreFunction = Callable[[Dict[Node, Node]], Score]
 AggregationFunction = Callable[[Iterable[Score]], Score]
 
 class ScoreCalculation:
-    def __init__(self, local_score : LocalScoreFunction = None, global_score : GlobalScoreFunction = None):
+    def __init__(self, local_compatibility : LocalCompatibilityFunction = None, score_function : ScoreFunction = None):
         # This is a hack that gives a simple implementation where we can easily
         # - determine whether the default is overridden (for optimization)
         # - override behavior in a functional way by providing the functions as arguments (no extra class)
-        # - override behavior in a stateful way by implementing a new class that provides `local_score` and / or `global_score` methods
+        # - override behavior in a stateful way by implementing a new class that provides `local_compatibility` and / or `score_function` methods
         if not hasattr(self, "local_score"):
-            self.local_score : LocalScoreFunction = local_score or self.default_local_score
+            self.local_compatibility : LocalCompatibilityFunction = local_compatibility or self.default_local_compatibility
         if not hasattr(self, "global_score"):
-            self.global_score : GlobalScoreFunction = global_score or self.default_global_score
+            self.score_function : ScoreFunction = score_function or self.default_score_function
 
     def reset(self):
         pass
 
     @staticmethod
-    def default_local_score(a, b):
+    def default_local_compatibility(a, b):
         return True
 
     @staticmethod
-    def default_global_score(part):
+    def default_score_function(part):
         return True
 
-    def has_default_global_score(self):
-        return self.global_score is self.default_global_score
+    def has_score_function(self):
+        return self.score_function is not self.default_score_function
 
-    def has_default_local_score(self):
-        return self.local_score is self.default_local_score
+    def has_local_compatibility(self):
+        return self.local_compatibility is not self.default_local_compatibility
 
-def hoeffding_compatibility(eps, compare_original = True) -> LocalScoreFunction:
+def hoeffding_compatibility(eps, compare_original = True) -> LocalCompatibilityFunction:
     eps_fact = sqrt(0.5 * log(2 / eps))
     count_name = "original_count" if compare_original else "count"
 
@@ -56,7 +56,7 @@ def hoeffding_compatibility(eps, compare_original = True) -> LocalScoreFunction:
         return True
     return similar
 
-def non_det_compatibility(allow_subset = False) -> LocalScoreFunction:
+def non_det_compatibility(allow_subset = False) -> LocalCompatibilityFunction:
     def compat(a : Node, b : Node):
         for in_sym, a_trans in a.transitions.items():
             b_trans = b.transitions.get(in_sym)
@@ -85,7 +85,7 @@ class NoRareEventNonDetScore(ScoreCalculation):
         self.score = 0
         self.reject_local_score_only = reject_local_score_only
         if no_global_score:
-            self.global_score = self.default_global_score
+            self.global_score = self.default_score_function
 
     def reset(self):
         self.score = 0
@@ -114,7 +114,7 @@ class NoRareEventNonDetScore(ScoreCalculation):
 class ScoreWithKTail(ScoreCalculation):
     """Applies k-Tails to a compatibility function: Compatibility is only evaluated up to a certain depth k."""
     def __init__(self, k : int, other_score : ScoreCalculation):
-        super().__init__(None, other_score.global_score)
+        super().__init__(None, other_score.score_function)
         self.depth_offset = None
         self.k = k
         self.other_score = other_score
@@ -131,7 +131,7 @@ class ScoreWithKTail(ScoreCalculation):
         if self.k <= depth:
             return True
 
-        return self.other_score.local_score(a, b)
+        return self.other_score.local_compatibility(a, b)
 
 class ScoreCombinator(ScoreCalculation):
     """
@@ -149,12 +149,12 @@ class ScoreCombinator(ScoreCalculation):
             score.reset()
 
     def local_score(self, a : Node, b : Node):
-        return self.aggregate_local(score.local_score(a, b) for score in self.scores)
+        return self.aggregate_local(score.local_compatibility(a, b) for score in self.scores)
 
     def global_score(self, part : Dict[Node, Node]):
-        return self.aggregate_global(score.global_score(part) for score in self.scores)
+        return self.aggregate_global(score.score_function(part) for score in self.scores)
 
-def local_to_global_score(local_fun : LocalScoreFunction) -> GlobalScoreFunction:
+def local_to_global_score(local_fun : LocalCompatibilityFunction) -> ScoreFunction:
     """
     Converts a local score function to a global score function by evaluating the local compatibility for each of the new
     partitions with all nodes that make up that partition. One use case for this is to evaluate a local score function
@@ -186,7 +186,7 @@ def lower_threshold(value, thresh):
         return fun
     return value if thresh < value else False
 
-def likelihood_ratio_global_score(alpha) -> GlobalScoreFunction:
+def likelihood_ratio_global_score(alpha) -> ScoreFunction:
     alpha = log(alpha)
     def log_chi2(x, k):
         return (k/2 - 1) * log(x) - (x/2) * 1 - (k/2) * log(2) - lgamma(k/2)
@@ -200,13 +200,13 @@ def likelihood_ratio_global_score(alpha) -> GlobalScoreFunction:
         return lower_threshold(score, alpha) # Not entirely sure if implemented correctly
     return score_fun
 
-def AIC_global_score(alpha = 0) -> GlobalScoreFunction:
+def AIC_global_score(alpha = 0) -> ScoreFunction:
     def score(part : Dict[Node, Node]) :
         llh_diff, param_diff = differential_info(part)
         return lower_threshold(param_diff - llh_diff, alpha)
     return score
 
-def EDSM_global_score(min_evidence = -1) -> GlobalScoreFunction:
+def EDSM_global_score(min_evidence = -1) -> ScoreFunction:
     def score(part : Dict[Node, Node]):
         total_evidence = 0
         for old_node, new_node in part.items():
