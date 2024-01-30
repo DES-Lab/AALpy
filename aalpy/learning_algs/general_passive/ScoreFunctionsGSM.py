@@ -179,7 +179,7 @@ def likelihood_ratio_global_score(alpha) -> GlobalScoreFunction:
 
     def score_fun(part : Dict[Node, Node]) :
         llh_diff, param_diff = differential_info(part)
-        if param_diff == 0:
+        if param_diff == 0 or llh_diff == 0:
             # This should cover the corner case when the partition merges only states with no outgoing transitions.
             return True # We always merge them.
         score = log_chi2(2*(llh_diff), param_diff)
