@@ -11,10 +11,10 @@ AggregationFunction = Callable[[Iterable[Score]], Score]
 
 class ScoreCalculation:
     def __init__(self, local_score : LocalScoreFunction = None, global_score : GlobalScoreFunction = None):
-        # This is a hack that gives an simple implementation where we can easily
+        # This is a hack that gives a simple implementation where we can easily
         # - determine whether the default is overridden (for optimization)
         # - override behavior in a functional way by providing the functions as arguments (no extra class)
-        # - override behavior in a stateful way by implementing a new class
+        # - override behavior in a stateful way by implementing a new class that provides `local_score` and / or `global_score` methods
         if not hasattr(self, "local_score"):
             self.local_score : LocalScoreFunction = local_score or self.default_local_score
         if not hasattr(self, "global_score"):
@@ -73,12 +73,15 @@ class NoRareEventNonDetScore(ScoreCalculation):
     def __init__(self, thresh, p_min : Union[dict, float], reject_local_score_only = False, no_global_score = False):
         super().__init__()
         print("Warning: using experimental compatibility criterion for nondeterministic automata")
+
+        # Transform parameters to log space and create dict
         self.thresh = log(thresh)
         if isinstance(p_min, float):
             cost = log(1 - p_min)
             self.miss_dict = defaultdict(lambda: cost)
         else:
             self.miss_dict = {k: log(1 - v) for k, v in p_min.items()}
+
         self.score = 0
         self.reject_local_score_only = reject_local_score_only
         if no_global_score:
@@ -108,23 +111,33 @@ class NoRareEventNonDetScore(ScoreCalculation):
         # I don't think that we have to reevaluate on the full partition.
         return self.score
 
-class KTailCondition(ScoreCalculation):
-    def __init__(self, k):
-        super().__init__()
+class ScoreWithKTail(ScoreCalculation):
+    """Applies k-Tails to a compatibility function: Compatibility is only evaluated up to a certain depth k."""
+    def __init__(self, k : int, other_score : ScoreCalculation):
+        super().__init__(None, other_score.global_score)
         self.depth_offset = None
         self.k = k
+        self.other_score = other_score
 
     def reset(self):
         self.depth_offset = None
+        self.other_score.reset()
 
     def local_score(self, a : Node, b : Node):
         # assuming b is tree shaped.
         if self.depth_offset is None:
             self.depth_offset = len(b.prefix)
         depth = len(b.prefix) - self.depth_offset
-        return self.k <= depth
+        if self.k <= depth:
+            return True
+
+        return self.other_score.local_score(a, b)
 
 class ScoreCombinator(ScoreCalculation):
+    """
+    This class is used to combine several scoring / compatibility mechanisms by aggregating the results of the
+    individual methods in a user defined manner. It uses generator expressions to allow for short circuit evaluation.
+    """
     def __init__(self, scores : List[ScoreCalculation], aggregate_local : AggregationFunction = None, aggregate_global : AggregationFunction = None):
         super().__init__()
         self.scores = scores
@@ -143,8 +156,9 @@ class ScoreCombinator(ScoreCalculation):
 
 def local_to_global_score(local_fun : LocalScoreFunction) -> GlobalScoreFunction:
     """
-    Converts a local score function to a global score function.
-    This can be used to evaluate a local score function after the partitions are complete.
+    Converts a local score function to a global score function by evaluating the local compatibility for each of the new
+    partitions with all nodes that make up that partition. One use case for this is to evaluate a local score function
+    after the partitions are complete.
     """
     def fun(part : Dict[Node, Node]):
         for old_node, new_node in part.items():

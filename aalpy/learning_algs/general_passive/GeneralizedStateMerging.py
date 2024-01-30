@@ -254,7 +254,7 @@ class GeneralizedStateMerging:
 
     def _partition_from_merge(self, red: Node, blue: Node) -> Partitioning :
         # Compatibility check based on partitions.
-        # assumes that blue is a tree and red is not in blue
+        # assumes that blue is a tree and red is not reachable from blue
 
         partitioning = Partitioning(red, blue)
 
