@@ -211,18 +211,18 @@ class Node:
             trans_props = dict()
         if state_label is None:
             if output_behavior == "moore":
-                state_label = lambda node : f'{node.prefix[-1][1]} {node.count()}'
+                def state_label(node) : return f'{node.prefix[-1][1]} {node.count()}'
             else:
-                state_label = lambda node: f'{sum(t.count for _, t in node.transition_iterator())}'
+                def state_label(node) : return f'{sum(t.count for _, t in node.transition_iterator())}'
         if trans_label is None and "label" not in trans_props:
             if output_behavior == "moore":
-                trans_label = lambda node, in_sym, out_sym : f'{in_sym} [{node.transitions[in_sym][out_sym].count}]'
+                def trans_label(node, in_sym, out_sym) : return f'{in_sym} [{node.transitions[in_sym][out_sym].count}]'
             else:
-                trans_label = lambda node, in_sym, out_sym : f'{in_sym} / {out_sym} [{node.transitions[in_sym][out_sym].count}]'
+                def trans_label(node, in_sym, out_sym) : return f'{in_sym} / {out_sym} [{node.transitions[in_sym][out_sym].count}]'
         if state_color is None:
-            state_color = lambda x : "black"
+            def state_color(x) : return "black"
         if trans_color is None:
-            trans_color = lambda x, y, z : "black"
+            def trans_color(x, y, z) : return "black"
         if node_naming is None:
             node_dict = dict()
             def node_naming(node : Node):
