@@ -179,14 +179,24 @@ def differential_info(part : Dict[Node, Node]):
 
     return partial_llh_old - partial_llh_new, num_params_old - num_params_new
 
-def lower_threshold(value, thresh):
-    if isinstance(value, Callable): # can be used to wrap score functions
-        def fun(*args, **kwargs):
-            return lower_threshold(value(*args, **kwargs), thresh)
-        return fun
-    return value if thresh < value else False
+def transform_score(score, transform : Callable):
+    if isinstance(score, Callable):
+        return lambda *args: transform(score(*args))
+    if isinstance(score, ScoreCalculation):
+        score.score_function = lambda *args: transform(score.score_function(*args))
+        return score
+    return transform(score)
 
-def likelihood_ratio_global_score(alpha) -> ScoreFunction:
+def make_greedy(score):
+    return transform_score(score, lambda x: x is not False)
+
+def lower_threshold(score, thresh):
+    return transform_score(score, lambda x: x if thresh < x else False)
+
+def likelihood_ratio_score(alpha=0.05) -> ScoreFunction:
+    if not 0 < alpha <= 1:
+        raise ValueError(f"Confidence {alpha} not between 0 and 1")
+
     alpha = log(alpha)
     def log_chi2(x, k):
         return (k/2 - 1) * log(x) - (x/2) * 1 - (k/2) * log(2) - lgamma(k/2)
@@ -200,13 +210,13 @@ def likelihood_ratio_global_score(alpha) -> ScoreFunction:
         return lower_threshold(score, alpha) # Not entirely sure if implemented correctly
     return score_fun
 
-def AIC_global_score(alpha = 0) -> ScoreFunction:
+def AIC_score(alpha = 0) -> ScoreFunction:
     def score(part : Dict[Node, Node]) :
         llh_diff, param_diff = differential_info(part)
         return lower_threshold(param_diff - llh_diff, alpha)
     return score
 
-def EDSM_global_score(min_evidence = -1) -> ScoreFunction:
+def EDSM_score(min_evidence = -1) -> ScoreFunction:
     def score(part : Dict[Node, Node]):
         total_evidence = 0
         for old_node, new_node in part.items():
