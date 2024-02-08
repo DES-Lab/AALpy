@@ -113,17 +113,18 @@ class NoRareEventNonDetScore(ScoreCalculation):
 
 class ScoreWithKTail(ScoreCalculation):
     """Applies k-Tails to a compatibility function: Compatibility is only evaluated up to a certain depth k."""
-    def __init__(self, k : int, other_score : ScoreCalculation):
+    def __init__(self, other_score : ScoreCalculation, k : int):
         super().__init__(None, other_score.score_function)
-        self.depth_offset = None
-        self.k = k
         self.other_score = other_score
+        self.k = k
+
+        self.depth_offset = None
 
     def reset(self):
-        self.depth_offset = None
         self.other_score.reset()
+        self.depth_offset = None
 
-    def local_score(self, a : Node, b : Node):
+    def local_compatibility(self, a : Node, b : Node):
         # assuming b is tree shaped.
         if self.depth_offset is None:
             self.depth_offset = len(b.prefix)
@@ -138,21 +139,34 @@ class ScoreCombinator(ScoreCalculation):
     This class is used to combine several scoring / compatibility mechanisms by aggregating the results of the
     individual methods in a user defined manner. It uses generator expressions to allow for short circuit evaluation.
     """
-    def __init__(self, scores : List[ScoreCalculation], aggregate_local : AggregationFunction = None, aggregate_global : AggregationFunction = None):
+    def __init__(self, scores : List[ScoreCalculation], aggregate_compatibility : AggregationFunction = None, aggregate_score : AggregationFunction = None):
         super().__init__()
         self.scores = scores
-        self.aggregate_local = aggregate_local or all
-        self.aggregate_global = aggregate_global or (lambda x : list(x))
+        self.aggregate_compatibility = aggregate_compatibility or self.default_aggregate_compatibility
+        self.aggregate_score = aggregate_score or self.default_aggregate_score
 
     def reset(self):
         for score in self.scores:
             score.reset()
 
     def local_score(self, a : Node, b : Node):
-        return self.aggregate_local(score.local_compatibility(a, b) for score in self.scores)
+        return self.aggregate_compatibility(score.local_compatibility(a, b) for score in self.scores)
 
     def global_score(self, part : Dict[Node, Node]):
-        return self.aggregate_global(score.score_function(part) for score in self.scores)
+        return self.aggregate_score(score.score_function(part) for score in self.scores)
+
+    @staticmethod
+    def default_aggregate_compatibility(compatibility_iterable):
+        """Commits to the first value that is not inconclusive (== None). Accepts if in doubt."""
+        for compat in compatibility_iterable:
+            if compat is None:
+                continue
+            return compat
+        return True
+
+    @staticmethod
+    def default_aggregate_score(score_iterable):
+        return list(score_iterable)
 
 def local_to_global_score(local_fun : LocalCompatibilityFunction) -> ScoreFunction:
     """
