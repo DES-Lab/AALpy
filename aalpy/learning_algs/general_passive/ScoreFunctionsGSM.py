@@ -134,6 +134,29 @@ class ScoreWithKTail(ScoreCalculation):
 
         return self.other_score.local_compatibility(a, b)
 
+class ScoreWithSinks(ScoreCalculation):
+    def __init__(self, other_score : ScoreCalculation, sink_cond : Callable[[Node], bool], allow_sink_merge = True):
+        super().__init__(None, other_score.score_function)
+        self.other_score = other_score
+        self.sink_cond = sink_cond
+        self.allow_sink_merge = allow_sink_merge
+
+        self.is_first = True
+
+    def reset(self):
+        self.other_score.reset()
+        self.is_first = True
+
+    def local_compatibility(self, a : Node, b : Node):
+        if self.is_first:
+            self.is_first = False
+            a_sink, b_sink = self.sink_cond(a), self.sink_cond(b)
+            if a_sink != b_sink:
+                return False
+            if a_sink and b_sink and not self.allow_sink_merge:
+                return False
+        return self.other_score.local_compatibility(a, b)
+
 class ScoreCombinator(ScoreCalculation):
     """
     This class is used to combine several scoring / compatibility mechanisms by aggregating the results of the
