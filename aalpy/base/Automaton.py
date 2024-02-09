@@ -146,9 +146,9 @@ class Automaton(ABC, Generic[AutomatonStateType]):
         self.current_state = origin_state
         return [self.step(s) for s in seq]
 
-    def save(self, file_path='LearnedModel'):
+    def save(self, file_path='LearnedModel', file_type='dot'):
         from aalpy.utils import save_automaton_to_file
-        save_automaton_to_file(self, path=file_path)
+        save_automaton_to_file(self, path=file_path, file_type=file_type)
 
     def visualize(self, path='LearnedModel', file_type='pdf', display_same_state_transitions=True):
         from aalpy.utils import visualize_automaton
