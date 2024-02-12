@@ -1,0 +1,10 @@
+digraph coffee_mealy {
+s0 [label="s0"];
+s1 [label="s1"];
+s0 -> s1  [label="coin/ beep"];
+s0 -> s0  [label="button/ init"];
+s1 -> s1  [label="coin/ beep"];
+s1 -> s0  [label="button/ coffee"];
+__start0 [label="", shape=none];
+__start0 -> s0  [label=""];
+}
