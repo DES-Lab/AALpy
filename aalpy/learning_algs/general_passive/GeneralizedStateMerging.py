@@ -325,7 +325,7 @@ def run_GSM(data, *,
     return GeneralizedStateMerging(**locals()).run()
 
 
-def run_alergia(data, output_behavior : OutputBehavior = "moore",
+def run_GSM_Alergia(data, output_behavior : OutputBehavior = "moore",
                 epsilon : float = 0.005,
                 compatibility_behavior : CompatibilityBehavior = "future",
                 eval_compat_on_pta=True,
@@ -341,7 +341,7 @@ def run_alergia(data, output_behavior : OutputBehavior = "moore",
         **kwargs
     ).run()
 
-def run_RPNI(data, output_behavior : OutputBehavior = "moore", *args, **kwargs):
+def run_GSM_RPNI(data, output_behavior : OutputBehavior = "moore", *args, **kwargs):
     return GeneralizedStateMerging(
         data,
         output_behavior=output_behavior,

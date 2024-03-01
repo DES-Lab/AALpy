@@ -153,16 +153,16 @@ class Node:
             ("mealy","stochastic") : (StochasticMealyMachine, StochasticMealyState),
         }
 
-        Machine, State = type_dict[(output_behavior, transition_behavior)]
+        AutomatonClass, StateClass = type_dict[(output_behavior, transition_behavior)]
 
         # create states
         state_map = dict()
         for i, node in enumerate(nodes):
             state_id = f's{i}'
             if output_behavior == "mealy":
-                state = State(state_id)
+                state = StateClass(state_id)
             elif output_behavior == "moore":
-                state = State(state_id, node.prefix[-1].output)
+                state = StateClass(state_id, node.prefix[-1].output)
             state_map[node] = state
             if transition_behavior == "deterministic":
                 state.prefix = tuple(p.input for p in node.prefix)
@@ -179,21 +179,21 @@ class Node:
                 for out_sym, target_node in transitions.items():
                     target_state = state_map[target_node.target]
                     count = target_node.count
-                    if Machine is MooreMachine:
+                    if AutomatonClass is MooreMachine:
                         state.transitions[in_sym] = target_state
-                    elif Machine is MealyMachine :
+                    elif AutomatonClass is MealyMachine :
                         state.transitions[in_sym] = target_state
                         state.output_fun[in_sym] = out_sym
-                    elif Machine is NDMooreMachine:
+                    elif AutomatonClass is NDMooreMachine:
                         state.transitions[in_sym].append(target_state)
-                    elif Machine is Onfsm:
+                    elif AutomatonClass is Onfsm:
                         state.transitions[in_sym].append((out_sym, target_state))
-                    elif Machine is Mdp:
+                    elif AutomatonClass is Mdp:
                         state.transitions[in_sym].append((target_state, count / total))
-                    elif Machine is StochasticMealyMachine:
+                    elif AutomatonClass is StochasticMealyMachine:
                         state.transitions[in_sym].append((target_state, out_sym, count / total))
 
-        return Machine(initial_state, list(state_map.values()))
+        return AutomatonClass(initial_state, list(state_map.values()))
 
     def visualize(self, path : Union[str, pathlib.Path], output_behavior : OutputBehavior = "mealy", format : str = "dot", engine ="dot", *,
                   state_label : StateFunction = None, state_color : StateFunction = None,
