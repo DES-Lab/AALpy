@@ -15,9 +15,9 @@ class ScoreCalculation:
         # - determine whether the default is overridden (for optimization)
         # - override behavior in a functional way by providing the functions as arguments (no extra class)
         # - override behavior in a stateful way by implementing a new class that provides `local_compatibility` and / or `score_function` methods
-        if not hasattr(self, "local_score"):
+        if not hasattr(self, "local_compatibility"):
             self.local_compatibility : LocalCompatibilityFunction = local_compatibility or self.default_local_compatibility
-        if not hasattr(self, "global_score"):
+        if not hasattr(self, "score_function"):
             self.score_function : ScoreFunction = score_function or self.default_score_function
 
     def reset(self):
@@ -90,7 +90,7 @@ class NoRareEventNonDetScore(ScoreCalculation):
     def reset(self):
         self.score = 0
 
-    def local_score(self, a: Node, b: Node):
+    def local_compatibility(self, a: Node, b: Node):
         score_local = 0
         for in_sym in filter(lambda x: x in a.transitions.keys(), b.transitions.keys()):
             a_trans, b_trans = (x.transitions[in_sym] for x in [a, b])
@@ -107,7 +107,7 @@ class NoRareEventNonDetScore(ScoreCalculation):
             return self.thresh < score_local
         return self.thresh < self.score
 
-    def global_score(self, part: Dict[Node, Node]) -> Score:
+    def score_function(self, part: Dict[Node, Node]) -> Score:
         # I don't think that we have to reevaluate on the full partition.
         return self.score
 
@@ -172,10 +172,10 @@ class ScoreCombinator(ScoreCalculation):
         for score in self.scores:
             score.reset()
 
-    def local_score(self, a : Node, b : Node):
+    def local_compatibility(self, a : Node, b : Node):
         return self.aggregate_compatibility(score.local_compatibility(a, b) for score in self.scores)
 
-    def global_score(self, part : Dict[Node, Node]):
+    def score_function(self, part : Dict[Node, Node]):
         return self.aggregate_score(score.score_function(part) for score in self.scores)
 
     @staticmethod
