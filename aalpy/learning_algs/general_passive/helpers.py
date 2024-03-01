@@ -321,7 +321,8 @@ class Node:
             for out_sym, info in trans.items():
                 total_count += info.count
                 llc += info.count * math.log(info.count)
-            llc -= total_count * math.log(total_count)
+            if total_count != 0:
+              llc -= total_count * math.log(total_count)
         return llc
 
     def count(self):
