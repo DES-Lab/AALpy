@@ -1,3 +1,4 @@
+import warnings
 from collections import defaultdict
 from math import sqrt, log, lgamma
 from typing import Callable, Dict, Union, List, Iterable
@@ -72,7 +73,7 @@ def non_det_compatibility(allow_subset = False) -> LocalCompatibilityFunction:
 class NoRareEventNonDetScore(ScoreCalculation):
     def __init__(self, thresh, p_min : Union[dict, float], reject_local_score_only = False, no_global_score = False):
         super().__init__()
-        print("Warning: using experimental compatibility criterion for nondeterministic automata")
+        warnings.warn("Using experimental compatibility criterion for nondeterministic automata.")
 
         # Transform parameters to log space and create dict
         self.thresh = log(thresh)
