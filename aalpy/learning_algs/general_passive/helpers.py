@@ -341,8 +341,16 @@ class FoldResult:
         self.partitions : Set[Partition] = set()
         self.counter_examples = []
 
-
-def try_fold(a : 'Node', b : 'Node', compat : Callable[[Node, Node, Dict[Node, Partition]], Any], single_cex = False) -> FoldResult:
+def try_fold(a : 'Node', b : 'Node',
+             compat : Callable[[Node, Node, Dict[Node, Partition]], Any] = None,
+             stop_on_error : Callable[[Any], str] = None
+             ) -> FoldResult:
+    """
+    compute the partitions of two automata that result from grouping two nodes.
+    supports custom compatibility criteria for early stopping in case of incompatibility and/or reporting mismatches.
+    """
+    compat = compat or (lambda a,b,c : True)
+    stop_on_error = stop_on_error or (lambda err : "stop")
     result = FoldResult()
 
     partition_map : Dict[Node, Partition] = dict()
@@ -373,10 +381,13 @@ def try_fold(a : 'Node', b : 'Node', compat : Callable[[Node, Node, Dict[Node, P
             else:
                 error = prefix
             result.counter_examples.append(error)
-            if single_cex:
+            stop_mode = stop_on_error(compat_result)
+            if stop_mode == "stop":
                 break
-            else:
+            elif stop_mode == "stop exploration":
                 continue
+            elif stop_mode != "continue":
+                ValueError("stop_on_error produces invalid result")
 
         # merge partitions
         if len(a_part) < len(b_part):
