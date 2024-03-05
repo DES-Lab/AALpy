@@ -459,21 +459,7 @@ class ClassificationTree:
                     if old_leaf_access_string == destination.prefix:
                         self.transitions_to_update.append((state, inp))
         else:
-            old_state_id = next((x.state_id for x in self.hypothesis_states.values()
-                                 if x.prefix == old_leaf_access_string), None)
-
             for state in self.hypothesis_states.values():
                 state.transitions.clear()
                 self.transitions_to_update.extend(product([state], self.alphabet.internal_alphabet))
                 self.transitions_to_update.extend(product([state], self.alphabet.call_alphabet))
-                # for inp, transitions in state.transitions.items():
-                #     for transition in transitions:
-                #         if old_leaf_access_string == transition.target_state.prefix or transition.stack_guard[0] == old_state_id:
-                #             if transition.action == 'pop':
-                #                 self.transitions_to_update.append((state, transition.stack_guard[1]))
-                #             else:
-                #                 self.transitions_to_update.append((state, inp))
-                #             state.transitions[inp].remove(transition)
-
-
-
