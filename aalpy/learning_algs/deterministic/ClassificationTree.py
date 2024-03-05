@@ -7,7 +7,6 @@ from aalpy.automata import DfaState, Dfa, MealyState, MealyMachine, MooreState, 
 from aalpy.base import SUL
 from aalpy.learning_algs.deterministic.CounterExampleProcessing import rs_cex_processing, linear_cex_processing, \
     exponential_cex_processing
-from aalpy.utils.HelperFunctions import visualize_classification_tree
 
 automaton_class = {'dfa': Dfa, 'mealy': MealyMachine, 'moore': MooreMachine}
 
@@ -336,7 +335,7 @@ class ClassificationTree:
     def process_counterexample(self, cex: tuple, hypothesis, cex_processing_fun):
         """
         Updates the classification tree based on a counterexample,
-        using Rivest & Schapire's counterexample processing
+        using Rivest & Schapire counterexample processing
         - Replace the CTLeafNode labeled with the access string of the state
           that is reached by the sequence cex[:j-1] in the hypothesis
           with an CTInternalNode with two CTLeafNodes: one keeps the old
