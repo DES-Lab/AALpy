@@ -113,7 +113,7 @@ def run_KV(alphabet: Union[list, SevpaAlphabet], sul: SUL, eq_oracle: Oracle, au
             if max_learning_rounds and learning_rounds - 1 == max_learning_rounds:
                 break
 
-            hypothesis = classification_tree.gen_hypothesis()
+            hypothesis = classification_tree.update_hypothesis()
 
             if print_level == 2:
                 print(f'\rHypothesis {learning_rounds}: {hypothesis.size} states.', end="")
