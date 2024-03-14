@@ -16,6 +16,7 @@ automaton_types = {Dfa: 'dfa', MealyMachine: 'mealy', MooreMachine: 'moore', Mdp
 
 sevpa_transition_regex = r"(\S+)\s*/\s*\(\s*'(\S+)'\s*,\s*'(\S+)'\s*\)"
 
+
 def _wrap_label(label):
     """
     Adds a " " around a label if not already present on both ends.
@@ -247,7 +248,7 @@ def _process_node_label(node, label, node_label_dict, node_type, automaton_type)
         if automaton_type == 'moore' and label != "":
             label_output = _strip_label(label)
             label, output = label_output.split("|", maxsplit=1)
-            output = output if not output.isdigit() else int(output)
+            output = output.strip() if not output.isdigit() else int(output)
             node_label_dict[node_name] = node_type(label, output)
         else:
             node_label_dict[node_name] = node_type(label)
@@ -328,6 +329,79 @@ def load_automaton_from_file(path, automaton_type, compute_prefixes=False):
         assert False
 
     automaton = aut_type(initial_node, list(node_label_dict.values()))
+    if automaton_type not in {'mc', 'vpa'} and not automaton.is_input_complete():
+        print('Warning: Loaded automaton is not input complete.')
+    if compute_prefixes and not automaton_type not in {'mc', 'vpa'}:
+        for state in automaton.states:
+            state.prefix = automaton.get_shortest_path(automaton.initial_state, state)
+    return automaton
+
+
+def _process_node_label_prime(node_name, label, line, node_label_dict, node_type, automaton_type):
+    if automaton_type == 'mdp' or automaton_type == 'mc':
+        node_label_dict[node_name] = node_type(node_name, label)
+    else:
+        if automaton_type == 'moore' and label != "":
+            label_output = _strip_label(label)
+            label, output = label_output.split("|", maxsplit=1)
+            output = output.strip() if not output.isdigit() else int(output)
+            node_label_dict[node_name] = node_type(label, output)
+        else:
+            node_label_dict[node_name] = node_type(label)
+        if automaton_type == 'dfa' or automaton_type == 'vpa':
+            if 'doublecircle' in line:
+                node_label_dict[node_name].is_accepting = True
+
+
+label_pattern = r'label="([^"]*)"'
+starting_state_pattern = r'__start0\s*->\s*(\w+)\s*(?:\[label=""\])?;?'
+transition_pattern = r'(\w+)\s*->\s*(\w+)\s*\[label="([^"]+)"\];'
+
+
+def load_automaton_from_file_prime(path, automaton_type, compute_prefixes=False):
+    assert automaton_type in automaton_types.values()
+
+    id_node_aut_map = {'dfa': (DfaState, Dfa), 'mealy': (MealyState, MealyMachine), 'moore': (MooreState, MooreMachine),
+                       'onfsm': (OnfsmState, Onfsm), 'mdp': (MdpState, Mdp), 'mc': (McState, MarkovChain),
+                       'smm': (StochasticMealyState, StochasticMealyMachine), 'vpa': (SevpaState, Sevpa)}
+
+    nodeType, aut_type = id_node_aut_map[automaton_type]
+
+    initial_state = None
+    transition_data = []
+
+    node_label_dict = dict()
+
+    with open(path) as f:
+        for line in f.readlines():
+            line = line.strip()
+            if '__start0 ->' in line:
+                match = re.search(starting_state_pattern, line)
+                if match:
+                    initial_state = match.group(1).strip()
+            # State id
+            elif '__start0' not in line and 'label' in line and '->' not in line:
+                state_id = line.split('[')[0].strip()
+                match = re.search(label_pattern, line)
+                if match:
+                    label = match.group(1)
+                _process_node_label_prime(state_id, label, line, node_label_dict, nodeType, automaton_type)
+            # transitions
+            elif '->' in line:
+                match = re.match(transition_pattern, line)
+                if match:
+                    # source, destination, label
+                    transition_data.append((match.group(1).strip(), match.group(2).strip(), match.group(3)))
+
+    # ensure initial state is defined and it is defined states
+    assert initial_state is not None and initial_state in node_label_dict.keys()
+    initial_state = node_label_dict[initial_state]
+
+    for source, destination, transition_label in transition_data:
+        label = _strip_label(transition_label)
+        _process_label(label, node_label_dict[source], node_label_dict[destination], automaton_type)
+
+    automaton = aut_type(initial_state, list(node_label_dict.values()))
     if automaton_type not in {'mc', 'vpa'} and not automaton.is_input_complete():
         print('Warning: Loaded automaton is not input complete.')
     if compute_prefixes and not automaton_type not in {'mc', 'vpa'}:
