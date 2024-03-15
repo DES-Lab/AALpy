@@ -1,6 +1,6 @@
 import unittest
 
-from aalpy.utils import load_automaton_from_file, generate_random_markov_chain
+from aalpy.utils import generate_random_markov_chain, load_automaton_from_file
 from aalpy.utils.BenchmarkSULs import *
 
 

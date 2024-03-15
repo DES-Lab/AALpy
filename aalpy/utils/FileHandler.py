@@ -267,7 +267,7 @@ def _strip_label(label: str) -> str:
     return label
 
 
-def load_automaton_from_file(path, automaton_type, compute_prefixes=False):
+def load_automaton_from_file_pydot_version(path, automaton_type, compute_prefixes=False):
     """
     Loads the automaton from the file.
     Standard of the automatas strictly follows syntax found at: https://automata.cs.ru.nl/Syntax/Overview.
@@ -358,7 +358,26 @@ starting_state_pattern = r'__start0\s*->\s*(\w+)\s*(?:\[label=""\])?;?'
 transition_pattern = r'(\w+)\s*->\s*(\w+)\s*\[label="([^"]+)"\];'
 
 
-def load_automaton_from_file_prime(path, automaton_type, compute_prefixes=False):
+def load_automaton_from_file(path, automaton_type, compute_prefixes=False):
+    """
+    Loads the automaton from the file.
+    Standard of the automatas strictly follows syntax found at: https://automata.cs.ru.nl/Syntax/Overview.
+    For non-deterministic and stochastic systems syntax can be found on AALpy's Wiki.
+
+    Args:
+
+        path: pathlike or str to the file
+
+        automaton_type: type of the automaton, one of ['dfa', 'mealy', 'moore', 'mdp', 'smm', 'onfsm', 'mc', 'vpa']
+
+        compute_prefixes: it True, shortest path to reach every state will be computed and saved in the prefix of
+            the state. Useful when loading the model to use them as a equivalence oracle. (Default value = False)
+
+    Returns:
+
+      loaded automaton
+
+    """
     assert automaton_type in automaton_types.values()
 
     id_node_aut_map = {'dfa': (DfaState, Dfa), 'mealy': (MealyState, MealyMachine), 'moore': (MooreState, MooreMachine),
@@ -372,14 +391,14 @@ def load_automaton_from_file_prime(path, automaton_type, compute_prefixes=False)
 
     node_label_dict = dict()
 
-    with open(path) as f:
+    with open(Path(path)) as f:
         for line in f.readlines():
             line = line.strip()
             if '__start0 ->' in line:
                 match = re.search(starting_state_pattern, line)
                 if match:
                     initial_state = match.group(1).strip()
-            # State id
+            # State definitions
             elif '__start0' not in line and 'label' in line and '->' not in line:
                 state_id = line.split('[')[0].strip()
                 match = re.search(label_pattern, line)
