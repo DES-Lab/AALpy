@@ -1,6 +1,6 @@
 import warnings
 from collections import defaultdict
-from math import sqrt, log, lgamma
+from math import sqrt, log
 from typing import Callable, Dict, Union, List, Iterable
 
 from aalpy.learning_algs.general_passive.helpers import Node
@@ -232,19 +232,18 @@ def lower_threshold(score, thresh):
     return transform_score(score, lambda x: x if thresh < x else False)
 
 def likelihood_ratio_score(alpha=0.05) -> ScoreFunction:
+    # TODO remove and add as an example?
+    from scipy.stats import chi2
+
     if not 0 < alpha <= 1:
         raise ValueError(f"Confidence {alpha} not between 0 and 1")
 
-    alpha = log(alpha)
-    def log_chi2(x, k):
-        return (k/2 - 1) * log(x) - (x/2) * 1 - (k/2) * log(2) - lgamma(k/2)
-
     def score_fun(part : Dict[Node, Node]) :
         llh_diff, param_diff = differential_info(part)
-        if param_diff == 0 or llh_diff == 0:
+        if param_diff == 0:
             # This should cover the corner case when the partition merges only states with no outgoing transitions.
-            return True # We always merge them.
-        score = log_chi2(2*(llh_diff), param_diff)
+            return -1 # Let them be very bad merges.
+        score = 1 - chi2.cdf(2 * llh_diff, param_diff)
         return lower_threshold(score, alpha) # Not entirely sure if implemented correctly
     return score_fun
 
