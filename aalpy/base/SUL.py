@@ -40,6 +40,9 @@ class SUL(ABC):
         self.num_steps += len(word)
         return out
 
+    def io_query(self, word : tuple):
+        return list(zip(word, self.query(word)))
+
     @abstractmethod
     def pre(self):
         """
