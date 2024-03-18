@@ -1,4 +1,5 @@
 from collections import defaultdict
+from itertools import product
 from typing import Union
 
 from aalpy.automata import DfaState, Dfa, MealyState, MealyMachine, MooreState, MooreMachine, \
@@ -65,9 +66,9 @@ class ClassificationTree:
         self.automaton_type = automaton_type
 
         self.leaf_nodes = {}
-        self.query_cache = dict()
 
-        self.sifting_cache = {}
+        self.initial_state = None
+        self.hypothesis_states = {}
 
         # prefix of identified error state in VPDA learning
         self.error_state_prefix = None
@@ -75,8 +76,6 @@ class ClassificationTree:
         if self.automaton_type != 'mealy':
             initial_output = sul.query(())[-1]
             cex_output = sul.query(cex)[-1]
-
-            self.query_cache[()] = initial_output
 
             root_distinguishing_string = () if automaton_type != 'vpa' else ([(), ()])
 
@@ -106,6 +105,9 @@ class ClassificationTree:
             self.leaf_nodes[tuple()] = self.root.children[hypothesis_output]
             self.leaf_nodes[cex[:-1]] = self.root.children[cex_output]
 
+        self.new_states = list(self.leaf_nodes.values())
+        self.transitions_to_update = []
+
     def _sift(self, word):
         """
         Sifting a word into the classification tree.
@@ -123,9 +125,6 @@ class ClassificationTree:
             the CTLeafNode that is reached by the sifting operation.
         """
 
-        if word in self.sifting_cache:
-            return self.sifting_cache[word]
-
         node = self.root
         while not node.is_leaf():
 
@@ -134,17 +133,7 @@ class ClassificationTree:
             else:
                 query = node.distinguishing_string[0] + word + node.distinguishing_string[1]
 
-            if query not in self.query_cache.keys():
-                mq_result = self.sul.query(query)
-                # keep track of transitions (this might miss some due to other caching, but rest can be obtained from
-                # cache in gen hyp)
-                if self.automaton_type == 'mealy' and word not in self.query_cache.keys():
-                    self.query_cache[word] = mq_result[len(word) - 1]
-
-                mq_result = mq_result[-1]
-                self.query_cache[query] = mq_result
-            else:
-                mq_result = self.query_cache[query]
+            mq_result = self.sul.query(query)[-1]
 
             if mq_result not in node.children.keys():
                 new_leaf = CTLeafNode(access_string=word, parent=node, path_to_node=mq_result)
@@ -153,18 +142,16 @@ class ClassificationTree:
 
             node = node.children[mq_result]
 
-        self.sifting_cache[word] = node
         assert node.is_leaf()
         return node
 
-    def gen_hypothesis(self):
+    def update_hypothesis(self):
         # for each CTLeafNode of this CT,
         # create a state in the hypothesis that is labeled by that
         # node's access string. The start state is the empty word
-        states = {}
-        initial_state = None
-        state_counter = 0
-        for node in self.leaf_nodes.values():
+        state_counter = len(self.hypothesis_states.values())
+        while self.new_states:
+            node = self.new_states.pop(0)
 
             if self.automaton_type == 'dfa':
                 new_state = DfaState(state_id=f's{state_counter}', is_accepting=node.output)
@@ -177,78 +164,89 @@ class ClassificationTree:
 
             new_state.prefix = node.access_string
             if new_state.prefix == ():
-                initial_state = new_state
-            states[new_state.prefix] = new_state
+                self.initial_state = new_state
+
+            self.hypothesis_states[new_state.prefix] = new_state
+
+            if self.automaton_type != 'vpa':
+                self.transitions_to_update.extend(product([new_state], self.alphabet))
+            else:
+                self.transitions_to_update.extend(product([new_state], self.alphabet.internal_alphabet))
+                self.transitions_to_update.extend(product([new_state], self.alphabet.call_alphabet))
+
             state_counter += 1
-        assert initial_state is not None
+
+        assert self.initial_state is not None
 
         # For each access state s of the hypothesis and each letter b in the
         # alphabet, compute the b-transition out of state s by sifting s.state_id*b
-        states_for_transitions = list(states.values())
-        for state in states_for_transitions:
+        while self.transitions_to_update:
+            state, input_element = self.transitions_to_update.pop(0)
+
             if self.automaton_type != 'vpa':
-                for letter in self.alphabet:
-                    transition_target_node = self._sift(state.prefix + (letter,))
-                    transition_target_access_string = transition_target_node.access_string
 
-                    if self.automaton_type != "dfa" and transition_target_access_string not in states:
-                        if self.automaton_type == 'mealy':
-                            new_state = MealyState(state_id=f's{state_counter}')
-                        else:
-                            output = self._query_and_update_cache(transition_target_access_string)
-                            new_state = MooreState(state_id=f's{state_counter}', output=output)
+                transition_target_node = self._sift(state.prefix + (input_element,))
+                transition_target_access_string = transition_target_node.access_string
 
-                        new_state.prefix = transition_target_access_string
-                        states_for_transitions.append(new_state)
-                        states[new_state.prefix] = new_state
-                        state_counter += 1
+                if self.automaton_type != "dfa" and transition_target_access_string not in self.hypothesis_states:
+                    if self.automaton_type == 'mealy':
+                        new_state = MealyState(state_id=f's{state_counter}')
+                    else:
+                        output = self.sul.query(transition_target_access_string)[-1]
+                        new_state = MooreState(state_id=f's{state_counter}', output=output)
 
-                    state.transitions[letter] = states[transition_target_access_string]
+                    new_state.prefix = transition_target_access_string
+                    self.hypothesis_states[new_state.prefix] = new_state
+                    self.transitions_to_update.extend(product([new_state], self.alphabet))
+                    state_counter += 1
 
-                    if self.automaton_type == "mealy":
-                        state.output_fun[letter] = self._query_and_update_cache(state.prefix + (letter,))
+                state.transitions[input_element] = self.hypothesis_states[transition_target_access_string]
+
+                if self.automaton_type == "mealy":
+                    state.output_fun[input_element] = self.sul.query(state.prefix + (input_element,))[-1]
             else:
                 # internal transitions
-                for internal_letter in self.alphabet.internal_alphabet:
-                    transition_target_node = self._sift(state.prefix + (internal_letter,))
+                if input_element in self.alphabet.internal_alphabet:
+                    transition_target_node = self._sift(state.prefix + (input_element,))
                     transition_target_access_string = transition_target_node.access_string
 
-                    assert transition_target_access_string in states
-                    trans = SevpaTransition(target=states[transition_target_access_string],
-                                            letter=internal_letter, action=None)
-                    state.transitions[internal_letter].append(trans)
+                    assert transition_target_access_string in self.hypothesis_states
+                    trans = SevpaTransition(target=self.hypothesis_states[transition_target_access_string],
+                                            letter=input_element, action=None)
+                    state.transitions[input_element].append(trans)
 
-                # Add call transitions
-                for call_letter in self.alphabet.call_alphabet:
+                #  call transitions
+                elif input_element in self.alphabet.call_alphabet:
                     # Add return transitions
                     for return_letter in self.alphabet.return_alphabet:
                         # check if exclusive pairs of call and return letters are defined in an alphabets
                         if self.alphabet.exclusive_call_return_pairs and \
-                                self.alphabet.exclusive_call_return_pairs[call_letter] != return_letter:
+                                self.alphabet.exclusive_call_return_pairs[input_element] != return_letter:
                             continue
 
-                        for other_state in states_for_transitions:
+                        for other_state in self.hypothesis_states.values():
                             # ignore other state if other state is error state
                             if other_state.prefix == self.error_state_prefix:
                                 continue
                             transition_target_node = self._sift(
-                                other_state.prefix + (call_letter,) + state.prefix + (return_letter,))
+                                other_state.prefix + (input_element,) + state.prefix + (return_letter,))
                             transition_target_access_string = transition_target_node.access_string
 
-                            trans = SevpaTransition(target=states[transition_target_access_string],
+                            trans = SevpaTransition(target=self.hypothesis_states[transition_target_access_string],
                                                     letter=return_letter,
-                                                    action='pop', stack_guard=(other_state.state_id, call_letter))
+                                                    action='pop', stack_guard=(other_state.state_id, input_element))
                             state.transitions[return_letter].append(trans)
 
         if self.automaton_type == 'vpa':
-            hypothesis = Sevpa(initial_state=initial_state, states=list(states.values()))
+            hypothesis = Sevpa(initial_state=self.initial_state, states=list(self.hypothesis_states.values()))
             if not self.error_state_prefix:
                 error_state = hypothesis.get_error_state()
                 if error_state:
                     self.error_state_prefix = error_state.prefix
             return hypothesis
 
-        return automaton_class[self.automaton_type](initial_state=initial_state, states=list(states.values()))
+        return automaton_class[self.automaton_type](initial_state=self.initial_state,
+                                                    states=list(self.hypothesis_states.values()))
 
     def _least_common_ancestor(self, node_1_id, node_2_id):
         """
@@ -337,7 +335,7 @@ class ClassificationTree:
     def process_counterexample(self, cex: tuple, hypothesis, cex_processing_fun):
         """
         Updates the classification tree based on a counterexample,
-        using Rivest & Schapire's counterexample processing
+        using Rivest & Schapire counterexample processing
         - Replace the CTLeafNode labeled with the access string of the state
           that is reached by the sequence cex[:j-1] in the hypothesis
           with an CTInternalNode with two CTLeafNodes: one keeps the old
@@ -452,19 +450,15 @@ class ClassificationTree:
         discriminator_node.children[other_leaf_position] = old_leaf
 
         # sifting cache update
-        sifting_cache_outdated = []
-        if old_leaf in self.sifting_cache.values():
-            for prefix, node in self.sifting_cache.items():
-                if old_leaf == node:
-                    sifting_cache_outdated.append(prefix)
+        self.new_states.append(new_leaf)
 
-        for to_delete in sifting_cache_outdated:
-            del self.sifting_cache[to_delete]
-
-    def _query_and_update_cache(self, word):
-        if word in self.query_cache.keys():
-            output = self.query_cache[word]
+        if self.automaton_type != 'vpa':
+            for state in self.hypothesis_states.values():
+                for inp, destination in state.transitions.items():
+                    if old_leaf_access_string == destination.prefix:
+                        self.transitions_to_update.append((state, inp))
         else:
-            output = self.sul.query(word)[-1]
-            self.query_cache[word] = output
-        return output
+            for state in self.hypothesis_states.values():
+                state.transitions.clear()
+                self.transitions_to_update.extend(product([state], self.alphabet.internal_alphabet))
+                self.transitions_to_update.extend(product([state], self.alphabet.call_alphabet))

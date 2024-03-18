@@ -146,9 +146,9 @@ class Automaton(ABC, Generic[AutomatonStateType]):
         self.current_state = origin_state
         return [self.step(s) for s in seq]
 
-    def save(self, file_path='LearnedModel'):
+    def save(self, file_path='LearnedModel', file_type='dot'):
         from aalpy.utils import save_automaton_to_file
-        save_automaton_to_file(self, path=file_path)
+        save_automaton_to_file(self, path=file_path, file_type=file_type)
 
     def visualize(self, path='LearnedModel', file_type='pdf', display_same_state_transitions=True):
         from aalpy.utils import visualize_automaton
@@ -259,7 +259,7 @@ class DeterministicAutomaton(Automaton[AutomatonStateType]):
         self.current_state = state_save
         return output
 
-    def find_distinguishing_seq(self, state1, state2):
+    def find_distinguishing_seq(self, state1, state2, alphabet):
         """
         A BFS to determine an input sequence that distinguishes two states in the automaton, i.e., a sequence such that
         the output response from the given states is different. In a minimal automaton, this function always returns a
@@ -267,13 +267,13 @@ class DeterministicAutomaton(Automaton[AutomatonStateType]):
         Args:
             state1: first state
             state2: second state to distinguish
+            alphabet: input alphabet of the automaton
 
         Returns: an input sequence distinguishing two states, or None if the states are equivalent
 
         """
         visited = set()
         to_explore = [(state1, state2, [])]
-        alphabet = self.get_input_alphabet()
         while to_explore:
             (curr_s1, curr_s2, prefix) = to_explore.pop(0)
             visited.add((curr_s1, curr_s2))
@@ -348,6 +348,7 @@ class DeterministicAutomaton(Automaton[AutomatonStateType]):
             for seq in char_set_init:
                 blocks = self._split_blocks(blocks, seq)
 
+        alphabet = self.get_input_alphabet()
         while True:
             # Given a partition (of states), this function returns a block with at least two elements.
             try:
@@ -359,7 +360,7 @@ class DeterministicAutomaton(Automaton[AutomatonStateType]):
                 break
             split_state1 = block_to_split[0]
             split_state2 = block_to_split[1]
-            dist_seq = self.find_distinguishing_seq(split_state1, split_state2)
+            dist_seq = self.find_distinguishing_seq(split_state1, split_state2, alphabet)
             if dist_seq is None:
                 if return_same_states:
                     return split_state1, split_state2

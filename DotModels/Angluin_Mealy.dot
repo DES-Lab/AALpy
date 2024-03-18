@@ -1,8 +1,8 @@
 digraph Angluin_Mealy {
-s0 [label=s0];
-s1 [label=s1];
-s2 [label=s2];
-s3 [label=s3];
+s0 [label="s0"];
+s1 [label="s1"];
+s2 [label="s2"];
+s3 [label="s3"];
 s0 -> s2  [label="a/0"];
 s0 -> s1  [label="b/0"];
 s1 -> s3  [label="a/0"];

@@ -1,0 +1,13 @@
+digraph g {
+        __start0 [label="" shape="none"];
+        __start0 -> A;
+    	A [shape="record", style="rounded", label="{ A | init }"];
+    	B [shape="record", style="rounded", label="{ B | beep }"];
+    	C [shape="doublecircle", style="rounded", label="{ C | coffee }"];
+    	A -> B [label="coin"];
+    	A -> A [label="button"];
+    	B -> C [label="button"];
+    	B -> B [label="coin"];
+    	C -> B [label="coin"];
+    	C -> A [label="button"];
+    }
