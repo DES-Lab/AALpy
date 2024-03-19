@@ -353,9 +353,9 @@ def _process_node_label_prime(node_name, label, line, node_label_dict, node_type
                 node_label_dict[node_name].is_accepting = True
 
 
-label_pattern = r'label="([^"]*)"'
+label_pattern = r'label=("[^"]*"|[^\s\],]*)'
 starting_state_pattern = r'__start0\s*->\s*(\w+)\s*(?:\[label=""\])?;?'
-transition_pattern = r'(\w+)\s*->\s*(\w+)\s*\[label="([^"]+)"\];'
+transition_pattern = r'(\w+)\s*->\s*(\w+)\s*(.*);'
 
 
 def load_automaton_from_file(path, automaton_type, compute_prefixes=False):
@@ -396,21 +396,19 @@ def load_automaton_from_file(path, automaton_type, compute_prefixes=False):
             line = line.strip()
             if '__start0 ->' in line:
                 match = re.search(starting_state_pattern, line)
-                if match:
-                    initial_state = match.group(1).strip()
+                initial_state = match.group(1).strip()
             # State definitions
             elif '__start0' not in line and 'label' in line and '->' not in line:
                 state_id = line.split('[')[0].strip()
                 match = re.search(label_pattern, line)
-                if match:
-                    label = match.group(1)
+                label = match.group(1)
                 _process_node_label_prime(state_id, label, line, node_label_dict, nodeType, automaton_type)
             # transitions
             elif '->' in line:
                 match = re.match(transition_pattern, line)
-                if match:
-                    # source, destination, label
-                    transition_data.append((match.group(1).strip(), match.group(2).strip(), match.group(3)))
+                # source, destination, label
+                label = re.search(label_pattern, match.group(3)).group(1)
+                transition_data.append((match.group(1).strip(), match.group(2).strip(), label))
 
     # ensure initial state is defined and it is defined states
     assert initial_state is not None and initial_state in node_label_dict.keys()
