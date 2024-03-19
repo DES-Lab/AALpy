@@ -401,7 +401,7 @@ def load_automaton_from_file(path, automaton_type, compute_prefixes=False):
             elif '__start0' not in line and 'label' in line and '->' not in line:
                 state_id = line.split('[')[0].strip()
                 match = re.search(label_pattern, line)
-                label = match.group(1)
+                label = _strip_label(match.group(1))
                 _process_node_label_prime(state_id, label, line, node_label_dict, nodeType, automaton_type)
             # transitions
             elif '->' in line:
