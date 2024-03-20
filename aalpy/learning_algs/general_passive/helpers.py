@@ -2,6 +2,7 @@ import itertools
 import math
 import pathlib
 from collections import deque
+from enum import Enum
 from functools import total_ordering
 from typing import Dict, Any, List, Tuple, Iterable, Callable, NamedTuple, Union, Set
 import pydot
@@ -341,16 +342,21 @@ class FoldResult:
         self.partitions : Set[Partition] = set()
         self.counter_examples = []
 
+class StopMode(Enum):
+    Stop = 0
+    StopExploration = 1
+    Continue = 2
+
 def try_fold(a : 'Node', b : 'Node',
              compat : Callable[[Node, Node, Dict[Node, Partition]], Any] = None,
-             stop_on_error : Callable[[Any], str] = None
+             stop_on_error : Callable[[Any], StopMode] = None
              ) -> FoldResult:
     """
     compute the partitions of two automata that result from grouping two nodes.
     supports custom compatibility criteria for early stopping in case of incompatibility and/or reporting mismatches.
     """
     compat = compat or (lambda a,b,c : True)
-    stop_on_error = stop_on_error or (lambda err : "stop")
+    stop_on_error = stop_on_error or (lambda err : StopMode.Stop)
     result = FoldResult()
 
     partition_map : Dict[Node, Partition] = dict()
@@ -372,6 +378,8 @@ def try_fold(a : 'Node', b : 'Node',
             b_part = Partition(set(), {b})
             partition_map[b] = b_part
             result.partitions.add(b_part)
+        if a_part is b_part:
+            continue
 
         # determine compatibility
         compat_result = compat(a, b, partition_map)
@@ -382,12 +390,12 @@ def try_fold(a : 'Node', b : 'Node',
                 error = prefix
             result.counter_examples.append(error)
             stop_mode = stop_on_error(compat_result)
-            if stop_mode == "stop":
+            if stop_mode == StopMode.Stop:
                 break
-            elif stop_mode == "stop exploration":
+            elif stop_mode == StopMode.StopExploration:
                 continue
-            elif stop_mode != "continue":
-                ValueError("stop_on_error produces invalid result")
+            elif stop_mode == StopMode.Continue:
+                pass # Just continue as if nothing happened.
 
         # merge partitions
         if len(a_part) < len(b_part):
