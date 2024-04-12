@@ -56,6 +56,7 @@ class TransitionInfo:
         self.original_target : 'Node' = original_target
         self.original_count : int = original_count
 
+# TODO add custom pickling code that flattens the Node structure in order to circumvent running into recursion issues for large models
 @total_ordering
 class Node:
     """
