@@ -134,10 +134,8 @@ class GeneralizedStateMerging:
         self.root: Node
         if isinstance(data, Node):
             self.root = data
-        elif output_behavior == "moore":
-            self.root = Node.createPTA((d[1:] for d in data), data[0][0])
-        else :
-            self.root = Node.createPTA(data)
+        else:
+            self.root = Node.createPTA(data, output_behavior)
 
         self.debug.pta_construction_done(pta_construction_start)
 
@@ -281,8 +279,9 @@ class GeneralizedStateMerging:
                 return p
 
         # rewire the blue node's parent
-        blue_parent = update_partition(self.root.get_by_prefix(blue.prefix[:-1]), None)
-        blue_parent.transitions[blue.prefix[-1][0]][blue.prefix[-1][1]].target = red
+        blue_access = blue.prefix.get_sequence()
+        blue_parent = update_partition(self.root.get_by_prefix(blue_access[:-1]), None)
+        blue_parent.transitions[blue_access[-1][0]][blue_access[-1][1]].target = red
 
         q : deque[Tuple[Node, Node]] = deque([(red, blue)])
         pop = q.pop if self.depth_first else q.popleft

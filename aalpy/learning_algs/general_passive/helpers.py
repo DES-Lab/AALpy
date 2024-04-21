@@ -19,10 +19,43 @@ TransitionBehavior = str
 TransitionBehaviorRange = ["deterministic", "nondeterministic", "stochastic"]
 
 IOPair = NamedTuple("IOPair", [("input", Any), ("output",Any)])
-Prefix = List[IOPair]
-
-IOTrace = Iterable[IOPair]
+IOTrace = List[IOPair]
 IOExample = Tuple[Iterable[Any], Any]
+
+@total_ordering
+class Prefix(Iterable):
+    __slots__ = ["trace", "length", "initial_output"]
+    def __init__(self, trace : IOTrace, predecessor_or_initial_output : Any):
+        self.trace = trace
+        if isinstance(predecessor_or_initial_output, Prefix):
+            self.length = predecessor_or_initial_output.length + 1
+            self.initial_output = predecessor_or_initial_output.initial_output
+        else:
+            self.length = 0
+            self.initial_output = predecessor_or_initial_output
+        assert self.length <= len(trace), "Length of trace must be <= length of trace"
+
+    def get_sequence(self):
+        return self.trace[:self.length]
+
+    def get_previous_transition_output(self):
+        return self.trace[self.length - 1].output if 0 < self.length else self.initial_output
+
+    def __len__(self):
+        return self.length
+
+    def __iter__(self):
+        return iter(self.get_sequence())
+
+    def __lt__(self, other):
+        if len(self) != len(other):
+            return len(self) < len(other)
+        own_p = self.get_sequence()
+        other_p = other.get_sequence()
+        try:
+            return own_p < other_p
+        except TypeError:
+            return [str(x) for x in own_p] < [str(x) for x in other_p]
 
 StateFunction = Callable[['Node'], str]
 TransitionFunction = Callable[['Node', Any, Any], str]
@@ -76,12 +109,7 @@ class Node:
         self.prefix : Prefix = prefix
 
     def __lt__(self, other):
-        if len(self.prefix) != len(other.prefix):
-            return len(self.prefix) < len(other.prefix)
-        try:
-            return self.prefix < other.prefix
-        except TypeError:
-            return [str(x) for x in self.prefix] < [str(x) for x in other.prefix]
+        return self.prefix < other.prefix
 
     def __eq__(self, other):
         return self.prefix == other.prefix
@@ -110,7 +138,7 @@ class Node:
             node.transitions[in_sym] = d
         return node
 
-    def get_by_prefix(self, seq : Prefix) -> 'Node':
+    def get_by_prefix(self, seq : IOTrace) -> 'Node':
         node : Node = self
         for in_sym, out_sym in seq:
             if in_sym is None:
@@ -164,7 +192,7 @@ class Node:
             if output_behavior == "mealy":
                 state = StateClass(state_id)
             elif output_behavior == "moore":
-                state = StateClass(state_id, node.prefix[-1].output)
+                state = StateClass(state_id, node.prefix.get_previous_transition_output())
             state_map[node] = state
             if transition_behavior == "deterministic":
                 state.prefix = tuple(p.input for p in node.prefix)
@@ -213,7 +241,7 @@ class Node:
             trans_props = dict()
         if state_label is None:
             if output_behavior == "moore":
-                def state_label(node) : return f'{node.prefix[-1][1]} {node.count()}'
+                def state_label(node) : return f'{node.prefix.get_previous_transition_output()} {node.count()}'
             else:
                 def state_label(node) : return f'{sum(t.count for _, t in node.transition_iterator())}'
         if trans_label is None and "label" not in trans_props:
@@ -266,7 +294,7 @@ class Node:
 
     def add_data(self, data):
         for seq in data:
-            self.add_trace(seq)
+            self.add_trace([IOPair(in_sym, out_sym) for (in_sym, out_sym) in seq])
 
     def add_trace(self, data : IOTrace):
         curr_node : Node = self
@@ -274,7 +302,7 @@ class Node:
             transitions = curr_node.get_transitions_safe(in_sym)
             info = transitions.get(out_sym)
             if info is None:
-                node = Node(curr_node.prefix + [IOPair(in_sym, out_sym)])
+                node = Node(Prefix(data, curr_node.prefix))
                 transitions[out_sym] = TransitionInfo(node, 1, node, 1)
             else:
                 info.count += 1
@@ -287,8 +315,13 @@ class Node:
         raise NotImplementedError()
 
     @staticmethod
-    def createPTA(data, initial_output = None) :
-        root_node = Node([IOPair(None, initial_output)])
+    def createPTA(data, output_behavior) :
+        if output_behavior == "moore":
+            initial_output = data[0][0]
+            data = (d[1:] for d in data)
+        else:
+            initial_output = None
+        root_node = Node(Prefix([], initial_output))
         root_node.add_data(data)
         return root_node
 
@@ -314,7 +347,7 @@ class Node:
         return True
 
     def moore_compatible(self, other : 'Node'):
-        return self.prefix[-1][1] == other.prefix[-1][1]
+        return self.prefix.get_previous_transition_output() == other.prefix.get_previous_transition_output()
 
     def local_log_likelihood_contribution(self):
         llc = 0
