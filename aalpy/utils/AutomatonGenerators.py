@@ -252,15 +252,11 @@ def generate_random_mdp(num_states, input_size, output_size, possible_probabilit
 
     deterministic_model = generate_random_deterministic_automata('moore', num_states, input_size, output_size)
 
-    if input_size > output_size:
-        assert False, 'Cannot create deterministic MDP (in all states, all input-output pairs leads to a single state)' \
-                      ', if number of inputs is smaller than number of outputs)'
-
     if not possible_probabilities:
         possible_probabilities = [(1.,), (1.,), (1.,), (0.9, 0.1),
                                   (0.8, 0.2), (0.7, 0.3), (0.8, 0.1, 0.1), (0.7, 0.2, 0.1), (0.6, 0.2, 0.1, 0.1)]
         # ensure that there are no infinite loops
-        max_prob_num = min(num_states, input_size)
+        max_prob_num = min(num_states, output_size)
         possible_probabilities = [p for p in possible_probabilities if len(p) <= max_prob_num]
 
     mdp_states = []
@@ -322,15 +318,11 @@ def generate_random_smm(num_states, input_size, output_size, possible_probabilit
     output_al = list(set([o for state in deterministic_model.states for o in state.output_fun.values()]))
     output_al.sort()
 
-    if input_size > output_size:
-        assert False, 'Cannot create deterministic SMM (in all states, all input-output pairs leads to a single state)' \
-                      ', if number of inputs is smaller than number of outputs)'
-
     if not possible_probabilities:
         possible_probabilities = [(1.,), (1.,), (1.,), (0.9, 0.1),
                                   (0.8, 0.2), (0.7, 0.3), (0.8, 0.1, 0.1), (0.7, 0.2, 0.1), (0.6, 0.2, 0.1, 0.1)]
         # ensure that there are no infinite loops
-        max_prob_num = min(num_states, input_size)
+        max_prob_num = min(num_states, output_size)
         possible_probabilities = [p for p in possible_probabilities if len(p) <= max_prob_num]
 
     smm_states = []
