@@ -18,10 +18,8 @@ OutputBehaviorRange = ["moore", "mealy"]
 TransitionBehavior = str
 TransitionBehaviorRange = ["deterministic", "nondeterministic", "stochastic"]
 
-IOPair = NamedTuple("IOPair", [("input", Any), ("output",Any)])
-Prefix = List[IOPair]
-
-IOTrace = Iterable[IOPair]
+IOPair = Tuple[Any, Any]
+IOTrace = List[IOPair]
 IOExample = Tuple[Iterable[Any], Any]
 
 StateFunction = Callable[['Node'], str]
@@ -68,26 +66,43 @@ class Node:
 
     Transition count is preferred over state count as it allows to easily count transitions for non-tree-shaped automata
     """
-    __slots__ = ['transitions', 'prefix']
+    __slots__ = ['transitions', 'predecessor', 'prefix_length', 'prefix_access_pair']
 
-    def __init__(self, prefix : Prefix):
+    def __init__(self, prefix_access_pair, predecessor : 'Node' = None):
         # TODO try single dict
         self.transitions : Dict[Any, Dict[Any, TransitionInfo]] = dict()
-        self.prefix : Prefix = prefix
+        self.predecessor : Node = predecessor
+        self.prefix_access_pair = prefix_access_pair
+        self.prefix_length = predecessor.prefix_length + 1 if predecessor else 0
 
-    def __lt__(self, other):
-        if len(self.prefix) != len(other.prefix):
-            return len(self.prefix) < len(other.prefix)
+    def __lt__(self, other, compare_length_only=False):
+        if self.prefix_length < other.prefix_length:
+            return True
+        if compare_length_only:
+            return False
+        own_p = self.get_prefix()
+        other_p = other.get_prefix()
         try:
-            return self.prefix < other.prefix
+            return own_p < other_p
         except TypeError:
-            return [str(x) for x in self.prefix] < [str(x) for x in other.prefix]
+            return any(str(own) < str(other) for own, other in zip(own_p, other_p))
 
     def __eq__(self, other):
-        return self.prefix == other.prefix
+        return self is other # TODO hack, does this lead to problems down the line?
 
     def __hash__(self):
         return id(self) # TODO This is a hack
+
+    def get_prefix_output(self):
+        return self.prefix_access_pair[1]
+
+    def get_prefix(self):
+        node = self
+        prefix = []
+        while node.predecessor:
+            prefix.append(node.prefix_access_pair)
+        prefix.reverse()
+        return prefix
 
     def get_transitions_safe(self, in_sym) -> Dict[Any, TransitionInfo]:
         t = self.transitions.get(in_sym)
@@ -102,7 +117,7 @@ class Node:
                 yield (in_sym, out_sym), node
 
     def shallow_copy(self) -> 'Node':
-        node = Node(self.prefix)
+        node = Node(self.prefix_access_pair, self.predecessor)
         for in_sym, t in self.transitions.items():
             d = dict()
             for out_sym, v in t.items():
@@ -110,7 +125,7 @@ class Node:
             node.transitions[in_sym] = d
         return node
 
-    def get_by_prefix(self, seq : Prefix) -> 'Node':
+    def get_by_prefix(self, seq : IOTrace) -> 'Node':
         node : Node = self
         for in_sym, out_sym in seq:
             if in_sym is None:
@@ -137,7 +152,7 @@ class Node:
                 backing_set.add(t)
         return True
 
-    def to_automaton(self, output_behavior : OutputBehavior, transition_behavior : TransitionBehavior, check_behavior = False) -> Automaton:
+    def to_automaton(self, output_behavior : OutputBehavior, transition_behavior : TransitionBehavior, check_behavior = False, set_prefix = False) -> Automaton:
         nodes = self.get_all_nodes()
 
         if check_behavior:
@@ -164,12 +179,15 @@ class Node:
             if output_behavior == "mealy":
                 state = StateClass(state_id)
             elif output_behavior == "moore":
-                state = StateClass(state_id, node.prefix[-1].output)
+                state = StateClass(state_id, node.get_prefix_output())
             state_map[node] = state
-            if transition_behavior == "deterministic":
-                state.prefix = tuple(p.input for p in node.prefix)
+            if set_prefix:
+                if transition_behavior == "deterministic":
+                    state.prefix = tuple(p[0] for p in node.get_prefix())
+                else:
+                    state.prefix = tuple(node.get_prefix())
             else:
-                state.prefix = tuple(node.prefix)
+                state.prefix = None
 
         initial_state = state_map[self]
 
@@ -213,14 +231,14 @@ class Node:
             trans_props = dict()
         if state_label is None:
             if output_behavior == "moore":
-                def state_label(node) : return f'{node.prefix[-1][1]} {node.count()}'
+                def state_label(node : Node) : return f'{node.get_prefix_output()} {node.count()}'
             else:
-                def state_label(node) : return f'{sum(t.count for _, t in node.transition_iterator())}'
+                def state_label(node : Node) : return f'{sum(t.count for _, t in node.transition_iterator())}'
         if trans_label is None and "label" not in trans_props:
             if output_behavior == "moore":
-                def trans_label(node, in_sym, out_sym) : return f'{in_sym} [{node.transitions[in_sym][out_sym].count}]'
+                def trans_label(node : Node, in_sym, out_sym) : return f'{in_sym} [{node.transitions[in_sym][out_sym].count}]'
             else:
-                def trans_label(node, in_sym, out_sym) : return f'{in_sym} / {out_sym} [{node.transitions[in_sym][out_sym].count}]'
+                def trans_label(node : Node, in_sym, out_sym) : return f'{in_sym} / {out_sym} [{node.transitions[in_sym][out_sym].count}]'
         if state_color is None:
             def state_color(x) : return "black"
         if trans_color is None:
@@ -266,7 +284,7 @@ class Node:
 
     def add_data(self, data):
         for seq in data:
-            self.add_trace(seq)
+            self.add_trace([IOPair(in_sym, out_sym) for (in_sym, out_sym) in seq])
 
     def add_trace(self, data : IOTrace):
         curr_node : Node = self
@@ -274,7 +292,7 @@ class Node:
             transitions = curr_node.get_transitions_safe(in_sym)
             info = transitions.get(out_sym)
             if info is None:
-                node = Node(curr_node.prefix + [IOPair(in_sym, out_sym)])
+                node = Node((in_sym, out_sym), curr_node)
                 transitions[out_sym] = TransitionInfo(node, 1, node, 1)
             else:
                 info.count += 1
@@ -287,8 +305,13 @@ class Node:
         raise NotImplementedError()
 
     @staticmethod
-    def createPTA(data, initial_output = None) :
-        root_node = Node([IOPair(None, initial_output)])
+    def createPTA(data, output_behavior) :
+        if output_behavior == "moore":
+            initial_output = data[0][0]
+            data = (d[1:] for d in data)
+        else:
+            initial_output = None
+        root_node = Node((None, initial_output), None)
         root_node.add_data(data)
         return root_node
 
@@ -314,7 +337,7 @@ class Node:
         return True
 
     def moore_compatible(self, other : 'Node'):
-        return self.prefix[-1][1] == other.prefix[-1][1]
+        return self.get_prefix_output() == other.get_prefix_output()
 
     def local_log_likelihood_contribution(self):
         llc = 0

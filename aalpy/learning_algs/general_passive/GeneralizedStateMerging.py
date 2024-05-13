@@ -58,7 +58,7 @@ class DebugInfoGSM(DebugInfo):
         if self.lvl != 1:
             states = self.instance.root.get_all_nodes()
             leafs = [state for state in states if len(state.transitions.keys()) == 0]
-            depth = [len(state.prefix) for state in leafs]
+            depth = [state.prefix_length for state in leafs]
             self.pta_size = len(states)
             print(f'PTA has {len(states)} states leading to {len(leafs)} leafs')
             print(f'min / avg / max depth : {min(depth)} / {sum(depth) / len(depth)} / {max(depth)}')
@@ -71,13 +71,13 @@ class DebugInfoGSM(DebugInfo):
 
     @min_lvl(1)
     def log_promote(self, node : Node, red_states):
-        self.log.append(["promote", (node.prefix,)])
+        self.log.append(["promote", (node.get_prefix(),)])
         self.nr_red_states = len(red_states) # could be done incrementally, here for historic reasons
         self.print_status()
 
     @min_lvl(1)
     def log_merge(self, part : Partitioning):
-        self.log.append(["merge", (part.red.prefix, part.blue.prefix)])
+        self.log.append(["merge", (part.red.get_prefix(), part.blue.get_prefix_output())])
         self.nr_merged_states_total += len(part.full_mapping) - len(part.red_mapping)
         self.nr_merged_states += 1
         self.print_status()
@@ -134,10 +134,8 @@ class GeneralizedStateMerging:
         self.root: Node
         if isinstance(data, Node):
             self.root = data
-        elif output_behavior == "moore":
-            self.root = Node.createPTA((d[1:] for d in data), data[0][0])
-        else :
-            self.root = Node.createPTA(data)
+        else:
+            self.root = Node.createPTA(data, output_behavior)
 
         self.debug.pta_construction_done(pta_construction_start)
 
@@ -281,8 +279,9 @@ class GeneralizedStateMerging:
                 return p
 
         # rewire the blue node's parent
-        blue_parent = update_partition(self.root.get_by_prefix(blue.prefix[:-1]), None)
-        blue_parent.transitions[blue.prefix[-1][0]][blue.prefix[-1][1]].target = red
+        blue_parent = update_partition(blue.predecessor, None)
+        blue_in_sym, blue_out_sym = blue.prefix_access_pair
+        blue_parent.transitions[blue_in_sym][blue_out_sym].target = red
 
         q : deque[Tuple[Node, Node]] = deque([(red, blue)])
         pop = q.pop if self.depth_first else q.popleft
