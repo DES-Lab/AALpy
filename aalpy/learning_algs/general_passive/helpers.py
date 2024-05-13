@@ -22,41 +22,6 @@ IOPair = NamedTuple("IOPair", [("input", Any), ("output",Any)])
 IOTrace = List[IOPair]
 IOExample = Tuple[Iterable[Any], Any]
 
-@total_ordering
-class Prefix(Iterable):
-    __slots__ = ["trace", "length", "initial_output"]
-    def __init__(self, trace : IOTrace, predecessor_or_initial_output : Any):
-        self.trace = trace
-        if isinstance(predecessor_or_initial_output, Prefix):
-            self.length = predecessor_or_initial_output.length + 1
-            self.initial_output = predecessor_or_initial_output.initial_output
-        else:
-            self.length = 0
-            self.initial_output = predecessor_or_initial_output
-        assert self.length <= len(trace), "Length of trace must be <= length of trace"
-
-    def get_sequence(self):
-        return self.trace[:self.length]
-
-    def get_previous_transition_output(self):
-        return self.trace[self.length - 1].output if 0 < self.length else self.initial_output
-
-    def __len__(self):
-        return self.length
-
-    def __iter__(self):
-        return iter(self.get_sequence())
-
-    def __lt__(self, other):
-        if len(self) != len(other):
-            return len(self) < len(other)
-        own_p = self.get_sequence()
-        other_p = other.get_sequence()
-        try:
-            return own_p < other_p
-        except TypeError:
-            return [str(x) for x in own_p] < [str(x) for x in other_p]
-
 StateFunction = Callable[['Node'], str]
 TransitionFunction = Callable[['Node', Any, Any], str]
 
@@ -101,21 +66,43 @@ class Node:
 
     Transition count is preferred over state count as it allows to easily count transitions for non-tree-shaped automata
     """
-    __slots__ = ['transitions', 'prefix']
+    __slots__ = ['transitions', 'predecessor', 'prefix_length', 'prefix_access_pair']
 
-    def __init__(self, prefix : Prefix):
+    def __init__(self, prefix_access_pair, predecessor : 'Node' = None):
         # TODO try single dict
         self.transitions : Dict[Any, Dict[Any, TransitionInfo]] = dict()
-        self.prefix : Prefix = prefix
+        self.predecessor : Node = predecessor
+        self.prefix_access_pair = prefix_access_pair
+        self.prefix_length = predecessor.prefix_length + 1 if predecessor else 0
 
-    def __lt__(self, other):
-        return self.prefix < other.prefix
+    def __lt__(self, other, compare_length_only=False):
+        if self.prefix_length < other.prefix_length:
+            return True
+        if compare_length_only:
+            return False
+        own_p = self.get_prefix()
+        other_p = other.get_prefix()
+        try:
+            return own_p < other_p
+        except TypeError:
+            return any(str(own) < str(other) for own, other in zip(own_p, other_p))
 
     def __eq__(self, other):
-        return self.prefix == other.prefix
+        return self is other # TODO hack, does this lead to problems down the line?
 
     def __hash__(self):
         return id(self) # TODO This is a hack
+
+    def get_prefix_output(self):
+        return self.prefix_access_pair[1]
+
+    def get_prefix(self):
+        node = self
+        prefix = []
+        while node.predecessor:
+            prefix.append(node.prefix_access_pair)
+        prefix.reverse()
+        return prefix
 
     def get_transitions_safe(self, in_sym) -> Dict[Any, TransitionInfo]:
         t = self.transitions.get(in_sym)
@@ -130,7 +117,7 @@ class Node:
                 yield (in_sym, out_sym), node
 
     def shallow_copy(self) -> 'Node':
-        node = Node(self.prefix)
+        node = Node(self.prefix_access_pair, self.predecessor)
         for in_sym, t in self.transitions.items():
             d = dict()
             for out_sym, v in t.items():
@@ -165,7 +152,7 @@ class Node:
                 backing_set.add(t)
         return True
 
-    def to_automaton(self, output_behavior : OutputBehavior, transition_behavior : TransitionBehavior, check_behavior = False) -> Automaton:
+    def to_automaton(self, output_behavior : OutputBehavior, transition_behavior : TransitionBehavior, check_behavior = False, set_prefix = False) -> Automaton:
         nodes = self.get_all_nodes()
 
         if check_behavior:
@@ -192,12 +179,15 @@ class Node:
             if output_behavior == "mealy":
                 state = StateClass(state_id)
             elif output_behavior == "moore":
-                state = StateClass(state_id, node.prefix.get_previous_transition_output())
+                state = StateClass(state_id, node.get_prefix_output())
             state_map[node] = state
-            if transition_behavior == "deterministic":
-                state.prefix = tuple(p.input for p in node.prefix)
+            if set_prefix:
+                if transition_behavior == "deterministic":
+                    state.prefix = tuple(p[0] for p in node.get_prefix())
+                else:
+                    state.prefix = tuple(node.get_prefix())
             else:
-                state.prefix = tuple(node.prefix)
+                state.prefix = None
 
         initial_state = state_map[self]
 
@@ -241,14 +231,14 @@ class Node:
             trans_props = dict()
         if state_label is None:
             if output_behavior == "moore":
-                def state_label(node) : return f'{node.prefix.get_previous_transition_output()} {node.count()}'
+                def state_label(node : Node) : return f'{node.get_prefix_output()} {node.count()}'
             else:
-                def state_label(node) : return f'{sum(t.count for _, t in node.transition_iterator())}'
+                def state_label(node : Node) : return f'{sum(t.count for _, t in node.transition_iterator())}'
         if trans_label is None and "label" not in trans_props:
             if output_behavior == "moore":
-                def trans_label(node, in_sym, out_sym) : return f'{in_sym} [{node.transitions[in_sym][out_sym].count}]'
+                def trans_label(node : Node, in_sym, out_sym) : return f'{in_sym} [{node.transitions[in_sym][out_sym].count}]'
             else:
-                def trans_label(node, in_sym, out_sym) : return f'{in_sym} / {out_sym} [{node.transitions[in_sym][out_sym].count}]'
+                def trans_label(node : Node, in_sym, out_sym) : return f'{in_sym} / {out_sym} [{node.transitions[in_sym][out_sym].count}]'
         if state_color is None:
             def state_color(x) : return "black"
         if trans_color is None:
@@ -302,7 +292,7 @@ class Node:
             transitions = curr_node.get_transitions_safe(in_sym)
             info = transitions.get(out_sym)
             if info is None:
-                node = Node(Prefix(data, curr_node.prefix))
+                node = Node((in_sym, out_sym), curr_node)
                 transitions[out_sym] = TransitionInfo(node, 1, node, 1)
             else:
                 info.count += 1
@@ -321,7 +311,7 @@ class Node:
             data = (d[1:] for d in data)
         else:
             initial_output = None
-        root_node = Node(Prefix([], initial_output))
+        root_node = Node((None, initial_output), None)
         root_node.add_data(data)
         return root_node
 
@@ -347,7 +337,7 @@ class Node:
         return True
 
     def moore_compatible(self, other : 'Node'):
-        return self.prefix.get_previous_transition_output() == other.prefix.get_previous_transition_output()
+        return self.get_prefix_output() == other.get_prefix_output()
 
     def local_log_likelihood_contribution(self):
         llc = 0
