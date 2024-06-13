@@ -566,3 +566,14 @@ class Sevpa(Automaton):
 
         self.reset_to_initial()
         return word
+
+    def is_balanced(self, seq):
+        counter = 0
+        for i in seq:
+            if i in self.call_set:
+                counter += 1
+            if i in self.return_set:
+                counter -= 1
+            if counter < 0:
+                return False
+        return counter == 0

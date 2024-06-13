@@ -11,7 +11,7 @@ from ...base.SUL import CacheSUL
 
 print_options = [0, 1, 2, 3]
 counterexample_processing_strategy = ['rs', 'linear_fwd', 'linear_bwd', 'exponential_fwd', 'exponential_bwd']
-automaton_class = {'dfa': Dfa, 'mealy': MealyMachine, 'moore': MooreMachine, 'vpa': Sevpa}
+automaton_class = {'dfa': Dfa, 'mealy': MealyMachine, 'moore': MooreMachine, 'sevpa': Sevpa}
 
 
 def run_KV(alphabet: Union[list, SevpaAlphabet], sul: SUL, eq_oracle: Oracle, automaton_type, cex_processing='rs',
@@ -27,7 +27,7 @@ def run_KV(alphabet: Union[list, SevpaAlphabet], sul: SUL, eq_oracle: Oracle, au
 
         eq_oracle: equivalence oracle
 
-        automaton_type: type of automaton to be learned. One of 'dfa', 'mealy', 'moore', 'vpa'
+        automaton_type: type of automaton to be learned. One of 'dfa', 'mealy', 'moore', 'sevpa'
 
         cex_processing: Counterexample processing strategy. Either 'rs' (Riverst-Schapire), 'longest_prefix'.
             (Default value = 'rs'), 'longest_prefix', 'linear_fwd', 'linear_bwd', 'exponential_fwd', 'exponential_bwd'
@@ -52,7 +52,7 @@ def run_KV(alphabet: Union[list, SevpaAlphabet], sul: SUL, eq_oracle: Oracle, au
     assert print_level in print_options
     assert cex_processing in counterexample_processing_strategy
     assert automaton_type in [*automaton_class]
-    assert automaton_type != 'vpa' and isinstance(alphabet, list) or isinstance(alphabet, SevpaAlphabet)
+    assert automaton_type != 'sevpa' and isinstance(alphabet, list) or isinstance(alphabet, SevpaAlphabet)
 
     start_time = time.time()
     eq_query_time = 0
@@ -82,13 +82,13 @@ def run_KV(alphabet: Union[list, SevpaAlphabet], sul: SUL, eq_oracle: Oracle, au
 
     initial_state.prefix = tuple()
 
-    if automaton_type != 'vpa':
+    if automaton_type != 'sevpa':
         for a in alphabet:
             initial_state.transitions[a] = initial_state
             if automaton_type == 'mealy':
                 initial_state.output_fun[a] = sul.query((a,))[-1]
 
-    if automaton_type != 'vpa':
+    if automaton_type != 'sevpa':
         hypothesis = automaton_class[automaton_type](initial_state, [initial_state])
     else:
         hypothesis = Sevpa.create_daisy_hypothesis(initial_state, alphabet)
@@ -138,7 +138,7 @@ def run_KV(alphabet: Union[list, SevpaAlphabet], sul: SUL, eq_oracle: Oracle, au
 
             classification_tree.process_counterexample(cex, hypothesis, cex_processing)
 
-    if automaton_type == 'vpa':
+    if automaton_type == 'sevpa':
         hypothesis.delete_state(hypothesis.get_error_state())
 
     total_time = round(time.time() - start_time, 2)

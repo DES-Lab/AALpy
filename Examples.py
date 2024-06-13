@@ -958,7 +958,7 @@ def learning_context_free_grammar_example():
     balanced_string_sul = get_balanced_string_sul(call_return_map, allow_empty_string=False)
     eq_oracle = RandomWordEqOracle(sevpa_alphabet.get_merged_alphabet(), balanced_string_sul, num_walks=1000,
                                    min_walk_len=5, max_walk_len=30)
-    learned_model = run_KV(sevpa_alphabet, balanced_string_sul, eq_oracle, automaton_type='vpa')
+    learned_model = run_KV(sevpa_alphabet, balanced_string_sul, eq_oracle, automaton_type='sevpa')
     learned_model.visualize()
 
 
@@ -1006,7 +1006,7 @@ def arithmetic_expression_sevpa_learning():
     eq_oracle = RandomWordEqOracle(alphabet.get_merged_alphabet(), sul, min_walk_len=2,
                                    max_walk_len=10, num_walks=2000)
 
-    learned_model = run_KV(alphabet, sul, eq_oracle, automaton_type='vpa')
+    learned_model = run_KV(alphabet, sul, eq_oracle, automaton_type='sevpa')
 
     learned_model.visualize()
 
@@ -1031,7 +1031,7 @@ def benchmark_sevpa_learning():
         eq_oracle = RandomWordEqOracle(alphabet=alphabet.get_merged_alphabet(), sul=sul, num_walks=10000,
                                        min_walk_len=10, max_walk_len=30)
 
-        learned_model = run_KV(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, automaton_type='vpa',
+        learned_model = run_KV(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, automaton_type='sevpa',
                                print_level=2, cex_processing='rs')
 
         print(learned_model.get_random_accepting_word())
@@ -1059,6 +1059,6 @@ def random_sevpa_learning():
     eq_oracle = RandomWordEqOracle(alphabet=alphabet.get_merged_alphabet(), sul=sul, num_walks=10000,
                                    min_walk_len=10, max_walk_len=30)
 
-    model = run_KV(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, automaton_type='vpa',
+    model = run_KV(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, automaton_type='sevpa',
                    print_level=2, cex_processing='rs')
 

@@ -77,7 +77,7 @@ class ClassificationTree:
             initial_output = sul.query(())[-1]
             cex_output = sul.query(cex)[-1]
 
-            root_distinguishing_string = () if automaton_type != 'vpa' else ([(), ()])
+            root_distinguishing_string = () if automaton_type != 'sevpa' else ([(), ()])
 
             self.root = CTInternalNode(distinguishing_string=root_distinguishing_string, parent=None, path_to_node=None)
 
@@ -128,7 +128,7 @@ class ClassificationTree:
         node = self.root
         while not node.is_leaf():
 
-            if self.automaton_type != 'vpa':
+            if self.automaton_type != 'sevpa':
                 query = word + node.distinguishing_string
             else:
                 query = node.distinguishing_string[0] + word + node.distinguishing_string[1]
@@ -157,7 +157,7 @@ class ClassificationTree:
                 new_state = DfaState(state_id=f's{state_counter}', is_accepting=node.output)
             elif self.automaton_type == 'moore':
                 new_state = MooreState(state_id=f's{state_counter}', output=node.output)
-            elif self.automaton_type == 'vpa':
+            elif self.automaton_type == 'sevpa':
                 new_state = SevpaState(state_id=f'q{state_counter}', is_accepting=node.output)
             else:
                 new_state = MealyState(state_id=f's{state_counter}')
@@ -168,7 +168,7 @@ class ClassificationTree:
 
             self.hypothesis_states[new_state.prefix] = new_state
 
-            if self.automaton_type != 'vpa':
+            if self.automaton_type != 'sevpa':
                 self.transitions_to_update.extend(product([new_state], self.alphabet))
             else:
                 self.transitions_to_update.extend(product([new_state], self.alphabet.internal_alphabet))
@@ -183,7 +183,7 @@ class ClassificationTree:
         while self.transitions_to_update:
             state, input_element = self.transitions_to_update.pop(0)
 
-            if self.automaton_type != 'vpa':
+            if self.automaton_type != 'sevpa':
 
                 transition_target_node = self._sift(state.prefix + (input_element,))
                 transition_target_access_string = transition_target_node.access_string
@@ -237,7 +237,7 @@ class ClassificationTree:
                                                     action='pop', stack_guard=(other_state.state_id, input_element))
                             state.transitions[return_letter].append(trans)
 
-        if self.automaton_type == 'vpa':
+        if self.automaton_type == 'sevpa':
             hypothesis = Sevpa(initial_state=self.initial_state, states=list(self.hypothesis_states.values()))
             if not self.error_state_prefix:
                 error_state = hypothesis.get_error_state()
@@ -352,14 +352,14 @@ class ClassificationTree:
         v = None
         if 'linear' in cex_processing_fun:
             direction = cex_processing_fun[-3:]
-            v = linear_cex_processing(self.sul, cex, hypothesis, is_vpa=self.automaton_type == 'vpa',
+            v = linear_cex_processing(self.sul, cex, hypothesis, is_vpa=self.automaton_type == 'sevpa',
                                       direction=direction, suffix_closedness=False)[0]
         elif 'exponential' in cex_processing_fun:
             direction = cex_processing_fun[-3:]
-            v = exponential_cex_processing(self.sul, cex, hypothesis, is_vpa=self.automaton_type == 'vpa',
+            v = exponential_cex_processing(self.sul, cex, hypothesis, is_vpa=self.automaton_type == 'sevpa',
                                            direction=direction, suffix_closedness=False)[0]
         elif cex_processing_fun == 'rs':
-            v = rs_cex_processing(self.sul, cex, hypothesis, is_vpa=self.automaton_type == 'vpa',
+            v = rs_cex_processing(self.sul, cex, hypothesis, is_vpa=self.automaton_type == 'sevpa',
                                   suffix_closedness=False)[0]
 
         assert v
@@ -370,14 +370,14 @@ class ClassificationTree:
         hypothesis.execute_sequence(hypothesis.initial_state, u)
         u_state = hypothesis.current_state
 
-        top_of_stack = hypothesis.stack[-1] if self.automaton_type == 'vpa' else None
+        top_of_stack = hypothesis.stack[-1] if self.automaton_type == 'sevpa' else None
 
         # get state reached after executing last action => old leaf
         hypothesis.step(a)
         ua_state = hypothesis.current_state
 
         # get discriminator and new_leaf_access_string
-        if self.automaton_type == 'vpa':
+        if self.automaton_type == 'sevpa':
             discriminator = (tuple(hypothesis.transform_access_string()), tuple(v))
 
             if a in self.alphabet.internal_alphabet:
@@ -390,7 +390,7 @@ class ClassificationTree:
             discriminator = v
             new_leaf_access_string = (*u_state.prefix, a)
 
-        if self.automaton_type == 'dfa' or self.automaton_type == 'vpa':
+        if self.automaton_type == 'dfa' or self.automaton_type == 'sevpa':
             new_leaf_position = not hypothesis.execute_sequence(hypothesis.initial_state, cex)[-1]
         else:
             new_leaf_position = self.sul.query(cex)[-1]
@@ -420,7 +420,7 @@ class ClassificationTree:
         Returns:
 
         """
-        if self.automaton_type == "dfa" or self.automaton_type == 'vpa':
+        if self.automaton_type == "dfa" or self.automaton_type == 'sevpa':
             other_leaf_position = not new_leaf_position
         else:
             # check if this query is in the node cache
@@ -452,7 +452,7 @@ class ClassificationTree:
         # sifting cache update
         self.new_states.append(new_leaf)
 
-        if self.automaton_type != 'vpa':
+        if self.automaton_type != 'sevpa':
             for state in self.hypothesis_states.values():
                 for inp, destination in state.transitions.items():
                     if old_leaf_access_string == destination.prefix:
