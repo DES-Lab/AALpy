@@ -15,7 +15,7 @@
 </div>
 <hr />
 
-AALpy is a light-weight automata learning library written in Python. 
+AALpy is a lightweight automata learning library written in Python. 
 You can start learning automata in just a few lines of code.
 
 Whether you work with regular languages or you would like to learn models of 
@@ -35,7 +35,7 @@ as well as **deterministic context-free grammars/pushdown automata**.
 
 AALpy enables efficient learning by providing a large set of equivalence oracles, implementing various conformance testing strategies. Active learning 
 is mostly based on Angluin's [L* algorithm](https://people.eecs.berkeley.edu/~dawnsong/teaching/s10/papers/angluin87.pdf), for which AALpy supports a 
-selection of optimizations, including efficient counterexample processing caching. However, the recent addition of efficiently implemented 
+selection of optimizations, including efficient counterexample processing and caching. However, the recent addition of efficiently implemented 
 [KV](https://mitpress.mit.edu/9780262111935/an-introduction-to-computational-learning-theory/) algorithm
 requires (on average) much less interaction with the system under learning than L*. In addition, KV can be used to learn Visibly Deterministic Pushdown Automata (VPDA).
 
