@@ -1,3 +1,9 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./logos/quint-logo-light.png">
+  <img alt="AALpy Logo" src="./logo.jpg" width=700>
+</picture>
+
+
 <div align="center">
     <h1 align="center">AALpy</h1>
     <p align="center">An Active Automata Learning Library</p>
