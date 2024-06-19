@@ -1,7 +1,11 @@
+<picture style="float: right;" >
+  <source media="(prefers-color-scheme: dark)" srcset="./docs/logo_dark.png">
+  <img style="float: left;"   alt="AALpy Logo" src="./docs/logo_light.png">
+</picture>
+
+<br/><br/>
 
 <div align="center">
-    <h1 align="center">AALpy</h1>
-    <p align="center">An Active Automata Learning Library</p>
 
 [![Python application](https://github.com/DES-Lab/AALpy/actions/workflows/python-app.yml/badge.svg)](https://github.com/DES-Lab/AALpy/actions/workflows/python-app.yml)
 [![CodeQL](https://github.com/DES-Lab/AALpy/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/DES-Lab/AALpy/actions/workflows/codeql-analysis.yml)
@@ -13,6 +17,7 @@
 ![PyPI - Wheel](https://img.shields.io/pypi/wheel/aalpy)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
 </div>
 <hr />
 
