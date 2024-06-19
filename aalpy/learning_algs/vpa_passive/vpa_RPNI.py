@@ -22,6 +22,7 @@ class RPNI_VPA:
         start_time = time.time()
 
         red = [self.root_node]
+        red.append()
         blue = list(red[0].children.values())
 
         while blue:
@@ -53,9 +54,9 @@ class RPNI_VPA:
             print(f'RPNI Learned {len(red)} state automaton.')
 
         assert sorted(red, key=lambda x: len(x.prefix)) == red
-        # visualize_vpa_pta(self.root_node)
+        visualize_vpa_pta(self.root_node)
         x = self._compatible(self.root_node)
-        print(x)
+
         return to_vpa(red, self.vpa_alphabet)
 
     def _compatible(self, root_node):
@@ -72,6 +73,7 @@ class RPNI_VPA:
         Only allow merging of states that have same output(s), and all common push/pop pairs match
         """
         #
+        # return (red_node.output == blue_node.output  or blue_node.output is None)
         return (red_node.output == blue_node.output or red_node.output is None or blue_node.output is None) \
                and all(red_node.top_of_stack[k] == blue_node.top_of_stack[k]
                        for k in red_node.top_of_stack if

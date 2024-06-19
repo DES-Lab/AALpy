@@ -1,5 +1,6 @@
 import pickle
 import queue
+from collections import defaultdict
 from functools import total_ordering
 from typing import Set
 
@@ -88,6 +89,9 @@ def create_Vpa_PTA(data, vpa_alphabet):
             curr_node.output = label
         if curr_node.output != label:
             return None
+
+    error_node = VpaRpniNode()
+    error_node.output = False
 
     #visualize_vpa_pta(root_node)
     #exit()
