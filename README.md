@@ -1,11 +1,11 @@
-<picture style="float: right;" >
-  <source media="(prefers-color-scheme: dark)" srcset="./docs/logo_dark.png">
-  <img style="float: left;"   alt="AALpy Logo" src="./docs/logo_light.png">
+<div align="center">
+
+<picture style="align: center;">
+  <source media="(prefers-color-scheme: dark)" srcset="./docs/logo_dark_cent.png">
+  <img width=55% height=55% alt="AALpy Logo" src="./docs/logo_light_cent.png">
 </picture>
 
-<br/><br/>
-
-<div align="center">
+<br/>
 
 [![Python application](https://github.com/DES-Lab/AALpy/actions/workflows/python-app.yml/badge.svg)](https://github.com/DES-Lab/AALpy/actions/workflows/python-app.yml)
 [![CodeQL](https://github.com/DES-Lab/AALpy/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/DES-Lab/AALpy/actions/workflows/codeql-analysis.yml)
@@ -72,7 +72,7 @@ please check out our **Wiki**. On Wiki, you will find more detailed examples on 
 
 ## Usage
 
-All automata learning procedures follow this high-level approach:
+All active automata learning procedures follow this high-level approach:
 - [Define the input alphabet and system under learning (SUL)](https://github.com/DES-Lab/AALpy/wiki/SUL-Interface,-or-How-to-Learn-Your-Systems)
 - [Choose the equivalence oracle](https://github.com/DES-Lab/AALpy/wiki/Equivalence-Oracles)
 - [Run the learning algorithm](https://github.com/DES-Lab/AALpy/wiki/Setting-Up-Learning)
@@ -92,8 +92,7 @@ For more detailed examples, check out:
 
 The following snippet demonstrates a short example in which an automaton is either [loaded](https://github.com/DES-Lab/AALpy/wiki/Loading,Saving,-Syntax-and-Visualization-of-Automata) or [randomly generated](https://github.com/DES-Lab/AALpy/wiki/Generation-of-Random-Automata) and then [learned](https://github.com/DES-Lab/AALpy/wiki/Setting-Up-Learning).
 ```python
-from aalpy.utils import load_automaton_from_file, save_automaton_to_file, visualize_automaton, generate_random_dfa
-from aalpy.automata import Dfa
+from aalpy.utils import load_automaton_from_file, generate_random_deterministic_automata
 from aalpy.SULs import AutomatonSUL
 from aalpy.oracles import RandomWalkEqOracle
 from aalpy.learning_algs import run_Lstar, run_KV
@@ -101,18 +100,9 @@ from aalpy.learning_algs import run_Lstar, run_KV
 # load an automaton
 # automaton = load_automaton_from_file('path_to_the_file.dot', automaton_type='dfa')
 
-# or construct it from state setup
-dfa_state_setup = {
-    'q0': (True, {'a': 'q1', 'b': 'q2'}),
-    'q1': (False, {'a': 'q0', 'b': 'q3'}),
-    'q2': (False, {'a': 'q3', 'b': 'q0'}),
-    'q3': (False, {'a': 'q2', 'b': 'q1'})
-}
-
-small_dfa = Dfa.from_state_setup(dfa_state_setup)
 # or randomly generate one
-random_dfa = generate_random_dfa(alphabet=[1,2,3,4,5],num_states=20, num_accepting_states=8)
-big_random_dfa = generate_random_dfa(alphabet=[1,2,3,4,5],num_states=2000, num_accepting_states=500)
+random_dfa = generate_random_deterministic_automata(automaton_type='dfa', num_states=8, 
+                                                    input_alphabet_size=5, output_alphabet_size=2)
 
 # get input alphabet of the automaton
 alphabet = random_dfa.get_input_alphabet()
@@ -152,9 +142,11 @@ seed(2) # all experiments will be reproducible
 
 ## Selected Applications
 AALpy has been used to:
-- [Learn Bluetooth Low-Energy](https://github.com/apferscher/ble-learning)
-- [Learn Input-Output Behavior of RNNs](https://github.com/DES-Lab/Extracting-FSM-From-RNNs)
+- [Learn Models of Bluetooth Low-Energy](https://github.com/apferscher/ble-learning)
 - [Find bugs in VIM text editor](https://github.com/DES-Lab/AALpy/discussions/13)
+- [Learn Input-Output Behavior of RNNs](https://github.com/DES-Lab/Extracting-FSM-From-RNNs)
+- [Learn Models of GIT](https://github.com/taburg/git-learning)
+- [Solve RL Problems](https://github.com/DES-Lab/Learning-Environment-Models-with-Continuous-Stochastic-Dynamics)
 
 ## Cite AALpy and Research Contact
 If you use AALpy in your research, please cite us with of the following:
