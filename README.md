@@ -24,7 +24,7 @@
 ALpy is a light-weight automata learning library written in Python. 
 You can start learning automata in just a few lines of code.
 
-AALpy supports both **active** and **passive** automata learning algorithms and a variety of modeling formalisms, including 
+AALpy supports both **active** and **passive** automata learning algorithms that can be used to learn a variety of modeling formalisms, including 
 **deterministic**, **non-deterministic**, and **stochastic automata**, as well as **deterministic context-free grammars/pushdown automata**.
 
 <div align="center">
