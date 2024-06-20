@@ -21,13 +21,11 @@
 </div>
 <hr />
 
-AALpy is a lightweight automata learning library written in Python. 
+ALpy is a light-weight automata learning library written in Python. 
 You can start learning automata in just a few lines of code.
 
-Whether you work with regular languages or you would like to learn models of 
-(black-box) reactive systems, AALpy supports a wide range of modeling formalisms, including 
-**deterministic**, **non-deterministic**, and **stochastic automata**, 
-as well as **deterministic context-free grammars/pushdown automata**. 
+AALpy supports both **active** and **passive** automata learning algorithms and a variety of modeling formalisms, including 
+**deterministic**, **non-deterministic**, and **stochastic automata**, as well as **deterministic context-free grammars/pushdown automata**.
 
 <div align="center">
    
@@ -39,14 +37,6 @@ as well as **deterministic context-free grammars/pushdown automata**.
 | Pushdown          |          VPDA/SEVPA                                                            | KV<sub>VPA</sub> | Specification of exclusive <br/> call-return pairs
 </div>
 
-AALpy enables efficient learning by providing a large set of equivalence oracles, implementing various conformance testing strategies. Active learning 
-is mostly based on Angluin's [L* algorithm](https://people.eecs.berkeley.edu/~dawnsong/teaching/s10/papers/angluin87.pdf), for which AALpy supports a 
-selection of optimizations, including efficient counterexample processing and caching. However, the recent addition of efficiently implemented 
-[KV](https://mitpress.mit.edu/9780262111935/an-introduction-to-computational-learning-theory/) algorithm
-requires (on average) much less interaction with the system under learning than L*. In addition, KV can be used to learn Visibly Deterministic Pushdown Automata (VPDA).
-
-AALpy also includes **passive automata learning algorithms**, namely RPNI for deterministic and ALERGIA for stochastic models. Unlike active algorithms which learn by interaction with the system, passive learning algorithms construct a model based on provided data.
- 
 ## Installation
 
 Use the package manager [pip](https://pip.pypa.io/en/stable/) to install the latest release of AALpy:
@@ -68,24 +58,17 @@ If you are interested in automata learning or would like to understand the autom
 please check out our **Wiki**. On Wiki, you will find more detailed examples on how to use AALpy.
 - <https://github.com/DES-Lab/AALpy/wiki>
 
-***[Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py)*** contains many examples and it is a great starting point. 
+***[Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py)*** contains examples covering almost the whole of AALpy's functionality and its a great starting point. 
 
-## Usage
+### Usage
 
 All active automata learning procedures follow this high-level approach:
 - [Define the input alphabet and system under learning (SUL)](https://github.com/DES-Lab/AALpy/wiki/SUL-Interface,-or-How-to-Learn-Your-Systems)
 - [Choose the equivalence oracle](https://github.com/DES-Lab/AALpy/wiki/Equivalence-Oracles)
 - [Run the learning algorithm](https://github.com/DES-Lab/AALpy/wiki/Setting-Up-Learning)
 
-For more detailed examples, check out:
-- [How to learn Regex with AALpy](https://github.com/DES-Lab/AALpy/wiki/SUL-Interface,-or-How-to-Learn-Your-Systems#example---regexsul)
-- [How to learn MQTT with AALpy](https://github.com/DES-Lab/AALpy/wiki/SUL-Interface,-or-How-to-Learn-Your-Systems#example---mqtt)
-- [Few Simple Examples](https://github.com/DES-Lab/Automata-Learning-Based-Diagnosis)
-- [Interactive Examples](https://github.com/DES-Lab/AALpy/tree/master/notebooks)
-- [Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py)
+Passive learning algorithm simply require you to provide data in the appropriate format (check Wiki and Examples) and run the learning function.
 
-[Examples.py](https://github.com/DES-Lab/AALpy/blob/master/Examples.py) contains examples covering almost the whole of AALpy's functionality, and it is a great starting point/reference.
-[Wiki](https://github.com/DES-Lab/AALpy/wiki) has a step-by-step guide to using AALpy and can help you understand AALpy and automata learning in general. 
 
 <details>
   <summary>Code snipped demonstrating some of AALpy's functionalities</summary>
