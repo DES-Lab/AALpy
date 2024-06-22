@@ -247,6 +247,10 @@ def bisimilar(a1: DeterministicAutomaton, a2: DeterministicAutomaton, return_cex
     # TODO allow states as inputs instead of automata
     if a1.__class__ != a2.__class__:
         raise ValueError("tried to check bisimilarity of different automaton types")
+    # if you use this function with the same object (does not make sense anyway)
+    if a1 is a2:
+        a2 = a1.copy()
+
     supported_automaton_types = (Dfa, MooreMachine, MealyMachine)
     if not isinstance(a1, supported_automaton_types):
         raise NotImplementedError(
@@ -302,8 +306,12 @@ def compare_automata(aut_1: DeterministicAutomaton, aut_2: DeterministicAutomato
     """
     #
     from aalpy.oracles import RandomWMethodEqOracle
+    # if you use this function with the same object (does not make sense anyway)
+    if aut_1 is aut_2:
+        aut_2 = aut_1.copy()
 
-    assert set(aut_1.get_input_alphabet()) == set(aut_2.get_input_alphabet())
+    if set(aut_1.get_input_alphabet()) != set(aut_2.get_input_alphabet()):
+        assert False, "Cannot compare automata with different input alphabets"
 
     input_al = aut_1.get_input_alphabet()
     # larger automaton is used as hypothesis, as then test-cases will contain prefixes leading to states
