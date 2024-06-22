@@ -1,28 +1,8 @@
-<div align="center">
-
-![Logo](/docs/logo_light.png)
-
-<br/>
-<br/>
-
-</div>
-<hr />
-
-ALpy is a light-weight automata learning library written in Python. 
+AALpy is a light-weight automata learning library written in Python. 
 You can start learning models of black-box systems with a few lines of code.
 
 AALpy supports both **active** and **passive** automata learning algorithms that can be used to learn a variety of modeling formalisms, including 
 **deterministic**, **non-deterministic**, and **stochastic automata**, as well as **deterministic context-free grammars/pushdown automata**.
-
-<div align="center">
-   
-| **Automata Type** |                      **Supported Formalisms**                     | **Algorithms**        |                                                       **Features** |
-|-------------------|:-----------------------------------------------------------------:|-----------------------|-------------------------------------------------------------------:|
-| Deterministic     |                 DFAs <br /> Mealy Machines <br /> Moore Machines                 |      L* <br /> KV <br /> RPNI      | Seamless Caching <br /> Counterexample Processing <br /> 13 Equivalence Oracles  |
-| Non-Deterministic |                      ONFSM <br /> Abstracted ONFSM                      |        L*<sub>ONFSM</sub>       |                                 Size Reduction  Trough Abstraction |
-| Stochastic        | Markov Decision Processes <br /> Stochastic Mealy Machines <br /> Markov Chains | L*<sub>MDP</sub> <br /> L*<sub>SMM</sub> <br /> ALERGIA |               Counterexample Processing <br /> Exportable to PRISM format  <br /> Bindings to jALERGIA|
-| Pushdown          |          VPDA/SEVPA                                                            | KV<sub>VPA</sub> | Specification of exclusive <br/> call-return pairs
-</div>
 
 ## Installation
 
@@ -55,60 +35,6 @@ All active automata learning procedures follow this high-level approach:
 - [Run the learning algorithm](https://github.com/DES-Lab/AALpy/wiki/Setting-Up-Learning)
 
 Passive learning algorithm simply require you to provide data in the appropriate format (check Wiki and Examples) and run the learning function.
-
-
-<details>
-  <summary>Code snipped demonstrating some of AALpy's functionalities</summary>
-
-The following snippet demonstrates a short example in which an automaton is either [loaded](https://github.com/DES-Lab/AALpy/wiki/Loading,Saving,-Syntax-and-Visualization-of-Automata) or [randomly generated](https://github.com/DES-Lab/AALpy/wiki/Generation-of-Random-Automata) and then [learned](https://github.com/DES-Lab/AALpy/wiki/Setting-Up-Learning).
-```python
-from aalpy.utils import load_automaton_from_file, generate_random_deterministic_automata
-from aalpy.SULs import AutomatonSUL
-from aalpy.oracles import RandomWalkEqOracle
-from aalpy.learning_algs import run_Lstar, run_KV
-
-# load an automaton
-# automaton = load_automaton_from_file('path_to_the_file.dot', automaton_type='dfa')
-
-# or randomly generate one
-random_dfa = generate_random_deterministic_automata(automaton_type='dfa', num_states=8, 
-                                                    input_alphabet_size=5, output_alphabet_size=2)
-
-# get input alphabet of the automaton
-alphabet = random_dfa.get_input_alphabet()
-
-# loaded or randomly generated automata are considered as BLACK-BOX that is queried
-# learning algorithm has no knowledge about its structure
-# create a SUL instance for the automaton/system under learning
-sul = AutomatonSUL(random_dfa)
-
-# define the equivalence oracle
-eq_oracle = RandomWalkEqOracle(alphabet, sul, num_steps=5000, reset_prob=0.09)
-
-# start learning
-# run_KV is for the most part reacquires much fewer interactions with the system under learning
-learned_dfa = run_KV(alphabet, sul, eq_oracle, automaton_type='dfa')
-# or run L*
-# learned_dfa_lstar = run_Lstar(alphabet, sul, eq_oracle, automaton_type='dfa')
-
-# save automaton to file and visualize it
-# save_automaton_to_file(learned_dfa, path='Learned_Automaton', file_type='dot')
-# or
-learned_dfa.save()
-
-# visualize automaton
-# visualize_automaton(learned_dfa)
-learned_dfa.visualize()
-# or just print its DOT representation
-print(learned_dfa)
-```
-</details>
-
-To make experiments reproducible, define a random seed at the beginning of your program.
-```Python
-from random import seed
-seed(2) # all experiments will be reproducible
-```
 
 ## Selected Applications
 AALpy has been used to:
