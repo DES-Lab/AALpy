@@ -1,23 +1,9 @@
 <div align="center">
 
-<picture style="align: center; padding-bottom: 3mm;">
-  <source media="(prefers-color-scheme: dark)" srcset="./docs/logo_dark.png">
-  <img width=70% height=70% alt="AALpy Logo" src="./docs/logo_light.png">
-</picture>
+![Logo](/docs/logo_light.png)
 
 <br/>
 <br/>
-
-[![Python application](https://github.com/DES-Lab/AALpy/actions/workflows/python-app.yml/badge.svg)](https://github.com/DES-Lab/AALpy/actions/workflows/python-app.yml)
-[![CodeQL](https://github.com/DES-Lab/AALpy/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/DES-Lab/AALpy/actions/workflows/codeql-analysis.yml)
-![PyPI - Downloads](https://img.shields.io/pypi/dm/aalpy)
-
-[![GitHub issues](https://img.shields.io/github/issues/DES-Lab/AALpy)](https://github.com/DES-Lab/AALpy/issues)
-![GitHub pull requests](https://img.shields.io/github/issues-pr/des-lab/aalpy)
-[![Python 3.6](https://img.shields.io/badge/python-3.6%2B-blue)](https://www.python.org/downloads/release/python-360/)
-![PyPI - Wheel](https://img.shields.io/pypi/wheel/aalpy)
-[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 </div>
 <hr />
