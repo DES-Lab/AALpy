@@ -1,10 +1,11 @@
 <div align="center">
 
-<picture style="align: center;">
-  <source media="(prefers-color-scheme: dark)" srcset="./docs/logo_dark_cent.png">
-  <img width=55% height=55% alt="AALpy Logo" src="./docs/logo_light_cent.png">
+<picture style="align: center; padding-bottom: 3mm;">
+  <source media="(prefers-color-scheme: dark)" srcset="./docs/logo_dark.png">
+  <img width=70% height=70% alt="AALpy Logo" src="./docs/logo_light.png">
 </picture>
 
+<br/>
 <br/>
 
 [![Python application](https://github.com/DES-Lab/AALpy/actions/workflows/python-app.yml/badge.svg)](https://github.com/DES-Lab/AALpy/actions/workflows/python-app.yml)
@@ -22,7 +23,7 @@
 <hr />
 
 ALpy is a light-weight automata learning library written in Python. 
-You can start learning automata in just a few lines of code.
+You can start learning models of black-box systems with a few lines of code.
 
 AALpy supports both **active** and **passive** automata learning algorithms that can be used to learn a variety of modeling formalisms, including 
 **deterministic**, **non-deterministic**, and **stochastic automata**, as well as **deterministic context-free grammars/pushdown automata**.
