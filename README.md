@@ -1,8 +1,8 @@
 <div align="center">
 
 <picture style="align: center;">
-  <source media="(prefers-color-scheme: dark)" srcset="./docs/logo_dark_cent.png">
-  <img width=55% height=55% alt="AALpy Logo" src="./docs/logo_light_cent.png">
+  <source media="(prefers-color-scheme: dark)" srcset="./docs/logo_dark.png">
+  <img width=55% height=55% alt="AALpy Logo" src="./docs/logo_light.png">
 </picture>
 
 <br/>
