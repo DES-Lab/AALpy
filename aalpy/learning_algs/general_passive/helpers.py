@@ -284,7 +284,7 @@ class Node:
 
     def add_data(self, data):
         for seq in data:
-            self.add_trace([IOPair(in_sym, out_sym) for (in_sym, out_sym) in seq])
+            self.add_trace(seq)
 
     def add_trace(self, data : IOTrace):
         curr_node : Node = self
