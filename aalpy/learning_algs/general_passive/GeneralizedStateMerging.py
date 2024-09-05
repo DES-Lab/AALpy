@@ -58,7 +58,7 @@ class DebugInfoGSM(DebugInfo):
         if self.lvl != 1:
             states = self.instance.root.get_all_nodes()
             leafs = [state for state in states if len(state.transitions.keys()) == 0]
-            depth = [state.prefix_length for state in leafs]
+            depth = [state.get_prefix_length() for state in leafs]
             self.pta_size = len(states)
             print(f'PTA has {len(states)} states leading to {len(leafs)} leafs')
             print(f'min / avg / max depth : {min(depth)} / {sum(depth) / len(depth)} / {max(depth)}')
@@ -77,7 +77,7 @@ class DebugInfoGSM(DebugInfo):
 
     @min_lvl(1)
     def log_merge(self, part : Partitioning):
-        self.log.append(["merge", (part.red.get_prefix(), part.blue.get_prefix_output())])
+        self.log.append(["merge", (part.red.get_prefix(), part.blue.get_prefix())])
         self.nr_merged_states_total += len(part.full_mapping) - len(part.red_mapping)
         self.nr_merged_states += 1
         self.print_status()
@@ -125,11 +125,12 @@ class GeneralizedStateMerging:
 
         if node_order is None:
             node_order = Node.__lt__
-        self.node_order = functools.cmp_to_key(lambda a, b: -1 if node_order(a,b) else 1)
+        self.node_order = functools.cmp_to_key(lambda a, b: -1 if node_order(a, b) else 1)
 
         self.consider_all_blue_states = consider_all_blue_states
         self.depth_first = depth_first
 
+        # TODO make reusable by removing data from params.
         pta_construction_start = time.time()
         self.root: Node
         if isinstance(data, Node):
@@ -219,6 +220,9 @@ class GeneralizedStateMerging:
             partition_candidates.clear()
             for real_node, partition_node in best_candidate.red_mapping.items():
                 real_node.transitions = partition_node.transitions
+                for _, t_info in real_node.transition_iterator():
+                    if t_info.target not in red_states:
+                        t_info.target.predecessor = real_node
             self.debug.log_merge(best_candidate)
 
         self.debug.learning_done(red_states, start_time)

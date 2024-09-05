@@ -66,18 +66,18 @@ class Node:
 
     Transition count is preferred over state count as it allows to easily count transitions for non-tree-shaped automata
     """
-    __slots__ = ['transitions', 'predecessor', 'prefix_length', 'prefix_access_pair']
+    __slots__ = ['transitions', 'predecessor', 'prefix_access_pair']
 
     def __init__(self, prefix_access_pair, predecessor : 'Node' = None):
         # TODO try single dict
         self.transitions : Dict[Any, Dict[Any, TransitionInfo]] = dict()
         self.predecessor : Node = predecessor
         self.prefix_access_pair = prefix_access_pair
-        self.prefix_length = predecessor.prefix_length + 1 if predecessor else 0
 
     def __lt__(self, other, compare_length_only=False):
-        if self.prefix_length < other.prefix_length:
-            return True
+        own_l, other_l = self.get_prefix_length(), other.get_prefix_length()
+        if own_l != other_l:
+            return own_l < other_l
         if compare_length_only:
             return False
         own_p = self.get_prefix()
@@ -85,7 +85,7 @@ class Node:
         try:
             return own_p < other_p
         except TypeError:
-            return any(str(own) < str(other) for own, other in zip(own_p, other_p))
+            return [str(x) for x in own_p] < [str(x) for x in other_p]
 
     def __eq__(self, other):
         return self is other # TODO hack, does this lead to problems down the line?
@@ -93,14 +93,28 @@ class Node:
     def __hash__(self):
         return id(self) # TODO This is a hack
 
+    # TODO implicit prefixes as currently implemented require O(length) time for prefix calculations (e.g. to determine the minimal blue node)
+    # other options would be to have more efficient explicit prefixes such as shared list representations
+    def get_prefix_length(self):
+        node = self
+        length = 0
+        while node.predecessor:
+            node = node.predecessor
+            length += 1
+        return length
+
     def get_prefix_output(self):
         return self.prefix_access_pair[1]
 
-    def get_prefix(self):
+    def get_prefix(self, include_output=True):
         node = self
         prefix = []
         while node.predecessor:
-            prefix.append(node.prefix_access_pair)
+            symbol = node.prefix_access_pair
+            if not include_output:
+                symbol = symbol[0]
+            prefix.append(symbol)
+            node = node.predecessor
         prefix.reverse()
         return prefix
 
