@@ -1,3 +1,4 @@
+import random
 import string
 from collections import defaultdict
 
@@ -323,3 +324,55 @@ def visualize_classification_tree(root_node):
 
     # print(graph.to_string())
     graph.write(path='classification_tree.pdf', format='pdf')
+
+
+def is_balanced(input_seq, vpa_alphabet):
+    counter = 0
+    for i in input_seq:
+        if i in vpa_alphabet.call_alphabet:
+            counter += 1
+        if i in vpa_alphabet.return_alphabet:
+            counter -= 1
+        if counter < 0:
+            return False
+    return counter == 0
+
+
+def generate_input_output_data_from_automata(model, num_sequances=4000, min_seq_len=1, max_seq_len=16):
+    from aalpy.automata import Sevpa, Vpa
+    if isinstance(model, (Sevpa, Vpa)):
+        return generate_input_output_data_from_vpa(model, num_sequances, min_seq_len, max_seq_len)
+
+    alphabet = model.get_input_alphabet()
+    input_output_sequances = []
+    while len(input_output_sequances) < num_sequances:
+        sequance = []
+        for _ in range(random.randint(min_seq_len, max_seq_len)):
+            sequance.append(random.choice(alphabet))
+
+        model.reset_to_initial()
+        outputs = model.execute_sequence(model.initial_state, sequance)
+
+        input_output_sequances.append(list(zip(sequance, outputs)))
+
+    return input_output_sequances
+
+
+def generate_input_output_data_from_vpa(vpa, num_sequances=4000, min_seq_len=1, max_seq_len=16):
+    alphabet = vpa.input_alphabet.get_merged_alphabet()
+    input_output_sequances = []
+    while len(input_output_sequances) < num_sequances:
+        sequance = []
+        for _ in range(random.randint(min_seq_len, max_seq_len)):
+            sequance.append(random.choice(alphabet))
+
+        # not necessary as PAPNI checks it, but this way you actually generate num_sequances number of sequances
+        if not vpa.is_balanced(sequance):
+            continue
+
+        vpa.reset_to_initial()
+        outputs = vpa.execute_sequence(vpa.initial_state, sequance)
+
+        input_output_sequances.append(list(zip(sequance, outputs)))
+
+    return input_output_sequances

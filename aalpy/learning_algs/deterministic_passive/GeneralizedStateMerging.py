@@ -22,7 +22,7 @@ class GeneralizedStateMerging:
         start_time = time.time()
 
         # sorted list of states already considered
-        red_states = [self.root]
+        red_states = list([self.root])
         # used to get the minimal non-red state
         blue_states = list(red_states[0].children.values())
 
@@ -30,6 +30,7 @@ class GeneralizedStateMerging:
             blue_state = min(list(blue_states))
 
             partition = None
+            red_state = None
             for red_state in red_states:
                 partition = self._partition_from_merge(red_state, blue_state)
                 if partition is not None:
