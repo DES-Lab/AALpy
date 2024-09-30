@@ -37,6 +37,7 @@ from .learning_algs import (
     run_non_det_Lstar,
     run_RPNI,
     run_stochastic_Lstar,
+    run_PAPNI
 )
 from .oracles import (
     BreadthFirstExplorationEqOracle,

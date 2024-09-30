@@ -415,7 +415,7 @@ def gen_arithmetic_data(num_sequances=3000, min_seq_len=2, max_seq_len=8):
 
     sul = ArithmeticSUL()
 
-    alphabet = VpaAlphabet(internal_alphabet=['1', '+', '-', '/', '0'], call_alphabet=['(', ], return_alphabet=[')', ])
+    alphabet = VpaAlphabet(internal_alphabet=['1', '+',], call_alphabet=['(', ], return_alphabet=[')', ])
     merged_alphabet = alphabet.get_merged_alphabet()
     data = []
     while len(data) < num_sequances:
