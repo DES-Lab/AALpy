@@ -28,8 +28,7 @@ class BreadthFirstExplorationEqOracle(Oracle):
 
         # generate all test-cases
         for seq in product(self.alphabet, repeat=self.depth):
-            input_seq = tuple([i for sub in seq for i in sub])
-            self.queue.append(input_seq)
+            self.queue.append(seq)
 
         shuffle(self.queue)
 

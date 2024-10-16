@@ -52,7 +52,8 @@ class SevpaState(AutomatonState):
 
     def __init__(self, state_id, is_accepting=False):
         super().__init__(state_id)
-        self.transitions = defaultdict(List[SevpaTransition])
+        # list of SevpaTransition
+        self.transitions = defaultdict(list)
         self.is_accepting = is_accepting
 
 
