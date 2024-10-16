@@ -192,7 +192,7 @@ def run_PAPNI(data, vpa_alphabet, algorithm='gsm', print_info=True):
         VPA conforming to the data, or None if data is non-deterministic.
     """
     from aalpy.utils import is_balanced
-    from aalpy.automata.Vpa import from_dfa_representation
+    from aalpy.automata.Vpa import vpa_from_dfa_representation
 
     assert algorithm in {'gsm', 'classic'}
 
@@ -234,6 +234,6 @@ def run_PAPNI(data, vpa_alphabet, algorithm='gsm', print_info=True):
     learned_model = rpni.run_rpni()
 
     # convert intermediate DFA representation to VPA
-    learned_model = from_dfa_representation(learned_model, vpa_alphabet)
+    learned_model = vpa_from_dfa_representation(learned_model, vpa_alphabet)
 
     return learned_model

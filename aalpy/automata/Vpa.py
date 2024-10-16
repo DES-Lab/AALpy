@@ -171,7 +171,7 @@ class Vpa(Automaton):
                     if transition.action == 'pop':
                         if transition.letter not in ret_alphabet:
                             ret_alphabet.append(transition.letter)
-                    if transition.action == 'push':
+                    elif transition.action == 'push':
                         if transition.letter not in call_alphabet:
                             call_alphabet.append(transition.letter)
                     elif transition.letter not in int_alphabet:
@@ -252,68 +252,56 @@ class Vpa(Automaton):
         from aalpy.utils import is_balanced
         return is_balanced(seq, self.input_alphabet)
 
-    def gen_random_accepting_word(self, return_letter_prob: float = 0.5, call_letter_prob: float = 0.5,
-                                  early_finish: bool = True):
+    def generate_random_accepting_word(self, min_steps=4, max_steps=20):
         """
-        Create a random word that gets accepted by the automaton.
+        Generate a random valid sequence for a given VPDA.
 
         Args:
 
+            min_steps : Minimum number of steps
+            max_steps : Maximum number of steps before the process terminates
+
         Returns:
+            list: A list of input symbols (the generated sequence) leading to an accepting state.
         """
-        assert return_letter_prob + call_letter_prob <= 1.0
 
-        internal_letter_prob = 1 - call_letter_prob - return_letter_prob
-
-        assert (call_letter_prob + return_letter_prob + internal_letter_prob) == 1.0
-
-        call_letter_boarder = call_letter_prob
-        return_letter_boarder = call_letter_boarder + return_letter_prob
-        internal_letter_boarder = return_letter_boarder + internal_letter_prob
-
-        word = []
+        sequence = []
         self.reset_to_initial()
-        while True:
-            letter_type = random.uniform(0.0, 1.0)
-            if 0.0 <= letter_type <= call_letter_boarder:
-                possible_letters = self.input_alphabet.call_alphabet
-            elif call_letter_boarder < letter_type <= return_letter_boarder:
-                # skip return letters if stack is empty or if the word is empty
-                if not self.stack:
-                    continue
-                possible_letters = self.input_alphabet.return_alphabet
-            elif return_letter_boarder < letter_type <= internal_letter_boarder:
-                possible_letters = self.input_alphabet.internal_alphabet
-            else:
-                assert False
 
-            assert len(possible_letters) > 0
+        for step_count in range(max_steps):
+            current_state = self.current_state
 
-            letter = ''
-            if early_finish:
-                for l in possible_letters:
-                    for transition in self.current_state.transitions[l]:
-                        if transition.target_state.is_accepting:
-                            letter = l
-                            break
-                    break
-            if letter == '':
-                random_trans_letter_index = random.randint(0, len(possible_letters) - 1)
-                letter = possible_letters[random_trans_letter_index]
-            self.step(letter)
-            if not self.current_state == self.error_state:
-                word.append(letter)
-            else:
-                self.reset_to_initial()
-                self.execute_sequence(self.initial_state, word)
+            # If we have met the min_steps requirement and are in an accepting state with an empty stack, stop
+            if step_count >= min_steps and current_state.is_accepting and not self.stack:
+                return sequence
 
-            if self.current_state.is_accepting and not self.stack:
+            # Get all possible transitions from the current state
+            possible_transitions = []
+            for letter, transitions in current_state.transitions.items():
+                for t in transitions:
+                    if t.action == 'pop' and self.stack and t.stack_guard == self.top():
+                        possible_transitions.append(t)
+                    elif t.action == 'push' or t.action is None:
+                        possible_transitions.append(t)
+
+            # If no valid transitions exist, return an incomplete sequence or error
+            if not possible_transitions:
                 break
 
-        return word
+            # Randomly choose a valid transition
+            chosen_transition = random.choice(possible_transitions)
+
+            # Perform the transition
+            self.step(chosen_transition.letter)
+
+            # Add the chosen letter to the sequence
+            sequence.append(chosen_transition.letter)
+
+        # None indicates that a sequance was not successfully generated
+        return None
 
 
-def from_dfa_representation(dfa_repr, vpa_alphabet):
+def vpa_from_dfa_representation(dfa_repr, vpa_alphabet):
     vpa_states = dict()
     for dfa_state in dfa_repr.states:
         vpa_state = VpaState(state_id=dfa_state.state_id, is_accepting=dfa_state.is_accepting)
@@ -343,6 +331,3 @@ def from_dfa_representation(dfa_repr, vpa_alphabet):
     learned_model = Vpa(initial_state, list(vpa_states.values()))
 
     return learned_model
-
-
-
