@@ -770,5 +770,5 @@ s54 -> s54[label="ACK+RST(V,V,0)/TIMEOUT"];
 s54 -> s2[label="CLOSE/TIMEOUT"];
 s54 -> s54[label="SEND/TIMEOUT"];
 s54 -> s51[label="ACK(V,V,0)/RST(ZERO,ZERO,0)"];
-__start0 -> s0;
+__start0 -> s0 [label=""];
 }
