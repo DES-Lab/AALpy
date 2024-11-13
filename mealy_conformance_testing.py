@@ -26,11 +26,11 @@ for file, model in zip(files, models):
     intermediate = info['intermediate_hypotheses']
 
     for number, hyp in enumerate(intermediate):
-        save_automaton_to_file(hyp, path=f"intermediate_hypotheses/{file.stem}{number}.dot")
+        hyp.save(file_path=f"intermediate_hypotheses/{file.stem}{number}.dot")
     
-    print(f"steps = {steps}")
-    print(f"queries = {queries}")
-    print(f"# intermediate = {len(intermediate)}")
-    print(f"# states = {size}")
+    print(f"# steps         = {steps}")
+    print(f"# queries       = {queries}")
+    print(f"# intermediate  = {len(intermediate)}")
+    print(f"# states        = {size}")
 
 
