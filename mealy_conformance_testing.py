@@ -4,7 +4,7 @@ from pathlib import Path
 from aalpy.SULs.AutomataSUL import AutomatonSUL
 from aalpy.learning_algs.deterministic.LStar import run_Lstar
 from aalpy.oracles import RandomWordEqOracle
-from aalpy.utils.FileHandler import load_automaton_from_file, save_automaton_to_file
+from aalpy.utils.FileHandler import load_automaton_from_file
 
 root = os.getcwd() + "/DotModels"
 protocols = ["MQTT", "TCP", "TLS"]

@@ -78,6 +78,7 @@ def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, sampl
     eq_query_time = 0
     learning_rounds = 0
     hypothesis = None
+    intermediate_hypotheses = []
 
     observation_table = ObservationTable(alphabet, sul, automaton_type, all_prefixes_in_obs_table)
 
@@ -109,6 +110,7 @@ def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, sampl
 
         # Generate hypothesis
         hypothesis = observation_table.gen_hypothesis(no_cex_processing_used=cex_processing is None)
+        intermediate_hypotheses.append(hypothesis)
         # Find counterexample if none has previously been found (first round) and cex is successfully processed
         # (not a counterexample in the current hypothesis)
         if cex is None or counterexample_successfully_processed(sul, cex, hypothesis):
@@ -176,7 +178,8 @@ def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, sampl
         'learning_time': learning_time,
         'eq_oracle_time': eq_query_time,
         'total_time': total_time,
-        'characterization_set': observation_table.E
+        'characterization_set': observation_table.E,
+        'intermediate_hypotheses': intermediate_hypotheses
     }
     if cache_and_non_det_check:
         info['cache_saved'] = sul.num_cached_queries
