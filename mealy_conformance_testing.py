@@ -14,6 +14,9 @@ models = [load_automaton_from_file(f, 'mealy') for f in files]
 
 assert len(files) == len(models)
 
+if not os.path.exists('intermediate_hypotheses'):
+    os.makedirs('intermediate_hypotheses')
+
 for file, model in zip(files, models):
     alphabet = model.get_input_alphabet()
     sul = AutomatonSUL(model)
@@ -25,8 +28,18 @@ for file, model in zip(files, models):
     queries = info['queries_learning']
     intermediate = info['intermediate_hypotheses']
 
+    path = f"intermediate_hypotheses/{file.stem}"
     for number, hyp in enumerate(intermediate):
-        hyp.save(file_path=f"intermediate_hypotheses/{file.stem}{number}.dot")
+        # check if directory exists
+        if not os.path.exists(path):
+            os.makedirs(path)
+        hyp.save(file_path=(path + f"/h{number}.dot"))
+
+    # also save the diffs of consecutive hypotheses
+    # this can be done by executing diff on the command line
+    # diff hyp1.dot hyp2.dot > diff1_2.txt
+    for i in range(1, len(intermediate)):
+        os.system(f"diff {path}/h{i - 1}.dot {path}/h{i}.dot > {path}/diff_{i - 1}_{i}.txt")
     
     print(f"# steps         = {steps}")
     print(f"# queries       = {queries}")
