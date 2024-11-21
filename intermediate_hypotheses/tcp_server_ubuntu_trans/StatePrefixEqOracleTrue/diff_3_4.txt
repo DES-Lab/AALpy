@@ -1,0 +1,72 @@
+1c1
+< digraph h3 {
+---
+> digraph h4 {
+42a43,44
+> s41 [label="s41"];
+> s42 [label="s42"];
+118c120
+< s6 -> s32 [label="RST(V,V,0)/TIMEOUT"];
+---
+> s6 -> s41 [label="RST(V,V,0)/TIMEOUT"];
+124c126
+< s6 -> s32 [label="ACK+RST(V,V,0)/TIMEOUT"];
+---
+> s6 -> s41 [label="ACK+RST(V,V,0)/TIMEOUT"];
+130c132
+< s7 -> s32 [label="RST(V,V,0)/TIMEOUT"];
+---
+> s7 -> s41 [label="RST(V,V,0)/TIMEOUT"];
+136c138
+< s7 -> s32 [label="ACK+RST(V,V,0)/TIMEOUT"];
+---
+> s7 -> s41 [label="ACK+RST(V,V,0)/TIMEOUT"];
+142c144
+< s8 -> s32 [label="RST(V,V,0)/TIMEOUT"];
+---
+> s8 -> s41 [label="RST(V,V,0)/TIMEOUT"];
+148c150
+< s8 -> s32 [label="ACK+RST(V,V,0)/TIMEOUT"];
+---
+> s8 -> s41 [label="ACK+RST(V,V,0)/TIMEOUT"];
+154c156
+< s9 -> s32 [label="RST(V,V,0)/TIMEOUT"];
+---
+> s9 -> s41 [label="RST(V,V,0)/TIMEOUT"];
+160c162
+< s9 -> s32 [label="ACK+RST(V,V,0)/TIMEOUT"];
+---
+> s9 -> s41 [label="ACK+RST(V,V,0)/TIMEOUT"];
+431c433
+< s32 -> s32 [label="ACCEPT/TIMEOUT"];
+---
+> s32 -> s41 [label="ACCEPT/TIMEOUT"];
+504c506
+< s38 -> s39 [label="FIN+ACK(V,V,0)/ACK(NEXT,NEXT,0)"];
+---
+> s38 -> s42 [label="FIN+ACK(V,V,0)/ACK(NEXT,NEXT,0)"];
+534a537,560
+> s41 -> s1 [label="CLOSECONNECTION/TIMEOUT"];
+> s41 -> s41 [label="ACK+PSH(V,V,1)/RST(ZERO,ZERO,0)"];
+> s41 -> s41 [label="SYN+ACK(V,V,0)/RST(ZERO,ZERO,0)"];
+> s41 -> s41 [label="RST(V,V,0)/TIMEOUT"];
+> s41 -> s41 [label="ACCEPT/TIMEOUT"];
+> s41 -> s41 [label="FIN+ACK(V,V,0)/RST(ZERO,ZERO,0)"];
+> s41 -> s41 [label="LISTEN/TIMEOUT"];
+> s41 -> s34 [label="SYN(V,V,0)/ACK+SYN(FRESH,NEXT,0)"];
+> s41 -> s41 [label="RCV/TIMEOUT"];
+> s41 -> s41 [label="ACK+RST(V,V,0)/TIMEOUT"];
+> s41 -> s15 [label="CLOSE/TIMEOUT"];
+> s41 -> s41 [label="ACK(V,V,0)/RST(ZERO,ZERO,0)"];
+> s42 -> s33 [label="CLOSECONNECTION/TIMEOUT"];
+> s42 -> s42 [label="ACK+PSH(V,V,1)/TIMEOUT"];
+> s42 -> s42 [label="SYN+ACK(V,V,0)/ACK(NEXT,CURRENT,0)"];
+> s42 -> s32 [label="RST(V,V,0)/TIMEOUT"];
+> s42 -> s42 [label="ACCEPT/TIMEOUT"];
+> s42 -> s42 [label="FIN+ACK(V,V,0)/TIMEOUT"];
+> s42 -> s42 [label="LISTEN/TIMEOUT"];
+> s42 -> s42 [label="SYN(V,V,0)/TIMEOUT"];
+> s42 -> s42 [label="RCV/TIMEOUT"];
+> s42 -> s32 [label="ACK+RST(V,V,0)/TIMEOUT"];
+> s42 -> s15 [label="CLOSE/ACK+RST(NEXT,CURRENT,0)"];
+> s42 -> s42 [label="ACK(V,V,0)/TIMEOUT"];

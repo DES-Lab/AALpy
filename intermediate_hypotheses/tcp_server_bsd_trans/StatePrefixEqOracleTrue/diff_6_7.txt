@@ -1,0 +1,32 @@
+1c1
+< digraph h6 {
+---
+> digraph h7 {
+41a42
+> s40 [label="s40"];
+537c538
+< s38 -> s3 [label="ACK+PSH(V,V,1)/ACK(NEXT,NEXT,0)"];
+---
+> s38 -> s40 [label="ACK+PSH(V,V,1)/ACK(NEXT,NEXT,0)"];
+541c542
+< s38 -> s3 [label="FIN+ACK(V,V,0)/ACK(NEXT,NEXT,0)"];
+---
+> s38 -> s40 [label="FIN+ACK(V,V,0)/ACK(NEXT,NEXT,0)"];
+548c549
+< s38 -> s3 [label="ACK(V,V,0)/TIMEOUT"];
+---
+> s38 -> s40 [label="ACK(V,V,0)/TIMEOUT"];
+561a563,575
+> s40 -> s3 [label="CLOSECONNECTION/TIMEOUT"];
+> s40 -> s40 [label="ACK+PSH(V,V,1)/ACK(NEXT,NEXT,0)"];
+> s40 -> s28 [label="SYN+ACK(V,V,0)/ACK+RST(NEXT,CURRENT,0)"];
+> s40 -> s28 [label="RST(V,V,0)/TIMEOUT"];
+> s40 -> s40 [label="ACCEPT/TIMEOUT"];
+> s40 -> s40 [label="FIN+ACK(V,V,0)/ACK(NEXT,NEXT,0)"];
+> s40 -> s40 [label="LISTEN/TIMEOUT"];
+> s40 -> s28 [label="SYN(V,V,0)/ACK+RST(NEXT,CURRENT,0)"];
+> s40 -> s40 [label="RCV/TIMEOUT"];
+> s40 -> s28 [label="ACK+RST(V,V,0)/TIMEOUT"];
+> s40 -> s12 [label="CLOSE/ACK+RST(NEXT,CURRENT,0)"];
+> s40 -> s40 [label="SEND/TIMEOUT"];
+> s40 -> s40 [label="ACK(V,V,0)/TIMEOUT"];

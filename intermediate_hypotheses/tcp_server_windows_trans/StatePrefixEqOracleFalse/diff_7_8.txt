@@ -1,0 +1,48 @@
+1c1
+< digraph h7 {
+---
+> digraph h8 {
+33a34
+> s32 [label="s32"];
+348,349c349,350
+< s24 -> s21 [label="SYN+ACK(V,V,0)/RST(NEXT,FRESH,0)"];
+< s24 -> s21 [label="RST(V,V,0)/TIMEOUT"];
+---
+> s24 -> s32 [label="SYN+ACK(V,V,0)/RST(NEXT,FRESH,0)"];
+> s24 -> s32 [label="RST(V,V,0)/TIMEOUT"];
+353c354
+< s24 -> s21 [label="SYN(V,V,0)/ACK+RST(ZERO,NEXT,0)"];
+---
+> s24 -> s32 [label="SYN(V,V,0)/ACK+RST(ZERO,NEXT,0)"];
+355c356
+< s24 -> s21 [label="ACK+RST(V,V,0)/TIMEOUT"];
+---
+> s24 -> s32 [label="ACK+RST(V,V,0)/TIMEOUT"];
+361,362c362,363
+< s25 -> s21 [label="SYN+ACK(V,V,0)/RST(NEXT,FRESH,0)"];
+< s25 -> s21 [label="RST(V,V,0)/TIMEOUT"];
+---
+> s25 -> s32 [label="SYN+ACK(V,V,0)/RST(NEXT,FRESH,0)"];
+> s25 -> s32 [label="RST(V,V,0)/TIMEOUT"];
+366c367
+< s25 -> s21 [label="SYN(V,V,0)/ACK+RST(ZERO,NEXT,0)"];
+---
+> s25 -> s32 [label="SYN(V,V,0)/ACK+RST(ZERO,NEXT,0)"];
+368c369
+< s25 -> s21 [label="ACK+RST(V,V,0)/TIMEOUT"];
+---
+> s25 -> s32 [label="ACK+RST(V,V,0)/TIMEOUT"];
+449a451,463
+> s32 -> s14 [label="CLOSECONNECTION/TIMEOUT"];
+> s32 -> s32 [label="ACK+PSH(V,V,1)/TIMEOUT"];
+> s32 -> s32 [label="SYN+ACK(V,V,0)/TIMEOUT"];
+> s32 -> s32 [label="RST(V,V,0)/TIMEOUT"];
+> s32 -> s32 [label="ACCEPT/TIMEOUT"];
+> s32 -> s32 [label="FIN+ACK(V,V,0)/TIMEOUT"];
+> s32 -> s32 [label="LISTEN/TIMEOUT"];
+> s32 -> s32 [label="SYN(V,V,0)/TIMEOUT"];
+> s32 -> s32 [label="RCV/TIMEOUT"];
+> s32 -> s32 [label="ACK+RST(V,V,0)/TIMEOUT"];
+> s32 -> s21 [label="CLOSE/TIMEOUT"];
+> s32 -> s32 [label="SEND/TIMEOUT"];
+> s32 -> s32 [label="ACK(V,V,0)/TIMEOUT"];

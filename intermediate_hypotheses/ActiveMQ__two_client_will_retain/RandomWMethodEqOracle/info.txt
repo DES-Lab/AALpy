@@ -1,0 +1,4 @@
+# steps         = 13656
+# queries       = 2331
+# intermediate  = 7
+# states        = 18

@@ -1,0 +1,42 @@
+1c1
+< digraph h1 {
+---
+> digraph h2 {
+10a11,12
+> s9 [label="s9"];
+> s10 [label="s10"];
+13c15
+< s0 -> s2 [label="ConnectC1WithWillRetain / c1_ConnAck__c2_ConnectionClosed"];
+---
+> s0 -> s9 [label="ConnectC1WithWillRetain / c1_ConnAck__c2_ConnectionClosed"];
+65c67
+< s6 -> s2 [label="ConnectC2 / Empty__c2_ConnectionClosed"];
+---
+> s6 -> s9 [label="ConnectC2 / Empty__c2_ConnectionClosed"];
+74c76
+< s7 -> s0 [label="ConnectC2 / c1_ConnectionClosed__c2_ConnectionClosed"];
+---
+> s7 -> s10 [label="ConnectC2 / c1_ConnectionClosed__c2_ConnectionClosed"];
+83c85
+< s8 -> s2 [label="ConnectC2 / Empty__c2_ConnectionClosed"];
+---
+> s8 -> s9 [label="ConnectC2 / Empty__c2_ConnectionClosed"];
+91a94,111
+> s9 -> s6 [label="ConnectC2 / Empty__c2_ConnAck"];
+> s9 -> s10 [label="ConnectC1WithWill / c1_ConnectionClosed__c2_ConnectionClosed"];
+> s9 -> s10 [label="ConnectC1WithWillRetain / c1_ConnectionClosed__c2_ConnectionClosed"];
+> s9 -> s9 [label="DeleteRetainedC1 / c1_PubAck__c2_ConnectionClosed"];
+> s9 -> s9 [label="DeleteRetainedC2 / Empty__c2_ConnectionClosed"];
+> s9 -> s9 [label="SubscribeC2 / Empty__c2_ConnectionClosed"];
+> s9 -> s9 [label="UnSubScribeC2 / Empty__c2_ConnectionClosed"];
+> s9 -> s10 [label="DisconnectTCPC1 / c1_ConnectionClosed__c2_ConnectionClosed"];
+> s9 -> s0 [label="DisconnectC1 / c1_ConnectionClosed__c2_ConnectionClosed"];
+> s10 -> s7 [label="ConnectC2 / c1_ConnectionClosed__c2_ConnAck"];
+> s10 -> s9 [label="ConnectC1WithWill / c1_ConnAck__c2_ConnectionClosed"];
+> s10 -> s9 [label="ConnectC1WithWillRetain / c1_ConnAck__c2_ConnectionClosed"];
+> s10 -> s10 [label="DeleteRetainedC1 / c1_ConnectionClosed__c2_ConnectionClosed"];
+> s10 -> s10 [label="DeleteRetainedC2 / c1_ConnectionClosed__c2_ConnectionClosed"];
+> s10 -> s10 [label="SubscribeC2 / c1_ConnectionClosed__c2_ConnectionClosed"];
+> s10 -> s10 [label="UnSubScribeC2 / c1_ConnectionClosed__c2_ConnectionClosed"];
+> s10 -> s10 [label="DisconnectTCPC1 / c1_ConnectionClosed__c2_ConnectionClosed"];
+> s10 -> s10 [label="DisconnectC1 / c1_ConnectionClosed__c2_ConnectionClosed"];
