@@ -61,9 +61,18 @@ class KWayStateCoverageEqOracle(Oracle):
 
             index = 0
             path = comb[0].prefix
+            possible_test_case = True
             while index < len(comb) - 1:
-                path += hypothesis.get_shortest_path(comb[index], comb[index + 1])
+                path_between_states = hypothesis.get_shortest_path(comb[index], comb[index + 1])
                 index += 1
+
+                if not path_between_states:
+                    possible_test_case = False
+                    break
+                path += path_between_states
+
+            if possible_test_case is None:
+                continue
 
             path += tuple(choices(self.alphabet, k=self.random_walk_len))
 
