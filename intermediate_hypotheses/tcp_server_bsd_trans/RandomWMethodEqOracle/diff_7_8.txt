@@ -1,0 +1,28 @@
+1c1
+< digraph h7 {
+---
+> digraph h8 {
+41a42
+> s40 [label="s40"];
+163c164
+< s9 -> s9 [label="ACCEPT/TIMEOUT"];
+---
+> s9 -> s40 [label="ACCEPT/TIMEOUT"];
+372c373
+< s25 -> s9 [label="FIN+ACK(V,V,0)/ACK(NEXT,NEXT,0)"];
+---
+> s25 -> s40 [label="FIN+ACK(V,V,0)/ACK(NEXT,NEXT,0)"];
+561a563,575
+> s40 -> s9 [label="CLOSECONNECTION/TIMEOUT"];
+> s40 -> s40 [label="ACK+PSH(V,V,1)/ACK(NEXT,CURRENT,0)"];
+> s40 -> s40 [label="SYN+ACK(V,V,0)/ACK(NEXT,CURRENT,0)"];
+> s40 -> s26 [label="RST(V,V,0)/TIMEOUT"];
+> s40 -> s40 [label="ACCEPT/TIMEOUT"];
+> s40 -> s40 [label="FIN+ACK(V,V,0)/ACK(NEXT,CURRENT,0)"];
+> s40 -> s40 [label="LISTEN/TIMEOUT"];
+> s40 -> s40 [label="SYN(V,V,0)/TIMEOUT"];
+> s40 -> s40 [label="RCV/TIMEOUT"];
+> s40 -> s26 [label="ACK+RST(V,V,0)/TIMEOUT"];
+> s40 -> s16 [label="CLOSE/TIMEOUT"];
+> s40 -> s40 [label="SEND/TIMEOUT"];
+> s40 -> s40 [label="ACK(V,V,0)/TIMEOUT"];

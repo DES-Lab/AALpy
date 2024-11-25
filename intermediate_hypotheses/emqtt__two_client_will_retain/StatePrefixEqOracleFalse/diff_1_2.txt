@@ -22,9 +22,9 @@
 ---
 > s8 -> s12 [label="ConnectC2 / c1_ConnectionClosed__c2_ConnectionClosed"];
 94c96
-< s9 -> s0 [label="ConnectC2 / c1_ConnectionClosed__c2_ConnectionClosed"];
+< s9 -> s2 [label="ConnectC2 / Empty__c2_ConnectionClosed"];
 ---
-> s9 -> s12 [label="ConnectC2 / c1_ConnectionClosed__c2_ConnectionClosed"];
+> s9 -> s11 [label="ConnectC2 / Empty__c2_ConnectionClosed"];
 103c105
 < s10 -> s2 [label="ConnectC2 / Empty__c2_ConnectionClosed"];
 ---

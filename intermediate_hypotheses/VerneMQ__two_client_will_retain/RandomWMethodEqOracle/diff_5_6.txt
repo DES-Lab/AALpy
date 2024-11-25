@@ -4,21 +4,21 @@
 > digraph h6 {
 17a18
 > s16 [label="s16"];
-119c120
-< s11 -> s14 [label="ConnectC1WithWillRetain / c1_ConnAck__c2_ConnectionClosed"];
+137c138
+< s13 -> s14 [label="ConnectC1WithWillRetain / c1_ConnAck__c2_ConnectionClosed"];
 ---
-> s11 -> s16 [label="ConnectC1WithWillRetain / c1_ConnAck__c2_ConnectionClosed"];
+> s13 -> s16 [label="ConnectC1WithWillRetain / c1_ConnAck__c2_ConnectionClosed"];
 153c154
 < s15 -> s14 [label="ConnectC2 / Empty__c2_ConnectionClosed"];
 ---
 > s15 -> s16 [label="ConnectC2 / Empty__c2_ConnectionClosed"];
 161a163,171
 > s16 -> s15 [label="ConnectC2 / Empty__c2_ConnAck"];
-> s16 -> s11 [label="ConnectC1WithWill / c1_ConnectionClosed__c2_ConnectionClosed"];
-> s16 -> s11 [label="ConnectC1WithWillRetain / c1_ConnectionClosed__c2_ConnectionClosed"];
-> s16 -> s10 [label="DeleteRetainedC1 / c1_PubAck__c2_ConnectionClosed"];
+> s16 -> s13 [label="ConnectC1WithWill / c1_ConnectionClosed__c2_ConnectionClosed"];
+> s16 -> s13 [label="ConnectC1WithWillRetain / c1_ConnectionClosed__c2_ConnectionClosed"];
+> s16 -> s12 [label="DeleteRetainedC1 / c1_PubAck__c2_ConnectionClosed"];
 > s16 -> s16 [label="DeleteRetainedC2 / Empty__c2_ConnectionClosed"];
 > s16 -> s16 [label="SubscribeC2 / Empty__c2_ConnectionClosed"];
 > s16 -> s16 [label="UnSubScribeC2 / Empty__c2_ConnectionClosed"];
-> s16 -> s11 [label="DisconnectTCPC1 / c1_ConnectionClosed__c2_ConnectionClosed"];
-> s16 -> s11 [label="DisconnectC1 / c1_ConnectionClosed__c2_ConnectionClosed"];
+> s16 -> s13 [label="DisconnectTCPC1 / c1_ConnectionClosed__c2_ConnectionClosed"];
+> s16 -> s13 [label="DisconnectC1 / c1_ConnectionClosed__c2_ConnectionClosed"];

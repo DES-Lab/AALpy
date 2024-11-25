@@ -2,27 +2,51 @@
 < digraph h4 {
 ---
 > digraph h5 {
-18a19
-> s17 [label="s17"];
-109c110
-< s10 -> s11 [label="ConnectC2 / Empty__c2_ConnectionClosed"];
+15a16,18
+> s14 [label="s14"];
+> s15 [label="s15"];
+> s16 [label="s16"];
+81c84
+< s7 -> s13 [label="ConnectC1WithWillRetain / c1_ConnAck__c2_ConnectionClosed"];
 ---
-> s10 -> s17 [label="ConnectC2 / Empty__c2_ConnectionClosed"];
-129c130
-< s12 -> s11 [label="ConnectC1WithWillRetain / c1_ConnAck__c2_ConnectionClosed"];
+> s7 -> s14 [label="ConnectC1WithWillRetain / c1_ConnAck__c2_ConnectionClosed"];
+90c93
+< s8 -> s9 [label="ConnectC1WithWillRetain / c1_ConnAck__Empty"];
 ---
-> s12 -> s17 [label="ConnectC1WithWillRetain / c1_ConnAck__c2_ConnectionClosed"];
-163c164
-< s16 -> s11 [label="ConnectC2 / Empty__c2_ConnectionClosed"];
+> s8 -> s15 [label="ConnectC1WithWillRetain / c1_ConnAck__Empty"];
+102c105
+< s9 -> s11 [label="SubscribeC2 / Empty__c2_SubAck__Pub(c2,my_topic,bye)"];
 ---
-> s16 -> s17 [label="ConnectC2 / Empty__c2_ConnectionClosed"];
-171a173,181
-> s17 -> s10 [label="ConnectC2 / Empty__c2_ConnAck"];
-> s17 -> s12 [label="ConnectC1WithWill / c1_ConnectionClosed__c2_ConnectionClosed"];
-> s17 -> s12 [label="ConnectC1WithWillRetain / c1_ConnectionClosed__c2_ConnectionClosed"];
-> s17 -> s11 [label="DeleteRetainedC1 / c1_PubAck__c2_ConnectionClosed"];
-> s17 -> s17 [label="DeleteRetainedC2 / Empty__c2_ConnectionClosed"];
-> s17 -> s17 [label="SubscribeC2 / Empty__c2_ConnectionClosed"];
-> s17 -> s17 [label="UnSubScribeC2 / Empty__c2_ConnectionClosed"];
-> s17 -> s12 [label="DisconnectTCPC1 / c1_ConnectionClosed__c2_ConnectionClosed"];
-> s17 -> s12 [label="DisconnectC1 / c1_ConnectionClosed__c2_ConnectionClosed"];
+> s9 -> s16 [label="SubscribeC2 / Empty__c2_SubAck__Pub(c2,my_topic,bye)"];
+125c128
+< s12 -> s11 [label="ConnectC1WithWill / c1_ConnAck__Empty"];
+---
+> s12 -> s16 [label="ConnectC1WithWill / c1_ConnAck__Empty"];
+141a145,171
+> s14 -> s15 [label="ConnectC2 / Empty__c2_ConnAck"];
+> s14 -> s7 [label="ConnectC1WithWill / c1_ConnectionClosed__c2_ConnectionClosed"];
+> s14 -> s7 [label="ConnectC1WithWillRetain / c1_ConnectionClosed__c2_ConnectionClosed"];
+> s14 -> s6 [label="DeleteRetainedC1 / c1_PubAck__c2_ConnectionClosed"];
+> s14 -> s14 [label="DeleteRetainedC2 / Empty__c2_ConnectionClosed"];
+> s14 -> s14 [label="SubscribeC2 / Empty__c2_ConnectionClosed"];
+> s14 -> s14 [label="UnSubScribeC2 / Empty__c2_ConnectionClosed"];
+> s14 -> s7 [label="DisconnectTCPC1 / c1_ConnectionClosed__c2_ConnectionClosed"];
+> s14 -> s7 [label="DisconnectC1 / c1_ConnectionClosed__c2_ConnectionClosed"];
+> s15 -> s14 [label="ConnectC2 / Empty__c2_ConnectionClosed"];
+> s15 -> s8 [label="ConnectC1WithWill / c1_ConnectionClosed__Empty"];
+> s15 -> s8 [label="ConnectC1WithWillRetain / c1_ConnectionClosed__Empty"];
+> s15 -> s10 [label="DeleteRetainedC1 / c1_PubAck__Empty"];
+> s15 -> s10 [label="DeleteRetainedC2 / Empty__c2_PubAck"];
+> s15 -> s11 [label="SubscribeC2 / Empty__c2_SubAck__Pub(c2,my_topic,bye)"];
+> s15 -> s15 [label="UnSubScribeC2 / Empty__c2_UnSubAck"];
+> s15 -> s8 [label="DisconnectTCPC1 / c1_ConnectionClosed__Empty"];
+> s15 -> s8 [label="DisconnectC1 / c1_ConnectionClosed__Empty"];
+> s16 -> s13 [label="ConnectC2 / Empty__c2_ConnectionClosed"];
+> s16 -> s12 [label="ConnectC1WithWill / c1_ConnectionClosed__Pub(c2,my_topic,bye)"];
+> s16 -> s12 [label="ConnectC1WithWillRetain / c1_ConnectionClosed__Pub(c2,my_topic,bye)"];
+> s16 -> s5 [label="DeleteRetainedC1 / c1_PubAck__Pub(c2,my_topic,)"];
+> s16 -> s5 [label="DeleteRetainedC2 / Empty__Pub(c2,my_topic,)__c2_PubAck"];
+> s16 -> s16 [label="SubscribeC2 / Empty__c2_SubAck"];
+> s16 -> s9 [label="UnSubScribeC2 / Empty__c2_UnSubAck"];
+> s16 -> s12 [label="DisconnectTCPC1 / c1_ConnectionClosed__Pub(c2,my_topic,bye)"];
+> s16 -> s12 [label="DisconnectC1 / c1_ConnectionClosed__Empty"];
