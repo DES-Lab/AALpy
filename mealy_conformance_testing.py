@@ -33,9 +33,6 @@ if not os.path.exists(resultsdir):
     files = [file for dir in directories for file in dir.iterdir()]
     models = [load_automaton_from_file(f, 'mealy') for f in files]
 
-    assert len(files) == len(models)
-
-
     class StatePrefixEqOracleTrue(oracles.StatePrefixEqOracle):
         def __init__(self, alphabet, sul):
             super().__init__(alphabet, sul, walks_per_state=50, depth_first=True)
