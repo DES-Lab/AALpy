@@ -8,7 +8,6 @@ from aalpy.SULs.AutomataSUL import AutomatonSUL
 from aalpy.learning_algs.deterministic.LStar import run_Lstar
 from aalpy.utils.FileHandler import load_automaton_from_file
 
-
 resultsdir = "results"
 
 attributes = ['learning_rounds',
@@ -93,10 +92,10 @@ if not os.path.exists(resultsdir):
 
         results[file.stem] = oracle_status
 
-    with open('results.pkl', 'wb') as f:
+    with open(resultsdir + '/results.pkl', 'wb') as f:
         pickle.dump(results, f)
 else:
-    with open('results.pkl', 'rb') as f:
+    with open(resultsdir + '/results.pkl', 'rb') as f:
         results = pickle.load(f)
 
 randkey = random.choice(list(results.keys()))
@@ -104,7 +103,7 @@ index = [ first for first, _ in results[randkey] ]
 new_results= { key: [second for _, second in value] for key, value in results.items() } 
 df = pd.DataFrame(new_results, index=index)
 print(df)
-df.to_pickle("results-pd.pkl")
+df.to_pickle(resultsdir + '/results-pd.pkl')
 
 for index, row in df.iterrows():
     truths = row.value_counts()[True]
