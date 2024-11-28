@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 import pickle
+import random
 from pathlib import Path
 
 from aalpy import oracles
@@ -43,10 +44,10 @@ if not os.path.exists('results.pkl'):
                     StatePrefixEqOracleTrue(alphabet, sul),
                     oracles.BreadthFirstExplorationEqOracle(alphabet, sul),
                     oracles.KWayStateCoverageEqOracle(alphabet, sul),
-                    oracles.TransitionFocusOracle(alphabet, sul),
+                    oracles.TransitionFocusOracle(alphabet, sul, walk_len=40),
                     oracles.CacheBasedEqOracle(alphabet, sul),
                     oracles.PacOracle(alphabet, sul),
-                    oracles.RandomWMethodEqOracle(alphabet, sul, walks_per_state=25, walk_len=20)
+                    oracles.RandomWMethodEqOracle(alphabet, sul, walks_per_state=50, walk_len=40)
                     ]
     
         # eqo = RandomWordEqOracle(alphabet, sul, num_walks=5000, min_walk_len=10, max_walk_len=100)
@@ -93,8 +94,14 @@ else:
     with open('results.pkl', 'rb') as f:
         results = pickle.load(f)
 
-index = [ first for first, _ in results["TCP_Linux_Client"] ]
+randkey = random.choice(list(results.keys()))
+index = [ first for first, _ in results[randkey] ]
 new_results= { key: [second for _, second in value] for key, value in results.items() } 
 df = pd.DataFrame(new_results, index=index)
 print(df)
 df.to_pickle("results-pd.pkl")
+
+for index, row in df.iterrows():
+    truths = row.value_counts()[True]
+    falses = len(row) - truths
+    print(f"{index} learned correctly {truths} times and failed {falses} times")
