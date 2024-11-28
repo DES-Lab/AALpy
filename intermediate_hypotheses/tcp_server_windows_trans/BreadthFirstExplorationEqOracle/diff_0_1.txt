@@ -12,37 +12,13 @@
 < s1 -> s0 [label="CLOSE/TIMEOUT"];
 ---
 > s1 -> s14 [label="CLOSE/TIMEOUT"];
-57,58c58,59
-< s3 -> s0 [label="SYN+ACK(V,V,0)/RST(NEXT,FRESH,0)"];
-< s3 -> s0 [label="RST(V,V,0)/TIMEOUT"];
----
-> s3 -> s14 [label="SYN+ACK(V,V,0)/RST(NEXT,FRESH,0)"];
-> s3 -> s14 [label="RST(V,V,0)/TIMEOUT"];
-62c63
-< s3 -> s0 [label="SYN(V,V,0)/ACK+RST(ZERO,NEXT,0)"];
----
-> s3 -> s14 [label="SYN(V,V,0)/ACK+RST(ZERO,NEXT,0)"];
-64,65c65,66
-< s3 -> s0 [label="ACK+RST(V,V,0)/TIMEOUT"];
+65c66
 < s3 -> s0 [label="CLOSE/ACK+RST(NEXT,CURRENT,0)"];
 ---
-> s3 -> s14 [label="ACK+RST(V,V,0)/TIMEOUT"];
 > s3 -> s14 [label="CLOSE/ACK+RST(NEXT,CURRENT,0)"];
-70,71c71,72
-< s4 -> s0 [label="SYN+ACK(V,V,0)/RST(NEXT,FRESH,0)"];
-< s4 -> s0 [label="RST(V,V,0)/TIMEOUT"];
----
-> s4 -> s14 [label="SYN+ACK(V,V,0)/RST(NEXT,FRESH,0)"];
-> s4 -> s14 [label="RST(V,V,0)/TIMEOUT"];
-75c76
-< s4 -> s0 [label="SYN(V,V,0)/ACK+RST(ZERO,NEXT,0)"];
----
-> s4 -> s14 [label="SYN(V,V,0)/ACK+RST(ZERO,NEXT,0)"];
-77,78c78,79
-< s4 -> s0 [label="ACK+RST(V,V,0)/TIMEOUT"];
+78c79
 < s4 -> s0 [label="CLOSE/ACK+RST(NEXT,CURRENT,0)"];
 ---
-> s4 -> s14 [label="ACK+RST(V,V,0)/TIMEOUT"];
 > s4 -> s14 [label="CLOSE/ACK+RST(NEXT,CURRENT,0)"];
 82c83
 < s5 -> s0 [label="ACK+PSH(V,V,1)/RST(NEXT,CURRENT,0)"];

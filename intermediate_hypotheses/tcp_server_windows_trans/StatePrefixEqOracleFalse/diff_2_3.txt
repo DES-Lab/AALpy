@@ -2,95 +2,47 @@
 < digraph h2 {
 ---
 > digraph h3 {
-23a24,28
+23a24
 > s22 [label="s22"];
-> s23 [label="s23"];
-> s24 [label="s24"];
-> s25 [label="s25"];
-> s26 [label="s26"];
-41c46
-< s1 -> s1 [label="ACCEPT/TIMEOUT"];
+65,66c66,67
+< s3 -> s0 [label="SYN+ACK(V,V,0)/RST(NEXT,FRESH,0)"];
+< s3 -> s0 [label="RST(V,V,0)/TIMEOUT"];
 ---
-> s1 -> s22 [label="ACCEPT/TIMEOUT"];
-54c59
-< s2 -> s2 [label="ACCEPT/TIMEOUT"];
+> s3 -> s22 [label="SYN+ACK(V,V,0)/RST(NEXT,FRESH,0)"];
+> s3 -> s22 [label="RST(V,V,0)/TIMEOUT"];
+70c71
+< s3 -> s0 [label="SYN(V,V,0)/ACK+RST(ZERO,NEXT,0)"];
 ---
-> s2 -> s23 [label="ACCEPT/TIMEOUT"];
-158c163
-< s10 -> s10 [label="ACCEPT/TIMEOUT"];
+> s3 -> s22 [label="SYN(V,V,0)/ACK+RST(ZERO,NEXT,0)"];
+72c73
+< s3 -> s0 [label="ACK+RST(V,V,0)/TIMEOUT"];
 ---
-> s10 -> s24 [label="ACCEPT/TIMEOUT"];
-171c176
-< s11 -> s11 [label="ACCEPT/TIMEOUT"];
+> s3 -> s22 [label="ACK+RST(V,V,0)/TIMEOUT"];
+78,79c79,80
+< s4 -> s0 [label="SYN+ACK(V,V,0)/RST(NEXT,FRESH,0)"];
+< s4 -> s0 [label="RST(V,V,0)/TIMEOUT"];
 ---
-> s11 -> s25 [label="ACCEPT/TIMEOUT"];
-184c189
-< s12 -> s12 [label="ACCEPT/TIMEOUT"];
+> s4 -> s22 [label="SYN+ACK(V,V,0)/RST(NEXT,FRESH,0)"];
+> s4 -> s22 [label="RST(V,V,0)/TIMEOUT"];
+83c84
+< s4 -> s0 [label="SYN(V,V,0)/ACK+RST(ZERO,NEXT,0)"];
 ---
-> s12 -> s26 [label="ACCEPT/TIMEOUT"];
-309a315,379
-> s22 -> s1 [label="CLOSECONNECTION/TIMEOUT"];
+> s4 -> s22 [label="SYN(V,V,0)/ACK+RST(ZERO,NEXT,0)"];
+85c86
+< s4 -> s0 [label="ACK+RST(V,V,0)/TIMEOUT"];
+---
+> s4 -> s22 [label="ACK+RST(V,V,0)/TIMEOUT"];
+309a311,323
+> s22 -> s22 [label="CLOSECONNECTION/TIMEOUT"];
 > s22 -> s22 [label="ACK+PSH(V,V,1)/TIMEOUT"];
 > s22 -> s22 [label="SYN+ACK(V,V,0)/TIMEOUT"];
 > s22 -> s22 [label="RST(V,V,0)/TIMEOUT"];
-> s22 -> s22 [label="ACCEPT/TIMEOUT"];
+> s22 -> s1 [label="ACCEPT/TIMEOUT"];
 > s22 -> s22 [label="FIN+ACK(V,V,0)/TIMEOUT"];
 > s22 -> s22 [label="LISTEN/TIMEOUT"];
-> s22 -> s23 [label="SYN(V,V,0)/ACK+SYN(FRESH,NEXT,0)"];
+> s22 -> s22 [label="SYN(V,V,0)/TIMEOUT"];
 > s22 -> s22 [label="RCV/TIMEOUT"];
 > s22 -> s22 [label="ACK+RST(V,V,0)/TIMEOUT"];
 > s22 -> s14 [label="CLOSE/TIMEOUT"];
 > s22 -> s22 [label="SEND/TIMEOUT"];
 > s22 -> s22 [label="ACK(V,V,0)/TIMEOUT"];
-> s23 -> s2 [label="CLOSECONNECTION/TIMEOUT"];
-> s23 -> s6 [label="ACK+PSH(V,V,1)/ACK(NEXT,NEXT,0)"];
-> s23 -> s23 [label="SYN+ACK(V,V,0)/TIMEOUT"];
-> s23 -> s22 [label="RST(V,V,0)/TIMEOUT"];
-> s23 -> s23 [label="ACCEPT/TIMEOUT"];
-> s23 -> s7 [label="FIN+ACK(V,V,0)/ACK(NEXT,NEXT,0)"];
-> s23 -> s23 [label="LISTEN/TIMEOUT"];
-> s23 -> s22 [label="SYN(V,V,0)/ACK+RST(ZERO,NEXT,0)"];
-> s23 -> s23 [label="RCV/TIMEOUT"];
-> s23 -> s22 [label="ACK+RST(V,V,0)/TIMEOUT"];
-> s23 -> s5 [label="CLOSE/TIMEOUT"];
-> s23 -> s23 [label="SEND/TIMEOUT"];
-> s23 -> s9 [label="ACK(V,V,0)/TIMEOUT"];
-> s24 -> s10 [label="CLOSECONNECTION/TIMEOUT"];
-> s24 -> s22 [label="ACK+PSH(V,V,1)/TIMEOUT"];
-> s24 -> s22 [label="SYN+ACK(V,V,0)/RST(NEXT,FRESH,0)"];
-> s24 -> s22 [label="RST(V,V,0)/TIMEOUT"];
-> s24 -> s24 [label="ACCEPT/TIMEOUT"];
-> s24 -> s22 [label="FIN+ACK(V,V,0)/TIMEOUT"];
-> s24 -> s24 [label="LISTEN/TIMEOUT"];
-> s24 -> s22 [label="SYN(V,V,0)/ACK+RST(ZERO,NEXT,0)"];
-> s24 -> s24 [label="RCV/TIMEOUT"];
-> s24 -> s22 [label="ACK+RST(V,V,0)/TIMEOUT"];
-> s24 -> s19 [label="CLOSE/TIMEOUT"];
-> s24 -> s24 [label="SEND/TIMEOUT"];
-> s24 -> s22 [label="ACK(V,V,0)/TIMEOUT"];
-> s25 -> s11 [label="CLOSECONNECTION/TIMEOUT"];
-> s25 -> s22 [label="ACK+PSH(V,V,1)/ACK+RST(NEXT,NEXT,0)"];
-> s25 -> s22 [label="SYN+ACK(V,V,0)/RST(NEXT,FRESH,0)"];
-> s25 -> s22 [label="RST(V,V,0)/TIMEOUT"];
-> s25 -> s25 [label="ACCEPT/TIMEOUT"];
-> s25 -> s26 [label="FIN+ACK(V,V,0)/ACK(NEXT,NEXT,0)"];
-> s25 -> s25 [label="LISTEN/TIMEOUT"];
-> s25 -> s22 [label="SYN(V,V,0)/ACK+RST(ZERO,NEXT,0)"];
-> s25 -> s25 [label="RCV/TIMEOUT"];
-> s25 -> s22 [label="ACK+RST(V,V,0)/TIMEOUT"];
-> s25 -> s20 [label="CLOSE/TIMEOUT"];
-> s25 -> s25 [label="SEND/TIMEOUT"];
-> s25 -> s25 [label="ACK(V,V,0)/TIMEOUT"];
-> s26 -> s12 [label="CLOSECONNECTION/TIMEOUT"];
-> s26 -> s26 [label="ACK+PSH(V,V,1)/TIMEOUT"];
-> s26 -> s26 [label="SYN+ACK(V,V,0)/RST(NEXT,FRESH,0)"];
-> s26 -> s22 [label="RST(V,V,0)/TIMEOUT"];
-> s26 -> s26 [label="ACCEPT/TIMEOUT"];
-> s26 -> s26 [label="FIN+ACK(V,V,0)/TIMEOUT"];
-> s26 -> s26 [label="LISTEN/TIMEOUT"];
-> s26 -> s23 [label="SYN(V,V,0)/ACK+SYN(FRESH,NEXT,0)"];
-> s26 -> s26 [label="RCV/TIMEOUT"];
-> s26 -> s22 [label="ACK+RST(V,V,0)/TIMEOUT"];
-> s26 -> s13 [label="CLOSE/TIMEOUT"];
-> s26 -> s26 [label="SEND/TIMEOUT"];
-> s26 -> s26 [label="ACK(V,V,0)/TIMEOUT"];

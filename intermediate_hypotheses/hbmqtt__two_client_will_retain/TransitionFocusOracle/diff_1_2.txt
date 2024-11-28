@@ -12,7 +12,7 @@
 131a134,151
 > s13 -> s9 [label="ConnectC2 / c1_ConnectionClosed__c2_ConnAck"];
 > s13 -> s14 [label="ConnectC1WithWill / c1_ConnAck__c2_ConnectionClosed"];
-> s13 -> s6 [label="ConnectC1WithWillRetain / c1_ConnAck__c2_ConnectionClosed"];
+> s13 -> s14 [label="ConnectC1WithWillRetain / c1_ConnAck__c2_ConnectionClosed"];
 > s13 -> s13 [label="DeleteRetainedC1 / c1_ConnectionClosed__c2_ConnectionClosed"];
 > s13 -> s13 [label="DeleteRetainedC2 / c1_ConnectionClosed__c2_ConnectionClosed"];
 > s13 -> s13 [label="SubscribeC2 / c1_ConnectionClosed__c2_ConnectionClosed"];

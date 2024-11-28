@@ -2,22 +2,30 @@
 < digraph h2 {
 ---
 > digraph h3 {
-25a26
-> s24 [label="s24"];
-54c55
+21a22
+> s20 [label="s20"];
+50c51
 < s2 -> s2 [label="ACCEPT/TIMEOUT"];
 ---
-> s2 -> s24 [label="ACCEPT/TIMEOUT"];
-313a315,326
-> s24 -> s2 [label="CLOSECONNECTION/TIMEOUT"];
-> s24 -> s6 [label="ACK+PSH(V,V,1)/ACK(NEXT,NEXT,0)"];
-> s24 -> s1 [label="SYN+ACK(V,V,0)/RST(NEXT,ZERO,0)"];
-> s24 -> s1 [label="RST(V,V,0)/TIMEOUT"];
-> s24 -> s24 [label="ACCEPT/TIMEOUT"];
-> s24 -> s7 [label="FIN+ACK(V,V,0)/ACK(NEXT,NEXT,0)"];
-> s24 -> s24 [label="LISTEN/TIMEOUT"];
-> s24 -> s1 [label="SYN(V,V,0)/ACK+RST(ZERO,NEXT,0)"];
-> s24 -> s24 [label="RCV/TIMEOUT"];
-> s24 -> s1 [label="ACK+RST(V,V,0)/TIMEOUT"];
-> s24 -> s5 [label="CLOSE/TIMEOUT"];
-> s24 -> s9 [label="ACK(V,V,0)/TIMEOUT"];
+> s2 -> s20 [label="ACCEPT/TIMEOUT"];
+245c246
+< s18 -> s2 [label="SYN(V,V,0)/ACK+SYN(FRESH,NEXT,0)"];
+---
+> s18 -> s20 [label="SYN(V,V,0)/ACK+SYN(FRESH,NEXT,0)"];
+257c258
+< s19 -> s2 [label="SYN(V,V,0)/ACK+SYN(FRESH,NEXT,0)"];
+---
+> s19 -> s20 [label="SYN(V,V,0)/ACK+SYN(FRESH,NEXT,0)"];
+261a263,274
+> s20 -> s2 [label="CLOSECONNECTION/TIMEOUT"];
+> s20 -> s6 [label="ACK+PSH(V,V,1)/ACK(NEXT,NEXT,0)"];
+> s20 -> s18 [label="SYN+ACK(V,V,0)/RST(NEXT,ZERO,0)"];
+> s20 -> s18 [label="RST(V,V,0)/TIMEOUT"];
+> s20 -> s20 [label="ACCEPT/TIMEOUT"];
+> s20 -> s7 [label="FIN+ACK(V,V,0)/ACK(NEXT,NEXT,0)"];
+> s20 -> s20 [label="LISTEN/TIMEOUT"];
+> s20 -> s18 [label="SYN(V,V,0)/ACK+RST(ZERO,NEXT,0)"];
+> s20 -> s20 [label="RCV/TIMEOUT"];
+> s20 -> s18 [label="ACK+RST(V,V,0)/TIMEOUT"];
+> s20 -> s5 [label="CLOSE/TIMEOUT"];
+> s20 -> s9 [label="ACK(V,V,0)/TIMEOUT"];
