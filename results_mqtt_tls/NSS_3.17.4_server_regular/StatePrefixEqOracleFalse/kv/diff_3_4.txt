@@ -1,0 +1,24 @@
+1c1
+< digraph h3 {
+---
+> digraph h4 {
+7a8,9
+> s6 [label="s6"];
+> s7 [label="s7"];
+55a58,73
+> s6 -> s3 [label="ApplicationData/Alert Fatal (Unexpected message) & ConnectionClosed"];
+> s6 -> s3 [label="ApplicationDataEmpty/Alert Fatal (Unexpected message) & ConnectionClosed"];
+> s6 -> s3 [label="ChangeCipherSpec/Alert Fatal (Unexpected message) & ConnectionClosed"];
+> s6 -> s3 [label="ClientHelloRSA/Alert Fatal (Unexpected message) & ConnectionClosed"];
+> s6 -> s3 [label="ClientKeyExchange/Alert Fatal (Unexpected message) & ConnectionClosed"];
+> s6 -> s3 [label="EmptyCertificate/Alert Fatal (Unexpected message) & ConnectionClosed"];
+> s6 -> s7 [label="Finished/ChangeCipherSpec & Finished"];
+> s6 -> s3 [label="HeartbeatRequest/ConnectionClosed"];
+> s7 -> s3 [label="ApplicationData/ApplicationData & Alert Warning (Close notify) & ConnectionClosed"];
+> s7 -> s7 [label="ApplicationDataEmpty/Empty"];
+> s7 -> s3 [label="ChangeCipherSpec/Alert Fatal (Unexpected message)Alert Warning (Close notify) & ConnectionClosed"];
+> s7 -> s3 [label="ClientHelloRSA/Alert Fatal (Handshake failure)Alert Warning (No renegotiation)Alert Warning (Close notify) & ConnectionClosed"];
+> s7 -> s3 [label="ClientKeyExchange/Alert Fatal (Unexpected message)Alert Warning (Close notify) & ConnectionClosed"];
+> s7 -> s3 [label="EmptyCertificate/Alert Fatal (Unexpected message)Alert Warning (Close notify) & ConnectionClosed"];
+> s7 -> s3 [label="Finished/Alert Fatal (Unexpected message)Alert Warning (Close notify) & ConnectionClosed"];
+> s7 -> s3 [label="HeartbeatRequest/Alert Warning (Close notify) & ConnectionClosed"];

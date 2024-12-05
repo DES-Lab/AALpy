@@ -1,0 +1,33 @@
+1c1
+< digraph h3 {
+---
+> digraph h4 {
+6a7,9
+> s5 [label="s5"];
+> s6 [label="s6"];
+> s7 [label="s7"];
+46a50,73
+> s5 -> s2 [label="ApplicationData/Alert Fatal (Unexpected message) & ConnectionClosed"];
+> s5 -> s2 [label="ApplicationDataEmpty/Empty"];
+> s5 -> s6 [label="ChangeCipherSpec/Empty"];
+> s5 -> s2 [label="ClientHelloRSA/Alert Fatal (Unexpected message) & ConnectionClosed"];
+> s5 -> s2 [label="ClientKeyExchange/Alert Fatal (Unexpected message) & ConnectionClosed"];
+> s5 -> s2 [label="EmptyCertificate/Alert Fatal (Unexpected message) & ConnectionClosed"];
+> s5 -> s2 [label="Finished/ConnectionClosed"];
+> s5 -> s2 [label="HeartbeatRequest/ConnectionClosed"];
+> s6 -> s2 [label="ApplicationData/Alert Fatal (Unexpected message) & ConnectionClosed"];
+> s6 -> s2 [label="ApplicationDataEmpty/Alert Fatal (Unexpected message) & ConnectionClosed"];
+> s6 -> s2 [label="ChangeCipherSpec/Alert Fatal (Unexpected message) & ConnectionClosed"];
+> s6 -> s2 [label="ClientHelloRSA/Alert Fatal (Unexpected message) & ConnectionClosed"];
+> s6 -> s2 [label="ClientKeyExchange/Alert Fatal (Unexpected message) & ConnectionClosed"];
+> s6 -> s2 [label="EmptyCertificate/Alert Fatal (Unexpected message) & ConnectionClosed"];
+> s6 -> s7 [label="Finished/ChangeCipherSpec & Finished"];
+> s6 -> s2 [label="HeartbeatRequest/ConnectionClosed"];
+> s7 -> s2 [label="ApplicationData/ApplicationData & Alert Warning (Close notify) & ConnectionClosed"];
+> s7 -> s7 [label="ApplicationDataEmpty/Empty"];
+> s7 -> s2 [label="ChangeCipherSpec/Alert Fatal (Unexpected message)Alert Warning (Close notify) & ConnectionClosed"];
+> s7 -> s2 [label="ClientHelloRSA/Alert Fatal (Handshake failure)Alert Warning (No renegotiation)Alert Warning (Close notify) & ConnectionClosed"];
+> s7 -> s2 [label="ClientKeyExchange/Alert Fatal (Unexpected message)Alert Warning (Close notify) & ConnectionClosed"];
+> s7 -> s2 [label="EmptyCertificate/Alert Fatal (Unexpected message)Alert Warning (Close notify) & ConnectionClosed"];
+> s7 -> s2 [label="Finished/Alert Fatal (Unexpected message)Alert Warning (Close notify) & ConnectionClosed"];
+> s7 -> s2 [label="HeartbeatRequest/Alert Warning (Close notify) & ConnectionClosed"];

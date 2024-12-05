@@ -1,0 +1,15 @@
+1c1
+< digraph h2 {
+---
+> digraph h3 {
+8a9
+> s7 [label="s7"];
+64a66,73
+> s7 -> s2 [label="ApplicationData/Alert Warning (Close notify)"];
+> s7 -> s8 [label="ApplicationDataEmpty/Empty"];
+> s7 -> s2 [label="ChangeCipherSpec/Alert Warning (Close notify)"];
+> s7 -> s2 [label="ClientHelloRSA/Alert Warning (Close notify)"];
+> s7 -> s2 [label="ClientKeyExchange/Alert Warning (Close notify)"];
+> s7 -> s2 [label="EmptyCertificate/Alert Warning (Close notify)"];
+> s7 -> s2 [label="Finished/Alert Warning (Close notify)"];
+> s7 -> s2 [label="HeartbeatRequest/Alert Warning (Close notify)"];

@@ -1,0 +1,42 @@
+1c1
+< digraph h2 {
+---
+> digraph h3 {
+6a7,10
+> s5 [label="s5"];
+> s6 [label="s6"];
+> s7 [label="s7"];
+> s8 [label="s8"];
+46a51,82
+> s5 -> s1 [label="ApplicationData/Alert Fatal (Unexpected message)"];
+> s5 -> s5 [label="ApplicationDataEmpty/Empty"];
+> s5 -> s6 [label="ChangeCipherSpec/Empty"];
+> s5 -> s1 [label="ClientHelloRSA/Alert Fatal (Unexpected message)"];
+> s5 -> s1 [label="ClientKeyExchange/Alert Fatal (Unexpected message)"];
+> s5 -> s1 [label="EmptyCertificate/Alert Fatal (Unexpected message)"];
+> s5 -> s1 [label="Finished/Alert Fatal (Unexpected message)"];
+> s5 -> s1 [label="HeartbeatRequest/Alert Fatal (Unexpected message)"];
+> s6 -> s1 [label="ApplicationData/Alert Fatal (Unexpected message)"];
+> s6 -> s7 [label="ApplicationDataEmpty/Empty"];
+> s6 -> s1 [label="ChangeCipherSpec/Alert Fatal (Bad record MAC)"];
+> s6 -> s1 [label="ClientHelloRSA/Alert Fatal (Bad record MAC)"];
+> s6 -> s1 [label="ClientKeyExchange/Alert Fatal (Unexpected message)"];
+> s6 -> s1 [label="EmptyCertificate/Alert Fatal (Bad record MAC)"];
+> s6 -> s8 [label="Finished/ChangeCipherSpec & Finished"];
+> s6 -> s1 [label="HeartbeatRequest/Alert Fatal (Unexpected message)"];
+> s7 -> s1 [label="ApplicationData/Alert Fatal (Unexpected message)"];
+> s7 -> s7 [label="ApplicationDataEmpty/Empty"];
+> s7 -> s1 [label="ChangeCipherSpec/Alert Fatal (Unexpected message)"];
+> s7 -> s1 [label="ClientHelloRSA/Alert Fatal (Unexpected message)"];
+> s7 -> s1 [label="ClientKeyExchange/Alert Fatal (Unexpected message)"];
+> s7 -> s1 [label="EmptyCertificate/Alert Fatal (Unexpected message)"];
+> s7 -> s8 [label="Finished/ChangeCipherSpec & Finished"];
+> s7 -> s1 [label="HeartbeatRequest/Alert Fatal (Unexpected message)"];
+> s8 -> s1 [label="ApplicationData/ApplicationDataAlert Warning (Close notify)"];
+> s8 -> s8 [label="ApplicationDataEmpty/Empty"];
+> s8 -> s1 [label="ChangeCipherSpec/Alert Fatal (Illegal parameter)Alert Warning (Close notify)"];
+> s8 -> s1 [label="ClientHelloRSA/Alert Fatal (Internal error)"];
+> s8 -> s1 [label="ClientKeyExchange/Alert Fatal (Unexpected message)"];
+> s8 -> s1 [label="EmptyCertificate/Alert Fatal (Unexpected message)"];
+> s8 -> s1 [label="Finished/Alert Fatal (Unexpected message)"];
+> s8 -> s1 [label="HeartbeatRequest/Alert Fatal (Unexpected message)Alert Warning (Close notify)"];

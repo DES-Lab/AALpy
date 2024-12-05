@@ -1,0 +1,22 @@
+digraph h1 {
+s0 [label="s0"];
+s1 [label="s1"];
+s0 -> s1 [label="ApplicationData/Empty"];
+s0 -> s1 [label="ApplicationDataEmpty/Empty"];
+s0 -> s1 [label="ChangeCipherSpec/Empty"];
+s0 -> s3 [label="ClientHelloRSA/ServerHello Certificate & CertificateRequest & ServerHelloDone"];
+s0 -> s2 [label="ClientKeyExchange/Alert Fatal (Unexpected message) & ConnectionClosed"];
+s0 -> s2 [label="EmptyCertificate/Alert Fatal (Unexpected message) & ConnectionClosed"];
+s0 -> s2 [label="Finished/ConnectionClosed"];
+s0 -> s1 [label="HeartbeatRequest/Empty"];
+s1 -> s1 [label="ApplicationData/Empty"];
+s1 -> s1 [label="ApplicationDataEmpty/Empty"];
+s1 -> s1 [label="ChangeCipherSpec/Empty"];
+s1 -> s1 [label="ClientHelloRSA/Empty"];
+s1 -> s1 [label="ClientKeyExchange/Empty"];
+s1 -> s1 [label="EmptyCertificate/Empty"];
+s1 -> s1 [label="Finished/Empty"];
+s1 -> s1 [label="HeartbeatRequest/Empty"];
+__start0 [shape=none, label=""];
+__start0 -> s0 [label=""];
+}

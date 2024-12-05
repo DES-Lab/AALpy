@@ -1,0 +1,22 @@
+1c1
+< digraph h3 {
+---
+> digraph h4 {
+6a7,8
+> s5 [label="s5"];
+> s6 [label="s6"];
+41a44,57
+> s5 -> s1 [label="ApplicationData/Alert Fatal (Unexpected message) & ConnectionClosed"];
+> s5 -> s5 [label="ApplicationDataEmpty/Empty"];
+> s5 -> s1 [label="ChangeCipherSpec/Alert Fatal (Unexpected message) & ConnectionClosed"];
+> s5 -> s1 [label="ClientHelloRSA/Alert Fatal (Unexpected message) & ConnectionClosed"];
+> s5 -> s1 [label="ClientKeyExchange/Alert Fatal (Unexpected message) & ConnectionClosed"];
+> s5 -> s1 [label="EmptyCertificate/Alert Fatal (Unexpected message) & ConnectionClosed"];
+> s5 -> s6 [label="Finished/ChangeCipherSpec & Finished"];
+> s6 -> s1 [label="ApplicationData/ApplicationData & ConnectionClosed"];
+> s6 -> s6 [label="ApplicationDataEmpty/Empty"];
+> s6 -> s1 [label="ChangeCipherSpec/Alert Fatal (Unexpected message) & ConnectionClosed"];
+> s6 -> s1 [label="ClientHelloRSA/Alert Fatal (Handshake failure) & ConnectionClosed"];
+> s6 -> s1 [label="ClientKeyExchange/Alert Fatal (Unexpected message) & ConnectionClosed"];
+> s6 -> s1 [label="EmptyCertificate/Alert Fatal (Unexpected message) & ConnectionClosed"];
+> s6 -> s1 [label="Finished/Alert Fatal (Unexpected message) & ConnectionClosed"];

@@ -1,0 +1,16 @@
+1c1
+< digraph h5 {
+---
+> digraph h6 {
+9a10
+> s8 [label="s8"];
+81a83,91
+> s8 -> s10 [label="ConnectC2 / Empty__c2_ConnectionClosed"];
+> s8 -> s7 [label="ConnectC1WithWill / c1_ConnectionClosed__Pub(c2,my_topic,bye)"];
+> s8 -> s7 [label="ConnectC1WithWillRetain / c1_ConnectionClosed__Pub(c2,my_topic,bye)"];
+> s8 -> s12 [label="DeleteRetainedC1 / c1_PubAck__Empty"];
+> s8 -> s12 [label="DeleteRetainedC2 / Empty__c2_PubAck"];
+> s8 -> s8 [label="SubscribeC2 / Empty__c2_SubAck__Pub(c2,my_topic,bye)"];
+> s8 -> s11 [label="UnSubScribeC2 / Empty__c2_UnSubAck"];
+> s8 -> s7 [label="DisconnectTCPC1 / c1_ConnectionClosed__Pub(c2,my_topic,bye)"];
+> s8 -> s7 [label="DisconnectC1 / c1_ConnectionClosed__Empty"];

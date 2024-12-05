@@ -1,0 +1,14 @@
+1c1
+< digraph h1 {
+---
+> digraph h2 {
+4a5
+> s3 [label="s3"];
+25a27,33
+> s3 -> s1 [label="ApplicationData/Alert Fatal (Unexpected message) & ConnectionClosed"];
+> s3 -> s3 [label="ApplicationDataEmpty/Empty"];
+> s3 -> s4 [label="ChangeCipherSpec/Empty"];
+> s3 -> s1 [label="ClientHelloRSA/Alert Fatal (Unexpected message) & ConnectionClosed"];
+> s3 -> s1 [label="ClientKeyExchange/Alert Fatal (Unexpected message) & ConnectionClosed"];
+> s3 -> s1 [label="EmptyCertificate/Alert Fatal (Unexpected message) & ConnectionClosed"];
+> s3 -> s1 [label="Finished/Alert Fatal (Unexpected message) & ConnectionClosed"];
