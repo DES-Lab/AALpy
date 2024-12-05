@@ -198,7 +198,7 @@ def save_automaton_to_file(automaton, path="LearnedModel", file_type="dot",
     else:
         try:
             graph.write(path=path, format=file_type if file_type != 'dot' else 'raw')
-            print(f'Model saved to {path.as_posix()}.')
+            # print(f'Model saved to {path.as_posix()}.')
 
             if visualize and file_type in {'pdf', 'png', 'svg'}:
                 try:

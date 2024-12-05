@@ -57,6 +57,7 @@ def run_KV(alphabet: Union[list, SevpaAlphabet], sul: SUL, eq_oracle: Oracle, au
     start_time = time.time()
     eq_query_time = 0
     learning_rounds = 0
+    intermediate_hypotheses = []
 
     if cache_and_non_det_check:
         # Wrap the sul in the CacheSUL, so that all steps/queries are cached
@@ -93,6 +94,8 @@ def run_KV(alphabet: Union[list, SevpaAlphabet], sul: SUL, eq_oracle: Oracle, au
     else:
         hypothesis = Sevpa.create_daisy_hypothesis(initial_state, alphabet)
 
+    intermediate_hypotheses.append(hypothesis)
+
     # Perform an equivalence query on this automaton
     eq_query_start = time.time()
     cex = eq_oracle.find_cex(hypothesis)
@@ -114,6 +117,7 @@ def run_KV(alphabet: Union[list, SevpaAlphabet], sul: SUL, eq_oracle: Oracle, au
                 break
 
             hypothesis = classification_tree.update_hypothesis()
+            intermediate_hypotheses.append(hypothesis)
 
             if print_level == 2:
                 print(f'\rHypothesis {learning_rounds}: {hypothesis.size} states.', end="")
@@ -156,6 +160,7 @@ def run_KV(alphabet: Union[list, SevpaAlphabet], sul: SUL, eq_oracle: Oracle, au
         'eq_oracle_time': eq_query_time,
         'total_time': total_time,
         'cache_saved': sul.num_cached_queries,
+        'intermediate_hypotheses': intermediate_hypotheses
     }
 
     if print_level > 0:
