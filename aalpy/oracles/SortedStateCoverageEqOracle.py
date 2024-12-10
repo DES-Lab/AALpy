@@ -30,7 +30,6 @@ class SortedStateCoverageEqOracle(Oracle):
         # add a dict that keeps track of the 'age' of the state
         # the age is incremented with every new hypothesis
         self.age_dict = dict()
-        self.freq_dict = dict()
 
     def find_cex(self, hypothesis):
         # update the age of the states
@@ -40,14 +39,11 @@ class SortedStateCoverageEqOracle(Oracle):
             else:
                 self.age_dict[state.state_id] += 1
 
-        states_to_cover = []
         for state in hypothesis.states:
             if state.prefix is None:
                 state.prefix = hypothesis.get_shortest_path(hypothesis.initial_state, state)
-            if state.prefix not in self.freq_dict.keys():
-                self.freq_dict[state.prefix] = 0
 
-            states_to_cover.extend([state] * (self.walks_per_state - self.freq_dict[state.prefix]))
+        states_to_cover = [s for s in hypothesis.states for _ in range(self.walks_per_state)]
         
         if self.mode == 'random':
             random.shuffle(states_to_cover)
@@ -57,8 +53,6 @@ class SortedStateCoverageEqOracle(Oracle):
             states_to_cover.sort(key=lambda x: self.age_dict[x.state_id], reverse=True)
 
         for state in states_to_cover:
-            self.freq_dict[state.prefix] = self.freq_dict[state.prefix] + 1
-
             self.reset_hyp_and_sul(hypothesis)
 
             prefix = state.prefix
