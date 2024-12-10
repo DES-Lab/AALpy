@@ -10,27 +10,27 @@ from aalpy.learning_algs.deterministic.LStar import run_Lstar
 from aalpy.utils.FileHandler import load_automaton_from_file
 
 class NewFirst(SortedStateCoverageEqOracle):
-    def __init__(self, alphabet, sul, walks_per_state=7500, walk_len=150, mode='newest'):
+    def __init__(self, alphabet, sul, walks_per_state=4000, walk_len=150, mode='newest'):
         super().__init__(alphabet, sul, walks_per_state, walk_len, mode)
 
 class OldFirst(SortedStateCoverageEqOracle):
-    def __init__(self, alphabet, sul, walks_per_state=7500, walk_len=150, mode='oldest'):
+    def __init__(self, alphabet, sul, walks_per_state=4000, walk_len=150, mode='oldest'):
         super().__init__(alphabet, sul, walks_per_state, walk_len, mode)
 
 class Random(SortedStateCoverageEqOracle):
-    def __init__(self, alphabet, sul, walks_per_state=7500, walk_len=150, mode='random'):
+    def __init__(self, alphabet, sul, walks_per_state=4000, walk_len=150, mode='random'):
         super().__init__(alphabet, sul, walks_per_state, walk_len, mode)
 
 class InterleavedRandom(InterleavedStateCoverageEqOracle):
-    def __init__(self, alphabet, sul, walks_per_state=7500, walk_len=150, mode='random'):
+    def __init__(self, alphabet, sul, walks_per_state=4000, walk_len=150, mode='random'):
         super().__init__(alphabet, sul, walks_per_state, walk_len, mode)
 
 class InterleavedNewFirst(InterleavedStateCoverageEqOracle):
-    def __init__(self, alphabet, sul, walks_per_state=7500, walk_len=150, mode='newest'):
+    def __init__(self, alphabet, sul, walks_per_state=4000, walk_len=150, mode='newest'):
         super().__init__(alphabet, sul, walks_per_state, walk_len, mode)
 
 class InterleavedOldFirst(InterleavedStateCoverageEqOracle):
-    def __init__(self, alphabet, sul, walks_per_state=7500, walk_len=150, mode='oldest'):
+    def __init__(self, alphabet, sul, walks_per_state=4000, walk_len=150, mode='oldest'):
         super().__init__(alphabet, sul, walks_per_state, walk_len, mode)
 
 
@@ -39,7 +39,7 @@ def learn_model(alphabet, sul, name):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-        oracle = RandomWMethodEqOracle(alphabet, sul, walks_per_state=5000, walk_len=100)
+        oracle = RandomWMethodEqOracle(alphabet, sul, walks_per_state=7500, walk_len=150)
         _, learning_info = run_Lstar(alphabet, sul, oracle, 'mealy', return_data=True, print_level=0)
         intermediate_hypotheses = learning_info['intermediate_hypotheses']
         for num, hyp in enumerate(intermediate_hypotheses):
@@ -60,8 +60,7 @@ def test_oracles(oracles, hyps, name):
             cexs[j][i] = oracle.find_cex(hyp)
             queries[j, i] = oracle.num_queries
             if cexs[j][i] is None:
-                print(f"Oracle {oracle.__class__.__name__} failed at round {i + 1}")
-                break
+                print(f"Oracle {oracle.__class__.__name__} failed at h{i}")
     return queries
 
 
@@ -101,6 +100,7 @@ for index, (model, file) in enumerate(zip(MODELS, FILES)):
         continue
 
     print(f"Number of {name} hypotheses: {len(hypotheses)} {[h.size for h in hypotheses]}")
+    print(f"Size of alphabet is {len(alphabet)}")
 
     intermediate = hypotheses[:-1]
 
@@ -115,7 +115,8 @@ for index, (model, file) in enumerate(zip(MODELS, FILES)):
         oracle4 = InterleavedRandom(alphabet, sul)
         oracle5 = InterleavedNewFirst(alphabet, sul)
         oracle6 = InterleavedOldFirst(alphabet, sul)
-        queries = test_oracles([oracle1, oracle2, oracle3, oracle4, oracle5, oracle6], intermediate, name)
+        oracles = [oracle1, oracle2, oracle3, oracle4, oracle5, oracle6]
+        queries = test_oracles(oracles, intermediate, name)
         means += queries
 
     means /= TIMES
