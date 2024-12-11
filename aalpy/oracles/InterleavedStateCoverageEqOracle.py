@@ -7,7 +7,7 @@ from aalpy.base.SUL import SUL
 modes = ['random', 'newest', 'oldest']
 
 class InterleavedStateCoverageEqOracle(Oracle):
-    def __init__(self, alphabet: list, sul: SUL, walks_per_state=10, walk_len=12, mode='random'):
+    def __init__(self, alphabet: list, sul: SUL, walks_per_round, walks_per_state=10, walk_len=12, mode='random'):
         """
         Args:
 
@@ -26,6 +26,7 @@ class InterleavedStateCoverageEqOracle(Oracle):
 
         super().__init__(alphabet, sul)
         self.walks_per_state = walks_per_state
+        self.walks_per_round = walks_per_round
         self.steps_per_walk = walk_len
         self.mode = mode
         # add a dict that keeps track of the 'age' of the state
@@ -62,8 +63,11 @@ class InterleavedStateCoverageEqOracle(Oracle):
                         self.walks_per_state
                         )
                     )
-
+        remaining = self.walks_per_round
         for state in states_to_cover:
+            if remaining <= 0:
+                break
+            remaining -= 1
             self.reset_hyp_and_sul(hypothesis)
 
             prefix = state.prefix
