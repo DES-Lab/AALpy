@@ -5,33 +5,46 @@ from pathlib import Path
 from aalpy.oracles import RandomWMethodEqOracle
 from aalpy.oracles.SortedStateCoverageEqOracle import SortedStateCoverageEqOracle
 from aalpy.oracles.InterleavedStateCoverageEqOracle import InterleavedStateCoverageEqOracle
+from aalpy.oracles.StochasticStateCoverageEqOracle import StochasticStateCoverageEqOracle
 from aalpy.SULs.AutomataSUL import AutomatonSUL
 from aalpy.learning_algs.deterministic.LStar import run_Lstar
 from aalpy.utils.FileHandler import load_automaton_from_file
 
-class NewFirst(SortedStateCoverageEqOracle):
-    def __init__(self, alphabet, sul, walks_per_state=4000, walk_len=150, mode='newest'):
-        super().__init__(alphabet, sul, walks_per_state, walk_len, mode)
-
-class OldFirst(SortedStateCoverageEqOracle):
-    def __init__(self, alphabet, sul, walks_per_state=4000, walk_len=150, mode='oldest'):
-        super().__init__(alphabet, sul, walks_per_state, walk_len, mode)
+# class NewFirst(SortedStateCoverageEqOracle):
+#     def __init__(self, alphabet, sul, walks_per_state=4000, walk_len=150, mode='newest'):
+#         super().__init__(alphabet, sul, walks_per_state, walk_len, mode)
+#
+# class OldFirst(SortedStateCoverageEqOracle):
+#     def __init__(self, alphabet, sul, walks_per_state=4000, walk_len=150, mode='oldest'):
+#         super().__init__(alphabet, sul, walks_per_state, walk_len, mode)
 
 class Random(SortedStateCoverageEqOracle):
-    def __init__(self, alphabet, sul, walks_per_state=4000, walk_len=150, mode='random'):
-        super().__init__(alphabet, sul, walks_per_state, walk_len, mode)
+    def __init__(self, alphabet, sul, walks_per_round=200000, walks_per_state=4000, walk_len=150, mode='random'):
+        super().__init__(alphabet, sul, walks_per_round, walks_per_state, walk_len, mode)
 
 class InterleavedRandom(InterleavedStateCoverageEqOracle):
-    def __init__(self, alphabet, sul, walks_per_state=4000, walk_len=150, mode='random'):
-        super().__init__(alphabet, sul, walks_per_state, walk_len, mode)
+    def __init__(self, alphabet, sul, walks_per_round=200000, walks_per_state=4000, walk_len=150, mode='random'):
+        super().__init__(alphabet, sul, walks_per_round, walks_per_state, walk_len, mode)
 
 class InterleavedNewFirst(InterleavedStateCoverageEqOracle):
-    def __init__(self, alphabet, sul, walks_per_state=4000, walk_len=150, mode='newest'):
-        super().__init__(alphabet, sul, walks_per_state, walk_len, mode)
+    def __init__(self, alphabet, sul, walks_per_round=200000, walks_per_state=4000, walk_len=150, mode='newest'):
+        super().__init__(alphabet, sul, walks_per_round, walks_per_state, walk_len, mode)
 
 class InterleavedOldFirst(InterleavedStateCoverageEqOracle):
-    def __init__(self, alphabet, sul, walks_per_state=4000, walk_len=150, mode='oldest'):
-        super().__init__(alphabet, sul, walks_per_state, walk_len, mode)
+    def __init__(self, alphabet, sul, walks_per_round=200000,  walks_per_state=4000, walk_len=150, mode='oldest'):
+        super().__init__(alphabet, sul, walks_per_round, walks_per_state, walk_len, mode)
+
+class StochasticLinear(StochasticStateCoverageEqOracle):
+    def __init__(self, alphabet, sul, walks_per_round=200000, walk_len=150, prob_function='linear'):
+        super().__init__(alphabet, sul, walks_per_round, walk_len, prob_function)
+
+class StochasticSquare(StochasticStateCoverageEqOracle):
+    def __init__(self, alphabet, sul, walks_per_round=200000, walk_len=150, prob_function='square'):
+        super().__init__(alphabet, sul, walks_per_round, walk_len, prob_function)
+
+class StochasticExponential(StochasticStateCoverageEqOracle):
+    def __init__(self, alphabet, sul, walks_per_round=200000, walk_len=150, prob_function='exponential'):
+        super().__init__(alphabet, sul, walks_per_round, walk_len, prob_function)
 
 
 def learn_model(alphabet, sul, name):
@@ -39,7 +52,7 @@ def learn_model(alphabet, sul, name):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-        oracle = RandomWMethodEqOracle(alphabet, sul, walks_per_state=7500, walk_len=150)
+        oracle = RandomWMethodEqOracle(alphabet, sul, walks_per_state=10000, walk_len=150)
         _, learning_info = run_Lstar(alphabet, sul, oracle, 'mealy', return_data=True, print_level=0)
         intermediate_hypotheses = learning_info['intermediate_hypotheses']
         for num, hyp in enumerate(intermediate_hypotheses):
@@ -77,8 +90,8 @@ MODELS = [load_automaton_from_file(f, 'mealy') for f in FILES]
 # If counterexamples are found successfully, we will store them and keep doing
 # this, either until the final hypothesis is reached or until an oracle fails.
 
-TIMES = 10
-NUM_ORACLES = 6
+TIMES = 20
+NUM_ORACLES = 7
 for index, (model, file) in enumerate(zip(MODELS, FILES)):
     print("=====================================================")
     name = file.stem
@@ -110,23 +123,24 @@ for index, (model, file) in enumerate(zip(MODELS, FILES)):
     means = np.zeros((NUM_ORACLES, NUM_HYPS))
     for trial in range(TIMES):
         oracle1 = Random(alphabet, sul)
-        oracle2 = NewFirst(alphabet, sul)
-        oracle3 = OldFirst(alphabet, sul)
-        oracle4 = InterleavedRandom(alphabet, sul)
-        oracle5 = InterleavedNewFirst(alphabet, sul)
-        oracle6 = InterleavedOldFirst(alphabet, sul)
-        oracles = [oracle1, oracle2, oracle3, oracle4, oracle5, oracle6]
+        oracle2 = InterleavedRandom(alphabet, sul)
+        oracle3 = InterleavedNewFirst(alphabet, sul)
+        oracle4 = InterleavedOldFirst(alphabet, sul)
+        oracle5 = StochasticLinear(alphabet, sul)
+        oracle6 = StochasticSquare(alphabet, sul)
+        oracle7 = StochasticExponential(alphabet, sul)
+        oracles = [oracle1, oracle2, oracle3, oracle4, oracle5, oracle6, oracle7]
         queries = test_oracles(oracles, intermediate, name)
         means += queries
 
     means /= TIMES
-    
+
     # print up to 1 decimal point
     np.set_printoptions(precision=1)
     # do not print in scientific notation
     np.set_printoptions(suppress=True)
-    oracles = [oracle1, oracle2, oracle3, oracle4, oracle5, oracle6]
+    oracles = [oracle1, oracle2, oracle3, oracle4, oracle5, oracle6, oracle7]
     # print as panda dataframe
     df = pd.DataFrame(means, columns=[f"h{i}" for i in range(NUM_HYPS)], index=[o.__class__.__name__ for o in oracles])
     print(df)
-    
+
