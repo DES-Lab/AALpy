@@ -1,9 +1,10 @@
 import os
+import pathlib 
 import pandas as pd
 import numpy as np
-from pathlib import Path
 from aalpy.oracles import RandomWMethodEqOracle
 from aalpy.oracles import PerfectKnowledgeEqOracle
+from aalpy.oracles import StatePrefixEqOracle
 from aalpy.oracles.SortedStateCoverageEqOracle import SortedStateCoverageEqOracle
 from aalpy.oracles.InterleavedStateCoverageEqOracle import InterleavedStateCoverageEqOracle
 from aalpy.oracles.StochasticStateCoverageEqOracle import StochasticStateCoverageEqOracle
@@ -24,9 +25,13 @@ np.set_printoptions(suppress=True)
 #     def __init__(self, alphabet, sul, walks_per_state=4000, walk_len=150, mode='oldest'):
 #         super().__init__(alphabet, sul, walks_per_state, walk_len, mode)
 
-class Random(SortedStateCoverageEqOracle):
-    def __init__(self, alphabet, sul, walks_per_round=200000, walks_per_state=4000, walk_len=150, mode='random'):
-        super().__init__(alphabet, sul, walks_per_round, walks_per_state, walk_len, mode)
+# class Random(SortedStateCoverageEqOracle):
+#     def __init__(self, alphabet, sul, walks_per_round=200000, walks_per_state=4000, walk_len=150, mode='random'):
+#         super().__init__(alphabet, sul, walks_per_round, walks_per_state, walk_len, mode)
+
+class Random(StatePrefixEqOracle):
+    def __init__(self, alphabet, sul, walks_per_round=200000, walks_per_state=4000, walk_len=150, depth_first=False):
+        super().__init__(alphabet, sul, walks_per_round, walks_per_state, walk_len, depth_first)
 
 class InterleavedRandom(InterleavedStateCoverageEqOracle):
     def __init__(self, alphabet, sul, walks_per_round=200000, walks_per_state=4000, walk_len=150, mode='random'):
@@ -52,8 +57,8 @@ class StochasticExponential(StochasticStateCoverageEqOracle):
     def __init__(self, alphabet, sul, walks_per_round=200000, walk_len=150, prob_function='exponential'):
         super().__init__(alphabet, sul, walks_per_round, walk_len, prob_function)
 
-TEACHER = "RandomWMethodEqOracle"
-# TEACHER = "PerfectKnowledgeEqOracle"
+# TEACHER = "RandomWMethodEqOracle"
+TEACHER = "PerfectKnowledgeEqOracle"
 
 if not os.path.exists(TEACHER):
     os.makedirs(TEACHER)
@@ -75,7 +80,8 @@ def learn_model(alphabet, sul, model, name):
             hyp.save(file_path=(f"{directory}/h{num}.dot"))
     else: # if hypotheses exist, load them
         intermediate_hypotheses = []
-        for num, _ in enumerate(os.listdir(directory)):
+        dots = list(pathlib.Path(directory).glob('*.dot'))
+        for num in range(len(dots)):
             intermediate_hypotheses.append(load_automaton_from_file(f'{directory}/h{num}.dot', 'mealy'))
 
     return intermediate_hypotheses
@@ -96,7 +102,7 @@ def test_oracles(oracles, hyps, name):
 ROOT = os.getcwd() + "/DotModels"
 # PROTOCOLS = ["ASML", "TLS", "MQTT", "EMV", "TCP"]
 PROTOCOLS = ["TCP"]
-DIRS = [Path(ROOT + '/' + prot) for prot in PROTOCOLS]
+DIRS = [pathlib.Path(ROOT + '/' + prot) for prot in PROTOCOLS]
 FILES = [file for dir in DIRS for file in dir.iterdir()]
 MODELS = [load_automaton_from_file(f, 'mealy') for f in FILES]
 MODELS.sort(key=lambda x: x.size)
@@ -115,7 +121,7 @@ tiny = []
 for index, (model, file) in enumerate(zip(MODELS, FILES)):
     name = file.stem
     alphabet = model.get_input_alphabet()
-    if model.size > 150:
+    if model.size > 150 or len(alphabet) > 100:
         huge.append((name, model.size, len(alphabet)))
         continue
     sul = AutomatonSUL(model)
@@ -139,7 +145,7 @@ for index, (model, file) in enumerate(zip(MODELS, FILES)):
     # We will now try to find counterexamples for every intermediate hypothesis
     # using both StatePrefixEqOracles.
     NUM_HYPS = len(intermediate)
-    means = np.zeros((NUM_ORACLES, NUM_HYPS))
+    measurements = np.zeros((TIMES, NUM_ORACLES, NUM_HYPS))
     failures = np.zeros((NUM_ORACLES, NUM_HYPS))
     for trial in range(TIMES):
         oracle1 = Random(alphabet, sul)
@@ -151,16 +157,27 @@ for index, (model, file) in enumerate(zip(MODELS, FILES)):
         oracle7 = StochasticExponential(alphabet, sul)
         oracles = [oracle1, oracle2, oracle3, oracle4, oracle5, oracle6, oracle7]
         queries, fails = test_oracles(oracles, intermediate, name)
-        means += queries
+        measurements[trial] = queries
         failures += fails
 
-    means /= TIMES
+    averages = np.mean(measurements, axis=0)
+    deviations = np.std(measurements, axis=0, mean=averages)
+
     failures /= TIMES
+
     # print as panda dataframe
-    df = pd.DataFrame(means, columns=[f"h{i}" for i in range(NUM_HYPS)], index=[o.__class__.__name__ for o in oracles])
+    df = pd.DataFrame(averages, columns=[f"h{i}" for i in range(NUM_HYPS)], index=[o.__class__.__name__ for o in oracles])
+    df.index.name = 'oracle'
     print(df)
     df.to_csv(f"{TEACHER}/{name}/queries.csv")
+
+    df = pd.DataFrame(deviations, columns=[f"h{i}" for i in range(NUM_HYPS)], index=[o.__class__.__name__ for o in oracles])
+    df.index.name = 'oracle'
+    print(df)
+    df.to_csv(f"{TEACHER}/{name}/deviations.csv")
+
     df = pd.DataFrame(failures, columns=[f"h{i}" for i in range(NUM_HYPS)], index=[o.__class__.__name__ for o in oracles])
+    df.index.name = 'oracle'
     print(df)
     df.to_csv(f"{TEACHER}/{name}/failures.csv")
 
