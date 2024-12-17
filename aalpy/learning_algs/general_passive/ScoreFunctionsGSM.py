@@ -25,11 +25,11 @@ class ScoreCalculation:
         pass
 
     @staticmethod
-    def default_local_compatibility(a, b):
+    def default_local_compatibility(a: Node, b: Node):
         return True
 
     @staticmethod
-    def default_score_function(part):
+    def default_score_function(part: Dict[Node, Node]):
         return True
 
     def has_score_function(self):
