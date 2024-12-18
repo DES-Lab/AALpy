@@ -116,7 +116,7 @@ MODELS.sort(key=lambda x: x.size)
 # If counterexamples are found successfully, we will store them and keep doing
 # this, either until the final hypothesis is reached or until an oracle fails.
 
-TIMES = 20
+TIMES = 30
 NUM_ORACLES = 7
 huge = []
 tiny = []
