@@ -1,8 +1,0 @@
-oracle,h0,h1
-Random,824.5,2712.5
-InterleavedRandom,643.5,2324.0
-InterleavedNewFirst,387.5,2038.0
-InterleavedOldFirst,620.0,2661.0
-StochasticLinear,464.5,1805.0
-StochasticSquare,628.5,3255.5
-StochasticExponential,971.0,2267.0

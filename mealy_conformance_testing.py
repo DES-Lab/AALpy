@@ -65,8 +65,7 @@ TEACHER = "RandomWMethodEqOracle"
 if not os.path.exists(TEACHER):
     os.makedirs(TEACHER)
 
-def learn_model(alphabet, sul, model, name):
-    directory = f"{TEACHER}/{name}"
+def learn_model(alphabet, sul, model, directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
@@ -103,11 +102,10 @@ def test_oracles(oracles, hyps, name):
 
 ROOT = os.getcwd() + "/DotModels"
 # PROTOCOLS = ["ASML", "TLS", "MQTT", "EMV", "TCP"]
-PROTOCOLS = ["TCP"]
+PROTOCOLS = ["TCP", "MQTT", "TLS"]
 DIRS = [pathlib.Path(ROOT + '/' + prot) for prot in PROTOCOLS]
 FILES = [file for dir in DIRS for file in dir.iterdir()]
 MODELS = [load_automaton_from_file(f, 'mealy') for f in FILES]
-MODELS.sort(key=lambda x: x.size)
 
 # We will learn every model using the RandomWpEqOracle and we will retain the
 # intermediate hypotheses of the learning experiment.
@@ -121,23 +119,25 @@ NUM_ORACLES = 7
 huge = []
 tiny = []
 for index, (model, file) in enumerate(zip(MODELS, FILES)):
-    name = file.stem
+    NAME = file.stem
+    PROT = file.parent.name
+    RESULT_DIR = f"{TEACHER}/{PROT}/{NAME}"
+    print(RESULT_DIR)
     alphabet = model.get_input_alphabet()
     if model.size > 150 or len(alphabet) > 100:
-        huge.append((name, model.size, len(alphabet)))
+        huge.append((NAME, model.size, len(alphabet)))
         continue
     sul = AutomatonSUL(model)
 
     # this has the side effect of saving the intermediate hypotheses
-    # in the directory "stefanos_test/{name}"
-    hypotheses = learn_model(alphabet, sul, model, name)
+    hypotheses = learn_model(alphabet, sul, model, RESULT_DIR)
     # indicator that the model has been learned correctly
     if not hypotheses[-1].size == model.size:
         print(f"Model not learned successfully {hypotheses[-1].size} / {model.size}. Skipping ... ")
         continue
 
     if len(hypotheses) == 1:
-        tiny.append((name, model.size, len(alphabet)))
+        tiny.append((NAME, model.size, len(alphabet)))
         continue
 
     print(f"==================={file.stem}====================")
@@ -146,10 +146,10 @@ for index, (model, file) in enumerate(zip(MODELS, FILES)):
     NUM_HYPS = len(intermediate)
 
     # check if the measurements file exists and load it if it does
-    flag = os.path.exists(f"{TEACHER}/{name}/measurements.npy") and os.path.exists(f"{TEACHER}/{name}/failures.csv")
+    flag = os.path.exists(f"{RESULT_DIR}/measurements.npy") and os.path.exists(f"{RESULT_DIR}/failures.csv")
     if flag:
-        measurements = np.load(f"{TEACHER}/{name}/measurements.npy")
-        failures = pd.read_csv(f"{TEACHER}/{name}/failures.csv", index_col=0)
+        measurements = np.load(f"{RESULT_DIR}/measurements.npy")
+        failures = pd.read_csv(f"{RESULT_DIR}/failures.csv", index_col=0)
         # the index of the dataframe holds the oracle names
         index = failures.index.values
         failures = failures.to_numpy()
@@ -167,13 +167,13 @@ for index, (model, file) in enumerate(zip(MODELS, FILES)):
             oracle6 = StochasticSquare(alphabet, sul)
             oracle7 = StochasticExponential(alphabet, sul)
             oracles = [oracle1, oracle2, oracle3, oracle4, oracle5, oracle6, oracle7]
-            queries, fails = test_oracles(oracles, intermediate, name)
+            queries, fails = test_oracles(oracles, intermediate, NAME)
             measurements[trial] = queries
             failures += fails
-        
+
         index = [o.__class__.__name__ for o in oracles]
         # save all measurements so that they can be inspected later
-        np.save(f"{TEACHER}/{name}/measurements.npy", measurements)
+        np.save(f"{RESULT_DIR}/measurements.npy", measurements)
     averages = np.mean(measurements, axis=0)
     deviations = np.std(measurements, axis=0, mean=averages)
     # also save the geometric mean and the median
@@ -189,7 +189,7 @@ for index, (model, file) in enumerate(zip(MODELS, FILES)):
         df.index.name = 'oracle'
         print(df)
         if not flag:
-            df.to_csv(f"{TEACHER}/{name}/{stat_name}.csv")
+            df.to_csv(f"{RESULT_DIR}/{stat_name}.csv")
 
 print("These models are too big to learn:")
 print(huge)
