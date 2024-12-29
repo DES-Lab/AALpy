@@ -64,7 +64,7 @@ class RandomWMethodEqOracle(Oracle):
     Random walks stem from fixed prefix (path to the state). At the end of the random
     walk an element from the characterization set is added to the test case.
     """
-    def __init__(self, alphabet: list, sul: SUL, walks_per_state=12, walk_len=12):
+    def __init__(self, alphabet: list, sul: SUL, walks_per_round, walks_per_state=12, walk_len=12):
         """
         Args:
 
@@ -79,6 +79,7 @@ class RandomWMethodEqOracle(Oracle):
 
         super().__init__(alphabet, sul)
         self.walks_per_state = walks_per_state
+        self.walks_per_round = walks_per_round
         self.random_walk_len = walk_len
         self.freq_dict = dict()
 
@@ -100,8 +101,11 @@ class RandomWMethodEqOracle(Oracle):
             states_to_cover.extend([state] * (self.walks_per_state - self.freq_dict[state.prefix]))
 
         shuffle(states_to_cover)
-
+        remaining = self.walks_per_round
         for state in states_to_cover:
+            if remaining == 0:
+                break
+            remaining -= 1
             self.freq_dict[state.prefix] = self.freq_dict[state.prefix] + 1
 
             self.reset_hyp_and_sul(hypothesis)
