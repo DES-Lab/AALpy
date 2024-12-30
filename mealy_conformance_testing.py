@@ -11,6 +11,7 @@ from aalpy.oracles.StochasticStateCoverageEqOracle import StochasticStateCoverag
 from aalpy.SULs.AutomataSUL import AutomatonSUL
 from aalpy.learning_algs.deterministic.LStar import run_Lstar
 from aalpy.utils.FileHandler import load_automaton_from_file
+import multiprocessing as mp
 
 # print up to 1 decimal point
 np.set_printoptions(precision=1)
@@ -19,180 +20,141 @@ np.set_printoptions(suppress=True)
 # print up to 3 decimal point
 pd.options.display.float_format = '{:.3f}'.format
 
-# class NewFirst(SortedStateCoverageEqOracle):
-#     def __init__(self, alphabet, sul, walks_per_state=4000, walk_len=150, mode='newest'):
-#         super().__init__(alphabet, sul, walks_per_state, walk_len, mode)
-#
-# class OldFirst(SortedStateCoverageEqOracle):
-#     def __init__(self, alphabet, sul, walks_per_state=4000, walk_len=150, mode='oldest'):
-#         super().__init__(alphabet, sul, walks_per_state, walk_len, mode)
-
-# class Random(SortedStateCoverageEqOracle):
-#     def __init__(self, alphabet, sul, walks_per_round=200000, walks_per_state=4000, walk_len=150, mode='random'):
-#         super().__init__(alphabet, sul, walks_per_round, walks_per_state, walk_len, mode)
+WALKS_PER_ROUND = {
+        "TCP": 100000,
+        "TLS": 10000,
+        "MQTT": 10000
+        }
+WALKS_PER_STATE = {
+        "TCP": 1000,
+        "TLS": 1000,
+        "MQTT": 1000
+        }
+WALK_LEN = {
+        "TCP": 200,
+        "TLS": 100,
+        "MQTT": 100
+        }
 
 class Random(StatePrefixEqOracle):
-    def __init__(self, alphabet, sul, walks_per_round=200000, walks_per_state=4000, walk_len=150, depth_first=False):
+    def __init__(self, alphabet, sul,
+                 walks_per_round,
+                 walks_per_state,
+                 walk_len,
+                 depth_first=False):
         super().__init__(alphabet, sul, walks_per_round, walks_per_state, walk_len, depth_first)
 
-class InterleavedRandom(InterleavedStateCoverageEqOracle):
-    def __init__(self, alphabet, sul, walks_per_round=200000, walks_per_state=4000, walk_len=150, mode='random'):
-        super().__init__(alphabet, sul, walks_per_round, walks_per_state, walk_len, mode)
-
-class InterleavedNewFirst(InterleavedStateCoverageEqOracle):
-    def __init__(self, alphabet, sul, walks_per_round=200000, walks_per_state=4000, walk_len=150, mode='newest'):
-        super().__init__(alphabet, sul, walks_per_round, walks_per_state, walk_len, mode)
-
-class InterleavedOldFirst(InterleavedStateCoverageEqOracle):
-    def __init__(self, alphabet, sul, walks_per_round=200000,  walks_per_state=4000, walk_len=150, mode='oldest'):
-        super().__init__(alphabet, sul, walks_per_round, walks_per_state, walk_len, mode)
-
 class StochasticLinear(StochasticStateCoverageEqOracle):
-    def __init__(self, alphabet, sul, walks_per_round=200000, walk_len=150, prob_function='linear'):
+    def __init__(self, alphabet, sul,
+                 walks_per_round,
+                 walk_len,
+                 prob_function='linear'):
         super().__init__(alphabet, sul, walks_per_round, walk_len, prob_function)
 
 class StochasticSquare(StochasticStateCoverageEqOracle):
-    def __init__(self, alphabet, sul, walks_per_round=200000, walk_len=150, prob_function='square'):
+    def __init__(self, alphabet, sul,
+                 walks_per_round,
+                 walk_len,
+                 prob_function='square'):
         super().__init__(alphabet, sul, walks_per_round, walk_len, prob_function)
 
 class StochasticExponential(StochasticStateCoverageEqOracle):
-    def __init__(self, alphabet, sul, walks_per_round=200000, walk_len=150, prob_function='exponential'):
+    def __init__(self, alphabet, sul,
+                 walks_per_round,
+                 walk_len,
+                 prob_function='exponential'):
         super().__init__(alphabet, sul, walks_per_round, walk_len, prob_function)
 
-TEACHER = "RandomWMethodEqOracle"
-# TEACHER = "PerfectKnowledgeEqOracle"
+def process_oracle(alphabet, sul, oracle, correct_size, i):
+    """
+    Process the oracle and return the number of queries to the equivalence and membership oracles
+    and whether the learned model has the correct size.
 
-if not os.path.exists(TEACHER):
-    os.makedirs(TEACHER)
+    Args:
+        alphabet: input alphabet
+        sul: system under learning
+        oracle: equivalence oracle
+        correct_size: correct size of the model
+        i: index of the oracle
+    """
+    _, info = run_Lstar(alphabet, sul, oracle, 'mealy', return_data=True, print_level=0)
+    print(f"{i} number of hypotheses: {len(info['intermediate_hypotheses'])}")
+    return (i, info['queries_eq_oracle'],
+               info['queries_learning'],
+               1 if info['automaton_size'] != correct_size else 0)
 
-def learn_model(alphabet, sul, model, directory):
-    if not os.path.exists(directory):
-        os.makedirs(directory)
+def do_learning_experiments(model, alphabet, correct_size, prot):
+    """
+    Perform the learning experiments for the given model and alphabet.
 
-        if TEACHER == "PerfectKnowledgeEqOracle":
-            oracle = PerfectKnowledgeEqOracle(alphabet, sul, model)
-        elif TEACHER == "RandomWMethodEqOracle":
-            oracle = RandomWMethodEqOracle(alphabet, sul, walks_per_state=10000, walk_len=150)
-        else:
-            raise ValueError("Unknown teacher")
-        _, learning_info = run_Lstar(alphabet, sul, oracle, 'mealy', return_data=True, print_level=0)
-        intermediate_hypotheses = learning_info['intermediate_hypotheses']
-        for num, hyp in enumerate(intermediate_hypotheses):
-            hyp.save(file_path=(f"{directory}/h{num}.dot"))
-    else: # if hypotheses exist, load them
-        intermediate_hypotheses = []
-        dots = list(pathlib.Path(directory).glob('*.dot'))
-        for num in range(len(dots)):
-            intermediate_hypotheses.append(load_automaton_from_file(f'{directory}/h{num}.dot', 'mealy'))
+    Args:
+        model: model to learn
+        alphabet: input alphabet
+        correct_size: correct size of the model
+    """
+    # create a copy of the SUL for each oracle
+    suls = [AutomatonSUL(model) for _ in range(NUM_ORACLES)]
+    # initialize the oracles
+    eq_oracles = [Random(alphabet, suls[0], WALKS_PER_ROUND[prot], WALKS_PER_STATE[prot], WALK_LEN[prot]),
+                  StochasticLinear(alphabet, suls[1], WALKS_PER_ROUND[prot], WALK_LEN[prot]),
+                  StochasticSquare(alphabet, suls[2], WALKS_PER_ROUND[prot], WALK_LEN[prot]),
+                  StochasticExponential(alphabet, suls[3], WALKS_PER_ROUND[prot], WALK_LEN[prot])]
+    # create the arguments for eache oracle's task
+    tasks = [(alphabet, sul, oracle, correct_size, i)
+             for i, (sul, oracle) in enumerate(zip(suls, eq_oracles))]
+    with mp.Pool(processes=mp.cpu_count()) as pool:
+        results = pool.starmap(process_oracle, tasks)
 
-    return intermediate_hypotheses
-
-def test_oracles(oracles, hyps, name):
-    queries = np.zeros((len(oracles), len(hyps)))
-    failures = np.zeros((len(oracles), len(hyps)))
-    # counterexamples are immutable, so we can't store them in a numpy array
-    cexs = [[None for _ in range(len(hyps))] for _ in range(len(oracles))]
-    for i, hyp in enumerate(hyps):
-        for j, oracle in enumerate(oracles):
-            cexs[j][i] = oracle.find_cex(hyp)
-            queries[j, i] = oracle.num_queries
-            failures[j][i] = 1 if cexs[j][i] is None else 0
-    return queries, failures
+    return results
 
 
-ROOT = os.getcwd() + "/DotModels"
-# PROTOCOLS = ["ASML", "TLS", "MQTT", "EMV", "TCP"]
-PROTOCOLS = ["TCP", "MQTT", "TLS"]
-DIRS = [pathlib.Path(ROOT + '/' + prot) for prot in PROTOCOLS]
-FILES = [file for dir in DIRS for file in dir.iterdir()]
-MODELS = [load_automaton_from_file(f, 'mealy') for f in FILES]
-
-# We will learn every model using the RandomWpEqOracle and we will retain the
-# intermediate hypotheses of the learning experiment.
-# Then, for every intermediate hypotheses, we will try to find a counterexample
-# using the StatePrefixEqOracleTrue and StatePrefixEqOracleFalse.
-# If counterexamples are found successfully, we will store them and keep doing
-# this, either until the final hypothesis is reached or until an oracle fails.
-
-TIMES = 30
-NUM_ORACLES = 7
-huge = []
-tiny = []
-for index, (model, file) in enumerate(zip(MODELS, FILES)):
-    NAME = file.stem
-    PROT = file.parent.name
-    RESULT_DIR = f"{TEACHER}/{PROT}/{NAME}"
-    print(RESULT_DIR)
-    alphabet = model.get_input_alphabet()
-    if model.size > 150 or len(alphabet) > 100:
-        huge.append((NAME, model.size, len(alphabet)))
-        continue
-    sul = AutomatonSUL(model)
-
-    # this has the side effect of saving the intermediate hypotheses
-    hypotheses = learn_model(alphabet, sul, model, RESULT_DIR)
-    # indicator that the model has been learned correctly
-    if not hypotheses[-1].size == model.size:
-        print(f"Model not learned successfully {hypotheses[-1].size} / {model.size}. Skipping ... ")
-        continue
-
-    if len(hypotheses) == 1:
-        tiny.append((NAME, model.size, len(alphabet)))
-        continue
-
-    print(f"==================={file.stem}====================")
-    print(f"Number of hypotheses: {len(hypotheses)} {[h.size for h in hypotheses]}")
-    intermediate = hypotheses[:-1]
-    NUM_HYPS = len(intermediate)
-
-    # check if the measurements file exists and load it if it does
-    flag = os.path.exists(f"{RESULT_DIR}/measurements.npy") and os.path.exists(f"{RESULT_DIR}/failures.csv")
-    if flag:
-        measurements = np.load(f"{RESULT_DIR}/measurements.npy")
-        failures = pd.read_csv(f"{RESULT_DIR}/failures.csv", index_col=0)
-        # the index of the dataframe holds the oracle names
-        index = failures.index.values
-        failures = failures.to_numpy()
-    else:
-        # We will now try to find counterexamples for every intermediate hypothesis
-        # using both StatePrefixEqOracles.
-        measurements = np.zeros((TIMES, NUM_ORACLES, NUM_HYPS))
-        failures = np.zeros((NUM_ORACLES, NUM_HYPS))
+def main():
+    ROOT = os.getcwd() + "/DotModels"
+    # PROTOCOLS = ["ASML", "TLS", "MQTT", "EMV", "TCP"]
+    # ORDER: TCP -> TLS -> MQTT
+    PROTOCOLS = ["TLS", "MQTT"]
+    DIRS = [pathlib.Path(ROOT + '/' + prot) for prot in PROTOCOLS]
+    FILES = [file for dir in DIRS for file in dir.iterdir()]
+    FILES_PER_PROT = {prot: len([file for file in DIRS[i].iterdir()]) for i, prot in enumerate(PROTOCOLS)}
+    MODELS = [load_automaton_from_file(f, 'mealy') for f in FILES]
+    
+    EQ_QUERIES = np.zeros((len(MODELS), TIMES, NUM_ORACLES))
+    MB_QUERIES = np.zeros((len(MODELS), TIMES, NUM_ORACLES))
+    FAILURES   = np.zeros((len(MODELS), TIMES, NUM_ORACLES))
+    # iterate over the models
+    for index, (model, file) in enumerate(zip(MODELS, FILES)):
+        # these variables can be shared among the processes
+        prot = file.parent.stem
+        correct_size = model.size
+        alphabet = list(model.get_input_alphabet())
+        # repeat the experiments to gather statistics
         for trial in range(TIMES):
-            oracle1 = Random(alphabet, sul)
-            oracle2 = InterleavedRandom(alphabet, sul)
-            oracle3 = InterleavedNewFirst(alphabet, sul)
-            oracle4 = InterleavedOldFirst(alphabet, sul)
-            oracle5 = StochasticLinear(alphabet, sul)
-            oracle6 = StochasticSquare(alphabet, sul)
-            oracle7 = StochasticExponential(alphabet, sul)
-            oracles = [oracle1, oracle2, oracle3, oracle4, oracle5, oracle6, oracle7]
-            queries, fails = test_oracles(oracles, intermediate, NAME)
-            measurements[trial] = queries
-            failures += fails
 
-        index = [o.__class__.__name__ for o in oracles]
-        # save all measurements so that they can be inspected later
-        np.save(f"{RESULT_DIR}/measurements.npy", measurements)
-    averages = np.mean(measurements, axis=0)
-    deviations = np.std(measurements, axis=0, mean=averages)
-    # also save the geometric mean and the median
-    geometric_means = np.exp(np.mean(np.log(measurements), axis=0))
-    medians = np.median(measurements, axis=0)
-    columns = [f"h{i}" for i in range(NUM_HYPS)]
+            results = do_learning_experiments(model, alphabet, correct_size, prot)
 
-    failures /= TIMES
+            for i, eq_queries, mb_queries, failure in results:
+                EQ_QUERIES[index, trial, i] = eq_queries
+                MB_QUERIES[index, trial, i] = mb_queries
+                FAILURES[index, trial, i] = failure
+    
+    prev = 0
+    for prot in PROTOCOLS:
+        items = FILES_PER_PROT[prot]
+        np.save(f'eq_queries_{prot}.npy', EQ_QUERIES[prev:prev+items, :, :])
+        np.save(f'mb_queries_{prot}.npy', MB_QUERIES[prev:prev+items, :, :])
+        np.save(f'failures_{prot}.npy', FAILURES[prev:prev+items, :, :])
+        prev += items
 
-    for stat, stat_name in zip([averages, deviations, geometric_means, medians, failures],
-                          ['averages', 'deviations', 'geometric_means', 'medians', 'failures']):
-        df = pd.DataFrame(stat, columns=columns, index=index)
-        df.index.name = 'oracle'
-        print(df)
-        if not flag:
-            df.to_csv(f"{RESULT_DIR}/{stat_name}.csv")
+    for array, name in zip([EQ_QUERIES, MB_QUERIES, FAILURES],
+                            ['eq_queries', 'mb_queries', 'failures']):
+        averages = np.mean(array, axis=1)
+        std_devs = np.std(array, axis=1)
+        np.save(f'{name}.npy', array)
+        np.save(f'{name}_averages.npy', averages)
+        np.save(f'{name}_std_devs.npy', std_devs)
 
-print("These models are too big to learn:")
-print(huge)
-print("These models are too small to learn:")
-print(tiny)
+if __name__ == '__main__':
+    TIMES = 1
+    NUM_ORACLES = 4
+    main()
 
