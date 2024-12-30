@@ -1,8 +1,0 @@
-oracle,h0,h1,h2,h3,h4,h5
-Random,1.0,2.0,4.0,9.0,12.5,21.5
-InterleavedRandom,1.0,2.0,4.5,7.0,13.5,18.5
-InterleavedNewFirst,1.0,2.0,3.0,8.0,13.0,20.0
-InterleavedOldFirst,1.0,2.0,4.0,7.0,13.0,21.0
-StochasticLinear,1.0,2.0,4.0,7.5,13.0,18.5
-StochasticSquare,1.0,2.0,4.0,8.0,13.0,18.5
-StochasticExponential,1.0,2.0,4.0,7.0,13.0,20.0
