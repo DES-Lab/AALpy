@@ -4,7 +4,7 @@ import collections
 from aalpy.base.Oracle import Oracle
 from aalpy.base.SUL import SUL
 
-probability_functions = ['linear', 'exponential', 'square']
+probability_functions = ['linear', 'exponential', 'square', 'random']
 
 class StochasticStateCoverageEqOracle(Oracle):
     def linear(self, x, size):
@@ -41,9 +41,9 @@ class StochasticStateCoverageEqOracle(Oracle):
         super().__init__(alphabet, sul)
         self.steps_per_walk = walk_len
         self.walks_per_round = walks_per_round
-        self.prob_function = getattr(self, prob_function)
+        self.prob_function = getattr(self, prob_function) if prob_function != 'random' else 'random'
         self.age_groups = collections.deque()
-
+    
     def find_cex(self, hypothesis):
         if not self.age_groups:
             self.age_groups.extend([[s for s in hypothesis.states]])
@@ -54,9 +54,10 @@ class StochasticStateCoverageEqOracle(Oracle):
                 new.append(state)
         self.age_groups.extend([new])
 
-        n = len(self.age_groups)
-        probabilities = [self.prob_function(i, n) for i in range(n)]
-        assert round(sum(probabilities)) == 1, "Invalid probability function. Probabilities do not sum up to 1."
+        if not self.prob_function == 'random':
+            n = len(self.age_groups)
+            probabilities = [self.prob_function(i, n) for i in range(n)]
+            assert round(sum(probabilities)) == 1, "Invalid probability function. Probabilities do not sum up to 1."
 
         for state in hypothesis.states:
             if state.prefix is None:
@@ -66,8 +67,11 @@ class StochasticStateCoverageEqOracle(Oracle):
             self.reset_hyp_and_sul(hypothesis)
 
             # sample according to the list of probabilities
-            group = random.choices(self.age_groups, probabilities)[0]
-            state = random.choice(group)
+            if not self.prob_function == 'random':
+                group = random.choices(self.age_groups, probabilities)[0]
+                state = random.choice(group)
+            else:
+                state = random.choice(hypothesis.states)
 
             prefix = state.prefix
             for p in prefix:
@@ -75,9 +79,9 @@ class StochasticStateCoverageEqOracle(Oracle):
                 self.sul.step(p)
                 self.num_steps += 1
 
-            suffix = ()
+            suffix = []
             for _ in range(self.steps_per_walk):
-                suffix += (random.choice(self.alphabet),)
+                suffix.append(random.choice(self.alphabet))
 
                 out_sul = self.sul.step(suffix[-1])
                 out_hyp = hypothesis.step(suffix[-1])
@@ -85,6 +89,5 @@ class StochasticStateCoverageEqOracle(Oracle):
 
                 if out_sul != out_hyp:
                     self.sul.post()
-                    return prefix + suffix
-
+                    return prefix + tuple(suffix)
         return None
