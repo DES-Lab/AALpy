@@ -79,6 +79,7 @@ def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, sampl
     learning_rounds = 0
     hypothesis = None
     intermediate_hypotheses = []
+    counterexamples = []
 
     observation_table = ObservationTable(alphabet, sul, automaton_type, all_prefixes_in_obs_table)
 
@@ -132,6 +133,7 @@ def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, sampl
 
         # make sure counterexample is a tuple in case oracle returns a list
         cex = tuple(cex)
+        counterexamples.append(cex)
 
         if print_level == 3:
             print('Counterexample', cex)
@@ -179,7 +181,8 @@ def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, sampl
         'eq_oracle_time': eq_query_time,
         'total_time': total_time,
         'characterization_set': observation_table.E,
-        'intermediate_hypotheses': intermediate_hypotheses
+        'intermediate_hypotheses': intermediate_hypotheses,
+        'counterexamples': counterexamples,
     }
     if cache_and_non_det_check:
         info['cache_saved'] = sul.num_cached_queries

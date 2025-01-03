@@ -1,19 +1,24 @@
 import os
 import pathlib
 import numpy as np
+
 # import pandas as pd
 import multiprocessing as mp
 from aalpy.oracles import RandomWMethodEqOracle
 from aalpy.oracles import PerfectKnowledgeEqOracle
 from aalpy.oracles import StatePrefixEqOracle
 from aalpy.oracles.SortedStateCoverageEqOracle import SortedStateCoverageEqOracle
-from aalpy.oracles.InterleavedStateCoverageEqOracle import InterleavedStateCoverageEqOracle
-from aalpy.oracles.StochasticStateCoverageEqOracle import StochasticStateCoverageEqOracle
+from aalpy.oracles.InterleavedStateCoverageEqOracle import (
+    InterleavedStateCoverageEqOracle,
+)
+from aalpy.oracles.StochasticStateCoverageEqOracle import (
+    StochasticStateCoverageEqOracle,
+)
 from aalpy.SULs.AutomataSUL import AutomatonSUL
 from aalpy.base.SUL import CacheSUL
 from aalpy.learning_algs.deterministic.LStar import run_Lstar
 from aalpy.learning_algs.deterministic.KV import run_KV
-from aalpy.utils.FileHandler import load_automaton_from_file
+from aalpy.utils.FileHandler import load_automaton_from_file, save_automaton_to_file
 
 # print up to 1 decimal point
 np.set_printoptions(precision=1)
@@ -23,43 +28,52 @@ np.set_printoptions(suppress=True)
 # pd.options.display.float_format = '{:.3f}'.format
 
 WALKS_PER_ROUND = {
-        "TCP": 150000, # tcp is large, it is learned in multiple rounds
-        "TLS": 2000, # tls is tiny, it is learned in one round
-        "MQTT": 2000 # this is also small, but it is not learned in one round
-        }
-WALK_LEN = {
-        "TCP": 70,
-        "TLS": 50,
-        "MQTT": 50
-        }
+    "TCP": 150000,  # tcp is large, it is learned in multiple rounds
+    "TLS": 2000,  # tls is tiny, it is learned in one round
+    "MQTT": 2000,  # this is also small, but it is not learned in one round
+}
+WALK_LEN = {"TCP": 70, "TLS": 50, "MQTT": 50}
+
 
 class StochasticRandom(StochasticStateCoverageEqOracle):
-    def __init__(self, alphabet, sul,
-                 walks_per_round,
-                 walk_len,
-                 prob_function='random'):
+    def __init__(
+        self, alphabet, sul, walks_per_round, walk_len, prob_function="random"
+    ):
         super().__init__(alphabet, sul, walks_per_round, walk_len, prob_function)
+
 
 class StochasticLinear(StochasticStateCoverageEqOracle):
-    def __init__(self, alphabet, sul,
-                 walks_per_round,
-                 walk_len,
-                 prob_function='linear'):
+    def __init__(
+        self, alphabet, sul, walks_per_round, walk_len, prob_function="linear"
+    ):
         super().__init__(alphabet, sul, walks_per_round, walk_len, prob_function)
+
 
 class StochasticSquare(StochasticStateCoverageEqOracle):
-    def __init__(self, alphabet, sul,
-                 walks_per_round,
-                 walk_len,
-                 prob_function='square'):
+    def __init__(
+        self, alphabet, sul, walks_per_round, walk_len, prob_function="square"
+    ):
         super().__init__(alphabet, sul, walks_per_round, walk_len, prob_function)
 
+
 class StochasticExponential(StochasticStateCoverageEqOracle):
-    def __init__(self, alphabet, sul,
-                 walks_per_round,
-                 walk_len,
-                 prob_function='exponential'):
+    def __init__(
+        self, alphabet, sul, walks_per_round, walk_len, prob_function="exponential"
+    ):
         super().__init__(alphabet, sul, walks_per_round, walk_len, prob_function)
+
+
+def user(x, size):
+    fundamental = 0.5
+    return fundamental * (0.5**x)
+
+
+class StochasticInverse(StochasticStateCoverageEqOracle):
+    def __init__(
+        self, alphabet, sul, walks_per_round, walk_len, prob_function="user", user=user
+    ):
+        super().__init__(alphabet, sul, walks_per_round, walk_len, prob_function, user)
+
 
 def process_oracle(alphabet, sul, oracle, correct_size, i):
     """
@@ -73,11 +87,17 @@ def process_oracle(alphabet, sul, oracle, correct_size, i):
         correct_size: correct size of the model
         i: index of the oracle
     """
-    _, info = run_Lstar(alphabet, sul, oracle, 'mealy', return_data=True, print_level=0)
+    _, info = run_Lstar(alphabet, sul, oracle, "mealy", return_data=True, print_level=0)
     # _, info = run_KV(alphabet, sul, oracle, 'mealy', return_data=True, print_level=0)
-    return (i, info['queries_eq_oracle'],
-               info['queries_learning'],
-               1 if info['automaton_size'] != correct_size else 0)
+    return (
+        i,
+        info["queries_eq_oracle"],
+        info["queries_learning"],
+        1 if info["automaton_size"] != correct_size else 0,
+        info["intermediate_hypotheses"],
+        info["counterexamples"],
+    )
+
 
 def do_learning_experiments(model, alphabet, correct_size, prot):
     """
@@ -89,16 +109,21 @@ def do_learning_experiments(model, alphabet, correct_size, prot):
     """
     # create a copy of the SUL for each oracle
     suls = [AutomatonSUL(model) for _ in range(NUM_ORACLES)]
-    wpr  = WALKS_PER_ROUND[prot]
-    wl   = WALK_LEN[prot]
+    wpr = WALKS_PER_ROUND[prot]
+    wl = WALK_LEN[prot]
     # initialize the oracles
-    eq_oracles = [StochasticRandom(alphabet, suls[0], wpr, wl),
-                  StochasticLinear(alphabet, suls[1], wpr, wl),
-                  StochasticSquare(alphabet, suls[2], wpr, wl),
-                  StochasticExponential(alphabet, suls[3], wpr, wl)]
+    eq_oracles = [
+        StochasticRandom(alphabet, suls[0], wpr, wl),
+        StochasticLinear(alphabet, suls[1], wpr, wl),
+        StochasticSquare(alphabet, suls[2], wpr, wl),
+        StochasticExponential(alphabet, suls[3], wpr, wl),
+        StochasticInverse(alphabet, suls[4], wpr, wl),
+    ]
     # create the arguments for eache oracle's task
-    tasks = [(alphabet, sul, oracle, correct_size, i)
-             for i, (sul, oracle) in enumerate(zip(suls, eq_oracles))]
+    tasks = [
+        (alphabet, sul, oracle, correct_size, i)
+        for i, (sul, oracle) in enumerate(zip(suls, eq_oracles))
+    ]
 
     with mp.Pool() as pool:
         results = pool.starmap(process_oracle, tasks)
@@ -107,53 +132,76 @@ def do_learning_experiments(model, alphabet, correct_size, prot):
 
 
 def main():
-    ROOT           = os.getcwd() + "/DotModels"
+    ROOT = os.getcwd() + "/DotModels"
     # PROTOCOLS    = ["ASML", "TLS", "MQTT", "EMV", "TCP"]
-    PROTOCOLS      = ["TLS", "MQTT", "TCP"]
-    DIRS           = [pathlib.Path(ROOT + '/' + prot) for prot in PROTOCOLS]
-    FILES          = [file for dir in DIRS for file in dir.iterdir()]
-    FILES_PER_PROT = {prot: len([file for file in DIRS[i].iterdir()]) for i, prot in enumerate(PROTOCOLS)}
-    MODELS         = (load_automaton_from_file(f, 'mealy') for f in FILES)
+    PROTOCOLS = ["TCP"]
+    DIRS = [pathlib.Path(ROOT + "/" + prot) for prot in PROTOCOLS]
+    FILES = [file for dir in DIRS for file in dir.iterdir()]
+    FILES_PER_PROT = {
+        prot: len([file for file in DIRS[i].iterdir()])
+        for i, prot in enumerate(PROTOCOLS)
+    }
+    MODELS = (load_automaton_from_file(f, "mealy") for f in FILES)
 
     EQ_QUERIES = np.zeros((len(FILES), TIMES, NUM_ORACLES))
     MB_QUERIES = np.zeros((len(FILES), TIMES, NUM_ORACLES))
-    FAILURES   = np.zeros((len(FILES), TIMES, NUM_ORACLES))
+    FAILURES = np.zeros((len(FILES), TIMES, NUM_ORACLES))
 
     # iterate over the models
     for index, (model, file) in enumerate(zip(MODELS, FILES)):
         # these variables can be shared among the processes
-        prot         = file.parent.stem
+        prot = file.parent.stem
         correct_size = model.size
-        alphabet     = list(model.get_input_alphabet())
+        alphabet = list(model.get_input_alphabet())
         # repeat the experiments to gather statistics
         for trial in range(TIMES):
 
             results = do_learning_experiments(model, alphabet, correct_size, prot)
 
-            for i, eq_queries, mb_queries, failure in results:
+            for i, eq_queries, mb_queries, failure, hyps, cexs in results:
                 EQ_QUERIES[index, trial, i] = eq_queries
                 MB_QUERIES[index, trial, i] = mb_queries
-                FAILURES[index, trial, i]   = failure
+                FAILURES[index, trial, i] = failure
+
+                if SAVE_INTERMEDIATE_HYPOTHESES:
+                    MODEL_RES_DIR = (
+                        f"./results/{prot}/{file.stem}/trial_{trial}/oracle_{i}"
+                    )
+                    if not os.path.exists(MODEL_RES_DIR):
+                        os.makedirs(MODEL_RES_DIR)
+                    for i, hyp, cex in enumerate(zip(hyps, cexs)):
+                        save_automaton_to_file(hyp, f"{MODEL_RES_DIR}/h{i}.dot", "dot")
+                        with open(f"{MODEL_RES_DIR}/cex{i}.txt", "w") as f:
+                            f.write(str(cex))
 
     prev = 0
     for prot in PROTOCOLS:
         items = FILES_PER_PROT[prot]
-        np.save(f'eq_queries_{prot}.npy', EQ_QUERIES[prev:prev+items, :, :])
-        np.save(f'mb_queries_{prot}.npy', MB_QUERIES[prev:prev+items, :, :])
-        np.save(f'failures_{prot}.npy',   FAILURES[prev:prev+items, :, :])
+        np.save(f"eq_queries_{prot}.npy", EQ_QUERIES[prev : prev + items, :, :])
+        np.save(f"mb_queries_{prot}.npy", MB_QUERIES[prev : prev + items, :, :])
+        np.save(f"failures_{prot}.npy", FAILURES[prev : prev + items, :, :])
         prev += items
 
-
-    for array, name in zip([EQ_QUERIES, MB_QUERIES, FAILURES],
-                            ['eq_queries', 'mb_queries', 'failures']):
+    for array, name in zip(
+        [EQ_QUERIES, MB_QUERIES, FAILURES], ["eq_queries", "mb_queries", "failures"]
+    ):
         averages = np.mean(array, axis=1)
         std_devs = np.std(array, axis=1)
-        np.save(f'{name}.npy', array)
-        np.save(f'{name}_averages.npy', averages)
-        np.save(f'{name}_std_devs.npy', std_devs)
 
-if __name__ == '__main__':
-    TIMES = 30
-    NUM_ORACLES = 4
+        np.save(f"{name}.npy", array)
+        np.save(f"{name}_averages.npy", averages)
+        np.save(f"{name}_std_devs.npy", std_devs)
+        if not "failures" == name:
+            s1_scores = np.sum(averages, axis=0)
+            maxima = np.max(averages, axis=1)
+            s2_scores = np.sum(averages / maxima[:, np.newaxis], axis=0)
+
+            np.save(f"{name}_s1_scores.npy", s1_scores)
+            np.save(f"{name}_s2_scores.npy", s2_scores)
+
+
+if __name__ == "__main__":
+    TIMES = 5
+    NUM_ORACLES = 5
+    SAVE_INTERMEDIATE_HYPOTHESES = False
     main()
-
