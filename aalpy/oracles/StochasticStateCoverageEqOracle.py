@@ -4,7 +4,7 @@ import collections
 from aalpy.base.Oracle import Oracle
 from aalpy.base.SUL import SUL
 
-probability_functions = ['linear', 'exponential', 'square', 'random']
+probability_functions = ['linear', 'exponential', 'square', 'random', 'user']
 
 class StochasticStateCoverageEqOracle(Oracle):
     def linear(self, x, size):
@@ -19,7 +19,7 @@ class StochasticStateCoverageEqOracle(Oracle):
         fundamental = 1 / (2 ** size - 1)
         return (2 ** x) * fundamental
 
-    def __init__(self, alphabet: list, sul: SUL, walks_per_round, walk_len, prob_function):
+    def __init__(self, alphabet: list, sul: SUL, walks_per_round, walk_len, prob_function, user=None):
         """
         This oracle uses a probability function to sample groups of states, based on their age.
 
@@ -34,14 +34,20 @@ class StochasticStateCoverageEqOracle(Oracle):
 
             walk_len: length of random walk
 
-            prob_function: either 'linear', 'square' or 'exponential'
+            prob_function: either 'linear', 'square', 'exponential' or 'random'
 
         """
         assert prob_function in probability_functions, f"Probability function must be one of {probability_functions}"
         super().__init__(alphabet, sul)
+        if prob_function == 'user':
+            assert user is not None, "User defined probability function must be provided."
+            self.prob_function = user
+        elif not prob_function == 'random':
+            self.prob_function = getattr(self, prob_function)
+        else:
+            self.prob_function = 'random'
         self.steps_per_walk = walk_len
         self.walks_per_round = walks_per_round
-        self.prob_function = getattr(self, prob_function) if prob_function != 'random' else 'random'
         self.age_groups = collections.deque()
     
     def find_cex(self, hypothesis):
