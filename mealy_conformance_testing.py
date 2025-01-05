@@ -1,16 +1,13 @@
 import os
+import sys
 import pathlib
 import numpy as np
 
 # import pandas as pd
 import multiprocessing as mp
-from aalpy.oracles import RandomWMethodEqOracle
+from aalpy.oracles.WMethodEqOracle import WMethodEqOracle, WMethodDiffFirstEqOracle, RandomWMethodEqOracle
 from aalpy.oracles import PerfectKnowledgeEqOracle
 from aalpy.oracles import StatePrefixEqOracle
-from aalpy.oracles.SortedStateCoverageEqOracle import SortedStateCoverageEqOracle
-from aalpy.oracles.InterleavedStateCoverageEqOracle import (
-    InterleavedStateCoverageEqOracle,
-)
 from aalpy.oracles.StochasticStateCoverageEqOracle import (
     StochasticStateCoverageEqOracle,
 )
@@ -34,45 +31,16 @@ WALKS_PER_ROUND = {
 }
 WALK_LEN = {"TCP": 70, "TLS": 50, "MQTT": 50}
 
+METHOD_TO_ORACLES = {
+        "wmethod": 2,
+        "state_coverage": 5,
+}
 
-class StochasticRandom(StochasticStateCoverageEqOracle):
-    def __init__(
-        self, alphabet, sul, walks_per_round, walk_len, prob_function="random"
-    ):
-        super().__init__(alphabet, sul, walks_per_round, walk_len, prob_function)
-
-
-class StochasticLinear(StochasticStateCoverageEqOracle):
-    def __init__(
-        self, alphabet, sul, walks_per_round, walk_len, prob_function="linear"
-    ):
-        super().__init__(alphabet, sul, walks_per_round, walk_len, prob_function)
-
-
-class StochasticSquare(StochasticStateCoverageEqOracle):
-    def __init__(
-        self, alphabet, sul, walks_per_round, walk_len, prob_function="square"
-    ):
-        super().__init__(alphabet, sul, walks_per_round, walk_len, prob_function)
-
-
-class StochasticExponential(StochasticStateCoverageEqOracle):
-    def __init__(
-        self, alphabet, sul, walks_per_round, walk_len, prob_function="exponential"
-    ):
-        super().__init__(alphabet, sul, walks_per_round, walk_len, prob_function)
-
-
-def user(x, size):
-    fundamental = 0.5
-    return fundamental * (0.5**x)
-
-
-class StochasticInverse(StochasticStateCoverageEqOracle):
-    def __init__(
-        self, alphabet, sul, walks_per_round, walk_len, prob_function="user", user=user
-    ):
-        super().__init__(alphabet, sul, walks_per_round, walk_len, prob_function, user)
+PROTOCOL_TO_MAX_MODEL_SIZE = {
+        "TCP": 60,
+        "TLS": 10,
+        "MQTT": 20,
+}
 
 
 def process_oracle(alphabet, sul, oracle, correct_size, i):
@@ -112,20 +80,30 @@ def do_learning_experiments(model, alphabet, correct_size, prot):
     wpr = WALKS_PER_ROUND[prot]
     wl = WALK_LEN[prot]
     # initialize the oracles
-    eq_oracles = [
-        StochasticRandom(alphabet, suls[0], wpr, wl),
-        StochasticLinear(alphabet, suls[1], wpr, wl),
-        StochasticSquare(alphabet, suls[2], wpr, wl),
-        StochasticExponential(alphabet, suls[3], wpr, wl),
-        StochasticInverse(alphabet, suls[4], wpr, wl),
-    ]
+    if BASE_METHOD == "wmethod":
+        max_size = PROTOCOL_TO_MAX_MODEL_SIZE[prot]
+        eq_oracles = [
+            WMethod(alphabet, suls[0], max_size),
+            WMethodDiffFirst(alphabet, suls[1], max_size),
+        ]
+    else:
+        eq_oracles = [
+            StochasticRandom(alphabet, suls[0], wpr, wl),
+            StochasticLinear(alphabet, suls[1], wpr, wl),
+            StochasticSquare(alphabet, suls[2], wpr, wl),
+            StochasticExponential(alphabet, suls[3], wpr, wl),
+            StochasticInverse(alphabet, suls[4], wpr, wl),
+        ]
     # create the arguments for eache oracle's task
+
+    assert len(suls) == len(eq_oracles), "Number of oracles and SULs must be the same."
+    assert NUM_ORACLES == len(eq_oracles), "Number of oracles must be the same as the number of methods."
     tasks = [
         (alphabet, sul, oracle, correct_size, i)
         for i, (sul, oracle) in enumerate(zip(suls, eq_oracles))
     ]
 
-    with mp.Pool() as pool:
+    with mp.Pool(NUM_ORACLES) as pool:
         results = pool.starmap(process_oracle, tasks)
 
     return results
@@ -134,7 +112,7 @@ def do_learning_experiments(model, alphabet, correct_size, prot):
 def main():
     ROOT = os.getcwd() + "/DotModels"
     # PROTOCOLS    = ["ASML", "TLS", "MQTT", "EMV", "TCP"]
-    PROTOCOLS = ["TCP"]
+    PROTOCOLS = ["TLS", "MQTT"]
     DIRS = [pathlib.Path(ROOT + "/" + prot) for prot in PROTOCOLS]
     FILES = [file for dir in DIRS for file in dir.iterdir()]
     FILES_PER_PROT = {
@@ -165,7 +143,7 @@ def main():
 
                 if SAVE_INTERMEDIATE_HYPOTHESES:
                     MODEL_RES_DIR = (
-                        f"./results/{prot}/{file.stem}/trial_{trial}/oracle_{i}"
+                        f"./results/{BASE_METHOD}/{prot}/{file.stem}/trial_{trial}/oracle_{i}"
                     )
                     if not os.path.exists(MODEL_RES_DIR):
                         os.makedirs(MODEL_RES_DIR)
@@ -177,9 +155,9 @@ def main():
     prev = 0
     for prot in PROTOCOLS:
         items = FILES_PER_PROT[prot]
-        np.save(f"eq_queries_{prot}.npy", EQ_QUERIES[prev : prev + items, :, :])
-        np.save(f"mb_queries_{prot}.npy", MB_QUERIES[prev : prev + items, :, :])
-        np.save(f"failures_{prot}.npy", FAILURES[prev : prev + items, :, :])
+        np.save(f"./results/{BASE_METHOD}/eq_queries_{prot}.npy", EQ_QUERIES[prev : prev + items, :, :])
+        np.save(f"./results/{BASE_METHOD}/mb_queries_{prot}.npy", MB_QUERIES[prev : prev + items, :, :])
+        np.save(f"./results/{BASE_METHOD}/failures_{prot}.npy", FAILURES[prev : prev + items, :, :])
         prev += items
 
     for array, name in zip(
@@ -188,20 +166,82 @@ def main():
         averages = np.mean(array, axis=1)
         std_devs = np.std(array, axis=1)
 
-        np.save(f"{name}.npy", array)
-        np.save(f"{name}_averages.npy", averages)
-        np.save(f"{name}_std_devs.npy", std_devs)
+        np.save(f"./results/{BASE_METHOD}/{name}.npy", array)
+        np.save(f"./results/{BASE_METHOD}/{name}_averages.npy", averages)
+        np.save(f"./results/{BASE_METHOD}/{name}_std_devs.npy", std_devs)
         if not "failures" == name:
             s1_scores = np.sum(averages, axis=0)
             maxima = np.max(averages, axis=1)
             s2_scores = np.sum(averages / maxima[:, np.newaxis], axis=0)
 
-            np.save(f"{name}_s1_scores.npy", s1_scores)
-            np.save(f"{name}_s2_scores.npy", s2_scores)
+            np.save(f"./results/{BASE_METHOD}/{name}_s1_scores.npy", s1_scores)
+            np.save(f"./results/{BASE_METHOD}/{name}_s2_scores.npy", s2_scores)
 
+def usage():
+    print("Usage: python mealy_conformance_testing.py <base method>")
+    print("Valid base methods are:")
+    for method in METHOD_TO_ORACLES:
+        print(method)
+    sys.exit(1)
 
 if __name__ == "__main__":
-    TIMES = 5
-    NUM_ORACLES = 5
+    TIMES = 30
     SAVE_INTERMEDIATE_HYPOTHESES = False
+    # get one argument from the command line
+    if len (sys.argv) != 2:
+        usage()
+    BASE_METHOD = sys.argv[1]
+    if BASE_METHOD not in METHOD_TO_ORACLES:
+        usage()
+
+    NUM_ORACLES = METHOD_TO_ORACLES[BASE_METHOD]
+
+    if BASE_METHOD == 'state_coverage':
+        class StochasticRandom(StochasticStateCoverageEqOracle):
+            def __init__(
+                self, alphabet, sul, walks_per_round, walk_len, prob_function="random"
+            ):
+                super().__init__(alphabet, sul, walks_per_round, walk_len, prob_function)
+
+        class StochasticLinear(StochasticStateCoverageEqOracle):
+            def __init__(
+                self, alphabet, sul, walks_per_round, walk_len, prob_function="linear"
+            ):
+                super().__init__(alphabet, sul, walks_per_round, walk_len, prob_function)
+
+        class StochasticSquare(StochasticStateCoverageEqOracle):
+            def __init__(
+                self, alphabet, sul, walks_per_round, walk_len, prob_function="square"
+            ):
+                super().__init__(alphabet, sul, walks_per_round, walk_len, prob_function)
+
+        class StochasticExponential(StochasticStateCoverageEqOracle):
+            def __init__(
+                self, alphabet, sul, walks_per_round, walk_len, prob_function="exponential"
+            ):
+                super().__init__(alphabet, sul, walks_per_round, walk_len, prob_function)
+
+        def user(x, size):
+            fundamental = 0.5
+            return fundamental * (0.5**x)
+
+        class StochasticInverse(StochasticStateCoverageEqOracle):
+            def __init__(
+                self, alphabet, sul, walks_per_round, walk_len, prob_function="user", user=user
+            ):
+                super().__init__(alphabet, sul, walks_per_round, walk_len, prob_function, user)
+
+    elif BASE_METHOD == 'wmethod':
+        class WMethod(WMethodEqOracle):
+            def __init__(
+                self, alphabet, sul, max_model_size
+            ):
+                super().__init__(alphabet, sul, max_model_size)
+
+        class WMethodDiffFirst(WMethodDiffFirstEqOracle):
+            def __init__(
+                self, alphabet, sul, max_model_size
+            ):
+                super().__init__(alphabet, sul, max_model_size)
+
     main()
