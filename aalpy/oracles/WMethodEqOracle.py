@@ -42,7 +42,7 @@ class WMethodEqOracle(Oracle):
         ]
 
         middle = []
-        for i in range(self.m + 1 - len(hypothesis.states)):
+        for i in range(min(self.m + 1 - len(hypothesis.states), 3)):
             middle.extend(list(product(self.alphabet, repeat=i)))
 
         for seq in product(transition_cover, middle, hypothesis.characterization_set):
@@ -59,9 +59,11 @@ class WMethodEqOracle(Oracle):
                     outputs.append(out_sul)
                     if out_hyp != out_sul:
                         self.sul.post()
+                        print("Cex", inp_seq[: ind + 1])
                         return inp_seq[: ind + 1]
                 self.cache.add(inp_seq)
 
+        print("No Cex")
         return None
 
 class WMethodDiffFirstEqOracle(Oracle):
@@ -99,6 +101,7 @@ class WMethodDiffFirstEqOracle(Oracle):
         sorted_states = reduce(lambda x,y: x + y, self.age_groups)
 
         # covers every transition of the specification at least once.
+        # with emphasis on newer states
         transition_cover = [
             state.prefix + (letter,)
             for state in sorted_states
@@ -106,7 +109,7 @@ class WMethodDiffFirstEqOracle(Oracle):
         ]
 
         middle = []
-        for i in range(self.m + 1 - len(hypothesis.states)):
+        for i in range(min(self.m + 1 - len(hypothesis.states), 3)):
             middle.extend(list(product(self.alphabet, repeat=i)))
 
         for seq in product(transition_cover, middle, hypothesis.characterization_set):
@@ -123,9 +126,11 @@ class WMethodDiffFirstEqOracle(Oracle):
                     outputs.append(out_sul)
                     if out_hyp != out_sul:
                         self.sul.post()
+                        print("Cex", inp_seq[: ind + 1])
                         return inp_seq[: ind + 1]
                 self.cache.add(inp_seq)
 
+        print("No Cex")
         return None
 
 

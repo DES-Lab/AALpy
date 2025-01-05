@@ -86,7 +86,7 @@ def do_learning_experiments(model, alphabet, correct_size, prot):
             WMethod(alphabet, suls[0], max_size),
             WMethodDiffFirst(alphabet, suls[1], max_size),
         ]
-    else:
+    elif BASE_METHOD == "state_coverage":
         eq_oracles = [
             StochasticRandom(alphabet, suls[0], wpr, wl),
             StochasticLinear(alphabet, suls[1], wpr, wl),
@@ -94,17 +94,26 @@ def do_learning_experiments(model, alphabet, correct_size, prot):
             StochasticExponential(alphabet, suls[3], wpr, wl),
             StochasticInverse(alphabet, suls[4], wpr, wl),
         ]
-    # create the arguments for eache oracle's task
+    else:
+        raise ValueError("Unknown base method")
 
     assert len(suls) == len(eq_oracles), "Number of oracles and SULs must be the same."
     assert NUM_ORACLES == len(eq_oracles), "Number of oracles must be the same as the number of methods."
-    tasks = [
-        (alphabet, sul, oracle, correct_size, i)
-        for i, (sul, oracle) in enumerate(zip(suls, eq_oracles))
-    ]
 
-    with mp.Pool(NUM_ORACLES) as pool:
-        results = pool.starmap(process_oracle, tasks)
+    if PARALLEL:
+        # create the arguments for eache oracle's task
+        tasks = [
+            (alphabet, sul, oracle, correct_size, i)
+            for i, (sul, oracle) in enumerate(zip(suls, eq_oracles))
+        ]
+
+        with mp.Pool(NUM_ORACLES) as pool:
+            results = pool.starmap(process_oracle, tasks)
+    else:
+        results = [
+            process_oracle(alphabet, sul, oracle, correct_size, i)
+            for i, (sul, oracle) in enumerate(zip(suls, eq_oracles))
+        ]
 
     return results
 
@@ -112,7 +121,7 @@ def do_learning_experiments(model, alphabet, correct_size, prot):
 def main():
     ROOT = os.getcwd() + "/DotModels"
     # PROTOCOLS    = ["ASML", "TLS", "MQTT", "EMV", "TCP"]
-    PROTOCOLS = ["TLS", "MQTT"]
+    PROTOCOLS = ["TCP"]
     DIRS = [pathlib.Path(ROOT + "/" + prot) for prot in PROTOCOLS]
     FILES = [file for dir in DIRS for file in dir.iterdir()]
     FILES_PER_PROT = {
@@ -181,13 +190,13 @@ def usage():
     print("Usage: python mealy_conformance_testing.py <base method>")
     print("Valid base methods are:")
     for method in METHOD_TO_ORACLES:
-        print(method)
+        print(f"\t{method}")
     sys.exit(1)
 
 if __name__ == "__main__":
     TIMES = 30
+    PARALLEL = False
     SAVE_INTERMEDIATE_HYPOTHESES = False
-    # get one argument from the command line
     if len (sys.argv) != 2:
         usage()
     BASE_METHOD = sys.argv[1]
