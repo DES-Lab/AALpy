@@ -2,9 +2,11 @@ import os
 import sys
 import pathlib
 import numpy as np
-
-# import pandas as pd
 import multiprocessing as mp
+
+# import argument parser
+import argparse
+
 from aalpy.oracles.WMethodEqOracle import WMethodEqOracle, WMethodDiffFirstEqOracle, RandomWMethodEqOracle
 from aalpy.oracles import PerfectKnowledgeEqOracle
 from aalpy.oracles import StatePrefixEqOracle
@@ -194,15 +196,42 @@ def usage():
     sys.exit(1)
 
 if __name__ == "__main__":
-    TIMES = 30
-    PARALLEL = True
-    SAVE_INTERMEDIATE_HYPOTHESES = False
-    if len (sys.argv) != 2:
-        usage()
-    BASE_METHOD = sys.argv[1]
-    if BASE_METHOD not in METHOD_TO_ORACLES:
-        usage()
+    parser = argparse.ArgumentParser(description="Parse arguments for running learning experiments.")
 
+    parser.add_argument(
+        "-p", "--parallel", 
+        action="store_true", 
+        default=False,
+        help="Run the experiments in parallel or not. Defaults to False."
+    )
+    
+    parser.add_argument(
+        "-t", "--times", 
+        type=int, 
+        default=30,
+        help="Number of times to run the stochastic experiments. Defaults to 30."
+    )
+    
+    parser.add_argument(
+        "-b", "--base_method", 
+        type=str, 
+        choices=["state_coverage", "wmethod"], 
+        default="state_coverage",
+        help="Base method to use. Can be 'state_coverage' or 'wmethod'. Defaults to 'state_coverage'."
+    )
+    
+    parser.add_argument(
+        "-s", "--save_intermediate", 
+        action="store_true", 
+        default=False,
+        help="Save intermediate results or not. Defaults to False."
+    )
+
+    args = parser.parse_args()
+    TIMES = args.times
+    PARALLEL = args.parallel
+    SAVE_INTERMEDIATE_HYPOTHESES = args.save_intermediate
+    BASE_METHOD = args.base_method
     NUM_ORACLES = METHOD_TO_ORACLES[BASE_METHOD]
 
     if BASE_METHOD == 'state_coverage':
