@@ -188,13 +188,6 @@ def main():
             np.save(f"./results/{BASE_METHOD}/{name}_s1_scores.npy", s1_scores)
             np.save(f"./results/{BASE_METHOD}/{name}_s2_scores.npy", s2_scores)
 
-def usage():
-    print("Usage: python mealy_conformance_testing.py <base method>")
-    print("Valid base methods are:")
-    for method in METHOD_TO_ORACLES:
-        print(f"\t{method}")
-    sys.exit(1)
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Parse arguments for running learning experiments.")
 
