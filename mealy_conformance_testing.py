@@ -25,7 +25,7 @@ np.set_printoptions(suppress=True)
 # pd.options.display.float_format = '{:.3f}'.format
 
 WALKS_PER_ROUND = {
-    "TCP": 150000,  # tcp is large, it is learned in multiple rounds
+    "TCP": 200000,  # tcp is large, it is learned in multiple rounds
     "TLS": 2000,  # tls is tiny, it is learned in one round
     "MQTT": 2000,  # this is also small, but it is not learned in one round
 }
@@ -55,7 +55,7 @@ def process_oracle(alphabet, sul, oracle, correct_size, i):
         correct_size: correct size of the model
         i: index of the oracle
     """
-    _, info = run_Lstar(alphabet, sul, oracle, "mealy", return_data=True, print_level=0)
+    _, info = run_Lstar(alphabet, sul, oracle, "mealy", return_data=True, print_level=2)
     # _, info = run_KV(alphabet, sul, oracle, 'mealy', return_data=True, print_level=0)
     return (
         i,
@@ -121,7 +121,7 @@ def do_learning_experiments(model, alphabet, correct_size, prot):
 def main():
     ROOT = os.getcwd() + "/DotModels"
     # PROTOCOLS    = ["ASML", "TLS", "MQTT", "EMV", "TCP"]
-    PROTOCOLS = ["TCP"]
+    PROTOCOLS = ["TLS", "MQTT"]
     DIRS = [pathlib.Path(ROOT + "/" + prot) for prot in PROTOCOLS]
     FILES = [file for dir in DIRS for file in dir.iterdir()]
     FILES_PER_PROT = {
@@ -195,7 +195,7 @@ def usage():
 
 if __name__ == "__main__":
     TIMES = 30
-    PARALLEL = False
+    PARALLEL = True
     SAVE_INTERMEDIATE_HYPOTHESES = False
     if len (sys.argv) != 2:
         usage()
@@ -231,7 +231,7 @@ if __name__ == "__main__":
                 super().__init__(alphabet, sul, walks_per_round, walk_len, prob_function)
 
         def user(x, size):
-            fundamental = 0.5
+            fundamental = 0.5 /  (1 - 0.5 ** size)
             return fundamental * (0.5**x)
 
         class StochasticInverse(StochasticStateCoverageEqOracle):
@@ -241,6 +241,7 @@ if __name__ == "__main__":
                 super().__init__(alphabet, sul, walks_per_round, walk_len, prob_function, user)
 
     elif BASE_METHOD == 'wmethod':
+        TIMES = 1 # WMethod is deterministic
         class WMethod(WMethodEqOracle):
             def __init__(
                 self, alphabet, sul, max_model_size
