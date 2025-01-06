@@ -59,11 +59,9 @@ class WMethodEqOracle(Oracle):
                     outputs.append(out_sul)
                     if out_hyp != out_sul:
                         self.sul.post()
-                        print("Cex", inp_seq[: ind + 1])
                         return inp_seq[: ind + 1]
                 self.cache.add(inp_seq)
 
-        print("No Cex")
         return None
 
 class WMethodDiffFirstEqOracle(Oracle):
@@ -83,28 +81,17 @@ class WMethodDiffFirstEqOracle(Oracle):
         super().__init__(alphabet, sul)
         self.m = max_number_of_states
         self.shuffle = shuffle_test_set
-        self.age_groups = []
         self.cache = set()
 
     def find_cex(self, hypothesis):
-        if not self.age_groups:
-            self.age_groups.extend([[s for s in hypothesis.states]])
-
         if not hypothesis.characterization_set:
             hypothesis.characterization_set = hypothesis.compute_characterization_set()
-
-        new = []
-        for state in hypothesis.states:
-            if not any(state.state_id in p for p in self.age_groups):
-                new.append(state)
-        self.age_groups.extend([new])
-        sorted_states = reduce(lambda x,y: x + y, self.age_groups)
-
+        
         # covers every transition of the specification at least once.
-        # with emphasis on newer states
+        # with emphasis on newer states, notice the reversed order of states
         transition_cover = [
             state.prefix + (letter,)
-            for state in sorted_states
+            for state in reversed(hypothesis.states)
             for letter in self.alphabet
         ]
 
@@ -126,11 +113,9 @@ class WMethodDiffFirstEqOracle(Oracle):
                     outputs.append(out_sul)
                     if out_hyp != out_sul:
                         self.sul.post()
-                        print("Cex", inp_seq[: ind + 1])
                         return inp_seq[: ind + 1]
                 self.cache.add(inp_seq)
 
-        print("No Cex")
         return None
 
 
@@ -142,7 +127,7 @@ class RandomWMethodEqOracle(Oracle):
     """
 
     def __init__(
-        self, alphabet: list, sul: SUL, walks_per_round, walks_per_state=12, walk_len=12
+        self, alphabet: list, sul: SUL, walks_per_state=12, walk_len=12
     ):
         """
         Args:
@@ -158,7 +143,6 @@ class RandomWMethodEqOracle(Oracle):
 
         super().__init__(alphabet, sul)
         self.walks_per_state = walks_per_state
-        self.walks_per_round = walks_per_round
         self.random_walk_len = walk_len
         self.freq_dict = dict()
 
@@ -186,11 +170,7 @@ class RandomWMethodEqOracle(Oracle):
             )
 
         shuffle(states_to_cover)
-        remaining = self.walks_per_round
         for state in states_to_cover:
-            if remaining == 0:
-                break
-            remaining -= 1
             self.freq_dict[state.prefix] = self.freq_dict[state.prefix] + 1
 
             self.reset_hyp_and_sul(hypothesis)
@@ -212,3 +192,4 @@ class RandomWMethodEqOracle(Oracle):
                     return test_case[: ind + 1]
 
         return None
+
