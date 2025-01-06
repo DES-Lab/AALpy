@@ -7,7 +7,11 @@ import multiprocessing as mp
 # import argument parser
 import argparse
 
-from aalpy.oracles.WMethodEqOracle import WMethodEqOracle, WMethodDiffFirstEqOracle, RandomWMethodEqOracle
+from aalpy.oracles.WMethodEqOracle import (
+    WMethodEqOracle,
+    WMethodDiffFirstEqOracle,
+    RandomWMethodEqOracle,
+)
 from aalpy.oracles import PerfectKnowledgeEqOracle
 from aalpy.oracles import StatePrefixEqOracle
 from aalpy.oracles.StochasticStateCoverageEqOracle import (
@@ -34,14 +38,14 @@ WALKS_PER_ROUND = {
 WALK_LEN = {"TCP": 70, "TLS": 50, "MQTT": 50}
 
 METHOD_TO_ORACLES = {
-        "wmethod": 2,
-        "state_coverage": 5,
+    "wmethod": 2,
+    "state_coverage": 5,
 }
 
 PROTOCOL_TO_MAX_MODEL_SIZE = {
-        "TCP": 60,
-        "TLS": 10,
-        "MQTT": 20,
+    "TCP": 60,
+    "TLS": 10,
+    "MQTT": 20,
 }
 
 
@@ -100,7 +104,9 @@ def do_learning_experiments(model, alphabet, correct_size, prot):
         raise ValueError("Unknown base method")
 
     assert len(suls) == len(eq_oracles), "Number of oracles and SULs must be the same."
-    assert NUM_ORACLES == len(eq_oracles), "Number of oracles must be the same as the number of methods."
+    assert NUM_ORACLES == len(
+        eq_oracles
+    ), "Number of oracles must be the same as the number of methods."
 
     if PARALLEL:
         # create the arguments for eache oracle's task
@@ -153,9 +159,7 @@ def main():
                 FAILURES[index, trial, i] = failure
 
                 if SAVE_INTERMEDIATE_HYPOTHESES:
-                    MODEL_RES_DIR = (
-                        f"./results/{BASE_METHOD}/{prot}/{file.stem}/trial_{trial}/oracle_{i}"
-                    )
+                    MODEL_RES_DIR = f"./results/{BASE_METHOD}/{prot}/{file.stem}/trial_{trial}/oracle_{i}"
                     if not os.path.exists(MODEL_RES_DIR):
                         os.makedirs(MODEL_RES_DIR)
                     for i, hyp, cex in enumerate(zip(hyps, cexs)):
@@ -166,9 +170,18 @@ def main():
     prev = 0
     for prot in PROTOCOLS:
         items = FILES_PER_PROT[prot]
-        np.save(f"./results/{BASE_METHOD}/eq_queries_{prot}.npy", EQ_QUERIES[prev : prev + items, :, :])
-        np.save(f"./results/{BASE_METHOD}/mb_queries_{prot}.npy", MB_QUERIES[prev : prev + items, :, :])
-        np.save(f"./results/{BASE_METHOD}/failures_{prot}.npy", FAILURES[prev : prev + items, :, :])
+        np.save(
+            f"./results/{BASE_METHOD}/eq_queries_{prot}.npy",
+            EQ_QUERIES[prev : prev + items, :, :],
+        )
+        np.save(
+            f"./results/{BASE_METHOD}/mb_queries_{prot}.npy",
+            MB_QUERIES[prev : prev + items, :, :],
+        )
+        np.save(
+            f"./results/{BASE_METHOD}/failures_{prot}.npy",
+            FAILURES[prev : prev + items, :, :],
+        )
         prev += items
 
     for array, name in zip(
@@ -188,92 +201,119 @@ def main():
             np.save(f"./results/{BASE_METHOD}/{name}_s1_scores.npy", s1_scores)
             np.save(f"./results/{BASE_METHOD}/{name}_s2_scores.npy", s2_scores)
 
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Parse arguments for running learning experiments.")
+    parser = argparse.ArgumentParser(
+        description="Parse arguments for running learning experiments."
+    )
 
     parser.add_argument(
-        "-p", "--parallel", 
-        action="store_true", 
+        "-p",
+        "--parallel",
+        action="store_true",
         default=False,
-        help="Run the experiments in parallel or not. Defaults to False."
+        help="Run the experiments in parallel or not. Defaults to False.",
     )
-    
+
     parser.add_argument(
-        "-t", "--times", 
-        type=int, 
+        "-t",
+        "--times",
+        type=int,
         default=30,
-        help="Number of times to run the stochastic experiments. Defaults to 30."
+        help="Number of times to run the stochastic experiments. Defaults to 30.",
     )
-    
+
     parser.add_argument(
-        "-b", "--base_method", 
-        type=str, 
-        choices=["state_coverage", "wmethod"], 
+        "-b",
+        "--base_method",
+        type=str,
+        choices=["state_coverage", "wmethod"],
         default="state_coverage",
-        help="Base method to use. Can be 'state_coverage' or 'wmethod'. Defaults to 'state_coverage'."
+        help="Base method to use. Can be 'state_coverage' or 'wmethod'. Defaults to 'state_coverage'.",
     )
-    
+
     parser.add_argument(
-        "-s", "--save_intermediate", 
-        action="store_true", 
+        "-s",
+        "--save_intermediate",
+        action="store_true",
         default=False,
-        help="Save intermediate results or not. Defaults to False."
+        help="Save intermediate results or not. Defaults to False.",
     )
 
     args = parser.parse_args()
     TIMES = args.times
     PARALLEL = args.parallel
-    SAVE_INTERMEDIATE_HYPOTHESES = args.save_intermediate
     BASE_METHOD = args.base_method
+    SAVE_INTERMEDIATE_HYPOTHESES = args.save_intermediate
+
     NUM_ORACLES = METHOD_TO_ORACLES[BASE_METHOD]
 
-    if BASE_METHOD == 'state_coverage':
+    if BASE_METHOD == "state_coverage":
+
         class StochasticRandom(StochasticStateCoverageEqOracle):
             def __init__(
                 self, alphabet, sul, walks_per_round, walk_len, prob_function="random"
             ):
-                super().__init__(alphabet, sul, walks_per_round, walk_len, prob_function)
+                super().__init__(
+                    alphabet, sul, walks_per_round, walk_len, prob_function
+                )
 
         class StochasticLinear(StochasticStateCoverageEqOracle):
             def __init__(
                 self, alphabet, sul, walks_per_round, walk_len, prob_function="linear"
             ):
-                super().__init__(alphabet, sul, walks_per_round, walk_len, prob_function)
+                super().__init__(
+                    alphabet, sul, walks_per_round, walk_len, prob_function
+                )
 
         class StochasticSquare(StochasticStateCoverageEqOracle):
             def __init__(
                 self, alphabet, sul, walks_per_round, walk_len, prob_function="square"
             ):
-                super().__init__(alphabet, sul, walks_per_round, walk_len, prob_function)
+                super().__init__(
+                    alphabet, sul, walks_per_round, walk_len, prob_function
+                )
 
         class StochasticExponential(StochasticStateCoverageEqOracle):
             def __init__(
-                self, alphabet, sul, walks_per_round, walk_len, prob_function="exponential"
+                self,
+                alphabet,
+                sul,
+                walks_per_round,
+                walk_len,
+                prob_function="exponential",
             ):
-                super().__init__(alphabet, sul, walks_per_round, walk_len, prob_function)
+                super().__init__(
+                    alphabet, sul, walks_per_round, walk_len, prob_function
+                )
 
         def user(x, size):
-            fundamental = 0.5 /  (1 - 0.5 ** size)
+            fundamental = 0.5 / (1 - 0.5**size)
             return fundamental * (0.5**x)
 
         class StochasticInverse(StochasticStateCoverageEqOracle):
             def __init__(
-                self, alphabet, sul, walks_per_round, walk_len, prob_function="user", user=user
+                self,
+                alphabet,
+                sul,
+                walks_per_round,
+                walk_len,
+                prob_function="user",
+                user=user,
             ):
-                super().__init__(alphabet, sul, walks_per_round, walk_len, prob_function, user)
+                super().__init__(
+                    alphabet, sul, walks_per_round, walk_len, prob_function, user
+                )
 
-    elif BASE_METHOD == 'wmethod':
-        TIMES = 1 # WMethod is deterministic
+    elif BASE_METHOD == "wmethod":
+        TIMES = 1  # WMethod is deterministic
+
         class WMethod(WMethodEqOracle):
-            def __init__(
-                self, alphabet, sul, max_model_size
-            ):
+            def __init__(self, alphabet, sul, max_model_size):
                 super().__init__(alphabet, sul, max_model_size)
 
         class WMethodDiffFirst(WMethodDiffFirstEqOracle):
-            def __init__(
-                self, alphabet, sul, max_model_size
-            ):
+            def __init__(self, alphabet, sul, max_model_size):
                 super().__init__(alphabet, sul, max_model_size)
 
     main()
