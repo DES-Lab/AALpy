@@ -114,8 +114,8 @@ def do_learning_experiments(model, alphabet, correct_size, prot):
             (alphabet, sul, oracle, correct_size, i)
             for i, (sul, oracle) in enumerate(zip(suls, eq_oracles))
         ]
-
-        with mp.Pool(NUM_ORACLES) as pool:
+        workers = min(mp.cpu_count(), NUM_ORACLES)
+        with mp.Pool(workers) as pool:
             results = pool.starmap(process_oracle, tasks)
     else:
         results = [
@@ -129,7 +129,7 @@ def do_learning_experiments(model, alphabet, correct_size, prot):
 def main():
     ROOT = os.getcwd() + "/DotModels"
     # PROTOCOLS    = ["ASML", "TLS", "MQTT", "EMV", "TCP"]
-    PROTOCOLS = ["TLS", "MQTT"]
+    PROTOCOLS = ["TLS", "MQTT", "TCP"]
     DIRS = [pathlib.Path(ROOT + "/" + prot) for prot in PROTOCOLS]
     FILES = [file for dir in DIRS for file in dir.iterdir()]
     FILES_PER_PROT = {
