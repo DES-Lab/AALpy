@@ -54,7 +54,7 @@ class WpMethodEqOracle(Oracle):
     Implements the Wp-method equivalence oracle.
     """
 
-    def __init__(self, alphabet: list, sul: SUL, max_number_of_states):
+    def __init__(self, alphabet: list, sul: SUL, max_number_of_states=4):
         super().__init__(alphabet, sul)
         self.m = max_number_of_states
         self.cache = set()
@@ -71,10 +71,8 @@ class WpMethodEqOracle(Oracle):
         state_cover = set(state.prefix for state in hypothesis.states)
         difference = transition_cover.difference(state_cover)
 
-        # not really helpful but it's here
-        minimum = min(self.m + 1 - len(hypothesis.states), 3)
         # two views of the same iterator
-        middle_1, middle_2 = tee(i_star(self.alphabet, minimum), 2)
+        middle_1, middle_2 = tee(i_star(self.alphabet, self.m), 2)
         # first phase State Cover * Middle * Characterization Set
         first_phase = product(state_cover, middle_1, hypothesis.characterization_set)
         # second phase (Transition Cover - State Cover) * Middle * Characterization Set
