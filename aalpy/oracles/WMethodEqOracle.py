@@ -2,8 +2,7 @@ from random import shuffle, choice, randint
 
 from aalpy.base.Oracle import Oracle
 from aalpy.base.SUL import SUL
-from aalpy.utils.HelperFunctions import product_with_possible_empty_iterable
-
+from itertools import product
 
 class WMethodEqOracle(Oracle):
     """
@@ -39,11 +38,12 @@ class WMethodEqOracle(Oracle):
         """
         # fix the length of the middle part per loop
         # to avoid generating large sequences early on
+        char_set = char_set or [()]
         for d in range(depth):
-            middle = product_with_possible_empty_iterable(self.alphabet, repeat=d)
+            middle = product(self.alphabet, repeat=d)
             for m in middle:
-                for case in product_with_possible_empty_iterable(cover, [m], char_set):
-                    yield case
+                for (s, c) in product(cover, char_set):
+                    yield s + m + c
 
 
     def find_cex(self, hypothesis):
@@ -52,16 +52,19 @@ class WMethodEqOracle(Oracle):
             hypothesis.characterization_set = hypothesis.compute_characterization_set()
 
         # covers every transition of the specification at least once.
-        transition_cover = [state.prefix + (letter,) for state in hypothesis.states for letter in self.alphabet]
+        transition_cover = [
+                state.prefix + (letter,)
+                for state in hypothesis.states
+                for letter in self.alphabet
+                ]
 
         depth = self.m + 1 - len(hypothesis.states)
         for seq in self.test_suite(transition_cover, depth, hypothesis.characterization_set):
-            inp_seq = tuple([i for sub in seq for i in sub])
-            if inp_seq not in self.cache:
+            if seq not in self.cache:
                 self.reset_hyp_and_sul(hypothesis)
                 outputs = []
 
-                for ind, letter in enumerate(inp_seq):
+                for ind, letter in enumerate(seq):
                     out_hyp = hypothesis.step(letter)
                     out_sul = self.sul.step(letter)
                     self.num_steps += 1
@@ -69,8 +72,8 @@ class WMethodEqOracle(Oracle):
                     outputs.append(out_sul)
                     if out_hyp != out_sul:
                         self.sul.post()
-                        return inp_seq[:ind + 1]
-                self.cache.add(inp_seq)
+                        return seq[:ind + 1]
+                self.cache.add(seq)
 
         return None
 
