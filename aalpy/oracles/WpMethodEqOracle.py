@@ -35,8 +35,9 @@ def first_phase_it(alphabet, state_cover, depth, char_set):
     for d in range(depth):
         middle = product(alphabet, repeat=d)
         for m in middle:
-            for (s, c) in product(state_cover, char_set):
-                yield s + m + c
+            for s in state_cover:
+                for c in char_set:
+                    yield s + m + c
 
 def second_phase_it(hyp, alphabet, difference, depth):
     """
@@ -50,14 +51,15 @@ def second_phase_it(hyp, alphabet, difference, depth):
     state_mapping = {}
     for d in range(depth):
         middle = product(alphabet, repeat=d)
-        for t, mid in product(difference, middle):
-            _ = hyp.execute_sequence(hyp.initial_state, t + mid)
-            state = hyp.current_state
-            if state not in state_mapping:
-                state_mapping[state] = state_characterization_set(hyp, alphabet, state)
+        for t in difference:
+            for mid in middle:
+                _ = hyp.execute_sequence(hyp.initial_state, t + mid)
+                state = hyp.current_state
+                if state not in state_mapping:
+                    state_mapping[state] = state_characterization_set(hyp, alphabet, state)
 
-            for sm in state_mapping[state]:
-                yield t + mid + sm
+                for sm in state_mapping[state]:
+                    yield t + mid + sm
 
 
 class WpMethodEqOracle(Oracle):
