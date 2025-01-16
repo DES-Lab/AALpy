@@ -51,8 +51,8 @@ def second_phase_it(hyp, alphabet, difference, depth):
     state_mapping = {}
     for d in range(depth):
         middle = product(alphabet, repeat=d)
-        for t in difference:
-            for mid in middle:
+        for mid in middle:
+            for t in difference:
                 _ = hyp.execute_sequence(hyp.initial_state, t + mid)
                 state = hyp.current_state
                 if state not in state_mapping:
