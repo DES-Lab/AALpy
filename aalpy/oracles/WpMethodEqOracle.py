@@ -1,7 +1,7 @@
-from aalpy.base.Oracle import Oracle
-from aalpy.base.SUL import SUL
 from itertools import chain, tee
 
+from aalpy.base.Oracle import Oracle
+from aalpy.base.SUL import SUL
 from aalpy.utils.HelperFunctions import product_with_possible_empty_iterable
 
 
@@ -47,13 +47,10 @@ def second_phase_it(hyp, alphabet, difference, middle):
         _ = hyp.execute_sequence(hyp.initial_state, t + mid)
         state = hyp.current_state
         if state not in state_mapping:
-            char_set = state_characterization_set(hyp, alphabet, state)
-            state_mapping[state] = char_set
-        else:
-            char_set = state_mapping[state]
-        concatenated = product_with_possible_empty_iterable([t], [mid], char_set)
-        for el in concatenated:
-            yield el
+            state_mapping[state] = state_characterization_set(hyp, alphabet, state)
+
+        for sm in state_mapping[state]:
+            yield (t,) + (mid,) + (sm,)
 
 
 class WpMethodEqOracle(Oracle):
@@ -88,27 +85,22 @@ class WpMethodEqOracle(Oracle):
         # second phase (Transition Cover - State Cover) * Middle * Characterization Set
         # of the state that the prefix leads to
         second_phase = second_phase_it(hypothesis, self.alphabet, difference, middle_2)
-
         test_suite = chain(first_phase, second_phase)
 
-        l = 0
         for seq in test_suite:
-            print(l)
-            l += 1
-            inp_seq = tuple([i for sub in seq for i in sub])
-            if inp_seq not in self.cache:
-                self.reset_hyp_and_sul(hypothesis)
-                outputs = []
+            seq = tuple([i for sub in seq for i in sub])
 
-                for ind, letter in enumerate(inp_seq):
+            if seq not in self.cache:
+                self.reset_hyp_and_sul(hypothesis)
+
+                for ind, letter in enumerate(seq):
                     out_hyp = hypothesis.step(letter)
                     out_sul = self.sul.step(letter)
                     self.num_steps += 1
 
-                    outputs.append(out_sul)
                     if out_hyp != out_sul:
                         self.sul.post()
-                        return inp_seq[: ind + 1]
-                self.cache.add(inp_seq)
+                        return seq[: ind + 1]
+                self.cache.add(seq)
 
         return None
