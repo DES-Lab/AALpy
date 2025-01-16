@@ -33,7 +33,7 @@ def i_star(alphabet, max_seq_len):
     return chain(*(product_with_possible_empty_iterable(alphabet, repeat=i) for i in range(max_seq_len)))
 
 
-def second_phase_it(hyp, alphabet, difference, middle):
+def second_phase_test_case_generator(hyp, alphabet, difference, middle):
     """
     Return an iterator that generates all possible sequences for the second phase of the Wp-method.
     Args:
@@ -50,7 +50,7 @@ def second_phase_it(hyp, alphabet, difference, middle):
             state_mapping[state] = state_characterization_set(hyp, alphabet, state)
 
         for sm in state_mapping[state]:
-            yield (t,) + (mid,) + (sm,)
+            yield t + mid + sm
 
 
 class WpMethodEqOracle(Oracle):
@@ -62,6 +62,21 @@ class WpMethodEqOracle(Oracle):
         super().__init__(alphabet, sul)
         self.m = max_number_of_states
         self.cache = set()
+
+    def test_sequance(self, hypothesis, seq_under_test):
+        self.reset_hyp_and_sul(hypothesis)
+
+        for ind, letter in enumerate(seq_under_test):
+            out_hyp = hypothesis.step(letter)
+            out_sul = self.sul.step(letter)
+            self.num_steps += 1
+
+            if out_hyp != out_sul:
+                self.sul.post()
+                return seq_under_test[: ind + 1]
+        self.cache.add(seq_under_test)
+
+        return None
 
     def find_cex(self, hypothesis):
         if not hypothesis.characterization_set:
@@ -80,27 +95,26 @@ class WpMethodEqOracle(Oracle):
         middle_1, middle_2 = tee(i_star(self.alphabet, self.m - hypothesis.size + 1), 2)
 
         # first phase State Cover * Middle * Characterization Set
-        first_phase = product_with_possible_empty_iterable(state_cover, middle_1, hypothesis.characterization_set)
+        state_cover = state_cover or [()]
+        char_set = hypothesis.characterization_set or [()]
+
+        for sc in state_cover:
+            for m in middle_1:
+                for cs in char_set:
+                    test_seq = sc + m + cs
+                    if test_seq not in self.cache:
+                        counterexample = self.test_sequance(hypothesis, test_seq)
+                        if counterexample:
+                            return counterexample
 
         # second phase (Transition Cover - State Cover) * Middle * Characterization Set
         # of the state that the prefix leads to
-        second_phase = second_phase_it(hypothesis, self.alphabet, difference, middle_2)
-        test_suite = chain(first_phase, second_phase)
+        second_phase = second_phase_test_case_generator(hypothesis, self.alphabet, difference, middle_2)
 
-        for seq in test_suite:
-            seq = tuple([i for sub in seq for i in sub])
-
-            if seq not in self.cache:
-                self.reset_hyp_and_sul(hypothesis)
-
-                for ind, letter in enumerate(seq):
-                    out_hyp = hypothesis.step(letter)
-                    out_sul = self.sul.step(letter)
-                    self.num_steps += 1
-
-                    if out_hyp != out_sul:
-                        self.sul.post()
-                        return seq[: ind + 1]
-                self.cache.add(seq)
+        for test_seq in second_phase:
+            if test_seq not in self.cache:
+                counterexample = self.test_sequance(hypothesis, test_seq)
+                if counterexample:
+                    return counterexample
 
         return None
