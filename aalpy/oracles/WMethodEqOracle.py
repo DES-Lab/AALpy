@@ -1,8 +1,8 @@
-from itertools import product
 from random import shuffle, choice, randint
 
 from aalpy.base.Oracle import Oracle
 from aalpy.base.SUL import SUL
+from aalpy.utils.HelperFunctions import product_with_possible_empty_iterable
 
 
 class WMethodEqOracle(Oracle):
@@ -10,6 +10,7 @@ class WMethodEqOracle(Oracle):
     Equivalence oracle based on characterization set/ W-set. From 'Tsun S. Chow.   Testing software design modeled by
     finite-state machines'.
     """
+
     def __init__(self, alphabet: list, sul: SUL, max_number_of_states, shuffle_test_set=True):
         """
         Args:
@@ -35,9 +36,9 @@ class WMethodEqOracle(Oracle):
 
         middle = []
         for i in range(self.m + 1 - len(hypothesis.states)):
-            middle.extend(list(product(self.alphabet, repeat=i)))
+            middle.extend(list(product_with_possible_empty_iterable(self.alphabet, repeat=i)))
 
-        for seq in product(transition_cover, middle, hypothesis.characterization_set):
+        for seq in product_with_possible_empty_iterable(transition_cover, middle, hypothesis.characterization_set):
             inp_seq = tuple([i for sub in seq for i in sub])
             if inp_seq not in self.cache:
                 self.reset_hyp_and_sul(hypothesis)
@@ -53,7 +54,6 @@ class WMethodEqOracle(Oracle):
                         self.sul.post()
                         return inp_seq[:ind + 1]
                 self.cache.add(inp_seq)
-            
 
         return None
 
@@ -64,6 +64,7 @@ class RandomWMethodEqOracle(Oracle):
     Random walks stem from fixed prefix (path to the state). At the end of the random
     walk an element from the characterization set is added to the test case.
     """
+
     def __init__(self, alphabet: list, sul: SUL, walks_per_state=12, walk_len=12):
         """
         Args:

@@ -1,5 +1,6 @@
 import random
 import string
+from itertools import product
 from collections import defaultdict
 
 
@@ -376,3 +377,11 @@ def generate_input_output_data_from_vpa(vpa, num_sequances=4000, min_seq_len=1, 
         input_output_sequances.append(list(zip(sequance, outputs)))
 
     return input_output_sequances
+
+
+def product_with_possible_empty_iterable(*iterables, repeat=1):
+    """
+    Words like regular product, but if one of the iterables is empty it will just ignore it, instead of returning [].
+    """
+    non_empty_iterables = [it for it in iterables if it]
+    return product(*non_empty_iterables, repeat=repeat)
