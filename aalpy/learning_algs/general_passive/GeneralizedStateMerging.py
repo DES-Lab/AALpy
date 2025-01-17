@@ -151,6 +151,8 @@ class GeneralizedStateMerging:
             return False
         return self.score_calc.local_compatibility(a, b)
 
+    # TODO: make more generic by adding the option to use a different algorithm than red blue
+    #  for selecting potential merge candidates
     def run(self):
         start_time = time.time()
 
