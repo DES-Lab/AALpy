@@ -4,6 +4,7 @@ from aalpy.base.Oracle import Oracle
 from aalpy.base.SUL import SUL
 from itertools import product
 
+
 class WMethodEqOracle(Oracle):
     """
     Equivalence oracle based on characterization set/ W-set. From 'Tsun S. Chow.   Testing software design modeled by
@@ -45,7 +46,6 @@ class WMethodEqOracle(Oracle):
                 for (s, c) in product(cover, char_set):
                     yield s + m + c
 
-
     def find_cex(self, hypothesis):
 
         if not hypothesis.characterization_set:
@@ -53,10 +53,10 @@ class WMethodEqOracle(Oracle):
 
         # covers every transition of the specification at least once.
         transition_cover = [
-                state.prefix + (letter,)
-                for state in hypothesis.states
-                for letter in self.alphabet
-                ]
+            state.prefix + (letter,)
+            for state in hypothesis.states
+            for letter in self.alphabet
+        ]
 
         depth = self.m + 1 - len(hypothesis.states)
         for seq in self.test_suite(transition_cover, depth, hypothesis.characterization_set):
