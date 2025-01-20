@@ -1,4 +1,4 @@
-from itertools import chain, tee, product
+from itertools import chain, product
 
 from aalpy.base.Oracle import Oracle
 from aalpy.base.SUL import SUL
@@ -38,6 +38,7 @@ def first_phase_it(alphabet, state_cover, depth, char_set):
             for s in state_cover:
                 for c in char_set:
                     yield s + m + c
+
 
 def second_phase_it(hyp, alphabet, difference, depth):
     """
