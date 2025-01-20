@@ -141,6 +141,21 @@ def learn_date_validator():
     # visualize the automaton
     learned_model.visualize()
 
+def bluetooth_lsharp():
+    from aalpy.utils import load_automaton_from_file
+    from aalpy.SULs import MealySUL
+    from aalpy.oracles import PerfectKnowledgeEqOracle, WMethodEqOracle
+    from aalpy.learning_algs import run_Lsharp
+
+    dot_file = f'./DotModels/Bluetooth/bluetooth_model.dot'
+
+    mealy_machine = load_automaton_from_file(dot_file, automaton_type='mealy')
+    input_alphabet = mealy_machine.get_input_alphabet()
+
+    sul_mealy = MealySUL(mealy_machine)
+    eq_oracle = WMethodEqOracle(input_alphabet, sul_mealy, len(mealy_machine.states), 2)
+
+    learned_mealy = run_Lsharp(input_alphabet, sul_mealy, eq_oracle, extension_rule="SepSeq", separation_rule="ADS",max_learning_rounds=50, print_level=1, add_tests_to_tree=True)
 
 def random_deterministic_example_with_provided_sequences():
     from random import choice, randint

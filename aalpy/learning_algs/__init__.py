@@ -1,4 +1,5 @@
 # public API for running automata learning algorithms
+from .deterministic.LSharp import run_Lsharp
 from .deterministic.LStar import run_Lstar
 from .deterministic.KV import run_KV
 from .non_deterministic.OnfsmLstar import run_non_det_Lstar

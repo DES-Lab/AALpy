@@ -1,4 +1,5 @@
 from itertools import chain, tee
+from random import shuffle, choice, randint, Random
 
 from aalpy.base.Oracle import Oracle
 from aalpy.base.SUL import SUL
@@ -58,12 +59,15 @@ class WpMethodEqOracle(Oracle):
     Implements the Wp-method equivalence oracle.
     """
 
-    def __init__(self, alphabet: list, sul: SUL, max_number_of_states=4):
+    def __init__(self, alphabet: list, sul: SUL, max_number_of_states=4, lookahead=None, shuffle_test_set=False):
         super().__init__(alphabet, sul)
         self.m = max_number_of_states
+        self.shuffle = shuffle_test_set
         self.cache = set()
+        self.lookahead = lookahead
 
-    def test_sequance(self, hypothesis, seq_under_test):
+
+    def test_sequence(self, hypothesis, seq_under_test, ob_tree):
         self.reset_hyp_and_sul(hypothesis)
 
         for ind, letter in enumerate(seq_under_test):
@@ -75,10 +79,13 @@ class WpMethodEqOracle(Oracle):
                 self.sul.post()
                 return seq_under_test[: ind + 1]
         self.cache.add(seq_under_test)
+        # If an observation tree is given, we add the test queries to the observation tree
+        if ob_tree:
+            ob_tree.insert_observation(inp_seq, outputs)
 
         return None
 
-    def find_cex(self, hypothesis):
+    def find_cex(self, hypothesis, ob_tree=None):
         if not hypothesis.characterization_set:
             hypothesis.characterization_set = hypothesis.compute_characterization_set()
 
@@ -91,21 +98,38 @@ class WpMethodEqOracle(Oracle):
         state_cover = set(state.prefix for state in hypothesis.states)
         difference = transition_cover.difference(state_cover)
 
+        # Check for the number of expected states
+        k_extra_states = self.m + 1 - len(hypothesis.states)
+        # Check for k additional states
+        if self.lookahead:
+            k_extra_states = self.lookahead
+            
         # two views of the same iterator
-        middle_1, middle_2 = tee(i_star(self.alphabet, self.m - hypothesis.size + 1), 2)
+        middle_1, middle_2 = tee(i_star(self.alphabet, k_extra_states), 2)
 
         # first phase State Cover * Middle * Characterization Set
         state_cover = state_cover or [()]
         char_set = hypothesis.characterization_set or [()]
 
+        test_suite = []
         for sc in state_cover:
             for m in middle_1:
                 for cs in char_set:
                     test_seq = sc + m + cs
                     if test_seq not in self.cache:
-                        counterexample = self.test_sequance(hypothesis, test_seq)
-                        if counterexample:
-                            return counterexample
+                        if self.shuffle:
+                            test_suite.append(test_seq)
+                        else:
+                            counterexample = self.test_sequence(hypothesis, test_seq)
+                            if counterexample:
+                                return counterexample
+        
+        if self.shuffle:
+            shuffle(test_suite)
+            for test in test_suite:
+                counterexample = self.test_sequence(hypothesis, test_seq)
+                if counterexample:
+                    return counterexample
 
         # second phase (Transition Cover - State Cover) * Middle * Characterization Set
         # of the state that the prefix leads to
@@ -113,7 +137,7 @@ class WpMethodEqOracle(Oracle):
 
         for test_seq in second_phase:
             if test_seq not in self.cache:
-                counterexample = self.test_sequance(hypothesis, test_seq)
+                counterexample = self.test_sequence(hypothesis, test_seq)
                 if counterexample:
                     return counterexample
 
