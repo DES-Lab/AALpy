@@ -51,13 +51,12 @@ class DebugInfoGSM(DebugInfo):
         self.nr_merged_states_total = 0
         self.nr_merged_states = 0
         self.nr_red_states = 1
-        self.root = None
 
     @min_lvl(1)
-    def pta_construction_done(self, start_time):
+    def pta_construction_done(self, root, start_time):
         print(f'PTA Construction Time: {round(time.time() - start_time, 2)}')
         if self.lvl != 1:
-            states = self.root.get_all_nodes()
+            states = root.get_all_nodes()
             leafs = [state for state in states if len(state.transitions.keys()) == 0]
             depth = [state.get_prefix_length() for state in leafs]
             self.pta_size = len(states)
@@ -84,11 +83,11 @@ class DebugInfoGSM(DebugInfo):
         self.print_status()
 
     @min_lvl(1)
-    def learning_done(self, red_states, start_time):
+    def learning_done(self, root, red_states, start_time):
         print(f'\nLearning Time: {round(time.time() - start_time, 2)}')
         print(f'Learned {len(red_states)} state automaton via {self.nr_merged_states} merges.')
         if 2 < self.lvl:
-            self.root.visualize("model",self.instance.output_behavior)
+            root.visualize("model",self.instance.output_behavior)
 
 class GeneralizedStateMerging:
     def __init__(self, *,
@@ -99,10 +98,8 @@ class GeneralizedStateMerging:
                  eval_compat_on_pta : bool = False,
                  node_order : Callable[[Node, Node], bool] = None,
                  consider_all_blue_states = False,
-                 depth_first = False,
-                 debug_lvl = 0):
+                 depth_first = False):
         self.eval_compat_on_pta = eval_compat_on_pta
-        self.debug = DebugInfoGSM(debug_lvl, self)
 
         if output_behavior not in OutputBehaviorRange:
             raise ValueError(f"invalid output behavior {output_behavior}")
@@ -139,15 +136,14 @@ class GeneralizedStateMerging:
 
     # TODO: make more generic by adding the option to use a different algorithm than red blue
     #  for selecting potential merge candidates
-    def run(self, data, extract = True):
+    def run(self, data, debug_lvl = 0, extract = True):
+        debug = DebugInfoGSM(debug_lvl, self)
+        pta_construction_start = time.time()
         if isinstance(data, Node):
             root = data
-            self.debug.root = root
         else:
-            pta_construction_start = time.time()
             root = Node.createPTA(data, self.output_behavior)
-            self.debug.root = root
-            self.debug.pta_construction_done(pta_construction_start)
+        debug.pta_construction_done(pta_construction_start)
 
         if self.transition_behavior == "deterministic":
             if not root.is_deterministic():
@@ -202,7 +198,7 @@ class GeneralizedStateMerging:
                 # no merge candidates for this blue state -> promote
                 if all(part.score is False for part in current_candidates.values()):
                     red_states.append(blue_state)
-                    self.debug.log_promote(blue_state, red_states)
+                    debug.log_promote(blue_state, red_states)
                     promotion = True
                     break
 
@@ -224,9 +220,9 @@ class GeneralizedStateMerging:
                 for _, t_info in real_node.transition_iterator():
                     if t_info.target not in red_states:
                         t_info.target.predecessor = real_node
-            self.debug.log_merge(best_candidate)
+            debug.log_merge(best_candidate)
 
-        self.debug.learning_done(red_states, start_time)
+        debug.learning_done(root, red_states, start_time)
 
         if extract:
             root = root.to_automaton(self.output_behavior, self.transition_behavior)
@@ -327,10 +323,14 @@ def run_GSM(data, *,
             node_order : Callable[[Node, Node], bool] = None,
             consider_all_blue_states = False,
             depth_first = False,
-            debug_lvl = 0):
-    all_params = dict(**locals())
-    del all_params['data']
-    return GeneralizedStateMerging(**all_params).run(data)
+            debug_lvl = 0,
+            extract = True,
+            ):
+    all_params = locals()
+    run_param_names = ["data", "debug_lvl", "extract"]
+    run_params = {key: all_params[key] for key in run_param_names}
+    ctor_params = {key: val for key, val in all_params.items() if key not in run_params}
+    return GeneralizedStateMerging(**ctor_params).run(**run_params)
 
 
 def run_GSM_Alergia(data, output_behavior : OutputBehavior = "moore",
