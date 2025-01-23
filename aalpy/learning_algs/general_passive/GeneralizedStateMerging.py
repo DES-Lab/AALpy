@@ -51,12 +51,13 @@ class DebugInfoGSM(DebugInfo):
         self.nr_merged_states_total = 0
         self.nr_merged_states = 0
         self.nr_red_states = 1
+        self.root = None
 
     @min_lvl(1)
     def pta_construction_done(self, start_time):
         print(f'PTA Construction Time: {round(time.time() - start_time, 2)}')
         if self.lvl != 1:
-            states = self.instance.root.get_all_nodes()
+            states = self.root.get_all_nodes()
             leafs = [state for state in states if len(state.transitions.keys()) == 0]
             depth = [state.get_prefix_length() for state in leafs]
             self.pta_size = len(states)
@@ -87,10 +88,10 @@ class DebugInfoGSM(DebugInfo):
         print(f'\nLearning Time: {round(time.time() - start_time, 2)}')
         print(f'Learned {len(red_states)} state automaton via {self.nr_merged_states} merges.')
         if 2 < self.lvl:
-            self.instance.root.visualize("model",self.instance.output_behavior)
+            self.root.visualize("model",self.instance.output_behavior)
 
 class GeneralizedStateMerging:
-    def __init__(self, data, *,
+    def __init__(self, *,
                  output_behavior : OutputBehavior = "moore",
                  transition_behavior : TransitionBehavior = "deterministic",
                  compatibility_behavior : CompatibilityBehavior = "partition",
@@ -101,7 +102,6 @@ class GeneralizedStateMerging:
                  depth_first = False,
                  debug_lvl = 0):
         self.eval_compat_on_pta = eval_compat_on_pta
-        self.data = data
         self.debug = DebugInfoGSM(debug_lvl, self)
 
         if output_behavior not in OutputBehaviorRange:
@@ -130,20 +130,6 @@ class GeneralizedStateMerging:
         self.consider_all_blue_states = consider_all_blue_states
         self.depth_first = depth_first
 
-        # TODO make reusable by removing data from params.
-        pta_construction_start = time.time()
-        self.root: Node
-        if isinstance(data, Node):
-            self.root = data
-        else:
-            self.root = Node.createPTA(data, output_behavior)
-
-        self.debug.pta_construction_done(pta_construction_start)
-
-        if transition_behavior == "deterministic":
-            if not self.root.is_deterministic():
-                raise ValueError("required deterministic automaton but input data is nondeterministic")
-
     def compute_local_compatibility(self, a : Node, b : Node):
         if self.output_behavior == "moore" and not Node.moore_compatible(a,b):
             return False
@@ -153,11 +139,24 @@ class GeneralizedStateMerging:
 
     # TODO: make more generic by adding the option to use a different algorithm than red blue
     #  for selecting potential merge candidates
-    def run(self):
+    def run(self, data, extract = True):
+        if isinstance(data, Node):
+            root = data
+            self.debug.root = root
+        else:
+            pta_construction_start = time.time()
+            root = Node.createPTA(data, self.output_behavior)
+            self.debug.root = root
+            self.debug.pta_construction_done(pta_construction_start)
+
+        if self.transition_behavior == "deterministic":
+            if not root.is_deterministic():
+                raise ValueError("required deterministic automaton but input data is nondeterministic")
+
         start_time = time.time()
 
         # sorted list of states already considered
-        red_states = [self.root]
+        red_states = [root]
 
         partition_candidates : Dict[Tuple[Node, Node], Partitioning] = dict()
         while True:
@@ -229,7 +228,9 @@ class GeneralizedStateMerging:
 
         self.debug.learning_done(red_states, start_time)
 
-        return self.root.to_automaton(self.output_behavior, self.transition_behavior)
+        if extract:
+            root = root.to_automaton(self.output_behavior, self.transition_behavior)
+        return root
 
     def _check_futures(self, red: Node, blue: Node) -> bool:
         q : deque[Tuple[Node, Node]] = deque([(red, blue)])
@@ -327,7 +328,9 @@ def run_GSM(data, *,
             consider_all_blue_states = False,
             depth_first = False,
             debug_lvl = 0):
-    return GeneralizedStateMerging(**locals()).run()
+    all_params = dict(**locals())
+    del all_params['data']
+    return GeneralizedStateMerging(**all_params).run(data)
 
 
 def run_GSM_Alergia(data, output_behavior : OutputBehavior = "moore",
@@ -337,20 +340,18 @@ def run_GSM_Alergia(data, output_behavior : OutputBehavior = "moore",
                 global_score=None,
                 **kwargs) :
     return GeneralizedStateMerging(
-        data,
         output_behavior=output_behavior,
         transition_behavior="stochastic",
         compatibility_behavior=compatibility_behavior,
         score_calc=ScoreCalculation(hoeffding_compatibility(epsilon), global_score),
         eval_compat_on_pta=eval_compat_on_pta,
         **kwargs
-    ).run()
+    ).run(data)
 
 def run_GSM_RPNI(data, output_behavior : OutputBehavior = "moore", *args, **kwargs):
     return GeneralizedStateMerging(
-        data,
         output_behavior=output_behavior,
         transition_behavior="deterministic",
         compatibility_behavior="partition",
         *args, **kwargs
-    ).run()
+    ).run(data)
