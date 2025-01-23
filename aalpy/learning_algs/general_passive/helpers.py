@@ -319,7 +319,7 @@ class Node:
         raise NotImplementedError()
 
     @staticmethod
-    def createPTA(data, output_behavior) :
+    def createPTA(data, output_behavior) -> 'Node':
         if output_behavior == "moore":
             initial_output = data[0][0]
             data = (d[1:] for d in data)
