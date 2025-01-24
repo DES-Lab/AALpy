@@ -96,6 +96,7 @@ class GeneralizedStateMerging:
                  compatibility_behavior : CompatibilityBehavior = "partition",
                  score_calc : ScoreCalculation = None,
                  pta_preprocessing : Callable[[Node], Node] = None,
+                 postprocessing : Callable[[Node], Node] = None,
                  eval_compat_on_pta : bool = False,
                  node_order : Callable[[Node, Node], bool] = None,
                  consider_all_blue_states = False,
@@ -125,9 +126,8 @@ class GeneralizedStateMerging:
             node_order = Node.__lt__
         self.node_order = functools.cmp_to_key(lambda a, b: -1 if node_order(a, b) else 1)
 
-        if pta_preprocessing is None:
-            pta_preprocessing = lambda x: x
-        self.pta_preprocessing = pta_preprocessing
+        self.pta_preprocessing = pta_preprocessing or (lambda x: x)
+        self.postprocessing = postprocessing or (lambda x: x)
 
         self.consider_all_blue_states = consider_all_blue_states
         self.depth_first = depth_first
@@ -230,6 +230,8 @@ class GeneralizedStateMerging:
 
         debug.learning_done(root, red_states, start_time)
 
+        root = self.postprocessing(root)
+
         if extract:
             root = root.to_automaton(self.output_behavior, self.transition_behavior)
         return root
@@ -322,6 +324,7 @@ def run_GSM(data, *,
             compatibility_behavior : CompatibilityBehavior = "partition",
             score_calc : ScoreCalculation = None,
             pta_preprocessing : Callable[[Node], Node] = None,
+            postprocessing : Callable[[Node], Node] = None,
             eval_compat_on_pta : bool = False,
             node_order : Callable[[Node, Node], bool] = None,
             consider_all_blue_states = False,
