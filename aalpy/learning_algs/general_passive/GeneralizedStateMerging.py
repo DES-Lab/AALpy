@@ -300,7 +300,7 @@ class GeneralizedStateMerging:
                     return partitioning
 
             for in_sym, blue_transitions in blue.transitions.items():
-                partition_transitions = partition.get_transitions_safe(in_sym)
+                partition_transitions = partition.get_or_create_transitions(in_sym)
                 for out_sym, blue_transition in blue_transitions.items():
                     partition_transition = partition_transitions.get(out_sym)
                     if partition_transition is not None:

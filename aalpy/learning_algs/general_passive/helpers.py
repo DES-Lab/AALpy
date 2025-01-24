@@ -139,7 +139,7 @@ class Node:
         prefix.reverse()
         return prefix
 
-    def get_transitions_safe(self, in_sym) -> Dict[Any, TransitionInfo]:
+    def get_or_create_transitions(self, in_sym) -> Dict[Any, TransitionInfo]:
         t = self.transitions.get(in_sym)
         if t is None:
             t = dict()
@@ -324,7 +324,7 @@ class Node:
     def add_trace(self, data : IOTrace):
         curr_node : Node = self
         for in_sym, out_sym in data:
-            transitions = curr_node.get_transitions_safe(in_sym)
+            transitions = curr_node.get_or_create_transitions(in_sym)
             info = transitions.get(out_sym)
             if info is None:
                 node = Node((in_sym, out_sym), curr_node)
