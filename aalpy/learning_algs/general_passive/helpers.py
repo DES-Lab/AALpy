@@ -43,6 +43,27 @@ def generate_values(base : list, step : Callable, backing_set=True):
                     result.append(new_val)
         return result
 
+from typing import TypeVar, Iterator
+Key = TypeVar("Key")
+Val = TypeVar("Val")
+
+def intersection_iterator(a: Dict[Key, Val], b: Dict[Key, Val]) -> Iterator[Tuple[Key, Val, Val]]:
+    missing = object()
+    for key, a_val in a.items():
+        b_val = b.get(key, missing)
+        if b_val is missing:
+            continue
+        yield key, a_val, b_val
+
+def join_iterator(a: Dict[Key, Val], b: Dict[Key, Val], default: Val = None) -> Iterator[Tuple[Key, Val, Val]]:
+    for key, a_val in a.items():
+        b_val = b.get(key, default)
+        yield key, a_val, b_val
+    for key, b_val in b.items():
+        if key in a:
+            continue
+        a_val = a.get(key, default)
+        yield key, a_val, b_val
 
 # TODO maybe split this for maintainability (and perfomance?)
 class TransitionInfo:

@@ -4,7 +4,7 @@ from typing import Dict, Tuple, Callable
 from collections import deque
 
 from aalpy.learning_algs.general_passive.helpers import Node, OutputBehavior, TransitionBehavior, TransitionInfo, \
-    OutputBehaviorRange, TransitionBehaviorRange
+    OutputBehaviorRange, TransitionBehaviorRange, intersection_iterator
 from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreCalculation, NoRareEventNonDetScore, \
     hoeffding_compatibility, Score
 
@@ -244,12 +244,8 @@ class GeneralizedStateMerging:
             if self.compute_local_compatibility(red, blue) is False:
                 return False
 
-            for in_sym, blue_transitions in blue.transitions.items():
-                red_transitions = red.get_transitions_safe(in_sym)
-                for out_sym, blue_child in blue_transitions.items():
-                    red_child = red_transitions.get(out_sym)
-                    if red_child is None:
-                        continue
+            for in_sym, red_trans, blue_trans in intersection_iterator(red.transitions, blue.transitions):
+                for out_sym, red_child, blue_child in intersection_iterator(red_trans, blue_trans):
                     if self.eval_compat_on_pta:
                         if blue_child.original_count == 0 or red_child.original_count == 0:
                             continue

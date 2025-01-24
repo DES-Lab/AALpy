@@ -3,7 +3,7 @@ from collections import defaultdict
 from math import sqrt, log
 from typing import Callable, Dict, Union, List, Iterable
 
-from aalpy.learning_algs.general_passive.helpers import Node
+from aalpy.learning_algs.general_passive.helpers import Node, intersection_iterator, join_iterator, TransitionInfo
 
 Score = Union[bool, float]
 LocalCompatibilityFunction = Callable[[Node, Node], bool]
@@ -41,17 +41,17 @@ class ScoreCalculation:
 def hoeffding_compatibility(eps, compare_original = True) -> LocalCompatibilityFunction:
     eps_fact = sqrt(0.5 * log(2 / eps))
     count_name = "original_count" if compare_original else "count"
+    transition_dummy = TransitionInfo(None, 0, None, 0)
 
     def similar(a: Node, b: Node):
-        for in_sym in filter(lambda x : x in a.transitions.keys(), b.transitions.keys()):
+        for in_sym, a_trans, b_trans in intersection_iterator(a.transitions, b.transitions):
             # could create appropriate dict here
-            a_trans, b_trans = (x.transitions[in_sym] for x in [a,b])
             a_total, b_total = (sum(getattr(x, count_name) for x in trans.values()) for trans in (a_trans, b_trans))
             if a_total == 0 or b_total == 0:
-                continue
+                continue # is it really necessary to check this?
             threshold = eps_fact * (sqrt(1 / a_total) + sqrt(1 / b_total))
-            for out_sym in set(a_trans.keys()).union(b_trans.keys()):
-                ac, bc = (getattr(x[out_sym], count_name) if out_sym in x else 0 for x in (a_trans, b_trans))
+            for out_sym, a_info, b_info in join_iterator(a_trans, b_trans, transition_dummy):
+                ac, bc = (getattr(x, count_name) for x in (a_info, b_info))
                 if abs(ac / a_total - bc / b_total) > threshold:
                     return False
         return True
@@ -257,12 +257,9 @@ def EDSM_score(min_evidence = -1) -> ScoreFunction:
     def score(part : Dict[Node, Node]):
         total_evidence = 0
         for old_node, new_node in part.items():
-            for in_sym, trans_old in old_node.transitions.items():
-                trans_new = new_node.transitions.get(in_sym)
-                if not trans_new:
-                    continue
-                for out_sym, trans_info in trans_old.items():
-                    if out_sym in trans_new:
-                        total_evidence += trans_info.count
+            for in_sym, trans_old, trans_new in intersection_iterator(old_node.transitions, new_node.transitions):
+                for out_sym, t_info_old, t_info_new in intersection_iterator(trans_old, trans_new):
+                    if t_info_old.count != t_info_new.count:
+                        total_evidence += t_info_old.count
         return lower_threshold(total_evidence, min_evidence)
     return score
