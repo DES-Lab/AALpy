@@ -95,6 +95,7 @@ class GeneralizedStateMerging:
                  transition_behavior : TransitionBehavior = "deterministic",
                  compatibility_behavior : CompatibilityBehavior = "partition",
                  score_calc : ScoreCalculation = None,
+                 pta_preprocessing : Callable[[Node], Node] = None,
                  eval_compat_on_pta : bool = False,
                  node_order : Callable[[Node, Node], bool] = None,
                  consider_all_blue_states = False,
@@ -124,6 +125,10 @@ class GeneralizedStateMerging:
             node_order = Node.__lt__
         self.node_order = functools.cmp_to_key(lambda a, b: -1 if node_order(a, b) else 1)
 
+        if pta_preprocessing is None:
+            pta_preprocessing = lambda x: x
+        self.pta_preprocessing = pta_preprocessing
+
         self.consider_all_blue_states = consider_all_blue_states
         self.depth_first = depth_first
 
@@ -135,7 +140,7 @@ class GeneralizedStateMerging:
         return self.score_calc.local_compatibility(a, b)
 
     # TODO: make more generic by adding the option to use a different algorithm than red blue
-    #  for selecting potential merge candidates
+    #  for selecting potential merge candidates. Maybe using inheritance with abstract `run`.
     def run(self, data, debug_lvl = 0, extract = True):
         debug = DebugInfoGSM(debug_lvl, self)
         pta_construction_start = time.time()
@@ -143,6 +148,7 @@ class GeneralizedStateMerging:
             root = data
         else:
             root = Node.createPTA(data, self.output_behavior)
+        root = self.pta_preprocessing(root)
         debug.pta_construction_done(pta_construction_start)
 
         if self.transition_behavior == "deterministic":
@@ -319,6 +325,7 @@ def run_GSM(data, *,
             transition_behavior : TransitionBehavior = "deterministic",
             compatibility_behavior : CompatibilityBehavior = "partition",
             score_calc : ScoreCalculation = None,
+            pta_preprocessing : Callable[[Node], Node] = None,
             eval_compat_on_pta : bool = False,
             node_order : Callable[[Node, Node], bool] = None,
             consider_all_blue_states = False,
