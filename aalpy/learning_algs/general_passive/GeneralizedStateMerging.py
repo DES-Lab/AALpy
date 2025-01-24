@@ -151,9 +151,10 @@ class GeneralizedStateMerging:
         root = self.pta_preprocessing(root)
         debug.pta_construction_done(pta_construction_start)
 
-        if self.transition_behavior == "deterministic":
-            if not root.is_deterministic():
-                raise ValueError("required deterministic automaton but input data is nondeterministic")
+        # This was removed because it is also checked during extraction
+        # if self.transition_behavior == "deterministic":
+        #     if not root.is_deterministic():
+        #         raise ValueError("required deterministic automaton but input data is nondeterministic")
 
         start_time = time.time()
 
