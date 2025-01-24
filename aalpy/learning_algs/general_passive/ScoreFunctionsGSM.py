@@ -253,7 +253,7 @@ def AIC_score(alpha = 0) -> ScoreFunction:
         return lower_threshold(param_diff - llh_diff, alpha)
     return score
 
-def EDSM_score(min_evidence = -1) -> ScoreFunction:
+def EDSM_frequency_score(min_evidence = -1) -> ScoreFunction:
     def score(part : Dict[Node, Node]):
         total_evidence = 0
         for old_node, new_node in part.items():
@@ -263,3 +263,12 @@ def EDSM_score(min_evidence = -1) -> ScoreFunction:
                         total_evidence += t_info_old.count
         return lower_threshold(total_evidence, min_evidence)
     return score
+
+def EDSM_score(min_evidence = -1) -> ScoreFunction:
+    def score(part : Dict[Node, Node]):
+        nr_partitions = len(set(part.values()))
+        nr_merged = len(part)
+        return lower_threshold(nr_merged - nr_partitions, min_evidence)
+    return score
+
+score = ScoreCalculation(lambda a,b: local_compatibility(a,b,epsilon))
