@@ -2,6 +2,7 @@ import functools
 import time
 from typing import Dict, Tuple, Callable
 from collections import deque
+from functools import wraps
 
 from aalpy.learning_algs.general_passive.helpers import Node, OutputBehavior, TransitionBehavior, TransitionInfo, \
     OutputBehaviorRange, TransitionBehaviorRange, intersection_iterator
@@ -22,27 +23,20 @@ class Partitioning:
         self.red_mapping : Dict[Node, Node] = dict()
         self.full_mapping : Dict[Node, Node] = dict()
 
-class DebugInfo:
-    def __init__(self, lvl):
-        self.lvl = lvl
-
+class DebugInfoGSM:
     @staticmethod
     def min_lvl(lvl):
         def decorator(fn):
-            from functools import wraps
             @wraps(fn)
-            def wrapper(*args, **kw):
-                if args[0].lvl < lvl:
+            def wrapper(this, *args, **kw):
+                if this.lvl < lvl:
                     return
-                fn(*args, **kw)
+                fn(this, *args, **kw)
             return wrapper
         return decorator
 
-class DebugInfoGSM(DebugInfo):
-    min_lvl = DebugInfo.min_lvl
-
     def __init__(self, lvl, instance : 'GeneralizedStateMerging'):
-        super().__init__(lvl)
+        self.lvl = lvl
         if lvl < 1:
             return
         self.instance = instance
@@ -70,9 +64,9 @@ class DebugInfoGSM(DebugInfo):
         print(print_str, end="")
 
     @min_lvl(1)
-    def log_promote(self, node : Node, red_states):
+    def log_promote(self, node : Node):
         self.log.append(["promote", (node.get_prefix(),)])
-        self.nr_red_states = len(red_states) # could be done incrementally, here for historic reasons
+        self.nr_red_states += 1
         self.print_status()
 
     @min_lvl(1)
@@ -87,7 +81,7 @@ class DebugInfoGSM(DebugInfo):
         print(f'\nLearning Time: {round(time.time() - start_time, 2)}')
         print(f'Learned {len(red_states)} state automaton via {self.nr_merged_states} merges.')
         if 2 < self.lvl:
-            root.visualize("model",self.instance.output_behavior)
+            root.visualize("model", self.instance.output_behavior)
 
 class GeneralizedStateMerging:
     def __init__(self, *,
@@ -141,8 +135,12 @@ class GeneralizedStateMerging:
 
     # TODO: make more generic by adding the option to use a different algorithm than red blue
     #  for selecting potential merge candidates. Maybe using inheritance with abstract `run`.
-    def run(self, data, debug_lvl = 0, extract = True):
-        debug = DebugInfoGSM(debug_lvl, self)
+    def run(self, data, debug_lvl = 0, convert = True):
+        if isinstance(debug_lvl, int):
+            debug = DebugInfoGSM(debug_lvl, self)
+        else:
+            debug = debug_lvl(self)
+
         pta_construction_start = time.time()
         if isinstance(data, Node):
             root = data
@@ -205,7 +203,7 @@ class GeneralizedStateMerging:
                 # no merge candidates for this blue state -> promote
                 if all(part.score is False for part in current_candidates.values()):
                     red_states.append(blue_state)
-                    debug.log_promote(blue_state, red_states)
+                    debug.log_promote(blue_state)
                     promotion = True
                     break
 
@@ -233,7 +231,7 @@ class GeneralizedStateMerging:
 
         root = self.postprocessing(root)
 
-        if extract:
+        if convert:
             root = root.to_automaton(self.output_behavior, self.transition_behavior)
         return root
 
@@ -331,34 +329,10 @@ def run_GSM(data, *,
             consider_all_blue_states = True,
             depth_first = False,
             debug_lvl = 0,
-            extract = True,
+            convert = True,
             ):
     all_params = locals()
-    run_param_names = ["data", "debug_lvl", "extract"]
+    run_param_names = ["data", "debug_lvl", "convert"]
     run_params = {key: all_params[key] for key in run_param_names}
     ctor_params = {key: val for key, val in all_params.items() if key not in run_params}
     return GeneralizedStateMerging(**ctor_params).run(**run_params)
-
-
-def run_GSM_Alergia(data, output_behavior : OutputBehavior = "moore",
-                epsilon : float = 0.005,
-                compatibility_behavior : CompatibilityBehavior = "future",
-                eval_compat_on_pta=True,
-                global_score=None,
-                **kwargs) :
-    return GeneralizedStateMerging(
-        output_behavior=output_behavior,
-        transition_behavior="stochastic",
-        compatibility_behavior=compatibility_behavior,
-        score_calc=ScoreCalculation(hoeffding_compatibility(epsilon), global_score),
-        eval_compat_on_pta=eval_compat_on_pta,
-        **kwargs
-    ).run(data)
-
-def run_GSM_RPNI(data, output_behavior : OutputBehavior = "moore", *args, **kwargs):
-    return GeneralizedStateMerging(
-        output_behavior=output_behavior,
-        transition_behavior="deterministic",
-        compatibility_behavior="partition",
-        *args, **kwargs
-    ).run(data)

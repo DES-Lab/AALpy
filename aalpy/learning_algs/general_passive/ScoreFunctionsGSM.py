@@ -192,15 +192,16 @@ class ScoreCombinator(ScoreCalculation):
     def default_aggregate_score(score_iterable):
         return list(score_iterable)
 
-def local_to_global_score(local_fun : LocalCompatibilityFunction) -> ScoreFunction:
+def local_to_global_compatibility(local_fun : LocalCompatibilityFunction) -> ScoreFunction:
     """
-    Converts a local score function to a global score function by evaluating the local compatibility for each of the new
-    partitions with all nodes that make up that partition. One use case for this is to evaluate a local score function
-    after the partitions are complete.
+    Converts a local compatibility function to a global score function by evaluating the local compatibility for each of
+    the new partitions with all nodes that make up that partition. One use case for this is to evaluate a local score
+    function after the partitions are complete. The order of arguments for the local compatibility function is
+    partition, original.
     """
     def fun(part : Dict[Node, Node]):
         for old_node, new_node in part.items():
-            if local_fun(new_node, old_node) is False:
+            if local_fun(new_node, old_node) is False: # Follows local_fun(red, blue)
                 return False
         return True
     return fun
