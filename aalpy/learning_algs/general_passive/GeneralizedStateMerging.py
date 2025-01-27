@@ -135,7 +135,7 @@ class GeneralizedStateMerging:
 
     # TODO: make more generic by adding the option to use a different algorithm than red blue
     #  for selecting potential merge candidates. Maybe using inheritance with abstract `run`.
-    def run(self, data, debug_lvl = 0, convert = True):
+    def run(self, data, convert = True, debug_lvl = 0, return_debug = False):
         if isinstance(debug_lvl, int):
             debug = DebugInfoGSM(debug_lvl, self)
         else:
@@ -230,9 +230,11 @@ class GeneralizedStateMerging:
         debug.learning_done(root, red_states, start_time)
 
         root = self.postprocessing(root)
-
         if convert:
             root = root.to_automaton(self.output_behavior, self.transition_behavior)
+
+        if return_debug:
+            return root, debug
         return root
 
     def _check_futures(self, red: Node, blue: Node) -> bool:
