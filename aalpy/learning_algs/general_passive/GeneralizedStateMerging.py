@@ -99,7 +99,7 @@ class GeneralizedStateMerging:
                  postprocessing : Callable[[Node], Node] = None,
                  eval_compat_on_pta : bool = False,
                  node_order : Callable[[Node, Node], bool] = None,
-                 consider_all_blue_states = False,
+                 consider_all_blue_states = True,
                  depth_first = False):
         self.eval_compat_on_pta = eval_compat_on_pta
 
@@ -328,7 +328,7 @@ def run_GSM(data, *,
             postprocessing : Callable[[Node], Node] = None,
             eval_compat_on_pta : bool = False,
             node_order : Callable[[Node, Node], bool] = None,
-            consider_all_blue_states = False,
+            consider_all_blue_states = True,
             depth_first = False,
             debug_lvl = 0,
             extract = True,
