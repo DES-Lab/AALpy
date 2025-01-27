@@ -90,10 +90,8 @@ class GeneralizedStateMerging:
                  eval_compat_on_pta : bool = False,
                  eval_compat_on_futures : bool = False,
                  node_order : Callable[[Node, Node], bool] = None,
-                 consider_all_blue_states = True,
+                 consider_only_min_blue = False,
                  depth_first = False):
-        self.eval_compat_on_pta = eval_compat_on_pta
-        self.eval_compat_on_futures = eval_compat_on_futures
 
         if output_behavior not in OutputBehaviorRange:
             raise ValueError(f"invalid output behavior {output_behavior}")
@@ -118,7 +116,10 @@ class GeneralizedStateMerging:
         self.pta_preprocessing = pta_preprocessing or (lambda x: x)
         self.postprocessing = postprocessing or (lambda x: x)
 
-        self.consider_all_blue_states = consider_all_blue_states
+        self.eval_compat_on_pta = eval_compat_on_pta
+        self.eval_compat_on_futures = eval_compat_on_futures
+
+        self.consider_only_min_blue = consider_only_min_blue
         self.depth_first = depth_first
 
     def compute_local_compatibility(self, a : Node, b : Node):
@@ -164,7 +165,7 @@ class GeneralizedStateMerging:
                     if c in red_states:
                         continue
                     blue_states.append(c)
-                    if not self.consider_all_blue_states:
+                    if self.consider_only_min_blue:
                         blue_states = [min(blue_states, key=self.node_order)]
 
             # no blue states left -> done
@@ -323,7 +324,7 @@ def run_GSM(data, *,
             eval_compat_on_pta : bool = False,
             eval_compat_on_futures : bool = False,
             node_order : Callable[[Node, Node], bool] = None,
-            consider_all_blue_states = True,
+            consider_only_min_blue = False,
             depth_first = False,
             debug_lvl = 0,
             convert = True,
