@@ -9,11 +9,8 @@ from aalpy.learning_algs.general_passive.helpers import Node, OutputBehavior, Tr
 from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreCalculation, NoRareEventNonDetScore, \
     hoeffding_compatibility, Score
 
-# TODO make non-mutual exclusive? Easiest done by adding a new method / field to ScoreCalculation
-# future: Only compare futures of states
-# partition: Check compatibility while partition is created
-CompatibilityBehavior = str
-CompatibilityBehaviorRange = ["future", "partition"]
+# TODO add option for making checking of futures and partition non mutual exclusive?
+#  Easiest done by adding a new method / field to ScoreCalculation
 
 class Partitioning:
     def __init__(self, red : Node, blue : Node):
@@ -87,15 +84,16 @@ class GeneralizedStateMerging:
     def __init__(self, *,
                  output_behavior : OutputBehavior = "moore",
                  transition_behavior : TransitionBehavior = "deterministic",
-                 compatibility_behavior : CompatibilityBehavior = "partition",
                  score_calc : ScoreCalculation = None,
                  pta_preprocessing : Callable[[Node], Node] = None,
                  postprocessing : Callable[[Node], Node] = None,
                  eval_compat_on_pta : bool = False,
+                 eval_compat_on_futures : bool = False,
                  node_order : Callable[[Node, Node], bool] = None,
                  consider_all_blue_states = True,
                  depth_first = False):
         self.eval_compat_on_pta = eval_compat_on_pta
+        self.eval_compat_on_futures = eval_compat_on_futures
 
         if output_behavior not in OutputBehaviorRange:
             raise ValueError(f"invalid output behavior {output_behavior}")
@@ -103,9 +101,6 @@ class GeneralizedStateMerging:
         if transition_behavior not in TransitionBehaviorRange:
             raise ValueError(f"invalid transition behavior {transition_behavior}")
         self.transition_behavior : TransitionBehavior = transition_behavior
-        if compatibility_behavior not in CompatibilityBehaviorRange:
-            raise ValueError(f"invalid compatibility behavior {compatibility_behavior}")
-        self.compatibility_behavior : CompatibilityBehavior = compatibility_behavior
 
         if score_calc is None:
             if transition_behavior == "deterministic" :
@@ -266,12 +261,12 @@ class GeneralizedStateMerging:
 
         self.score_calc.reset()
 
-        if self.compatibility_behavior == "future":
+        if self.eval_compat_on_futures:
             if self._check_futures(red, blue) is False:
                 return partitioning
 
         # when compatibility is determined only by future and scores are disabled, we need not create partitions.
-        if self.compatibility_behavior == "future" and not self.score_calc.has_score_function():
+        if self.eval_compat_on_futures and not self.score_calc.has_score_function():
             def update_partition(red_node: Node, blue_node: Node) -> Node:
                 return red_node
         else:
@@ -298,7 +293,7 @@ class GeneralizedStateMerging:
             red, blue = pop()
             partition = update_partition(red, blue)
 
-            if self.compatibility_behavior == "partition":
+            if not self.eval_compat_on_futures:
                 if self.compute_local_compatibility(partition, blue) is False:
                     return partitioning
 
@@ -322,11 +317,11 @@ class GeneralizedStateMerging:
 def run_GSM(data, *,
             output_behavior : OutputBehavior = "moore",
             transition_behavior : TransitionBehavior = "deterministic",
-            compatibility_behavior : CompatibilityBehavior = "partition",
             score_calc : ScoreCalculation = None,
             pta_preprocessing : Callable[[Node], Node] = None,
             postprocessing : Callable[[Node], Node] = None,
             eval_compat_on_pta : bool = False,
+            eval_compat_on_futures : bool = False,
             node_order : Callable[[Node, Node], bool] = None,
             consider_all_blue_states = True,
             depth_first = False,
