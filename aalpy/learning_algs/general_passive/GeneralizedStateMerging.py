@@ -143,7 +143,7 @@ class GeneralizedStateMerging:
         else:
             root = Node.createPTA(data, self.output_behavior)
         root = self.pta_preprocessing(root)
-        debug.pta_construction_done(pta_construction_start)
+        debug.pta_construction_done(root, pta_construction_start)
 
         # This was removed because it is also checked during extraction
         # if self.transition_behavior == "deterministic":
