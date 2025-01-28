@@ -1,6 +1,6 @@
 import functools
 import time
-from typing import Dict, Tuple, Callable
+from typing import Dict, Tuple, Callable, List
 from collections import deque
 from functools import wraps
 
@@ -20,65 +20,24 @@ class Partitioning:
         self.red_mapping : Dict[Node, Node] = dict()
         self.full_mapping : Dict[Node, Node] = dict()
 
-class DebugInfoGSM:
-    @staticmethod
-    def min_lvl(lvl):
-        def decorator(fn):
-            @wraps(fn)
-            def wrapper(this, *args, **kw):
-                if this.lvl < lvl:
-                    return
-                fn(this, *args, **kw)
-            return wrapper
-        return decorator
+class Instrumentation:
+  def __init__(self):
+      pass
 
-    def __init__(self, lvl, instance : 'GeneralizedStateMerging'):
-        self.lvl = lvl
-        if lvl < 1:
-            return
-        self.instance = instance
-        self.log = []
-        self.pta_size = None
-        self.nr_merged_states_total = 0
-        self.nr_merged_states = 0
-        self.nr_red_states = 1
+  def reset(self, gsm: 'GeneralizedStateMerging'):
+      pass
 
-    @min_lvl(1)
-    def pta_construction_done(self, root, start_time):
-        print(f'PTA Construction Time: {round(time.time() - start_time, 2)}')
-        if self.lvl != 1:
-            states = root.get_all_nodes()
-            leafs = [state for state in states if len(state.transitions.keys()) == 0]
-            depth = [state.get_prefix_length() for state in leafs]
-            self.pta_size = len(states)
-            print(f'PTA has {len(states)} states leading to {len(leafs)} leafs')
-            print(f'min / avg / max depth : {min(depth)} / {sum(depth) / len(depth)} / {max(depth)}')
+  def pta_construction_done(self, root):
+      pass
 
-    def print_status(self):
-        print_str = f'\rCurrent automaton size: {self.nr_red_states}'
-        if self.lvl != 1:
-            print_str += f' Merged: {self.nr_merged_states_total} Remaining: {self.pta_size - self.nr_red_states - self.nr_merged_states_total}'
-        print(print_str, end="")
+  def log_promote(self, node: Node):
+      pass
 
-    @min_lvl(1)
-    def log_promote(self, node : Node):
-        self.log.append(["promote", (node.get_prefix(),)])
-        self.nr_red_states += 1
-        self.print_status()
+  def log_merge(self, part: Partitioning):
+      pass
 
-    @min_lvl(1)
-    def log_merge(self, part : Partitioning):
-        self.log.append(["merge", (part.red.get_prefix(), part.blue.get_prefix())])
-        self.nr_merged_states_total += len(part.full_mapping) - len(part.red_mapping)
-        self.nr_merged_states += 1
-        self.print_status()
-
-    @min_lvl(1)
-    def learning_done(self, root, red_states, start_time):
-        print(f'\nLearning Time: {round(time.time() - start_time, 2)}')
-        print(f'Learned {len(red_states)} state automaton via {self.nr_merged_states} merges.')
-        if 2 < self.lvl:
-            root.visualize("model", self.instance.output_behavior)
+  def learning_done(self, root: Node, red_states: List[Node]):
+      pass
 
 class GeneralizedStateMerging:
     def __init__(self, *,
@@ -131,19 +90,18 @@ class GeneralizedStateMerging:
 
     # TODO: make more generic by adding the option to use a different algorithm than red blue
     #  for selecting potential merge candidates. Maybe using inheritance with abstract `run`.
-    def run(self, data, convert = True, debug_lvl = 0, return_debug = False):
-        if isinstance(debug_lvl, int):
-            debug = DebugInfoGSM(debug_lvl, self)
-        else:
-            debug = debug_lvl(self)
+    def run(self, data, convert = True, instrumentation: Instrumentation = None):
+        if instrumentation is None:
+            instrumentation = Instrumentation()
+        instrumentation.reset(self)
 
-        pta_construction_start = time.time()
         if isinstance(data, Node):
             root = data
         else:
             root = Node.createPTA(data, self.output_behavior)
         root = self.pta_preprocessing(root)
-        debug.pta_construction_done(root, pta_construction_start)
+        instrumentation.pta_construction_done(root)
+        instrumentation.log_promote(root)
 
         # This was removed because it is also checked during extraction
         # if self.transition_behavior == "deterministic":
@@ -199,7 +157,7 @@ class GeneralizedStateMerging:
                 # no merge candidates for this blue state -> promote
                 if all(part.score is False for part in current_candidates.values()):
                     red_states.append(blue_state)
-                    debug.log_promote(blue_state)
+                    instrumentation.log_promote(blue_state)
                     promotion = True
                     break
 
@@ -213,6 +171,7 @@ class GeneralizedStateMerging:
 
             # find best partitioning and clear candidates
             best_candidate = max(partition_candidates.values(), key = lambda part : part.score)
+            instrumentation.log_merge(best_candidate)
             # FUTURE: optimizations for compatibility tests where merges can be orthogonal
             # FUTURE: caching for aggregating compatibility tests
             partition_candidates.clear()
@@ -221,16 +180,12 @@ class GeneralizedStateMerging:
                 for _, t_info in real_node.transition_iterator():
                     if t_info.target not in red_states:
                         t_info.target.predecessor = real_node
-            debug.log_merge(best_candidate)
 
-        debug.learning_done(root, red_states, start_time)
+        instrumentation.learning_done(root, red_states)
 
         root = self.postprocessing(root)
         if convert:
             root = root.to_automaton(self.output_behavior, self.transition_behavior)
-
-        if return_debug:
-            return root, debug
         return root
 
     def _check_futures(self, red: Node, blue: Node) -> bool:
@@ -326,11 +281,11 @@ def run_GSM(data, *,
             node_order : Callable[[Node, Node], bool] = None,
             consider_only_min_blue = False,
             depth_first = False,
-            debug_lvl = 0,
+            instrumentation = None,
             convert = True,
             ):
     all_params = locals()
-    run_param_names = ["data", "debug_lvl", "convert"]
+    run_param_names = ["data", "instrumentation", "convert"]
     run_params = {key: all_params[key] for key in run_param_names}
     ctor_params = {key: val for key, val in all_params.items() if key not in run_params}
     return GeneralizedStateMerging(**ctor_params).run(**run_params)
