@@ -4,7 +4,7 @@ import pathlib
 from collections import deque
 from enum import Enum
 from functools import total_ordering
-from typing import Dict, Any, List, Tuple, Iterable, Callable, NamedTuple, Union, Set
+from typing import Dict, Any, List, Tuple, Iterable, Callable, Union, Set
 import pydot
 from copy import copy
 
@@ -163,7 +163,7 @@ class Node:
     def get_by_prefix(self, seq : IOTrace) -> 'Node':
         node : Node = self
         for in_sym, out_sym in seq:
-            if in_sym is None:
+            if in_sym is None: # ignore initial transition of Node.get_prefix()
                 continue
             node = node.transitions[in_sym][out_sym].target
         return node

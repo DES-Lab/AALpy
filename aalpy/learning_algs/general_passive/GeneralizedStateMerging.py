@@ -1,8 +1,6 @@
 import functools
-import time
 from typing import Dict, Tuple, Callable, List
 from collections import deque
-from functools import wraps
 
 from aalpy.learning_algs.general_passive.helpers import Node, OutputBehavior, TransitionBehavior, TransitionInfo, \
     OutputBehaviorRange, TransitionBehaviorRange, intersection_iterator
@@ -27,7 +25,7 @@ class Instrumentation:
   def reset(self, gsm: 'GeneralizedStateMerging'):
       pass
 
-  def pta_construction_done(self, root):
+  def pta_construction_done(self, root: Node):
       pass
 
   def log_promote(self, node: Node):
@@ -65,7 +63,7 @@ class GeneralizedStateMerging:
             elif transition_behavior == "nondeterministic" :
                 score_calc = NoRareEventNonDetScore(0.5, 0.001)
             elif transition_behavior == "stochastic" :
-                score_calc = ScoreCalculation(hoeffding_compatibility(0.005, self.eval_compat_on_pta))
+                score_calc = ScoreCalculation(hoeffding_compatibility(0.005, eval_compat_on_pta))
         self.score_calc : ScoreCalculation = score_calc
 
         if node_order is None:
@@ -107,8 +105,6 @@ class GeneralizedStateMerging:
         # if self.transition_behavior == "deterministic":
         #     if not root.is_deterministic():
         #         raise ValueError("required deterministic automaton but input data is nondeterministic")
-
-        start_time = time.time()
 
         # sorted list of states already considered
         red_states = [root]
