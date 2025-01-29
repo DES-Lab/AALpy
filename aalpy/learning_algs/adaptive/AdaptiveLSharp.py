@@ -4,22 +4,24 @@ import random
 from aalpy.base import Oracle, SUL
 from aalpy.learning_algs.deterministic import Apartness, ADS
 from aalpy.automata import MealyMachine, MealyState
-from .ObservationTree import ObservationTree
+from .AdaptiveObservationTree import AdaptiveObservationTree
 from ...base.SUL import CacheSUL
 from aalpy.utils import bisimilar
 from aalpy.utils.HelperFunctions import print_learning_info
 from aalpy.oracles import WMethodEqOracle, WpMethodEqOracle, PerfectKnowledgeEqOracle
 
 
-def run_Lsharp(alphabet: list, sul: SUL, eq_oracle: Oracle, extension_rule="Nothing", separation_rule="SepSeq", samples=[], max_learning_rounds=None, cache_and_non_det_check=True, return_data=False, print_level=2, add_tests_to_tree=False):
+def run_AdaptiveLsharp(alphabet: list, sul: SUL, references: list, eq_oracle: Oracle, extension_rule="Nothing", separation_rule="SepSeq", rebuilding=True, state_matching="Approximate", samples=[], max_learning_rounds=None, cache_and_non_det_check=True, return_data=False, print_level=2, add_tests_to_tree=False):
     """
-    Executes the L# algorithm (prefix-tree based automaton learning).
+    Executes the Adaptive L# algorithm (prefix-tree based automaton learning) which can use reference models to kickstart the learning process.
 
     Args:
 
         alphabet: input alphabet
 
         sul: system under learning
+
+        references: a list of Mealy machines references
 
         eq_oracle: equivalence oracle
 
@@ -50,6 +52,7 @@ def run_Lsharp(alphabet: list, sul: SUL, eq_oracle: Oracle, extension_rule="Noth
 
     assert extension_rule in {"Nothing", "SepSeq", "ADS"}
     assert separation_rule in {"SepSeq", "ADS"}
+    assert state_matching in {"None", "Total", "Approximate"}
 
     if cache_and_non_det_check or samples is not None:
         # Wrap the sul in the CacheSUL, so that all steps/queries are cached
@@ -60,7 +63,8 @@ def run_Lsharp(alphabet: list, sul: SUL, eq_oracle: Oracle, extension_rule="Noth
             for input_seq, output_seq in samples:
                 sul.cache.add_to_cache(input_seq, output_seq)
 
-    ob_tree = ObservationTree(alphabet, sul, extension_rule, separation_rule)
+    ob_tree = AdaptiveObservationTree(
+        alphabet, sul, references, extension_rule, separation_rule, rebuilding, state_matching)
     start_time = time.time()
     eq_query_time = 0
     learning_rounds = 0
@@ -77,6 +81,8 @@ def run_Lsharp(alphabet: list, sul: SUL, eq_oracle: Oracle, extension_rule="Noth
             print(f'Hypothesis {learning_rounds}: {hypothesis.size} states.')
         if print_level == 3:
             print(hypothesis)
+            if state_matching != "None":
+                ob_tree.state_matcher.print_match_table(ob_tree)
 
         # Pose Equivalence Query
         eq_query_start = time.time()
@@ -112,6 +118,11 @@ def run_Lsharp(alphabet: list, sul: SUL, eq_oracle: Oracle, extension_rule="Noth
         'total_time': total_time,
         'cache_saved': sul.num_cached_queries,
     }
+    if rebuilding:
+        info['rebuild_states'] = ob_tree.rebuild_states
+    if state_matching != "None":
+        info['matching_type'] = state_matching
+        info['matching_states'] = ob_tree.matching_states
 
     if print_level > 0:
         print_learning_info(info)

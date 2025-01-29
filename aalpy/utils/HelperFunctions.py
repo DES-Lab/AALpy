@@ -91,6 +91,10 @@ def print_learning_info(info: dict):
     print('Learning Finished.')
     print('Learning Rounds:  {}'.format(info['learning_rounds']))
     print('Number of states: {}'.format(info['automaton_size']))
+    if 'rebuild_states' in info.keys():
+        print(' # Found by Rebuilding: {}'.format(info['rebuild_states']))
+    if 'matching_states' in info.keys():
+        print(' # Found by {} State Matching: {}'.format(info['matching_type'], info['matching_states']))
     print('Time (in seconds)')
     print('  Total                : {}'.format(info['total_time']))
     print('  Learning algorithm   : {}'.format(info['learning_time']))

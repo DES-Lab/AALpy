@@ -144,18 +144,34 @@ def learn_date_validator():
 def bluetooth_lsharp():
     from aalpy.utils import load_automaton_from_file
     from aalpy.SULs import MealySUL
-    from aalpy.oracles import PerfectKnowledgeEqOracle, WMethodEqOracle
+    from aalpy.oracles import WMethodEqOracle
     from aalpy.learning_algs import run_Lsharp
 
-    dot_file = f'./DotModels/Bluetooth/bluetooth_model.dot'
-
-    mealy_machine = load_automaton_from_file(dot_file, automaton_type='mealy')
+    mealy_machine = load_automaton_from_file(f'./DotModels/Bluetooth/CYW43455.dot', automaton_type='mealy')
     input_alphabet = mealy_machine.get_input_alphabet()
 
     sul_mealy = MealySUL(mealy_machine)
     eq_oracle = WMethodEqOracle(input_alphabet, sul_mealy, len(mealy_machine.states), 2)
 
-    learned_mealy = run_Lsharp(input_alphabet, sul_mealy, eq_oracle, extension_rule="SepSeq", separation_rule="ADS",max_learning_rounds=50, print_level=1, add_tests_to_tree=True)
+    learned_mealy = run_Lsharp(input_alphabet, sul_mealy, eq_oracle, extension_rule="Nothing", separation_rule="SepSeq",max_learning_rounds=50, print_level=1, add_tests_to_tree=True)
+
+def bluetooth_adaptive_lsharp():
+    from aalpy.utils import load_automaton_from_file
+    from aalpy.SULs import MealySUL
+    from aalpy.oracles import WMethodEqOracle
+    from aalpy.learning_algs import run_AdaptiveLsharp
+
+    reference1 = load_automaton_from_file(f'./DotModels/Bluetooth/CC2650.dot', automaton_type='mealy')
+    reference2 = load_automaton_from_file(f'./DotModels/Bluetooth/nRF52832.dot', automaton_type='mealy')
+    reference3 = load_automaton_from_file(f'./DotModels/Bluetooth/CC2640R2-no-feature-req.dot', automaton_type='mealy')
+    target = load_automaton_from_file(f'./DotModels/Bluetooth/CYW43455.dot', automaton_type='mealy')
+
+    input_alphabet = target.get_input_alphabet()
+
+    sul_mealy = MealySUL(target)
+    eq_oracle = WMethodEqOracle(input_alphabet, sul_mealy, len(target.states), 2)
+
+    learned_mealy = run_AdaptiveLsharp(input_alphabet, sul_mealy, [reference1, reference2, reference3], eq_oracle, extension_rule="Nothing", separation_rule="SepSeq", rebuilding=True, state_matching="Approximate", max_learning_rounds=50, print_level=1, add_tests_to_tree=True)
 
 def random_deterministic_example_with_provided_sequences():
     from random import choice, randint

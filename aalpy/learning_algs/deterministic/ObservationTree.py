@@ -3,6 +3,7 @@ from .ADS import Ads
 from aalpy.automata import MealyMachine, MealyState
 from aalpy.base import Automaton
 
+
 class Node:
     _id_counter = 0
 
@@ -37,7 +38,8 @@ class Node:
         if (input in self.successors):
             out = self.successors[input][0]
             if out != output:
-                raise Exception(f"observation not consistent with tree with output from tree: {out} and output from call: {output}")
+                raise Exception(
+                    f"observation not consistent with tree with output from tree: {out} and output from call: {output}")
             return self.successors[input][1]
         successor_node = Node(parent=self)
         self.add_successor(input, output, successor_node)
@@ -47,9 +49,7 @@ class Node:
 
 class ObservationTree:
     def __init__(self, alphabet, sul, extension_rule, separation_rule):
-        """
-        Initialize the tree with a root node and the alphabet
-        """
+        """ Initialize the tree with a root node and the alphabet """
         self.alphabet = alphabet
         self.sul = sul
         self.extension_rule = extension_rule
@@ -58,28 +58,25 @@ class ObservationTree:
         self.root = Node()
         self.basis = []
         self.basis.append(self.root)
-        self.frontier_to_basis_dict = {}  
+        self.frontier_to_basis_dict = {}
 
-        self.witness_cache = {} # Caches the separating sequences between basis states
-        self.basis_to_mealy_dict = {} # Maps the basis states to hypothesis states
+        self.witness_cache = {}  # Caches the separating sequences between basis states
+        self.basis_to_mealy_dict = {}  # Maps the basis states to hypothesis states
 
     ### Posing queries and adding observations ###
 
     def validate_input(self, inputs):
-        """
-        Check if all inputs are valid (part of the alphabet)
-        """
+        """ Check if all inputs are valid (part of the alphabet) """
         for input_val in inputs:
             if input_val not in self.alphabet:
-                raise ValueError(f"Input '{input_val}' is not in the alphabet.")
+                raise ValueError(
+                    f"Input '{input_val}' is not in the alphabet.")
 
     def insert_observation(self, inputs, outputs):
-        """
-        Insert an observation into the tree using sequences of inputs and outputs
-        """
+        """ Insert an observation into the tree using sequences of inputs and outputs """
         if len(inputs) != len(outputs):
             raise ValueError("Inputs and outputs must have the same length.")
-        
+
         self.validate_input(inputs)
 
         current_node = self.root
@@ -87,9 +84,7 @@ class ObservationTree:
             current_node = current_node.extend_and_get(input_val, output_val)
 
     def get_observation(self, inputs):
-        """
-        Retrieve the list of outputs based on a given sequence of inputs
-        """
+        """ Retrieve the list of outputs based on a given input sequence """
         self.validate_input(inputs)
 
         current_node = self.root
@@ -104,9 +99,7 @@ class ObservationTree:
         return observation
 
     def get_outputs(self, basis_state, inputs):
-        """
-        Retrieve the list of outputs based on a basis state and a given sequence of inputs
-        """
+        """ Retrieve the list of outputs based on a basis state and a given input sequence """
         self.validate_input(inputs)
 
         prefix = self.get_transfer_sequence(self.root, basis_state)
@@ -122,9 +115,7 @@ class ObservationTree:
         return observation
 
     def get_successor(self, inputs):
-        """
-        Retrieve the node (sub-tree) corresponding to the given sequence of inputs
-        """
+        """ Retrieve the node (sub-tree) corresponding to the given input sequence """
         self.validate_input(inputs)
 
         current_node = self.root
@@ -137,9 +128,7 @@ class ObservationTree:
         return current_node
 
     def get_transfer_sequence(self, from_node, to_node):
-        """
-        Get the transfer sequence (inputs) that moves from one node to another
-        """
+        """ Get the transfer sequence (inputs) that moves from one node to another """
         transfer_sequence = []
         current_node = to_node
 
@@ -152,12 +141,27 @@ class ObservationTree:
         transfer_sequence.reverse()
         return transfer_sequence
 
+    def get_access_sequence(self, to_node):
+        """ Get the transfer sequence (inputs) that moves from one node to another """
+        transfer_sequence = []
+        current_node = to_node
+
+        while current_node != self.root:
+            if current_node.parent is None:
+                return None
+            transfer_sequence.append(current_node.input_to_parent)
+            current_node = current_node.parent
+
+        transfer_sequence.reverse()
+        return tuple(transfer_sequence)
+
+    def get_size(self):
+        return self.root._id_counter
+
     ### Functions related to finding new basis and frontier states ###
 
     def update_frontier_and_basis(self):
-        """
-        Updates the frontier to basis map, promotes a frontier state and checks for consistency
-        """
+        """ Updates the frontier to basis map, promotes a frontier state and checks for consistency """
         self.update_frontier_to_basis_dict()
         self.promote_frontier_state()
         self.check_frontier_consistency()
@@ -169,12 +173,13 @@ class ObservationTree:
         Removes basis states that are deemed apart from the frontier state.
         """
         if frontier_state not in self.frontier_to_basis_dict:
-            print(f"Warning: {frontier_state} not found in frontier_to_basis_dict.")
+            print(
+                f"Warning: {frontier_state} not found in frontier_to_basis_dict.")
             return
-        
+
         basis_list = self.frontier_to_basis_dict[frontier_state]
         self.frontier_to_basis_dict[frontier_state] = [
-            basis_state for basis_state in basis_list 
+            basis_state for basis_state in basis_list
             if not Apartness.states_are_apart(frontier_state, basis_state, self)
         ]
 
@@ -185,9 +190,9 @@ class ObservationTree:
         """
         for frontier_state, basis_list in self.frontier_to_basis_dict.items():
             self.frontier_to_basis_dict[frontier_state] = [
-                basis_state for basis_state in basis_list 
+                basis_state for basis_state in basis_list
                 if not Apartness.states_are_apart(frontier_state, basis_state, self)
-            ]               
+            ]
 
     def promote_frontier_state(self):
         """
@@ -202,7 +207,7 @@ class ObservationTree:
                 for frontier_state, new_basis_list in self.frontier_to_basis_dict.items():
                     if not Apartness.states_are_apart(new_basis, frontier_state, self):
                         new_basis_list.append(new_basis)
-                break       
+                break
 
     def check_frontier_consistency(self):
         """
@@ -213,9 +218,9 @@ class ObservationTree:
                 maybe_frontier = basis_state.get_successor(input)
                 if (maybe_frontier == None or maybe_frontier in self.basis or maybe_frontier in self.frontier_to_basis_dict):
                     continue
-                
+
                 self.frontier_to_basis_dict[maybe_frontier] = [
-                    new_basis_state for new_basis_state in self.basis 
+                    new_basis_state for new_basis_state in self.basis
                     if not Apartness.states_are_apart(new_basis_state, maybe_frontier, self)
                 ]
 
@@ -227,18 +232,16 @@ class ObservationTree:
         for _, basis_list in self.frontier_to_basis_dict.items():
             if len(basis_list) != 1:
                 return False
-        
+
         for basis_state in self.basis:
             for inp in self.alphabet:
                 if basis_state.get_output(inp) is None:
                     return False
-        
+
         return True
 
     def make_basis_complete(self):
-        """
-        Explore new frontier states and adding them to the frontier to basis map
-        """
+        """ Explore new frontier states and adding them to the frontier to basis map """
         for basis_state in self.basis:
             for inp in self.alphabet:
                 if basis_state.get_successor(inp) is None:
@@ -259,9 +262,10 @@ class ObservationTree:
         """
         if (self.extension_rule == "ADS"):
             suffix = Ads(self, self.basis)
-            ads_in, ads_out = self.adaptive_output_query(self.get_transfer_sequence(self.root, basis_state), inp, suffix)
+            ads_in, ads_out = self.adaptive_output_query(
+                self.get_transfer_sequence(self.root, basis_state), inp, suffix)
             self.insert_observation(ads_in, ads_out)
-            return 
+            return
         if (self.extension_rule == "Nothing" or (self.extension_rule == "SepSeq" and len(self.basis) == 1)):
             inputs = self.get_transfer_sequence(self.root, basis_state)
             inputs.append(inp)
@@ -282,16 +286,12 @@ class ObservationTree:
             return
 
     def adaptive_output_query(self, prefix, infix, suffix):
-        """
-        Adds input to the prefix and calls the base function
-        """
+        """ Adds input to the prefix and calls the base function """
         prefix.append(infix)
         return self.adaptive_output_query_base(prefix, suffix)
 
     def adaptive_output_query_base(self, prefix, suffix):
-        """
-        Query the tree for a result, if unsuccesful query the SUL and update the tree
-        """
+        """ Query the tree for a result, if unsuccesful query the SUL and update the tree """
         from_node = self.get_successor(prefix)
         if from_node:
             tree_in, tree_out = self._answer_ads_from_tree(suffix, from_node)
@@ -304,11 +304,11 @@ class ObservationTree:
                 outputs.extend(tree_out)
                 return (inputs, outputs)
 
-        outputs = self.sul.query(prefix) 
+        outputs = self.sul.query(prefix)
         sul_in, sul_out = self.sul.adaptive_query(prefix, suffix)
         if sul_out:
             outputs = sul_out
-        
+
         self.insert_observation(sul_in, outputs)
 
         return sul_in, outputs
@@ -346,36 +346,34 @@ class ObservationTree:
         Only add pairs (a,b) with a < b.
         """
         if state_one.id < state_two.id:
-            pair = (state_one.id, state_two.id) 
+            pair = (state_one.id, state_two.id)
         else:
-            pair = (state_two.id, state_one.id) 
-            
+            pair = (state_two.id, state_one.id)
+
         if pair in self.witness_cache:
             return self.witness_cache.get(pair)
-        
+
         witness = Apartness.compute_witness(state_one, state_two, self)
         self.witness_cache[pair] = witness
         return witness
 
     def make_frontiers_identified(self):
-        """
-        Loop over all frontier states to indentify them
-        """
+        """ Loop over all frontier states to identify them """
         for frontier_state in self.frontier_to_basis_dict:
             self.identify_frontier(frontier_state)
 
     def identify_frontier(self, frontier_state):
-        """
-        Identify a specific frontier state
-        """
+        """ Identify a specific frontier state """
         if frontier_state not in self.frontier_to_basis_dict:
-            raise Exception(f"Warning: {frontier_state} not found in frontier_to_basis_dict.")
-        
+            raise Exception(
+                f"Warning: {frontier_state} not found in frontier_to_basis_dict.")
+
         self.update_basis_candidates(frontier_state)
-        old_candidate_size = len(self.frontier_to_basis_dict.get(frontier_state))
+        old_candidate_size = len(
+            self.frontier_to_basis_dict.get(frontier_state))
         if (old_candidate_size < 2):
             return
-        
+
         if (self.separation_rule == "SepSeq" or old_candidate_size == 2):
             inputs, outputs = self._identify_frontier_sepseq(frontier_state)
         else:
@@ -387,34 +385,27 @@ class ObservationTree:
             print("Identification did not increase the norm")
 
     def _identify_frontier_sepseq(self, frontier_state):
-        """
-        Specifically identify frontier states using separating sequences
-        """
+        """ Specifically identify frontier states using separating sequences """
         basis_candidates = self.frontier_to_basis_dict.get(frontier_state)
         basis_one = basis_candidates[0]
         basis_two = basis_candidates[1]
 
         witness = self.get_or_compute_witness(basis_one, basis_two)
-
         inputs = self.get_transfer_sequence(self.root, frontier_state)
         inputs.extend(witness)
 
-        outputs = self.sul.query(inputs) 
+        outputs = self.sul.query(inputs)
 
         return inputs, outputs
 
     def _identify_frontier_ads(self, frontier_state):
-        """
-        Specifically identify frontier states using ADS
-        """
+        """ Specifically identify frontier states using ADS """
         basis_candidates = self.frontier_to_basis_dict.get(frontier_state)
         suffix = Ads(self, basis_candidates)
         return self.adaptive_output_query_base(self.get_transfer_sequence(self.root, frontier_state), suffix)
 
     def construct_hypothesis(self):
-        """
-        Construct a hypothesis (Mealy Machine) based on the observation tree
-        """
+        """ Construct a hypothesis (Mealy Machine) based on the observation tree """
         self.basis_to_mealy_dict.clear()
         state_counter = 0
         for basis_state in self.basis:
@@ -432,74 +423,72 @@ class ObservationTree:
                 if successor in self.frontier_to_basis_dict:
                     candidates = self.frontier_to_basis_dict[successor]
                     if len(candidates) > 1:
-                        raise RuntimeError("Multiple basis candidates for a single frontier state.")
+                        raise RuntimeError(
+                            "Multiple basis candidates for a single frontier state.")
                     successor = next(iter(candidates))
 
                 if successor not in self.basis_to_mealy_dict:
-                    raise RuntimeError("Successor is not in the basisToStateMap.")
-                
+                    raise RuntimeError(
+                        "Successor is not in the basisToStateMap.")
+
                 source.output_fun[input_val] = output
                 destination = self.basis_to_mealy_dict[successor]
                 source.transitions[input_val] = destination
-            
+
             mealy_states.append(source)
 
-        hypothesis = MealyMachine(self.basis_to_mealy_dict[self.root], mealy_states)
+        hypothesis = MealyMachine(
+            self.basis_to_mealy_dict[self.root], mealy_states)
         hypothesis.compute_prefixes()
         hypothesis.characterization_set = self.set_characterization_set()
 
         return hypothesis
 
     def set_characterization_set(self):
-        """ 
-        Create characterization set based on the witness between basis states
-        """
+        """ Create characterization set based on the witness between basis states """
         charset = []
-        for basis_i in range(0,len(self.basis)):
-            for basis_j in range(basis_i+1,len(self.basis)):
+        for basis_i in range(0, len(self.basis)):
+            for basis_j in range(basis_i+1, len(self.basis)):
                 found = False
                 for sepseq in charset:
                     if self.get_outputs(self.basis[basis_i], sepseq) != self.get_outputs(self.basis[basis_j], sepseq):
-                        found = True 
+                        found = True
                         break
                 if not found:
-                    wit = self.get_or_compute_witness(self.basis[basis_i], self.basis[basis_j])
+                    wit = self.get_or_compute_witness(
+                        self.basis[basis_i], self.basis[basis_j])
                     charset.append(wit)
         return charset
 
-
     def build_hypothesis(self):
-        """
-        Builds the hypothesis which will be sent to the SUL
-        """
+        """ Builds the hypothesis which will be sent to the SUL """
         self.make_observation_tree_adequate()
         return self.construct_hypothesis()
 
     def make_observation_tree_adequate(self):
-        """
-        Updates the frontier and basis based on extension and separation rule
-        """
+        """ Updates the frontier and basis based on extension and separation rule """
         self.update_frontier_and_basis()
-        while(not self.is_observation_tree_adequate()):
+        while (not self.is_observation_tree_adequate()):
             self.make_basis_complete()
             self.make_frontiers_identified()
             self.promote_frontier_state()
 
     ### Counterexample Processing ###
-    
+
     def process_counter_example(self, hypothesis, cex_inputs, cex_outputs):
         """
         Inserts the counter example into the observation tree and searches for the input-output sequence which is different
         """
         self.insert_observation(cex_inputs, cex_outputs)
-        hyp_outputs = hypothesis.compute_output_seq(hypothesis.initial_state, cex_inputs)
-        prefix_index = self._get_counter_example_prefix_index(cex_outputs, hyp_outputs)
-        self._process_binary_search(hypothesis, cex_inputs[:prefix_index], cex_outputs[:prefix_index])
+        hyp_outputs = hypothesis.compute_output_seq(
+            hypothesis.initial_state, cex_inputs)
+        prefix_index = self._get_counter_example_prefix_index(
+            cex_outputs, hyp_outputs)
+        self._process_binary_search(
+            hypothesis, cex_inputs[:prefix_index], cex_outputs[:prefix_index])
 
     def _get_counter_example_prefix_index(self, cex_outputs, hyp_outputs):
-        """
-        Checks at which index the output functions differ
-        """
+        """ Checks at which index the output functions differ """
         for index in range(len(cex_outputs)):
             if cex_outputs[index] != hyp_outputs[index]:
                 return index
@@ -512,11 +501,13 @@ class ObservationTree:
         tree_node = self.get_successor(cex_inputs)
         self.update_frontier_and_basis()
 
-        if(tree_node in self.frontier_to_basis_dict or tree_node in self.basis):
+        if (tree_node in self.frontier_to_basis_dict or tree_node in self.basis):
             return
-        
-        hyp_state = self._get_mealy_successor(hypothesis, hypothesis.initial_state, cex_inputs)
-        hyp_node = list(self.basis_to_mealy_dict.keys())[list(self.basis_to_mealy_dict.values()).index(hyp_state)]
+
+        hyp_state = self._get_mealy_successor(
+            hypothesis, hypothesis.initial_state, cex_inputs)
+        hyp_node = list(self.basis_to_mealy_dict.keys())[list(
+            self.basis_to_mealy_dict.values()).index(hyp_state)]
 
         prefix = []
         current_state = self.root
@@ -530,8 +521,10 @@ class ObservationTree:
         sigma1 = list(cex_inputs[:h])
         sigma2 = list(cex_inputs[h:])
 
-        hyp_state_p = self._get_mealy_successor(hypothesis, hypothesis.initial_state, sigma1)
-        hyp_node_p = list(self.basis_to_mealy_dict.keys())[list(self.basis_to_mealy_dict.values()).index(hyp_state_p)]
+        hyp_state_p = self._get_mealy_successor(
+            hypothesis, hypothesis.initial_state, sigma1)
+        hyp_node_p = list(self.basis_to_mealy_dict.keys())[list(
+            self.basis_to_mealy_dict.values()).index(hyp_state_p)]
         hyp_p_access = self.get_transfer_sequence(self.root, hyp_node_p)
 
         witness = Apartness.compute_witness(tree_node, hyp_node, self)
@@ -539,7 +532,7 @@ class ObservationTree:
             raise RuntimeError("Binary search: There should be a witness")
 
         query_inputs = hyp_p_access + sigma2 + witness
-        query_outputs = self.sul.query(query_inputs) 
+        query_outputs = self.sul.query(query_inputs)
 
         self.insert_observation(query_inputs, query_outputs)
 
@@ -551,13 +544,12 @@ class ObservationTree:
             self._process_binary_search(hypothesis, sigma1, cex_outputs[:h])
         else:
             new_inputs = list(hyp_p_access) + sigma2
-            self._process_binary_search(hypothesis, new_inputs, query_outputs[:len(new_inputs)])
+            self._process_binary_search(
+                hypothesis, new_inputs, query_outputs[:len(new_inputs)])
 
     def _get_mealy_successor(self, mealy_machine, from_state, inputs):
         mealy_machine.current_state = from_state
         for input in inputs:
             mealy_machine.current_state = mealy_machine.current_state.transitions[input]
-        
-        return mealy_machine.current_state
 
-    
+        return mealy_machine.current_state
