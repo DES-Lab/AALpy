@@ -1,4 +1,5 @@
 import functools
+from bisect import insort
 from typing import Dict, Tuple, Callable, List
 from collections import deque
 
@@ -152,7 +153,7 @@ class GeneralizedStateMerging:
 
                 # no merge candidates for this blue state -> promote
                 if all(part.score is False for part in current_candidates.values()):
-                    red_states.append(blue_state)
+                    insort(red_states, blue_state, key=self.node_order)
                     instrumentation.log_promote(blue_state)
                     promotion = True
                     break
