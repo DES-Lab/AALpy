@@ -57,7 +57,7 @@ class ProgressReport(Instrumentation):
     def print_status(self):
         reset_char = "\33[2K\r"
         print_str = reset_char + f'Current automaton size: {self.nr_red_states}'
-        if self.lvl != 1:
+        if self.lvl != 1 and not self.gsm.eval_compat_on_futures:
             print_str += f' Merged: {self.nr_merged_states_total} Remaining: {self.pta_size - self.nr_red_states - self.nr_merged_states_total}'
         print(print_str, end="")
 

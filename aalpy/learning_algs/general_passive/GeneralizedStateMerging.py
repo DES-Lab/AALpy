@@ -221,6 +221,7 @@ class GeneralizedStateMerging:
         # when compatibility is determined only by future and scores are disabled, we need not create partitions.
         if self.eval_compat_on_futures and not self.score_calc.has_score_function():
             def update_partition(red_node: Node, blue_node: Node) -> Node:
+                partitioning.red_mapping[red_node] = red_node
                 return red_node
         else:
             def update_partition(red_node: Node, blue_node: Node) -> Node:
