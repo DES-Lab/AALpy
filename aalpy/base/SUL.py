@@ -61,7 +61,7 @@ class SUL(ABC):
         last_output = None
 
         for inp in inputs:
-            output = self.sul.step(inp)
+            output = self.step(inp)
             outputs_received.append(output)
         self.num_steps += len(inputs)
 
@@ -70,7 +70,7 @@ class SUL(ABC):
             if next_input is None:
                 break
             inputs.append(next_input)
-            output = self.sul.step(next_input) 
+            output = self.step(next_input) 
             outputs_received.append(output)
             last_output = output
             self.num_steps += 1

@@ -43,19 +43,6 @@ class Apartness:
         return None
 
     @staticmethod
-    def compute_witness_in_tree_and_hypothesis(ob_tree, hypothesis):
-        """
-        Finds a distinguishing sequence between the observation tree and the hypothesis if they differ
-        """
-        compute_witness_in_tree_and_hypothesis_states(
-            ob_tree, ob_tree.root, hypothesis, hypothesis.initial_state, alphabet)
-        tree_destination = Apartness._show_states_are_apart_in_tree_and_hypothesis(
-            hypothesis, ob_tree)
-        if not tree_destination:
-            return
-        return ob_tree.get_transfer_sequence(ob_tree.root, tree_destination)
-
-    @staticmethod
     def compute_witness_in_tree_and_hypothesis_states(ob_tree, ob_tree_state, hypothesis, hyp_state):
         """
         Determines if the observation tree and the hypothesis are distinguishable based on their state outputs

@@ -263,8 +263,6 @@ class AdaptiveObservationTree(ObservationTree):
         if len(inputs) != len(outputs):
             raise ValueError("Inputs and outputs must have the same length.")
 
-        self.validate_input(inputs)
-
         if self.state_matching != "None":
             self.extend_node_and_update_matching(inputs, outputs)
         else:

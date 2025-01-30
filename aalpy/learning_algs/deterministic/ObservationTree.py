@@ -65,19 +65,10 @@ class ObservationTree:
 
     ### Posing queries and adding observations ###
 
-    def validate_input(self, inputs):
-        """ Check if all inputs are valid (part of the alphabet) """
-        for input_val in inputs:
-            if input_val not in self.alphabet:
-                raise ValueError(
-                    f"Input '{input_val}' is not in the alphabet.")
-
     def insert_observation(self, inputs, outputs):
         """ Insert an observation into the tree using sequences of inputs and outputs """
         if len(inputs) != len(outputs):
             raise ValueError("Inputs and outputs must have the same length.")
-
-        self.validate_input(inputs)
 
         current_node = self.root
         for input_val, output_val in zip(inputs, outputs):
@@ -85,8 +76,6 @@ class ObservationTree:
 
     def get_observation(self, inputs):
         """ Retrieve the list of outputs based on a given input sequence """
-        self.validate_input(inputs)
-
         current_node = self.root
         observation = []
         for input_val in inputs:
@@ -116,8 +105,6 @@ class ObservationTree:
 
     def get_successor(self, inputs):
         """ Retrieve the node (sub-tree) corresponding to the given input sequence """
-        self.validate_input(inputs)
-
         current_node = self.root
         for input_val in inputs:
             successor_node = current_node.get_successor(input_val)
