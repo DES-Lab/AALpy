@@ -101,8 +101,8 @@ def split_data_to_learning_and_testing(data, learning_to_test_ratio=0.5):
     num_learning_positive_seq = total_number_positive * learning_to_test_ratio
     num_learning_negative_seq = total_number_negative * learning_to_test_ratio
 
-    sorted(data, key=lambda x: len(x[0]))
-    # shuffle(data)
+    # sorted(data, key=lambda x: len(x[0]))
+    shuffle(data)
 
     learning_sequances, test_sequances = [], []
 
@@ -125,7 +125,8 @@ def run_experiment(experiment_id,
                    num_of_learning_seq,
                    min_learning_seq_len,
                    max_learning_seq_len,
-                   random_data_generation=True):
+                   random_data_generation=True,
+                   learning_to_test_ratio=0.5):
     if random_data_generation:
         data = generate_input_output_data_from_vpa(ground_truth_model,
                                                    num_sequances=num_of_learning_seq,
@@ -133,18 +134,35 @@ def run_experiment(experiment_id,
                                                    max_seq_len=max_learning_seq_len,
                                                    min_number_positive=12, )
     else:
-        data = all_data[experiment_id]
+        all_generated_data = all_data[experiment_id]
+
+        # sorted(all_generated_data, key=lambda x: len(x))
+        shuffle(all_generated_data)
+
+        positive_seq = [x for x in all_generated_data if x[1]]
+        negative_seq = [x for x in all_generated_data if not x[1]]
+
+        data = []
+        data += positive_seq[:5000]
+        data += negative_seq[:10000 - len(data)]
+
+        # wm_negative = 0
+        # for seq, label in data:
+        #     if not label and ground_truth_model.is_balanced(seq):
+        #         wm_negative += 1
+        # print(wm_negative)
+
         # data = get_sequances_from_active_sevpa(ground_truth_model)
 
     vpa_alphabet = ground_truth_model.get_input_alphabet()
 
-    learning_data, test_data = split_data_to_learning_and_testing(data, learning_to_test_ratio=0.3)
+    learning_data, test_data = split_data_to_learning_and_testing(data, learning_to_test_ratio=learning_to_test_ratio)
 
     num_positive_learning = len([x for x in learning_data if x[1]])
     learning_set_size = (num_positive_learning, len(learning_data) - num_positive_learning)
 
     num_positive_test = len([x for x in test_data if x[1]])
-    test_set_size = (num_positive_test, len(test_data) - num_positive_test)
+    num_test_size = (num_positive_test, len(test_data) - num_positive_test)
 
     rpni_model = run_RPNI(learning_data, 'dfa', print_info=False, input_completeness='sink_state')
 
@@ -152,14 +170,14 @@ def run_experiment(experiment_id,
 
     comparison_results = compare_rpni_and_papni(test_data, rpni_model, papni_model)
 
-    comparison_results = comparison_results + [learning_set_size, test_set_size]
+    comparison_results = comparison_results + [learning_set_size, num_test_size]
     return comparison_results
 
 
-def run_all_experiments_experiments(test_models):
+def run_all_experiments_experiments(test_models, learning_to_test_ratio):
     for idx, gt in enumerate(test_models):
         results = run_experiment(idx, gt, num_of_learning_seq=10000, min_learning_seq_len=10, max_learning_seq_len=50,
-                                 random_data_generation=False)
+                                 random_data_generation=False, learning_to_test_ratio=learning_to_test_ratio)
 
         res_str = f'GT {idx + 1}:\t Learning ({results[-2][0]}/{results[-2][1]}),\t Test ({results[-1][0]}/{results[-1][1]}),\t'
         res_str += f'RPNI: size: {results[0]}, prec/rec/F1: {results[2]}, \t PAPNI size: {results[1]}, prec/rec/F1: {results[3]}'
@@ -172,7 +190,7 @@ def run_experiments_multiple_times(test_models, num_times):
     for idx, gt in enumerate(test_models):
         for _ in range(num_times):
             r = run_experiment(idx, gt, num_of_learning_seq=10000, min_learning_seq_len=50, max_learning_seq_len=50,
-                               random_data_generation=False)
+                               random_data_generation=False, learning_to_test_ratio=0.5)
 
             all_results[idx].append(r)
 
@@ -195,5 +213,5 @@ def run_experiments_multiple_times(test_models, num_times):
 
 all_models = get_all_VPAs()
 
-run_all_experiments_experiments(all_models)
+run_all_experiments_experiments(all_models, learning_to_test_ratio=0.5)
 # run_experiments_multiple_times(all_models, 20)
