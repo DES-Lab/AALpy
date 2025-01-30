@@ -1,10 +1,8 @@
-from random import shuffle, choice, randint, Random
-import random
+from random import shuffle, choice, randint
 
 from aalpy.base.Oracle import Oracle
 from aalpy.base.SUL import SUL
-from aalpy.utils.HelperFunctions import product_with_possible_empty_iterable
-from aalpy.learning_algs.deterministic.ObservationTree import ObservationTree
+from itertools import product
 
 
 class WMethodEqOracle(Oracle):
@@ -13,7 +11,7 @@ class WMethodEqOracle(Oracle):
     finite-state machines'.
     """
 
-    def __init__(self, alphabet: list, sul: SUL, max_number_of_states, lookahead=None, shuffle_test_set=False):
+    def __init__(self, alphabet: list, sul: SUL, max_number_of_states, shuffle_test_set=True):
         """
         Args:
 
@@ -27,37 +25,46 @@ class WMethodEqOracle(Oracle):
         self.m = max_number_of_states
         self.shuffle = shuffle_test_set
         self.cache = set()
-        self.lookahead = lookahead
 
-    def find_cex(self, hypothesis, ob_tree=None):
+    def test_suite(self, cover, depth, char_set):
+        """
+        Construct the test suite for the W Method using
+        the provided state cover and characterization set,
+        exploring up to a given depth.
+        Args:
+
+            cover: list of states to cover
+            depth: maximum length of middle part
+            char_set: characterization set
+        """
+        # fix the length of the middle part per loop
+        # to avoid generating large sequences early on
+        char_set = char_set or [()]
+        for d in range(depth):
+            middle = product(self.alphabet, repeat=d)
+            for m in middle:
+                for (s, c) in product(cover, char_set):
+                    yield s + m + c
+
+    def find_cex(self, hypothesis):
+
         if not hypothesis.characterization_set:
             hypothesis.characterization_set = hypothesis.compute_characterization_set()
 
         # covers every transition of the specification at least once.
-        transition_cover = [state.prefix + (letter,) for state in hypothesis.states for letter in self.alphabet]
-        middle = []
+        transition_cover = [
+            state.prefix + (letter,)
+            for state in hypothesis.states
+            for letter in self.alphabet
+        ]
 
-        # Check for the number of expected states
-        k_extra_states = self.m + 1 - len(hypothesis.states)
-        # Check for k additional states
-        if self.lookahead:
-            k_extra_states = self.lookahead
-
-        for i in range(k_extra_states):
-            middle.extend(list(product_with_possible_empty_iterable(self.alphabet, repeat=i)))
-
-        test_suite = product_with_possible_empty_iterable(transition_cover, middle, hypothesis.characterization_set) 
-        if self.shuffle:
-            test_suite = list(test_suite)
-            Random(51).shuffle(test_suite)
-
-        for seq in test_suite:
-            inp_seq = tuple([i for sub in seq for i in sub])
-            if inp_seq not in self.cache:
+        depth = self.m + 1 - len(hypothesis.states)
+        for seq in self.test_suite(transition_cover, depth, hypothesis.characterization_set):
+            if seq not in self.cache:
                 self.reset_hyp_and_sul(hypothesis)
                 outputs = []
 
-                for ind, letter in enumerate(inp_seq):
+                for ind, letter in enumerate(seq):
                     out_hyp = hypothesis.step(letter)
                     out_sul = self.sul.step(letter)
                     self.num_steps += 1
@@ -65,11 +72,8 @@ class WMethodEqOracle(Oracle):
                     outputs.append(out_sul)
                     if out_hyp != out_sul:
                         self.sul.post()
-                        return inp_seq[:ind + 1]
-                self.cache.add(inp_seq)
-                # If an observation tree is given, we add the test queries to the observation tree
-                if ob_tree:
-                    ob_tree.insert_observation(inp_seq, outputs)
+                        return seq[:ind + 1]
+                self.cache.add(seq)
 
         return None
 

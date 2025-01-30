@@ -17,6 +17,14 @@ class AdaptiveObservationTree(ObservationTree):
         """
         super().__init__(alphabet, sul, extension_rule, separation_rule)
         self.references = references
+        self.rebuild_states = 0
+        self.matching_states = 0
+
+        if not references:
+            self.state_matching = "None"
+            print(
+                    f"Warning: no references given, normal L# is executed.")
+            return
         self.rebuilding = rebuilding
         self.state_matching = state_matching
         self.prefixes_map = {}
@@ -26,9 +34,6 @@ class AdaptiveObservationTree(ObservationTree):
         # We keep track of a new basis to ensure maximal overlap between prefixes in the references and the new model
         self.new_basis = [self.root]
         self.initial_OQs = []
-
-        self.rebuild_states = 0
-        self.matching_states = 0
 
         if self.rebuilding:
             self.rebuildObsTree()
@@ -111,6 +116,8 @@ class AdaptiveObservationTree(ObservationTree):
         parent_basis = frontier_state.parent
         inp = frontier_state.input_to_parent
         match = self.state_matcher.best_match[parent_basis]
+        if not match:
+            return
         if match[0].output_fun[inp] != 'epsilon': 
             frontier_match = match[0].transitions[inp]
             identifiers = self.characterization_map[frontier_match]

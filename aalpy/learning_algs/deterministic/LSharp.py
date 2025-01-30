@@ -11,7 +11,7 @@ from aalpy.utils.HelperFunctions import print_learning_info
 from aalpy.oracles import WMethodEqOracle, WpMethodEqOracle, PerfectKnowledgeEqOracle
 
 
-def run_Lsharp(alphabet: list, sul: SUL, eq_oracle: Oracle, extension_rule="Nothing", separation_rule="SepSeq", samples=[], max_learning_rounds=None, cache_and_non_det_check=True, return_data=False, print_level=2, add_tests_to_tree=False):
+def run_Lsharp(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, extension_rule="Nothing", separation_rule="SepSeq", samples=[], max_learning_rounds=None, cache_and_non_det_check=True, return_data=False, print_level=2):
     """
     Executes the L# algorithm (prefix-tree based automaton learning).
 
@@ -22,6 +22,8 @@ def run_Lsharp(alphabet: list, sul: SUL, eq_oracle: Oracle, extension_rule="Noth
         sul: system under learning
 
         eq_oracle: equivalence oracle
+
+        automaton_type: currently only 'mealy' is accepted
 
         extension_rule: strategy used during the extension rule. Options: "Nothing" (default), "SepSeq" and "ADS".
 
@@ -40,14 +42,12 @@ def run_Lsharp(alphabet: list, sul: SUL, eq_oracle: Oracle, extension_rule="Noth
         print_level: 0 - None, 1 - just results, 2 - current round and hypothesis size, 3 - educational/debug
             (Default value = 2)
 
-        add_tests_to_tree: adds the test sequences to the observation tree. Only implemented for W and Wp method
-
     Returns:
 
         automaton of type automaton_type (dict containing all information about learning if 'return_data' is True)
 
     """
-
+    assert automaton_type == "mealy"
     assert extension_rule in {"Nothing", "SepSeq", "ADS"}
     assert separation_rule in {"SepSeq", "ADS"}
 
@@ -80,10 +80,7 @@ def run_Lsharp(alphabet: list, sul: SUL, eq_oracle: Oracle, extension_rule="Noth
 
         # Pose Equivalence Query
         eq_query_start = time.time()
-        if add_tests_to_tree and (isinstance(eq_oracle, WMethodEqOracle) or isinstance(eq_oracle, WpMethodEqOracle)):
-            cex = eq_oracle.find_cex(hypothesis, ob_tree)
-        else:
-            cex = eq_oracle.find_cex(hypothesis)
+        cex = eq_oracle.find_cex(hypothesis)
         eq_query_time += time.time() - eq_query_start
 
         if print_level > 2:

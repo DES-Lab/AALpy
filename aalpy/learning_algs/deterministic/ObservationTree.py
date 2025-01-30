@@ -440,25 +440,9 @@ class ObservationTree:
         hypothesis = MealyMachine(
             self.basis_to_mealy_dict[self.root], mealy_states)
         hypothesis.compute_prefixes()
-        hypothesis.characterization_set = self.set_characterization_set()
+        hypothesis.characterization_set = hypothesis.compute_characterization_set()
 
         return hypothesis
-
-    def set_characterization_set(self):
-        """ Create characterization set based on the witness between basis states """
-        charset = []
-        for basis_i in range(0, len(self.basis)):
-            for basis_j in range(basis_i+1, len(self.basis)):
-                found = False
-                for sepseq in charset:
-                    if self.get_outputs(self.basis[basis_i], sepseq) != self.get_outputs(self.basis[basis_j], sepseq):
-                        found = True
-                        break
-                if not found:
-                    wit = self.get_or_compute_witness(
-                        self.basis[basis_i], self.basis[basis_j])
-                    charset.append(wit)
-        return charset
 
     def build_hypothesis(self):
         """ Builds the hypothesis which will be sent to the SUL """
