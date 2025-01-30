@@ -204,10 +204,11 @@ class AdaptiveObservationTree(ObservationTree):
 
         frontier_states = list(self.frontier_to_basis_dict.keys())
         for frontier_state in frontier_states:
-            basis_candidates = self.frontier_to_basis_dict[frontier_state]
-            self.match_separation_frontier(
-                matched_states, frontier_state, basis_candidates)
-            self.update_frontier_and_basis()
+            if frontier_state in self.frontier_to_basis_dict.keys():
+                basis_candidates = self.frontier_to_basis_dict[frontier_state]
+                self.match_separation_frontier(
+                    matched_states, frontier_state, basis_candidates)
+                self.update_frontier_and_basis()
 
     def match_separation_frontier(self, matched_states, frontier_state, basis_candidates):
         """ 
@@ -377,8 +378,6 @@ class AdaptiveObservationTree(ObservationTree):
         """
         if len(inputs) != len(outputs):
             raise ValueError("Inputs and outputs must have the same length.")
-
-        self.validate_input(inputs)
 
         split = None
         current_node = self.root
