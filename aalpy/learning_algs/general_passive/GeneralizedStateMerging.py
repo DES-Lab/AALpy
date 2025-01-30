@@ -120,7 +120,7 @@ class GeneralizedStateMerging:
                     if c in red_states:
                         continue
                     blue_states.append(c)
-                    if self.consider_only_min_blue:
+                    if self.consider_only_min_blue or not self.score_calc.has_score_function():
                         blue_states = [min(blue_states, key=self.node_order)]
 
             # no blue states left -> done
