@@ -300,6 +300,170 @@ class Vpa(Automaton):
         # None indicates that a sequance was not successfully generated
         return None
 
+    def output_step(self, state, letter):
+        state_save = self.current_state
+        stack_save = self.stack.copy()
+        self.current_state = state
+        output = self.step(letter)
+        stack = self.stack
+        self.current_state = state_save
+        self.stack = stack_save
+        return output, stack
+
+    def find_distinguishing_seq(self, state1, state2, alphabet):
+
+        visited = set()
+        to_explore = [(state1, state2, [])]
+        while to_explore:
+            (curr_s1, curr_s2, prefix) = to_explore.pop(0)
+            visited.add((curr_s1, curr_s2))
+            for i in alphabet:
+                o1, stack = self.output_step(curr_s1, i)
+                o2, stack = self.output_step(curr_s2, i)
+                new_prefix = prefix + [i]
+                if o1 != o2:
+                    return new_prefix
+                else:
+                    if curr_s1.transitions[i]:
+                        next_s1 = curr_s1.transitions[i][0].target_state
+                    else:
+                        next_s1 = curr_s1
+                    if curr_s2.transitions[i]:
+                        next_s2 = curr_s2.transitions[i][0].target_state
+                    else:
+                        next_s2 = curr_s2
+
+                    if (next_s1, next_s2) not in visited:
+                        to_explore.append((next_s1, next_s2, new_prefix))
+
+        return None
+
+    def compute_output_seq(self, state, sequence):
+        """
+        Given an input sequence, compute the output response from a given state.
+        Args:
+            state: state from which the output response shall be computed
+            sequence: an input sequence over the alphabet
+
+        Returns: the output response
+
+        """
+        state_save = self.current_state
+        stack_save = self.stack.copy()
+        output = self.execute_sequence(state, sequence)
+        self.current_state = state_save
+        self.stack = stack_save
+        return output
+
+    def _split_blocks(self, blocks, seq):
+        """
+        Refines a partition of states (blocks) using the output response to a given input sequence seq.
+        Args:
+            blocks: a partition of states
+            seq: an input sequence
+
+        Returns: a refined partition of states
+
+        """
+        new_blocks = []
+        for block in blocks:
+            block_after_split = defaultdict(list)
+            for state in block:
+                output_seq = tuple(self.compute_output_seq(state, seq))
+                block_after_split[output_seq].append(state)
+            for new_block in block_after_split.values():
+                new_blocks.append(new_block)
+        return new_blocks
+
+    def compute_characterization_set(self, char_set_init=None,
+                                     online_suffix_closure=True,
+                                     split_all_blocks=True,
+                                     return_same_states=False,
+                                     raise_warning=True):
+        """
+        Computation of a characterization set, that is, a set of sequences that can distinguish all states in the
+        automation. The implementation follows the approach for finding multiple preset diagnosing experiments described
+        by Arthur Gill in "Introduction to the Theory of Finite State Machines".
+        Some optional parameterized adaptations, e.g., for computing suffix-closed sets target the application in
+        L*-based learning and conformance testing.
+        The function only works for minimal automata.
+        Args:
+            char_set_init: a list of sequence that will be included in the characterization set, e.g., the input
+                        alphabet. A empty sequance is added to this list when using automata with state labels
+                        (DFA and Moore)
+            online_suffix_closure: if true, ensures suffix closedness of the characterization set at every computation
+                                step
+            split_all_blocks: if false, the computation follows the original tree-based strategy, where newly computed
+                        sequences are only checked on a subset of the states to be distinguished
+                        if true, sequences are used to distinguish all states, yielding a potentially smaller set, which
+                        is useful for conformance testing and learning
+            return_same_states: if True, a single distinguishable pair of states will be returned, or None None if there
+                        are no non-distinguishable states
+            raise_warning: prints warning message if characterization set cannot be computed
+
+        Returns: a characterization set or None if a non-minimal automaton is passed to the function
+
+        """
+        import copy
+
+        blocks = list()
+        blocks.append(copy.copy(self.states))
+        char_set = [] if not char_set_init else char_set_init
+        if char_set_init:
+            for seq in char_set_init:
+                blocks = self._split_blocks(blocks, seq)
+
+        alphabet = self.get_input_alphabet().get_merged_alphabet()
+        while True:
+            # Given a partition (of states), this function returns a block with at least two elements.
+            try:
+                block_to_split = next(filter(lambda b: len(b) > 1, blocks))
+            except StopIteration:
+                block_to_split = None
+
+            if not block_to_split:
+                break
+            split_state1 = block_to_split[0]
+            split_state2 = block_to_split[1]
+            dist_seq = self.find_distinguishing_seq(split_state1, split_state2, alphabet)
+            if dist_seq is None:
+                if return_same_states:
+                    return split_state1, split_state2
+
+                return None
+
+            # in L*-based learning, we use suffix-closed column labels, so it makes sense to use a suffix-closed
+            # char set in this context
+            if online_suffix_closure:
+                dist_seq_closure = [tuple(dist_seq[len(dist_seq) - i - 1:]) for i in range(len(dist_seq))]
+            else:
+                dist_seq_closure = [tuple(dist_seq)]
+
+            # the standard approach described by Gill, computes a sequence that splits one block and really only splits
+            # one block, that is, it is only applied to the states in said block
+            # in L*-based learning we combine every prefix with every, therefore it makes sense to apply the sequence
+            # on all blocks and split all
+            if split_all_blocks:
+                for seq in dist_seq_closure:
+                    # seq may be in char_set if we do the closure on the fly
+                    if seq in char_set:
+                        continue
+                    char_set.append(seq)
+                    blocks = self._split_blocks(blocks, seq)
+            else:
+                blocks.remove(block_to_split)
+                new_blocks = [block_to_split]
+                for seq in dist_seq_closure:
+                    char_set.append(seq)
+                    new_blocks = self._split_blocks(new_blocks, seq)
+                for new_block in new_blocks:
+                    blocks.append(new_block)
+
+        char_set = list(set(char_set))
+        if return_same_states:
+            return None, None
+        return char_set
+
 
 def vpa_from_dfa_representation(dfa_repr, vpa_alphabet):
     vpa_states = dict()

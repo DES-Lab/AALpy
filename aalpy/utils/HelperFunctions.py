@@ -356,16 +356,21 @@ def generate_input_output_data_from_automata(model, num_sequances=4000, min_seq_
     return input_output_sequances
 
 
-def generate_input_output_data_from_vpa(vpa, num_sequances=1000, max_seq_len=16, max_attempts=None):
-    alphabet = vpa.input_alphabet.get_merged_alphabet()
+def generate_input_output_data_from_vpa(vpa, num_sequances=1000,
+                                        min_seq_len=2,
+                                        max_seq_len=16,
+                                        max_attempts=None,
+                                        min_number_positive=10):
+    alphabet = vpa.vpa_alphabet.get_merged_alphabet()
     data_set = set()
 
     num_nominal_tries = num_sequances // 2
     num_generation_attempts = 0
+    num_positive = 0
 
     max_attempts = max_attempts if max_attempts is not None else num_sequances * 50
 
-    while len(data_set) < num_sequances:
+    while len(data_set) < num_sequances or num_positive < min_number_positive:
         num_generation_attempts += 1
         # it can happen that it is not possible to generate num_sequances balanced words of lenght <= max_seq_len
         if num_generation_attempts == max_attempts:
@@ -375,7 +380,9 @@ def generate_input_output_data_from_vpa(vpa, num_sequances=1000, max_seq_len=16,
 
         vpa.reset_to_initial()
 
-        for _ in range(max_seq_len):
+        seq_len = random.randint(min_seq_len, max_seq_len)
+
+        for _ in range(seq_len):
             if num_generation_attempts <= num_nominal_tries:
                 possible_transitions = list(vpa.current_state.transitions.keys())
                 if not possible_transitions:
@@ -386,6 +393,9 @@ def generate_input_output_data_from_vpa(vpa, num_sequances=1000, max_seq_len=16,
             sequance += (chosen_input,)
 
             output = vpa.step(chosen_input)
+            if output:
+                num_positive += 1
+
             #if vpa.is_balanced(sequance):
             data_set.add((sequance, output))
 

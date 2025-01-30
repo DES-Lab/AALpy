@@ -1109,7 +1109,7 @@ def passive_vpa_learning_on_all_benchmark_models():
 
     for gt in get_all_VPAs():
 
-        vpa_alphabet = gt.input_alphabet
+        vpa_alphabet = gt.vpa_alphabet
         data = generate_input_output_data_from_vpa(gt, num_sequances=2000, min_seq_len=1, max_seq_len=16)
 
         data = convert_i_o_traces_for_RPNI(data)

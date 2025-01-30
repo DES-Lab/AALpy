@@ -207,7 +207,7 @@ def benchmark_vpa_dfa():
                                        list(model_under_learning.call_set),
                                        list(model_under_learning.return_set))
 
-        alphabet_dfa = model_under_learning.input_alphabet.get_merged_alphabet()
+        alphabet_dfa = model_under_learning.vpa_alphabet.get_merged_alphabet()
 
         sul_vpa = VpaSUL(vpa)
         sul_dfa = DfaSUL(vpa)

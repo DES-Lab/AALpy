@@ -416,8 +416,8 @@ def vpa_json():
 
     # Define states and transitions
     state_setup = {
-        "q0": (False, {
-            "{": [("q1", 'push', '{')],
+        "q0": (True, {
+            "{": [("q2", 'push', '{')],
             "[": [("q2", 'push', '[')],
             "}": [("q0", 'pop', '{')],
             "]": [("q0", 'pop', '[')],
@@ -463,3 +463,6 @@ def get_all_VPAs():
     return [vpa_L1(), vpa_L2(), vpa_L3(), vpa_L4(),
             vpa_L6(), vpa_L8(), vpa_L9(), vpa_L10(),
             vpa_L11(), vpa_L12(), vpa_for_odd_parentheses(), vpa_for_even_parentheses(), arithmetics_vpa]
+
+if __name__ == '__main__':
+    vpa_L2().visualize()
