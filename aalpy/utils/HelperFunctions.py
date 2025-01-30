@@ -361,7 +361,7 @@ def generate_input_output_data_from_vpa(vpa, num_sequances=1000,
                                         max_seq_len=16,
                                         max_attempts=None,
                                         min_number_positive=10):
-    alphabet = vpa.vpa_alphabet.get_merged_alphabet()
+    alphabet = vpa.get_input_alphabet().get_merged_alphabet()
     data_set = set()
 
     num_nominal_tries = num_sequances // 2
