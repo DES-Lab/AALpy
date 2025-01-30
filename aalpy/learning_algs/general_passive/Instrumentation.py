@@ -55,7 +55,8 @@ class ProgressReport(Instrumentation):
         self.previous_time = time.time()
 
     def print_status(self):
-        print_str = f'\rCurrent automaton size: {self.nr_red_states}'
+        reset_char = "\33[2K\r"
+        print_str = reset_char + f'Current automaton size: {self.nr_red_states}'
         if self.lvl != 1:
             print_str += f' Merged: {self.nr_merged_states_total} Remaining: {self.pta_size - self.nr_red_states - self.nr_merged_states_total}'
         print(print_str, end="")
