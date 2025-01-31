@@ -230,6 +230,10 @@ def run_PAPNI(data, vpa_alphabet, algorithm='gsm', print_info=True):
         rpni = GeneralizedStateMerging(papni_data, automaton_type='dfa',
                                        print_info=print_info)
 
+    if rpni.root is None:
+        print('Data provided to PAPNI is not deterministic. Returning: None')
+        return None
+
     # run classic RPNI with preprocessed data that is aware of stack
     learned_model = rpni.run_rpni()
 
