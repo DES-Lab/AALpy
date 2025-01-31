@@ -3,7 +3,8 @@ from functools import wraps
 from typing import Dict
 
 from aalpy.learning_algs.general_passive.GeneralizedStateMerging import Instrumentation, Partitioning, GeneralizedStateMerging
-from aalpy.learning_algs.general_passive.helpers import Node
+from aalpy.learning_algs.general_passive.helpers import Node, TransitionInfo
+
 
 class ProgressReport(Instrumentation):
     @staticmethod
@@ -88,8 +89,10 @@ class MergeViolationDebugger(Instrumentation):
         self.root = ground_truth
         self.map: Dict[Node, Node] = dict()
         self.log = []
+        self.gsm : GeneralizedStateMerging = None
 
     def reset(self, gsm: GeneralizedStateMerging):
+        self.gsm = gsm
         self.map = dict()
         self.log = []
 
@@ -99,25 +102,27 @@ class MergeViolationDebugger(Instrumentation):
         old_red = self.map.get(node)
         if old_red is None:
             self.map[node] = new_red
-            self.log.append(("promote", (new_red_prefix,)))
+            self.log.append(("promote", new_red_prefix))
         elif old_red is not new_red:
             print(f"Erroneous promotion detected:")
             print(f"  Ground truth: {node.get_prefix()}")
             print(f"  Representative (old): {old_red.get_prefix()}")
             print(f"  Representative (new): {new_red_prefix}")
-            self.log.append(("wrong promote", (new_red_prefix,)))
+            self.log.append(("wrong promote", new_red_prefix))
 
     def log_merge(self, part: Partitioning):
         red_prefix = part.red.get_prefix()
         blue_prefix = part.blue.get_prefix()
         red_node = self.root.get_by_prefix(red_prefix)
         blue_node = self.root.get_by_prefix(blue_prefix)
-        if red_node is blue_node:
-            self.log.append(("merge", (red_prefix, blue_prefix)))
+        if red_node is None or blue_node is None:
+            self.log.append(("broken merge", red_prefix, blue_prefix))
+        elif red_node is blue_node:
+            self.log.append(("merge", red_prefix, blue_prefix))
         else:
             print(f"Erroneous merge detected:")
             print(f"  PTA red: {red_prefix}")
             print(f"  PTA blue: {blue_prefix}")
             print(f"  real red: {red_node.get_prefix()}")
             print(f"  real blue: {blue_node.get_prefix()}")
-            self.log.append(("wrong merge", (red_prefix, blue_prefix)))
+            self.log.append(("wrong merge", red_prefix, blue_prefix))

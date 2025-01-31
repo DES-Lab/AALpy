@@ -165,7 +165,13 @@ class Node:
         for in_sym, out_sym in seq:
             if in_sym is None: # ignore initial transition of Node.get_prefix()
                 continue
-            node = node.transitions[in_sym][out_sym].target
+            trans = node.transitions.get(in_sym)
+            if trans is None:
+                return None
+            t_info = trans.get(out_sym)
+            if t_info is None:
+                return None
+            node = t_info.target
         return node
 
     def get_all_nodes(self) -> List['Node']:
