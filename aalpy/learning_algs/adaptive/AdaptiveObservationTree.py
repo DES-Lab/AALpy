@@ -1,9 +1,7 @@
-from aalpy.learning_algs.deterministic.Apartness import Apartness
-from aalpy.learning_algs.deterministic.ADS import Ads
 from aalpy.automata import MealyMachine, MealyState
-from aalpy.base import Automaton
-from aalpy.learning_algs.deterministic.ObservationTree import ObservationTree
 from aalpy.learning_algs.adaptive.StateMatching import TotalStateMatching, ApproximateStateMatching
+from aalpy.learning_algs.deterministic.Apartness import Apartness
+from aalpy.learning_algs.deterministic.ObservationTree import ObservationTree
 from aalpy.oracles.WpMethodEqOracle import state_characterization_set
 
 
@@ -225,11 +223,11 @@ class AdaptiveObservationTree(ObservationTree):
                 if basis_state not in self.frontier_to_basis_dict[frontier_state]:
                     continue
                 if Apartness.compute_witness_in_tree_and_hypothesis_states(
-                    self, frontier_state, self.combined_model, frontier_match):
+                    self, frontier_state, frontier_match):
                     continue
 
                 witness = Apartness.compute_witness_in_tree_and_hypothesis_states(
-                    self, basis_state, self.combined_model, frontier_match)
+                    self, basis_state, frontier_match)
                 if witness is None:
                     continue
                 inputs = self.get_transfer_sequence(self.root, frontier_state)

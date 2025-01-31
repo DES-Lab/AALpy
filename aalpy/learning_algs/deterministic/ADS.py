@@ -1,6 +1,9 @@
 from collections import defaultdict
 
+
 class AdsNode:
+    __slots__ = ['input', 'children', 'score']
+
     def __init__(self, input_val=None, children=None, score=0):
         self.input = input_val
         self.children = children if children else {}
@@ -8,21 +11,17 @@ class AdsNode:
 
     @staticmethod
     def create_leaf():
-        """ Creates a leaf node """
         return AdsNode()
 
     def get_input(self):
-        """ returns the input """
         return self.input
 
     def get_child_node(self, output):
-        """ returns the child node based on the given output """
         if output in self.children:
             return self.children[output]
         return None
 
     def get_score(self):
-        """ returns the score of the node """
         return self.score
 
 
@@ -32,11 +31,11 @@ class Ads:
         self.current_node = self.initial_node
 
     def get_score(self):
-        """ returns the score of the tree """
         return self.initial_node.get_score()
 
     def construct_ads(self, obs_tree, current_block):
-        """ builds the ADS tree recursively by selecting optimal inputs for splitting states """
+        # builds the ADS tree recursively by selecting optimal inputs for splitting states
+
         if len(current_block) == 1:
             return AdsNode.create_leaf()
 
@@ -81,19 +80,19 @@ class Ads:
         return AdsNode(best_input, best_children, best_score)
 
     def make_subtree(self, obs_tree, sub_trees, partition):
-        """ Constructs a subtree for a partition and calculates its score """
+        # Constructs a subtree for a partition and calculates its score
         partition_size = len(partition)
         child_score = self.construct_ads(obs_tree, partition).get_score()
         return self.compute_reg_score(partition_size, sub_trees, child_score)
 
     def compute_output_subtree(self, obs_tree, partition, sub_trees):
-        """ Computes and scores a subtree for a specific output partition """
+        # Computes and scores a subtree for a specific output partition
         output_subtree = self.construct_ads(obs_tree, partition)
         output_score = self.compute_reg_score(len(partition), sub_trees, output_subtree.get_score())
         return output_score, output_subtree
 
     def maximal_base_input(self, alphabet, block, split_score):
-        """ Identifies the input with the highest ability to split the state block based on apartness """
+        # Identifies the input with the highest ability to split the state block based on apartness
         best_input = alphabet[0]
         best_apart_pairs = 0
 
@@ -117,11 +116,11 @@ class Ads:
         return best_input
 
     def compute_reg_score(self, partition_size, sub_trees, child_score):
-        """ Calculates a score based on partition size and subtree characteristics """
+        # Calculates a score based on partition size and subtree characteristics
         return partition_size * (sub_trees - partition_size) + child_score
 
     def partition_on_output(self, block, input_val):
-        """ Partitions states in the block based on their output for a given input """
+        # Partitions states in the block based on their output for a given input
         partition = defaultdict(list)
         for node in block:
             output = node.get_output(input_val)
@@ -132,7 +131,7 @@ class Ads:
         return partition
 
     def next_input(self, prev_output):
-        """ Returns the next input based on the previous output and updates the current node """
+        # Returns the next input based on the previous output and updates the current node
         if prev_output is not None:
             child = self.current_node.get_child_node(prev_output)
             if child is None:
@@ -141,6 +140,5 @@ class Ads:
         return self.current_node.get_input()
 
     def reset_to_root(self):
-        """ Resets the current ADS node to the initial root node """
+        # Resets the current ADS node to the initial root node
         self.current_node = self.initial_node
-

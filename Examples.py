@@ -141,6 +141,7 @@ def learn_date_validator():
     # visualize the automaton
     learned_model.visualize()
 
+
 def bluetooth_lsharp():
     from aalpy.utils import load_automaton_from_file
     from aalpy.SULs import MealySUL
@@ -155,7 +156,9 @@ def bluetooth_lsharp():
 
     # Extension rule options: {"Nothing", "SepSeq", "ADS"}
     # Separation rule options: {"SepSeq", "ADS"}
-    learned_mealy = run_Lsharp(input_alphabet, sul_mealy, eq_oracle, automaton_type='mealy', extension_rule="Nothing", separation_rule="SepSeq", max_learning_rounds=50, print_level=1)
+    learned_mealy = run_Lsharp(input_alphabet, sul_mealy, eq_oracle, automaton_type='mealy', extension_rule=None,
+                               separation_rule="SepSeq", max_learning_rounds=50, print_level=1)
+
 
 def bluetooth_adaptive_lsharp():
     from aalpy.utils import load_automaton_from_file
@@ -175,7 +178,12 @@ def bluetooth_adaptive_lsharp():
 
     # Rebuilding options: {True, False}
     # State Matching options: {"None", "Total", "Approximate"}
-    learned_mealy = run_AdaptiveLsharp(input_alphabet, sul_mealy, [reference1, reference2, reference3], eq_oracle, automaton_type='mealy', extension_rule="Nothing", separation_rule="SepSeq", rebuilding=True, state_matching="Approximate", max_learning_rounds=50, print_level=1)
+    learned_mealy = run_AdaptiveLsharp(input_alphabet, sul_mealy, [reference1, reference2, reference3], eq_oracle,
+                                       automaton_type='mealy', extension_rule="Nothing", separation_rule="SepSeq",
+                                       rebuilding=True, state_matching="Approximate", max_learning_rounds=50,
+                                       print_level=1)
+
+
 
 def random_deterministic_example_with_provided_sequences():
     from random import choice, randint

@@ -1,19 +1,19 @@
 import time
-import random
 
 from aalpy.base import Oracle, SUL
-from aalpy.learning_algs.deterministic import Apartness, ADS
-from aalpy.automata import MealyMachine, MealyState
+from aalpy.utils.HelperFunctions import print_learning_info
 from .AdaptiveObservationTree import AdaptiveObservationTree
 from ...base.SUL import CacheSUL
-from aalpy.utils import bisimilar
-from aalpy.utils.HelperFunctions import print_learning_info
-from aalpy.oracles import WMethodEqOracle, WpMethodEqOracle, PerfectKnowledgeEqOracle
 
 
-def run_AdaptiveLsharp(alphabet: list, sul: SUL, references: list, eq_oracle: Oracle, automaton_type='mealy', extension_rule="Nothing", separation_rule="SepSeq", rebuilding=True, state_matching="Approximate", samples=[], max_learning_rounds=None, cache_and_non_det_check=True, return_data=False, print_level=2):
+def run_AdaptiveLsharp(alphabet: list, sul: SUL, references: list, eq_oracle: Oracle, automaton_type='mealy',
+                       extension_rule=None, separation_rule="SepSeq",
+                       rebuilding=True, state_matching="Approximate",
+                       samples=None, max_learning_rounds=None,
+                       cache_and_non_det_check=True, return_data=False, print_level=2):
     """
-    Executes the Adaptive L# algorithm (prefix-tree based automaton learning) which can use reference models to kickstart the learning process.
+    Executes the Adaptive L# algorithm (prefix-tree based automaton learning)
+    which can use reference models to kickstart the learning process.
 
     Args:
 
@@ -50,9 +50,10 @@ def run_AdaptiveLsharp(alphabet: list, sul: SUL, references: list, eq_oracle: Or
 
     """
     assert automaton_type == "mealy"
-    assert extension_rule in {"Nothing", "SepSeq", "ADS"}
+    assert extension_rule in {None, "SepSeq", "ADS"}
     assert separation_rule in {"SepSeq", "ADS"}
-    assert state_matching in {"None", "Total", "Approximate"}
+    assert state_matching in {"Total", "Approximate"}
+    assert references is not None, 'List of reference models is empty. Use L*, KV, L#, or provide models.'
 
     if cache_and_non_det_check or samples is not None:
         # Wrap the sul in the CacheSUL, so that all steps/queries are cached
@@ -63,8 +64,9 @@ def run_AdaptiveLsharp(alphabet: list, sul: SUL, references: list, eq_oracle: Or
             for input_seq, output_seq in samples:
                 sul.cache.add_to_cache(input_seq, output_seq)
 
-    ob_tree = AdaptiveObservationTree(
-        alphabet, sul, references, extension_rule, separation_rule, rebuilding, state_matching)
+    ob_tree = AdaptiveObservationTree(alphabet, sul, references,
+                                      extension_rule, separation_rule,
+                                      rebuilding, state_matching)
     start_time = time.time()
     eq_query_time = 0
     learning_rounds = 0
