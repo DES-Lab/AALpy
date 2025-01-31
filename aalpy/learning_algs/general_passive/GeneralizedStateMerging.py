@@ -168,15 +168,16 @@ class GeneralizedStateMerging:
 
             # find best partitioning and clear candidates
             best_candidate = max(partition_candidates.values(), key = lambda part : part.score)
+            for real_node, partition_node in best_candidate.red_mapping.items():
+                real_node.transitions = partition_node.transitions
+                for access_pair, t_info in real_node.transition_iterator():
+                    if t_info.target not in red_states:
+                        t_info.target.predecessor = real_node
+                        t_info.target.prefix_access_pair = access_pair # not sure whether this is actually required
             instrumentation.log_merge(best_candidate)
             # FUTURE: optimizations for compatibility tests where merges can be orthogonal
             # FUTURE: caching for aggregating compatibility tests
             partition_candidates.clear()
-            for real_node, partition_node in best_candidate.red_mapping.items():
-                real_node.transitions = partition_node.transitions
-                for _, t_info in real_node.transition_iterator():
-                    if t_info.target not in red_states:
-                        t_info.target.predecessor = real_node
 
         instrumentation.learning_done(root, red_states)
 
