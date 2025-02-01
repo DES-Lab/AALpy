@@ -33,17 +33,17 @@ class Node:
             return self.successors[input_val][0]
         return None
 
-    def extend_and_get(self, input, output):
+    def extend_and_get(self, inp, output):
         """ Extend the node with a new successor and return the successor node """
-        if input in self.successors:
-            out = self.successors[input][0]
+        if inp in self.successors:
+            out = self.successors[inp][0]
             if out != output:
                 raise Exception(
                     f"observation not consistent with tree with output from tree: {out} and output from call: {output}")
-            return self.successors[input][1]
+            return self.successors[inp][1]
         successor_node = Node(parent=self)
-        self.add_successor(input, output, successor_node)
-        successor_node.input_to_parent = input
+        self.add_successor(inp, output, successor_node)
+        successor_node.input_to_parent = inp
         return successor_node
 
     @property
@@ -53,7 +53,9 @@ class Node:
 
 class ObservationTree:
     def __init__(self, alphabet, sul, extension_rule, separation_rule):
-        """ Initialize the tree with a root node and the alphabet """
+        """
+        Initialize the tree with a root node and the alphabet
+        """
         self.alphabet = alphabet
         self.sul = sul
         self.extension_rule = extension_rule
@@ -109,7 +111,7 @@ class ObservationTree:
         return observation
 
     def get_successor(self, inputs):
-        # Retrieve the node (sub-tree) corresponding to the given input sequence
+        # Retrieve the node (subtree) corresponding to the given input sequence
         current_node = self.root
         for input_val in inputs:
             successor_node = current_node.get_successor(input_val)
@@ -185,7 +187,7 @@ class ObservationTree:
 
     def promote_frontier_state(self):
         """
-        Searches for a isolated frontier state and adds it to the basis states if it is not associated with another basis state
+        Searches for an isolated frontier state and adds it to the basis states if it is not associated with another basis state
         """
         for iso_frontier_state, basis_list in self.frontier_to_basis_dict.items():
             if not basis_list:
@@ -517,7 +519,7 @@ class ObservationTree:
 
     def _get_mealy_successor(self, mealy_machine, from_state, inputs):
         mealy_machine.current_state = from_state
-        for input in inputs:
-            mealy_machine.current_state = mealy_machine.current_state.transitions[input]
+        for inp in inputs:
+            mealy_machine.current_state = mealy_machine.current_state.transitions[inp]
 
         return mealy_machine.current_state

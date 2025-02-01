@@ -6,7 +6,7 @@ from .AdaptiveObservationTree import AdaptiveObservationTree
 from ...base.SUL import CacheSUL
 
 
-def run_AdaptiveLsharp(alphabet: list, sul: SUL, references: list, eq_oracle: Oracle, automaton_type='mealy',
+def run_adaptive_Lsharp(alphabet: list, sul: SUL, references: list, eq_oracle: Oracle, automaton_type='mealy',
                        extension_rule=None, separation_rule="SepSeq",
                        rebuilding=True, state_matching="Approximate",
                        samples=None, max_learning_rounds=None,
@@ -31,12 +31,16 @@ def run_AdaptiveLsharp(alphabet: list, sul: SUL, references: list, eq_oracle: Or
 
         separation_rule: strategy used during the extension rule. Options: "SepSeq" (default) and "ADS".
 
+        rebuilding: default value: True
+
+        state_matching: either "Approximate" or "Total"
+
         samples: input output traces provided to the learning algorithm. They are added to cache and could reduce
         total interaction with the system. Syntax: list of [(input_sequence, output_sequence)] or None
 
         max_learning_rounds: number of learning rounds after which learning will terminate (Default value = None)
 
-        cache: Use caching (Default value = True)
+        cache_and_non_det_check: Use caching and non-determinism checks (Default value = True)
 
         return_data: if True, a map containing all information(runtime/#queries/#steps) will be returned
             (Default value = False)
@@ -52,6 +56,7 @@ def run_AdaptiveLsharp(alphabet: list, sul: SUL, references: list, eq_oracle: Or
     assert automaton_type == "mealy"
     assert extension_rule in {None, "SepSeq", "ADS"}
     assert separation_rule in {"SepSeq", "ADS"}
+
     assert state_matching in {"Total", "Approximate"}
     assert references is not None, 'List of reference models is empty. Use L*, KV, L#, or provide models.'
 
@@ -70,6 +75,7 @@ def run_AdaptiveLsharp(alphabet: list, sul: SUL, references: list, eq_oracle: Or
     start_time = time.time()
     eq_query_time = 0
     learning_rounds = 0
+    hypothesis = None
 
     while True:
         learning_rounds += 1

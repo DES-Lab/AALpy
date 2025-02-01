@@ -122,12 +122,14 @@ class Ads:
     def partition_on_output(self, block, input_val):
         # Partitions states in the block based on their output for a given input
         partition = defaultdict(list)
+
         for node in block:
             output = node.get_output(input_val)
             if output is not None:
                 successor = node.get_successor(input_val)
                 if successor is not None:
                     partition[output].append(successor)
+
         return partition
 
     def next_input(self, prev_output):
@@ -137,6 +139,7 @@ class Ads:
             if child is None:
                 return None
             self.current_node = child
+
         return self.current_node.get_input()
 
     def reset_to_root(self):

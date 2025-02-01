@@ -7,7 +7,7 @@ from ...base.SUL import CacheSUL
 
 
 def run_Lsharp(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type,
-               extension_rule=None, separation_rule="SepSeq", samples=None,
+               extension_rule='SepSeq', separation_rule="ADS", samples=None,
                max_learning_rounds=None, cache_and_non_det_check=True, return_data=False, print_level=2):
     """
     Executes the L# algorithm (prefix-tree based automaton learning).
@@ -59,6 +59,7 @@ def run_Lsharp(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type,
 
     ob_tree = ObservationTree(alphabet, sul, extension_rule, separation_rule)
     start_time = time.time()
+
     eq_query_time = 0
     learning_rounds = 0
     hypothesis = None

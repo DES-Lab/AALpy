@@ -142,7 +142,7 @@ def learn_date_validator():
     learned_model.visualize()
 
 
-def bluetooth_lsharp():
+def bluetooth_Lsharp():
     from aalpy.utils import load_automaton_from_file
     from aalpy.SULs import MealySUL
     from aalpy.oracles import WpMethodEqOracle
@@ -160,11 +160,11 @@ def bluetooth_lsharp():
                                separation_rule="SepSeq", max_learning_rounds=50, print_level=1)
 
 
-def bluetooth_adaptive_lsharp():
+def bluetooth_adaptive_Lsharp():
     from aalpy.utils import load_automaton_from_file
     from aalpy.SULs import MealySUL
     from aalpy.oracles import WpMethodEqOracle
-    from aalpy.learning_algs import run_AdaptiveLsharp
+    from aalpy.learning_algs import run_adaptive_Lsharp
 
     reference1 = load_automaton_from_file(f'./DotModels/Bluetooth/CC2650.dot', automaton_type='mealy')
     reference2 = load_automaton_from_file(f'./DotModels/Bluetooth/nRF52832.dot', automaton_type='mealy')
@@ -178,10 +178,9 @@ def bluetooth_adaptive_lsharp():
 
     # Rebuilding options: {True, False}
     # State Matching options: {"None", "Total", "Approximate"}
-    learned_mealy = run_AdaptiveLsharp(input_alphabet, sul_mealy, [reference1, reference2, reference3], eq_oracle,
-                                       automaton_type='mealy', extension_rule="Nothing", separation_rule="SepSeq",
-                                       rebuilding=True, state_matching="Approximate", max_learning_rounds=50,
-                                       print_level=1)
+    learned_mealy = run_adaptive_Lsharp(input_alphabet, sul_mealy, [reference1, reference2, reference3], eq_oracle,
+                                       automaton_type='mealy', extension_rule='SepSeq', separation_rule="ADS",
+                                       rebuilding=True, state_matching="Approximate",print_level=2)
 
 
 
@@ -216,14 +215,8 @@ def random_deterministic_example_with_provided_sequences():
 def big_input_alphabet_example():
     """
         Small example where input alphabet can be huge and outputs are just true and false (DFA).
-
-    Args:
-        input_alphabet_size: size of input alphabet
-        automaton_depth: depth of alternating True/False paths in final automaton
-
-    Returns:
-        learned model
     """
+
     from aalpy.base import SUL
     from aalpy.learning_algs import run_Lstar
     from aalpy.oracles import RandomWMethodEqOracle

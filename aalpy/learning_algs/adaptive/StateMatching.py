@@ -3,13 +3,31 @@ from abc import abstractmethod
 
 class StateMatching:
     def __init__(self, alphabet, combined_model):
-        """ Initializes the super class for state matching """
+        """
+        Initializes the super class for state matching
+         """
         self.alphabet = alphabet
         self.combined_model = combined_model
 
         self.matchings = {}  # map from basis states to reference states
         self.best_match = {}
         self.best_score = {}
+
+    @abstractmethod
+    def add_entry_basis(self, basis_state):
+        pass
+
+    @abstractmethod
+    def update_best_score(self, basis_state):
+        pass
+
+    @abstractmethod
+    def update_score(self, ob_tree, basis_state, reference_state, basis_state_access, defined_after_access, new_part):
+        pass
+
+    @abstractmethod
+    def update_best_match(self, basis_state, score):
+        pass
 
     def initialize_matching(self, ob_tree):
         """ 
@@ -18,20 +36,15 @@ class StateMatching:
         """
         for basis_state in ob_tree.basis:
             self.add_entry_basis(basis_state)
-        for (defined_part, new_part) in ob_tree.initial_OQs:
+
+        for defined_part, new_part in ob_tree.initial_OQs:
             to_recalc = []
             for basis_state in ob_tree.basis:
                 if self.is_prefix_of(tuple(ob_tree.get_access_sequence(basis_state)), (defined_part + new_part)):
                     to_recalc.append(basis_state)
+
             self.update_matching(to_recalc, (defined_part, new_part), ob_tree)
 
-    @abstractmethod
-    def update_best_score(self, basis_state):
-        pass
-
-    @abstractmethod
-    def get_best_match(self, idx):
-        pass
 
     def update_matching(self, to_recalc, split, ob_tree):
         """ 
@@ -42,60 +55,43 @@ class StateMatching:
         Then for every reference model check if the defined part uses only inputs valid in the reference model
         If these are all valid, we calculate the score of the new part
         """
-        (defined_part, orig_new_part) = split
+        defined_part, orig_new_part = split
+
         for basis_state in to_recalc:
             basis_state_access = ob_tree.get_access_sequence(basis_state)
             defined_after_access = ()
+
             new_part = orig_new_part
             if len(defined_part) > len(basis_state_access):
                 defined_after_access = defined_part[len(basis_state_access):]
             else:
-                new_part = (defined_part +
-                            orig_new_part)[len(basis_state_access):]
+                new_part = (defined_part + orig_new_part)[len(basis_state_access):]
+
             for reference_state in self.combined_model.states:
                 # defined_after_access contains invalid input for reference model, score remains 0
                 if self.validate_reference_input(defined_after_access, reference_state):
                     self.update_score(ob_tree, basis_state, reference_state,
                                       basis_state_access, defined_after_access, new_part)
+
             score = self.update_best_score(basis_state)
             self.update_best_match(basis_state, score)
 
-    def print_match_table(self, ob_tree):
-        """ 
-        Prints the match table
-        Code based on https://stackoverflow.com/questions/13214809/pretty-print-2d-list
-        """
-        print(f"Mapping of basis state ids to access sequences")
-        for basis_state in ob_tree.basis:
-            print(f"{basis_state.id}: {ob_tree.get_access_sequence(basis_state)}")
-        first_row = ["state", "|", "match", "|", "score", "|"] + \
-            [ref_state.state_id for ref_state in self.combined_model.states]
-        data = [first_row]
-        for basis_state in ob_tree.basis:
-            row = [basis_state.id, "|", [
-                st.state_id for st in self.best_match[basis_state]], "|", self.best_score[basis_state], "|"]
-            row += [sc for sc in self.matchings[basis_state].values()]
-            data.append(row)
 
-        s = [[str(e) for e in row] for row in data]
-        lens = [max(map(len, col)) for col in zip(*s)]
-        fmt = '\t'.join('{{:{}}}'.format(x) for x in lens)
-        table = [fmt.format(*row) for row in s]
-        print('\n'.join(table))
 
-    def update_matching_basis(self, basis_state, basis, ob_tree):
+    def update_matching_basis(self, basis_state, ob_tree):
         """ 
         Initializes and updates the matching for a newly added basis state
         """
         self.add_entry_basis(basis_state)
         longest_words = list(self.find_longest_words(basis_state, ob_tree, []))
         basis_state_access = ob_tree.get_access_sequence(basis_state)
+
         for i in range(0, len(longest_words)):
-            split = (basis_state_access,
-                     longest_words[i][len(basis_state_access):])
+            split = basis_state_access, longest_words[i][len(basis_state_access):]
+
             if i > 0:
-                split = self.find_longest_common_part(
-                    longest_words[i-1], longest_words[i])
+                split = self.find_longest_common_part(longest_words[i-1], longest_words[i])
+
             self.update_matching([basis_state], split, ob_tree)
 
     def find_longest_words(self, current_state, ob_tree, all_seqs):
@@ -142,8 +138,31 @@ class StateMatching:
             if str2[i] == str1[i]:
                 so_far.append(str2[i])
             else:
-                return (tuple(so_far), tuple(str2[i:]))
-        return (tuple(so_far), tuple())
+                return tuple(so_far), tuple(str2[i:])
+        return tuple(so_far), tuple()
+
+    def print_match_table(self, ob_tree):
+        """
+        Prints the match table
+        Code based on https://stackoverflow.com/questions/13214809/pretty-print-2d-list
+        """
+        print(f"Mapping of basis state ids to access sequences")
+        for basis_state in ob_tree.basis:
+            print(f"{basis_state.id}: {ob_tree.get_access_sequence(basis_state)}")
+        first_row = ["state", "|", "match", "|", "score", "|"] + \
+            [ref_state.state_id for ref_state in self.combined_model.states]
+        data = [first_row]
+        for basis_state in ob_tree.basis:
+            row = [basis_state.id, "|", [
+                st.state_id for st in self.best_match[basis_state]], "|", self.best_score[basis_state], "|"]
+            row += [sc for sc in self.matchings[basis_state].values()]
+            data.append(row)
+
+        s = [[str(e) for e in row] for row in data]
+        lens = [max(map(len, col)) for col in zip(*s)]
+        fmt = '\t'.join('{{:{}}}'.format(x) for x in lens)
+        table = [fmt.format(*row) for row in s]
+        print('\n'.join(table))
 
 
 class TotalStateMatching(StateMatching):
@@ -159,13 +178,11 @@ class TotalStateMatching(StateMatching):
 
     def add_entry_basis(self, basis_state):
         """ Initializes a new matching row with 1 """
-        self.matchings[basis_state] = {
-            ref_state: 1 for ref_state in self.combined_model.states}
+        self.matchings[basis_state] = {ref_state: 1 for ref_state in self.combined_model.states}
 
     def update_best_score(self, basis_state):
         """ Updates the best score for a basis state """
-        score = max([self.matchings[basis_state][ref_state]
-                    for ref_state in self.combined_model.states])
+        score = max([self.matchings[basis_state][ref_state] for ref_state in self.combined_model.states])
         self.best_score[basis_state] = score
         return score
 
@@ -174,8 +191,11 @@ class TotalStateMatching(StateMatching):
         if score == 0:
             self.best_match[basis_state] = []
         else:
-            matches = [
-                ref_state for ref_state in self.combined_model.states if self.matchings[basis_state][ref_state] == score]
+            matches = []
+            for ref_state in self.combined_model.states:
+                if self.matchings[basis_state][ref_state] == score:
+                    matches.append(ref_state)
+
             self.best_match[basis_state] = matches
 
     def update_score(self, ob_tree, basis_state, reference_state, basis_state_access, defined_after_access, new_part):
@@ -183,11 +203,12 @@ class TotalStateMatching(StateMatching):
         Updates the matching score for a basis and reference state based on the: 
             basis access, already defined part after access and the new part
         For every input in the new part, we take a step in the ob_tree and in the combined model
-        If the combined model has output 'epsilon', the input is not in the reference alphabet and we return
+        If the combined model has output 'epsilon', the input is not in the reference alphabet, and we return
         If the outputs differ, we set the matching to 0
         """
         if self.matchings[basis_state][reference_state] == 0:
             return
+
         current_ob_state = ob_tree.get_successor(
             tuple(basis_state_access) + tuple(defined_after_access))
         self.combined_model.execute_sequence(
@@ -196,6 +217,7 @@ class TotalStateMatching(StateMatching):
             ob_out = current_ob_state.get_output(inp)
             if reference_state.output_fun[inp] == 'epsilon':
                 return
+
             ref_out = self.combined_model.step(inp)
             if ob_out != ref_out:
                 self.matchings[basis_state][reference_state] = 0
@@ -238,27 +260,31 @@ class ApproximateStateMatching(StateMatching):
         if score == 0:
             self.best_match[basis_state] = []
         else:
-            matches = [ref_state for ref_state in self.combined_model.states if self.get_score(
-                basis_state, ref_state) == score]
-            self.best_match[basis_state] = matches    
+            matches = []
+            for ref_state in self.combined_model.states:
+                if self.get_score(basis_state, ref_state) == score:
+                    matches.append(ref_state)
+
+            self.best_match[basis_state] = matches
 
     def update_score(self, ob_tree, basis_state, reference_state, basis_state_access, defined_after_access, new_part):
         """ 
         Updates the matching score for a basis and reference state based on the: 
             basis access, already defined part after access and the new part
         For every input in the new part, we take a step in the ob_tree and in the combined model
-        If the combined model has output 'epsilon;, the input is not in the reference alphabet and we return
+        If the combined model has output 'epsilon;, the input is not in the reference alphabet, and we return
         If the outputs are equivalent, we add [1,1]
         If the outputs differ, we add [0,1]
         """
-        current_ob_state = ob_tree.get_successor(
-            tuple(basis_state_access) + tuple(defined_after_access))
-        self.combined_model.execute_sequence(
-            reference_state, defined_after_access)
+        current_ob_state = ob_tree.get_successor(tuple(basis_state_access) + tuple(defined_after_access))
+
+        self.combined_model.execute_sequence(reference_state, defined_after_access)
+
         for inp in new_part:
             ob_out = current_ob_state.get_output(inp)
             if self.combined_model.current_state.output_fun[inp] == 'epsilon':
                 break
+
             ref_out = self.combined_model.step(inp)
             self.matchings[basis_state][reference_state][1] += 1
             if ob_out == ref_out:
