@@ -3,7 +3,7 @@ from bisect import insort
 from typing import Dict, Tuple, Callable, List
 from collections import deque
 
-from aalpy.learning_algs.general_passive.helpers import Node, OutputBehavior, TransitionBehavior, TransitionInfo, \
+from aalpy.learning_algs.general_passive.Node import Node, OutputBehavior, TransitionBehavior, TransitionInfo, \
     OutputBehaviorRange, TransitionBehaviorRange, intersection_iterator
 from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreCalculation, NoRareEventNonDetScore, \
     hoeffding_compatibility, Score

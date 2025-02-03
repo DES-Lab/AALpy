@@ -4,13 +4,16 @@ import pathlib
 from collections import deque
 from enum import Enum
 from functools import total_ordering
-from typing import Dict, Any, List, Tuple, Iterable, Callable, Union, Set
+from typing import Dict, Any, List, Tuple, Iterable, Callable, Union, Set, TypeVar, Iterator
 import pydot
 from copy import copy
 
 from aalpy.automata import StochasticMealyMachine, StochasticMealyState, MooreState, MooreMachine, NDMooreState, \
     NDMooreMachine, Mdp, MdpState, MealyMachine, MealyState, Onfsm, OnfsmState
 from aalpy.base import Automaton
+
+Key = TypeVar("Key")
+Val = TypeVar("Val")
 
 OutputBehavior = str
 OutputBehaviorRange = ["moore", "mealy"]
@@ -42,10 +45,6 @@ def generate_values(base : list, step : Callable, backing_set=True):
                 if new_val not in result:
                     result.append(new_val)
         return result
-
-from typing import TypeVar, Iterator
-Key = TypeVar("Key")
-Val = TypeVar("Val")
 
 def intersection_iterator(a: Dict[Key, Val], b: Dict[Key, Val]) -> Iterator[Tuple[Key, Val, Val]]:
     missing = object()

@@ -3,7 +3,7 @@ from collections import defaultdict
 from math import sqrt, log
 from typing import Callable, Dict, Union, List, Iterable
 
-from aalpy.learning_algs.general_passive.helpers import Node, intersection_iterator, join_iterator, TransitionInfo
+from aalpy.learning_algs.general_passive.Node import Node, intersection_iterator, join_iterator, TransitionInfo
 
 Score = Union[bool, float]
 LocalCompatibilityFunction = Callable[[Node, Node], bool]
