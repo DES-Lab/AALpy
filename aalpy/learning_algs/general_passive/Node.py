@@ -54,7 +54,7 @@ def intersection_iterator(a: Dict[Key, Val], b: Dict[Key, Val]) -> Iterator[Tupl
             continue
         yield key, a_val, b_val
 
-def join_iterator(a: Dict[Key, Val], b: Dict[Key, Val], default: Val = None) -> Iterator[Tuple[Key, Val, Val]]:
+def union_iterator(a: Dict[Key, Val], b: Dict[Key, Val], default: Val = None) -> Iterator[Tuple[Key, Val, Val]]:
     for key, a_val in a.items():
         b_val = b.get(key, default)
         yield key, a_val, b_val

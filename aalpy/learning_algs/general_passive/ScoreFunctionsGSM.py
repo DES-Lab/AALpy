@@ -3,7 +3,7 @@ from collections import defaultdict
 from math import sqrt, log
 from typing import Callable, Dict, Union, List, Iterable
 
-from aalpy.learning_algs.general_passive.Node import Node, intersection_iterator, join_iterator, TransitionInfo
+from aalpy.learning_algs.general_passive.Node import Node, intersection_iterator, union_iterator, TransitionInfo
 
 Score = Union[bool, float]
 LocalCompatibilityFunction = Callable[[Node, Node], bool]
@@ -50,7 +50,7 @@ def hoeffding_compatibility(eps, compare_original = True) -> LocalCompatibilityF
             if a_total == 0 or b_total == 0:
                 continue # is it really necessary to check this?
             threshold = eps_fact * (sqrt(1 / a_total) + sqrt(1 / b_total))
-            for out_sym, a_info, b_info in join_iterator(a_trans, b_trans, transition_dummy):
+            for out_sym, a_info, b_info in union_iterator(a_trans, b_trans, transition_dummy):
                 ac, bc = (getattr(x, count_name) for x in (a_info, b_info))
                 if abs(ac / a_total - bc / b_total) > threshold:
                     return False
