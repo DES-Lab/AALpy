@@ -66,6 +66,9 @@ def run_adaptive_Lsharp(alphabet: list, sul: SUL, references: list, eq_oracle: O
     assert state_matching in {None, "Total", "Approximate"}
     assert references is not None, 'List of reference models is empty. Use L*, KV, L#, or provide models.'
 
+    if not rebuilding and not state_matching:
+        raise Exception(f"Use L# instead of Adaptive L# if rebuilding is set to False and state matching to None.")
+
     if cache_and_non_det_check or samples is not None:
         # Wrap the sul in the CacheSUL, so that all steps/queries are cached
         sul = CacheSUL(sul)
