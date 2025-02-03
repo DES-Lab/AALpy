@@ -271,5 +271,3 @@ def EDSM_score(min_evidence = -1) -> ScoreFunction:
         nr_merged = len(part)
         return lower_threshold(nr_merged - nr_partitions, min_evidence)
     return score
-
-score = ScoreCalculation(lambda a,b: local_compatibility(a,b,epsilon))
