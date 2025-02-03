@@ -177,10 +177,10 @@ def bluetooth_adaptive_Lsharp():
     eq_oracle = WpMethodEqOracle(input_alphabet, sul_mealy, len(target.states))
 
     # Rebuilding options: {True, False}
-    # State Matching options: {"None", "Total", "Approximate"}
+    # State Matching options: {None, "Total", "Approximate"}
     learned_mealy = run_adaptive_Lsharp(input_alphabet, sul_mealy, [reference1, reference2, reference3], eq_oracle,
                                        automaton_type='mealy', extension_rule='SepSeq', separation_rule="ADS",
-                                       rebuilding=True, state_matching="Approximate",print_level=2)
+                                       rebuilding=True, state_matching="Approximate", print_level=2)
 
 
 

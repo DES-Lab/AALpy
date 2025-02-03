@@ -19,7 +19,7 @@ class AdaptiveObservationTree(ObservationTree):
         self.matching_states = 0
 
         if not references:
-            self.state_matching = "None"
+            self.state_matching = None
             print(f"Warning: no references given, normal L# is executed.")
             return
 
@@ -41,7 +41,8 @@ class AdaptiveObservationTree(ObservationTree):
         elif self.state_matching == "Approximate":
             self.state_matcher = ApproximateStateMatching(self.alphabet, self.combined_model)
 
-        self.state_matcher.initialize_matching(self)
+        if self.state_matching:
+            self.state_matcher.initialize_matching(self)
 
 
     def build_hypothesis(self):
@@ -49,7 +50,10 @@ class AdaptiveObservationTree(ObservationTree):
         Builds the hypothesis which will be sent to the SUL
         This is either done with or without matching rules
         """
-        self.make_observation_tree_adequate_matching()
+        if self.state_matching:
+            self.make_observation_tree_adequate_matching()
+        else:
+            super().make_observation_tree_adequate()
         return self.construct_hypothesis()
 
     def make_observation_tree_adequate_matching(self):
@@ -244,7 +248,8 @@ class AdaptiveObservationTree(ObservationTree):
                 new_basis = iso_frontier_state
                 self.basis.append(new_basis)
                 self.frontier_to_basis_dict.pop(new_basis)
-                self.state_matcher.update_matching_basis(new_basis, self)
+                if self.state_matching:
+                    self.state_matcher.update_matching_basis(new_basis, self)
 
                 for frontier_state, new_basis_list in self.frontier_to_basis_dict.items():
                     if not Apartness.states_are_apart(new_basis, frontier_state, self):
@@ -259,7 +264,13 @@ class AdaptiveObservationTree(ObservationTree):
         if len(inputs) != len(outputs):
             raise ValueError("Inputs and outputs must have the same length.")
 
-        self.extend_node_and_update_matching(inputs, outputs)
+        if self.state_matching:
+            self.extend_node_and_update_matching(inputs, outputs)
+        else:
+            current_node = self.root
+            for input_val, output_val in zip(inputs, outputs):
+                current_node = current_node.extend_and_get(
+                    input_val, output_val)
 
 
     def extend_node_and_update_matching(self, inputs, outputs):

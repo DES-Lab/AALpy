@@ -7,13 +7,15 @@ from ...base.SUL import CacheSUL
 
 
 def run_adaptive_Lsharp(alphabet: list, sul: SUL, references: list, eq_oracle: Oracle, automaton_type='mealy',
-                       extension_rule=None, separation_rule="SepSeq",
-                       rebuilding=True, state_matching="Approximate",
-                       samples=None, max_learning_rounds=None,
-                       cache_and_non_det_check=True, return_data=False, print_level=2):
+                        extension_rule=None, separation_rule="SepSeq",
+                        rebuilding=True, state_matching="Approximate",
+                        samples=None, max_learning_rounds=None,
+                        cache_and_non_det_check=True, return_data=False, print_level=2):
     """
-    Executes the Adaptive L# algorithm (prefix-tree based automaton learning)
-    which can use reference models to kickstart the learning process.
+    Based on ''State Matching and Multiple References in Adaptive Active Automata Learning'' from Kruger, Junges and Rot.
+    The algorithm learns a Mealy machine using a set of references. These references are used by two procedures 
+    1) Rebuilding which kickstarts the learning process using the references and 2) State Matching which matches the
+    basis states and references states to find new basis states faster.
 
     Args:
 
@@ -31,9 +33,15 @@ def run_adaptive_Lsharp(alphabet: list, sul: SUL, references: list, eq_oracle: O
 
         separation_rule: strategy used during the extension rule. Options: "SepSeq" (default) and "ADS".
 
-        rebuilding: default value: True
+        rebuilding: procedure that poses output queries to rebuild the observation tree based on prefixes and separating sequences from the reference(s).
+        Only executes at the start of adaptive L#. default value: True. 
 
-        state_matching: either "Approximate" or "Total"
+        state_matching: if not None, the learner maintains a matching relation between basis states (in the observation tree) and reference model states.
+        This matching relation is used in three rules added on top of L# to either identify a frontier state faster or isolate it when the matching indicates
+        that the frontier state corresponds to a reference model state not yet present in the basis. default value: "Approximate". 
+        - Two states match according to "total matching" if all output over the defined and shared alphabet are exactly the same.
+        - Two states match according to "approximate matching" if they have the highest ratio of equivalent outputs to defined outputs over the shared alphabet. 
+        - None can be used if only the rebuilding procedure is needed.
 
         samples: input output traces provided to the learning algorithm. They are added to cache and could reduce
         total interaction with the system. Syntax: list of [(input_sequence, output_sequence)] or None
@@ -57,8 +65,11 @@ def run_adaptive_Lsharp(alphabet: list, sul: SUL, references: list, eq_oracle: O
     assert extension_rule in {None, "SepSeq", "ADS"}
     assert separation_rule in {"SepSeq", "ADS"}
 
-    assert state_matching in {"Total", "Approximate"}
+    assert state_matching in {None, "Total", "Approximate"}
     assert references is not None, 'List of reference models is empty. Use L*, KV, L#, or provide models.'
+
+    if not rebuilding and not state_matching:
+        raise Exception(f"Use L# instead of Adaptive L# if rebuilding is set to False and state matching to None.")
 
     if cache_and_non_det_check or samples is not None:
         # Wrap the sul in the CacheSUL, so that all steps/queries are cached
