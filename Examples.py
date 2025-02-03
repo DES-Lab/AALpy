@@ -180,7 +180,7 @@ def bluetooth_adaptive_Lsharp():
     # State Matching options: {None, "Total", "Approximate"}
     learned_mealy = run_adaptive_Lsharp(input_alphabet, sul_mealy, [reference1, reference2, reference3], eq_oracle,
                                        automaton_type='mealy', extension_rule='SepSeq', separation_rule="ADS",
-                                       rebuilding=True, state_matching="Approximate",print_level=2)
+                                       rebuilding=True, state_matching="Approximate", print_level=2)
 
 
 
@@ -1160,6 +1160,3 @@ def passive_vpa_learning_on_all_benchmark_models():
                 assert False, 'Papni Learned Model not consistent with data.'
 
         print('PAPNI model conforms to data.')
-
-# bluetooth_Lsharp()
-bluetooth_adaptive_Lsharp()
