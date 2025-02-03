@@ -12,8 +12,10 @@ def run_adaptive_Lsharp(alphabet: list, sul: SUL, references: list, eq_oracle: O
                         samples=None, max_learning_rounds=None,
                         cache_and_non_det_check=True, return_data=False, print_level=2):
     """
-    Executes the Adaptive L# algorithm (prefix-tree based automaton learning)
-    which can use reference models to kickstart the learning process.
+    Based on ''State Matching and Multiple References in Adaptive Active Automata Learning'' from Kruger, Junges and Rot.
+    The algorithm learns a Mealy machine using a set of references. These references are used by two procedures 
+    1) Rebuilding which kickstarts the learning process using the references and 2) State Matching which matches the
+    basis states and references states to find new basis states faster.
 
     Args:
 
@@ -32,7 +34,7 @@ def run_adaptive_Lsharp(alphabet: list, sul: SUL, references: list, eq_oracle: O
         separation_rule: strategy used during the extension rule. Options: "SepSeq" (default) and "ADS".
 
         rebuilding: procedure that poses output queries to rebuild the observation tree based on prefixes and separating sequences from the reference(s).
-        Only executes at the start of adaptive L#. For more information see: https://arxiv.org/abs/2406.19714. default value: True. 
+        Only executes at the start of adaptive L#. default value: True. 
 
         state_matching: if not None, the learner maintains a matching relation between basis states (in the observation tree) and reference model states.
         This matching relation is used in three rules added on top of L# to either identify a frontier state faster or isolate it when the matching indicates

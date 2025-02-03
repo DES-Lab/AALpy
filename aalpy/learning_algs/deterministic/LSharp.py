@@ -10,7 +10,8 @@ def run_Lsharp(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type,
                extension_rule='SepSeq', separation_rule="ADS", samples=None,
                max_learning_rounds=None, cache_and_non_det_check=True, return_data=False, print_level=2):
     """
-    Executes the L# algorithm (prefix-tree based automaton learning).
+    Based on ''A New Approach for Active Automata Learning Based on Apartness'' from Vaandrager, Garhewal, Rot and Wissmann.
+    The algorithm learns a Mealy machine using apartness and an observation tree. 
 
     Args:
 
