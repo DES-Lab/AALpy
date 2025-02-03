@@ -1,21 +1,18 @@
 import re
 import sys
-import sys
 import traceback
 from pathlib import Path
 
-from pydot import Dot, Node, Edge, graph_from_dot_file
+from pydot import Dot, Node, Edge
 
 from aalpy.automata import Dfa, MooreMachine, Mdp, Onfsm, MealyState, DfaState, MooreState, MealyMachine, \
     MdpState, StochasticMealyMachine, StochasticMealyState, OnfsmState, MarkovChain, McState, Sevpa, SevpaState, \
-    SevpaTransition, NDMooreMachine
+    SevpaTransition, Vpa, VpaState, VpaTransition, NDMooreMachine
 
 file_types = ['dot', 'png', 'svg', 'pdf', 'string']
 automaton_types = {Dfa: 'dfa', MealyMachine: 'mealy', MooreMachine: 'moore', Mdp: 'mdp',
-                   StochasticMealyMachine: 'smm', Onfsm: 'onfsm', MarkovChain: 'mc', Sevpa: 'vpa',
-                   NDMooreMachine: 'ndmoore'}
-
-sevpa_transition_regex = r"(\S+)\s*/\s*\(\s*'(\S+)'\s*,\s*'(\S+)'\s*\)"
+                   StochasticMealyMachine: 'smm', Onfsm: 'onfsm', NDMooreMachine: 'ndmoore', MarkovChain: 'mc',
+                   Sevpa: 'sevpa', Vpa: 'vpa'}
 
 
 def _wrap_label(label):
@@ -45,7 +42,7 @@ def _get_node(state, automaton_type):
         return Node(state.state_id, label=_wrap_label(f'{state.output}'))
     if automaton_type == 'smm':
         return Node(state.state_id, label=_wrap_label(state.state_id))
-    if automaton_type == 'vpa':
+    if automaton_type == 'sevpa' or automaton_type == 'vpa':
         if state.is_accepting:
             return Node(state.state_id, label=_wrap_label(state.state_id), shape='doublecircle')
         return Node(state.state_id, label=_wrap_label(state.state_id))
@@ -98,13 +95,29 @@ def _add_transition_to_graph(graph, state, automaton_type, display_same_state_tr
                     continue
                 prob = round(s[2], round_floats) if round_floats else s[2]
                 graph.add_edge(Edge(state.state_id, s[0].state_id, label=_wrap_label(f'{i}/{s[1]}:{prob}')))
-    if automaton_type == 'vpa':
+    if automaton_type == 'sevpa':
         for i in state.transitions.keys():
             transitions_list = state.transitions[i]
             for transition in transitions_list:
                 if transition.action == 'pop':
                     edge = Edge(state.state_id, transition.target_state.state_id,
                                 label=_wrap_label(f'{transition.letter} / {transition.stack_guard}'))
+                elif transition.action is None:
+                    edge = Edge(state.state_id, transition.target_state.state_id,
+                                label=_wrap_label(f'{transition.letter}'))
+                else:
+                    assert False
+                graph.add_edge(edge)
+    if automaton_type == 'vpa':
+        for i in state.transitions.keys():
+            transitions_list = state.transitions[i]
+            for transition in transitions_list:
+                if transition.action == 'pop':
+                    edge = Edge(state.state_id, transition.target_state.state_id,
+                                label=_wrap_label(f'{transition.letter} / pop({transition.stack_guard})'))
+                elif transition.action == 'push':
+                    edge = Edge(state.state_id, transition.target_state.state_id,
+                                label=_wrap_label(f'push({transition.stack_guard})'))
                 elif transition.action is None:
                     edge = Edge(state.state_id, transition.target_state.state_id,
                                 label=_wrap_label(f'{transition.letter}'))
@@ -176,7 +189,7 @@ def save_automaton_to_file(automaton, path="LearnedModel", file_type="dot",
 
     graph = Dot(path.stem, graph_type='digraph')
     for state in automaton.states:
-        if automaton_type == 'pda' and state.state_id == 'ErrorSinkState':
+        if automaton_type in {'vpa', 'sevpa'} and state.state_id == 'ErrorSinkState':
             continue
         graph.add_node(_get_node(state, automaton_type))
 
@@ -204,6 +217,11 @@ def save_automaton_to_file(automaton, path="LearnedModel", file_type="dot",
         except OSError:
             traceback.print_exc()
             print(f'Could not write to the file {path.as_posix()}.', file=sys.stderr)
+
+
+sevpa_transition_pattern = r"(\S+)\s*/\s*\(\s*'(\S+)'\s*,\s*'(\S+)'\s*\)"
+vpa_push_pattern = r"push\(([^)]+)\)"
+vpa_pop_pattern = r"(\S+)\s*/\s*pop\(\s*(.*?)\s*\)"
 
 
 def _process_label(label, source, destination, automaton_type):
@@ -234,8 +252,8 @@ def _process_label(label, source, destination, automaton_type):
         inp = int(inp) if inp.isdigit() else inp
         out = int(out) if out.isdigit() else out
         source.transitions[inp].append((destination, out, float(prob)))
-    if automaton_type == 'vpa':
-        match = re.match(sevpa_transition_regex, label)
+    if automaton_type == 'sevpa':
+        match = re.match(sevpa_transition_pattern, label)
         # cast to integer
         label = int(label) if label.isdigit() else label
         if match:
@@ -246,6 +264,26 @@ def _process_label(label, source, destination, automaton_type):
             internal_transition = SevpaTransition(destination, label, None, None)
             source.transitions[label].append(internal_transition)
         pass
+    if automaton_type == 'vpa':
+        input_symbol, stack_symbol, action = None, None, None
+        if 'push' in label:
+            input_symbol = re.match(vpa_push_pattern, label).group(1)
+            stack_symbol = input_symbol
+            action = 'push'
+        elif 'pop' in label:
+            pop_elements = re.match(vpa_pop_pattern, label)
+            input_symbol, stack_symbol = pop_elements.group(1), pop_elements.group(2)
+            action = 'pop'
+        else:
+            input_symbol = label
+
+        input_symbol = int(input_symbol) if input_symbol.isdigit() else input_symbol
+        if stack_symbol:
+            stack_symbol = int(stack_symbol) if stack_symbol.isdigit() else stack_symbol
+
+        transition = VpaTransition(source, destination, input_symbol, action, stack_symbol)
+
+        source.transitions[input_symbol].append(transition)
 
 
 def _process_node_label(node, label, node_label_dict, node_type, automaton_type):
@@ -260,7 +298,7 @@ def _process_node_label(node, label, node_label_dict, node_type, automaton_type)
             node_label_dict[node_name] = node_type(label, output)
         else:
             node_label_dict[node_name] = node_type(label)
-        if automaton_type == 'dfa' or automaton_type == 'vpa':
+        if automaton_type == 'dfa' or automaton_type == 'sevpa':
             if 'shape' in node.get_attributes().keys() and 'doublecircle' in node.get_attributes()['shape']:
                 node_label_dict[node_name].is_accepting = True
 
@@ -275,76 +313,6 @@ def _strip_label(label: str) -> str:
     return label
 
 
-def load_automaton_from_file_pydot_version(path, automaton_type, compute_prefixes=False):
-    """
-    Loads the automaton from the file.
-    Standard of the automatas strictly follows syntax found at: https://automata.cs.ru.nl/Syntax/Overview.
-    For non-deterministic and stochastic systems syntax can be found on AALpy's Wiki.
-
-    Args:
-
-        path: pathlike or str to the file
-
-        automaton_type: type of the automaton, if not specified it will be automatically determined according,
-            one of ['dfa', 'mealy', 'moore', 'mdp', 'smm', 'onfsm', 'mc']
-
-        compute_prefixes: it True, shortest path to reach every state will be computed and saved in the prefix of
-            the state. Useful when loading the model to use them as a equivalence oracle. (Default value = False)
-
-    Returns:
-      automaton
-
-    """
-    path = Path(path)
-    graph = graph_from_dot_file(path)[0]
-
-    assert automaton_type in automaton_types.values()
-
-    id_node_aut_map = {'dfa': (DfaState, Dfa), 'mealy': (MealyState, MealyMachine), 'moore': (MooreState, MooreMachine),
-                       'onfsm': (OnfsmState, Onfsm), 'mdp': (MdpState, Mdp), 'mc': (McState, MarkovChain),
-                       'smm': (StochasticMealyState, StochasticMealyMachine), 'vpa': (SevpaState, Sevpa)}
-
-    nodeType, aut_type = id_node_aut_map[automaton_type]
-
-    node_label_dict = dict()
-    for n in graph.get_node_list():
-        if n.get_name() == '__start0' or n.get_name() == '' or n.get_name() == '"\\n"':
-            continue
-        label = None
-        if 'label' in n.get_attributes().keys():
-            label = n.get_attributes()['label']
-            label = _strip_label(label)
-
-        _process_node_label(n, label, node_label_dict, nodeType, automaton_type)
-
-    initial_node = None
-    for edge in graph.get_edge_list():
-        if edge.get_source() == '__start0':
-            initial_node = node_label_dict[edge.get_destination()]
-            continue
-
-        source = node_label_dict[edge.get_source()]
-        destination = node_label_dict[edge.get_destination()]
-
-        label = edge.get_attributes()['label']
-        label = _strip_label(label)
-        _process_label(label, source, destination, automaton_type)
-
-    if initial_node is None:
-        print("No initial state found. \n"
-              "Please follow syntax found at: https://github.com/DES-Lab/AALpy/wiki/"
-              "Loading,Saving,-Syntax-and-Visualization-of-Automata ")
-        assert False
-
-    automaton = aut_type(initial_node, list(node_label_dict.values()))
-    if automaton_type not in {'mc', 'vpa'} and not automaton.is_input_complete():
-        print('Warning: Loaded automaton is not input complete.')
-    if compute_prefixes and not automaton_type not in {'mc', 'vpa'}:
-        for state in automaton.states:
-            state.prefix = automaton.get_shortest_path(automaton.initial_state, state)
-    return automaton
-
-
 def _process_node_label_prime(node_name, label, line, node_label_dict, node_type, automaton_type):
     if automaton_type == 'mdp' or automaton_type == 'mc':
         node_label_dict[node_name] = node_type(node_name, label)
@@ -356,7 +324,7 @@ def _process_node_label_prime(node_name, label, line, node_label_dict, node_type
             node_label_dict[node_name] = node_type(label, output)
         else:
             node_label_dict[node_name] = node_type(label)
-        if automaton_type == 'dfa' or automaton_type == 'vpa':
+        if automaton_type in {'dfa', 'vpa', 'sevpa'}:
             if 'doublecircle' in line:
                 node_label_dict[node_name].is_accepting = True
 
@@ -376,7 +344,7 @@ def load_automaton_from_file(path, automaton_type, compute_prefixes=False):
 
         path: pathlike or str to the file
 
-        automaton_type: type of the automaton, one of ['dfa', 'mealy', 'moore', 'mdp', 'smm', 'onfsm', 'mc', 'vpa']
+        automaton_type: type of the automaton, one of ['dfa', 'mealy', 'moore', 'mdp', 'smm', 'onfsm', 'mc', 'sevpa']
 
         compute_prefixes: it True, shortest path to reach every state will be computed and saved in the prefix of
             the state. Useful when loading the model to use them as a equivalence oracle. (Default value = False)
@@ -390,7 +358,8 @@ def load_automaton_from_file(path, automaton_type, compute_prefixes=False):
 
     id_node_aut_map = {'dfa': (DfaState, Dfa), 'mealy': (MealyState, MealyMachine), 'moore': (MooreState, MooreMachine),
                        'onfsm': (OnfsmState, Onfsm), 'mdp': (MdpState, Mdp), 'mc': (McState, MarkovChain),
-                       'smm': (StochasticMealyState, StochasticMealyMachine), 'vpa': (SevpaState, Sevpa)}
+                       'smm': (StochasticMealyState, StochasticMealyMachine), 'sevpa': (SevpaState, Sevpa),
+                       'vpa': (VpaState, Vpa)}
 
     nodeType, aut_type = id_node_aut_map[automaton_type]
 
@@ -427,9 +396,9 @@ def load_automaton_from_file(path, automaton_type, compute_prefixes=False):
         _process_label(label, node_label_dict[source], node_label_dict[destination], automaton_type)
 
     automaton = aut_type(initial_state, list(node_label_dict.values()))
-    if automaton_type not in {'mc', 'vpa'} and not automaton.is_input_complete():
+    if automaton_type not in {'mc', 'sevpa', 'vpa'} and not automaton.is_input_complete():
         print('Warning: Loaded automaton is not input complete.')
-    if compute_prefixes and not automaton_type not in {'mc', 'vpa'}:
+    if compute_prefixes and not automaton_type not in {'mc', 'sevpa', 'vpa'}:
         for state in automaton.states:
             state.prefix = automaton.get_shortest_path(automaton.initial_state, state)
     return automaton

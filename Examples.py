@@ -142,6 +142,48 @@ def learn_date_validator():
     learned_model.visualize()
 
 
+def bluetooth_Lsharp():
+    from aalpy.utils import load_automaton_from_file
+    from aalpy.SULs import MealySUL
+    from aalpy.oracles import WpMethodEqOracle
+    from aalpy.learning_algs import run_Lsharp
+
+    mealy_machine = load_automaton_from_file(f'./DotModels/Bluetooth/CYW43455.dot', automaton_type='mealy')
+    input_alphabet = mealy_machine.get_input_alphabet()
+
+    sul_mealy = MealySUL(mealy_machine)
+    eq_oracle = WpMethodEqOracle(input_alphabet, sul_mealy, len(mealy_machine.states))
+
+    # Extension rule options: {"Nothing", "SepSeq", "ADS"}
+    # Separation rule options: {"SepSeq", "ADS"}
+    learned_mealy = run_Lsharp(input_alphabet, sul_mealy, eq_oracle, automaton_type='mealy', extension_rule=None,
+                               separation_rule="SepSeq", max_learning_rounds=50, print_level=1)
+
+
+def bluetooth_adaptive_Lsharp():
+    from aalpy.utils import load_automaton_from_file
+    from aalpy.SULs import MealySUL
+    from aalpy.oracles import WpMethodEqOracle
+    from aalpy.learning_algs import run_adaptive_Lsharp
+
+    reference1 = load_automaton_from_file(f'./DotModels/Bluetooth/CC2650.dot', automaton_type='mealy')
+    reference2 = load_automaton_from_file(f'./DotModels/Bluetooth/nRF52832.dot', automaton_type='mealy')
+    reference3 = load_automaton_from_file(f'./DotModels/Bluetooth/CC2640R2-no-feature-req.dot', automaton_type='mealy')
+    target = load_automaton_from_file(f'./DotModels/Bluetooth/CYW43455.dot', automaton_type='mealy')
+
+    input_alphabet = target.get_input_alphabet()
+
+    sul_mealy = MealySUL(target)
+    eq_oracle = WpMethodEqOracle(input_alphabet, sul_mealy, len(target.states))
+
+    # Rebuilding options: {True, False}
+    # State Matching options: {None, "Total", "Approximate"}
+    learned_mealy = run_adaptive_Lsharp(input_alphabet, sul_mealy, [reference1, reference2, reference3], eq_oracle,
+                                       automaton_type='mealy', extension_rule='SepSeq', separation_rule="ADS",
+                                       rebuilding=True, state_matching="Approximate", print_level=2)
+
+
+
 def random_deterministic_example_with_provided_sequences():
     from random import choice, randint
     from aalpy.SULs import AutomatonSUL
@@ -173,14 +215,8 @@ def random_deterministic_example_with_provided_sequences():
 def big_input_alphabet_example():
     """
         Small example where input alphabet can be huge and outputs are just true and false (DFA).
-
-    Args:
-        input_alphabet_size: size of input alphabet
-        automaton_depth: depth of alternating True/False paths in final automaton
-
-    Returns:
-        learned model
     """
+
     from aalpy.base import SUL
     from aalpy.learning_algs import run_Lstar
     from aalpy.oracles import RandomWMethodEqOracle
@@ -799,24 +835,21 @@ def rpni_example():
 
 
 def rpni_check_model_example():
-    import random
     from aalpy.SULs import AutomatonSUL
     from aalpy.learning_algs import run_RPNI
     from aalpy.oracles import StatePrefixEqOracle
-    from aalpy.utils import generate_random_moore_machine, generate_random_dfa
+    from aalpy.utils import generate_random_moore_machine
+    from aalpy.utils import generate_input_output_data_from_automata, convert_i_o_traces_for_RPNI
 
-    model = generate_random_dfa(num_states=5, alphabet=[1, 2, 3], num_accepting_states=2)
+    # model = generate_random_dfa(num_states=5, alphabet=[1, 2, 3], num_accepting_states=2)
     model = generate_random_moore_machine(num_states=5, input_alphabet=[1, 2, 3], output_alphabet=['a', 'b'])
 
     input_al = model.get_input_alphabet()
 
-    num_sequences = 1000
-    data = []
-    for _ in range(num_sequences):
-        seq_len = random.randint(1, 20)
-        random_seq = random.choices(input_al, k=seq_len)
-        output = model.compute_output_seq(model.initial_state, random_seq)[-1]
-        data.append((random_seq, output))
+    data = generate_input_output_data_from_automata(model, num_sequances=2000,
+                                                    min_seq_len=1, max_seq_len=12)
+
+    data = convert_i_o_traces_for_RPNI(data)
 
     rpni_model = run_RPNI(data, automaton_type='moore', print_info=True)
 
@@ -830,7 +863,7 @@ def rpni_check_model_example():
     if cex is None:
         print("Could not find a counterexample between the RPNI-model and the original model.")
     else:
-        print('Counterexample found. Either RPNI data was incomplete, or there is a bug in RPNI algorithm :o ')
+        print('Counterexample found. Either RPNI data was incomplete (or there is a bug in RPNI algorithm :o )')
 
 
 def rpni_mealy_example():
@@ -1062,3 +1095,68 @@ def random_sevpa_learning():
     model = run_KV(alphabet=alphabet, sul=sul, eq_oracle=eq_oracle, automaton_type='vpa',
                    print_level=2, cex_processing='rs')
 
+
+def passive_vpa_learning_on_lists():
+    from aalpy.learning_algs import run_PAPNI
+    from aalpy.automata import VpaAlphabet
+
+    vpa_alphabet = VpaAlphabet(internal_alphabet=['1'], call_alphabet=['(', '['], return_alphabet=[')', ']'])
+
+    list_data = [
+        (tuple(), False),
+        (('[', '[', ']', ']'), True),
+        (('(', '(', ')', ')'), True),
+
+        (('[', '[', ']', ')'), False),
+        (('[', '[', ')', ']'), False),
+        (('[', ')'), False),
+        (('(', ']'), False),
+        (('[', '[', ']', '1', ']'), True),
+        (('[', '1', '[', ']', '1', ']'), True),
+        (('(', '1', '[', ']', '1', ')'), True),
+        (('(', ')'), True),
+        (('[', ']'), True),
+        (('[', '1', '(', ']', '1', ')'), False),
+    ]
+
+    papni = run_PAPNI(list_data, vpa_alphabet, algorithm='gsm', print_info=True)
+    papni.visualize()
+
+
+def passive_vpa_learning_arithmetics():
+    from aalpy.learning_algs import run_PAPNI
+    from aalpy.utils.BenchmarkVpaModels import gen_arithmetic_data
+    arithmetic_data, vpa_alphabet = gen_arithmetic_data(num_sequances=4000, min_seq_len=2, max_seq_len=10)
+
+    print(f"Alphabet: {vpa_alphabet}")
+
+    print('Data:')
+    for i in range(10):
+        print(arithmetic_data[i])
+
+    learned_model = run_PAPNI(arithmetic_data, vpa_alphabet)
+    learned_model.visualize()
+
+
+def passive_vpa_learning_on_all_benchmark_models():
+    from aalpy.learning_algs import run_PAPNI
+    from aalpy.utils.BenchmarkVpaModels import get_all_VPAs
+    from aalpy.utils import generate_input_output_data_from_vpa, convert_i_o_traces_for_RPNI
+
+    for gt in get_all_VPAs():
+
+        vpa_alphabet = gt.input_alphabet
+        data = generate_input_output_data_from_vpa(gt, num_sequances=2000, min_seq_len=1, max_seq_len=16)
+
+        data = convert_i_o_traces_for_RPNI(data)
+
+        papni = run_PAPNI(data, vpa_alphabet, algorithm='gsm', print_info=True)
+
+        for seq, o in data:
+            papni.reset_to_initial()
+            learned_output = papni.execute_sequence(papni.initial_state, seq)[-1]
+            if o != learned_output:
+                print(seq, o, learned_output)
+                assert False, 'Papni Learned Model not consistent with data.'
+
+        print('PAPNI model conforms to data.')

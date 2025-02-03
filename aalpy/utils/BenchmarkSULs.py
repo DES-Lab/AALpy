@@ -1,14 +1,14 @@
 def get_Angluin_dfa():
     from aalpy.automata import Dfa
 
-    anguin_dfa = {
+    angluin_dfa = {
         'q0': (True, {'a': 'q1', 'b': 'q2'}),
         'q1': (False, {'a': 'q0', 'b': 'q3'}),
         'q2': (False, {'a': 'q3', 'b': 'q0'}),
         'q3': (False, {'a': 'q2', 'b': 'q1'})
     }
 
-    return Dfa.from_state_setup(anguin_dfa)
+    return Dfa.from_state_setup(angluin_dfa)
 
 
 def get_benchmark_ONFSM():

@@ -1,4 +1,6 @@
+import random
 import string
+from itertools import product
 from collections import defaultdict
 
 
@@ -89,6 +91,10 @@ def print_learning_info(info: dict):
     print('Learning Finished.')
     print('Learning Rounds:  {}'.format(info['learning_rounds']))
     print('Number of states: {}'.format(info['automaton_size']))
+    if 'rebuild_states' in info.keys():
+        print(' # Found by Rebuilding: {}'.format(info['rebuild_states']))
+    if 'matching_states' in info.keys():
+        print(' # Found by {} State Matching: {}'.format(info['matching_type'], info['matching_states']))
     print('Time (in seconds)')
     print('  Total                : {}'.format(info['total_time']))
     print('  Learning algorithm   : {}'.format(info['learning_time']))
@@ -282,7 +288,7 @@ def make_input_complete(automaton, missing_transition_go_to='self_loop'):
     return automaton
 
 
-def convert_i_o_traces_for_RPNI(sequences):
+def convert_i_o_traces_for_RPNI(sequences, automaton_type="mealy"):
     """
     Converts a list of input-output sequences to RPNI format.
     Eg. [[(1,'a'), (2,'b'), (3,'c')], [(6,'7'), (4,'e'), (3,'c')]] to
@@ -290,7 +296,13 @@ def convert_i_o_traces_for_RPNI(sequences):
     """
     rpni_sequences = set()
 
+    if automaton_type not in ["mealy", "moore", "dfa"]:
+        raise ValueError()
+
     for s in sequences:
+        if automaton_type in ["moore", "dfa"]:
+            rpni_sequences.add((tuple(),s[0]))
+            s = s[1:]
         for i in range(len(s)):
             inputs = tuple([io[0] for io in s[:i + 1]])
             rpni_sequences.add((inputs, s[i][1]))
@@ -323,3 +335,77 @@ def visualize_classification_tree(root_node):
 
     # print(graph.to_string())
     graph.write(path='classification_tree.pdf', format='pdf')
+
+
+def is_balanced(input_seq, vpa_alphabet):
+    counter = 0
+    for i in input_seq:
+        if i in vpa_alphabet.call_alphabet:
+            counter += 1
+        if i in vpa_alphabet.return_alphabet:
+            counter -= 1
+        if counter < 0:
+            return False
+    return counter == 0
+
+
+def generate_input_output_data_from_automata(model, num_sequances=4000, min_seq_len=1, max_seq_len=16):
+
+    alphabet = model.get_input_alphabet()
+    input_output_sequances = []
+    while len(input_output_sequances) < num_sequances:
+        sequance = []
+        for _ in range(random.randint(min_seq_len, max_seq_len)):
+            sequance.append(random.choice(alphabet))
+
+        model.reset_to_initial()
+        outputs = model.execute_sequence(model.initial_state, sequance)
+
+        input_output_sequances.append(list(zip(sequance, outputs)))
+
+    return input_output_sequances
+
+
+def generate_input_output_data_from_vpa(vpa, num_sequances=1000, max_seq_len=16, max_attempts=None):
+    alphabet = vpa.input_alphabet.get_merged_alphabet()
+    data_set = set()
+
+    num_nominal_tries = num_sequances // 2
+    num_generation_attempts = 0
+
+    max_attempts = max_attempts if max_attempts is not None else num_sequances * 50
+
+    while len(data_set) < num_sequances:
+        num_generation_attempts += 1
+        # it can happen that it is not possible to generate num_sequances balanced words of lenght <= max_seq_len
+        if num_generation_attempts == max_attempts:
+            break
+
+        sequance = ()
+
+        vpa.reset_to_initial()
+
+        for _ in range(max_seq_len):
+            if num_generation_attempts <= num_nominal_tries:
+                possible_transitions = list(vpa.current_state.transitions.keys())
+                if not possible_transitions:
+                    break
+                chosen_input = random.choice(possible_transitions)
+            else:
+                chosen_input = random.choice(alphabet)
+            sequance += (chosen_input,)
+
+            output = vpa.step(chosen_input)
+            #if vpa.is_balanced(sequance):
+            data_set.add((sequance, output))
+
+    data_set = list(data_set)
+    return data_set
+
+
+def product_with_possible_empty_iterable(*iterables, repeat=1):
+    """
+    Words like regular product, but if one of the iterables is empty it will just ignore it, instead of returning [].
+    """
+    non_empty_iterables = [it for it in iterables if it]
+    return product(*non_empty_iterables, repeat=repeat)

@@ -1,10 +1,8 @@
 import random
 from collections import defaultdict, deque
-from typing import Union
+from typing import Union, List, Dict
 
 from aalpy.base import Automaton, AutomatonState
-
-from typing import List, Dict
 
 
 class SevpaAlphabet:
@@ -54,7 +52,8 @@ class SevpaState(AutomatonState):
 
     def __init__(self, state_id, is_accepting=False):
         super().__init__(state_id)
-        self.transitions = defaultdict(list[SevpaTransition])
+        # list of SevpaTransition
+        self.transitions = defaultdict(list)
         self.is_accepting = is_accepting
 
 
@@ -90,7 +89,7 @@ class Sevpa(Automaton):
     """
     empty = "_"
 
-    def __init__(self, initial_state: SevpaState, states: list[SevpaState]):
+    def __init__(self, initial_state: SevpaState, states: List[SevpaState]):
         super().__init__(initial_state, states)
         self.initial_state = initial_state
         self.states = states

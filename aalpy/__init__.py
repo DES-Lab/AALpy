@@ -40,6 +40,7 @@ from .learning_algs import (
     run_RPNI,
     run_stochastic_Lstar,
     run_GSM,
+    run_PAPNI
 )
 from .oracles import (
     BreadthFirstExplorationEqOracle,

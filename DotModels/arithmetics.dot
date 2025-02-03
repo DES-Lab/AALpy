@@ -1,0 +1,10 @@
+digraph learnedModel {
+s0 [label="s0", shape=circle];
+s1 [label="s1", shape=doublecircle];
+s0 -> s1  [label="1"];
+s0 -> s0  [label="push(()"];
+s1 -> s0  [label="+"];
+s1 -> s1  [label=") / pop(()"];
+__start0 [label="", shape=none];
+__start0 -> s0  [label=""];
+}

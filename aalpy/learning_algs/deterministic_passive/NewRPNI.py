@@ -30,6 +30,7 @@ class NewRPNI:
             blue_state = min(list(blue_states))
 
             partition = None
+            red_state = None
             for red_state in red_states:
                 partition = self._partition_from_merge(red_state, blue_state)
                 if partition is not None:
