@@ -9,4 +9,3 @@ from .stochastic_passive.ActiveAleriga import run_active_Alergia
 from .deterministic_passive.RPNI import run_RPNI
 from .deterministic_passive.active_RPNI import run_active_RPNI
 from .general_passive.GeneralizedStateMerging import run_GSM
-from .general_passive import ScoreFunctionsGSM
