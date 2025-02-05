@@ -44,12 +44,14 @@ def hoeffding_compatibility(eps, compare_original = True) -> LocalCompatibilityF
     transition_dummy = TransitionInfo(None, 0, None, 0)
 
     def similar(a: Node, b: Node):
+        # iterate over inputs that are common to both states
         for in_sym, a_trans, b_trans in intersection_iterator(a.transitions, b.transitions):
             # could create appropriate dict here
             a_total, b_total = (sum(getattr(x, count_name) for x in trans.values()) for trans in (a_trans, b_trans))
             if a_total == 0 or b_total == 0:
-                continue # is it really necessary to check this?
+                continue # parameter combinations require this check
             threshold = eps_fact * (sqrt(1 / a_total) + sqrt(1 / b_total))
+            # iterate over outputs that appear in either distribution
             for out_sym, a_info, b_info in union_iterator(a_trans, b_trans, transition_dummy):
                 ac, bc = (getattr(x, count_name) for x in (a_info, b_info))
                 if abs(ac / a_total - bc / b_total) > threshold:
