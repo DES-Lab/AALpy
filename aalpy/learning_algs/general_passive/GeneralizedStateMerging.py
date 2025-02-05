@@ -5,8 +5,7 @@ from collections import deque
 
 from aalpy.learning_algs.general_passive.Node import Node, OutputBehavior, TransitionBehavior, TransitionInfo, \
     OutputBehaviorRange, TransitionBehaviorRange, intersection_iterator
-from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreCalculation, NoRareEventNonDetScore, \
-    hoeffding_compatibility, Score
+from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreCalculation, hoeffding_compatibility, Score
 
 
 # TODO add option for making checking of futures and partition non mutual exclusive?
@@ -64,9 +63,9 @@ class GeneralizedStateMerging:
         if score_calc is None:
             if transition_behavior == "deterministic":
                 score_calc = ScoreCalculation()
-            elif transition_behavior == "nondeterministic":
-                score_calc = NoRareEventNonDetScore(0.5, 0.001)
-            elif transition_behavior == "stochastic":
+            elif transition_behavior == "nondeterministic" :
+                raise ValueError("Missing score_calc for nondeterministic transition behavior. No default available.")
+            elif transition_behavior == "stochastic" :
                 score_calc = ScoreCalculation(hoeffding_compatibility(0.005, compatibility_on_pta))
         self.score_calc: ScoreCalculation = score_calc
 

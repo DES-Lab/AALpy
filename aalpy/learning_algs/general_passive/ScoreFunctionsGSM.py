@@ -1,14 +1,11 @@
-import warnings
-from collections import defaultdict
 from math import sqrt, log
-from typing import Callable, Dict, Union, List, Iterable
+from typing import Callable, Dict, List, Iterable, Any
 
 from aalpy.learning_algs.general_passive.Node import Node, intersection_iterator, union_iterator, TransitionInfo
 
-Score = Union[bool, float]
 LocalCompatibilityFunction = Callable[[Node, Node], bool]
-ScoreFunction = Callable[[Dict[Node, Node]], Score]
-AggregationFunction = Callable[[Iterable[Score]], Score]
+ScoreFunction = Callable[[Dict[Node, Node]], Any]
+AggregationFunction = Callable[[Iterable], Any]
 
 
 class ScoreCalculation:
@@ -63,64 +60,6 @@ def hoeffding_compatibility(eps, compare_original=True) -> LocalCompatibilityFun
     return similar
 
 
-def non_det_compatibility(allow_subset=False) -> LocalCompatibilityFunction:
-    def compat(a: Node, b: Node):
-        for in_sym, a_trans in a.transitions.items():
-            b_trans = b.transitions.get(in_sym)
-            if b_trans is None:
-                continue
-            c1 = allow_subset and any(out_sym not in a_trans for out_sym in b_trans.keys())
-            c2 = not allow_subset and set(a_trans.keys()) != set(b_trans.keys())
-            if c1 or c2:
-                return False
-        return True
-
-    return compat
-
-
-class NoRareEventNonDetScore(ScoreCalculation):
-    def __init__(self, thresh, p_min: Union[dict, float], reject_local_score_only=False, no_global_score=False):
-        super().__init__()
-        warnings.warn("Using experimental compatibility criterion for nondeterministic automata.")
-
-        # Transform parameters to log space and create dict
-        self.thresh = log(thresh)
-        if isinstance(p_min, float):
-            cost = log(1 - p_min)
-            self.miss_dict = defaultdict(lambda: cost)
-        else:
-            self.miss_dict = {k: log(1 - v) for k, v in p_min.items()}
-
-        self.score = 0
-        self.reject_local_score_only = reject_local_score_only
-        if no_global_score:
-            self.global_score = self.default_score_function
-
-    def reset(self):
-        self.score = 0
-
-    def local_compatibility(self, a: Node, b: Node):
-        score_local = 0
-        for in_sym in filter(lambda x: x in a.transitions.keys(), b.transitions.keys()):
-            a_trans, b_trans = (x.transitions[in_sym] for x in [a, b])
-            a_total, b_total = (sum(x.count for x in x.values()) for x in (a_trans, b_trans))
-            for out_sym in set(a_trans.keys()).union(b_trans.keys()):
-                a_miss, b_miss = (out_sym not in trans for trans in [a_trans, b_trans])
-                if a_miss:
-                    score_local += a_total * self.miss_dict[in_sym, out_sym]
-                if b_miss:
-                    score_local += b_total * self.miss_dict[in_sym, out_sym]
-
-        self.score += score_local
-        if self.reject_local_score_only:
-            return self.thresh < score_local
-        return self.thresh < self.score
-
-    def score_function(self, part: Dict[Node, Node]) -> Score:
-        # I don't think that we have to reevaluate on the full partition.
-        return self.score
-
-
 class ScoreWithKTail(ScoreCalculation):
     """Applies k-Tails to a compatibility function: Compatibility is only evaluated up to a certain depth k."""
 
@@ -145,11 +84,10 @@ class ScoreWithKTail(ScoreCalculation):
 
         return self.other_score.local_compatibility(a, b)
 
-    def score_function(self, part: Dict[Node, Node]) -> Score:
-        return self.other_score.score_function(part)
-
 
 class ScoreWithSinks(ScoreCalculation):
+    """This class allows rejecting merge candidates based on additional criteria for the initial merge"""
+    
     def __init__(self, other_score: ScoreCalculation, sink_cond: Callable[[Node], bool], allow_sink_merge=True):
         super().__init__(None, other_score.score_function)
         self.other_score = other_score
