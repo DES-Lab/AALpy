@@ -86,6 +86,8 @@ class ScoreWithKTail(ScoreCalculation):
 
 
 class ScoreWithSinks(ScoreCalculation):
+    """This class allows rejecting merge candidates based on additional criteria for the initial merge"""
+    
     def __init__(self, other_score: ScoreCalculation, sink_cond: Callable[[Node], bool], allow_sink_merge=True):
         super().__init__(None, other_score.score_function)
         self.other_score = other_score
