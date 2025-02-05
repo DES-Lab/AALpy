@@ -319,7 +319,11 @@ def _process_node_label_prime(node_name, label, line, node_label_dict, node_type
     else:
         if automaton_type == 'moore' and label != "":
             label_output = _strip_label(label)
-            label, output = label_output.split("|", maxsplit=1)
+            if "|" in label_output:
+                label, output = label_output.split("|", maxsplit=1)
+            else:
+                label = node_name
+                output = label_output
             output = output.strip() if not output.isdigit() else int(output)
             node_label_dict[node_name] = node_type(label, output)
         else:
@@ -329,6 +333,7 @@ def _process_node_label_prime(node_name, label, line, node_label_dict, node_type
                 node_label_dict[node_name].is_accepting = True
 
 
+# TODO: robust patterns (break eg. if state label contains "-")
 label_pattern = r'label=("[^"]*"|[^\s\],]*)'
 starting_state_pattern = r'__start0\s*->\s*(\w+)\s*(?:\[label=""\])?;?'
 transition_pattern = r'(\w+)\s*->\s*(\w+)\s*(.*);'
