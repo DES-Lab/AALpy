@@ -8,64 +8,67 @@ from aalpy.learning_algs.general_passive.Node import Node, OutputBehavior, Trans
 from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreCalculation, NoRareEventNonDetScore, \
     hoeffding_compatibility, Score
 
+
 # TODO add option for making checking of futures and partition non mutual exclusive?
 #  Easiest done by adding a new method / field to ScoreCalculation
 
 class Partitioning:
-    def __init__(self, red : Node, blue : Node):
-        self.red : Node = red
-        self.blue : Node = blue
-        self.score : Score = False
-        self.red_mapping : Dict[Node, Node] = dict()
-        self.full_mapping : Dict[Node, Node] = dict()
+    def __init__(self, red: Node, blue: Node):
+        self.red: Node = red
+        self.blue: Node = blue
+        self.score: Score = False
+        self.red_mapping: Dict[Node, Node] = dict()
+        self.full_mapping: Dict[Node, Node] = dict()
+
 
 class Instrumentation:
-  def __init__(self):
-      pass
+    def __init__(self):
+        pass
 
-  def reset(self, gsm: 'GeneralizedStateMerging'):
-      pass
+    def reset(self, gsm: 'GeneralizedStateMerging'):
+        pass
 
-  def pta_construction_done(self, root: Node):
-      pass
+    def pta_construction_done(self, root: Node):
+        pass
 
-  def log_promote(self, node: Node):
-      pass
+    def log_promote(self, node: Node):
+        pass
 
-  def log_merge(self, part: Partitioning):
-      pass
+    def log_merge(self, part: Partitioning):
+        pass
 
-  def learning_done(self, root: Node, red_states: List[Node]):
-      pass
+    def learning_done(self, root: Node, red_states: List[Node]):
+        pass
+
 
 class GeneralizedStateMerging:
     def __init__(self, *,
-                 output_behavior : OutputBehavior = "moore",
-                 transition_behavior : TransitionBehavior = "deterministic",
-                 score_calc : ScoreCalculation = None,
-                 pta_preprocessing : Callable[[Node], Node] = None,
-                 postprocessing : Callable[[Node], Node] = None,
-                 eval_compat_on_pta : bool = False,
-                 eval_compat_on_futures : bool = False,
-                 node_order : Callable[[Node, Node], bool] = None,
-                 consider_only_min_blue = False,
-                 depth_first = False):
+                 output_behavior: OutputBehavior = "moore",
+                 transition_behavior: TransitionBehavior = "deterministic",
+                 score_calc: ScoreCalculation = None,
+                 pta_preprocessing: Callable[[Node], Node] = None,
+                 postprocessing: Callable[[Node], Node] = None,
+                 eval_compat_on_pta: bool = False,
+                 eval_compat_on_futures: bool = False,
+                 node_order: Callable[[Node, Node], bool] = None,
+                 consider_only_min_blue=False,
+                 depth_first=False):
 
         if output_behavior not in OutputBehaviorRange:
             raise ValueError(f"invalid output behavior {output_behavior}")
-        self.output_behavior : OutputBehavior = output_behavior
+        self.output_behavior: OutputBehavior = output_behavior
         if transition_behavior not in TransitionBehaviorRange:
             raise ValueError(f"invalid transition behavior {transition_behavior}")
-        self.transition_behavior : TransitionBehavior = transition_behavior
+        self.transition_behavior: TransitionBehavior = transition_behavior
 
         if score_calc is None:
-            if transition_behavior == "deterministic" :
+            if transition_behavior == "deterministic":
                 score_calc = ScoreCalculation()
-            elif transition_behavior == "nondeterministic" :
+            elif transition_behavior == "nondeterministic":
                 score_calc = NoRareEventNonDetScore(0.5, 0.001)
-            elif transition_behavior == "stochastic" :
+            elif transition_behavior == "stochastic":
                 score_calc = ScoreCalculation(hoeffding_compatibility(0.005, eval_compat_on_pta))
-        self.score_calc : ScoreCalculation = score_calc
+        self.score_calc: ScoreCalculation = score_calc
 
         if node_order is None:
             node_order = Node.__lt__
@@ -80,16 +83,16 @@ class GeneralizedStateMerging:
         self.consider_only_min_blue = consider_only_min_blue
         self.depth_first = depth_first
 
-    def compute_local_compatibility(self, a : Node, b : Node):
-        if self.output_behavior == "moore" and not Node.moore_compatible(a,b):
+    def compute_local_compatibility(self, a: Node, b: Node):
+        if self.output_behavior == "moore" and not Node.moore_compatible(a, b):
             return False
-        if self.transition_behavior == "deterministic" and not Node.deterministic_compatible(a,b):
+        if self.transition_behavior == "deterministic" and not Node.deterministic_compatible(a, b):
             return False
         return self.score_calc.local_compatibility(a, b)
 
     # TODO: make more generic by adding the option to use a different algorithm than red blue
     #  for selecting potential merge candidates. Maybe using inheritance with abstract `run`.
-    def run(self, data, convert = True, instrumentation: Instrumentation = None):
+    def run(self, data, convert=True, instrumentation: Instrumentation = None):
         if instrumentation is None:
             instrumentation = Instrumentation()
         instrumentation.reset(self)
@@ -110,7 +113,7 @@ class GeneralizedStateMerging:
         # sorted list of states already considered
         red_states = [root]
 
-        partition_candidates : Dict[Tuple[Node, Node], Partitioning] = dict()
+        partition_candidates: Dict[Tuple[Node, Node], Partitioning] = dict()
         while True:
             # get blue states
             blue_states = []
@@ -135,7 +138,7 @@ class GeneralizedStateMerging:
                 # FUTURE: Save partitions?
 
                 # calculate partitions resulting from merges with red states if necessary
-                current_candidates : Dict[Node, Partitioning] = dict()
+                current_candidates: Dict[Node, Partitioning] = dict()
                 perfect_partitioning = None
                 for red_state in red_states:
                     partition = partition_candidates.get((red_state, blue_state))
@@ -146,9 +149,10 @@ class GeneralizedStateMerging:
                         break
                     current_candidates[red_state] = partition
 
+                assert red_state
                 # partition with perfect score found: don't consider anything else
                 if perfect_partitioning:
-                    partition_candidates = {(red_state, blue_state) : perfect_partitioning}
+                    partition_candidates = {(red_state, blue_state): perfect_partitioning}
                     break
 
                 # no merge candidates for this blue state -> promote
@@ -159,7 +163,8 @@ class GeneralizedStateMerging:
                     break
 
                 # update tracking dict with new candidates
-                new_candidates = (((red, blue_state), part) for red, part in current_candidates.items() if part.score is not False)
+                new_candidates = (((red, blue_state), part) for red, part in current_candidates.items() if
+                                  part.score is not False)
                 partition_candidates.update(new_candidates)
 
             # a state was promoted -> don't clear candidates
@@ -167,13 +172,13 @@ class GeneralizedStateMerging:
                 continue
 
             # find best partitioning and clear candidates
-            best_candidate = max(partition_candidates.values(), key = lambda part : part.score)
+            best_candidate = max(partition_candidates.values(), key=lambda part: part.score)
             for real_node, partition_node in best_candidate.red_mapping.items():
                 real_node.transitions = partition_node.transitions
                 for access_pair, t_info in real_node.transition_iterator():
                     if t_info.target not in red_states:
                         t_info.target.predecessor = real_node
-                        t_info.target.prefix_access_pair = access_pair # not sure whether this is actually required
+                        t_info.target.prefix_access_pair = access_pair  # not sure whether this is actually required
             instrumentation.log_merge(best_candidate)
             # FUTURE: optimizations for compatibility tests where merges can be orthogonal
             # FUTURE: caching for aggregating compatibility tests
@@ -187,7 +192,7 @@ class GeneralizedStateMerging:
         return root
 
     def _check_futures(self, red: Node, blue: Node) -> bool:
-        q : deque[Tuple[Node, Node]] = deque([(red, blue)])
+        q: deque[Tuple[Node, Node]] = deque([(red, blue)])
         pop = q.pop if self.depth_first else q.popleft
 
         while len(q) != 0:
@@ -207,7 +212,7 @@ class GeneralizedStateMerging:
 
         return True
 
-    def _partition_from_merge(self, red: Node, blue: Node) -> Partitioning :
+    def _partition_from_merge(self, red: Node, blue: Node) -> Partitioning:
         # Compatibility check based on partitions.
         # assumes that blue is a tree and red is not reachable from blue
 
@@ -241,7 +246,7 @@ class GeneralizedStateMerging:
         blue_in_sym, blue_out_sym = blue.prefix_access_pair
         blue_parent.transitions[blue_in_sym][blue_out_sym].target = red
 
-        q : deque[Tuple[Node, Node]] = deque([(red, blue)])
+        q: deque[Tuple[Node, Node]] = deque([(red, blue)])
         pop = q.pop if self.depth_first else q.popleft
 
         while len(q) != 0:
@@ -270,18 +275,18 @@ class GeneralizedStateMerging:
 
 # TODO nicer interface?
 def run_GSM(data, *,
-            output_behavior : OutputBehavior = "moore",
-            transition_behavior : TransitionBehavior = "deterministic",
-            score_calc : ScoreCalculation = None,
-            pta_preprocessing : Callable[[Node], Node] = None,
-            postprocessing : Callable[[Node], Node] = None,
-            eval_compat_on_pta : bool = False,
-            eval_compat_on_futures : bool = False,
-            node_order : Callable[[Node, Node], bool] = None,
-            consider_only_min_blue = False,
-            depth_first = False,
-            instrumentation = None,
-            convert = True,
+            output_behavior: OutputBehavior = "moore",
+            transition_behavior: TransitionBehavior = "deterministic",
+            score_calc: ScoreCalculation = None,
+            pta_preprocessing: Callable[[Node], Node] = None,
+            postprocessing: Callable[[Node], Node] = None,
+            eval_compat_on_pta: bool = False,
+            eval_compat_on_futures: bool = False,
+            node_order: Callable[[Node, Node], bool] = None,
+            consider_only_min_blue=False,
+            depth_first=False,
+            instrumentation=None,
+            convert=True,
             ):
     all_params = locals()
     run_param_names = ["data", "instrumentation", "convert"]

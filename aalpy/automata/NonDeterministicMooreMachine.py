@@ -1,9 +1,10 @@
 import random
 from collections import defaultdict
-from typing import List, Dict, Any, Generic
+from typing import List, Dict, Generic
 
 from aalpy.base import AutomatonState, Automaton
 from aalpy.base.Automaton import OutputType, InputType
+
 
 class NDMooreState(AutomatonState, Generic[InputType, OutputType]):
     """
@@ -12,8 +13,8 @@ class NDMooreState(AutomatonState, Generic[InputType, OutputType]):
 
     def __init__(self, state_id, output=None):
         super().__init__(state_id)
-        self.transitions : Dict[InputType, List['NDMooreState']] = defaultdict(lambda : list())
-        self.output : OutputType = output
+        self.transitions: Dict[InputType, List['NDMooreState']] = defaultdict(lambda: list())
+        self.output: OutputType = output
 
 
 class NDMooreMachine(Automaton[NDMooreState[InputType, OutputType]]):
@@ -22,7 +23,9 @@ class NDMooreMachine(Automaton[NDMooreState[InputType, OutputType]]):
         state_setup = dict()
 
         def set_dict_entry(state: NDMooreState):
-            state_setup[state.state_id] = (state.output, {in_sym : [target.state_id for target in trans] for in_sym, trans in state.transitions.items()})
+            state_setup[state.state_id] = (state.output,
+                                           {in_sym: [target.state_id for target in trans] for in_sym, trans in
+                                            state.transitions.items()})
 
         set_dict_entry(self.initial_state)
         for state in self.states:

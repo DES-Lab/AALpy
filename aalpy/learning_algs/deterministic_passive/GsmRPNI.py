@@ -4,7 +4,7 @@ from collections import deque
 from aalpy.learning_algs.deterministic_passive.rpni_helper_functions import to_automaton, RpniNode, createPTA
 
 
-class NewRPNI:
+class GsmRPNI:
     def __init__(self, data, automaton_type, print_info=True):
         self.data = data
         self.final_automaton_type = automaton_type

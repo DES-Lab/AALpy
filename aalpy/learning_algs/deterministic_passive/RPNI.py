@@ -2,7 +2,8 @@ from typing import Union
 
 from aalpy.base import DeterministicAutomaton
 from aalpy.learning_algs.deterministic_passive.ClassicRPNI import ClassicRPNI
-from aalpy.learning_algs.deterministic_passive.NewRPNI import NewRPNI
+from aalpy.learning_algs.deterministic_passive.GsmRPNI import GsmRPNI
+
 
 def run_RPNI(data, automaton_type, algorithm='gsm',
              input_completeness=None, print_info=True) -> Union[DeterministicAutomaton, None]:
@@ -33,7 +34,7 @@ def run_RPNI(data, automaton_type, algorithm='gsm',
     if algorithm == 'classic':
         rpni = ClassicRPNI(data, automaton_type, print_info)
     else:
-        rpni = NewRPNI(data, automaton_type, print_info)
+        rpni = GsmRPNI(data, automaton_type, print_info)
 
     if rpni.root_node is None:
         print('Data provided to RPNI is not deterministic. Ensure that the data is deterministic, '
@@ -104,15 +105,7 @@ def run_PAPNI(data, vpa_alphabet, algorithm='gsm', print_info=True):
         papni_data.append((processed_sequance, label))
 
     # instantiate and run PAPNI as base RPNI with stack-aware data
-    if print_info:
-        print('PAPNI with RPNI backend:')
-    if algorithm == 'classic':
-        rpni = ClassicRPNI(papni_data, automaton_type='dfa', print_info=print_info)
-    else:
-        rpni = NewRPNI(papni_data, automaton_type='dfa', print_info=print_info)
-
-    # run classic RPNI with preprocessed data that is aware of stack
-    learned_model = rpni.run_rpni()
+    learned_model = run_RPNI(papni_data, automaton_type='dfa', algorithm=algorithm, print_info=print_info)
 
     # convert intermediate DFA representation to VPA
     learned_model = vpa_from_dfa_representation(learned_model, vpa_alphabet)

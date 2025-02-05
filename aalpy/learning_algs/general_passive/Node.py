@@ -25,7 +25,8 @@ IOExample = Tuple[Iterable[Any], Any]
 StateFunction = Callable[['Node'], str]
 TransitionFunction = Callable[['Node', Any, Any], str]
 
-def generate_values(base : list, step : Callable, backing_set=True):
+
+def generate_values(base: list, step: Callable, backing_set=True):
     if backing_set:
         result = list(base)
         control = set(base)
@@ -43,6 +44,7 @@ def generate_values(base : list, step : Callable, backing_set=True):
                     result.append(new_val)
         return result
 
+
 def intersection_iterator(a: Dict[Key, Val], b: Dict[Key, Val]) -> Iterator[Tuple[Key, Val, Val]]:
     missing = object()
     for key, a_val in a.items():
@@ -50,6 +52,7 @@ def intersection_iterator(a: Dict[Key, Val], b: Dict[Key, Val]) -> Iterator[Tupl
         if b_val is missing:
             continue
         yield key, a_val, b_val
+
 
 def union_iterator(a: Dict[Key, Val], b: Dict[Key, Val], default: Val = None) -> Iterator[Tuple[Key, Val, Val]]:
     for key, a_val in a.items():
@@ -61,15 +64,17 @@ def union_iterator(a: Dict[Key, Val], b: Dict[Key, Val], default: Val = None) ->
         a_val = a.get(key, default)
         yield key, a_val, b_val
 
+
 # TODO maybe split this for maintainability (and perfomance?)
 class TransitionInfo:
     __slots__ = ["target", "count", "original_target", "original_count"]
 
     def __init__(self, target, count, original_target, original_count):
-        self.target : 'Node' = target
-        self.count : int = count
-        self.original_target : 'Node' = original_target
-        self.original_count : int = original_count
+        self.target: 'Node' = target
+        self.count: int = count
+        self.original_target: 'Node' = original_target
+        self.original_count: int = original_count
+
 
 # TODO add custom pickling code that flattens the Node structure in order to circumvent running into recursion issues for large models
 @total_ordering
@@ -85,10 +90,10 @@ class Node:
     """
     __slots__ = ['transitions', 'predecessor', 'prefix_access_pair']
 
-    def __init__(self, prefix_access_pair, predecessor : 'Node' = None):
+    def __init__(self, prefix_access_pair, predecessor: 'Node' = None):
         # TODO try single dict
-        self.transitions : Dict[Any, Dict[Any, TransitionInfo]] = dict()
-        self.predecessor : Node = predecessor
+        self.transitions: Dict[Any, Dict[Any, TransitionInfo]] = dict()
+        self.predecessor: Node = predecessor
         self.prefix_access_pair = prefix_access_pair
 
     def __lt__(self, other, compare_length_only=False):
@@ -105,10 +110,10 @@ class Node:
             return [str(x) for x in own_p] < [str(x) for x in other_p]
 
     def __eq__(self, other):
-        return self is other # TODO hack, does this lead to problems down the line?
+        return self is other  # TODO hack, does this lead to problems down the line?
 
     def __hash__(self):
-        return id(self) # TODO This is a hack
+        return id(self)  # TODO This is a hack
 
     # TODO implicit prefixes as currently implemented require O(length) time for prefix calculations (e.g. to determine the minimal blue node)
     # other options would be to have more efficient explicit prefixes such as shared list representations
@@ -156,10 +161,10 @@ class Node:
             node.transitions[in_sym] = d
         return node
 
-    def get_by_prefix(self, seq : IOTrace) -> 'Node':
-        node : Node = self
+    def get_by_prefix(self, seq: IOTrace) -> 'Node':
+        node: Node = self
         for in_sym, out_sym in seq:
-            if in_sym is None: # ignore initial transition of Node.get_prefix()
+            if in_sym is None:  # ignore initial transition of Node.get_prefix()
                 continue
             trans = node.transitions.get(in_sym)
             if trans is None:
@@ -171,13 +176,14 @@ class Node:
         return node
 
     def get_all_nodes(self) -> List['Node']:
-        def generator(state : Node):
+        def generator(state: Node):
             for _, child in state.transition_iterator():
                 yield child.target
+
         return generate_values([self], generator)
 
     def is_tree(self):
-        q : List['Node'] = [self]
+        q: List['Node'] = [self]
         backing_set = set()
         while len(q) != 0:
             current = q.pop(0)
@@ -189,7 +195,8 @@ class Node:
                 backing_set.add(t)
         return True
 
-    def to_automaton(self, output_behavior : OutputBehavior, transition_behavior : TransitionBehavior, check_behavior = False, set_prefix = False) -> Automaton:
+    def to_automaton(self, output_behavior: OutputBehavior, transition_behavior: TransitionBehavior,
+                     check_behavior=False, set_prefix=False) -> Automaton:
         nodes = self.get_all_nodes()
 
         if check_behavior:
@@ -199,12 +206,12 @@ class Node:
                 raise ValueError("Tried to obtain deterministic automaton from non-deterministic structure")
 
         type_dict = {
-            ("moore","deterministic") : (MooreMachine, MooreState),
-            ("moore","nondeterministic") : (NDMooreMachine, NDMooreState),
-            ("moore","stochastic") : (Mdp, MdpState),
-            ("mealy","deterministic") : (MealyMachine, MealyState),
-            ("mealy","nondeterministic") : (Onfsm, OnfsmState),
-            ("mealy","stochastic") : (StochasticMealyMachine, StochasticMealyState),
+            ("moore", "deterministic"): (MooreMachine, MooreState),
+            ("moore", "nondeterministic"): (NDMooreMachine, NDMooreState),
+            ("moore", "stochastic"): (Mdp, MdpState),
+            ("mealy", "deterministic"): (MealyMachine, MealyState),
+            ("mealy", "nondeterministic"): (Onfsm, OnfsmState),
+            ("mealy", "stochastic"): (StochasticMealyMachine, StochasticMealyState),
         }
 
         AutomatonClass, StateClass = type_dict[(output_behavior, transition_behavior)]
@@ -238,7 +245,7 @@ class Node:
                     count = target_node.count
                     if AutomatonClass is MooreMachine:
                         state.transitions[in_sym] = target_state
-                    elif AutomatonClass is MealyMachine :
+                    elif AutomatonClass is MealyMachine:
                         state.transitions[in_sym] = target_state
                         state.output_fun[in_sym] = out_sym
                     elif AutomatonClass is NDMooreMachine:
@@ -252,12 +259,13 @@ class Node:
 
         return AutomatonClass(initial_state, list(state_map.values()))
 
-    def visualize(self, path : Union[str, pathlib.Path], output_behavior : OutputBehavior = "mealy", format : str = "dot", engine ="dot", *,
-                  state_label : StateFunction = None, state_color : StateFunction = None,
-                  trans_label : TransitionFunction = None, trans_color : TransitionFunction = None,
-                  state_props : Dict[str,StateFunction] = None,
-                  trans_props : Dict[str,TransitionFunction] = None,
-                  node_naming : StateFunction = None):
+    def visualize(self, path: Union[str, pathlib.Path], output_behavior: OutputBehavior = "mealy", format: str = "dot",
+                  engine="dot", *,
+                  state_label: StateFunction = None, state_color: StateFunction = None,
+                  trans_label: TransitionFunction = None, trans_color: TransitionFunction = None,
+                  state_props: Dict[str, StateFunction] = None,
+                  trans_props: Dict[str, TransitionFunction] = None,
+                  node_naming: StateFunction = None):
 
         # handle default parameters
         if output_behavior not in ["moore", "mealy", None]:
@@ -268,43 +276,48 @@ class Node:
             trans_props = dict()
         if state_label is None:
             if output_behavior == "moore":
-                def state_label(node : Node) : return f'{node.get_prefix_output()} {node.count()}'
+                def state_label(node: Node):
+                    return f'{node.get_prefix_output()} {node.count()}'
             else:
-                def state_label(node : Node) : return f'{sum(t.count for _, t in node.transition_iterator())}'
+                def state_label(node: Node):
+                    return f'{sum(t.count for _, t in node.transition_iterator())}'
         if trans_label is None and "label" not in trans_props:
             if output_behavior == "moore":
-                def trans_label(node : Node, in_sym, out_sym) : return f'{in_sym} [{node.transitions[in_sym][out_sym].count}]'
+                def trans_label(node: Node, in_sym, out_sym):
+                    return f'{in_sym} [{node.transitions[in_sym][out_sym].count}]'
             else:
-                def trans_label(node : Node, in_sym, out_sym) : return f'{in_sym} / {out_sym} [{node.transitions[in_sym][out_sym].count}]'
+                def trans_label(node: Node, in_sym, out_sym):
+                    return f'{in_sym} / {out_sym} [{node.transitions[in_sym][out_sym].count}]'
         if state_color is None:
-            def state_color(x) : return "black"
+            def state_color(x): return "black"
         if trans_color is None:
-            def trans_color(x, y, z) : return "black"
+            def trans_color(x, y, z): return "black"
         if node_naming is None:
             node_dict = dict()
-            def node_naming(node : Node):
+
+            def node_naming(node: Node):
                 if node not in node_dict:
                     node_dict[node] = f"s{len(node_dict)}"
                 return node_dict[node]
-        state_props = {"label" : state_label, "color" : state_color , "fontcolor" : state_color, **state_props}
-        trans_props = {"label" : trans_label, "color" : trans_color, "fontcolor" : trans_color, **trans_props}
+        state_props = {"label": state_label, "color": state_color, "fontcolor": state_color, **state_props}
+        trans_props = {"label": trans_label, "color": trans_color, "fontcolor": trans_color, **trans_props}
 
         # create new graph
         graph = pydot.Dot('automaton', graph_type='digraph')
 
-        #graph.add_node(pydot.Node(str(self.prefix), label=state_label(self)))
+        # graph.add_node(pydot.Node(str(self.prefix), label=state_label(self)))
         nodes = self.get_all_nodes()
 
         # add nodes
         for node in nodes:
-            arg_dict = {key : fun(node) for key, fun in state_props.items()}
+            arg_dict = {key: fun(node) for key, fun in state_props.items()}
             graph.add_node(pydot.Node(node_naming(node), **arg_dict))
 
         # add transitions
         for node in nodes:
             for in_sym, options in node.transitions.items():
                 for out_sym, c in options.items():
-                    arg_dict = {key : fun(node, in_sym, out_sym) for key, fun in trans_props.items()}
+                    arg_dict = {key: fun(node, in_sym, out_sym) for key, fun in trans_props.items()}
                     graph.add_edge(pydot.Edge(node_naming(node), node_naming(c.target), **arg_dict))
 
         # add initial state
@@ -323,8 +336,8 @@ class Node:
         for seq in data:
             self.add_trace(seq)
 
-    def add_trace(self, data : IOTrace):
-        curr_node : Node = self
+    def add_trace(self, data: IOTrace):
+        curr_node: Node = self
         for in_sym, out_sym in data:
             transitions = curr_node.get_or_create_transitions(in_sym)
             info = transitions.get(out_sym)
@@ -337,7 +350,7 @@ class Node:
                 node = info.target
             curr_node = node
 
-    def add_example(self, data : IOExample):
+    def add_example(self, data: IOExample):
         # TODO add support for example based algorithms
         raise NotImplementedError()
 
@@ -358,7 +371,7 @@ class Node:
     def is_deterministic(self):
         return all(node.is_locally_deterministic() for node in self.get_all_nodes())
 
-    def deterministic_compatible(self, other : 'Node'):
+    def deterministic_compatible(self, other: 'Node'):
         common_keys = filter(lambda key: key in self.transitions.keys(), other.transitions.keys())
         return all(list(self.transitions[key].keys()) == list(other.transitions[key].keys()) for key in common_keys)
 
@@ -373,7 +386,7 @@ class Node:
                     output_dict[child] = out_sym
         return True
 
-    def moore_compatible(self, other : 'Node'):
+    def moore_compatible(self, other: 'Node'):
         return self.get_prefix_output() == other.get_prefix_output()
 
     def local_log_likelihood_contribution(self):
@@ -384,7 +397,7 @@ class Node:
                 total_count += info.count
                 llc += info.count * math.log(info.count)
             if total_count != 0:
-              llc -= total_count * math.log(total_count)
+                llc -= total_count * math.log(total_count)
         return llc
 
     def count(self):
