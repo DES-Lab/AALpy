@@ -3,7 +3,7 @@ from functools import wraps
 from typing import Dict
 
 from aalpy.learning_algs.general_passive.GeneralizedStateMerging import Instrumentation, Partitioning, GeneralizedStateMerging
-from aalpy.learning_algs.general_passive.Node import Node, TransitionInfo
+from aalpy.learning_algs.general_passive.Node import Node
 
 
 class ProgressReport(Instrumentation):
