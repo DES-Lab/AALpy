@@ -1140,15 +1140,12 @@ def passive_vpa_learning_arithmetics():
 
 def passive_vpa_learning_on_all_benchmark_models():
     from aalpy.learning_algs import run_PAPNI
-    from aalpy.utils.BenchmarkVpaModels import get_all_VPAs
+    from aalpy.utils.BenchmarkVpaModels import vpa_L1, vpa_L12, vpa_for_odd_parentheses
     from aalpy.utils import generate_input_output_data_from_vpa, convert_i_o_traces_for_RPNI
 
-    for gt in get_all_VPAs():
-
+    for gt in [vpa_L1(), vpa_L12(), vpa_for_odd_parentheses()]:
         vpa_alphabet = gt.input_alphabet
-        data = generate_input_output_data_from_vpa(gt, num_sequances=2000, min_seq_len=1, max_seq_len=16)
-
-        data = convert_i_o_traces_for_RPNI(data)
+        data = generate_input_output_data_from_vpa(gt, num_sequances=2000, max_seq_len=16)
 
         papni = run_PAPNI(data, vpa_alphabet, algorithm='gsm', print_info=True)
 
