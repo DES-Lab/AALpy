@@ -5,7 +5,7 @@ from collections import deque
 
 from aalpy.learning_algs.general_passive.Node import Node, OutputBehavior, TransitionBehavior, TransitionInfo, \
     OutputBehaviorRange, TransitionBehaviorRange, intersection_iterator
-from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreCalculation, hoeffding_compatibility, Score
+from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreCalculation, hoeffding_compatibility
 
 
 # TODO add option for making checking of futures and partition non mutual exclusive?
@@ -15,7 +15,7 @@ class Partitioning:
     def __init__(self, red: Node, blue: Node):
         self.red: Node = red
         self.blue: Node = blue
-        self.score: Score = False
+        self.score = False
         self.red_mapping: Dict[Node, Node] = dict()
         self.full_mapping: Dict[Node, Node] = dict()
 
