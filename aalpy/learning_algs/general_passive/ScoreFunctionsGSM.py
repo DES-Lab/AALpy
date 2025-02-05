@@ -1,14 +1,11 @@
-import warnings
-from collections import defaultdict
 from math import sqrt, log
-from typing import Callable, Dict, Union, List, Iterable
+from typing import Callable, Dict, List, Iterable, Any
 
 from aalpy.learning_algs.general_passive.Node import Node, intersection_iterator, union_iterator, TransitionInfo
 
-Score = Union[bool, float]
 LocalCompatibilityFunction = Callable[[Node, Node], bool]
-ScoreFunction = Callable[[Dict[Node, Node]], Score]
-AggregationFunction = Callable[[Iterable[Score]], Score]
+ScoreFunction = Callable[[Dict[Node, Node]], Any]
+AggregationFunction = Callable[[Iterable], Any]
 
 
 class ScoreCalculation:
@@ -87,7 +84,7 @@ class ScoreWithKTail(ScoreCalculation):
 
         return self.other_score.local_compatibility(a, b)
 
-    def score_function(self, part: Dict[Node, Node]) -> Score:
+    def score_function(self, part: Dict[Node, Node]):
         return self.other_score.score_function(part)
 
 
