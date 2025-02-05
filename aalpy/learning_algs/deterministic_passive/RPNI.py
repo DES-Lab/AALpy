@@ -107,10 +107,9 @@ def run_PAPNI(data, vpa_alphabet, algorithm='gsm', print_info=True):
     if print_info:
         print('PAPNI with RPNI backend:')
     if algorithm == 'classic':
-        rpni = RPNI(papni_data, automaton_type='dfa', print_info=print_info)
+        rpni = ClassicRPNI(papni_data, automaton_type='dfa', print_info=print_info)
     else:
-        rpni = GeneralizedStateMerging(papni_data, automaton_type='dfa',
-                                       print_info=print_info)
+        rpni = NewRPNI(papni_data, automaton_type='dfa', print_info=print_info)
 
     # run classic RPNI with preprocessed data that is aware of stack
     learned_model = rpni.run_rpni()
