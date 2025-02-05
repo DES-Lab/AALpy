@@ -128,12 +128,15 @@ class ScoreWithKTail(ScoreCalculation):
     def local_compatibility(self, a : Node, b : Node):
         # assuming b is tree shaped.
         if self.depth_offset is None:
-            self.depth_offset = len(b.prefix)
-        depth = len(b.prefix) - self.depth_offset
+            self.depth_offset = b.get_prefix_length()
+        depth = b.get_prefix_length() - self.depth_offset
         if self.k <= depth:
             return True
 
         return self.other_score.local_compatibility(a, b)
+
+    def score_function(self, part: Dict[Node, Node]) -> Score:
+        return self.other_score.score_function(part)
 
 class ScoreWithSinks(ScoreCalculation):
     def __init__(self, other_score : ScoreCalculation, sink_cond : Callable[[Node], bool], allow_sink_merge = True):
