@@ -1,5 +1,5 @@
-import queue
 import time
+from collections import deque
 
 from aalpy.learning_algs.deterministic_passive.rpni_helper_functions import to_automaton, RpniNode, createPTA
 
@@ -72,11 +72,11 @@ class NewRPNI:
         """
 
         partitions = dict()
-        q = queue.Queue()
-        q.put((red, blue))
+        q = deque()
+        q.append((red, blue))
 
-        while not q.empty():
-            red, blue = q.get()
+        while len(q) != 0:
+            red, blue = q.popleft()
 
             def get_partition(node: RpniNode):
                 if node not in partitions:
@@ -100,7 +100,7 @@ class NewRPNI:
 
             for symbol, blue_child in blue.children.items():
                 if symbol in partition.children.keys():
-                    q.put((partition.children[symbol], blue_child))
+                    q.append((partition.children[symbol], blue_child))
                 else:
                     # blue_child is blue after merging if there is a red state in the partition
                     partition.children[symbol] = blue_child
