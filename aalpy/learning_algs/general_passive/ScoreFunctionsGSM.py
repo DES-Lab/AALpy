@@ -84,9 +84,6 @@ class ScoreWithKTail(ScoreCalculation):
 
         return self.other_score.local_compatibility(a, b)
 
-    def score_function(self, part: Dict[Node, Node]):
-        return self.other_score.score_function(part)
-
 
 class ScoreWithSinks(ScoreCalculation):
     def __init__(self, other_score: ScoreCalculation, sink_cond: Callable[[Node], bool], allow_sink_merge=True):
