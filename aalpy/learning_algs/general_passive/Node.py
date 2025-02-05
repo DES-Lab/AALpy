@@ -1,7 +1,7 @@
 import math
 import pathlib
 from functools import total_ordering
-from typing import Dict, Any, List, Tuple, Iterable, Callable, Union, TypeVar, Iterator
+from typing import Dict, Any, List, Tuple, Iterable, Callable, Union, TypeVar, Iterator, Optional
 import pydot
 from copy import copy
 
@@ -161,7 +161,7 @@ class Node:
             node.transitions[in_sym] = d
         return node
 
-    def get_by_prefix(self, seq: IOTrace) -> 'Node':
+    def get_by_prefix(self, seq: IOTrace) -> Optional['Node']:
         node: Node = self
         for in_sym, out_sym in seq:
             if in_sym is None:  # ignore initial transition of Node.get_prefix()

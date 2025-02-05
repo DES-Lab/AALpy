@@ -1,8 +1,9 @@
 import time
 from functools import wraps
-from typing import Dict
+from typing import Dict, Optional
 
-from aalpy.learning_algs.general_passive.GeneralizedStateMerging import Instrumentation, Partitioning, GeneralizedStateMerging
+from aalpy.learning_algs.general_passive.GeneralizedStateMerging import Instrumentation, Partitioning, \
+    GeneralizedStateMerging
 from aalpy.learning_algs.general_passive.Node import Node
 
 
@@ -17,6 +18,7 @@ class ProgressReport(Instrumentation):
                 fn(this, *args, **kw)
 
             return wrapper
+
         return decorator
 
     def __init__(self, lvl):
@@ -24,7 +26,7 @@ class ProgressReport(Instrumentation):
         self.lvl = lvl
         if lvl < 1:
             return
-        self.gsm: GeneralizedStateMerging = None
+        self.gsm: Optional[GeneralizedStateMerging] = None
         self.log = []
         self.pta_size = None
         self.nr_merged_states_total = 0
@@ -58,7 +60,7 @@ class ProgressReport(Instrumentation):
     def print_status(self):
         reset_char = "\33[2K\r"
         print_str = reset_char + f'Current automaton size: {self.nr_red_states}'
-        if self.lvl != 1 and not self.gsm.eval_compat_on_futures:
+        if self.lvl != 1 and not self.gsm.compatibility_on_futures:
             print_str += f' Merged: {self.nr_merged_states_total} Remaining: {self.pta_size - self.nr_red_states - self.nr_merged_states_total}'
         print(print_str, end="")
 
@@ -89,7 +91,7 @@ class MergeViolationDebugger(Instrumentation):
         self.root = ground_truth
         self.map: Dict[Node, Node] = dict()
         self.log = []
-        self.gsm : GeneralizedStateMerging = None
+        self.gsm: Optional[GeneralizedStateMerging] = None
 
     def reset(self, gsm: GeneralizedStateMerging):
         self.gsm = gsm
