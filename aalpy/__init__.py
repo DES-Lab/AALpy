@@ -9,6 +9,8 @@ from .automata import (
     MealyState,
     MooreMachine,
     MooreState,
+    NDMooreMachine,
+    NDMooreState,
     Onfsm,
     OnfsmState,
     Sevpa,
@@ -37,6 +39,7 @@ from .learning_algs import (
     run_non_det_Lstar,
     run_RPNI,
     run_stochastic_Lstar,
+    run_GSM,
     run_PAPNI
 )
 from .oracles import (

@@ -1,10 +1,10 @@
-import queue
 import time
+from collections import deque
 
 from aalpy.learning_algs.deterministic_passive.rpni_helper_functions import to_automaton, RpniNode, createPTA
 
 
-class GeneralizedStateMerging:
+class GsmRPNI:
     def __init__(self, data, automaton_type, print_info=True):
         self.data = data
         self.final_automaton_type = automaton_type
@@ -12,7 +12,7 @@ class GeneralizedStateMerging:
         self.print_info = print_info
 
         pta_construction_start = time.time()
-        self.root = createPTA(data, self.automaton_type)
+        self.root_node = createPTA(data, self.automaton_type)
         self.log = []
 
         if self.print_info:
@@ -22,7 +22,7 @@ class GeneralizedStateMerging:
         start_time = time.time()
 
         # sorted list of states already considered
-        red_states = list([self.root])
+        red_states = [self.root_node]
         # used to get the minimal non-red state
         blue_states = list(red_states[0].children.values())
 
@@ -51,7 +51,7 @@ class GeneralizedStateMerging:
                     node.output = block.output
                     node.children = block.children
 
-                node = self.root.get_child_by_prefix(blue_state.prefix[:-1])
+                node = self.root_node.get_child_by_prefix(blue_state.prefix[:-1])
                 node.children[blue_state.prefix[-1]] = red_state
 
             blue_states.clear()
@@ -72,11 +72,11 @@ class GeneralizedStateMerging:
         """
 
         partitions = dict()
-        q = queue.Queue()
-        q.put((red, blue))
+        q = deque()
+        q.append((red, blue))
 
-        while not q.empty():
-            red, blue = q.get()
+        while len(q) != 0:
+            red, blue = q.popleft()
 
             def get_partition(node: RpniNode):
                 if node not in partitions:
@@ -100,7 +100,7 @@ class GeneralizedStateMerging:
 
             for symbol, blue_child in blue.children.items():
                 if symbol in partition.children.keys():
-                    q.put((partition.children[symbol], blue_child))
+                    q.append((partition.children[symbol], blue_child))
                 else:
                     # blue_child is blue after merging if there is a red state in the partition
                     partition.children[symbol] = blue_child
