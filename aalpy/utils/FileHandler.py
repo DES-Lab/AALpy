@@ -7,11 +7,11 @@ from pydot import Dot, Node, Edge
 
 from aalpy.automata import Dfa, MooreMachine, Mdp, Onfsm, MealyState, DfaState, MooreState, MealyMachine, \
     MdpState, StochasticMealyMachine, StochasticMealyState, OnfsmState, MarkovChain, McState, Sevpa, SevpaState, \
-    SevpaTransition, Vpa, VpaState, VpaTransition
+    SevpaTransition, Vpa, VpaState, VpaTransition, NDMooreMachine
 
 file_types = ['dot', 'png', 'svg', 'pdf', 'string']
 automaton_types = {Dfa: 'dfa', MealyMachine: 'mealy', MooreMachine: 'moore', Mdp: 'mdp',
-                   StochasticMealyMachine: 'smm', Onfsm: 'onfsm', MarkovChain: 'mc',
+                   StochasticMealyMachine: 'smm', Onfsm: 'onfsm', NDMooreMachine: 'ndmoore', MarkovChain: 'mc',
                    Sevpa: 'sevpa', Vpa: 'vpa'}
 
 
@@ -31,7 +31,7 @@ def _get_node(state, automaton_type):
         return Node(state.state_id, label=_wrap_label(state.state_id))
     if automaton_type == 'mealy':
         return Node(state.state_id, label=_wrap_label(state.state_id))
-    if automaton_type == 'moore':
+    if automaton_type in ['moore', 'ndmoore']:
         return Node(state.state_id, label=_wrap_label(f'{state.state_id}|{state.output}'), shape='record',
                     style='rounded')
     if automaton_type == 'onfsm':
@@ -68,6 +68,13 @@ def _add_transition_to_graph(graph, state, automaton_type, display_same_state_tr
                 if not display_same_state_trans and state.state_id == s[1].state_id:
                     continue
                 graph.add_edge(Edge(state.state_id, s[1].state_id, label=_wrap_label(f'{i}/{s[0]}')))
+    if automaton_type == 'ndmoore':
+        for i in state.transitions.keys():
+            new_states = state.transitions[i]
+            for new_state in new_states:
+                if not display_same_state_trans and state.state_id == new_state.state_id:
+                    continue
+                graph.add_edge(Edge(state.state_id, new_state.state_id, label=_wrap_label(f'{i}')))
     if automaton_type == 'mc':
         for new_state, prob in state.transitions:
             prob = round(prob, round_floats) if round_floats else prob
@@ -110,7 +117,7 @@ def _add_transition_to_graph(graph, state, automaton_type, display_same_state_tr
                                 label=_wrap_label(f'{transition.letter} / pop({transition.stack_guard})'))
                 elif transition.action == 'push':
                     edge = Edge(state.state_id, transition.target_state.state_id,
-                                label=_wrap_label(f'push({transition.stack_guard})'))
+                                label=_wrap_label(f'{transition.letter} / push({transition.stack_guard})'))
                 elif transition.action is None:
                     edge = Edge(state.state_id, transition.target_state.state_id,
                                 label=_wrap_label(f'{transition.letter}'))
@@ -312,7 +319,11 @@ def _process_node_label_prime(node_name, label, line, node_label_dict, node_type
     else:
         if automaton_type == 'moore' and label != "":
             label_output = _strip_label(label)
-            label, output = label_output.split("|", maxsplit=1)
+            if "|" in label_output:
+                label, output = label_output.split("|", maxsplit=1)
+            else:
+                label = node_name
+                output = label_output
             output = output.strip() if not output.isdigit() else int(output)
             node_label_dict[node_name] = node_type(label, output)
         else:
@@ -322,6 +333,7 @@ def _process_node_label_prime(node_name, label, line, node_label_dict, node_type
                 node_label_dict[node_name].is_accepting = True
 
 
+# TODO: robust patterns (break eg. if state label contains "-")
 label_pattern = r'label=("[^"]*"|[^\s\],]*)'
 starting_state_pattern = r'__start0\s*->\s*(\w+)\s*(?:\[label=""\])?;?'
 transition_pattern = r'(\w+)\s*->\s*(\w+)\s*(.*);'

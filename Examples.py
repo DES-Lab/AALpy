@@ -1140,15 +1140,12 @@ def passive_vpa_learning_arithmetics():
 
 def passive_vpa_learning_on_all_benchmark_models():
     from aalpy.learning_algs import run_PAPNI
-    from aalpy.utils.BenchmarkVpaModels import get_all_VPAs
+    from aalpy.utils.BenchmarkVpaModels import vpa_L1, vpa_L12, vpa_for_odd_parentheses
     from aalpy.utils import generate_input_output_data_from_vpa, convert_i_o_traces_for_RPNI
 
-    for gt in get_all_VPAs():
-
+    for gt in [vpa_L1(), vpa_L12(), vpa_for_odd_parentheses()]:
         vpa_alphabet = gt.input_alphabet
-        data = generate_input_output_data_from_vpa(gt, num_sequances=2000, min_seq_len=1, max_seq_len=16)
-
-        data = convert_i_o_traces_for_RPNI(data)
+        data = generate_input_output_data_from_vpa(gt, num_sequances=2000, max_seq_len=16)
 
         papni = run_PAPNI(data, vpa_alphabet, algorithm='gsm', print_info=True)
 
@@ -1160,3 +1157,147 @@ def passive_vpa_learning_on_all_benchmark_models():
                 assert False, 'Papni Learned Model not consistent with data.'
 
         print('PAPNI model conforms to data.')
+
+
+def gsm_rpni():
+    from aalpy import load_automaton_from_file
+    from aalpy.utils.Sampling import get_io_traces, sample_with_length_limits
+    from aalpy.learning_algs.general_passive.GeneralizedStateMerging import run_GSM
+
+    automaton = load_automaton_from_file("DotModels/car_alarm.dot", "moore")
+    input_traces = sample_with_length_limits(automaton.get_input_alphabet(), 100, 20, 30)
+    traces = get_io_traces(automaton, input_traces)
+
+    learned_model = run_GSM(traces, output_behavior="moore", transition_behavior="deterministic")
+    learned_model.visualize()
+
+
+def gsm_edsm():
+    from typing import Dict
+    from aalpy import load_automaton_from_file
+    from aalpy.utils.Sampling import get_io_traces, sample_with_length_limits
+    from aalpy.learning_algs.general_passive.GeneralizedStateMerging import run_GSM
+    from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreCalculation
+    from aalpy.learning_algs.general_passive.Node import Node
+
+    automaton = load_automaton_from_file("DotModels/car_alarm.dot", "moore")
+    input_traces = sample_with_length_limits(automaton.get_input_alphabet(), 100, 20, 30)
+    traces = get_io_traces(automaton, input_traces)
+
+    def EDSM_score(part: Dict[Node, Node]):
+        nr_partitions = len(set(part.values()))
+        nr_merged = len(part)
+        return nr_merged - nr_partitions
+
+    score = ScoreCalculation(score_function=EDSM_score)
+    learned_model = run_GSM(traces, output_behavior="moore", transition_behavior="deterministic", score_calc=score)
+    learned_model.visualize()
+
+
+def gsm_likelihood_ratio():
+    from typing import Dict
+    from scipy.stats import chi2
+    from aalpy.learning_algs.general_passive.GeneralizedStateMerging import run_GSM
+    from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreFunction, differential_info, ScoreCalculation
+    from aalpy.learning_algs.general_passive.Node import Node
+    from aalpy.utils.Sampling import get_io_traces, sample_with_length_limits
+    from aalpy import load_automaton_from_file
+
+    automaton = load_automaton_from_file("DotModels/MDPs/faulty_car_alarm.dot", "mdp")
+    input_traces = sample_with_length_limits(automaton.get_input_alphabet(), 2000, 20, 30)
+    traces = get_io_traces(automaton, input_traces)
+
+    def likelihood_ratio_score(alpha=0.05) -> ScoreFunction:
+        if not 0 < alpha <= 1:
+            raise ValueError(f"Confidence {alpha} not between 0 and 1")
+
+        def score_fun(part: Dict[Node, Node]):
+            llh_diff, param_diff = differential_info(part)
+            if param_diff == 0:
+                # This should cover the corner case when the partition merges only states with no outgoing transitions.
+                return -1  # Let them be very bad merges.
+            score = 1 - chi2.cdf(2 * llh_diff, param_diff)
+            if score < alpha:
+                return False
+            return score
+
+        return score_fun
+
+    score = ScoreCalculation(score_function=likelihood_ratio_score())
+    learned_model = run_GSM(traces, output_behavior="moore", transition_behavior="stochastic", score_calc=score)
+    learned_model.visualize()
+
+
+def gsm_IOAlergia_EDSM():
+    from aalpy.learning_algs.general_passive.GeneralizedStateMerging import run_GSM
+    from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import hoeffding_compatibility, ScoreCalculation
+    from aalpy.learning_algs.general_passive.Node import Node
+    from aalpy.utils.Sampling import get_io_traces, sample_with_length_limits
+    from aalpy import load_automaton_from_file
+
+    automaton = load_automaton_from_file("DotModels/MDPs/faulty_car_alarm.dot", "mdp")
+    input_traces = sample_with_length_limits(automaton.get_input_alphabet(), 2000, 20, 30)
+    traces = get_io_traces(automaton, input_traces)
+
+    class IOAlergiaWithEDSM(ScoreCalculation):
+        def __init__(self, epsilon):
+            super().__init__()
+            self.ioa_compatibility = hoeffding_compatibility(epsilon)
+            self.evidence = 0
+
+        def reset(self):
+            self.evidence = 0
+
+        def local_compatibility(self, a: Node, b: Node):
+            self.evidence += 1
+            return self.ioa_compatibility(a, b)
+
+        def score_function(self, part: dict[Node, Node]):
+            return self.evidence
+
+    epsilon = 0.05
+    scores = {
+        "IOA": ScoreCalculation(hoeffding_compatibility(epsilon)),
+        "IOA+EDSM": IOAlergiaWithEDSM(epsilon),
+    }
+    for name, score in scores.items():
+        learned_model = run_GSM(traces, output_behavior="moore", transition_behavior="stochastic", score_calc=score,
+                            compatibility_on_pta=True, compatibility_on_futures=True)
+        learned_model.visualize(name)
+
+
+def gsm_IOAlergia_domain_knowldege():
+    from aalpy.learning_algs.general_passive.GeneralizedStateMerging import run_GSM
+    from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import hoeffding_compatibility, ScoreCalculation
+    from aalpy.learning_algs.general_passive.Node import Node
+    from aalpy.utils.Sampling import get_io_traces, sample_with_length_limits
+    from aalpy import load_automaton_from_file
+
+    automaton = load_automaton_from_file("DotModels/MDPs/faulty_car_alarm.dot", "mdp")
+    input_traces = sample_with_length_limits(automaton.get_input_alphabet(), 2000, 20, 30)
+    traces = get_io_traces(automaton, input_traces)
+
+    ioa_compat = hoeffding_compatibility(0.05)
+
+    def get_parity(node: Node):
+        pref = node.get_prefix()
+        return [sum(in_s == key for in_s, out_s in pref) % 2 for key in ["l", "d"]]
+
+    # The car has 4 physical states arising from the combination of locked/unlocked and open/closed.
+    # Each input toggles a transition between these four states. While the car alarm system has richer behavior than that,
+    # it still needs to discern the physical states. Thus, in every sane implementation of a car alarm system, every state
+    # is associated with exactly one physical state. This additional assumption can be enforced by checking the parity of
+    # all input symbols during merging.
+    def ioa_compat_domain_knowledge(a: Node, b: Node):
+        parity = get_parity(a) == get_parity(b)
+        ioa = ioa_compat(a, b)
+        return parity and ioa
+
+    scores = {
+        "IOA": ScoreCalculation(ioa_compat),
+        "IOA+DK": ScoreCalculation(ioa_compat_domain_knowledge),
+    }
+    for name, score in scores.items():
+        learned_model = run_GSM(traces, output_behavior="moore", transition_behavior="stochastic", score_calc=score,
+                            compatibility_on_pta=True, compatibility_on_futures=True)
+        learned_model.visualize(name)
