@@ -117,7 +117,7 @@ def _add_transition_to_graph(graph, state, automaton_type, display_same_state_tr
                                 label=_wrap_label(f'{transition.letter} / pop({transition.stack_guard})'))
                 elif transition.action == 'push':
                     edge = Edge(state.state_id, transition.target_state.state_id,
-                                label=_wrap_label(f'push({transition.stack_guard})'))
+                                label=_wrap_label(f'{transition.letter} / push({transition.stack_guard})'))
                 elif transition.action is None:
                     edge = Edge(state.state_id, transition.target_state.state_id,
                                 label=_wrap_label(f'{transition.letter}'))
