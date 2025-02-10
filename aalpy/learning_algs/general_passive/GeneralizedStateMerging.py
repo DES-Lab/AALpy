@@ -4,7 +4,7 @@ from typing import Dict, Tuple, Callable, List, Optional
 from collections import deque
 
 from aalpy.learning_algs.general_passive.Node import Node, OutputBehavior, TransitionBehavior, TransitionInfo, \
-    OutputBehaviorRange, TransitionBehaviorRange, intersection_iterator
+    OutputBehaviorRange, TransitionBehaviorRange, intersection_iterator, NodeOrders
 from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreCalculation, hoeffding_compatibility
 
 
@@ -70,8 +70,11 @@ class GeneralizedStateMerging:
         self.score_calc: ScoreCalculation = score_calc
 
         if node_order is None:
-            node_order = Node.__lt__
-        self.node_order = functools.cmp_to_key(lambda a, b: -1 if node_order(a, b) else 1)
+            node_order = NodeOrders.Default
+        if node_order is NodeOrders.NoCompare or node_order is NodeOrders.Default:
+            self.node_order = node_order
+        else:
+            self.node_order = functools.cmp_to_key(lambda a, b: -1 if node_order(a, b) else 1)
 
         self.pta_preprocessing = pta_preprocessing or (lambda x: x)
         self.postprocessing = postprocessing or (lambda x: x)
@@ -128,7 +131,11 @@ class GeneralizedStateMerging:
             # no blue states left -> done
             if len(blue_states) == 0:
                 break
-            blue_states.sort(key=self.node_order)
+            if self.node_order is not NodeOrders.NoCompare:
+                blue_states.sort(key=self.node_order)
+                # red states are always sorted using default order on original prefix
+                if self.node_order is not NodeOrders.Default:
+                    red_states.sort(key=self.node_order)
 
             # loop over blue states
             promotion = False
@@ -158,7 +165,7 @@ class GeneralizedStateMerging:
 
                 # no merge candidates for this blue state -> promote
                 if all(part.score is False for part in current_candidates.values()):
-                    insort(red_states, blue_state, key=self.node_order)
+                    red_states.append(blue_state)
                     instrumentation.log_promote(blue_state)
                     promotion = True
                     break

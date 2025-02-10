@@ -1,3 +1,4 @@
+import functools
 import math
 import pathlib
 from functools import total_ordering
@@ -402,3 +403,7 @@ class Node:
 
     def count(self):
         return sum(trans.count for _, trans in self.transition_iterator())
+
+class NodeOrders:
+    NoCompare = lambda n: 0
+    Default = functools.cmp_to_key(lambda a, b: -1 if a < b else 1)
