@@ -191,7 +191,7 @@ class Node:
         return True
 
     def to_automaton(self, output_behavior: OutputBehavior, transition_behavior: TransitionBehavior,
-                     check_behavior=False, set_prefix=False) -> Automaton:
+                     check_behavior=True, set_prefix=False) -> Automaton:
         nodes = self.get_all_nodes()
 
         if check_behavior:
