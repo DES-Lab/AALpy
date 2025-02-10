@@ -146,7 +146,6 @@ class GeneralizedStateMerging:
                 # calculate partitions resulting from merges with red states if necessary
                 current_candidates: Dict[Node, Partitioning] = dict()
                 perfect_partitioning = None
-
                 red_state = None
                 for red_state in red_states:
                     partition = partition_candidates.get((red_state, blue_state))
@@ -156,8 +155,8 @@ class GeneralizedStateMerging:
                         perfect_partitioning = partition
                         break
                     current_candidates[red_state] = partition
-
                 assert red_state is not None
+
                 # partition with perfect score found: don't consider anything else
                 if perfect_partitioning:
                     partition_candidates = {(red_state, blue_state): perfect_partitioning}
@@ -254,9 +253,9 @@ class GeneralizedStateMerging:
         blue_in_sym, blue_out_sym = blue.prefix_access_pair
         blue_parent.transitions[blue_in_sym][blue_out_sym].target = red
 
+        # loop over implied merges
         q: deque[Tuple[Node, Node]] = deque([(red, blue)])
         pop = q.pop if self.depth_first else q.popleft
-
         while len(q) != 0:
             red, blue = pop()
             partition = update_partition(red, blue)
@@ -265,6 +264,7 @@ class GeneralizedStateMerging:
                 if self.compute_local_compatibility(partition, blue) is False:
                     return partitioning
 
+            # create implied merges for all common successors
             for in_sym, blue_transitions in blue.transitions.items():
                 partition_transitions = partition.get_or_create_transitions(in_sym)
                 for out_sym, blue_transition in blue_transitions.items():
