@@ -2,7 +2,7 @@ import functools
 import math
 import pathlib
 from functools import total_ordering
-from typing import Dict, Any, List, Tuple, Iterable, Callable, Union, TypeVar, Iterator, Optional
+from typing import Dict, Any, List, Tuple, Iterable, Callable, Union, TypeVar, Iterator, Optional, Sequence
 import pydot
 from copy import copy
 
@@ -19,12 +19,17 @@ OutputBehaviorRange = ["moore", "mealy"]
 TransitionBehavior = str
 TransitionBehaviorRange = ["deterministic", "nondeterministic", "stochastic"]
 
+DataFormat = str
+DataFormatRange = ["auto", "traces", "examples"]
+
 IOPair = Tuple[Any, Any]
-IOTrace = List[IOPair]
-IOExample = Tuple[Iterable[Any], Any]
+IOTrace = Sequence[IOPair]
+IOExample = Tuple[Sequence[Any], Any]
 
 StateFunction = Callable[['Node'], str]
 TransitionFunction = Callable[['Node', Any, Any], str]
+
+unknown_output = object()
 
 
 def generate_values(base: list, step: Callable, backing_set=True):
@@ -65,6 +70,21 @@ def union_iterator(a: Dict[Key, Val], b: Dict[Key, Val], default: Val = None) ->
         a_val = a.get(key, default)
         yield key, a_val, b_val
 
+# TODO maybe reuse this in classic RPNI
+def detect_data_format(data):
+    if not isinstance(data, Sequence):
+        raise ValueError("wrong input format. expected sequence type.")
+    for data_point in data:
+        if len(data_point) != 2:
+            return "traces"
+        o1, o2 = data_point
+        if not isinstance(o1, Sequence):
+            return "traces"
+        if not isinstance(o2, Sequence):
+            return "examples"
+    if len(data) == 0:
+        return "traces"
+    raise ValueError("ambiguous data format. data format needs to be specified explicitly.")
 
 # TODO maybe split this for maintainability (and perfomance?)
 class TransitionInfo:
@@ -327,13 +347,10 @@ class Node:
             file_ext = 'dot'
         graph.write(path=str(path) + "." + file_ext, prog=engine, format=format)
 
-    def add_data(self, data):
-        for seq in data:
-            self.add_trace(seq)
 
-    def add_trace(self, data: IOTrace):
+    def add_trace(self, trace: IOTrace):
         curr_node: Node = self
-        for in_sym, out_sym in data:
+        for in_sym, out_sym in trace:
             transitions = curr_node.get_or_create_transitions(in_sym)
             info = transitions.get(out_sym)
             if info is None:
@@ -345,19 +362,59 @@ class Node:
                 node = info.target
             curr_node = node
 
-    def add_example(self, data: IOExample):
-        # TODO add support for example based algorithms
-        raise NotImplementedError()
+    def add_example(self, example: IOExample):
+        inputs, output = example
+        curr_node: Node = self
+        in_sym = None
+
+        # step through inputs and add transitions
+        for in_sym in inputs:
+            transitions = curr_node.get_or_create_transitions(in_sym)
+            t_infos = list(transitions.values())
+            if len(t_infos) == 0:
+                node = Node((in_sym, unknown_output), curr_node)
+                t_info = TransitionInfo(node, 1, node, 1)
+                transitions[unknown_output] = t_info
+            elif len(t_infos) == 1:
+                t_info = t_infos[0]
+                t_info.count += 1
+                t_info.original_count += 1
+                node = t_info.target
+            else:
+                # This should never happen
+                raise ValueError("nondeterminism encountered for GSM with examples. not supported")
+            curr_node = node
+
+        # set last output
+        curr_node.prefix_access_pair = (curr_node.prefix_access_pair[0], output)
+        pred = curr_node.predecessor
+        if pred:
+            transitions = pred.transitions[in_sym]
+            if unknown_output in transitions:
+                transitions[output] = transitions[unknown_output]
+                del transitions[unknown_output]
+            if output not in transitions:
+                raise ValueError("nondeterminism encountered for GSM with examples. not supported")
+
 
     @staticmethod
-    def createPTA(data, output_behavior) -> 'Node':
-        if output_behavior == "moore":
-            initial_output = data[0][0]
-            data = (d[1:] for d in data)
-        else:
-            initial_output = None
-        root_node = Node((None, initial_output), None)
-        root_node.add_data(data)
+    def createPTA(data, output_behavior, data_format="auto") -> 'Node':
+        if data_format not in DataFormatRange:
+            raise ValueError(f"invalid data format {data_format}. should be in {DataFormatRange}")
+        if data_format == "auto":
+            data_format = detect_data_format(data)
+
+        root_node = Node((None, None), None)
+        if data_format == "examples":
+            for example in data:
+                root_node.add_example(example)
+        if data_format == "traces":
+            if output_behavior == "moore":
+                initial_output = data[0][0]
+                root_node.prefix_access_pair = (None, initial_output)
+                data = (d[1:] for d in data)
+            for trace in data:
+                root_node.add_trace(trace)
         return root_node
 
     def is_locally_deterministic(self):
@@ -367,8 +424,12 @@ class Node:
         return all(node.is_locally_deterministic() for node in self.get_all_nodes())
 
     def deterministic_compatible(self, other: 'Node'):
-        common_keys = filter(lambda key: key in self.transitions.keys(), other.transitions.keys())
-        return all(list(self.transitions[key].keys()) == list(other.transitions[key].keys()) for key in common_keys)
+        for _, trans_self, trans_other in intersection_iterator(self.transitions, other.transitions):
+            if unknown_output in trans_self or unknown_output in trans_other:
+                continue
+            if list(trans_self.keys()) != list(trans_other.keys()):
+                return False
+        return True
 
     def is_moore(self):
         output_dict = dict()

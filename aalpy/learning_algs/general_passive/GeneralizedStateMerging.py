@@ -4,7 +4,7 @@ from typing import Dict, Tuple, Callable, List, Optional
 from collections import deque
 
 from aalpy.learning_algs.general_passive.Node import Node, OutputBehavior, TransitionBehavior, TransitionInfo, \
-    OutputBehaviorRange, TransitionBehaviorRange, intersection_iterator, NodeOrders
+    OutputBehaviorRange, TransitionBehaviorRange, intersection_iterator, NodeOrders, unknown_output
 from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreCalculation, hoeffding_compatibility
 
 
@@ -94,7 +94,7 @@ class GeneralizedStateMerging:
 
     # TODO: make more generic by adding the option to use a different algorithm than red blue
     #  for selecting potential merge candidates. Maybe using inheritance with abstract `run`.
-    def run(self, data, convert=True, instrumentation: Instrumentation = None):
+    def run(self, data, convert=True, instrumentation: Instrumentation=None, data_format="auto"):
         if instrumentation is None:
             instrumentation = Instrumentation()
         instrumentation.reset(self)
@@ -102,7 +102,7 @@ class GeneralizedStateMerging:
         if isinstance(data, Node):
             root = data
         else:
-            root = Node.createPTA(data, self.output_behavior)
+            root = Node.createPTA(data, self.output_behavior, data_format)
 
         root = self.pta_preprocessing(root)
         instrumentation.pta_construction_done(root)
@@ -182,6 +182,7 @@ class GeneralizedStateMerging:
             best_candidate = max(partition_candidates.values(), key=lambda part: part.score)
             for real_node, partition_node in best_candidate.red_mapping.items():
                 real_node.transitions = partition_node.transitions
+                real_node.prefix_access_pair = partition_node.prefix_access_pair
                 for access_pair, t_info in real_node.transition_iterator():
                     if t_info.target not in red_states:
                         t_info.target.predecessor = real_node
@@ -269,6 +270,20 @@ class GeneralizedStateMerging:
                 partition_transitions = partition.get_or_create_transitions(in_sym)
                 for out_sym, blue_transition in blue_transitions.items():
                     partition_transition = partition_transitions.get(out_sym)
+                    # handle unknown output
+                    if partition_transition is None:
+                        if out_sym is unknown_output and len(partition_transitions) != 0:
+                            assert len(partition_transitions) == 1
+                            partition_transition = list(partition_transitions.values())[0]
+                        if unknown_output in partition_transitions:
+                            partition_transition = partition_transitions.pop(unknown_output)
+                            partition_transitions[out_sym] = partition_transition
+                            # re-hook access pair
+                            succ_part = update_partition(partition_transition.target, None)
+                            succ_pre_part = update_partition(succ_part.predecessor, None)
+                            if self.output_behavior == "moore" or succ_pre_part is partition:
+                                succ_part.prefix_access_pair = (succ_part.prefix_access_pair[0], out_sym)
+                    # add pairs
                     if partition_transition is not None:
                         q.append((partition_transition.target, blue_transition.target))
                         partition_transition.count += blue_transition.count
@@ -294,6 +309,7 @@ def run_GSM(data, *,
             depth_first=False,
             instrumentation=None,
             convert=True,
+            data_format="auto",
             ):
     """
     TODO
@@ -325,12 +341,14 @@ def run_GSM(data, *,
 
         convert:
 
+        data_format:
+
 
     Returns:
 
 
     """
-    # instantiate the gsm
+    # instantiate gsm
     gsm = GeneralizedStateMerging(
         output_behavior=output_behavior,
         transition_behavior=transition_behavior,
@@ -345,4 +363,4 @@ def run_GSM(data, *,
     )
 
     # run the algorithm
-    return gsm.run(data=data, instrumentation=instrumentation, convert=convert)
+    return gsm.run(data=data, instrumentation=instrumentation, convert=convert, data_format=data_format)
