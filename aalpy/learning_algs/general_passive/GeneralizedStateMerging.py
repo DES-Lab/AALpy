@@ -54,10 +54,10 @@ class GeneralizedStateMerging:
                  depth_first=False):
 
         if output_behavior not in OutputBehaviorRange:
-            raise ValueError(f"invalid output behavior {output_behavior}")
+            raise ValueError(f"invalid output behavior {output_behavior}. should be in {OutputBehaviorRange}")
         self.output_behavior: OutputBehavior = output_behavior
         if transition_behavior not in TransitionBehaviorRange:
-            raise ValueError(f"invalid transition behavior {transition_behavior}")
+            raise ValueError(f"invalid transition behavior {transition_behavior}. should be in {TransitionBehaviorRange}")
         self.transition_behavior: TransitionBehavior = transition_behavior
 
         if score_calc is None:
