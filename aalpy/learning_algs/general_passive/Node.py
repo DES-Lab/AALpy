@@ -110,12 +110,6 @@ class Node:
         except TypeError:
             return [str(x) for x in own_p] < [str(x) for x in other_p]
 
-    def __eq__(self, other):
-        return self is other  # TODO hack, does this lead to problems down the line?
-
-    def __hash__(self):
-        return id(self)  # TODO This is a hack
-
     # TODO implicit prefixes as currently implemented require O(length) time for prefix calculations (e.g. to determine the minimal blue node)
     # other options would be to have more efficient explicit prefixes such as shared list representations
     def get_prefix_length(self):
