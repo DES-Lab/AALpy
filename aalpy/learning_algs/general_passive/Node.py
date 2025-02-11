@@ -152,6 +152,9 @@ class Node:
     def get_prefix_output(self):
         return self.prefix_access_pair[1]
 
+    def get_prefix_input(self):
+        return self.prefix_access_pair[0]
+
     def get_prefix(self, include_output=True):
         node = self
         prefix = []
@@ -395,7 +398,7 @@ class Node:
             curr_node = node
 
         # set last output
-        curr_node.prefix_access_pair = (curr_node.prefix_access_pair[0], output)
+        curr_node.prefix_access_pair = (curr_node.get_prefix_input(), output)
         pred = curr_node.predecessor
         if pred:
             transitions = pred.transitions[in_sym]

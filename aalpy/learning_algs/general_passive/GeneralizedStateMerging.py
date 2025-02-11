@@ -186,7 +186,7 @@ class GeneralizedStateMerging:
                 for access_pair, t_info in real_node.transition_iterator():
                     if t_info.target not in red_states:
                         t_info.target.predecessor = real_node
-                        t_info.target.prefix_access_pair = access_pair  # not sure whether this is actually required
+                        # t_info.target.prefix_access_pair = access_pair  # not sure whether this is actually required
             instrumentation.log_merge(best_candidate)
             # FUTURE: optimizations for compatibility tests where merges can be orthogonal
             # FUTURE: caching for aggregating compatibility tests
@@ -254,6 +254,10 @@ class GeneralizedStateMerging:
         blue_in_sym, blue_out_sym = blue.prefix_access_pair
         blue_parent.transitions[blue_in_sym][blue_out_sym].target = red
 
+        if blue_out_sym is not unknown_output and self.output_behavior == "moore":
+            partition = update_partition(red, None)
+            partition.prefix_access_pair = (partition.get_prefix_input(), blue_out_sym)
+
         # loop over implied merges
         q: deque[Tuple[Node, Node]] = deque([(red, blue)])
         pop = q.pop if self.depth_first else q.popleft
@@ -280,9 +284,8 @@ class GeneralizedStateMerging:
                             partition_transitions[out_sym] = partition_transition
                             # re-hook access pair
                             succ_part = update_partition(partition_transition.target, None)
-                            succ_pre_part = update_partition(succ_part.predecessor, None)
-                            if self.output_behavior == "moore" or succ_pre_part is partition:
-                                succ_part.prefix_access_pair = (succ_part.prefix_access_pair[0], out_sym)
+                            if self.output_behavior == "moore" or succ_part.predecessor is red:
+                                succ_part.prefix_access_pair = (succ_part.get_prefix_input(), out_sym)
                     # add pairs
                     if partition_transition is not None:
                         q.append((partition_transition.target, blue_transition.target))
