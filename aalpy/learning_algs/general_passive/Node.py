@@ -29,6 +29,7 @@ IOExample = Tuple[Sequence[Any], Any]
 StateFunction = Callable[['Node'], str]
 TransitionFunction = Callable[['Node', Any, Any], str]
 
+
 class SpecialValue:
     def __init__(self, value):
         self.value = value
@@ -39,7 +40,9 @@ class SpecialValue:
     def __repr__(self):
         return str(self.value)
 
+
 unknown_output = SpecialValue("Output Unknown")
+
 
 def generate_values(base: list, step: Callable, backing_set=True):
     if backing_set:
@@ -79,21 +82,29 @@ def union_iterator(a: Dict[Key, Val], b: Dict[Key, Val], default: Val = None) ->
         a_val = a.get(key, default)
         yield key, a_val, b_val
 
+
 # TODO maybe reuse this in classic RPNI
 def detect_data_format(data):
     if not isinstance(data, Sequence):
         raise ValueError("wrong input format. expected sequence type.")
-    for data_point in data:
-        if len(data_point) != 2:
-            return "traces"
-        o1, o2 = data_point
-        if not isinstance(o1, Sequence):
-            return "traces"
-        if not isinstance(o2, Sequence):
-            return "examples"
     if len(data) == 0:
         return "traces"
-    raise ValueError("ambiguous data format. data format needs to be specified explicitly.")
+
+    detected_format = None
+    for data_point in data:
+
+        if len(data_point) == 2 and isinstance(data_point[0], Sequence):
+            data_point_format = 'examples'
+        else:
+            data_point_format = 'traces'
+
+        if detected_format is None:
+            detected_format = data_point_format
+        elif data_point_format != detected_format:
+            raise ValueError("ambiguous data format. data format needs to be specified explicitly.")
+
+    return detected_format
+
 
 # TODO maybe split this for maintainability (and perfomance?)
 class TransitionInfo:
@@ -359,7 +370,6 @@ class Node:
             file_ext = 'dot'
         graph.write(path=str(path) + "." + file_ext, prog=engine, format=format)
 
-
     def add_trace(self, trace: IOTrace):
         curr_node: Node = self
         for in_sym, out_sym in trace:
@@ -407,7 +417,6 @@ class Node:
                 del transitions[unknown_output]
             if output not in transitions:
                 raise ValueError("nondeterminism encountered for GSM with examples. not supported")
-
 
     @staticmethod
     def createPTA(data, output_behavior, data_format="auto") -> 'Node':
@@ -469,6 +478,7 @@ class Node:
 
     def count(self):
         return sum(trans.count for _, trans in self.transition_iterator())
+
 
 class NodeOrders:
     NoCompare = lambda n: 0
