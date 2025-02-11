@@ -220,7 +220,7 @@ def save_automaton_to_file(automaton, path="LearnedModel", file_type="dot",
 
 
 sevpa_transition_pattern = r"(\S+)\s*/\s*\(\s*'(\S+)'\s*,\s*'(\S+)'\s*\)"
-vpa_push_pattern = r"push\(([^)]+)\)"
+vpa_push_pattern = r"(\S+)\s*/\s*push\(\s*(.*?)\s*\)"
 vpa_pop_pattern = r"(\S+)\s*/\s*pop\(\s*(.*?)\s*\)"
 
 
@@ -267,8 +267,8 @@ def _process_label(label, source, destination, automaton_type):
     if automaton_type == 'vpa':
         input_symbol, stack_symbol, action = None, None, None
         if 'push' in label:
-            input_symbol = re.match(vpa_push_pattern, label).group(1)
-            stack_symbol = input_symbol
+            push_elements = re.match(vpa_push_pattern, label)
+            input_symbol, stack_symbol = push_elements.group(1), push_elements.group(2)
             action = 'push'
         elif 'pop' in label:
             pop_elements = re.match(vpa_pop_pattern, label)
