@@ -45,7 +45,7 @@ def run_Lsharp(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type,
         automaton of type automaton_type (dict containing all information about learning if 'return_data' is True)
 
     """
-    assert automaton_type == "mealy"
+    # assert automaton_type == "mealy"
     assert extension_rule in {None, "SepSeq", "ADS"}
     assert separation_rule in {"SepSeq", "ADS"}
 
@@ -58,7 +58,7 @@ def run_Lsharp(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type,
             for input_seq, output_seq in samples:
                 sul.cache.add_to_cache(input_seq, output_seq)
 
-    ob_tree = ObservationTree(alphabet, sul, extension_rule, separation_rule)
+    ob_tree = ObservationTree(alphabet, sul, automaton_type, extension_rule, separation_rule)
     start_time = time.time()
 
     eq_query_time = 0

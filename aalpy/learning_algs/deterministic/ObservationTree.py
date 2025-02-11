@@ -1,15 +1,57 @@
 from .ADS import Ads
 from .Apartness import Apartness
+from aalpy.base import Automaton, SUL
+from aalpy.automata import Dfa, DfaState, MealyState, MealyMachine, MooreMachine, MooreState
 
+aut_type = ['dfa', 'mealy', 'moore']
 
-class Node:
+class MooreNode:
     _id_counter = 0
+    __slots__ = ['id', 'output', 'successors', 'parent', 'input_to_parent']
 
+    def __init__(self, parent=None):
+        MooreNode._id_counter += 1
+        self.id = MooreNode._id_counter
+        self.output = None
+        self.successors = {}
+        self.parent = parent
+        self.input_to_parent = None
+
+    def __hash__(self):
+        return hash(self.id)
+
+    def add_successor(self, input_val, output_val, successor_node):
+        """ Adds a successor node to the current node based on input """
+        self.successors[input_val] = successor_node
+        self.successors[input_val].output = output_val
+
+    def get_successor(self, input_val):
+        """ Returns the successor node for the given input """
+        if input_val in self.successors:
+            return self.successors[input_val]
+        return None
+
+    def extend_and_get(self, inp, output):
+        """ Extend the node with a new successor and return the successor node """
+        if inp in self.successors:
+            return self.successors[inp]
+        successor_node = MooreNode(parent=self)
+        self.add_successor(inp, output, successor_node)
+        successor_node.input_to_parent = inp
+        return successor_node
+
+    @property
+    def id_counter(self):
+        return self._id_counter
+
+
+class MealyNode:
+    _id_counter = 0
     __slots__ = ['id', 'successors', 'parent', 'input_to_parent']
 
     def __init__(self, parent=None):
-        Node._id_counter += 1
-        self.id = Node._id_counter
+        MealyNode._id_counter += 1
+        self.id = MealyNode._id_counter
         self.successors = {}
         self.parent = parent
         self.input_to_parent = None
@@ -41,7 +83,7 @@ class Node:
                 raise Exception(
                     f"observation not consistent with tree with output from tree: {out} and output from call: {output}")
             return self.successors[inp][1]
-        successor_node = Node(parent=self)
+        successor_node = MealyNode(parent=self)
         self.add_successor(inp, output, successor_node)
         successor_node.input_to_parent = inp
         return successor_node
@@ -52,16 +94,26 @@ class Node:
 
 
 class ObservationTree:
-    def __init__(self, alphabet, sul, extension_rule, separation_rule):
+    def __init__(self, alphabet, sul, automaton_type, extension_rule, separation_rule):
         """
         Initialize the tree with a root node and the alphabet
         """
+        assert automaton_type in aut_type
+        assert alphabet is not None and sul is not None
+
+        self.automaton_type = automaton_type
         self.alphabet = alphabet
         self.sul = sul
         self.extension_rule = extension_rule
         self.separation_rule = separation_rule
 
-        self.root = Node()
+        if self.automaton_type == 'mealy':
+            self.root = MealyNode()
+        else:
+            self.root = MooreNode()
+            # initialize MooreNode with empty word output
+            self.root.output = self.sul.query([])[0]
+
         self.basis = []
         self.basis.append(self.root)
         self.frontier_to_basis_dict = {}
@@ -69,9 +121,7 @@ class ObservationTree:
         # Caches the separating sequences between basis states
         self.witness_cache = {}
         # Maps the basis states to hypothesis states
-        self.basis_to_mealy_dict = {}
-
-        # Posing queries and adding observations
+        self.states_dict = dict()
 
     def insert_observation(self, inputs, outputs):
         # Insert an observation into the tree using sequences of inputs and outputs
@@ -87,22 +137,27 @@ class ObservationTree:
         current_node = self.root
         observation = []
         for input_val in inputs:
-            output = current_node.get_output(input_val)
+            if self.automaton_type == 'mealy':
+                output = current_node.get_output(input_val)
+                current_node = current_node.get_successor(input_val)
+            else:
+                current_node = current_node.get_successor(input_val)
+                output = current_node.output
             if output is None:
                 return None
             observation.append(output)
-            current_node = current_node.get_successor(input_val)
-
         return observation
 
     def get_outputs(self, basis_state, inputs):
         # Retrieve the list of outputs based on a basis state and a given input sequence
-
         prefix = self.get_transfer_sequence(self.root, basis_state)
         current_node = self.get_successor(prefix)
         observation = []
         for input_val in inputs:
-            output = current_node.get_output(input_val)
+            if self.automaton_type == 'mealy':
+                output = current_node.get_output(input_val)
+            else:
+                output = current_node.output
             if output is None:
                 return None
             observation.append(output)
@@ -123,7 +178,6 @@ class ObservationTree:
 
     def get_transfer_sequence(self, from_node, to_node):
         # Get the transfer sequence (inputs) that moves from one node to another
-
         transfer_sequence = []
         current_node = to_node
 
@@ -167,7 +221,8 @@ class ObservationTree:
         Removes basis states that are deemed apart from the frontier state.
         """
         if frontier_state not in self.frontier_to_basis_dict:
-            print(f"Warning: {frontier_state} not found in frontier_to_basis_dict.")
+            print(
+                f"Warning: {frontier_state} not found in frontier_to_basis_dict.")
             return
 
         basis_list = self.frontier_to_basis_dict[frontier_state]
@@ -225,8 +280,12 @@ class ObservationTree:
 
         for basis_state in self.basis:
             for inp in self.alphabet:
-                if basis_state.get_output(inp) is None:
-                    return False
+                if self.automaton_type == 'mealy':
+                    if basis_state.get_output(inp) is None:
+                        return False
+                else:
+                    if basis_state.get_successor(inp) is None:
+                        return False
 
         return True
 
@@ -349,7 +408,8 @@ class ObservationTree:
     def identify_frontier(self, frontier_state):
         # Identify a specific frontier state
         if frontier_state not in self.frontier_to_basis_dict:
-            raise Exception(f"Warning: {frontier_state} not found in frontier_to_basis_dict.")
+            raise Exception(
+                f"Warning: {frontier_state} not found in frontier_to_basis_dict.")
 
         self.update_basis_candidates(frontier_state)
         old_candidate_size = len(
@@ -387,52 +447,72 @@ class ObservationTree:
         suffix = Ads(self, basis_candidates)
         return self.adaptive_output_query_base(self.get_transfer_sequence(self.root, frontier_state), suffix)
 
-    def construct_hypothesis(self):
-        # Construct a hypothesis (Mealy Machine) based on the observation tree
-        from aalpy.automata import MealyMachine, MealyState
-
-        self.basis_to_mealy_dict.clear()
+    def construct_hypothesis_states(self):
+        # Construct the hypothesis states from the basis
+        self.states_dict = dict()
+        initial_state = None
         state_counter = 0
         for basis_state in self.basis:
             state_id = f's{state_counter}'
-            self.basis_to_mealy_dict[basis_state] = MealyState(state_id)
+            if self.automaton_type == 'dfa':
+                self.states_dict[basis_state] = DfaState(state_id)
+                self.states_dict[basis_state].is_accepting = basis_state.output
+            elif self.automaton_type == 'moore':
+                self.states_dict[basis_state] = MooreState(
+                    state_id, output=basis_state.output)
+            else:
+                self.states_dict[basis_state] = MealyState(state_id)
             state_counter += 1
 
-        mealy_states = []
+    def construct_hypothesis_transitions(self):
+        # Construct the hypothesis transitions from the basis, frontier and basis to frontier mapping
         for basis_state in self.basis:
-            source = self.basis_to_mealy_dict[basis_state]
             for input_val in self.alphabet:
-                output = basis_state.get_output(input_val)
+                # set transition
                 successor = basis_state.get_successor(input_val)
-
                 if successor in self.frontier_to_basis_dict:
+                    # set successor for frontier state
                     candidates = self.frontier_to_basis_dict[successor]
                     if len(candidates) > 1:
                         raise RuntimeError(
                             "Multiple basis candidates for a single frontier state.")
                     successor = next(iter(candidates))
-
-                if successor not in self.basis_to_mealy_dict:
+                if successor not in self.states_dict:
                     raise RuntimeError(
                         "Successor is not in the basisToStateMap.")
 
-                source.output_fun[input_val] = output
-                destination = self.basis_to_mealy_dict[successor]
-                source.transitions[input_val] = destination
+                destination = self.states_dict[successor]
+                self.states_dict[basis_state].transitions[input_val] = destination
+                if self.automaton_type == 'mealy':
+                    self.states_dict[basis_state].output_fun[input_val] = basis_state.get_output(
+                        input_val)
 
-            mealy_states.append(source)
+    def construct_hypothesis(self):
+        # Construct a hypothesis (Mealy Machine) based on the observation tree
+        self.construct_hypothesis_states()
+        self.construct_hypothesis_transitions()
 
-        hypothesis = MealyMachine(
-            self.basis_to_mealy_dict[self.root], mealy_states)
+        automaton_class = {'dfa': Dfa, 'mealy': MealyMachine, 'moore': MooreMachine}
+        hypothesis = automaton_class[self.automaton_type](
+            self.states_dict[self.root], list(self.states_dict.values()))
         hypothesis.compute_prefixes()
-        hypothesis.characterization_set = hypothesis.compute_characterization_set()
+        hypothesis.characterization_set = hypothesis.compute_characterization_set(raise_warning=False)
 
         return hypothesis
 
     def build_hypothesis(self):
-        # Builds the hypothesis which will be sent to the SUL
-        self.make_observation_tree_adequate()
-        return self.construct_hypothesis()
+        # Builds the hypothesis which will be sent to the SUL and checks consistency
+        while True:
+            self.make_observation_tree_adequate()
+            hypothesis = self.construct_hypothesis()
+            counter_example = Apartness.compute_witness_in_tree_and_hypothesis_states(self, self.root, hypothesis.initial_state)
+
+            if not counter_example:
+                return hypothesis
+
+            cex_outputs = self.get_observation(counter_example)
+            print("INTERNAL CEX")
+            self.process_counter_example(hypothesis, counter_example, cex_outputs)
 
     def make_observation_tree_adequate(self):
         # Updates the frontier and basis based on extension and separation rule
@@ -450,6 +530,7 @@ class ObservationTree:
         input-output sequence which is different
         """
         self.insert_observation(cex_inputs, cex_outputs)
+        print(f"[CEX]: {cex_inputs} / {cex_outputs}")
         hyp_outputs = hypothesis.compute_output_seq(
             hypothesis.initial_state, cex_inputs)
         prefix_index = self._get_counter_example_prefix_index(
@@ -474,10 +555,10 @@ class ObservationTree:
         if tree_node in self.frontier_to_basis_dict or tree_node in self.basis:
             return
 
-        hyp_state = self._get_mealy_successor(
+        hyp_state = self._get_automaton_successor(
             hypothesis, hypothesis.initial_state, cex_inputs)
-        hyp_node = list(self.basis_to_mealy_dict.keys())[list(
-            self.basis_to_mealy_dict.values()).index(hyp_state)]
+        hyp_node = list(self.states_dict.keys())[list(
+            self.states_dict.values()).index(hyp_state)]
 
         prefix = []
         current_state = self.root
@@ -491,10 +572,10 @@ class ObservationTree:
         sigma1 = list(cex_inputs[:h])
         sigma2 = list(cex_inputs[h:])
 
-        hyp_state_p = self._get_mealy_successor(
+        hyp_state_p = self._get_automaton_successor(
             hypothesis, hypothesis.initial_state, sigma1)
-        hyp_node_p = list(self.basis_to_mealy_dict.keys())[list(
-            self.basis_to_mealy_dict.values()).index(hyp_state_p)]
+        hyp_node_p = list(self.states_dict.keys())[list(
+            self.states_dict.values()).index(hyp_state_p)]
         hyp_p_access = self.get_transfer_sequence(self.root, hyp_node_p)
 
         witness = Apartness.compute_witness(tree_node, hyp_node, self)
@@ -517,9 +598,9 @@ class ObservationTree:
             self._process_binary_search(
                 hypothesis, new_inputs, query_outputs[:len(new_inputs)])
 
-    def _get_mealy_successor(self, mealy_machine, from_state, inputs):
-        mealy_machine.current_state = from_state
+    def _get_automaton_successor(self, automaton, from_state, inputs):
+        automaton.current_state = from_state
         for inp in inputs:
-            mealy_machine.current_state = mealy_machine.current_state.transitions[inp]
+            automaton.current_state = automaton.current_state.transitions[inp]
 
-        return mealy_machine.current_state
+        return automaton.current_state
