@@ -441,18 +441,17 @@ class Node:
         return True
 
     def is_moore(self):
-        output_dict = dict()
         for node in self.get_all_nodes():
             for (in_sym, out_sym), transition in node.transition_iterator():
-                child = transition.target
-                if child in output_dict.keys() and output_dict[child] != out_sym:
+                child_output = transition.target.get_prefix_output()
+                if out_sym is not unknown_output and child_output != out_sym:
                     return False
-                else:
-                    output_dict[child] = out_sym
         return True
 
     def moore_compatible(self, other: 'Node'):
-        return self.get_prefix_output() == other.get_prefix_output()
+        so = self.get_prefix_output()
+        oo = other.get_prefix_output()
+        return so == oo or so is unknown_output or oo is unknown_output
 
     def local_log_likelihood_contribution(self):
         llc = 0
