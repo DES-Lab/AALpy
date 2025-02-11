@@ -1,9 +1,7 @@
-from itertools import chain, product
-
+import random
 from aalpy.base.Oracle import Oracle
 from aalpy.base.SUL import SUL
-
-import random
+from itertools import chain, product
 
 
 def state_characterization_set(hypothesis, alphabet, state):
@@ -124,16 +122,17 @@ class RandomWpMethodEqOracle(Oracle):
     """
 
     def __init__(
-        self, alphabet: list, sul: SUL, expected_length=10, min_length=1, bound=1000
-    ):
+        self, alphabet: list, sul: SUL, min_length=1, expected_length=10, num_tests=1000,):
         super().__init__(alphabet, sul)
-        self.expected_length = expected_length
         self.min_length = min_length
-        self.bound = bound
+        self.expected_length = expected_length
+        self.bound = num_tests
 
     def find_cex(self, hypothesis):
+        # fix for non-minimal intermediate hypothesis that can occur in KV
+        hypothesis.characterization_set = hypothesis.compute_characterization_set()
         if not hypothesis.characterization_set:
-            hypothesis.characterization_set = hypothesis.compute_characterization_set()
+            hypothesis.characterization_set = [(a,) for a in hypothesis.get_input_alphabet()]
 
         state_mapping = {s : state_characterization_set(hypothesis, self.alphabet, s) for s in hypothesis.states}
 
