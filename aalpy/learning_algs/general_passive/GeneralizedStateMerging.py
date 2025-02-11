@@ -254,8 +254,8 @@ class GeneralizedStateMerging:
         blue_in_sym, blue_out_sym = blue.prefix_access_pair
         blue_parent.transitions[blue_in_sym][blue_out_sym].target = red
 
-        if blue_out_sym is not unknown_output and self.output_behavior == "moore":
-            partition = update_partition(red, None)
+        partition = update_partition(red, None)
+        if partition.get_prefix_output() is unknown_output and self.output_behavior == "moore":
             partition.prefix_access_pair = (partition.get_prefix_input(), blue_out_sym)
 
         # loop over implied merges
