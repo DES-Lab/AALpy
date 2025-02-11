@@ -359,7 +359,6 @@ class ObservationTree:
 
     def _answer_ads_from_tree(self, ads, from_node):
         # searches the tree based on the inputs returning the inputs/outputs when all ads inputs are used
-
         prev_output = None
         inputs_sent = []
         outputs_received = []
@@ -371,10 +370,16 @@ class ObservationTree:
                 break
             inputs_sent.append(next_input)
 
-            output_from_node = current_node.get_output(next_input)
-            successor_from_node = current_node.get_successor(next_input)
-            if successor_from_node is None:
-                return None, None
+            if self.automaton_type == 'mealy':
+                output_from_node = current_node.get_output(next_input)
+                successor_from_node = current_node.get_successor(next_input)
+                if successor_from_node is None:
+                    return None, None
+            else:
+                successor_from_node = current_node.get_successor(next_input)
+                if successor_from_node is None:
+                    return None, None
+                output_from_node = successor_from_node.output
 
             prev_output = output_from_node
             outputs_received.append(output_from_node)

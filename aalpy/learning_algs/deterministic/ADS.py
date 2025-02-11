@@ -35,14 +35,13 @@ class Ads:
 
     def construct_ads(self, obs_tree, current_block):
         # builds the ADS tree recursively by selecting optimal inputs for splitting states
-
         if len(current_block) == 1:
             return AdsNode.create_leaf()
 
         split_score = {}
-        best_input = self.maximal_base_input(obs_tree.alphabet, current_block, split_score)
+        best_input = self.maximal_base_input(obs_tree.alphabet, current_block, split_score, obs_tree.automaton_type)
 
-        partitions = self.partition_on_output(current_block, best_input)
+        partitions = self.partition_on_output(current_block, best_input, obs_tree.automaton_type)
         sub_trees = sum(len(part) for part in partitions.values())
         max_input_score = sum(self.make_subtree(obs_tree, sub_trees, part) for _, part in partitions.items())
 
@@ -56,7 +55,7 @@ class Ads:
         best_score = 0
 
         for input_val in inputs_to_keep:
-            input_partitions = self.partition_on_output(current_block, input_val)
+            input_partitions = self.partition_on_output(current_block, input_val, obs_tree.automaton_type)
             sub_trees_size = sum(len(part) for part in input_partitions.values())
             input_score = 0
             children = {}
@@ -91,13 +90,13 @@ class Ads:
         output_score = self.compute_reg_score(len(partition), sub_trees, output_subtree.get_score())
         return output_score, output_subtree
 
-    def maximal_base_input(self, alphabet, block, split_score):
+    def maximal_base_input(self, alphabet, block, split_score, automaton_type):
         # Identifies the input with the highest ability to split the state block based on apartness
         best_input = alphabet[0]
         best_apart_pairs = 0
 
         for input_val in alphabet:
-            partition = self.partition_on_output(block, input_val)
+            partition = self.partition_on_output(block, input_val, automaton_type)
             non_apart_pairs = 0
             sub_trees_size = 0
 
@@ -117,18 +116,27 @@ class Ads:
 
     def compute_reg_score(self, partition_size, sub_trees, child_score):
         # Calculates a score based on partition size and subtree characteristics
+        # TODO HERE!!!
         return partition_size * (sub_trees - partition_size) + child_score
+        # return partition_size * (sub_trees - partition_size + child_score)
 
-    def partition_on_output(self, block, input_val):
+    def partition_on_output(self, block, input_val, automaton_type):
         # Partitions states in the block based on their output for a given input
         partition = defaultdict(list)
 
         for node in block:
-            output = node.get_output(input_val)
-            if output is not None:
+            if automaton_type == 'mealy':
+                output = node.get_output(input_val)
+                if output is not None:
+                    successor = node.get_successor(input_val)
+                    if successor is not None:
+                        partition[output].append(successor)
+            else:
                 successor = node.get_successor(input_val)
                 if successor is not None:
-                    partition[output].append(successor)
+                    output = successor.output 
+                    if output is not None:
+                        partition[output].append(successor)
 
         return partition
 
