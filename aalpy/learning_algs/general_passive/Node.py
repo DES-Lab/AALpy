@@ -29,8 +29,17 @@ IOExample = Tuple[Sequence[Any], Any]
 StateFunction = Callable[['Node'], str]
 TransitionFunction = Callable[['Node', Any, Any], str]
 
-unknown_output = object()
+class SpecialValue:
+    def __init__(self, value):
+        self.value = value
 
+    def __str__(self):
+        return str(self.value)
+
+    def __repr__(self):
+        return str(self.value)
+
+unknown_output = SpecialValue("Output Unknown")
 
 def generate_values(base: list, step: Callable, backing_set=True):
     if backing_set:
@@ -404,7 +413,7 @@ class Node:
         if data_format == "auto":
             data_format = detect_data_format(data)
 
-        root_node = Node((None, None), None)
+        root_node = Node((None, unknown_output), None)
         if data_format == "examples":
             for example in data:
                 root_node.add_example(example)
