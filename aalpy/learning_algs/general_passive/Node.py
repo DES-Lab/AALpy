@@ -175,6 +175,10 @@ class Node:
     def get_prefix_input(self):
         return self.prefix_access_pair[0]
 
+    def resolve_unknown_prefix_output(self, value):
+        if self.get_prefix_output() is unknown_output:
+            self.prefix_access_pair = (self.get_prefix_input(), value)
+
     def get_prefix(self, include_output=True):
         node = self
         prefix = []
@@ -417,13 +421,12 @@ class Node:
             curr_node = node
 
         # set last output
-        curr_node.prefix_access_pair = (curr_node.get_prefix_input(), output)
+        curr_node.resolve_unknown_prefix_output(output)
         pred = curr_node.predecessor
         if pred:
             transitions = pred.transitions[in_sym]
             if unknown_output in transitions:
-                transitions[output] = transitions[unknown_output]
-                del transitions[unknown_output]
+                transitions[output] = transitions.pop(unknown_output)
             if output not in transitions:
                 raise ValueError("nondeterminism encountered for GSM with examples. not supported")
 

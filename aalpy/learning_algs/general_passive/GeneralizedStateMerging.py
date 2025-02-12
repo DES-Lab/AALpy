@@ -255,8 +255,8 @@ class GeneralizedStateMerging:
         blue_parent.transitions[blue_in_sym][blue_out_sym].target = red
 
         partition = update_partition(red, None)
-        if partition.get_prefix_output() is unknown_output and self.output_behavior == "moore":
-            partition.prefix_access_pair = (partition.get_prefix_input(), blue_out_sym)
+        if self.output_behavior == "moore":
+            partition.resolve_unknown_prefix_output(blue_out_sym)
 
         # loop over implied merges
         q: deque[Tuple[Node, Node]] = deque([(red, blue)])
@@ -285,8 +285,8 @@ class GeneralizedStateMerging:
                             partition_transitions[out_sym] = partition_transition
                             # re-hook access pair
                             succ_part = update_partition(partition_transition.target, None)
-                            if succ_part.get_prefix_output() is unknown_output and (self.output_behavior == "moore" or succ_part.predecessor is red):
-                                succ_part.prefix_access_pair = (succ_part.get_prefix_input(), out_sym)
+                            if self.output_behavior == "moore" or succ_part.predecessor is red:
+                                succ_part.resolve_unknown_prefix_output(out_sym)
                     # add pairs
                     if partition_transition is not None:
                         q.append((partition_transition.target, blue_transition.target))
