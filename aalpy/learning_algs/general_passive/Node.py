@@ -1,7 +1,8 @@
+import functools
 import math
 import pathlib
 from functools import total_ordering
-from typing import Dict, Any, List, Tuple, Iterable, Callable, Union, TypeVar, Iterator, Optional
+from typing import Dict, Any, List, Tuple, Iterable, Callable, Union, TypeVar, Iterator, Optional, Sequence
 import pydot
 from copy import copy
 
@@ -18,12 +19,17 @@ OutputBehaviorRange = ["moore", "mealy"]
 TransitionBehavior = str
 TransitionBehaviorRange = ["deterministic", "nondeterministic", "stochastic"]
 
+DataFormat = str
+DataFormatRange = ["traces", "examples", "tree"]
+
 IOPair = Tuple[Any, Any]
-IOTrace = List[IOPair]
-IOExample = Tuple[Iterable[Any], Any]
+IOTrace = Sequence[IOPair]
+IOExample = Tuple[Sequence[Any], Any]
 
 StateFunction = Callable[['Node'], str]
 TransitionFunction = Callable[['Node', Any, Any], str]
+
+unknown_output = None # can be set to a special value if required
 
 
 def generate_values(base: list, step: Callable, backing_set=True):
@@ -63,6 +69,42 @@ def union_iterator(a: Dict[Key, Val], b: Dict[Key, Val], default: Val = None) ->
             continue
         a_val = a.get(key, default)
         yield key, a_val, b_val
+
+
+# TODO maybe reuse this in classic RPNI
+def detect_data_format(data, check_consistency=True):
+    accepted_types = (Tuple, List)
+    data_format = None
+    def check_data_format(value):
+        if data_format is None or data_format == value:
+            return value
+        raise ValueError("inconsistent data")
+
+    if isinstance(data, Node):
+        if not data.is_tree():
+            raise ValueError("provided automaton is not a tree")
+        return "tree"
+    if not isinstance(data, accepted_types):
+        raise ValueError("wrong input format. expected tuple or list.")
+    if len(data) == 0:
+        return "traces"
+    for data_point in data:
+        if len(data_point) != 2:
+            data_format = check_data_format("traces")
+            if not check_consistency:
+                return data_format
+        o1, o2 = data_point
+        if not isinstance(o1, accepted_types):
+            data_format = check_data_format("traces")
+            if not check_consistency:
+                return data_format
+        if not isinstance(o2, accepted_types):
+            data_format = check_data_format("examples")
+            if not check_consistency:
+                return data_format
+    if data_format is None:
+        raise ValueError("ambiguous data format. data format needs to be specified explicitly.")
+    return data_format
 
 
 # TODO maybe split this for maintainability (and perfomance?)
@@ -109,12 +151,6 @@ class Node:
         except TypeError:
             return [str(x) for x in own_p] < [str(x) for x in other_p]
 
-    def __eq__(self, other):
-        return self is other  # TODO hack, does this lead to problems down the line?
-
-    def __hash__(self):
-        return id(self)  # TODO This is a hack
-
     # TODO implicit prefixes as currently implemented require O(length) time for prefix calculations (e.g. to determine the minimal blue node)
     # other options would be to have more efficient explicit prefixes such as shared list representations
     def get_prefix_length(self):
@@ -127,6 +163,13 @@ class Node:
 
     def get_prefix_output(self):
         return self.prefix_access_pair[1]
+
+    def get_prefix_input(self):
+        return self.prefix_access_pair[0]
+
+    def resolve_unknown_prefix_output(self, value):
+        if self.get_prefix_output() is unknown_output:
+            self.prefix_access_pair = (self.get_prefix_input(), value)
 
     def get_prefix(self, include_output=True):
         node = self
@@ -184,7 +227,7 @@ class Node:
 
     def is_tree(self):
         q: List['Node'] = [self]
-        backing_set = set()
+        backing_set = {self}
         while len(q) != 0:
             current = q.pop(0)
             for _, child in current.transition_iterator():
@@ -196,7 +239,7 @@ class Node:
         return True
 
     def to_automaton(self, output_behavior: OutputBehavior, transition_behavior: TransitionBehavior,
-                     check_behavior=False, set_prefix=False) -> Automaton:
+                     check_behavior=True, set_prefix=False) -> Automaton:
         nodes = self.get_all_nodes()
 
         if check_behavior:
@@ -332,13 +375,9 @@ class Node:
             file_ext = 'dot'
         graph.write(path=str(path) + "." + file_ext, prog=engine, format=format)
 
-    def add_data(self, data):
-        for seq in data:
-            self.add_trace(seq)
-
-    def add_trace(self, data: IOTrace):
+    def add_trace(self, trace: IOTrace):
         curr_node: Node = self
-        for in_sym, out_sym in data:
+        for in_sym, out_sym in trace:
             transitions = curr_node.get_or_create_transitions(in_sym)
             info = transitions.get(out_sym)
             if info is None:
@@ -350,19 +389,59 @@ class Node:
                 node = info.target
             curr_node = node
 
-    def add_example(self, data: IOExample):
-        # TODO add support for example based algorithms
-        raise NotImplementedError()
+    def add_example(self, example: IOExample):
+        inputs, output = example
+        curr_node: Node = self
+        in_sym = None
+
+        # step through inputs and add transitions
+        for in_sym in inputs:
+            transitions = curr_node.get_or_create_transitions(in_sym)
+            t_infos = list(transitions.values())
+            if len(t_infos) == 0:
+                node = Node((in_sym, unknown_output), curr_node)
+                t_info = TransitionInfo(node, 1, node, 1)
+                transitions[unknown_output] = t_info
+            elif len(t_infos) == 1:
+                t_info = t_infos[0]
+                t_info.count += 1
+                t_info.original_count += 1
+                node = t_info.target
+            else:
+                # This should never happen
+                raise ValueError("nondeterminism encountered for GSM with examples. not supported")
+            curr_node = node
+
+        # set last output
+        curr_node.resolve_unknown_prefix_output(output)
+        pred = curr_node.predecessor
+        if pred:
+            transitions = pred.transitions[in_sym]
+            if unknown_output in transitions:
+                transitions[output] = transitions.pop(unknown_output)
+            if output not in transitions:
+                raise ValueError("nondeterminism encountered for GSM with examples. not supported")
 
     @staticmethod
-    def createPTA(data, output_behavior) -> 'Node':
-        if output_behavior == "moore":
-            initial_output = data[0][0]
-            data = (d[1:] for d in data)
-        else:
-            initial_output = None
-        root_node = Node((None, initial_output), None)
-        root_node.add_data(data)
+    def createPTA(data, output_behavior, data_format=None) -> 'Node':
+        if data_format is None:
+            data_format = detect_data_format(data)
+        if data_format not in DataFormatRange:
+            raise ValueError(f"invalid data format {data_format}. should be in {DataFormatRange}")
+
+        if data_format == "tree":
+            return data
+        root_node = Node((None, unknown_output), None)
+        if data_format == "examples":
+            for example in data:
+                root_node.add_example(example)
+        if data_format == "traces":
+            if output_behavior == "moore":
+                initial_output = data[0][0]
+                root_node.prefix_access_pair = (None, initial_output)
+                data = (d[1:] for d in data)
+            for trace in data:
+                root_node.add_trace(trace)
         return root_node
 
     def is_locally_deterministic(self):
@@ -372,22 +451,25 @@ class Node:
         return all(node.is_locally_deterministic() for node in self.get_all_nodes())
 
     def deterministic_compatible(self, other: 'Node'):
-        common_keys = filter(lambda key: key in self.transitions.keys(), other.transitions.keys())
-        return all(list(self.transitions[key].keys()) == list(other.transitions[key].keys()) for key in common_keys)
+        for _, trans_self, trans_other in intersection_iterator(self.transitions, other.transitions):
+            if unknown_output in trans_self or unknown_output in trans_other:
+                continue
+            if list(trans_self.keys()) != list(trans_other.keys()):
+                return False
+        return True
 
     def is_moore(self):
-        output_dict = dict()
         for node in self.get_all_nodes():
             for (in_sym, out_sym), transition in node.transition_iterator():
-                child = transition.target
-                if child in output_dict.keys() and output_dict[child] != out_sym:
+                child_output = transition.target.get_prefix_output()
+                if out_sym is not unknown_output and child_output != out_sym:
                     return False
-                else:
-                    output_dict[child] = out_sym
         return True
 
     def moore_compatible(self, other: 'Node'):
-        return self.get_prefix_output() == other.get_prefix_output()
+        so = self.get_prefix_output()
+        oo = other.get_prefix_output()
+        return so == oo or so is unknown_output or oo is unknown_output
 
     def local_log_likelihood_contribution(self):
         llc = 0
@@ -402,3 +484,8 @@ class Node:
 
     def count(self):
         return sum(trans.count for _, trans in self.transition_iterator())
+
+
+class NodeOrders:
+    NoCompare = lambda n: 0
+    Default = functools.cmp_to_key(lambda a, b: -1 if a < b else 1)

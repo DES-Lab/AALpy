@@ -1,10 +1,9 @@
 import functools
-from bisect import insort
-from typing import Dict, Tuple, Callable, List, Optional
 from collections import deque
+from typing import Dict, Tuple, Callable, List, Optional
 
 from aalpy.learning_algs.general_passive.Node import Node, OutputBehavior, TransitionBehavior, TransitionInfo, \
-    OutputBehaviorRange, TransitionBehaviorRange, intersection_iterator
+    OutputBehaviorRange, TransitionBehaviorRange, intersection_iterator, NodeOrders, unknown_output, detect_data_format
 from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreCalculation, hoeffding_compatibility
 
 
@@ -54,10 +53,10 @@ class GeneralizedStateMerging:
                  depth_first=False):
 
         if output_behavior not in OutputBehaviorRange:
-            raise ValueError(f"invalid output behavior {output_behavior}")
+            raise ValueError(f"invalid output behavior {output_behavior}. should be in {OutputBehaviorRange}")
         self.output_behavior: OutputBehavior = output_behavior
         if transition_behavior not in TransitionBehaviorRange:
-            raise ValueError(f"invalid transition behavior {transition_behavior}")
+            raise ValueError(f"invalid transition behavior {transition_behavior}. should be in {TransitionBehaviorRange}")
         self.transition_behavior: TransitionBehavior = transition_behavior
 
         if score_calc is None:
@@ -70,8 +69,11 @@ class GeneralizedStateMerging:
         self.score_calc: ScoreCalculation = score_calc
 
         if node_order is None:
-            node_order = Node.__lt__
-        self.node_order = functools.cmp_to_key(lambda a, b: -1 if node_order(a, b) else 1)
+            node_order = NodeOrders.Default
+        if node_order is NodeOrders.NoCompare or node_order is NodeOrders.Default:
+            self.node_order = node_order
+        else:
+            self.node_order = functools.cmp_to_key(lambda a, b: -1 if node_order(a, b) else 1)
 
         self.pta_preprocessing = pta_preprocessing or (lambda x: x)
         self.postprocessing = postprocessing or (lambda x: x)
@@ -91,15 +93,16 @@ class GeneralizedStateMerging:
 
     # TODO: make more generic by adding the option to use a different algorithm than red blue
     #  for selecting potential merge candidates. Maybe using inheritance with abstract `run`.
-    def run(self, data, convert=True, instrumentation: Instrumentation = None):
+    def run(self, data, convert=True, instrumentation: Instrumentation=None, data_format=None):
         if instrumentation is None:
             instrumentation = Instrumentation()
         instrumentation.reset(self)
 
-        if isinstance(data, Node):
-            root = data
-        else:
-            root = Node.createPTA(data, self.output_behavior)
+        if data_format is None:
+            data_format = detect_data_format(data)
+        if data_format == "examples" and self.transition_behavior != "deterministic":
+            raise ValueError("learning from examples is not possible for nondeterministic systems")
+        root = Node.createPTA(data, self.output_behavior, data_format)
 
         root = self.pta_preprocessing(root)
         instrumentation.pta_construction_done(root)
@@ -128,7 +131,11 @@ class GeneralizedStateMerging:
             # no blue states left -> done
             if len(blue_states) == 0:
                 break
-            blue_states.sort(key=self.node_order)
+            if self.node_order is not NodeOrders.NoCompare:
+                blue_states.sort(key=self.node_order)
+                # red states are always sorted using default order on original prefix
+                if self.node_order is not NodeOrders.Default:
+                    red_states.sort(key=self.node_order)
 
             # loop over blue states
             promotion = False
@@ -139,7 +146,6 @@ class GeneralizedStateMerging:
                 # calculate partitions resulting from merges with red states if necessary
                 current_candidates: Dict[Node, Partitioning] = dict()
                 perfect_partitioning = None
-
                 red_state = None
                 for red_state in red_states:
                     partition = partition_candidates.get((red_state, blue_state))
@@ -149,8 +155,8 @@ class GeneralizedStateMerging:
                         perfect_partitioning = partition
                         break
                     current_candidates[red_state] = partition
-
                 assert red_state is not None
+
                 # partition with perfect score found: don't consider anything else
                 if perfect_partitioning:
                     partition_candidates = {(red_state, blue_state): perfect_partitioning}
@@ -158,7 +164,7 @@ class GeneralizedStateMerging:
 
                 # no merge candidates for this blue state -> promote
                 if all(part.score is False for part in current_candidates.values()):
-                    insort(red_states, blue_state, key=self.node_order)
+                    red_states.append(blue_state)
                     instrumentation.log_promote(blue_state)
                     promotion = True
                     break
@@ -176,10 +182,11 @@ class GeneralizedStateMerging:
             best_candidate = max(partition_candidates.values(), key=lambda part: part.score)
             for real_node, partition_node in best_candidate.red_mapping.items():
                 real_node.transitions = partition_node.transitions
+                real_node.prefix_access_pair = partition_node.prefix_access_pair
                 for access_pair, t_info in real_node.transition_iterator():
                     if t_info.target not in red_states:
                         t_info.target.predecessor = real_node
-                        t_info.target.prefix_access_pair = access_pair  # not sure whether this is actually required
+                        # t_info.target.prefix_access_pair = access_pair  # not sure whether this is actually required
             instrumentation.log_merge(best_candidate)
             # FUTURE: optimizations for compatibility tests where merges can be orthogonal
             # FUTURE: caching for aggregating compatibility tests
@@ -247,9 +254,13 @@ class GeneralizedStateMerging:
         blue_in_sym, blue_out_sym = blue.prefix_access_pair
         blue_parent.transitions[blue_in_sym][blue_out_sym].target = red
 
+        partition = update_partition(red, None)
+        if self.output_behavior == "moore":
+            partition.resolve_unknown_prefix_output(blue_out_sym)
+
+        # loop over implied merges
         q: deque[Tuple[Node, Node]] = deque([(red, blue)])
         pop = q.pop if self.depth_first else q.popleft
-
         while len(q) != 0:
             red, blue = pop()
             partition = update_partition(red, blue)
@@ -258,10 +269,25 @@ class GeneralizedStateMerging:
                 if self.compute_local_compatibility(partition, blue) is False:
                     return partitioning
 
+            # create implied merges for all common successors
             for in_sym, blue_transitions in blue.transitions.items():
                 partition_transitions = partition.get_or_create_transitions(in_sym)
                 for out_sym, blue_transition in blue_transitions.items():
                     partition_transition = partition_transitions.get(out_sym)
+                    # handle unknown output
+                    if partition_transition is None:
+                        if out_sym is unknown_output and len(partition_transitions) != 0:
+                            assert len(partition_transitions) == 1
+                            partition_transition = list(partition_transitions.values())[0]
+                        if unknown_output in partition_transitions:
+                            assert len(partition_transitions) == 1
+                            partition_transition = partition_transitions.pop(unknown_output)
+                            partition_transitions[out_sym] = partition_transition
+                            # re-hook access pair
+                            succ_part = update_partition(partition_transition.target, None)
+                            if self.output_behavior == "moore" or succ_part.predecessor is red:
+                                succ_part.resolve_unknown_prefix_output(out_sym)
+                    # add pairs
                     if partition_transition is not None:
                         q.append((partition_transition.target, blue_transition.target))
                         partition_transition.count += blue_transition.count
@@ -287,6 +313,7 @@ def run_GSM(data, *,
             depth_first=False,
             instrumentation=None,
             convert=True,
+            data_format=None,
             ):
     """
     TODO
@@ -318,12 +345,14 @@ def run_GSM(data, *,
 
         convert:
 
+        data_format:
+
 
     Returns:
 
 
     """
-    # instantiate the gsm
+    # instantiate gsm
     gsm = GeneralizedStateMerging(
         output_behavior=output_behavior,
         transition_behavior=transition_behavior,
@@ -338,4 +367,4 @@ def run_GSM(data, *,
     )
 
     # run the algorithm
-    return gsm.run(data=data, instrumentation=instrumentation, convert=convert)
+    return gsm.run(data=data, instrumentation=instrumentation, convert=convert, data_format=data_format)

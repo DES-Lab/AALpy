@@ -1,5 +1,4 @@
 import time
-from functools import wraps
 from typing import Dict, Optional
 
 from aalpy.learning_algs.general_passive.GeneralizedStateMerging import Instrumentation, Partitioning, \
@@ -8,19 +7,6 @@ from aalpy.learning_algs.general_passive.Node import Node
 
 
 class ProgressReport(Instrumentation):
-    @staticmethod
-    def min_lvl(lvl):
-        def decorator(fn):
-            @wraps(fn)
-            def wrapper(this, *args, **kw):
-                if this.lvl < lvl:
-                    return
-                fn(this, *args, **kw)
-
-            return wrapper
-
-        return decorator
-
     def __init__(self, lvl):
         super().__init__()
         self.lvl = lvl
@@ -45,10 +31,9 @@ class ProgressReport(Instrumentation):
 
         self.previous_time = time.time()
 
-    @min_lvl(1)
     def pta_construction_done(self, root):
         print(f'PTA Construction Time: {round(time.time() - self.previous_time, 2)}')
-        if self.lvl != 1:
+        if 1 < self.lvl:
             states = root.get_all_nodes()
             leafs = [state for state in states if len(state.transitions.keys()) == 0]
             depth = [state.get_prefix_length() for state in leafs]
@@ -60,24 +45,21 @@ class ProgressReport(Instrumentation):
     def print_status(self):
         reset_char = "\33[2K\r"
         print_str = reset_char + f'Current automaton size: {self.nr_red_states}'
-        if self.lvl != 1 and not self.gsm.compatibility_on_futures:
+        if 1 < self.lvl and not self.gsm.compatibility_on_futures:
             print_str += f' Merged: {self.nr_merged_states_total} Remaining: {self.pta_size - self.nr_red_states - self.nr_merged_states_total}'
         print(print_str, end="")
 
-    @min_lvl(1)
     def log_promote(self, node: Node):
         self.log.append(["promote", (node.get_prefix(),)])
         self.nr_red_states += 1
         self.print_status()
 
-    @min_lvl(1)
     def log_merge(self, part: Partitioning):
         self.log.append(["merge", (part.red.get_prefix(), part.blue.get_prefix())])
         self.nr_merged_states_total += len(part.full_mapping) - len(part.red_mapping)
         self.nr_merged_states += 1
         self.print_status()
 
-    @min_lvl(1)
     def learning_done(self, root, red_states):
         print(f'\nLearning Time: {round(time.time() - self.previous_time, 2)}')
         print(f'Learned {len(red_states)} state automaton via {self.nr_merged_states} merges.')

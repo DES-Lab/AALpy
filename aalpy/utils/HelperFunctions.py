@@ -301,7 +301,7 @@ def convert_i_o_traces_for_RPNI(sequences, automaton_type="mealy"):
 
     for s in sequences:
         if automaton_type in ["moore", "dfa"]:
-            rpni_sequences.add((tuple(),s[0]))
+            rpni_sequences.add((tuple(), s[0]))
             s = s[1:]
         for i in range(len(s)):
             inputs = tuple([io[0] for io in s[:i + 1]])
@@ -349,11 +349,14 @@ def is_balanced(input_seq, vpa_alphabet):
     return counter == 0
 
 
-def generate_input_output_data_from_automata(model, num_sequances=4000, min_seq_len=1, max_seq_len=16):
+def generate_input_output_data_from_automata(model, num_sequances=4000, min_seq_len=1, max_seq_len=16,
+                                             sequance_type='single_output'):
+    assert sequance_type in {'io_trace', 'single_output'}
 
     alphabet = model.get_input_alphabet()
-    input_output_sequances = []
-    while len(input_output_sequances) < num_sequances:
+    dataset = []
+
+    while len(dataset) < num_sequances:
         sequance = []
         for _ in range(random.randint(min_seq_len, max_seq_len)):
             sequance.append(random.choice(alphabet))
@@ -361,9 +364,12 @@ def generate_input_output_data_from_automata(model, num_sequances=4000, min_seq_
         model.reset_to_initial()
         outputs = model.execute_sequence(model.initial_state, sequance)
 
-        input_output_sequances.append(list(zip(sequance, outputs)))
+        if sequance_type == 'io_trace':
+            dataset.append(list(zip(sequance, outputs)))
+        else:
+            dataset.append((sequance, outputs[-1]))
 
-    return input_output_sequances
+    return dataset
 
 
 def generate_input_output_data_from_vpa(vpa, num_sequances=1000, max_seq_len=16, max_attempts=None):
@@ -396,7 +402,7 @@ def generate_input_output_data_from_vpa(vpa, num_sequances=1000, max_seq_len=16,
             sequance += (chosen_input,)
 
             output = vpa.step(chosen_input)
-            #if vpa.is_balanced(sequance):
+            # if vpa.is_balanced(sequance):
             data_set.add((sequance, output))
 
     data_set = list(data_set)
@@ -409,3 +415,26 @@ def product_with_possible_empty_iterable(*iterables, repeat=1):
     """
     non_empty_iterables = [it for it in iterables if it]
     return product(*non_empty_iterables, repeat=repeat)
+
+
+def dfa_from_moore(moore_model):
+    from aalpy.automata import Dfa, DfaState
+
+    dfa_state_map = dict()
+    # define states
+    for moore_state in moore_model.states:
+        if moore_state.output not in {True, False, None}:
+            raise ValueError('Cannot convert Moore model with unrestricted output domain to DFA. '
+                             f'Output domain should be {True, False, None}. Problematic output: {moore_state.output}'
+                             )
+
+        is_accepting = moore_state.output if moore_state.output is not None else False
+        dfa_state_map[moore_state.state_id] = DfaState(moore_state.state_id, is_accepting)
+
+    # define transitions
+    for moore_state in moore_model.states:
+        for i, reached_state in moore_state.transitions.items():
+            dfa_state_map[moore_state.state_id].transitions[i] = dfa_state_map[reached_state.state_id]
+
+    initial_state = dfa_state_map[moore_model.initial_state.state_id]
+    return Dfa(initial_state, list(dfa_state_map.values()))
