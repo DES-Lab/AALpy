@@ -516,7 +516,6 @@ class ObservationTree:
                 return hypothesis
 
             cex_outputs = self.get_observation(counter_example)
-            print("INTERNAL CEX")
             self.process_counter_example(hypothesis, counter_example, cex_outputs)
 
     def make_observation_tree_adequate(self):
@@ -535,7 +534,6 @@ class ObservationTree:
         input-output sequence which is different
         """
         self.insert_observation(cex_inputs, cex_outputs)
-        print(f"[CEX]: {cex_inputs} / {cex_outputs}")
         hyp_outputs = hypothesis.compute_output_seq(
             hypothesis.initial_state, cex_inputs)
         prefix_index = self._get_counter_example_prefix_index(

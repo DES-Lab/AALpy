@@ -3,17 +3,19 @@ from aalpy.learning_algs.adaptive.StateMatching import TotalStateMatching, Appro
 from aalpy.learning_algs.deterministic.Apartness import Apartness
 from aalpy.learning_algs.deterministic.ObservationTree import ObservationTree
 from aalpy.oracles.WpMethodEqOracle import state_characterization_set
+from aalpy.base import Automaton, SUL
+from aalpy.automata import Dfa, DfaState, MealyState, MealyMachine, MooreMachine, MooreState
 
 
 class AdaptiveObservationTree(ObservationTree):
-    def __init__(self, alphabet, sul, references, extension_rule, separation_rule, rebuilding=True, state_matching="Approximate"):
+    def __init__(self, alphabet, sul, references, automaton_type, extension_rule, separation_rule, rebuilding=True, state_matching="Approximate"):
         """
         Initialize the tree with a root node and the alphabet
         A temporary new basis is needed for the prioritized promotion rule
         The rebuild states counter counts the number of states found with rebuilding excluding the root
         The matching states counter counts the number of states found with match refinement and match separation (NOT prioritized separation)
         """
-        super().__init__(alphabet, sul, extension_rule, separation_rule)
+        super().__init__(alphabet, sul, automaton_type, extension_rule, separation_rule)
         self.references = references
         self.rebuild_states = 0
         self.matching_states = 0
@@ -111,7 +113,7 @@ class AdaptiveObservationTree(ObservationTree):
         if not match:
             return
 
-        if match[0].output_fun[inp] != 'epsilon':
+        if inp in match[0].transitions:
             frontier_match = match[0].transitions[inp]
             identifiers = self.characterization_map[frontier_match]
             self.identify_frontier_with_identifiers(frontier_state, identifiers)
@@ -156,6 +158,31 @@ class AdaptiveObservationTree(ObservationTree):
                 self.refine_matches_basis(basis_state, matches)
                 self.update_frontier_and_basis()
 
+    def find_distinguishing_seq_partial(self, model, state1, state2, alphabet):
+        """
+        A BFS to determine an input sequence that distinguishes two states in the automaton
+        Can handle partial models
+        """
+        visited = set()
+        to_explore = [(state1, state2, [])]
+        while to_explore:
+            (curr_s1, curr_s2, prefix) = to_explore.pop(0)
+            visited.add((curr_s1, curr_s2))
+            for i in alphabet:
+                if i in curr_s1.transitions and i in curr_s2.transitions:
+                    o1 = model.output_step(curr_s1, i)
+                    o2 = model.output_step(curr_s2, i)
+                    new_prefix = prefix + [i]
+                    if o1 != o2:
+                        return new_prefix
+                    else:
+                        next_s1 = curr_s1.transitions[i]
+                        next_s2 = curr_s2.transitions[i]
+                        if (next_s1, next_s2) not in visited:
+                            to_explore.append((next_s1, next_s2, new_prefix))
+
+        return None
+
     def refine_matches_basis(self, basis_state, matches):
         """ 
         Loops over the matched reference states and separates them using a separating sequence
@@ -172,7 +199,7 @@ class AdaptiveObservationTree(ObservationTree):
                 if ref_state_two not in current_matches:
                     continue
 
-                witness = self.combined_model.find_distinguishing_seq(
+                witness = self.find_distinguishing_seq_partial(self.combined_model,
                     ref_state_one, ref_state_two, self.alphabet)
                 if witness is None:
                     continue
@@ -217,7 +244,7 @@ class AdaptiveObservationTree(ObservationTree):
         parent_basis = frontier_state.parent
         inp = frontier_state.input_to_parent
         for match in self.state_matcher.best_match[parent_basis]:
-            if match.transitions[inp] in matched_states:
+            if (inp in match.transitions and match.transitions[inp] in matched_states) or (inp not in match.transitions):
                 continue
 
             frontier_match = match.transitions[inp]
@@ -367,8 +394,8 @@ class AdaptiveObservationTree(ObservationTree):
                     reference.initial_state, basis_state_access)
                 state_two = reference.current_state
 
-                sep_seq = tuple(reference.find_distinguishing_seq(
-                    state_one, state_two, reference.get_input_alphabet()))
+                sep_seq = tuple(self.find_distinguishing_seq_partial(reference,
+                    state_one, state_two, self.alphabet))
                 if sep_seq and (self.get_successor(frontier_state_access + sep_seq) is None or
                                 self.get_successor(basis_state_access + sep_seq) is None):
                     return basis_state_access, frontier_state_access, sep_seq
@@ -406,18 +433,21 @@ class AdaptiveObservationTree(ObservationTree):
         """ 
         Makes a copy of the states of a reference with a unique state id and only transitions with the new input alphabet
         """
-        states = [MealyState(f"s({reference_id},{ref_state})")
+        automaton_state = {'dfa': DfaState, 'mealy': MealyState, 'moore': MooreState}
+        states = [automaton_state[self.automaton_type](f"s({reference_id},{ref_state})")
                   for ref_state in range(0, len(reference.states))]
         for state_id in range(0, len(reference.states)):
-            states[state_id].output_fun = reference.states[state_id].output_fun
+            if self.automaton_type == 'mealy':
+                states[state_id].output_fun = reference.states[state_id].output_fun
+            elif self.automaton_type == 'dfa':
+                states[state_id].is_accepting = reference.states[state_id].is_accepting
+            else:
+                states[state_id].output = reference.states[state_id].output
             for inp in self.alphabet:
                 if inp in reference.get_input_alphabet():
                     old_index = reference.states.index(
                         reference.states[state_id].transitions[inp])
                     states[state_id].transitions[inp] = states[old_index]
-                else:
-                    states[state_id].transitions[inp] = states[state_id]
-                    states[state_id].output_fun[inp] = 'epsilon'
         return states
 
     def compute_prefix_map(self, reference, reference_id):
@@ -433,7 +463,6 @@ class AdaptiveObservationTree(ObservationTree):
         """ 
         Computes the separating sequences of a reference model and stores them in a characterization map
         """
-
         for state, ref_state in zip(states, reference.states):
             all_sepseqs = state_characterization_set(reference, reference.get_input_alphabet(), ref_state)
             unique_sepseqs = list(dict.fromkeys(all_sepseqs))
@@ -444,8 +473,9 @@ class AdaptiveObservationTree(ObservationTree):
         """ 
         Builds a combined model from the reference models
         Compute the prefix and characterization maps used during construction of the combined model
-        The resulting mealy machine is made input complete by adding self-loops with output 'epsilon' for all undefined inputs
+        The resulting mealy machine may be partial
         """
+        automaton_class = {'dfa': Dfa, 'mealy': MealyMachine, 'moore': MooreMachine}
         all_states = []
         for reference_id in range(0, len(self.references)):
             reference = self.references[reference_id]
@@ -460,9 +490,8 @@ class AdaptiveObservationTree(ObservationTree):
             states = self.add_ref_transitions_to_states(reference, reference_id)
             all_states += states
 
-            self.compute_prefix_map(MealyMachine(states[0], states), reference_id)
+            self.compute_prefix_map(automaton_class[self.automaton_type](states[0], states), reference_id)
             self.compute_characterization_map(reference, states)
 
-        mm = MealyMachine(all_states[0], all_states)
-        mm.make_input_complete()
+        mm = automaton_class[self.automaton_type](all_states[0], all_states)
         return mm

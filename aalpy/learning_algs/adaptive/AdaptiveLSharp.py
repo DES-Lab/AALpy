@@ -6,7 +6,7 @@ from .AdaptiveObservationTree import AdaptiveObservationTree
 from ...base.SUL import CacheSUL
 
 
-def run_adaptive_Lsharp(alphabet: list, sul: SUL, references: list, eq_oracle: Oracle, automaton_type='mealy',
+def run_adaptive_Lsharp(alphabet: list, sul: SUL, references: list, eq_oracle: Oracle, automaton_type,
                         extension_rule=None, separation_rule="SepSeq",
                         rebuilding=True, state_matching="Approximate",
                         samples=None, max_learning_rounds=None,
@@ -27,7 +27,7 @@ def run_adaptive_Lsharp(alphabet: list, sul: SUL, references: list, eq_oracle: O
 
         eq_oracle: equivalence oracle
 
-        automaton_type: currently only 'mealy' is accepted
+        automaton_type: type of automaton to be learned. Either 'dfa', 'mealy' or 'moore'
 
         extension_rule: strategy used during the extension rule. Options: "Nothing" (default), "SepSeq" and "ADS".
 
@@ -61,7 +61,6 @@ def run_adaptive_Lsharp(alphabet: list, sul: SUL, references: list, eq_oracle: O
         automaton of type automaton_type (dict containing all information about learning if 'return_data' is True)
 
     """
-    assert automaton_type == "mealy"
     assert extension_rule in {None, "SepSeq", "ADS"}
     assert separation_rule in {"SepSeq", "ADS"}
 
@@ -80,7 +79,7 @@ def run_adaptive_Lsharp(alphabet: list, sul: SUL, references: list, eq_oracle: O
             for input_seq, output_seq in samples:
                 sul.cache.add_to_cache(input_seq, output_seq)
 
-    ob_tree = AdaptiveObservationTree(alphabet, sul, references,
+    ob_tree = AdaptiveObservationTree(alphabet, sul, references, automaton_type,
                                       extension_rule, separation_rule,
                                       rebuilding, state_matching)
     start_time = time.time()

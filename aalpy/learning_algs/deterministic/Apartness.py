@@ -84,9 +84,9 @@ class Apartness:
 
             for input_val in ob_tree.alphabet:
                 tree_output = tree_state.get_output(input_val)
-                hyp_output = hyp_state.output_fun[input_val]
 
-                if tree_output is not None and hyp_output is not (None or 'epsilon'):
+                if tree_output is not None and input_val in hyp_state.output_fun:
+                    hyp_output = hyp_state.output_fun[input_val]
                     if tree_output != hyp_output:
                         tree_dest = tree_state.get_successor(input_val)
                         return ob_tree.get_transfer_sequence(ob_tree_state, tree_dest)
@@ -116,7 +116,8 @@ class Apartness:
                     return ob_tree.get_transfer_sequence(ob_tree_state, tree_state)
 
                 for input_val in ob_tree.alphabet:
-                    pairs.append((tree_state.get_successor(
-                        input_val), hyp_state.transitions[input_val]))
+                    if input_val in hyp_state.transitions:
+                        pairs.append((tree_state.get_successor(
+                            input_val), hyp_state.transitions[input_val]))
 
         return None
