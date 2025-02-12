@@ -60,13 +60,14 @@ def run_EDSM(data, automaton_type, input_completeness=None, print_info=True) -> 
     return learned_model
 
 
-def run_k_tails(data, automaton_type, k, input_completeness=None, print_info=True) -> Union[DeterministicAutomaton, None]:
+def run_k_tails(data, automaton_type, k, input_completeness=None, print_info=True) -> Union[
+    DeterministicAutomaton, None]:
     """
     Runs k-tails.
 
     Args:
-        data: sequence of input sequences and corresponding label. Eg. [[(i1,i2,i3, ...), label], ...]
-        automaton_type: either 'dfa', 'mealy', 'moore'. Note that for 'mealy' machine learning, data has to be prefix-closed.
+        data: sequence of input-output traces
+        automaton_type: either 'mealy' or 'moore'. Note that the data has to be prefix-closed.
         k: depth until which to check node compatibility
         input_completeness: either None, 'sink_state', or 'self_loop'. If None, learned model could be input incomplete,
         sink_state will lead all undefined inputs form some state to the sink state, whereas self_loop will simply create
@@ -85,12 +86,11 @@ def run_k_tails(data, automaton_type, k, input_completeness=None, print_info=Tru
 
     internal_automaton_type = 'moore' if automaton_type != 'mealy' else automaton_type
 
-
     score = ScoreWithKTail(ScoreCalculation(GsmNode.deterministic_compatible), k)
 
     learned_model = run_GSM(data, output_behavior=internal_automaton_type,
                             transition_behavior="nondeterministic",
-                            score_calc=score, data_format='labeled_sequences', instrumentation=print_level)
+                            score_calc=score, data_format='io_traces', instrumentation=print_level)
 
     if not learned_model.is_input_complete():
         if not input_completeness:
