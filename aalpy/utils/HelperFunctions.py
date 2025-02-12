@@ -415,3 +415,26 @@ def product_with_possible_empty_iterable(*iterables, repeat=1):
     """
     non_empty_iterables = [it for it in iterables if it]
     return product(*non_empty_iterables, repeat=repeat)
+
+
+def dfa_from_moore(moore_model):
+    from aalpy.automata import Dfa, DfaState
+
+    dfa_state_map = dict()
+    # define states
+    for moore_state in moore_model.states:
+        if moore_state.output not in {True, False, None}:
+            raise ValueError('Cannot convert Moore model with unrestricted output domain to DFA. '
+                             f'Output domain should be {True, False, None}. Problematic output: {moore_state.output}'
+                             )
+
+        is_accepting = moore_state.output if moore_state.output is not None else False
+        dfa_state_map[moore_state.state_id] = DfaState(moore_state.state_id, is_accepting)
+
+    # define transitions
+    for moore_state in moore_model.states:
+        for i, reached_state in moore_state.transitions.items():
+            dfa_state_map[moore_state.state_id].transitions[i] = dfa_state_map[reached_state.state_id]
+
+    initial_state = dfa_state_map[moore_model.initial_state.state_id]
+    return Dfa(initial_state, list(dfa_state_map.values()))
