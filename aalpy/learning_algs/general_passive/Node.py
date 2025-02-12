@@ -91,8 +91,9 @@ def detect_data_format(data, check_consistency=True):
     for data_point in data:
         if len(data_point) != 2:
             data_format = check_data_format("traces")
-            if not check_consistency:
-                return data_format
+            if check_consistency:
+                continue
+            return data_format
         o1, o2 = data_point
         if not isinstance(o1, accepted_types):
             data_format = check_data_format("traces")
