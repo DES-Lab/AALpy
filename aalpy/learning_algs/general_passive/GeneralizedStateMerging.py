@@ -280,11 +280,12 @@ class GeneralizedStateMerging:
                             assert len(partition_transitions) == 1
                             partition_transition = list(partition_transitions.values())[0]
                         if unknown_output in partition_transitions:
+                            assert len(partition_transitions) == 1
                             partition_transition = partition_transitions.pop(unknown_output)
                             partition_transitions[out_sym] = partition_transition
                             # re-hook access pair
                             succ_part = update_partition(partition_transition.target, None)
-                            if self.output_behavior == "moore" or succ_part.predecessor is red:
+                            if succ_part.get_prefix_output() is unknown_output and (self.output_behavior == "moore" or succ_part.predecessor is red):
                                 succ_part.prefix_access_pair = (succ_part.get_prefix_input(), out_sym)
                     # add pairs
                     if partition_transition is not None:
