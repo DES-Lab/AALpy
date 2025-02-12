@@ -3,7 +3,7 @@ from typing import Dict, Optional
 
 from aalpy.learning_algs.general_passive.GeneralizedStateMerging import Instrumentation, Partitioning, \
     GeneralizedStateMerging
-from aalpy.learning_algs.general_passive.Node import Node
+from aalpy.learning_algs.general_passive.GsmNode import GsmNode
 
 
 class ProgressReport(Instrumentation):
@@ -49,7 +49,7 @@ class ProgressReport(Instrumentation):
             print_str += f' Merged: {self.nr_merged_states_total} Remaining: {self.pta_size - self.nr_red_states - self.nr_merged_states_total}'
         print(print_str, end="")
 
-    def log_promote(self, node: Node):
+    def log_promote(self, node: GsmNode):
         self.log.append(["promote", (node.get_prefix(),)])
         self.nr_red_states += 1
         self.print_status()
@@ -68,10 +68,10 @@ class ProgressReport(Instrumentation):
 
 
 class MergeViolationDebugger(Instrumentation):
-    def __init__(self, ground_truth: Node):
+    def __init__(self, ground_truth: GsmNode):
         super().__init__()
         self.root = ground_truth
-        self.map: Dict[Node, Node] = dict()
+        self.map: Dict[GsmNode, GsmNode] = dict()
         self.log = []
         self.gsm: Optional[GeneralizedStateMerging] = None
 
@@ -80,7 +80,7 @@ class MergeViolationDebugger(Instrumentation):
         self.map = dict()
         self.log = []
 
-    def log_promote(self, new_red: Node):
+    def log_promote(self, new_red: GsmNode):
         new_red_prefix = new_red.get_prefix()
         node = self.root.get_by_prefix(new_red_prefix)
         old_red = self.map.get(node)

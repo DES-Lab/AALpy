@@ -350,8 +350,8 @@ def is_balanced(input_seq, vpa_alphabet):
 
 
 def generate_input_output_data_from_automata(model, num_sequances=4000, min_seq_len=1, max_seq_len=16,
-                                             sequance_type='single_output'):
-    assert sequance_type in {'io_trace', 'single_output'}
+                                             sequance_type='labeled_sequences'):
+    assert sequance_type in {'io_traces', 'labeled_sequences'}
 
     alphabet = model.get_input_alphabet()
     dataset = []
@@ -364,7 +364,7 @@ def generate_input_output_data_from_automata(model, num_sequances=4000, min_seq_
         model.reset_to_initial()
         outputs = model.execute_sequence(model.initial_state, sequance)
 
-        if sequance_type == 'io_trace':
+        if sequance_type == 'io_traces':
             dataset.append(list(zip(sequance, outputs)))
         else:
             dataset.append((sequance, outputs[-1]))

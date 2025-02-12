@@ -20,7 +20,7 @@ TransitionBehavior = str
 TransitionBehaviorRange = ["deterministic", "nondeterministic", "stochastic"]
 
 DataFormat = str
-DataFormatRange = ["traces", "examples", "tree"]
+DataFormatRange = ["io_traces", "labeled_sequences", "tree"]
 
 IOPair = Tuple[Any, Any]
 IOTrace = Sequence[IOPair]
@@ -29,7 +29,7 @@ IOExample = Tuple[Sequence[Any], Any]
 StateFunction = Callable[['Node'], str]
 TransitionFunction = Callable[['Node', Any, Any], str]
 
-unknown_output = None # can be set to a special value if required
+unknown_output = None  # can be set to a special value if required
 
 
 def generate_values(base: list, step: Callable, backing_set=True):
@@ -71,56 +71,20 @@ def union_iterator(a: Dict[Key, Val], b: Dict[Key, Val], default: Val = None) ->
         yield key, a_val, b_val
 
 
-# TODO maybe reuse this in classic RPNI
-def detect_data_format(data, check_consistency=True):
-    accepted_types = (Tuple, List)
-    data_format = None
-    def check_data_format(value):
-        if data_format is None or data_format == value:
-            return value
-        raise ValueError("inconsistent data")
-
-    if isinstance(data, Node):
-        if not data.is_tree():
-            raise ValueError("provided automaton is not a tree")
-        return "tree"
-    if not isinstance(data, accepted_types):
-        raise ValueError("wrong input format. expected tuple or list.")
-    if len(data) == 0:
-        return "traces"
-    for data_point in data:
-        if len(data_point) != 2:
-            data_format = check_data_format("traces")
-            if not check_consistency:
-                return data_format
-        o1, o2 = data_point
-        if not isinstance(o1, accepted_types):
-            data_format = check_data_format("traces")
-            if not check_consistency:
-                return data_format
-        if not isinstance(o2, accepted_types):
-            data_format = check_data_format("examples")
-            if not check_consistency:
-                return data_format
-    if data_format is None:
-        raise ValueError("ambiguous data format. data format needs to be specified explicitly.")
-    return data_format
-
-
 # TODO maybe split this for maintainability (and perfomance?)
 class TransitionInfo:
     __slots__ = ["target", "count", "original_target", "original_count"]
 
     def __init__(self, target, count, original_target, original_count):
-        self.target: 'Node' = target
+        self.target: 'GsmNode' = target
         self.count: int = count
-        self.original_target: 'Node' = original_target
+        self.original_target: 'GsmNode' = original_target
         self.original_count: int = original_count
 
 
 # TODO add custom pickling code that flattens the Node structure in order to circumvent running into recursion issues for large models
 @total_ordering
-class Node:
+class GsmNode:
     """
     Generic class for observably deterministic automata.
 
@@ -132,10 +96,10 @@ class Node:
     """
     __slots__ = ['transitions', 'predecessor', 'prefix_access_pair']
 
-    def __init__(self, prefix_access_pair, predecessor: 'Node' = None):
+    def __init__(self, prefix_access_pair, predecessor: 'GsmNode' = None):
         # TODO try single dict
         self.transitions: Dict[Any, Dict[Any, TransitionInfo]] = dict()
-        self.predecessor: Node = predecessor
+        self.predecessor: GsmNode = predecessor
         self.prefix_access_pair = prefix_access_pair
 
     def __lt__(self, other, compare_length_only=False):
@@ -195,8 +159,8 @@ class Node:
             for out_sym, node in transitions.items():
                 yield (in_sym, out_sym), node
 
-    def shallow_copy(self) -> 'Node':
-        node = Node(self.prefix_access_pair, self.predecessor)
+    def shallow_copy(self) -> 'GsmNode':
+        node = GsmNode(self.prefix_access_pair, self.predecessor)
         for in_sym, t in self.transitions.items():
             d = dict()
             for out_sym, v in t.items():
@@ -204,8 +168,8 @@ class Node:
             node.transitions[in_sym] = d
         return node
 
-    def get_by_prefix(self, seq: IOTrace) -> Optional['Node']:
-        node: Node = self
+    def get_by_prefix(self, seq: IOTrace) -> Optional['GsmNode']:
+        node: GsmNode = self
         for in_sym, out_sym in seq:
             if in_sym is None:  # ignore initial transition of Node.get_prefix()
                 continue
@@ -218,15 +182,15 @@ class Node:
             node = t_info.target
         return node
 
-    def get_all_nodes(self) -> List['Node']:
-        def generator(state: Node):
+    def get_all_nodes(self) -> List['GsmNode']:
+        def generator(state: GsmNode):
             for _, child in state.transition_iterator():
                 yield child.target
 
         return generate_values([self], generator)
 
     def is_tree(self):
-        q: List['Node'] = [self]
+        q: List['GsmNode'] = [self]
         backing_set = {self}
         while len(q) != 0:
             current = q.pop(0)
@@ -319,17 +283,17 @@ class Node:
             trans_props = dict()
         if state_label is None:
             if output_behavior == "moore":
-                def state_label(node: Node):
+                def state_label(node: GsmNode):
                     return f'{node.get_prefix_output()} {node.count()}'
             else:
-                def state_label(node: Node):
+                def state_label(node: GsmNode):
                     return f'{sum(t.count for _, t in node.transition_iterator())}'
         if trans_label is None and "label" not in trans_props:
             if output_behavior == "moore":
-                def trans_label(node: Node, in_sym, out_sym):
+                def trans_label(node: GsmNode, in_sym, out_sym):
                     return f'{in_sym} [{node.transitions[in_sym][out_sym].count}]'
             else:
-                def trans_label(node: Node, in_sym, out_sym):
+                def trans_label(node: GsmNode, in_sym, out_sym):
                     return f'{in_sym} / {out_sym} [{node.transitions[in_sym][out_sym].count}]'
         if state_color is None:
             def state_color(x): return "black"
@@ -338,7 +302,7 @@ class Node:
         if node_naming is None:
             node_dict = dict()
 
-            def node_naming(node: Node):
+            def node_naming(node: GsmNode):
                 if node not in node_dict:
                     node_dict[node] = f"s{len(node_dict)}"
                 return node_dict[node]
@@ -376,12 +340,12 @@ class Node:
         graph.write(path=str(path) + "." + file_ext, prog=engine, format=format)
 
     def add_trace(self, trace: IOTrace):
-        curr_node: Node = self
+        curr_node: GsmNode = self
         for in_sym, out_sym in trace:
             transitions = curr_node.get_or_create_transitions(in_sym)
             info = transitions.get(out_sym)
             if info is None:
-                node = Node((in_sym, out_sym), curr_node)
+                node = GsmNode((in_sym, out_sym), curr_node)
                 transitions[out_sym] = TransitionInfo(node, 1, node, 1)
             else:
                 info.count += 1
@@ -389,9 +353,9 @@ class Node:
                 node = info.target
             curr_node = node
 
-    def add_example(self, example: IOExample):
+    def add_labeled_sequence(self, example: IOExample):
         inputs, output = example
-        curr_node: Node = self
+        curr_node: GsmNode = self
         in_sym = None
 
         # step through inputs and add transitions
@@ -399,7 +363,7 @@ class Node:
             transitions = curr_node.get_or_create_transitions(in_sym)
             t_infos = list(transitions.values())
             if len(t_infos) == 0:
-                node = Node((in_sym, unknown_output), curr_node)
+                node = GsmNode((in_sym, unknown_output), curr_node)
                 t_info = TransitionInfo(node, 1, node, 1)
                 transitions[unknown_output] = t_info
             elif len(t_infos) == 1:
@@ -409,7 +373,7 @@ class Node:
                 node = t_info.target
             else:
                 # This should never happen
-                raise ValueError("nondeterminism encountered for GSM with examples. not supported")
+                raise ValueError("Nondeterminism encountered for GSM with labeled_sequences. not supported")
             curr_node = node
 
         # set last output
@@ -420,22 +384,20 @@ class Node:
             if unknown_output in transitions:
                 transitions[output] = transitions.pop(unknown_output)
             if output not in transitions:
-                raise ValueError("nondeterminism encountered for GSM with examples. not supported")
+                raise ValueError("nondeterminism encountered for GSM with labeled_sequences. not supported")
 
     @staticmethod
-    def createPTA(data, output_behavior, data_format=None) -> 'Node':
-        if data_format is None:
-            data_format = detect_data_format(data)
+    def createPTA(data, output_behavior, data_format=None) -> 'GsmNode':
         if data_format not in DataFormatRange:
             raise ValueError(f"invalid data format {data_format}. should be in {DataFormatRange}")
 
         if data_format == "tree":
             return data
-        root_node = Node((None, unknown_output), None)
-        if data_format == "examples":
+        root_node = GsmNode((None, unknown_output), None)
+        if data_format == "labeled_sequences":
             for example in data:
-                root_node.add_example(example)
-        if data_format == "traces":
+                root_node.add_labeled_sequence(example)
+        if data_format == "io_traces":
             if output_behavior == "moore":
                 initial_output = data[0][0]
                 root_node.prefix_access_pair = (None, initial_output)
@@ -450,7 +412,7 @@ class Node:
     def is_deterministic(self):
         return all(node.is_locally_deterministic() for node in self.get_all_nodes())
 
-    def deterministic_compatible(self, other: 'Node'):
+    def deterministic_compatible(self, other: 'GsmNode'):
         for _, trans_self, trans_other in intersection_iterator(self.transitions, other.transitions):
             if unknown_output in trans_self or unknown_output in trans_other:
                 continue
@@ -466,7 +428,7 @@ class Node:
                     return False
         return True
 
-    def moore_compatible(self, other: 'Node'):
+    def moore_compatible(self, other: 'GsmNode'):
         so = self.get_prefix_output()
         oo = other.get_prefix_output()
         return so == oo or so is unknown_output or oo is unknown_output

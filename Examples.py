@@ -1178,13 +1178,13 @@ def gsm_edsm():
     from aalpy.utils.Sampling import get_io_traces, sample_with_length_limits
     from aalpy.learning_algs.general_passive.GeneralizedStateMerging import run_GSM
     from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreCalculation
-    from aalpy.learning_algs.general_passive.Node import Node
+    from aalpy.learning_algs.general_passive.GsmNode import GsmNode
 
     automaton = load_automaton_from_file("DotModels/car_alarm.dot", "moore")
     input_traces = sample_with_length_limits(automaton.get_input_alphabet(), 100, 20, 30)
     traces = get_io_traces(automaton, input_traces)
 
-    def EDSM_score(part: Dict[Node, Node]):
+    def EDSM_score(part: Dict[GsmNode, GsmNode]):
         nr_partitions = len(set(part.values()))
         nr_merged = len(part)
         return nr_merged - nr_partitions
@@ -1199,7 +1199,7 @@ def gsm_likelihood_ratio():
     from scipy.stats import chi2
     from aalpy.learning_algs.general_passive.GeneralizedStateMerging import run_GSM
     from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreFunction, differential_info, ScoreCalculation
-    from aalpy.learning_algs.general_passive.Node import Node
+    from aalpy.learning_algs.general_passive.GsmNode import GsmNode
     from aalpy.utils.Sampling import get_io_traces, sample_with_length_limits
     from aalpy import load_automaton_from_file
 
@@ -1211,7 +1211,7 @@ def gsm_likelihood_ratio():
         if not 0 < alpha <= 1:
             raise ValueError(f"Confidence {alpha} not between 0 and 1")
 
-        def score_fun(part: Dict[Node, Node]):
+        def score_fun(part: Dict[GsmNode, GsmNode]):
             llh_diff, param_diff = differential_info(part)
             if param_diff == 0:
                 # This should cover the corner case when the partition merges only states with no outgoing transitions.
@@ -1231,7 +1231,7 @@ def gsm_likelihood_ratio():
 def gsm_IOAlergia_EDSM():
     from aalpy.learning_algs.general_passive.GeneralizedStateMerging import run_GSM
     from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import hoeffding_compatibility, ScoreCalculation
-    from aalpy.learning_algs.general_passive.Node import Node
+    from aalpy.learning_algs.general_passive.GsmNode import GsmNode
     from aalpy.utils.Sampling import get_io_traces, sample_with_length_limits
     from aalpy import load_automaton_from_file
 
@@ -1248,11 +1248,11 @@ def gsm_IOAlergia_EDSM():
         def reset(self):
             self.evidence = 0
 
-        def local_compatibility(self, a: Node, b: Node):
+        def local_compatibility(self, a: GsmNode, b: GsmNode):
             self.evidence += 1
             return self.ioa_compatibility(a, b)
 
-        def score_function(self, part: dict[Node, Node]):
+        def score_function(self, part: dict[GsmNode, GsmNode]):
             return self.evidence
 
     epsilon = 0.05
@@ -1269,7 +1269,7 @@ def gsm_IOAlergia_EDSM():
 def gsm_IOAlergia_domain_knowldege():
     from aalpy.learning_algs.general_passive.GeneralizedStateMerging import run_GSM
     from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import hoeffding_compatibility, ScoreCalculation
-    from aalpy.learning_algs.general_passive.Node import Node
+    from aalpy.learning_algs.general_passive.GsmNode import GsmNode
     from aalpy.utils.Sampling import get_io_traces, sample_with_length_limits
     from aalpy import load_automaton_from_file
 
@@ -1279,7 +1279,7 @@ def gsm_IOAlergia_domain_knowldege():
 
     ioa_compat = hoeffding_compatibility(0.05)
 
-    def get_parity(node: Node):
+    def get_parity(node: GsmNode):
         pref = node.get_prefix()
         return [sum(in_s == key for in_s, out_s in pref) % 2 for key in ["l", "d"]]
 
@@ -1288,7 +1288,7 @@ def gsm_IOAlergia_domain_knowldege():
     # it still needs to discern the physical states. Thus, in every sane implementation of a car alarm system, every state
     # is associated with exactly one physical state. This additional assumption can be enforced by checking the parity of
     # all input symbols during merging.
-    def ioa_compat_domain_knowledge(a: Node, b: Node):
+    def ioa_compat_domain_knowledge(a: GsmNode, b: GsmNode):
         parity = get_parity(a) == get_parity(b)
         ioa = ioa_compat(a, b)
         return parity and ioa

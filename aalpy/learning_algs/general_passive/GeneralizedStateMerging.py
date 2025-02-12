@@ -2,8 +2,8 @@ import functools
 from collections import deque
 from typing import Dict, Tuple, Callable, List, Optional
 
-from aalpy.learning_algs.general_passive.Node import Node, OutputBehavior, TransitionBehavior, TransitionInfo, \
-    OutputBehaviorRange, TransitionBehaviorRange, intersection_iterator, NodeOrders, unknown_output, detect_data_format
+from aalpy.learning_algs.general_passive.GsmNode import GsmNode, OutputBehavior, TransitionBehavior, TransitionInfo, \
+    OutputBehaviorRange, TransitionBehaviorRange, intersection_iterator, NodeOrders, unknown_output
 from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreCalculation, hoeffding_compatibility
 
 
@@ -11,12 +11,12 @@ from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreCalculati
 #  Easiest done by adding a new method / field to ScoreCalculation
 
 class Partitioning:
-    def __init__(self, red: Node, blue: Node):
-        self.red: Node = red
-        self.blue: Node = blue
+    def __init__(self, red: GsmNode, blue: GsmNode):
+        self.red: GsmNode = red
+        self.blue: GsmNode = blue
         self.score = False
-        self.red_mapping: Dict[Node, Node] = dict()
-        self.full_mapping: Dict[Node, Node] = dict()
+        self.red_mapping: Dict[GsmNode, GsmNode] = dict()
+        self.full_mapping: Dict[GsmNode, GsmNode] = dict()
 
 
 class Instrumentation:
@@ -26,16 +26,16 @@ class Instrumentation:
     def reset(self, gsm: 'GeneralizedStateMerging'):
         pass
 
-    def pta_construction_done(self, root: Node):
+    def pta_construction_done(self, root: GsmNode):
         pass
 
-    def log_promote(self, node: Node):
+    def log_promote(self, node: GsmNode):
         pass
 
     def log_merge(self, part: Partitioning):
         pass
 
-    def learning_done(self, root: Node, red_states: List[Node]):
+    def learning_done(self, root: GsmNode, red_states: List[GsmNode]):
         pass
 
 
@@ -44,11 +44,11 @@ class GeneralizedStateMerging:
                  output_behavior: OutputBehavior = "moore",
                  transition_behavior: TransitionBehavior = "deterministic",
                  score_calc: ScoreCalculation = None,
-                 pta_preprocessing: Callable[[Node], Node] = None,
-                 postprocessing: Callable[[Node], Node] = None,
+                 pta_preprocessing: Callable[[GsmNode], GsmNode] = None,
+                 postprocessing: Callable[[GsmNode], GsmNode] = None,
                  compatibility_on_pta: bool = False,
                  compatibility_on_futures: bool = False,
-                 node_order: Callable[[Node, Node], bool] = None,
+                 node_order: Callable[[GsmNode, GsmNode], bool] = None,
                  consider_only_min_blue=False,
                  depth_first=False):
 
@@ -84,10 +84,10 @@ class GeneralizedStateMerging:
         self.consider_only_min_blue = consider_only_min_blue
         self.depth_first = depth_first
 
-    def compute_local_compatibility(self, a: Node, b: Node):
-        if self.output_behavior == "moore" and not Node.moore_compatible(a, b):
+    def compute_local_compatibility(self, a: GsmNode, b: GsmNode):
+        if self.output_behavior == "moore" and not GsmNode.moore_compatible(a, b):
             return False
-        if self.transition_behavior == "deterministic" and not Node.deterministic_compatible(a, b):
+        if self.transition_behavior == "deterministic" and not GsmNode.deterministic_compatible(a, b):
             return False
         return self.score_calc.local_compatibility(a, b)
 
@@ -98,11 +98,9 @@ class GeneralizedStateMerging:
             instrumentation = Instrumentation()
         instrumentation.reset(self)
 
-        if data_format is None:
-            data_format = detect_data_format(data)
-        if data_format == "examples" and self.transition_behavior != "deterministic":
-            raise ValueError("learning from examples is not possible for nondeterministic systems")
-        root = Node.createPTA(data, self.output_behavior, data_format)
+        if data_format == "labeled_sequances" and self.transition_behavior != "deterministic":
+            raise ValueError("learning from labeled_sequences is not possible for nondeterministic systems")
+        root = GsmNode.createPTA(data, self.output_behavior, data_format)
 
         root = self.pta_preprocessing(root)
         instrumentation.pta_construction_done(root)
@@ -115,7 +113,7 @@ class GeneralizedStateMerging:
         # sorted list of states already considered
         red_states = [root]
 
-        partition_candidates: Dict[Tuple[Node, Node], Partitioning] = dict()
+        partition_candidates: Dict[Tuple[GsmNode, GsmNode], Partitioning] = dict()
         while True:
             # get blue states
             blue_states = []
@@ -144,7 +142,7 @@ class GeneralizedStateMerging:
                 # FUTURE: Save partitions?
 
                 # calculate partitions resulting from merges with red states if necessary
-                current_candidates: Dict[Node, Partitioning] = dict()
+                current_candidates: Dict[GsmNode, Partitioning] = dict()
                 perfect_partitioning = None
                 red_state = None
                 for red_state in red_states:
@@ -199,8 +197,8 @@ class GeneralizedStateMerging:
             root = root.to_automaton(self.output_behavior, self.transition_behavior)
         return root
 
-    def _check_futures(self, red: Node, blue: Node) -> bool:
-        q: deque[Tuple[Node, Node]] = deque([(red, blue)])
+    def _check_futures(self, red: GsmNode, blue: GsmNode) -> bool:
+        q: deque[Tuple[GsmNode, GsmNode]] = deque([(red, blue)])
         pop = q.pop if self.depth_first else q.popleft
 
         while len(q) != 0:
@@ -220,7 +218,7 @@ class GeneralizedStateMerging:
 
         return True
 
-    def _partition_from_merge(self, red: Node, blue: Node) -> Partitioning:
+    def _partition_from_merge(self, red: GsmNode, blue: GsmNode) -> Partitioning:
         # Compatibility check based on partitions.
         # assumes that blue is a tree and red is not reachable from blue
 
@@ -234,11 +232,11 @@ class GeneralizedStateMerging:
 
         # when compatibility is determined only by future and scores are disabled, we need not create partitions.
         if self.compatibility_on_futures and not self.score_calc.has_score_function():
-            def update_partition(red_node: Node, blue_node: Optional[Node]) -> Node:
+            def update_partition(red_node: GsmNode, blue_node: Optional[GsmNode]) -> GsmNode:
                 partitioning.red_mapping[red_node] = red_node
                 return red_node
         else:
-            def update_partition(red_node: Node, blue_node: Optional[Node]) -> Node:
+            def update_partition(red_node: GsmNode, blue_node: Optional[GsmNode]) -> GsmNode:
                 if red_node not in partitioning.full_mapping:
                     p = red_node.shallow_copy()
                     partitioning.full_mapping[red_node] = p
@@ -259,7 +257,7 @@ class GeneralizedStateMerging:
             partition.resolve_unknown_prefix_output(blue_out_sym)
 
         # loop over implied merges
-        q: deque[Tuple[Node, Node]] = deque([(red, blue)])
+        q: deque[Tuple[GsmNode, GsmNode]] = deque([(red, blue)])
         pop = q.pop if self.depth_first else q.popleft
         while len(q) != 0:
             red, blue = pop()
@@ -304,16 +302,16 @@ def run_GSM(data, *,
             output_behavior: OutputBehavior = "moore",
             transition_behavior: TransitionBehavior = "deterministic",
             score_calc: ScoreCalculation = None,
-            pta_preprocessing: Callable[[Node], Node] = None,
-            postprocessing: Callable[[Node], Node] = None,
+            pta_preprocessing: Callable[[GsmNode], GsmNode] = None,
+            postprocessing: Callable[[GsmNode], GsmNode] = None,
             compatibility_on_pta: bool = False,
             compatibility_on_futures: bool = False,
-            node_order: Callable[[Node, Node], bool] = None,
+            node_order: Callable[[GsmNode, GsmNode], bool] = None,
             consider_only_min_blue=False,
             depth_first=False,
             instrumentation=None,
             convert=True,
-            data_format=None,
+            data_format='io_traces',
             ):
     """
     TODO

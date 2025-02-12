@@ -1,19 +1,19 @@
 from math import sqrt, log
 from typing import Callable, Dict, List, Iterable, Any
 
-from aalpy.learning_algs.general_passive.Node import Node, intersection_iterator, union_iterator, TransitionInfo
+from aalpy.learning_algs.general_passive.GsmNode import GsmNode, intersection_iterator, union_iterator, TransitionInfo
 
-LocalCompatibilityFunction = Callable[[Node, Node], bool]
-ScoreFunction = Callable[[Dict[Node, Node]], Any]
+LocalCompatibilityFunction = Callable[[GsmNode, GsmNode], bool]
+ScoreFunction = Callable[[Dict[GsmNode, GsmNode]], Any]
 AggregationFunction = Callable[[Iterable], Any]
 
 
 class ScoreCalculation:
     def __init__(self, local_compatibility: LocalCompatibilityFunction = None, score_function: ScoreFunction = None):
-        # This is a hack that gives a simple implementation where we can easily
-        # - determine whether the default is overridden (for optimization)
-        # - override behavior in a functional way by providing the functions as arguments (no extra class)
-        # - override behavior in a stateful way by implementing a new class that provides `local_compatibility` and / or `score_function` methods
+        # This is a hack that gives a simple implementation where we can easily - determine whether the default is
+        # overridden (for optimization) - override behavior in a functional way by providing the functions as
+        # arguments (no extra class) - override behavior in a stateful way by implementing a new class that provides
+        # `local_compatibility` and / or `score_function` methods
         if not hasattr(self, "local_compatibility"):
             self.local_compatibility: LocalCompatibilityFunction = local_compatibility or self.default_local_compatibility
         if not hasattr(self, "score_function"):
@@ -23,11 +23,11 @@ class ScoreCalculation:
         pass
 
     @staticmethod
-    def default_local_compatibility(a: Node, b: Node):
+    def default_local_compatibility(a: GsmNode, b: GsmNode):
         return True
 
     @staticmethod
-    def default_score_function(part: Dict[Node, Node]):
+    def default_score_function(part: Dict[GsmNode, GsmNode]):
         return True
 
     def has_score_function(self):
@@ -42,7 +42,7 @@ def hoeffding_compatibility(eps, compare_original=True) -> LocalCompatibilityFun
     count_name = "original_count" if compare_original else "count"
     transition_dummy = TransitionInfo(None, 0, None, 0)
 
-    def similar(a: Node, b: Node):
+    def similar(a: GsmNode, b: GsmNode):
         # iterate over inputs that are common to both states
         for in_sym, a_trans, b_trans in intersection_iterator(a.transitions, b.transitions):
             # could create appropriate dict here
@@ -74,11 +74,11 @@ class ScoreWithKTail(ScoreCalculation):
         self.other_score.reset()
         self.depth_offset = None
 
-    def local_compatibility(self, a: Node, b: Node):
+    def local_compatibility(self, a: GsmNode, b: GsmNode):
         # assuming b is tree shaped.
         if self.depth_offset is None:
             self.depth_offset = b.get_prefix_length()
-        depth = b.get_prefix_length() - self.depth_offset
+        depth = b.get_prefix_length() - a.get_prefix_length()
         if self.k <= depth:
             return True
 
@@ -88,7 +88,7 @@ class ScoreWithKTail(ScoreCalculation):
 class ScoreWithSinks(ScoreCalculation):
     """This class allows rejecting merge candidates based on additional criteria for the initial merge"""
     
-    def __init__(self, other_score: ScoreCalculation, sink_cond: Callable[[Node], bool], allow_sink_merge=True):
+    def __init__(self, other_score: ScoreCalculation, sink_cond: Callable[[GsmNode], bool], allow_sink_merge=True):
         super().__init__(None, other_score.score_function)
         self.other_score = other_score
         self.sink_cond = sink_cond
@@ -100,7 +100,7 @@ class ScoreWithSinks(ScoreCalculation):
         self.other_score.reset()
         self.is_first = True
 
-    def local_compatibility(self, a: Node, b: Node):
+    def local_compatibility(self, a: GsmNode, b: GsmNode):
         if self.is_first:
             self.is_first = False
             a_sink, b_sink = self.sink_cond(a), self.sink_cond(b)
@@ -128,10 +128,10 @@ class ScoreCombinator(ScoreCalculation):
         for score in self.scores:
             score.reset()
 
-    def local_compatibility(self, a: Node, b: Node):
+    def local_compatibility(self, a: GsmNode, b: GsmNode):
         return self.aggregate_compatibility(score.local_compatibility(a, b) for score in self.scores)
 
-    def score_function(self, part: Dict[Node, Node]):
+    def score_function(self, part: Dict[GsmNode, GsmNode]):
         return self.aggregate_score(score.score_function(part) for score in self.scores)
 
     @staticmethod
@@ -156,7 +156,7 @@ def local_to_global_compatibility(local_fun: LocalCompatibilityFunction) -> Scor
     partition, original.
     """
 
-    def fun(part: Dict[Node, Node]):
+    def fun(part: Dict[GsmNode, GsmNode]):
         for old_node, new_node in part.items():
             if local_fun(new_node, old_node) is False:  # Follows local_fun(red, blue)
                 return False
@@ -165,7 +165,7 @@ def local_to_global_compatibility(local_fun: LocalCompatibilityFunction) -> Scor
     return fun
 
 
-def differential_info(part: Dict[Node, Node]):
+def differential_info(part: Dict[GsmNode, GsmNode]):
     relevant_nodes_old = list(part.keys())
     relevant_nodes_new = set(part.values())
 
@@ -196,7 +196,7 @@ def lower_threshold(score, thresh):
 
 
 def AIC_score(alpha=0) -> ScoreFunction:
-    def score(part: Dict[Node, Node]):
+    def score(part: Dict[GsmNode, GsmNode]):
         llh_diff, param_diff = differential_info(part)
         return lower_threshold(param_diff - llh_diff, alpha)
 
@@ -204,7 +204,7 @@ def AIC_score(alpha=0) -> ScoreFunction:
 
 
 def EDSM_frequency_score(min_evidence=-1) -> ScoreFunction:
-    def score(part: Dict[Node, Node]):
+    def score(part: Dict[GsmNode, GsmNode]):
         total_evidence = 0
         for old_node, new_node in part.items():
             for in_sym, trans_old, trans_new in intersection_iterator(old_node.transitions, new_node.transitions):
@@ -217,7 +217,7 @@ def EDSM_frequency_score(min_evidence=-1) -> ScoreFunction:
 
 
 def EDSM_score(min_evidence=-1) -> ScoreFunction:
-    def score(part: Dict[Node, Node]):
+    def score(part: Dict[GsmNode, GsmNode]):
         nr_partitions = len(set(part.values()))
         nr_merged = len(part)
         return lower_threshold(nr_merged - nr_partitions, min_evidence)
