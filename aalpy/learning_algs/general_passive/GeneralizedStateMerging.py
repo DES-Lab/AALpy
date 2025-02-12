@@ -3,7 +3,7 @@ from collections import deque
 from typing import Dict, Tuple, Callable, List, Optional
 
 from aalpy.learning_algs.general_passive.Node import Node, OutputBehavior, TransitionBehavior, TransitionInfo, \
-    OutputBehaviorRange, TransitionBehaviorRange, intersection_iterator, NodeOrders, unknown_output
+    OutputBehaviorRange, TransitionBehaviorRange, intersection_iterator, NodeOrders, unknown_output, detect_data_format
 from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreCalculation, hoeffding_compatibility
 
 
@@ -93,15 +93,16 @@ class GeneralizedStateMerging:
 
     # TODO: make more generic by adding the option to use a different algorithm than red blue
     #  for selecting potential merge candidates. Maybe using inheritance with abstract `run`.
-    def run(self, data, convert=True, instrumentation: Instrumentation=None, data_format="auto"):
+    def run(self, data, convert=True, instrumentation: Instrumentation=None, data_format=None):
         if instrumentation is None:
             instrumentation = Instrumentation()
         instrumentation.reset(self)
 
-        if isinstance(data, Node):
-            root = data
-        else:
-            root = Node.createPTA(data, self.output_behavior, data_format)
+        if data_format is None:
+            data_format = detect_data_format(data)
+        if data_format == "examples" and self.transition_behavior != "deterministic":
+            raise ValueError("learning from examples is not possible for nondeterministic systems")
+        root = Node.createPTA(data, self.output_behavior, data_format)
 
         root = self.pta_preprocessing(root)
         instrumentation.pta_construction_done(root)
@@ -312,7 +313,7 @@ def run_GSM(data, *,
             depth_first=False,
             instrumentation=None,
             convert=True,
-            data_format="auto",
+            data_format=None,
             ):
     """
     TODO

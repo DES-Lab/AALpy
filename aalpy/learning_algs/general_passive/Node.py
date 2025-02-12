@@ -20,7 +20,7 @@ TransitionBehavior = str
 TransitionBehaviorRange = ["deterministic", "nondeterministic", "stochastic"]
 
 DataFormat = str
-DataFormatRange = ["auto", "traces", "examples"]
+DataFormatRange = ["traces", "examples", "tree"]
 
 IOPair = Tuple[Any, Any]
 IOTrace = Sequence[IOPair]
@@ -92,6 +92,10 @@ def detect_data_format(data, check_consistency=True):
             return value
         raise ValueError("inconsistent data")
 
+    if isinstance(data, Node):
+        if not data.is_tree():
+            raise ValueError("provided automaton is not a tree")
+        return "tree"
     if not isinstance(data, accepted_types):
         raise ValueError("wrong input format. expected tuple or list.")
     if len(data) == 0:
@@ -235,7 +239,7 @@ class Node:
 
     def is_tree(self):
         q: List['Node'] = [self]
-        backing_set = set()
+        backing_set = {self}
         while len(q) != 0:
             current = q.pop(0)
             for _, child in current.transition_iterator():
@@ -434,9 +438,9 @@ class Node:
     def createPTA(data, output_behavior, data_format="auto") -> 'Node':
         if data_format not in DataFormatRange:
             raise ValueError(f"invalid data format {data_format}. should be in {DataFormatRange}")
-        if data_format == "auto":
-            data_format = detect_data_format(data)
 
+        if data_format == "tree":
+            return data
         root_node = Node((None, unknown_output), None)
         if data_format == "examples":
             for example in data:
