@@ -84,26 +84,35 @@ def union_iterator(a: Dict[Key, Val], b: Dict[Key, Val], default: Val = None) ->
 
 
 # TODO maybe reuse this in classic RPNI
-def detect_data_format(data):
-    if not isinstance(data, Sequence):
-        raise ValueError("wrong input format. expected sequence type.")
+def detect_data_format(data, check_consistency=True):
+    accepted_types = (Tuple, List)
+    data_format = None
+    def check_data_format(value):
+        if data_format is None or data_format == value:
+            return value
+        raise ValueError("inconsistent data")
+
+    if not isinstance(data, accepted_types):
+        raise ValueError("wrong input format. expected tuple or list.")
     if len(data) == 0:
         return "traces"
-
-    detected_format = None
     for data_point in data:
-
-        if len(data_point) == 2 and isinstance(data_point[0], Sequence):
-            data_point_format = 'examples'
-        else:
-            data_point_format = 'traces'
-
-        if detected_format is None:
-            detected_format = data_point_format
-        elif data_point_format != detected_format:
-            raise ValueError("ambiguous data format. data format needs to be specified explicitly.")
-
-    return detected_format
+        if len(data_point) != 2:
+            data_format = check_data_format("traces")
+            if not check_consistency:
+                return data_format
+        o1, o2 = data_point
+        if not isinstance(o1, accepted_types):
+            data_format = check_data_format("traces")
+            if not check_consistency:
+                return data_format
+        if not isinstance(o2, accepted_types):
+            data_format = check_data_format("examples")
+            if not check_consistency:
+                return data_format
+    if data_format is None:
+        raise ValueError("ambiguous data format. data format needs to be specified explicitly.")
+    return data_format
 
 
 # TODO maybe split this for maintainability (and perfomance?)
