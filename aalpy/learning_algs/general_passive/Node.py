@@ -435,7 +435,9 @@ class Node:
                 raise ValueError("nondeterminism encountered for GSM with examples. not supported")
 
     @staticmethod
-    def createPTA(data, output_behavior, data_format="auto") -> 'Node':
+    def createPTA(data, output_behavior, data_format=None) -> 'Node':
+        if data_format is None:
+            data_format = detect_data_format(data)
         if data_format not in DataFormatRange:
             raise ValueError(f"invalid data format {data_format}. should be in {DataFormatRange}")
 
