@@ -181,6 +181,7 @@ class GeneralizedStateMerging:
             for real_node, partition_node in best_candidate.red_mapping.items():
                 real_node.transitions = partition_node.transitions
                 real_node.prefix_access_pair = partition_node.prefix_access_pair
+
                 for access_pair, t_info in real_node.transition_iterator():
                     if t_info.target not in red_states:
                         t_info.target.predecessor = real_node

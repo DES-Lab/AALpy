@@ -26,8 +26,8 @@ IOPair = Tuple[Any, Any]
 IOTrace = Sequence[IOPair]
 IOExample = Tuple[Sequence[Any], Any]
 
-StateFunction = Callable[['Node'], str]
-TransitionFunction = Callable[['Node', Any, Any], str]
+StateFunction = Callable[['GsmNode'], str]
+TransitionFunction = Callable[['GsmNode', Any, Any], str]
 
 unknown_output = None  # can be set to a special value if required
 

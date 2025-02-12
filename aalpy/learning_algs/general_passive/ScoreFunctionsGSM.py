@@ -78,7 +78,7 @@ class ScoreWithKTail(ScoreCalculation):
         # assuming b is tree shaped.
         if self.depth_offset is None:
             self.depth_offset = b.get_prefix_length()
-        depth = b.get_prefix_length() - a.get_prefix_length()
+        depth = b.get_prefix_length() - self.depth_offset
         if self.k <= depth:
             return True
 
