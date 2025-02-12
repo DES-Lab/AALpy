@@ -30,12 +30,12 @@ AALpy supports both **active** and **passive** automata learning algorithms that
 
 <div align="center">
    
-| **Automata Type** |                      **Supported Formalisms**                     | **Algorithms**                                          |                                                                                        **Features** |
-|-------------------|:-----------------------------------------------------------------:|---------------------------------------------------------|----------------------------------------------------------------------------------------------------:|
-| Deterministic     |                 DFAs <br /> Mealy Machines <br /> Moore Machines                 | L* <br /> KV <br /> RPNI <br /> L#                      | Seamless Caching <br /> Counterexample Processing <br /> 12+ Equivalence Oracles <br /> Adaptive L# |
-| Non-Deterministic |                      ONFSM <br /> Abstracted ONFSM                      | L*<sub>ONFSM</sub>                                      |                                                                  Size Reduction  Trough Abstraction |
-| Stochastic        | Markov Decision Processes <br /> Stochastic Mealy Machines <br /> Markov Chains | L*<sub>MDP</sub> <br /> L*<sub>SMM</sub> <br /> ALERGIA |            Counterexample Processing <br /> Exportable to PRISM format  <br /> Bindings to jALERGIA |
-| Pushdown          |          VPA/SEVPA                                                            | KV<sub>VPA</sub> <br /> PAPNI                           |                                         Passive learning of VPAs <br /> Exclusive call-return pairs 
+| **Automata Type** |                      **Supported Formalisms**                     | **Active Algorithms**                                          |              **Passive Algorithms**                       |                                                     **Features** |
+|-------------------|:-----------------------------------------------------------------:|---------------------------------------------------------|------------------------------------|----------------------------------------------------------------:|
+| Deterministic     |                 DFAs <br /> Mealy Machines <br /> Moore Machines                 | L* <br /> KV <br /> <br /> L#           |        RPNI <br /> EDSM <br /> GSM      | Seamless Caching <br /> Counterexample Processing <br /> 12+ Equivalence Oracles <br /> Adaptive L# |
+| Non-Deterministic |                      ONFSM <br /> Abstracted ONFSM                      | L*<sub>ONFSM</sub>                                |   GSM   |                                                                  Size Reduction  Trough Abstraction |
+| Stochastic        | Markov Decision Processes <br /> Stochastic Mealy Machines <br /> Markov Chains | L*<sub>MDP</sub> <br /> L*<sub>SMM</sub> | Alergia <br /> IoAlergia <br /> Alergia<sub>EDSM</sub> |            Counterexample Processing <br /> Exportable to PRISM format  <br /> Bindings to jALERGIA |
+| Pushdown          |          VPA/SEVPA                                                            | KV<sub>VPA</sub>                  |    PAPNI      |                                         Passive learning of VPAs <br /> Exclusive call-return pairs 
 </div>
 
 ## Installation
