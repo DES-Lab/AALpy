@@ -78,21 +78,19 @@ def run_k_tails(data, automaton_type, k, input_completeness=None, print_info=Tru
         Model conforming to the data, or None if data is non-deterministic.
 
     """
-    assert automaton_type in {'dfa', 'mealy', 'moore'}
+    assert automaton_type in {'mealy', 'moore'}
     assert input_completeness in {None, 'self_loop', 'sink_state'}
 
     print_level = ProgressReport(1) if print_info else None
 
     internal_automaton_type = 'moore' if automaton_type != 'mealy' else automaton_type
 
-    score = ScoreWithKTail(ScoreCalculation(), k)
+
+    score = ScoreWithKTail(ScoreCalculation(GsmNode.deterministic_compatible), k)
 
     learned_model = run_GSM(data, output_behavior=internal_automaton_type,
-                            transition_behavior="deterministic",
+                            transition_behavior="nondeterministic",
                             score_calc=score, data_format='labeled_sequences', instrumentation=print_level)
-
-    if automaton_type == 'dfa':
-        learned_model = dfa_from_moore(learned_model)
 
     if not learned_model.is_input_complete():
         if not input_completeness:
