@@ -2,6 +2,7 @@ from typing import Dict, Union
 
 from aalpy import DeterministicAutomaton
 from aalpy.learning_algs.general_passive.GeneralizedStateMerging import run_GSM
+from aalpy.learning_algs.general_passive.Instrumentation import ProgressReport
 from aalpy.learning_algs.general_passive.Node import Node
 from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreCalculation
 from aalpy.utils.HelperFunctions import dfa_from_moore
@@ -36,15 +37,9 @@ def run_EDSM(data, automaton_type, input_completeness=None, print_info=True) -> 
 
     internal_automaton_type = 'moore' if automaton_type != 'mealy' else automaton_type
 
-    if print_info:
-        print(f'Running EDSM.')
-
     learned_model = run_GSM(data, output_behavior=internal_automaton_type,
                             transition_behavior="deterministic",
-                            score_calc=score)
-
-    if print_info:
-        print(f'EDSM learned {learned_model.size} state automaton.')
+                            score_calc=score, instrumentation=ProgressReport(2))
 
     if automaton_type == 'dfa':
         learned_model = dfa_from_moore(learned_model)

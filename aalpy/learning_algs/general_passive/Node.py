@@ -41,7 +41,7 @@ class SpecialValue:
         return str(self.value)
 
 
-unknown_output = SpecialValue("Output Unknown")
+unknown_output = None #SpecialValue("Output Unknown")
 
 
 def generate_values(base: list, step: Callable, backing_set=True):

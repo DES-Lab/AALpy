@@ -1,7 +1,6 @@
 import functools
-from bisect import insort
-from typing import Dict, Tuple, Callable, List, Optional
 from collections import deque
+from typing import Dict, Tuple, Callable, List, Optional
 
 from aalpy.learning_algs.general_passive.Node import Node, OutputBehavior, TransitionBehavior, TransitionInfo, \
     OutputBehaviorRange, TransitionBehaviorRange, intersection_iterator, NodeOrders, unknown_output
