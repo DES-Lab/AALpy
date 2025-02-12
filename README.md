@@ -28,6 +28,8 @@ You can start learning models of black-box systems with a few lines of code.
 AALpy supports both **active** and **passive** automata learning algorithms that can be used to learn a variety of modeling formalisms, including 
 **deterministic**, **non-deterministic**, and **stochastic automata**, as well as **deterministic context-free grammars/pushdown automata**.
 
+AALpy also features a Generalized State Merging (GSM) framework based on the [Red-Blue method](https://www.researchgate.net/publication/221523449_Results_of_the_Abbadingo_One_DFA_Learning_Competition_and_a_New_Evidence-Driven_State_Merging_Algorithm), which simplifies the implementation of more complex and extensible passive learning algorithms, such as EDSM, k-tails and likelihood-ratio.
+
 <div align="center">
    
 | **Automata Type** |                      **Supported Formalisms**                     | **Active Algorithms**                                          |              **Passive Algorithms**                       |                                                     **Features** |
