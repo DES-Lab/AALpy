@@ -235,7 +235,7 @@ def make_input_complete(automaton, missing_transition_go_to='self_loop'):
     """
     from aalpy.base import DeterministicAutomaton
     from aalpy.automata import Dfa, MooreState, MealyMachine, Mdp, StochasticMealyMachine, Onfsm, \
-        DfaState, MealyState, MooreMachine, OnfsmState, MdpState, StochasticMealyState
+        DfaState, MealyState, MooreMachine, OnfsmState, MdpState, StochasticMealyState, NDMooreMachine, NDMooreState
 
     assert missing_transition_go_to in {'self_loop', 'sink_state'}
 
@@ -249,6 +249,7 @@ def make_input_complete(automaton, missing_transition_go_to='self_loop'):
                             MooreMachine: MooreState(state_id='sink', output='sink_state'),
                             MealyMachine: MealyState(state_id='sink'),
                             Onfsm: OnfsmState(state_id='sink'),
+                            NDMooreMachine: NDMooreState(state_id='sink'),
                             Mdp: MdpState(state_id='sink', output='sink_state'),
                             StochasticMealyMachine: StochasticMealyState(state_id='sink')}
 
@@ -259,31 +260,19 @@ def make_input_complete(automaton, missing_transition_go_to='self_loop'):
     for state in automaton.states:
         for i in input_al:
             if i not in state.transitions.keys():
-                if missing_transition_go_to == 'self_loop':
-                    if isinstance(automaton, DeterministicAutomaton):
-                        state.transitions[i] = state
-                        if isinstance(automaton, MealyMachine):
-                            state.output_fun[i] = 'epsilon'
-                    if isinstance(automaton, Onfsm):
-                        state.transitions[i].append(('epsilon', state))
-                    if isinstance(automaton, Mdp):
-                        state.transitions[i].append((state, 1.))
-                    if isinstance(automaton, StochasticMealyMachine):
-                        state.transitions[i].append((state, 'epsilon', 1.))
-                else:
-                    if isinstance(automaton, Dfa):
-                        state.transitions[i] = sink_state
-                    if isinstance(automaton, MooreMachine):
-                        state.transitions[i] = sink_state
+                target_state = state if missing_transition_go_to == 'self_loop' else sink_state
+
+                if isinstance(automaton, (DeterministicAutomaton, Dfa, MooreMachine, MealyMachine)):
+                    state.transitions[i] = target_state
                     if isinstance(automaton, MealyMachine):
-                        state.transitions[i] = sink_state
                         state.output_fun[i] = 'epsilon'
-                    if isinstance(automaton, Onfsm):
-                        state.transitions[i].append(('epsilon', sink_state))
-                    if isinstance(automaton, Mdp):
-                        state.transitions[i].append((sink_state, 1.))
-                    if isinstance(automaton, StochasticMealyMachine):
-                        state.transitions[i].append((sink_state, 'epsilon', 1.))
+                elif isinstance(automaton, (Onfsm, NDMooreMachine)):
+                    state.transitions[i].append(('epsilon', target_state) if
+                                                isinstance(automaton, Onfsm) else target_state)
+                elif isinstance(automaton, Mdp):
+                    state.transitions[i].append((target_state, 1.))
+                elif isinstance(automaton, StochasticMealyMachine):
+                    state.transitions[i].append((target_state, 'epsilon', 1.))
 
     return automaton
 
