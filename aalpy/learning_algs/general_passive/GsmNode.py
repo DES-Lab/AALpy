@@ -71,6 +71,43 @@ def union_iterator(a: Dict[Key, Val], b: Dict[Key, Val], default: Val = None) ->
         yield key, a_val, b_val
 
 
+# TODO reuse in RPNI
+def detect_data_format(data, check_consistency=True):
+    accepted_types = (Tuple, List)
+    data_format = None
+    def check_data_format(value):
+        if data_format is None or data_format == value:
+            return value
+        raise ValueError("inconsistent data")
+
+    if isinstance(data, GsmNode):
+        if not data.is_tree():
+            raise ValueError("provided automaton is not a tree")
+        return "tree"
+    if not isinstance(data, accepted_types):
+        raise ValueError("wrong input format. expected tuple or list.")
+    if len(data) == 0:
+        return "io_traces"
+    for data_point in data:
+        if len(data_point) != 2:
+            data_format = check_data_format("io_traces")
+            if check_consistency:
+                continue
+            return data_format
+        o1, o2 = data_point
+        if not isinstance(o1, accepted_types):
+            data_format = check_data_format("io_traces")
+            if not check_consistency:
+                return data_format
+        if not isinstance(o2, accepted_types):
+            data_format = check_data_format("labeled_sequences")
+            if not check_consistency:
+                return data_format
+    if data_format is None:
+        raise ValueError("ambiguous data format. data format needs to be specified explicitly.")
+    return data_format
+
+
 # TODO maybe split this for maintainability (and perfomance?)
 class TransitionInfo:
     __slots__ = ["target", "count", "original_target", "original_count"]
@@ -388,6 +425,8 @@ class GsmNode:
 
     @staticmethod
     def createPTA(data, output_behavior, data_format=None) -> 'GsmNode':
+        if data_format is None:
+            data_format = detect_data_format(data)
         if data_format not in DataFormatRange:
             raise ValueError(f"invalid data format {data_format}. should be in {DataFormatRange}")
 
