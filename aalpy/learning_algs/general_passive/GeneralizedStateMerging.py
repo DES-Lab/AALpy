@@ -180,12 +180,8 @@ class GeneralizedStateMerging:
             best_candidate = max(partition_candidates.values(), key=lambda part: part.score)
             for real_node, partition_node in best_candidate.red_mapping.items():
                 real_node.transitions = partition_node.transitions
+                real_node.predecessor = partition_node.predecessor
                 real_node.prefix_access_pair = partition_node.prefix_access_pair
-
-                for access_pair, t_info in real_node.transition_iterator():
-                    if t_info.target not in red_states:
-                        t_info.target.predecessor = real_node
-                        # t_info.target.prefix_access_pair = access_pair  # not sure whether this is actually required
             instrumentation.log_merge(best_candidate)
             # FUTURE: optimizations for compatibility tests where merges can be orthogonal
             # FUTURE: caching for aggregating compatibility tests
@@ -234,7 +230,6 @@ class GeneralizedStateMerging:
         # when compatibility is determined only by future and scores are disabled, we need not create partitions.
         if self.compatibility_on_futures and not self.score_calc.has_score_function():
             def update_partition(red_node: GsmNode, blue_node: Optional[GsmNode]) -> GsmNode:
-                partitioning.red_mapping[red_node] = red_node
                 return red_node
         else:
             def update_partition(red_node: GsmNode, blue_node: Optional[GsmNode]) -> GsmNode:
@@ -291,9 +286,12 @@ class GeneralizedStateMerging:
                         q.append((partition_transition.target, blue_transition.target))
                         partition_transition.count += blue_transition.count
                     else:
-                        # blue_child is blue after merging if there is a red state in blue's partition
+                        # blue child is blue after merging if there is a red state in blue's partition
                         partition_transition = TransitionInfo(blue_transition.target, blue_transition.count, None, 0)
                         partition_transitions[out_sym] = partition_transition
+                        # update predecessor of blue child
+                        blue_target_partition = update_partition(blue_transition.target, None)
+                        blue_target_partition.predecessor = red
 
         partitioning.score = self.score_calc.score_function(partitioning.full_mapping)
         return partitioning
