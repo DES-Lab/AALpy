@@ -269,7 +269,7 @@ class GeneralizedStateMerging:
 
             # create implied merges for all common successors
             for in_sym, blue_transitions in blue.transitions.items():
-                partition_transitions = partition.get_or_create_transitions(in_sym)
+                partition_transitions = partition.transitions[in_sym]
                 for out_sym, blue_transition in blue_transitions.items():
                     partition_transition = partition_transitions.get(out_sym)
                     # handle unknown output

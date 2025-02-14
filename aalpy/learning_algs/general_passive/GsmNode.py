@@ -1,6 +1,7 @@
 import functools
 import math
 import pathlib
+from collections import defaultdict
 from functools import total_ordering
 from typing import Dict, Any, List, Tuple, Iterable, Callable, Union, TypeVar, Iterator, Optional, Sequence
 import pydot
@@ -125,7 +126,7 @@ class GsmNode:
 
     def __init__(self, prefix_access_pair, predecessor: 'GsmNode' = None):
         # TODO try single dict
-        self.transitions: Dict[Any, Dict[Any, TransitionInfo]] = dict()
+        self.transitions: defaultdict[Any, Dict[Any, TransitionInfo]] = defaultdict(dict)
         self.predecessor: GsmNode = predecessor
         self.prefix_access_pair = prefix_access_pair
 
@@ -379,7 +380,7 @@ class GsmNode:
     def add_trace(self, trace: IOTrace):
         curr_node: GsmNode = self
         for in_sym, out_sym in trace:
-            transitions = curr_node.get_or_create_transitions(in_sym)
+            transitions = curr_node.transitions[in_sym]
             info = transitions.get(out_sym)
             if info is None:
                 node = GsmNode((in_sym, out_sym), curr_node)
@@ -397,7 +398,7 @@ class GsmNode:
 
         # step through inputs and add transitions
         for in_sym in inputs:
-            transitions = curr_node.get_or_create_transitions(in_sym)
+            transitions = curr_node.transitions[in_sym]
             t_infos = list(transitions.values())
             if len(t_infos) == 0:
                 node = GsmNode((in_sym, unknown_output), curr_node)
