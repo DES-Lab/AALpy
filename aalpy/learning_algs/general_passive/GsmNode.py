@@ -32,25 +32,6 @@ TransitionFunction = Callable[['GsmNode', Any, Any], str]
 unknown_output = None  # can be set to a special value if required
 
 
-def generate_values(base: list, step: Callable, backing_set=True):
-    if backing_set:
-        result = list(base)
-        control = set(base)
-        for val in result:
-            for new_val in step(val):
-                if new_val not in control:
-                    control.add(new_val)
-                    result.append(new_val)
-        return result
-    else:
-        result = list(base)
-        for val in result:
-            for new_val in step(val):
-                if new_val not in result:
-                    result.append(new_val)
-        return result
-
-
 def intersection_iterator(a: Dict[Key, Val], b: Dict[Key, Val]) -> Iterator[Tuple[Key, Val, Val]]:
     missing = object()
     for key, a_val in a.items():
@@ -183,23 +164,27 @@ class GsmNode:
         return node
 
     def get_all_nodes(self) -> List['GsmNode']:
-        def generator(state: GsmNode):
-            for _, child in state.transition_iterator():
-                yield child.target
-
-        return generate_values([self], generator)
+        result = [self]
+        backing_set = {self}
+        for state in result:
+            for _, transition in state.transition_iterator():
+                child = transition.target
+                if child not in backing_set:
+                    backing_set.add(child)
+                    result.append(child)
+        return result
 
     def is_tree(self):
         q: List['GsmNode'] = [self]
         backing_set = {self}
         while len(q) != 0:
             current = q.pop(0)
-            for _, child in current.transition_iterator():
-                t = child.target
-                if t in backing_set:
+            for _, transition in current.transition_iterator():
+                child = transition.target
+                if child in backing_set:
                     return False
-                q.append(t)
-                backing_set.add(t)
+                q.append(child)
+                backing_set.add(child)
         return True
 
     def to_automaton(self, output_behavior: OutputBehavior, transition_behavior: TransitionBehavior,
