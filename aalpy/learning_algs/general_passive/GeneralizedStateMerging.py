@@ -93,12 +93,12 @@ class GeneralizedStateMerging:
 
     # TODO: make more generic by adding the option to use a different algorithm than red blue
     #  for selecting potential merge candidates. Maybe using inheritance with abstract `run`.
-    def run(self, data, convert=True, instrumentation: Instrumentation=None, data_format=None):
+    def run(self, data, convert=True, instrumentation: Instrumentation=None, data_format="io_traces"):
         if instrumentation is None:
             instrumentation = Instrumentation()
         instrumentation.reset(self)
 
-        if data_format == "labeled_sequances" and self.transition_behavior != "deterministic":
+        if data_format == "labeled_sequences" and self.transition_behavior != "deterministic":
             raise ValueError("learning from labeled_sequences is not possible for nondeterministic systems")
         root = GsmNode.createPTA(data, self.output_behavior, data_format)
 
