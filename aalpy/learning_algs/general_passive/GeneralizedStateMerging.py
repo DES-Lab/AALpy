@@ -273,8 +273,8 @@ class GeneralizedStateMerging:
                 for out_sym, blue_transition in blue_transitions.items():
                     partition_transition = partition_transitions.get(out_sym)
                     # handle unknown output
-                    if partition_transition is None:
-                        if out_sym is unknown_output and len(partition_transitions) != 0:
+                    if partition_transition is None and len(partition_transitions) != 0:
+                        if out_sym is unknown_output:
                             assert len(partition_transitions) == 1
                             partition_transition = list(partition_transitions.values())[0]
                         if unknown_output in partition_transitions:
