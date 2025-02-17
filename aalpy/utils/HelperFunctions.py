@@ -363,7 +363,7 @@ def generate_input_output_data_from_automata(model, num_sequances=4000, min_seq_
 
 def generate_input_output_data_from_vpa(vpa, num_sequances=1000, max_seq_len=16, max_attempts=None):
     alphabet = vpa.input_alphabet.get_merged_alphabet()
-    data_set = set()
+    data_set, in_set = [], set()
 
     num_nominal_tries = num_sequances // 2
     num_generation_attempts = 0
@@ -391,10 +391,13 @@ def generate_input_output_data_from_vpa(vpa, num_sequances=1000, max_seq_len=16,
             sequance += (chosen_input,)
 
             output = vpa.step(chosen_input)
-            # if vpa.is_balanced(sequance):
-            data_set.add((sequance, output))
 
-    data_set = list(data_set)
+            # not elegant, but preserves order
+            data_point = (sequance, output)
+            if data_point not in in_set:
+                data_set.append(data_point)
+                in_set.add(data_point)
+
     return data_set
 
 
