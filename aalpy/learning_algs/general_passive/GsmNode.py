@@ -128,6 +128,12 @@ class GsmNode:
         prefix.reverse()
         return prefix
 
+    def get_root(self):
+        current = self
+        while current.predecessor:
+            current = current.predecessor
+        return current
+
     def get_or_create_transitions(self, in_sym) -> Dict[Any, TransitionInfo]:
         t = self.transitions.get(in_sym)
         if t is None:
