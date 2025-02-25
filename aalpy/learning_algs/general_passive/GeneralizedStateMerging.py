@@ -297,7 +297,7 @@ class GeneralizedStateMerging:
         return partitioning
 
 
-def run_GSM(data, *,
+def run_GSM(data: list, *,
             output_behavior: OutputBehavior = "moore",
             transition_behavior: TransitionBehavior = "deterministic",
             score_calc: ScoreCalculation = None,
@@ -313,41 +313,38 @@ def run_GSM(data, *,
             data_format='io_traces',
             ):
     """
-    TODO
+    Performs a state merging algorithm in the red-blue framework on provided data.
 
     Args:
-        data:
+        data: Data used for learning. Recorded behavior of the system.
 
-        output_behavior:
+        output_behavior: Specifies whether outputs are emitted by states ("moore") or transitions ("mealy").
 
-        transition_behavior:
+        transition_behavior: Either "deterministic", "nondeterministic" or "stochastic".
 
-        score_calc:
+        score_calc: A ScoreCalculation object which determines how compatibility and merge scores are calculated.
 
-        pta_preprocessing:
+        pta_preprocessing: A pre-processing function applied to the PTA.
 
-        postprocessing:
+        postprocessing: A postprocessing function applied to the learned automaton.
 
-        compatibility_on_pta:
+        compatibility_on_pta: Whether compatibility is evaluated on the PTA or the current hypothesis.
 
-        compatibility_on_futures:
+        compatibility_on_futures: Whether compatibility is evaluated using the futures of both states or all partition information.
 
-        node_order:
+        node_order: Order in which merge candidates are considered. Defaults to short-lex.
 
-        consider_only_min_blue:
+        consider_only_min_blue: Whether to consider merge candidates from all blue nodes or just a single.
 
-        depth_first:
+        depth_first: Whether compatibility is checked depth- or breadth-first.
 
-        instrumentation:
+        instrumentation: Instrumentation object for reporting progress or debugging.
 
-        convert:
+        convert: Whether to return a normal AALpy automaton type or a `GsmNode` object (internal representation).
 
-        data_format:
+        data_format: Whether the input is given in the form of input-output traces or labeled input traces.
 
-
-    Returns:
-
-
+    Returns: The learned automaton.
     """
     # instantiate gsm
     gsm = GeneralizedStateMerging(
