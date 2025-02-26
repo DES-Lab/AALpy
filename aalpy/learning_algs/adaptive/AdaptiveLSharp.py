@@ -99,7 +99,7 @@ def run_adaptive_Lsharp(alphabet: list, sul: SUL, references: list, eq_oracle: O
             print(f'Hypothesis {learning_rounds}: {hypothesis.size} states.')
         if print_level == 3:
             print(hypothesis)
-            if state_matching != "None":
+            if ob_tree.state_matching:
                 ob_tree.state_matcher.print_match_table(ob_tree)
 
         # Pose Equivalence Query

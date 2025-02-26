@@ -59,7 +59,6 @@ class SUL(ABC):
 
             list of outputs, where the i-th output corresponds to the output of the system after the i-th input
         """
-
         self.pre()
 
         outputs_received = []
@@ -75,12 +74,14 @@ class SUL(ABC):
             next_input = ads.next_input(last_output)
             if next_input is None:
                 break
-
-            word.append(next_input)
-            output = self.step(next_input) 
-            outputs_received.append(output)
-            last_output = output
-            self.num_steps += 1
+            if next_input is tuple(): # Relevant for DFA/Moore
+                last_output = self.step(None)
+            else:
+                word.append(next_input)
+                output = self.step(next_input) 
+                outputs_received.append(output)
+                last_output = output
+                self.num_steps += 1
 
         self.num_queries += 1
         self.post()

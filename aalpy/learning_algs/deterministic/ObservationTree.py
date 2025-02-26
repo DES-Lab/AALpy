@@ -313,9 +313,9 @@ class ObservationTree:
             outputs = self.sul.query(inputs)
             self.insert_observation(inputs, outputs)
         elif self.extension_rule == "ADS":
-            suffix = Ads(self, self.basis)
+            ads = Ads(self, self.basis)
             ads_in, ads_out = self.adaptive_output_query(
-                self.get_transfer_sequence(self.root, basis_state), inp, suffix)
+                self.get_transfer_sequence(self.root, basis_state), inp, ads)
             self.insert_observation(ads_in, ads_out)
         elif self.extension_rule == "SepSeq":
             iterator = iter(self.basis)
@@ -329,17 +329,17 @@ class ObservationTree:
             outputs = self.sul.query(inputs)
             self.insert_observation(inputs, outputs)
 
-    def adaptive_output_query(self, prefix, infix, suffix):
+    def adaptive_output_query(self, prefix, infix, ads):
         # Adds input to the prefix and calls the base function
         prefix.append(infix)
-        return self.adaptive_output_query_base(prefix, suffix)
+        return self.adaptive_output_query_base(prefix, ads)
 
-    def adaptive_output_query_base(self, prefix, suffix):
+    def adaptive_output_query_base(self, prefix, ads):
         # Query the tree for a result, if unsuccessful query the SUL and update the tree
         from_node = self.get_successor(prefix)
         if from_node:
-            tree_in, tree_out = self._answer_ads_from_tree(suffix, from_node)
-            suffix.reset_to_root()
+            tree_in, tree_out = self._answer_ads_from_tree(ads, from_node)
+            ads.reset_to_root()
 
             if tree_out:
                 inputs = prefix
@@ -348,8 +348,8 @@ class ObservationTree:
                 outputs.extend(tree_out)
                 return inputs, outputs
 
-        outputs = self.sul.query(prefix)
-        sul_in, sul_out = self.sul.adaptive_query(prefix, suffix)
+
+        sul_in, sul_out = self.sul.adaptive_query(prefix, ads)
         if sul_out:
             outputs = sul_out
 
@@ -430,7 +430,7 @@ class ObservationTree:
         self.insert_observation(inputs, outputs)
         self.update_basis_candidates(frontier_state)
         if len(self.frontier_to_basis_dict.get(frontier_state)) == old_candidate_size:
-            print("Identification did not increase the norm")
+            raise RuntimeError("Identification did not increase the norm")
 
     def _identify_frontier_sepseq(self, frontier_state):
         # Specifically identify frontier states using separating sequences
@@ -449,8 +449,9 @@ class ObservationTree:
     def _identify_frontier_ads(self, frontier_state):
         # Specifically identify frontier states using ADS
         basis_candidates = self.frontier_to_basis_dict.get(frontier_state)
-        suffix = Ads(self, basis_candidates)
-        return self.adaptive_output_query_base(self.get_transfer_sequence(self.root, frontier_state), suffix)
+        ads = Ads(self, basis_candidates)
+        ads.reset_to_root()
+        return self.adaptive_output_query_base(self.get_transfer_sequence(self.root, frontier_state), ads)
 
     def construct_hypothesis_states(self):
         # Construct the hypothesis states from the basis

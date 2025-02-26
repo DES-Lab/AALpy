@@ -63,7 +63,7 @@ def angluin_seminal_example_lsharp():
     eq_oracle = RandomWalkEqOracle(alphabet, sul, 500)
 
     learned_dfa = run_Lsharp(alphabet, sul, eq_oracle, automaton_type='dfa',
-                            extension_rule=None, separation_rule="SepSeq", max_learning_rounds=50, print_level=3)
+                            extension_rule="SepSeq", separation_rule="ADS", max_learning_rounds=50, print_level=3)
 
     assert learned_dfa == dfa
     return learned_dfa
@@ -180,7 +180,7 @@ def bluetooth_Lsharp():
     # Extension rule options: {"Nothing", "SepSeq", "ADS"}
     # Separation rule options: {"SepSeq", "ADS"}
     learned_mealy = run_Lsharp(input_alphabet, sul_mealy, eq_oracle, automaton_type='mealy', extension_rule=None,
-                               separation_rule="SepSeq", max_learning_rounds=50, print_level=1)
+                               separation_rule="SepSeq", max_learning_rounds=50, print_level=3)
 
 
 def bluetooth_adaptive_Lsharp():

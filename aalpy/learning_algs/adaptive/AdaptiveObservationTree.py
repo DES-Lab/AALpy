@@ -30,6 +30,9 @@ class AdaptiveObservationTree(ObservationTree):
         self.prefixes_map = {}
         self.characterization_map = {}
         self.combined_model = self.get_combined_model()
+        if not self.combined_model:
+            self.state_matching = None
+            return
 
         # We keep track of a new basis to ensure maximal overlap between prefixes in the references and the new model
         self.new_basis = [self.root]
@@ -394,11 +397,11 @@ class AdaptiveObservationTree(ObservationTree):
                     reference.initial_state, basis_state_access)
                 state_two = reference.current_state
 
-                sep_seq = tuple(self.find_distinguishing_seq_partial(reference,
-                    state_one, state_two, self.alphabet))
-                if sep_seq and (self.get_successor(frontier_state_access + sep_seq) is None or
-                                self.get_successor(basis_state_access + sep_seq) is None):
-                    return basis_state_access, frontier_state_access, sep_seq
+                sep_seq = self.find_distinguishing_seq_partial(reference,
+                    state_one, state_two, self.alphabet)
+                if sep_seq and (self.get_successor(frontier_state_access + tuple(sep_seq)) is None or
+                                self.get_successor(basis_state_access + tuple(sep_seq)) is None):
+                    return basis_state_access, frontier_state_access, tuple(sep_seq)
         return None
 
     def insert_observation_rebuilding(self, inputs, outputs):
@@ -493,5 +496,8 @@ class AdaptiveObservationTree(ObservationTree):
             self.compute_prefix_map(automaton_class[self.automaton_type](states[0], states), reference_id)
             self.compute_characterization_map(reference, states)
 
-        mm = automaton_class[self.automaton_type](all_states[0], all_states)
-        return mm
+        if all_states == []:
+            print(f"Warning: the references did not lead to any usable states, this could be due to empty models or no common inputs.")
+            return None
+        else:
+            return automaton_class[self.automaton_type](all_states[0], all_states)
