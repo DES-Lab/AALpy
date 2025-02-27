@@ -235,7 +235,7 @@ def make_input_complete(automaton, missing_transition_go_to='self_loop'):
     """
     from aalpy.base import DeterministicAutomaton
     from aalpy.automata import Dfa, MooreState, MealyMachine, Mdp, StochasticMealyMachine, Onfsm, \
-        DfaState, MealyState, MooreMachine, OnfsmState, MdpState, StochasticMealyState
+        DfaState, MealyState, MooreMachine, OnfsmState, MdpState, StochasticMealyState, NDMooreMachine, NDMooreState
 
     assert missing_transition_go_to in {'self_loop', 'sink_state'}
 
@@ -249,6 +249,7 @@ def make_input_complete(automaton, missing_transition_go_to='self_loop'):
                             MooreMachine: MooreState(state_id='sink', output='sink_state'),
                             MealyMachine: MealyState(state_id='sink'),
                             Onfsm: OnfsmState(state_id='sink'),
+                            NDMooreMachine: NDMooreState(state_id='sink'),
                             Mdp: MdpState(state_id='sink', output='sink_state'),
                             StochasticMealyMachine: StochasticMealyState(state_id='sink')}
 
@@ -259,31 +260,19 @@ def make_input_complete(automaton, missing_transition_go_to='self_loop'):
     for state in automaton.states:
         for i in input_al:
             if i not in state.transitions.keys():
-                if missing_transition_go_to == 'self_loop':
-                    if isinstance(automaton, DeterministicAutomaton):
-                        state.transitions[i] = state
-                        if isinstance(automaton, MealyMachine):
-                            state.output_fun[i] = 'epsilon'
-                    if isinstance(automaton, Onfsm):
-                        state.transitions[i].append(('epsilon', state))
-                    if isinstance(automaton, Mdp):
-                        state.transitions[i].append((state, 1.))
-                    if isinstance(automaton, StochasticMealyMachine):
-                        state.transitions[i].append((state, 'epsilon', 1.))
-                else:
-                    if isinstance(automaton, Dfa):
-                        state.transitions[i] = sink_state
-                    if isinstance(automaton, MooreMachine):
-                        state.transitions[i] = sink_state
+                target_state = state if missing_transition_go_to == 'self_loop' else sink_state
+
+                if isinstance(automaton, (DeterministicAutomaton, Dfa, MooreMachine, MealyMachine)):
+                    state.transitions[i] = target_state
                     if isinstance(automaton, MealyMachine):
-                        state.transitions[i] = sink_state
                         state.output_fun[i] = 'epsilon'
-                    if isinstance(automaton, Onfsm):
-                        state.transitions[i].append(('epsilon', sink_state))
-                    if isinstance(automaton, Mdp):
-                        state.transitions[i].append((sink_state, 1.))
-                    if isinstance(automaton, StochasticMealyMachine):
-                        state.transitions[i].append((sink_state, 'epsilon', 1.))
+                elif isinstance(automaton, (Onfsm, NDMooreMachine)):
+                    state.transitions[i].append(('epsilon', target_state) if
+                                                isinstance(automaton, Onfsm) else target_state)
+                elif isinstance(automaton, Mdp):
+                    state.transitions[i].append((target_state, 1.))
+                elif isinstance(automaton, StochasticMealyMachine):
+                    state.transitions[i].append((target_state, 'epsilon', 1.))
 
     return automaton
 
@@ -301,7 +290,7 @@ def convert_i_o_traces_for_RPNI(sequences, automaton_type="mealy"):
 
     for s in sequences:
         if automaton_type in ["moore", "dfa"]:
-            rpni_sequences.add((tuple(),s[0]))
+            rpni_sequences.add((tuple(), s[0]))
             s = s[1:]
         for i in range(len(s)):
             inputs = tuple([io[0] for io in s[:i + 1]])
@@ -349,11 +338,14 @@ def is_balanced(input_seq, vpa_alphabet):
     return counter == 0
 
 
-def generate_input_output_data_from_automata(model, num_sequances=4000, min_seq_len=1, max_seq_len=16):
+def generate_input_output_data_from_automata(model, num_sequances=4000, min_seq_len=1, max_seq_len=16,
+                                             sequance_type='labeled_sequences'):
+    assert sequance_type in {'io_traces', 'labeled_sequences'}
 
     alphabet = model.get_input_alphabet()
-    input_output_sequances = []
-    while len(input_output_sequances) < num_sequances:
+    dataset = []
+
+    while len(dataset) < num_sequances:
         sequance = []
         for _ in range(random.randint(min_seq_len, max_seq_len)):
             sequance.append(random.choice(alphabet))
@@ -361,14 +353,17 @@ def generate_input_output_data_from_automata(model, num_sequances=4000, min_seq_
         model.reset_to_initial()
         outputs = model.execute_sequence(model.initial_state, sequance)
 
-        input_output_sequances.append(list(zip(sequance, outputs)))
+        if sequance_type == 'io_traces':
+            dataset.append(list(zip(sequance, outputs)))
+        else:
+            dataset.append((sequance, outputs[-1]))
 
-    return input_output_sequances
+    return dataset
 
 
 def generate_input_output_data_from_vpa(vpa, num_sequances=1000, max_seq_len=16, max_attempts=None):
     alphabet = vpa.input_alphabet.get_merged_alphabet()
-    data_set = set()
+    data_set, in_set = [], set()
 
     num_nominal_tries = num_sequances // 2
     num_generation_attempts = 0
@@ -396,10 +391,13 @@ def generate_input_output_data_from_vpa(vpa, num_sequances=1000, max_seq_len=16,
             sequance += (chosen_input,)
 
             output = vpa.step(chosen_input)
-            #if vpa.is_balanced(sequance):
-            data_set.add((sequance, output))
 
-    data_set = list(data_set)
+            # not elegant, but preserves order
+            data_point = (sequance, output)
+            if data_point not in in_set:
+                data_set.append(data_point)
+                in_set.add(data_point)
+
     return data_set
 
 
@@ -409,3 +407,26 @@ def product_with_possible_empty_iterable(*iterables, repeat=1):
     """
     non_empty_iterables = [it for it in iterables if it]
     return product(*non_empty_iterables, repeat=repeat)
+
+
+def dfa_from_moore(moore_model):
+    from aalpy.automata import Dfa, DfaState
+
+    dfa_state_map = dict()
+    # define states
+    for moore_state in moore_model.states:
+        if moore_state.output not in {True, False, None}:
+            raise ValueError('Cannot convert Moore model with unrestricted output domain to DFA. '
+                             f'Output domain should be {True, False, None}. Problematic output: {moore_state.output}'
+                             )
+
+        is_accepting = moore_state.output if moore_state.output is not None else False
+        dfa_state_map[moore_state.state_id] = DfaState(moore_state.state_id, is_accepting)
+
+    # define transitions
+    for moore_state in moore_model.states:
+        for i, reached_state in moore_state.transitions.items():
+            dfa_state_map[moore_state.state_id].transitions[i] = dfa_state_map[reached_state.state_id]
+
+    initial_state = dfa_state_map[moore_model.initial_state.state_id]
+    return Dfa(initial_state, list(dfa_state_map.values()))

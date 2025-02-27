@@ -56,7 +56,7 @@ def run_RPNI(data, automaton_type, algorithm='gsm',
     return learned_model
 
 
-def run_PAPNI(data, vpa_alphabet, algorithm='gsm', print_info=True):
+def run_PAPNI(data, vpa_alphabet, algorithm='edsm', print_info=True):
     """
     Run PAPNI, a deterministic passive model learning algorithm of deterministic pushdown automata.
     Resulting model conforms to the provided data.
@@ -66,7 +66,7 @@ def run_PAPNI(data, vpa_alphabet, algorithm='gsm', print_info=True):
         data: sequence of input sequences and corresponding label. Eg. [[(i1,i2,i3, ...), label], ...]
         vpa_alphabet:  grouping of alphabet elements to call symbols, return symbols, and internal symbols. Call symbols
         push to stack, return symbols pop from stack, and internal symbols do not affect the stack.
-        algorithm: either 'gsm' (generalized state merging) or 'classic' for base RPNI implementation.
+        algorithm: either 'gsm' for classic RPNI or 'edsm' for evidence driven state merging variant of RPNI
         GSM is much faster and less resource intensive.
         print_info: print learning progress and runtime information
 
@@ -76,8 +76,9 @@ def run_PAPNI(data, vpa_alphabet, algorithm='gsm', print_info=True):
     """
     from aalpy.utils import is_balanced
     from aalpy.automata.Vpa import vpa_from_dfa_representation
+    from aalpy.learning_algs import run_EDSM
 
-    assert algorithm in {'gsm', 'classic'}
+    assert algorithm in {'gsm', 'classic', 'edsm'}
 
     # preprocess input sequances to keep track of stack
     papni_data = []
@@ -105,7 +106,10 @@ def run_PAPNI(data, vpa_alphabet, algorithm='gsm', print_info=True):
         papni_data.append((processed_sequance, label))
 
     # instantiate and run PAPNI as base RPNI with stack-aware data
-    learned_model = run_RPNI(papni_data, automaton_type='dfa', algorithm=algorithm, print_info=print_info)
+    if algorithm != 'edsm':
+        learned_model = run_RPNI(papni_data, automaton_type='dfa', algorithm=algorithm, print_info=print_info)
+    else:
+        learned_model = run_EDSM(papni_data, automaton_type='dfa', print_info=print_info)
 
     # convert intermediate DFA representation to VPA
     learned_model = vpa_from_dfa_representation(learned_model, vpa_alphabet)

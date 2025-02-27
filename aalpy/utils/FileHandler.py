@@ -7,7 +7,7 @@ from pydot import Dot, Node, Edge
 
 from aalpy.automata import Dfa, MooreMachine, Mdp, Onfsm, MealyState, DfaState, MooreState, MealyMachine, \
     MdpState, StochasticMealyMachine, StochasticMealyState, OnfsmState, MarkovChain, McState, Sevpa, SevpaState, \
-    SevpaTransition, Vpa, VpaState, VpaTransition, NDMooreMachine
+    SevpaTransition, Vpa, VpaState, VpaTransition, NDMooreMachine, NDMooreState
 
 file_types = ['dot', 'png', 'svg', 'pdf', 'string']
 automaton_types = {Dfa: 'dfa', MealyMachine: 'mealy', MooreMachine: 'moore', Mdp: 'mdp',
@@ -117,7 +117,7 @@ def _add_transition_to_graph(graph, state, automaton_type, display_same_state_tr
                                 label=_wrap_label(f'{transition.letter} / pop({transition.stack_guard})'))
                 elif transition.action == 'push':
                     edge = Edge(state.state_id, transition.target_state.state_id,
-                                label=_wrap_label(f'push({transition.stack_guard})'))
+                                label=_wrap_label(f'{transition.letter} / push({transition.stack_guard})'))
                 elif transition.action is None:
                     edge = Edge(state.state_id, transition.target_state.state_id,
                                 label=_wrap_label(f'{transition.letter}'))
@@ -220,7 +220,7 @@ def save_automaton_to_file(automaton, path="LearnedModel", file_type="dot",
 
 
 sevpa_transition_pattern = r"(\S+)\s*/\s*\(\s*'(\S+)'\s*,\s*'(\S+)'\s*\)"
-vpa_push_pattern = r"push\(([^)]+)\)"
+vpa_push_pattern = r"(\S+)\s*/\s*push\(\s*(.*?)\s*\)"
 vpa_pop_pattern = r"(\S+)\s*/\s*pop\(\s*(.*?)\s*\)"
 
 
@@ -238,6 +238,8 @@ def _process_label(label, source, destination, automaton_type):
         inp = int(inp) if inp.isdigit() else inp
         out = int(out) if out.isdigit() else out
         source.transitions[inp].append((out, destination))
+    if automaton_type == 'ndmoore':
+        source.transitions[int(label) if label.isdigit() else label].append(destination)
     if automaton_type == 'mc':
         prob = label
         source.transitions.append((destination, float(prob)))
@@ -267,8 +269,8 @@ def _process_label(label, source, destination, automaton_type):
     if automaton_type == 'vpa':
         input_symbol, stack_symbol, action = None, None, None
         if 'push' in label:
-            input_symbol = re.match(vpa_push_pattern, label).group(1)
-            stack_symbol = input_symbol
+            push_elements = re.match(vpa_push_pattern, label)
+            input_symbol, stack_symbol = push_elements.group(1), push_elements.group(2)
             action = 'push'
         elif 'pop' in label:
             pop_elements = re.match(vpa_pop_pattern, label)
@@ -317,7 +319,7 @@ def _process_node_label_prime(node_name, label, line, node_label_dict, node_type
     if automaton_type == 'mdp' or automaton_type == 'mc':
         node_label_dict[node_name] = node_type(node_name, label)
     else:
-        if automaton_type == 'moore' and label != "":
+        if automaton_type in {'moore', 'ndmoore'} and label != "":
             label_output = _strip_label(label)
             if "|" in label_output:
                 label, output = label_output.split("|", maxsplit=1)
@@ -349,7 +351,8 @@ def load_automaton_from_file(path, automaton_type, compute_prefixes=False):
 
         path: pathlike or str to the file
 
-        automaton_type: type of the automaton, one of ['dfa', 'mealy', 'moore', 'mdp', 'smm', 'onfsm', 'mc', 'sevpa']
+        automaton_type: type of the automaton, one of ['dfa', 'mealy', 'moore', 'mdp', 'smm',
+                        'onfsm', 'ndmoore', 'mc', 'sevpa', 'vpa']
 
         compute_prefixes: it True, shortest path to reach every state will be computed and saved in the prefix of
             the state. Useful when loading the model to use them as a equivalence oracle. (Default value = False)
@@ -364,7 +367,7 @@ def load_automaton_from_file(path, automaton_type, compute_prefixes=False):
     id_node_aut_map = {'dfa': (DfaState, Dfa), 'mealy': (MealyState, MealyMachine), 'moore': (MooreState, MooreMachine),
                        'onfsm': (OnfsmState, Onfsm), 'mdp': (MdpState, Mdp), 'mc': (McState, MarkovChain),
                        'smm': (StochasticMealyState, StochasticMealyMachine), 'sevpa': (SevpaState, Sevpa),
-                       'vpa': (VpaState, Vpa)}
+                       'vpa': (VpaState, Vpa), 'ndmoore': (NDMooreState, NDMooreMachine)}
 
     nodeType, aut_type = id_node_aut_map[automaton_type]
 
