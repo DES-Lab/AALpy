@@ -52,14 +52,22 @@ class AdaptiveObservationTree(ObservationTree):
 
     def build_hypothesis(self):
         """
-        Builds the hypothesis which will be sent to the SUL
+        Builds the hypothesis which will be sent to the SUL and checks consistency
         This is either done with or without matching rules
         """
-        if self.state_matching:
-            self.make_observation_tree_adequate_matching()
-        else:
-            super().make_observation_tree_adequate()
-        return self.construct_hypothesis()
+        while True:
+            if self.state_matching:
+                self.make_observation_tree_adequate_matching()
+            else:
+                super().make_observation_tree_adequate()
+            hypothesis = self.construct_hypothesis()
+            counter_example = Apartness.compute_witness_in_tree_and_hypothesis_states(self, self.root, hypothesis.initial_state)
+
+            if not counter_example:
+                return hypothesis
+
+            cex_outputs = self.get_observation(counter_example)
+            self.process_counter_example(hypothesis, counter_example, cex_outputs)
 
     def make_observation_tree_adequate_matching(self):
         """
@@ -432,6 +440,7 @@ class AdaptiveObservationTree(ObservationTree):
         return True
 
     # Functions related to finding the combined model
+    
     def add_ref_transitions_to_states(self, reference, reference_id):
         """ 
         Makes a copy of the states of a reference with a unique state id and only transitions with the new input alphabet
@@ -470,7 +479,6 @@ class AdaptiveObservationTree(ObservationTree):
             all_sepseqs = state_characterization_set(reference, reference.get_input_alphabet(), ref_state)
             unique_sepseqs = list(dict.fromkeys(all_sepseqs))
             self.characterization_map[state] = unique_sepseqs
-
 
     def get_combined_model(self):
         """ 
