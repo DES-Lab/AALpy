@@ -34,8 +34,8 @@ class Ads:
         return self.initial_node.get_score()
 
     def construct_ads(self, ob_tree, current_block):
-        # builds the ADS tree recursively by selecting optimal inputs for splitting states
-        # for DFA/Moore we have to consider the output in the current state as well
+        # Builds the ADS tree recursively by selecting optimal inputs for splitting states
+        # For DFA/Moore we have to consider the output for the empty word
         if ob_tree.automaton_type == 'mealy':
             return self.construct_ads_rec(ob_tree, current_block)
         else:
@@ -60,11 +60,11 @@ class Ads:
             return AdsNode(input, children, score)
 
     def construct_ads_rec(self, ob_tree, current_block):
-        # builds the ADS tree recursively by selecting optimal inputs for splitting states
+        # Builds the ADS tree recursively by selecting optimal inputs for splitting states
         if len(current_block) == 1:
             return AdsNode.create_leaf()
 
-        # if none of the nodes in the current block have a successor, we cannot decide a next input
+        # If none of the nodes in the current block have a successor, we cannot decide a next input
         if not any([True for node in current_block if node.successors is not None]):
             raise RuntimeError("No input available during ADS computation")
 
