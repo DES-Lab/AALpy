@@ -289,7 +289,6 @@ class ObservationTree:
                 outputs.extend(tree_out)
                 return inputs, outputs
 
-        outputs = self.sul.query(prefix)
         sul_in, sul_out = self.sul.adaptive_query(prefix, suffix)
         if sul_out:
             outputs = sul_out
