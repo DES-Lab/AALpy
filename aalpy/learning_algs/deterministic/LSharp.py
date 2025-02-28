@@ -25,7 +25,7 @@ def run_Lsharp(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type,
 
         automaton_type: type of automaton to be learned. Either 'dfa', 'mealy' or 'moore'
 
-        extension_rule: strategy used during the extension rule. Options: "Nothing" (default), "SepSeq" and "ADS".
+        extension_rule: strategy used during the extension rule. Options: None, "SepSeq" (default) and "ADS".
 
         separation_rule: strategy used during the extension rule. Options: "SepSeq" (default) and "ADS".
 

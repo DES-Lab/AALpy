@@ -1,7 +1,6 @@
 from .ADS import Ads
 from .Apartness import Apartness
-from aalpy.base import Automaton, SUL
-from aalpy.automata import Dfa, DfaState, MealyState, MealyMachine, MooreMachine, MooreState
+from ... import Dfa, DfaState, MealyState, MealyMachine, MooreMachine, MooreState
 
 aut_type = ['dfa', 'mealy', 'moore']
 
@@ -456,8 +455,8 @@ class ObservationTree:
     def construct_hypothesis_states(self):
         # Construct the hypothesis states from the basis
         self.states_dict = dict()
-        initial_state = None
         state_counter = 0
+
         for basis_state in self.basis:
             state_id = f's{state_counter}'
             if self.automaton_type == 'dfa':

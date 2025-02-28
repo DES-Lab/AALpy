@@ -98,11 +98,11 @@ class Ads:
 
         return AdsNode(best_input, best_children, best_score)
 
-    def make_subtree(self, ob_tree, sub_trees, partition):
-        # Constructs a subtree for a partition and calculates its score
-        partition_size = len(partition)
-        child_score = self.construct_ads_rec(ob_tree, partition).get_score()
-        return self.compute_reg_score(partition_size, sub_trees, child_score)
+    # def make_subtree(self, ob_tree, sub_trees, partition):
+    #     # Constructs a subtree for a partition and calculates its score
+    #     partition_size = len(partition)
+    #     child_score = self.construct_ads_rec(ob_tree, partition).get_score()
+    #     return self.compute_reg_score(partition_size, sub_trees, child_score)
 
     def compute_output_subtree(self, ob_tree, partition, u_i):
         # Computes and scores a subtree for a specific output partition
