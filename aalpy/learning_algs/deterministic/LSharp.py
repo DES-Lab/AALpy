@@ -10,8 +10,10 @@ def run_Lsharp(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type,
                extension_rule='SepSeq', separation_rule="ADS", samples=None,
                max_learning_rounds=None, cache_and_non_det_check=True, return_data=False, print_level=2):
     """
-    Based on ''A New Approach for Active Automata Learning Based on Apartness'' from Vaandrager, Garhewal, Rot and Wissmann.
-    The algorithm learns a Mealy machine using apartness and an observation tree. 
+    Based on ''A New Approach for Active Automata Learning Based on Apartness'' from Vaandrager, Garhewal, Rot and Wissmann. 
+    and ''L# for DFAs'' from Vaandrager, Sanders.
+
+    The algorithm learns a DFA/Moore machine/Mealy machine using apartness and an observation tree. 
 
     Args:
 
@@ -21,7 +23,7 @@ def run_Lsharp(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type,
 
         eq_oracle: equivalence oracle
 
-        automaton_type: currently only 'mealy' is accepted
+        automaton_type: type of automaton to be learned. Either 'dfa', 'mealy' or 'moore'
 
         extension_rule: strategy used during the extension rule. Options: "Nothing" (default), "SepSeq" and "ADS".
 
@@ -45,7 +47,6 @@ def run_Lsharp(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type,
         automaton of type automaton_type (dict containing all information about learning if 'return_data' is True)
 
     """
-    assert automaton_type == "mealy"
     assert extension_rule in {None, "SepSeq", "ADS"}
     assert separation_rule in {"SepSeq", "ADS"}
 
@@ -58,7 +59,7 @@ def run_Lsharp(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type,
             for input_seq, output_seq in samples:
                 sul.cache.add_to_cache(input_seq, output_seq)
 
-    ob_tree = ObservationTree(alphabet, sul, extension_rule, separation_rule)
+    ob_tree = ObservationTree(alphabet, sul, automaton_type, extension_rule, separation_rule)
     start_time = time.time()
 
     eq_query_time = 0

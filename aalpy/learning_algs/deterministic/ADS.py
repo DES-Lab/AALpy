@@ -34,15 +34,41 @@ class Ads:
         return self.initial_node.get_score()
 
     def construct_ads(self, ob_tree, current_block):
-        # builds the ADS tree recursively by selecting optimal inputs for splitting states
+        # Builds the ADS tree recursively by selecting optimal inputs for splitting states
+        # For DFA/Moore we have to consider the output for the empty word
+        if ob_tree.automaton_type == 'mealy':
+            return self.construct_ads_rec(ob_tree, current_block)
+        else:
+            if len(current_block) == 1:
+                return AdsNode.create_leaf()
+
+            # if none of the nodes in the current block have a successor, we cannot decide a next input
+            if not any([True for node in current_block if node.successors is not None]):
+                raise RuntimeError("No input available during ADS computation")
+
+            input = tuple()
+            empty_part = self.partition_on_output_empty(current_block, ob_tree.automaton_type)
+            u_i = sum(len(part) for part in empty_part.values())
+            score = 0
+            children = {}
+
+            for output, partition in empty_part.items():
+                output_score, subtree = self.compute_output_subtree(ob_tree, partition, u_i) 
+                score += output_score
+                children[output] = subtree
+
+            return AdsNode(input, children, score)
+
+    def construct_ads_rec(self, ob_tree, current_block):
+        # Builds the ADS tree recursively by selecting optimal inputs for splitting states
         if len(current_block) == 1:
             return AdsNode.create_leaf()
 
-        # if none of the nodes in the current block have a successor, we cannot decide a next input
+        # If none of the nodes in the current block have a successor, we cannot decide a next input
         if not any([True for node in current_block if node.successors is not None]):
             raise RuntimeError("No input available during ADS computation")
 
-        best_input, best_score = self.maximal_base_input(ob_tree.alphabet, current_block)
+        best_input, best_score = self.maximal_base_input(ob_tree.alphabet, current_block, ob_tree.automaton_type)
         best_children = None
 
         # The maximal apartness pairs is len(current block) - 1, for any current block, immediately return
@@ -50,7 +76,7 @@ class Ads:
             return AdsNode(best_input, best_children, best_score)
 
         for input_val in ob_tree.alphabet:
-            input_partitions = self.partition_on_output(current_block, input_val)
+            input_partitions = self.partition_on_output(current_block, input_val, ob_tree.automaton_type)
             u_i = sum(len(part) for part in input_partitions.values())
             input_score = 0
             children = {}
@@ -75,12 +101,12 @@ class Ads:
     def make_subtree(self, ob_tree, sub_trees, partition):
         # Constructs a subtree for a partition and calculates its score
         partition_size = len(partition)
-        child_score = self.construct_ads(ob_tree, partition).get_score()
+        child_score = self.construct_ads_rec(ob_tree, partition).get_score()
         return self.compute_reg_score(partition_size, sub_trees, child_score)
 
     def compute_output_subtree(self, ob_tree, partition, u_i):
         # Computes and scores a subtree for a specific output partition
-        output_subtree = self.construct_ads(ob_tree, partition)
+        output_subtree = self.construct_ads_rec(ob_tree, partition)
         output_score = self.compute_score(len(partition), u_i, output_subtree.get_score())
         return output_score, output_subtree
 
@@ -88,15 +114,31 @@ class Ads:
         # Calculates a score based on partition size and subtree characteristics
         return (u_io * (u_i - u_io + child_score)) / u_i
 
-    def partition_on_output(self, block, input_val):
+    def partition_on_output_empty(self, block, automaton_type):
+        # Partitions states in the block based on their output for the empty word
+        # Only use during the initial call
+        partition = defaultdict(list)
+        for node in block:
+            output = node.output
+            partition[output].append(node)
+        return partition
+
+    def partition_on_output(self, block, input_val, automaton_type):
         # Partitions states in the block based on their output for a given input
         partition = defaultdict(list)
         for node in block:
-            output = node.get_output(input_val)
-            if output is not None:
+            if automaton_type == 'mealy':
+                output = node.get_output(input_val)
+                if output is not None:
+                    successor = node.get_successor(input_val)
+                    if successor is not None:
+                        partition[output].append(successor)
+            else:
                 successor = node.get_successor(input_val)
                 if successor is not None:
-                    partition[output].append(successor)
+                    output = successor.output 
+                    if output is not None:
+                        partition[output].append(successor)
         return partition
 
     def next_input(self, prev_output):
@@ -108,14 +150,14 @@ class Ads:
             self.current_node = child
         return self.current_node.get_input()
 
-    def maximal_base_input(self, alphabet, block):
+    def maximal_base_input(self, alphabet, block, automaton_type):
         # Identifies the input with the highest ability to split the state block based on apartness
         # Does not use the recursive part of the formula
         best_input = alphabet[0]
         best_score = 0
 
         for input_val in alphabet:
-            partition = self.partition_on_output(block, input_val)
+            partition = self.partition_on_output(block, input_val, automaton_type)
             u_i = sum(len(part) for part in partition.values())
             score = 0
 

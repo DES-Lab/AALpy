@@ -45,6 +45,29 @@ def angluin_seminal_example():
     assert learned_dfa == dfa
     return learned_dfa
 
+def angluin_seminal_example_lsharp():
+    """
+    Example automaton from Angluin's seminal paper.
+    :return: learned DFA
+    """
+    from aalpy.SULs import AutomatonSUL
+    from aalpy.oracles import RandomWalkEqOracle
+    from aalpy.learning_algs import run_Lstar, run_Lsharp
+    from aalpy.utils import get_Angluin_dfa
+
+    dfa = get_Angluin_dfa()
+
+    alphabet = dfa.get_input_alphabet()
+
+    sul = AutomatonSUL(dfa)
+    eq_oracle = RandomWalkEqOracle(alphabet, sul, 500)
+
+    learned_dfa = run_Lsharp(alphabet, sul, eq_oracle, automaton_type='dfa',
+                            extension_rule="SepSeq", separation_rule="ADS", max_learning_rounds=50, print_level=3)
+
+    assert learned_dfa == dfa
+    return learned_dfa
+
 
 def tomita_example(tomita_number=3):
     """
@@ -157,7 +180,7 @@ def bluetooth_Lsharp():
     # Extension rule options: {"Nothing", "SepSeq", "ADS"}
     # Separation rule options: {"SepSeq", "ADS"}
     learned_mealy = run_Lsharp(input_alphabet, sul_mealy, eq_oracle, automaton_type='mealy', extension_rule=None,
-                               separation_rule="SepSeq", max_learning_rounds=50, print_level=1)
+                               separation_rule="SepSeq", max_learning_rounds=50, print_level=3)
 
 
 def bluetooth_adaptive_Lsharp():

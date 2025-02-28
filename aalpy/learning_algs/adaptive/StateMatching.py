@@ -35,7 +35,7 @@ class StateMatching:
         Updates the matching for the output queries posed during rebuilding
         """
         for basis_state in ob_tree.basis:
-            self.add_entry_basis(basis_state)
+            self.add_entry_basis(basis_state, ob_tree.automaton_type)
 
         for defined_part, new_part in ob_tree.initial_OQs:
             to_recalc = []
@@ -82,7 +82,7 @@ class StateMatching:
         """ 
         Initializes and updates the matching for a newly added basis state
         """
-        self.add_entry_basis(basis_state)
+        self.add_entry_basis(basis_state, ob_tree.automaton_type)
         longest_words = list(self.find_longest_words(basis_state, ob_tree, []))
         basis_state_access = ob_tree.get_access_sequence(basis_state)
 
@@ -103,7 +103,7 @@ class StateMatching:
         for inp in self.alphabet:
             if inp in current_state.successors:
                 new_seqs = self.find_longest_words(
-                    current_state.successors[inp][1], ob_tree, all_seqs)
+                    current_state.get_successor(inp), ob_tree, all_seqs)
                 for new_seq in new_seqs:
                     if new_seq not in all_seqs:
                         all_seqs.add(new_seq)
@@ -114,11 +114,10 @@ class StateMatching:
 
     def validate_reference_input(self, inputs, reference_state):
         """
-        Check if all inputs are valid (part of the alphabet)
-        Undefined inputs have output 'epsilon'
+        Check if all inputs are valid (part of the alphabet of the reference model)
         """
         for input_val in inputs:
-            if reference_state.output_fun[input_val] == 'epsilon':
+            if input_val not in reference_state.transitions:
                 return False
         return True
 
@@ -176,9 +175,22 @@ class TotalStateMatching(StateMatching):
     def __init__(self, alphabet, combined_model):
         super().__init__(alphabet, combined_model)
 
-    def add_entry_basis(self, basis_state):
-        """ Initializes a new matching row with 1 """
-        self.matchings[basis_state] = {ref_state: 1 for ref_state in self.combined_model.states}
+    def add_entry_basis(self, basis_state, aut_type):
+        """ Initializes a new matching row with 1 or empty word evaluation"""
+        if aut_type == 'mealy':
+            self.matchings[basis_state] = {ref_state: 1 for ref_state in self.combined_model.states}
+        else:
+            self.matchings[basis_state] = dict()
+            basis_out = basis_state.output 
+            for ref_state in self.combined_model.states:
+                if aut_type == 'dfa':
+                    ref_out = ref_state.is_accepting
+                elif aut_type == 'moore':
+                    ref_out = ref_state.output
+                if ref_out == basis_out:
+                    self.matchings[basis_state][ref_state] = 1
+                else:
+                    self.matchings[basis_state][ref_state] = 0
 
     def update_best_score(self, basis_state):
         """ Updates the best score for a basis state """
@@ -199,11 +211,19 @@ class TotalStateMatching(StateMatching):
             self.best_match[basis_state] = matches
 
     def update_score(self, ob_tree, basis_state, reference_state, basis_state_access, defined_after_access, new_part):
+        # calls update score for either mealy or moore/dfa 
+        if ob_tree.automaton_type == 'mealy':
+            return self.update_score_mealy(ob_tree, basis_state, reference_state, basis_state_access, defined_after_access, new_part)
+        else:
+            return self.update_score_moore(ob_tree, basis_state, reference_state, basis_state_access, defined_after_access, new_part)
+
+
+    def update_score_mealy(self, ob_tree, basis_state, reference_state, basis_state_access, defined_after_access, new_part):
         """ 
         Updates the matching score for a basis and reference state based on the: 
             basis access, already defined part after access and the new part
         For every input in the new part, we take a step in the ob_tree and in the combined model
-        If the combined model has output 'epsilon', the input is not in the reference alphabet, and we return
+        If the combined model has no transition for some input (because it is not in the reference alphabet), we return
         If the outputs differ, we set the matching to 0
         """
         if self.matchings[basis_state][reference_state] == 0:
@@ -213,9 +233,10 @@ class TotalStateMatching(StateMatching):
             tuple(basis_state_access) + tuple(defined_after_access))
         self.combined_model.execute_sequence(
             reference_state, defined_after_access)
+
         for inp in new_part:
             ob_out = current_ob_state.get_output(inp)
-            if reference_state.output_fun[inp] == 'epsilon':
+            if inp not in reference_state.output_fun:
                 return
 
             ref_out = self.combined_model.step(inp)
@@ -223,6 +244,42 @@ class TotalStateMatching(StateMatching):
                 self.matchings[basis_state][reference_state] = 0
                 return
             current_ob_state = current_ob_state.get_successor(inp)
+
+    def update_score_moore(self, ob_tree, basis_state, reference_state, basis_state_access, defined_after_access, new_part):
+        """ 
+        Updates the matching score for a basis and reference state based on the: 
+            basis access, already defined part after access and the new part
+        For every input in the new part, we take a step in the ob_tree and in the combined model
+        If the outputs differ, we set the matching to 0
+        """
+        orig_ref = reference_state
+        if self.matchings[basis_state][reference_state] == 0:
+            return
+
+        current_ob_state = ob_tree.get_successor(
+            tuple(basis_state_access) + tuple(defined_after_access))
+        self.combined_model.execute_sequence(reference_state, defined_after_access)
+        reference_state = self.combined_model.current_state
+
+        # need to test the empty word
+        if defined_after_access == (): 
+            if reference_state.is_accepting != current_ob_state.output:
+                self.matchings[basis_state][orig_ref] = 0
+                return
+
+        for inp in new_part:
+            if inp not in reference_state.transitions:
+                return
+            ref_out = self.combined_model.step(inp)
+            reference_state = self.combined_model.current_state
+
+            current_ob_state = current_ob_state.get_successor(inp)
+            ob_out = current_ob_state.output
+
+            if ob_out != ref_out:
+                self.matchings[basis_state][orig_ref] = 0
+                return
+
 
 
 class ApproximateStateMatching(StateMatching):
@@ -237,10 +294,23 @@ class ApproximateStateMatching(StateMatching):
         super().__init__(alphabet, combined_model)
         self.unmatched = set()
 
-    def add_entry_basis(self, basis_state):
-        """ Initializes a new matching row with [0,0] """
-        self.matchings[basis_state] = {ref_state: [0, 0]
-                                       for ref_state in self.combined_model.states}
+    def add_entry_basis(self, basis_state, aut_type):
+        """ Initializes a new matching row with [0,0] or empty word evaluation """
+        if aut_type == 'mealy':
+            self.matchings[basis_state] = {ref_state: [0, 0]
+                                        for ref_state in self.combined_model.states}
+        else:
+            self.matchings[basis_state] = dict()
+            basis_out = basis_state.output 
+            for ref_state in self.combined_model.states:
+                if aut_type == 'dfa':
+                    ref_out = ref_state.is_accepting
+                elif aut_type == 'moore':
+                    ref_out = ref_state.output
+                if ref_out == basis_out:
+                    self.matchings[basis_state][ref_state] = [1,1]
+                else:
+                    self.matchings[basis_state][ref_state] = [0,1]
 
     def get_score(self, basis_state, ref_state):
         """ Gets the score for a basis and reference states """
@@ -268,11 +338,18 @@ class ApproximateStateMatching(StateMatching):
             self.best_match[basis_state] = matches
 
     def update_score(self, ob_tree, basis_state, reference_state, basis_state_access, defined_after_access, new_part):
+        # calls update score for either mealy or moore/dfa 
+        if ob_tree.automaton_type == 'mealy':
+            return self.update_score_mealy(ob_tree, basis_state, reference_state, basis_state_access, defined_after_access, new_part)
+        else:
+            return self.update_score_moore(ob_tree, basis_state, reference_state, basis_state_access, defined_after_access, new_part)
+
+    def update_score_mealy(self, ob_tree, basis_state, reference_state, basis_state_access, defined_after_access, new_part):
         """ 
         Updates the matching score for a basis and reference state based on the: 
             basis access, already defined part after access and the new part
         For every input in the new part, we take a step in the ob_tree and in the combined model
-        If the combined model has output 'epsilon;, the input is not in the reference alphabet, and we return
+        If the combined model has no transition for some input (because it is not in the reference alphabet), we return
         If the outputs are equivalent, we add [1,1]
         If the outputs differ, we add [0,1]
         """
@@ -282,7 +359,7 @@ class ApproximateStateMatching(StateMatching):
 
         for inp in new_part:
             ob_out = current_ob_state.get_output(inp)
-            if self.combined_model.current_state.output_fun[inp] == 'epsilon':
+            if inp not in self.combined_model.current_state.output_fun:
                 break
 
             ref_out = self.combined_model.step(inp)
@@ -290,3 +367,30 @@ class ApproximateStateMatching(StateMatching):
             if ob_out == ref_out:
                 self.matchings[basis_state][reference_state][0] += 1
             current_ob_state = current_ob_state.get_successor(inp)
+
+    def update_score_moore(self, ob_tree, basis_state, reference_state, basis_state_access, defined_after_access, new_part):
+        """ 
+        Updates the matching score for a basis and reference state based on the: 
+            basis access, already defined part after access and the new part
+        For every input in the new part, we take a step in the ob_tree and in the combined model
+        If the combined model has no transition for some input (because it is not in the reference alphabet), we return
+        If the outputs are equivalent, we add [1,1]
+        If the outputs differ, we add [0,1]
+        """
+        orig_ref = reference_state
+        current_ob_state = ob_tree.get_successor(tuple(basis_state_access) + tuple(defined_after_access))
+        self.combined_model.execute_sequence(reference_state, defined_after_access)
+        reference_state = self.combined_model.current_state
+
+        for inp in new_part:
+            if inp not in reference_state.transitions:
+                return
+            ref_out = self.combined_model.step(inp)
+            reference_state = self.combined_model.current_state
+
+            current_ob_state = current_ob_state.get_successor(inp)
+            ob_out = current_ob_state.output
+
+            self.matchings[basis_state][orig_ref][1] += 1
+            if ob_out == ref_out:
+                self.matchings[basis_state][orig_ref][0] += 1
