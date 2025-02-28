@@ -338,7 +338,7 @@ def _process_node_label_prime(node_name, label, line, node_label_dict, node_type
 # TODO: robust patterns (break eg. if state label contains "-")
 label_pattern = r'label=("[^"]*"|[^\s\],]*)'
 starting_state_pattern = r'__start0\s*->\s*(\w+)\s*(?:\[label=""\])?;?'
-transition_pattern = r'(\w+)\s*->\s*(\w+)\s*(.*);'
+transition_pattern = r'(\w+)\s*->\s*(\w+)\s*(.*)?;?'
 
 
 def load_automaton_from_file(path, automaton_type, compute_prefixes=False):

@@ -1,12 +1,12 @@
 digraph {
-7
-0
-1
-2
-3
-4
-5
-6
+0 [label="s0"]
+1 [label="s1"]
+2 [label="s2"]
+3 [label="s3"]
+4 [label="s4"]
+5 [label="s5"]
+6 [label="s6"]
+7 [label="s7"]
 7 -> 6 [label="ApplicationData/Empty"]
 7 -> 6 [label="ApplicationDataEmpty/Empty"]
 7 -> 6 [label="ChangeCipherSpec/Empty"]
