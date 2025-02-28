@@ -339,7 +339,7 @@ def is_balanced(input_seq, vpa_alphabet):
 
 
 def generate_input_output_data_from_automata(model, num_sequances=4000, min_seq_len=1, max_seq_len=16,
-                                             sequance_type='labeled_sequences'):
+                                             sequance_type='io_traces'):
     assert sequance_type in {'io_traces', 'labeled_sequences'}
 
     alphabet = model.get_input_alphabet()

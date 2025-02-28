@@ -1,6 +1,6 @@
 from typing import Dict, Union
 
-from aalpy import DeterministicAutomaton
+from aalpy import DeterministicAutomaton, Onfsm, NDMooreMachine
 from aalpy.learning_algs.general_passive.GeneralizedStateMerging import run_GSM
 from aalpy.learning_algs.general_passive.Instrumentation import ProgressReport
 from aalpy.learning_algs.general_passive.GsmNode import GsmNode
@@ -61,22 +61,30 @@ def run_EDSM(data, automaton_type, input_completeness=None, print_info=True) -> 
 
 
 def run_k_tails(data, automaton_type, k, input_completeness=None, print_info=True) -> Union[
-    DeterministicAutomaton, None]:
+    Onfsm, NDMooreMachine, None]:
     """
     Runs k-tails.
 
     Args:
+
         data: sequence of input-output traces
-        automaton_type: either 'mealy' or 'moore'. Note that the data has to be prefix-closed.
+
+        automaton_type: either 'mealy' or 'moore'. Note that the data has to be prefix-closed, and the resulting model
+                        could be non-deterministic.
+
         k: depth until which to check node compatibility
+
         input_completeness: either None, 'sink_state', or 'self_loop'. If None, learned model could be input incomplete,
+
         sink_state will lead all undefined inputs form some state to the sink state, whereas self_loop will simply create
+
         a self loop. In case of Mealy learning output of the added transition will be 'epsilon'.
+
         print_info: print learning progress and runtime information
 
     Returns:
 
-        Model conforming to the data, or None if data is non-deterministic.
+        Model conforming to the data such that future compatibility is checked only until the depth of k.
 
     """
     assert automaton_type in {'mealy', 'moore'}
@@ -111,9 +119,8 @@ def run_Alergia_EDSM(data, automaton_type, eps=0.05, print_info=False):
 
     Args:
 
-        data: [[O,(I,O),(I,O)...],
-        [O,(I,O), (I, O)_,...],..,] if learning MDPs, or [[I,O,I,O...], [I,O_,...],..,] if learning SMMs
-         (I represents input, O output).
+        data: [[O,(I,O),(I,O)...], [O,(I,O), (I, O)_,...],..,] if learning MDPs,
+        or [[I,O,I,O...], [I,O_,...],..,] if learning SMMs (I represents input, O output).
         Note that in whole data first symbol of each entry should be the same (Initial output of the MDP).
 
         eps: epsilon value if you are using default HoeffdingCompatibility.
@@ -124,7 +131,7 @@ def run_Alergia_EDSM(data, automaton_type, eps=0.05, print_info=False):
 
     Returns:
 
-        An Mdp or SMM
+        A Mdp or SMM
     """
 
     assert automaton_type in {'mdp', 'smm'}

@@ -1324,3 +1324,23 @@ def gsm_IOAlergia_domain_knowldege():
         learned_model = run_GSM(traces, output_behavior="moore", transition_behavior="stochastic", score_calc=score,
                             compatibility_on_pta=True, compatibility_on_futures=True)
         learned_model.visualize(name)
+
+def k_tails_example():
+    from aalpy.learning_algs import run_k_tails
+    from aalpy.utils import generate_random_deterministic_automata, generate_input_output_data_from_automata
+
+    model = generate_random_deterministic_automata('moore', num_states=5,
+                                                   input_alphabet_size=3,
+                                                   output_alphabet_size=3)
+
+    data = generate_input_output_data_from_automata(model, num_sequances=2000,
+                                                    min_seq_len=1, max_seq_len=12,
+                                                    sequance_type='io_traces')
+
+    # k-trails works with prefix-closed input output traces, not labeled sequences like RPNI
+    # data is a list of sequences in this format [(i1, o1), (i2, o1), (i1, o3)]
+
+    # run k_tails with two different k's
+    k_trails_1 = run_k_tails(data, k=3, automaton_type='moore', print_info=True)
+
+    k_tails_2 = run_k_tails(data, k=8, automaton_type='mealy', print_info=True)
