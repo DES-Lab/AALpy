@@ -336,10 +336,9 @@ def _process_node_label_prime(node_name, label, line, node_label_dict, node_type
 
 
 # TODO: robust patterns (break eg. if state label contains "-")
-state_definition_pattern = r'(\w+)\s+\[label=("[^"]*"|[^\s\],]*)\]?;?'
 label_pattern = r'label=("[^"]*"|[^\s\],]*)'
 starting_state_pattern = r'__start0\s*->\s*(\w+)\s*(?:\[label=""\])?;?'
-transition_pattern = r'(\w+)\s*->\s*(\w+)\s*(\[.*\])?;?'
+transition_pattern = r'(\w+)\s*->\s*(\w+)\s*(.*);'
 
 
 def load_automaton_from_file(path, automaton_type, compute_prefixes=False):
@@ -385,12 +384,9 @@ def load_automaton_from_file(path, automaton_type, compute_prefixes=False):
                 initial_state = match.group(1).strip()
             # State definitions
             elif '__start0' not in line and 'label' in line and '->' not in line:
-                match = re.search(state_definition_pattern, line)
-                # ignore
-                if not match:
-                    continue
-                state_id = match.group(1)
-                label = _strip_label(match.group(2))
+                state_id = line.split('[')[0].strip()
+                match = re.search(label_pattern, line)
+                label = _strip_label(match.group(1))
                 _process_node_label_prime(state_id, label, line, node_label_dict, nodeType, automaton_type)
             # transitions
             elif '->' in line:
