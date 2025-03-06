@@ -102,6 +102,8 @@ class GeneralizedStateMerging:
             data_format = detect_data_format(data)
         if data_format == "labeled_sequences" and self.transition_behavior != "deterministic":
             raise ValueError("learning from labeled_sequences is not possible for nondeterministic systems")
+        if data_format == "traces" and self.transition_behavior == "deterministic":
+            print("learning deterministic systems from (output) traces only. this rarely makes sense. is `data_format` set correctly?")
         root = GsmNode.createPTA(data, self.output_behavior, data_format)
 
         root = self.pta_preprocessing(root)
