@@ -1,13 +1,13 @@
 digraph {
-6
-0
-1
-2
-3
-4
-5
-7
-8
+6 [label="s6"]
+0 [label="s0"]
+1 [label="s1"]
+2 [label="s2"]
+3 [label="s3"]
+4 [label="s4"]
+5 [label="s5"]
+7 [label="s7"]
+8 [label="s8"]
 6 -> 8 [label="ApplicationData/Alert Warning (Close notify)"]
 6 -> 5 [label="ApplicationDataEmpty/Empty"]
 6 -> 4 [label="ChangeCipherSpec/Empty"]

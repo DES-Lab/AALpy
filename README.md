@@ -22,20 +22,24 @@
 </div>
 <hr />
 
-AALpy is a light-weight automata learning library written in Python. 
+AALpy is a light-weight [automata learning](https://medium.com/p/82f7ec21d50d) library written in Python. 
 You can start learning models of black-box systems with a few lines of code.
 
+<!---
 AALpy supports both **active** and **passive** automata learning algorithms that can be used to learn a variety of modeling formalisms, including 
 **deterministic**, **non-deterministic**, and **stochastic automata**, as well as **deterministic context-free grammars/pushdown automata**.
 
+AALpy also features a Generalized State Merging (GSM) framework based on the [Red-Blue method](https://www.researchgate.net/publication/221523449_Results_of_the_Abbadingo_One_DFA_Learning_Competition_and_a_New_Evidence-Driven_State_Merging_Algorithm), which simplifies the implementation of more complex and extensible passive learning algorithms, such as EDSM, k-tails and likelihood-ratio.
+-->
+
 <div align="center">
    
-| **Automata Type** |                      **Supported Formalisms**                     | **Algorithms**        |                                                       **Features** |
-|-------------------|:-----------------------------------------------------------------:|-----------------------|-------------------------------------------------------------------:|
-| Deterministic     |                 DFAs <br /> Mealy Machines <br /> Moore Machines                 |      L* <br /> KV <br /> RPNI      | Seamless Caching <br /> Counterexample Processing <br /> 13 Equivalence Oracles  |
-| Non-Deterministic |                      ONFSM <br /> Abstracted ONFSM                      |        L*<sub>ONFSM</sub>       |                                 Size Reduction  Trough Abstraction |
-| Stochastic        | Markov Decision Processes <br /> Stochastic Mealy Machines <br /> Markov Chains | L*<sub>MDP</sub> <br /> L*<sub>SMM</sub> <br /> ALERGIA |               Counterexample Processing <br /> Exportable to PRISM format  <br /> Bindings to jALERGIA|
-| Pushdown          |          VPA/SEVPA                                                            | KV<sub>VPA</sub> <br /> PAPNI | Passive learning of VPAs <br /> Exclusive call-return pairs
+| **Automata Type** |                      **Supported Formalisms**                     | **Active Algorithms**                                          |              **Passive Algorithms**                |
+|-------------------|:-----------------------------------------------------------------:|---------------------------------------------------------|-------------------------------|
+| Deterministic     |                 DFAs <br /> Mealy Machines <br /> Moore Machines                 | L* <br /> KV <br />  L#           |        RPNI <br /> EDSM       |
+| Non-Deterministic |                      ONFSM <br /> Non-deterministic Moore Machines <br /> Abstracted ONFSM                      | L*<sub>ONFSM</sub>                                |  k-tails    |  
+| Stochastic        | Markov Decision Processes <br /> Stochastic Mealy Machines <br /> Markov Chains | L*<sub>MDP</sub> <br /> L*<sub>SMM</sub> | Alergia <br /> IoAlergia <br /> Alergia<sub>EDSM</sub> |    
+| Pushdown          |          VPA/SEVPA                                                            | KV<sub>VPA</sub>                  |    PAPNI      |    
 </div>
 
 ## Installation
@@ -55,6 +59,7 @@ For manual installation, clone the repo and install `pydot` (the only dependency
 
 ## Documentation and Wiki
 
+High level introduction to automata learning can be found at the following [Medium post](https://medium.com/p/82f7ec21d50d).
 If you are interested in automata learning or would like to understand the automata learning process in more detail,
 please check out our **Wiki**. On Wiki, you will find more detailed examples on how to use AALpy.
 - <https://github.com/DES-Lab/AALpy/wiki>

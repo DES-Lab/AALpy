@@ -14,6 +14,9 @@ class DfaState(AutomatonState, Generic[InputType]):
         self.transitions : Dict[InputType, DfaState] = dict()
         self.is_accepting = is_accepting
 
+    @property
+    def output(self):
+        return self.is_accepting
 
 class Dfa(DeterministicAutomaton[DfaState[InputType]]):
     """

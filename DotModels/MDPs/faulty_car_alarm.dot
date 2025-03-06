@@ -1,0 +1,26 @@
+digraph faulty_car_alarm {
+q1_locked_closed [label="N"];
+q2_locked_open [label="A"];
+q3_locked_closed [label="A"];
+q5_unlocked_closed [label="N"];
+q6_unlocked_open [label="N"];
+q7_locked_open [label="N"];
+q4_faulty [label="N"];
+q1_locked_closed -> q2_locked_open  [label="d:1"];
+q1_locked_closed -> q5_unlocked_closed  [label="l:1"];
+q2_locked_open -> q3_locked_closed  [label="d:1"];
+q2_locked_open -> q6_unlocked_open  [label="l:1"];
+q3_locked_closed -> q2_locked_open  [label="d:1"];
+q3_locked_closed -> q5_unlocked_closed  [label="l:1"];
+q5_unlocked_closed -> q6_unlocked_open  [label="d:1"];
+q5_unlocked_closed -> q1_locked_closed  [label="l:1"];
+q6_unlocked_open -> q5_unlocked_closed  [label="d:1"];
+q6_unlocked_open -> q7_locked_open  [label="l:1"];
+q7_locked_open -> q4_faulty  [label="d:1"];
+q7_locked_open -> q6_unlocked_open  [label="l:1"];
+q4_faulty -> q2_locked_open  [label="d:0.9"];
+q4_faulty -> q7_locked_open  [label="d:0.1"];
+q4_faulty -> q5_unlocked_closed  [label="l:1"];
+__start0 [label="", shape=none];
+__start0 -> q1_locked_closed  [label=""];
+}

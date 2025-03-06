@@ -45,6 +45,29 @@ def angluin_seminal_example():
     assert learned_dfa == dfa
     return learned_dfa
 
+def angluin_seminal_example_lsharp():
+    """
+    Example automaton from Angluin's seminal paper.
+    :return: learned DFA
+    """
+    from aalpy.SULs import AutomatonSUL
+    from aalpy.oracles import RandomWalkEqOracle
+    from aalpy.learning_algs import run_Lstar, run_Lsharp
+    from aalpy.utils import get_Angluin_dfa
+
+    dfa = get_Angluin_dfa()
+
+    alphabet = dfa.get_input_alphabet()
+
+    sul = AutomatonSUL(dfa)
+    eq_oracle = RandomWalkEqOracle(alphabet, sul, 500)
+
+    learned_dfa = run_Lsharp(alphabet, sul, eq_oracle, automaton_type='dfa',
+                            extension_rule="SepSeq", separation_rule="ADS", max_learning_rounds=50, print_level=3)
+
+    assert learned_dfa == dfa
+    return learned_dfa
+
 
 def tomita_example(tomita_number=3):
     """
@@ -142,6 +165,48 @@ def learn_date_validator():
     learned_model.visualize()
 
 
+def bluetooth_Lsharp():
+    from aalpy.utils import load_automaton_from_file
+    from aalpy.SULs import MealySUL
+    from aalpy.oracles import WpMethodEqOracle
+    from aalpy.learning_algs import run_Lsharp
+
+    mealy_machine = load_automaton_from_file(f'./DotModels/Bluetooth/CYW43455.dot', automaton_type='mealy')
+    input_alphabet = mealy_machine.get_input_alphabet()
+
+    sul_mealy = MealySUL(mealy_machine)
+    eq_oracle = WpMethodEqOracle(input_alphabet, sul_mealy, len(mealy_machine.states))
+
+    # Extension rule options: {"Nothing", "SepSeq", "ADS"}
+    # Separation rule options: {"SepSeq", "ADS"}
+    learned_mealy = run_Lsharp(input_alphabet, sul_mealy, eq_oracle, automaton_type='mealy', extension_rule=None,
+                               separation_rule="SepSeq", max_learning_rounds=50, print_level=3)
+
+
+def bluetooth_adaptive_Lsharp():
+    from aalpy.utils import load_automaton_from_file
+    from aalpy.SULs import MealySUL
+    from aalpy.oracles import WpMethodEqOracle
+    from aalpy.learning_algs import run_adaptive_Lsharp
+
+    reference1 = load_automaton_from_file(f'./DotModels/Bluetooth/CC2650.dot', automaton_type='mealy')
+    reference2 = load_automaton_from_file(f'./DotModels/Bluetooth/nRF52832.dot', automaton_type='mealy')
+    reference3 = load_automaton_from_file(f'./DotModels/Bluetooth/CC2640R2-no-feature-req.dot', automaton_type='mealy')
+    target = load_automaton_from_file(f'./DotModels/Bluetooth/CYW43455.dot', automaton_type='mealy')
+
+    input_alphabet = target.get_input_alphabet()
+
+    sul_mealy = MealySUL(target)
+    eq_oracle = WpMethodEqOracle(input_alphabet, sul_mealy, len(target.states))
+
+    # Rebuilding options: {True, False}
+    # State Matching options: {None, "Total", "Approximate"}
+    learned_mealy = run_adaptive_Lsharp(input_alphabet, sul_mealy, [reference1, reference2, reference3], eq_oracle,
+                                       automaton_type='mealy', extension_rule='SepSeq', separation_rule="ADS",
+                                       rebuilding=True, state_matching="Approximate", print_level=2)
+
+
+
 def random_deterministic_example_with_provided_sequences():
     from random import choice, randint
     from aalpy.SULs import AutomatonSUL
@@ -173,14 +238,8 @@ def random_deterministic_example_with_provided_sequences():
 def big_input_alphabet_example():
     """
         Small example where input alphabet can be huge and outputs are just true and false (DFA).
-
-    Args:
-        input_alphabet_size: size of input alphabet
-        automaton_depth: depth of alternating True/False paths in final automaton
-
-    Returns:
-        learned model
     """
+
     from aalpy.base import SUL
     from aalpy.learning_algs import run_Lstar
     from aalpy.oracles import RandomWMethodEqOracle
@@ -1104,15 +1163,12 @@ def passive_vpa_learning_arithmetics():
 
 def passive_vpa_learning_on_all_benchmark_models():
     from aalpy.learning_algs import run_PAPNI
-    from aalpy.utils.BenchmarkVpaModels import get_all_VPAs
+    from aalpy.utils.BenchmarkVpaModels import vpa_L1, vpa_L12, vpa_for_odd_parentheses
     from aalpy.utils import generate_input_output_data_from_vpa, convert_i_o_traces_for_RPNI
 
-    for gt in get_all_VPAs():
-
+    for gt in [vpa_L1(), vpa_L12(), vpa_for_odd_parentheses()]:
         vpa_alphabet = gt.input_alphabet
-        data = generate_input_output_data_from_vpa(gt, num_sequances=2000, min_seq_len=1, max_seq_len=16)
-
-        data = convert_i_o_traces_for_RPNI(data)
+        data = generate_input_output_data_from_vpa(gt, num_sequances=2000, max_seq_len=16)
 
         papni = run_PAPNI(data, vpa_alphabet, algorithm='gsm', print_info=True)
 
@@ -1124,3 +1180,167 @@ def passive_vpa_learning_on_all_benchmark_models():
                 assert False, 'Papni Learned Model not consistent with data.'
 
         print('PAPNI model conforms to data.')
+
+
+def gsm_rpni():
+    from aalpy import load_automaton_from_file
+    from aalpy.utils.Sampling import get_io_traces, sample_with_length_limits
+    from aalpy.learning_algs.general_passive.GeneralizedStateMerging import run_GSM
+
+    automaton = load_automaton_from_file("DotModels/car_alarm.dot", "moore")
+    input_traces = sample_with_length_limits(automaton.get_input_alphabet(), 100, 20, 30)
+    traces = get_io_traces(automaton, input_traces)
+
+    learned_model = run_GSM(traces, output_behavior="moore", transition_behavior="deterministic")
+    learned_model.visualize()
+
+
+def gsm_edsm():
+    from typing import Dict
+    from aalpy import load_automaton_from_file
+    from aalpy.utils.Sampling import get_io_traces, sample_with_length_limits
+    from aalpy.learning_algs.general_passive.GeneralizedStateMerging import run_GSM
+    from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreCalculation
+    from aalpy.learning_algs.general_passive.GsmNode import GsmNode
+
+    automaton = load_automaton_from_file("DotModels/car_alarm.dot", "moore")
+    input_traces = sample_with_length_limits(automaton.get_input_alphabet(), 100, 20, 30)
+    traces = get_io_traces(automaton, input_traces)
+
+    def EDSM_score(part: Dict[GsmNode, GsmNode]):
+        nr_partitions = len(set(part.values()))
+        nr_merged = len(part)
+        return nr_merged - nr_partitions
+
+    score = ScoreCalculation(score_function=EDSM_score)
+    learned_model = run_GSM(traces, output_behavior="moore", transition_behavior="deterministic", score_calc=score)
+    learned_model.visualize()
+
+
+def gsm_likelihood_ratio():
+    from typing import Dict
+    from scipy.stats import chi2
+    from aalpy.learning_algs.general_passive.GeneralizedStateMerging import run_GSM
+    from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreFunction, differential_info, ScoreCalculation
+    from aalpy.learning_algs.general_passive.GsmNode import GsmNode
+    from aalpy.utils.Sampling import get_io_traces, sample_with_length_limits
+    from aalpy import load_automaton_from_file
+
+    automaton = load_automaton_from_file("DotModels/MDPs/faulty_car_alarm.dot", "mdp")
+    input_traces = sample_with_length_limits(automaton.get_input_alphabet(), 2000, 20, 30)
+    traces = get_io_traces(automaton, input_traces)
+
+    def likelihood_ratio_score(alpha=0.05) -> ScoreFunction:
+        if not 0 < alpha <= 1:
+            raise ValueError(f"Confidence {alpha} not between 0 and 1")
+
+        def score_fun(part: Dict[GsmNode, GsmNode]):
+            llh_diff, param_diff = differential_info(part)
+            if param_diff == 0:
+                # This should cover the corner case when the partition merges only states with no outgoing transitions.
+                return -1  # Let them be very bad merges.
+            score = 1 - chi2.cdf(2 * llh_diff, param_diff)
+            if score < alpha:
+                return False
+            return score
+
+        return score_fun
+
+    score = ScoreCalculation(score_function=likelihood_ratio_score())
+    learned_model = run_GSM(traces, output_behavior="moore", transition_behavior="stochastic", score_calc=score)
+    learned_model.visualize()
+
+
+def gsm_IOAlergia_EDSM():
+    from aalpy.learning_algs.general_passive.GeneralizedStateMerging import run_GSM
+    from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import hoeffding_compatibility, ScoreCalculation
+    from aalpy.learning_algs.general_passive.GsmNode import GsmNode
+    from aalpy.utils.Sampling import get_io_traces, sample_with_length_limits
+    from aalpy import load_automaton_from_file
+
+    automaton = load_automaton_from_file("DotModels/MDPs/faulty_car_alarm.dot", "mdp")
+    input_traces = sample_with_length_limits(automaton.get_input_alphabet(), 2000, 20, 30)
+    traces = get_io_traces(automaton, input_traces)
+
+    class IOAlergiaWithEDSM(ScoreCalculation):
+        def __init__(self, epsilon):
+            super().__init__()
+            self.ioa_compatibility = hoeffding_compatibility(epsilon)
+            self.evidence = 0
+
+        def reset(self):
+            self.evidence = 0
+
+        def local_compatibility(self, a: GsmNode, b: GsmNode):
+            self.evidence += 1
+            return self.ioa_compatibility(a, b)
+
+        def score_function(self, part: dict[GsmNode, GsmNode]):
+            return self.evidence
+
+    epsilon = 0.05
+    scores = {
+        "IOA": ScoreCalculation(hoeffding_compatibility(epsilon)),
+        "IOA+EDSM": IOAlergiaWithEDSM(epsilon),
+    }
+    for name, score in scores.items():
+        learned_model = run_GSM(traces, output_behavior="moore", transition_behavior="stochastic", score_calc=score,
+                            compatibility_on_pta=True, compatibility_on_futures=True)
+        learned_model.visualize(name)
+
+
+def gsm_IOAlergia_domain_knowldege():
+    from aalpy.learning_algs.general_passive.GeneralizedStateMerging import run_GSM
+    from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import hoeffding_compatibility, ScoreCalculation
+    from aalpy.learning_algs.general_passive.GsmNode import GsmNode
+    from aalpy.utils.Sampling import get_io_traces, sample_with_length_limits
+    from aalpy import load_automaton_from_file
+
+    automaton = load_automaton_from_file("DotModels/MDPs/faulty_car_alarm.dot", "mdp")
+    input_traces = sample_with_length_limits(automaton.get_input_alphabet(), 2000, 20, 30)
+    traces = get_io_traces(automaton, input_traces)
+
+    ioa_compat = hoeffding_compatibility(0.05)
+
+    def get_parity(node: GsmNode):
+        pref = node.get_prefix()
+        return [sum(in_s == key for in_s, out_s in pref) % 2 for key in ["l", "d"]]
+
+    # The car has 4 physical states arising from the combination of locked/unlocked and open/closed.
+    # Each input toggles a transition between these four states. While the car alarm system has richer behavior than that,
+    # it still needs to discern the physical states. Thus, in every sane implementation of a car alarm system, every state
+    # is associated with exactly one physical state. This additional assumption can be enforced by checking the parity of
+    # all input symbols during merging.
+    def ioa_compat_domain_knowledge(a: GsmNode, b: GsmNode):
+        parity = get_parity(a) == get_parity(b)
+        ioa = ioa_compat(a, b)
+        return parity and ioa
+
+    scores = {
+        "IOA": ScoreCalculation(ioa_compat),
+        "IOA+DK": ScoreCalculation(ioa_compat_domain_knowledge),
+    }
+    for name, score in scores.items():
+        learned_model = run_GSM(traces, output_behavior="moore", transition_behavior="stochastic", score_calc=score,
+                            compatibility_on_pta=True, compatibility_on_futures=True)
+        learned_model.visualize(name)
+
+def k_tails_example():
+    from aalpy.learning_algs import run_k_tails
+    from aalpy.utils import generate_random_deterministic_automata, generate_input_output_data_from_automata
+
+    model = generate_random_deterministic_automata('moore', num_states=5,
+                                                   input_alphabet_size=3,
+                                                   output_alphabet_size=3)
+
+    data = generate_input_output_data_from_automata(model, num_sequances=2000,
+                                                    min_seq_len=1, max_seq_len=12,
+                                                    sequance_type='io_traces')
+
+    # k-trails works with prefix-closed input output traces, not labeled sequences like RPNI
+    # data is a list of sequences in this format [(i1, o1), (i2, o1), (i1, o3)]
+
+    # run k_tails with two different k's
+    k_trails_1 = run_k_tails(data, k=3, automaton_type='moore', print_info=True)
+
+    k_tails_2 = run_k_tails(data, k=8, automaton_type='mealy', print_info=True)

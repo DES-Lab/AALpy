@@ -1,8 +1,8 @@
-from itertools import product
 from random import shuffle, choice, randint
 
 from aalpy.base.Oracle import Oracle
 from aalpy.base.SUL import SUL
+from itertools import product
 
 
 class WMethodEqOracle(Oracle):
@@ -10,6 +10,7 @@ class WMethodEqOracle(Oracle):
     Equivalence oracle based on characterization set/ W-set. From 'Tsun S. Chow.   Testing software design modeled by
     finite-state machines'.
     """
+
     def __init__(self, alphabet: list, sul: SUL, max_number_of_states, shuffle_test_set=True):
         """
         Args:
@@ -25,25 +26,45 @@ class WMethodEqOracle(Oracle):
         self.shuffle = shuffle_test_set
         self.cache = set()
 
+    def test_suite(self, cover, depth, char_set):
+        """
+        Construct the test suite for the W Method using
+        the provided state cover and characterization set,
+        exploring up to a given depth.
+        Args:
+
+            cover: list of states to cover
+            depth: maximum length of middle part
+            char_set: characterization set
+        """
+        # fix the length of the middle part per loop
+        # to avoid generating large sequences early on
+        char_set = char_set or [()]
+        for d in range(depth):
+            middle = product(self.alphabet, repeat=d)
+            for m in middle:
+                for (s, c) in product(cover, char_set):
+                    yield s + m + c
+
     def find_cex(self, hypothesis):
 
         if not hypothesis.characterization_set:
             hypothesis.characterization_set = hypothesis.compute_characterization_set()
 
         # covers every transition of the specification at least once.
-        transition_cover = [state.prefix + (letter,) for state in hypothesis.states for letter in self.alphabet]
+        transition_cover = [
+            state.prefix + (letter,)
+            for state in hypothesis.states
+            for letter in self.alphabet
+        ]
 
-        middle = []
-        for i in range(self.m + 1 - len(hypothesis.states)):
-            middle.extend(list(product(self.alphabet, repeat=i)))
-
-        for seq in product(transition_cover, middle, hypothesis.characterization_set):
-            inp_seq = tuple([i for sub in seq for i in sub])
-            if inp_seq not in self.cache:
+        depth = self.m + 1 - len(hypothesis.states)
+        for seq in self.test_suite(transition_cover, depth, hypothesis.characterization_set):
+            if seq not in self.cache:
                 self.reset_hyp_and_sul(hypothesis)
                 outputs = []
 
-                for ind, letter in enumerate(inp_seq):
+                for ind, letter in enumerate(seq):
                     out_hyp = hypothesis.step(letter)
                     out_sul = self.sul.step(letter)
                     self.num_steps += 1
@@ -51,9 +72,8 @@ class WMethodEqOracle(Oracle):
                     outputs.append(out_sul)
                     if out_hyp != out_sul:
                         self.sul.post()
-                        return inp_seq[:ind + 1]
-                self.cache.add(inp_seq)
-            
+                        return seq[:ind + 1]
+                self.cache.add(seq)
 
         return None
 
@@ -64,6 +84,7 @@ class RandomWMethodEqOracle(Oracle):
     Random walks stem from fixed prefix (path to the state). At the end of the random
     walk an element from the characterization set is added to the test case.
     """
+
     def __init__(self, alphabet: list, sul: SUL, walks_per_state=12, walk_len=12):
         """
         Args:

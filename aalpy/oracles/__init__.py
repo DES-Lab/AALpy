@@ -8,6 +8,7 @@ from .StatePrefixEqOracle import StatePrefixEqOracle
 from .TransitionFocusOracle import TransitionFocusOracle
 from .UserInputEqOracle import UserInputEqOracle
 from .WMethodEqOracle import RandomWMethodEqOracle, WMethodEqOracle
+from .WpMethodEqOracle import RandomWpMethodEqOracle, WpMethodEqOracle
 from .PacOracle import PacOracle
 from .ProvidedSequencesOracleWrapper import ProvidedSequencesOracleWrapper
 from .PerfectKnowledgeEqOracle import PerfectKnowledgeEqOracle

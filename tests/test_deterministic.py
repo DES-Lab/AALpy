@@ -3,9 +3,9 @@ import unittest
 from aalpy.SULs import AutomatonSUL
 from aalpy.automata import Dfa, MealyMachine, MooreMachine
 from aalpy.learning_algs import run_Lstar
-from aalpy.oracles import WMethodEqOracle, RandomWalkEqOracle, StatePrefixEqOracle, TransitionFocusOracle, \
+from aalpy.oracles import WMethodEqOracle, WpMethodEqOracle, RandomWalkEqOracle, StatePrefixEqOracle, TransitionFocusOracle, \
     RandomWMethodEqOracle, BreadthFirstExplorationEqOracle, RandomWordEqOracle, CacheBasedEqOracle, \
-    KWayStateCoverageEqOracle
+    KWayStateCoverageEqOracle, RandomWpMethodEqOracle
 from aalpy.utils import get_Angluin_dfa, load_automaton_from_file
 from aalpy.utils.ModelChecking import bisimilar
 
@@ -112,14 +112,19 @@ class DeterministicTest(unittest.TestCase):
             tran_cov_eq_oracle = TransitionFocusOracle(alphabet, sul, num_random_walks=200, walk_len=30,
                                                        same_state_prob=0.3)
             w_method_eq_oracle = WMethodEqOracle(alphabet, sul, max_number_of_states=len(angluin_example.states) + 1)
+            wp_method_eq_oracle = WpMethodEqOracle(alphabet, sul, max_number_of_states=len(angluin_example.states) + 1)
+            rwp_method_eq_oracle = RandomWpMethodEqOracle(alphabet, sul)
             random_W_method_eq_oracle = RandomWMethodEqOracle(alphabet, sul, walks_per_state=10, walk_len=50)
             bf_exploration_eq_oracle = BreadthFirstExplorationEqOracle(alphabet, sul, 4)
             random_word_eq_oracle = RandomWordEqOracle(alphabet, sul)
             cache_based_eq_oracle = CacheBasedEqOracle(alphabet, sul)
             kWayStateCoverageEqOracle = KWayStateCoverageEqOracle(alphabet, sul)
 
-            oracles = [random_walk_eq_oracle, random_word_eq_oracle, random_W_method_eq_oracle, w_method_eq_oracle,
-                       kWayStateCoverageEqOracle, cache_based_eq_oracle, bf_exploration_eq_oracle, tran_cov_eq_oracle,
+            oracles = [random_walk_eq_oracle, random_word_eq_oracle,
+                       random_W_method_eq_oracle, w_method_eq_oracle,
+                       wp_method_eq_oracle, rwp_method_eq_oracle,
+                       kWayStateCoverageEqOracle, cache_based_eq_oracle,
+                       bf_exploration_eq_oracle, tran_cov_eq_oracle,
                        state_origin_eq_oracle]
 
             for oracle in oracles:
@@ -161,6 +166,9 @@ class DeterministicTest(unittest.TestCase):
                                                                        same_state_prob=0.3)
                             w_method_eq_oracle = WMethodEqOracle(alphabet, sul,
                                                                  max_number_of_states=len(angluin_example.states))
+                            wp_method_eq_oracle = WpMethodEqOracle(alphabet, sul,
+                                                                 max_number_of_states=len(angluin_example.states))
+                            rwp_method_eq_oracle = RandomWpMethodEqOracle(alphabet, sul)
                             random_W_method_eq_oracle = RandomWMethodEqOracle(alphabet, sul,
                                                                               walks_per_state=10, walk_len=50)
                             bf_exploration_eq_oracle = BreadthFirstExplorationEqOracle(alphabet, sul, 4)
@@ -168,8 +176,9 @@ class DeterministicTest(unittest.TestCase):
                             cache_based_eq_oracle = CacheBasedEqOracle(alphabet, sul)
 
                             oracles = [random_walk_eq_oracle, random_word_eq_oracle, random_W_method_eq_oracle,
-                                       cache_based_eq_oracle, bf_exploration_eq_oracle,
-                                       tran_cov_eq_oracle, w_method_eq_oracle, state_origin_eq_oracle]
+                                       rwp_method_eq_oracle, cache_based_eq_oracle, bf_exploration_eq_oracle, 
+                                       wp_method_eq_oracle, tran_cov_eq_oracle, w_method_eq_oracle,
+                                       state_origin_eq_oracle]
 
                             if not cache:
                                 oracles.remove(cache_based_eq_oracle)
