@@ -20,7 +20,7 @@ TransitionBehavior = str
 TransitionBehaviorRange = ["deterministic", "nondeterministic", "stochastic"]
 
 DataFormat = str
-DataFormatRange = ["io_traces", "labeled_sequences", "tree"]
+DataFormatRange = ["io_traces", "labeled_sequences", "traces", "tree"]
 
 IOPair = Tuple[Any, Any]
 IOTrace = Sequence[IOPair]
@@ -110,7 +110,8 @@ def detect_data_format(data, check_consistency=False, guess=False):
         if len(accepted_formats) == 1 and not check_consistency:
             return accepted_formats[0]
         if len(accepted_formats) == 0:
-            raise ValueError("invalid or inconsistent data. no options left")
+            return "traces" # default to traces
+            #raise ValueError("invalid or inconsistent data. no options left")
     if len(accepted_formats) != 1 and not guess:
         raise ValueError("ambiguous data format. data format needs to be specified explicitly.")
     return accepted_formats[0]
@@ -444,12 +445,14 @@ class GsmNode:
         if data_format == "labeled_sequences":
             for example in data:
                 root_node.add_labeled_sequence(example)
-        if data_format == "io_traces":
+        if data_format == "io_traces" or data_format == "traces":
             if output_behavior == "moore":
                 initial_output = data[0][0]
                 root_node.prefix_access_pair = (None, initial_output)
                 data = (d[1:] for d in data)
             for trace in data:
+                if data_format == "traces":
+                    trace = (("step", t) for t in trace)
                 root_node.add_trace(trace)
         return root_node
 
