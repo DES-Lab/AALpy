@@ -3,7 +3,7 @@ from collections import deque
 from typing import Dict, Tuple, Callable, List, Optional
 
 from aalpy.learning_algs.general_passive.GsmNode import GsmNode, OutputBehavior, TransitionBehavior, TransitionInfo, \
-    OutputBehaviorRange, TransitionBehaviorRange, intersection_iterator, NodeOrders, unknown_output
+    OutputBehaviorRange, TransitionBehaviorRange, intersection_iterator, NodeOrders, unknown_output, detect_data_format
 from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreCalculation, hoeffding_compatibility
 
 
@@ -93,13 +93,17 @@ class GeneralizedStateMerging:
 
     # TODO: make more generic by adding the option to use a different algorithm than red blue
     #  for selecting potential merge candidates. Maybe using inheritance with abstract `run`.
-    def run(self, data, convert=True, instrumentation: Instrumentation=None, data_format="io_traces"):
+    def run(self, data, convert=True, instrumentation: Instrumentation=None, data_format=None):
         if instrumentation is None:
             instrumentation = Instrumentation()
         instrumentation.reset(self)
 
+        if data_format is None:
+            data_format = detect_data_format(data)
         if data_format == "labeled_sequences" and self.transition_behavior != "deterministic":
             raise ValueError("learning from labeled_sequences is not possible for nondeterministic systems")
+        if data_format == "traces" and self.transition_behavior == "deterministic":
+            print("learning deterministic systems from (output) traces only. this rarely makes sense. is `data_format` set correctly?")
         root = GsmNode.createPTA(data, self.output_behavior, data_format)
 
         root = self.pta_preprocessing(root)
@@ -310,7 +314,7 @@ def run_GSM(data: list, *,
             depth_first=False,
             instrumentation=None,
             convert=True,
-            data_format='io_traces',
+            data_format=None,
             ):
     """
     Performs a state merging algorithm in the red-blue framework on provided data.

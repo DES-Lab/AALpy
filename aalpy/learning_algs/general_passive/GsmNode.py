@@ -20,7 +20,7 @@ TransitionBehavior = str
 TransitionBehaviorRange = ["deterministic", "nondeterministic", "stochastic"]
 
 DataFormat = str
-DataFormatRange = ["io_traces", "labeled_sequences", "tree"]
+DataFormatRange = ["io_traces", "labeled_sequences", "traces", "tree"]
 
 IOPair = Tuple[Any, Any]
 IOTrace = Sequence[IOPair]
@@ -50,6 +50,52 @@ def union_iterator(a: Dict[Key, Val], b: Dict[Key, Val], default: Val = None) ->
             continue
         a_val = a.get(key, default)
         yield key, a_val, b_val
+
+
+# TODO reuse in RPNI
+def detect_data_format(data, check_consistency=False, guess=False):
+    # The different data formats are
+    # - "tree": a tree-shaped automaton provided as a GsmNode
+    # - "io_traces": either
+    #   - Moore traces [[o, (i,o), (i,o), ...], ...]
+    #   - Mealy traces [[(i,o), (i,o), ...], ...]
+    # - "labeled_sequences": [([i, i, ...], o), ...]
+    # - "traces": [[o, o, ...], ...]
+
+    if isinstance(data, GsmNode):
+        if not data.is_tree():
+            raise ValueError("provided automaton is not a tree")
+        return "tree"
+
+    accepted_types = (Tuple, List)
+
+    # mapping data formats to compatibility criteria
+    check_dict = dict(
+        io_traces=lambda obj: len(obj) <= 1 or all(isinstance(o, accepted_types) and len(o) == 2 for o in obj[1:]),
+        labeled_sequences=lambda obj: len(obj) == 2 and isinstance(obj[0], accepted_types),
+    )
+    accept_dict = {k: True for k in check_dict}
+
+    if not isinstance(data, accepted_types):
+        raise ValueError("wrong input format. expected tuple or list.")
+    if len(data) == 0:
+        return "io_traces"
+
+    accepted_formats = list(accept_dict.keys())
+    for data_point in data:
+        if not isinstance(data_point, accepted_types):
+            raise ValueError("wrong input format. expected tuple or list.")
+        for k, check in check_dict.items():
+            accept_dict[k] &= check(data_point)
+        accepted_formats = [k for k, v in accept_dict.items() if v]
+        if len(accepted_formats) == 1 and not check_consistency:
+            return accepted_formats[0]
+        if len(accepted_formats) == 0:
+            return "traces" # default to traces
+            #raise ValueError("invalid or inconsistent data. no options left")
+    if len(accepted_formats) != 1 and not guess:
+        raise ValueError("ambiguous data format. data format needs to be specified explicitly.")
+    return accepted_formats[0]
 
 
 # TODO maybe split this for maintainability (and perfomance?)
@@ -379,6 +425,8 @@ class GsmNode:
 
     @staticmethod
     def createPTA(data, output_behavior, data_format=None) -> 'GsmNode':
+        if data_format is None:
+            data_format = detect_data_format(data)
         if data_format not in DataFormatRange:
             raise ValueError(f"invalid data format {data_format}. should be in {DataFormatRange}")
 
@@ -388,12 +436,14 @@ class GsmNode:
         if data_format == "labeled_sequences":
             for example in data:
                 root_node.add_labeled_sequence(example)
-        if data_format == "io_traces":
+        if data_format == "io_traces" or data_format == "traces":
             if output_behavior == "moore":
                 initial_output = data[0][0]
                 root_node.prefix_access_pair = (None, initial_output)
                 data = (d[1:] for d in data)
             for trace in data:
+                if data_format == "traces":
+                    trace = (("step", t) for t in trace)
                 root_node.add_trace(trace)
         return root_node
 
