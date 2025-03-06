@@ -72,40 +72,48 @@ def union_iterator(a: Dict[Key, Val], b: Dict[Key, Val], default: Val = None) ->
 
 
 # TODO reuse in RPNI
-def detect_data_format(data, check_consistency=True):
-    accepted_types = (Tuple, List)
-    data_format = None
-    def check_data_format(value):
-        if data_format is None or data_format == value:
-            return value
-        raise ValueError("inconsistent data")
+def detect_data_format(data, check_consistency=False, guess=False):
+    # The different data formats are
+    # - "tree": a tree-shaped automaton provided as a GsmNode
+    # - "io_traces": either
+    #   - Moore traces [[o, (i,o), (i,o), ...], ...]
+    #   - Mealy traces [[(i,o), (i,o), ...], ...]
+    # - "labeled_sequences": [([i, i, ...], o), ...]
+    # - "traces": [[o, o, ...], ...]
 
     if isinstance(data, GsmNode):
         if not data.is_tree():
             raise ValueError("provided automaton is not a tree")
         return "tree"
+
+    accepted_types = (Tuple, List)
+
+    # mapping data formats to compatibility criteria
+    check_dict = dict(
+        io_traces=lambda obj: len(obj) <= 1 or all(isinstance(o, accepted_types) and len(o) == 2 for o in obj[1:]),
+        labeled_sequences=lambda obj: len(obj) == 2 and isinstance(obj[0], accepted_types),
+    )
+    accept_dict = {k: True for k in check_dict}
+
     if not isinstance(data, accepted_types):
         raise ValueError("wrong input format. expected tuple or list.")
     if len(data) == 0:
         return "io_traces"
+
+    accepted_formats = list(accept_dict.keys())
     for data_point in data:
-        if len(data_point) != 2:
-            data_format = check_data_format("io_traces")
-            if check_consistency:
-                continue
-            return data_format
-        o1, o2 = data_point
-        if not isinstance(o1, accepted_types):
-            data_format = check_data_format("io_traces")
-            if not check_consistency:
-                return data_format
-        if not isinstance(o2, accepted_types):
-            data_format = check_data_format("labeled_sequences")
-            if not check_consistency:
-                return data_format
-    if data_format is None:
+        if not isinstance(data_point, accepted_types):
+            raise ValueError("wrong input format. expected tuple or list.")
+        for k, check in check_dict.items():
+            accept_dict[k] &= check(data_point)
+        accepted_formats = [k for k, v in accept_dict.items() if v]
+        if len(accepted_formats) == 1 and not check_consistency:
+            return accepted_formats[0]
+        if len(accepted_formats) == 0:
+            raise ValueError("invalid or inconsistent data. no options left")
+    if len(accepted_formats) != 1 and not guess:
         raise ValueError("ambiguous data format. data format needs to be specified explicitly.")
-    return data_format
+    return accepted_formats[0]
 
 
 # TODO maybe split this for maintainability (and perfomance?)
