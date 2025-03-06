@@ -1161,12 +1161,12 @@ def passive_vpa_learning_on_all_benchmark_models():
 
 def gsm_rpni():
     from aalpy import load_automaton_from_file
-    from aalpy.utils.Sampling import get_io_traces, sample_with_length_limits
+    from aalpy.utils.Sampling import get_data_from_input_sequence, sample_with_length_limits
     from aalpy.learning_algs.general_passive.GeneralizedStateMerging import run_GSM
 
     automaton = load_automaton_from_file("DotModels/car_alarm.dot", "moore")
     input_traces = sample_with_length_limits(automaton.get_input_alphabet(), 100, 20, 30)
-    traces = get_io_traces(automaton, input_traces)
+    traces = get_data_from_input_sequence(automaton, input_traces, "io_traces")
 
     learned_model = run_GSM(traces, output_behavior="moore", transition_behavior="deterministic")
     learned_model.visualize()
