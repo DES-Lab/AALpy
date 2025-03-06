@@ -34,9 +34,9 @@ AALpy also features a Generalized State Merging (GSM) framework based on the [Re
 
 <div align="center">
    
-| **Automata Type** |                      **Supported Formalisms**                     | **Active Algorithms**                                          |              **Passive Algorithms**                       |
-|-------------------|:-----------------------------------------------------------------:|---------------------------------------------------------|------------------------------------|
-| Deterministic     |                 DFAs <br /> Mealy Machines <br /> Moore Machines                 | L* <br /> KV <br />  L#           |        RPNI <br /> EDSM <br /> GSM      |
+| **Automata Type** |                      **Supported Formalisms**                     | **Active Algorithms**                                          |              **Passive Algorithms**                |
+|-------------------|:-----------------------------------------------------------------:|---------------------------------------------------------|-------------------------------|
+| Deterministic     |                 DFAs <br /> Mealy Machines <br /> Moore Machines                 | L* <br /> KV <br />  L#           |        RPNI <br /> EDSM       |
 | Non-Deterministic |                      ONFSM <br /> Non-deterministic Moore Machines <br /> Abstracted ONFSM                      | L*<sub>ONFSM</sub>                                |  k-tails    |  
 | Stochastic        | Markov Decision Processes <br /> Stochastic Mealy Machines <br /> Markov Chains | L*<sub>MDP</sub> <br /> L*<sub>SMM</sub> | Alergia <br /> IoAlergia <br /> Alergia<sub>EDSM</sub> |    
 | Pushdown          |          VPA/SEVPA                                                            | KV<sub>VPA</sub>                  |    PAPNI      |    
