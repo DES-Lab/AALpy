@@ -237,12 +237,11 @@ class GeneralizedStateMerging:
                 return red_node
         else:
             def update_partition(red_node: GsmNode, blue_node: Optional[GsmNode]) -> GsmNode:
-                if red_node not in partitioning.full_mapping:
+                p = partitioning.full_mapping.get(red_node) # could check smaller .red_mapping?
+                if p is None:
                     p = red_node.shallow_copy()
                     partitioning.full_mapping[red_node] = p
                     partitioning.red_mapping[red_node] = p
-                else:
-                    p = partitioning.full_mapping[red_node]
                 if blue_node is not None:
                     partitioning.full_mapping[blue_node] = p
                 return p
