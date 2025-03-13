@@ -196,9 +196,9 @@ class GsmNode:
     def shallow_copy(self) -> 'GsmNode':
         node = GsmNode(self.prefix_access_pair, self.predecessor)
         for in_sym, t in self.transitions.items():
-            d = dict()
-            for out_sym, v in t.items():
-                d[out_sym] = copy(v)
+            d = dict() # appears to be faster than dict comprehension
+            for out_sym, ti in t.items():
+                d[out_sym] = TransitionInfo(ti.target, ti.count, ti.original_target, ti.original_count)
             node.transitions[in_sym] = d
         return node
 
