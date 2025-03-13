@@ -458,7 +458,7 @@ class GsmNode:
         for _, trans_self, trans_other in intersection_iterator(self.transitions, other.transitions):
             if unknown_output in trans_self or unknown_output in trans_other:
                 continue
-            if list(trans_self.keys()) != list(trans_other.keys()):
+            if trans_self.keys() != trans_other.keys():
                 return False
         return True
 
