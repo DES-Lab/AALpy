@@ -191,7 +191,7 @@ class GsmNode:
     def transition_iterator(self) -> Iterable[Tuple[Tuple[Any, Any], TransitionInfo]]:
         for in_sym, transitions in self.transitions.items():
             for out_sym, node in transitions.items():
-                yield (in_sym, out_sym), node
+                yield in_sym, out_sym, node
 
     def shallow_copy(self) -> 'GsmNode':
         node = GsmNode(self.prefix_access_pair, self.predecessor)
@@ -220,7 +220,7 @@ class GsmNode:
         result = [self]
         backing_set = {self}
         for state in result:
-            for _, transition in state.transition_iterator():
+            for _, _, transition in state.transition_iterator():
                 child = transition.target
                 if child not in backing_set:
                     backing_set.add(child)
@@ -232,7 +232,7 @@ class GsmNode:
         backing_set = {self}
         while len(q) != 0:
             current = q.pop(0)
-            for _, transition in current.transition_iterator():
+            for _, _, transition in current.transition_iterator():
                 child = transition.target
                 if child in backing_set:
                     return False
@@ -325,7 +325,7 @@ class GsmNode:
                     return f'{node.get_prefix_output()} {node.count()}'
             else:
                 def state_label(node: GsmNode):
-                    return f'{sum(t.count for _, t in node.transition_iterator())}'
+                    return f'{sum(t.count for _, _, t in node.transition_iterator())}'
         if trans_label is None and "label" not in trans_props:
             if output_behavior == "moore":
                 def trans_label(node: GsmNode, in_sym, out_sym):
@@ -464,7 +464,7 @@ class GsmNode:
 
     def is_moore(self):
         for node in self.get_all_nodes():
-            for (in_sym, out_sym), transition in node.transition_iterator():
+            for in_sym, out_sym, transition in node.transition_iterator():
                 child_output = transition.target.get_prefix_output()
                 if out_sym is not unknown_output and child_output != out_sym:
                     return False
@@ -487,7 +487,7 @@ class GsmNode:
         return llc
 
     def count(self):
-        return sum(trans.count for _, trans in self.transition_iterator())
+        return sum(trans.count for _, _, trans in self.transition_iterator())
 
 
 class NodeOrders:

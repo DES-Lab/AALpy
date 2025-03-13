@@ -122,7 +122,7 @@ class GeneralizedStateMerging:
             # get blue states
             blue_states = []
             for r in red_states:
-                for _, t in r.transition_iterator():
+                for _, _, t in r.transition_iterator():
                     c = t.target
                     if c in red_states:
                         continue
