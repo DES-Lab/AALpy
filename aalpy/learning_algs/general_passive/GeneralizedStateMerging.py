@@ -3,7 +3,7 @@ from collections import deque
 from typing import Dict, Tuple, Callable, List, Optional
 
 from aalpy.learning_algs.general_passive.GsmNode import GsmNode, OutputBehavior, TransitionBehavior, TransitionInfo, \
-    OutputBehaviorRange, TransitionBehaviorRange, intersection_iterator, NodeOrders, unknown_output, detect_data_format
+    OutputBehaviorRange, TransitionBehaviorRange, intersection_iterator, unknown_output, detect_data_format
 from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreCalculation, hoeffding_compatibility
 
 
@@ -69,9 +69,7 @@ class GeneralizedStateMerging:
         self.score_calc: ScoreCalculation = score_calc
 
         if node_order is None:
-            node_order = NodeOrders.Default
-        if node_order is NodeOrders.NoCompare or node_order is NodeOrders.Default:
-            self.node_order = node_order
+            self.node_order = GsmNode.default_order
         else:
             self.node_order = functools.cmp_to_key(lambda a, b: -1 if node_order(a, b) else 1)
 
@@ -119,6 +117,10 @@ class GeneralizedStateMerging:
 
         partition_candidates: Dict[Tuple[GsmNode, GsmNode], Partitioning] = dict()
         while True:
+            # sort states. states are always sorted using default order on original prefix
+            if self.node_order is not GsmNode.default_order:
+                red_states.sort(key=self.node_order)
+
             # get blue states
             blue_states = []
             for r in red_states:
@@ -127,17 +129,16 @@ class GeneralizedStateMerging:
                     if c in red_states:
                         continue
                     blue_states.append(c)
-                    if self.consider_only_min_blue or not self.score_calc.has_score_function():
-                        blue_states = [min(blue_states, key=self.node_order)]
+                    if self.consider_only_min_blue and self.node_order is GsmNode.default_order:
+                        break
 
             # no blue states left -> done
             if len(blue_states) == 0:
                 break
-            if self.node_order is not NodeOrders.NoCompare:
+            if self.consider_only_min_blue: # does it make sense to check the score function here?
+                blue_states = [min(blue_states, key=self.node_order)]
+            if self.node_order is not GsmNode.default_order:
                 blue_states.sort(key=self.node_order)
-                # red states are always sorted using default order on original prefix
-                if self.node_order is not NodeOrders.Default:
-                    red_states.sort(key=self.node_order)
 
             # loop over blue states
             promotion = False
