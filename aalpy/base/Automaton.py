@@ -143,6 +143,9 @@ class Automaton(ABC, Generic[AutomatonStateType]):
         make_input_complete(self, missing_transition_go_to)
 
     def execute_sequence(self, origin_state, seq):
+        # to account epsilon in DFAs, Moore, MDPs machines
+        # if not seq:
+        #     return origin_state.output
         self.current_state = origin_state
         return [self.step(s) for s in seq]
 

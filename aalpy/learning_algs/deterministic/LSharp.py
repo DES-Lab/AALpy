@@ -1,19 +1,19 @@
 import time
-import random
 
 from aalpy.base import Oracle, SUL
-from aalpy.learning_algs.deterministic import Apartness, ADS
-from aalpy.automata import MealyMachine, MealyState
+from aalpy.utils.HelperFunctions import print_learning_info
 from .ObservationTree import ObservationTree
 from ...base.SUL import CacheSUL
-from aalpy.utils import bisimilar
-from aalpy.utils.HelperFunctions import print_learning_info
-from aalpy.oracles import WMethodEqOracle, WpMethodEqOracle, PerfectKnowledgeEqOracle
 
 
-def run_Lsharp(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, extension_rule="Nothing", separation_rule="SepSeq", samples=[], max_learning_rounds=None, cache_and_non_det_check=True, return_data=False, print_level=2):
+def run_Lsharp(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type,
+               extension_rule='SepSeq', separation_rule="ADS", samples=None,
+               max_learning_rounds=None, cache_and_non_det_check=True, return_data=False, print_level=2):
     """
-    Executes the L# algorithm (prefix-tree based automaton learning).
+    Based on ''A New Approach for Active Automata Learning Based on Apartness'' from Vaandrager, Garhewal, Rot and Wissmann. 
+    and ''L# for DFAs'' from Vaandrager, Sanders.
+
+    The algorithm learns a DFA/Moore machine/Mealy machine using apartness and an observation tree. 
 
     Args:
 
@@ -23,9 +23,9 @@ def run_Lsharp(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, exte
 
         eq_oracle: equivalence oracle
 
-        automaton_type: currently only 'mealy' is accepted
+        automaton_type: type of automaton to be learned. Either 'dfa', 'mealy' or 'moore'
 
-        extension_rule: strategy used during the extension rule. Options: "Nothing" (default), "SepSeq" and "ADS".
+        extension_rule: strategy used during the extension rule. Options: None, "SepSeq" (default) and "ADS".
 
         separation_rule: strategy used during the extension rule. Options: "SepSeq" (default) and "ADS".
 
@@ -34,7 +34,7 @@ def run_Lsharp(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, exte
 
         max_learning_rounds: number of learning rounds after which learning will terminate (Default value = None)
 
-        cache: Use caching (Default value = True)
+        cache_and_non_det_check: Use caching and non-determinism checks (Default value = True)
 
         return_data: if True, a map containing all information(runtime/#queries/#steps) will be returned
             (Default value = False)
@@ -47,8 +47,7 @@ def run_Lsharp(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, exte
         automaton of type automaton_type (dict containing all information about learning if 'return_data' is True)
 
     """
-    assert automaton_type == "mealy"
-    assert extension_rule in {"Nothing", "SepSeq", "ADS"}
+    assert extension_rule in {None, "SepSeq", "ADS"}
     assert separation_rule in {"SepSeq", "ADS"}
 
     if cache_and_non_det_check or samples is not None:
@@ -60,10 +59,12 @@ def run_Lsharp(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, exte
             for input_seq, output_seq in samples:
                 sul.cache.add_to_cache(input_seq, output_seq)
 
-    ob_tree = ObservationTree(alphabet, sul, extension_rule, separation_rule)
+    ob_tree = ObservationTree(alphabet, sul, automaton_type, extension_rule, separation_rule)
     start_time = time.time()
+
     eq_query_time = 0
     learning_rounds = 0
+    hypothesis = None
 
     while True:
         learning_rounds += 1

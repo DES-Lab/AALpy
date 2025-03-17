@@ -14,7 +14,7 @@ class TestCharSet(unittest.TestCase):
                                                  automaton_type='mealy'),
                 "openssl": load_automaton_from_file('../DotModels/TLS/OpenSSL_1.0.2_server_regular.dot',
                                                     automaton_type='mealy'),
-                "tcp_server": load_automaton_from_file('../DotModels/TCP/TCP_Linux_Server.dot',
+                "tcp_server": load_automaton_from_file('../DotModels/TCP/TCP_Linux_Client.dot',
                                                        automaton_type='mealy')}
 
     def test_can_differentiate(self):

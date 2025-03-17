@@ -43,41 +43,50 @@ class SUL(ABC):
     def io_query(self, word : tuple):
         return list(zip(word, self.query(word)))
 
-    def adaptive_query(self, inputs, ads):
+    def adaptive_query(self, word, ads):
         """
+
         Performs an adaptive output query on the SUL. Before the query, pre() method is called and after the query post()
         method is called. The ADS is a tree like object, the next input depends on the previous input-output pairs. Each input is executed using the step method. Currently only implemented for Mealy machines
 
         Args:
 
-            word: output query (word consisting of inputs)
+            word: membership query (word consisting of letters/inputs)
+
+            ads: adaptive distinguishing suffix
 
         Returns:
 
             list of outputs, where the i-th output corresponds to the output of the system after the i-th input
         """
         self.pre()
+
         outputs_received = []
         last_output = None
 
-        for inp in inputs:
+        for inp in word:
             output = self.step(inp)
             outputs_received.append(output)
-        self.num_steps += len(inputs)
+
+        self.num_steps += len(word)
 
         while True:
             next_input = ads.next_input(last_output)
             if next_input is None:
                 break
-            inputs.append(next_input)
-            output = self.step(next_input) 
-            outputs_received.append(output)
-            last_output = output
-            self.num_steps += 1
+            if next_input is tuple(): # Relevant for DFA/Moore
+                last_output = self.step(None)
+            else:
+                word.append(next_input)
+                output = self.step(next_input) 
+                outputs_received.append(output)
+                last_output = output
+                self.num_steps += 1
 
         self.num_queries += 1
         self.post()
-        return inputs, outputs_received
+
+        return word, outputs_received
 
     @abstractmethod
     def pre(self):

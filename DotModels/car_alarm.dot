@@ -1,0 +1,22 @@
+digraph car_alarm {
+q1_locked_closed [label="N"];
+q2_locked_open [label="A"];
+q3_locked_closed [label="A"];
+q5_unlocked_closed [label="N"];
+q6_unlocked_open [label="N"];
+q7_locked_open [label="N"];
+q1_locked_closed -> q2_locked_open  [label="d"];
+q1_locked_closed -> q5_unlocked_closed  [label="l"];
+q2_locked_open -> q3_locked_closed  [label="d"];
+q2_locked_open -> q6_unlocked_open  [label="l"];
+q3_locked_closed -> q2_locked_open  [label="d"];
+q3_locked_closed -> q5_unlocked_closed  [label="l"];
+q5_unlocked_closed -> q6_unlocked_open  [label="d"];
+q5_unlocked_closed -> q1_locked_closed  [label="l"];
+q6_unlocked_open -> q5_unlocked_closed  [label="d"];
+q6_unlocked_open -> q7_locked_open  [label="l"];
+q7_locked_open -> q1_locked_closed  [label="d"];
+q7_locked_open -> q6_unlocked_open  [label="l"];
+__start0 [label="", shape=none];
+__start0 -> q1_locked_closed  [label=""];
+}
