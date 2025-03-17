@@ -144,8 +144,8 @@ class Automaton(ABC, Generic[AutomatonStateType]):
 
     def execute_sequence(self, origin_state, seq):
         # to account epsilon in DFAs, Moore, MDPs machines
-        if not seq:
-            return origin_state.output
+        # if not seq:
+        #     return origin_state.output
         self.current_state = origin_state
         return [self.step(s) for s in seq]
 
