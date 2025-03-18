@@ -120,8 +120,9 @@ def run_Alergia_EDSM(data, automaton_type, eps=0.05, print_info=False):
     Args:
 
         data: [[O,(I,O),(I,O)...], [O,(I,O), (I, O)_,...],..,] if learning MDPs,
-        or [[I,O,I,O...], [I,O_,...],..,] if learning SMMs (I represents input, O output).
-        Note that in whole data first symbol of each entry should be the same (Initial output of the MDP).
+        or [[I,O,I,O...], [I,O_,...],..,] if learning SMMs (I represent input, O output), or [[O, O, O], ...] if
+        learning Markov chains.
+        Note that when learning MDPs and MCs the first symbol of each entry should be the same (Initial output).
 
         eps: epsilon value if you are using default HoeffdingCompatibility.
 
@@ -131,10 +132,11 @@ def run_Alergia_EDSM(data, automaton_type, eps=0.05, print_info=False):
 
     Returns:
 
-        A Mdp or SMM
+        A Mc, Mdp or SMM
     """
+    from aalpy.utils.HelperFunctions import mc_format_to_mdp, mc_from_mdp
 
-    assert automaton_type in {'mdp', 'smm'}
+    assert automaton_type in {'mc', 'mdp', 'smm',}
 
     print_level = ProgressReport(1) if print_info else None
 
@@ -154,11 +156,16 @@ def run_Alergia_EDSM(data, automaton_type, eps=0.05, print_info=False):
         def score_function(self, part: dict[GsmNode, GsmNode]):
             return self.evidence
 
-    output_behaviour = 'moore' if automaton_type == 'mdp' else 'mealy'
+    output_behaviour = 'moore' if automaton_type != 'smm' else 'mealy'
 
-    learned_model = run_GSM(data, output_behavior=output_behaviour, transition_behavior="stochastic",
+    learning_data = data if automaton_type != 'mc' else mc_format_to_mdp(data)
+
+    learned_model = run_GSM(learning_data, output_behavior=output_behaviour, transition_behavior="stochastic",
                             score_calc=IOAlergiaWithEDSM(eps),
                             compatibility_on_pta=True, compatibility_on_futures=True,
                             instrumentation=print_level, data_format='io_traces')
+
+    if automaton_type == 'mc':
+        learned_model = mc_from_mdp(learned_model)
 
     return learned_model

@@ -1251,7 +1251,7 @@ def gsm_likelihood_ratio():
     learned_model.visualize()
 
 
-def gsm_IOAlergia_EDSM():
+def example_Alergia_extension():
     from aalpy.learning_algs.general_passive.GeneralizedStateMerging import run_GSM
     from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import hoeffding_compatibility, ScoreCalculation
     from aalpy.learning_algs.general_passive.GsmNode import GsmNode
@@ -1261,6 +1261,8 @@ def gsm_IOAlergia_EDSM():
     automaton = load_automaton_from_file("DotModels/MDPs/faulty_car_alarm.dot", "mdp")
     input_traces = sample_with_length_limits(automaton.get_input_alphabet(), 2000, 20, 30)
     traces = get_io_traces(automaton, input_traces)
+
+    # NOTE THAT This example is equivalent to a call to a function run_Alergia_EDSM
 
     class IOAlergiaWithEDSM(ScoreCalculation):
         def __init__(self, epsilon):
@@ -1283,6 +1285,7 @@ def gsm_IOAlergia_EDSM():
         "IOA": ScoreCalculation(hoeffding_compatibility(epsilon)),
         "IOA+EDSM": IOAlergiaWithEDSM(epsilon),
     }
+
     for name, score in scores.items():
         learned_model = run_GSM(traces, output_behavior="moore", transition_behavior="stochastic", score_calc=score,
                             compatibility_on_pta=True, compatibility_on_futures=True)

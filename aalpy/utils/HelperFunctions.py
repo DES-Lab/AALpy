@@ -447,3 +447,13 @@ def mc_from_mdp(mdp: Mdp, input_symbol=None) -> MarkovChain:
 
     initial_state = state_map[mdp.initial_state.state_id]
     return MarkovChain(initial_state, list(state_map.values()))
+
+def mc_format_to_mdp(data):
+    # a hack to learn MC's with GSM -> treat them as MDP with a single input
+    augmented_data = []
+    for sequence in data:
+        new_sequence = [sequence[0]]
+        for item in sequence[1:]:
+            new_sequence.append(('Input', item))
+        augmented_data.append(new_sequence)
+    return augmented_data
