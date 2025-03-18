@@ -3,6 +3,8 @@ import string
 from itertools import product
 from collections import defaultdict
 
+from aalpy import Mdp, MarkovChain, McState, MooreMachine, Dfa, DfaState
+
 
 def extend_set(list_to_extend: list, new_elements: list) -> list:
     """
@@ -409,9 +411,7 @@ def product_with_possible_empty_iterable(*iterables, repeat=1):
     return product(*non_empty_iterables, repeat=repeat)
 
 
-def dfa_from_moore(moore_model):
-    from aalpy.automata import Dfa, DfaState
-
+def dfa_from_moore(moore_model: MooreMachine) -> Dfa:
     dfa_state_map = dict()
     # define states
     for moore_state in moore_model.states:
@@ -430,3 +430,20 @@ def dfa_from_moore(moore_model):
 
     initial_state = dfa_state_map[moore_model.initial_state.state_id]
     return Dfa(initial_state, list(dfa_state_map.values()))
+
+def mc_from_mdp(mdp: Mdp, input_symbol=None) -> MarkovChain:
+    alphabet = mdp.get_input_alphabet()
+    if len(alphabet) != 1 and input_symbol is None:
+        raise ValueError('Cannot convert MDP with several inputs to Markov chain.')
+    input_symbol = input_symbol or alphabet[0]
+
+    state_map = {state.state_id: McState(state.state_id, state.output) for state in mdp.states}
+    for state in mdp.states:
+        mdp_transitions = state.transitions.get(input_symbol)
+        if mdp_transitions is None:
+            continue
+        mc_transitions = [(state_map[mdp_target.state_id], prob) for mdp_target, prob in mdp_transitions]
+        state_map[state.state_id].transitions = mc_transitions
+
+    initial_state = state_map[mdp.initial_state.state_id]
+    return MarkovChain(initial_state, list(state_map.values()))
