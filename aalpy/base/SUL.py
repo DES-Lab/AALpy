@@ -75,7 +75,10 @@ class SUL(ABC):
             if next_input is None:
                 break
             if next_input is tuple(): # Relevant for DFA/Moore
-                last_output = self.step(None)
+                if outputs_received:
+                    last_output = outputs_received[-1]
+                else:
+                    last_output = self.step(None)
             else:
                 word.append(next_input)
                 output = self.step(next_input) 
