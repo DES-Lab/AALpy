@@ -188,7 +188,7 @@ class GsmNode:
             self.transitions[in_sym] = t
         return t
 
-    def transition_iterator(self) -> Iterable[Tuple[Tuple[Any, Any], TransitionInfo]]:
+    def transition_iterator(self) -> Iterable[Tuple[Any, Any, TransitionInfo]]:
         for in_sym, transitions in self.transitions.items():
             for out_sym, node in transitions.items():
                 yield in_sym, out_sym, node
