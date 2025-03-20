@@ -1,6 +1,7 @@
 import functools
 import math
 import pathlib
+from collections import defaultdict
 from functools import total_ordering
 from typing import Dict, Any, List, Tuple, Iterable, Callable, Union, TypeVar, Iterator, Optional, Sequence
 import pydot
@@ -125,7 +126,7 @@ class GsmNode:
 
     def __init__(self, prefix_access_pair, predecessor: 'GsmNode' = None):
         # TODO try single dict
-        self.transitions: Dict[Any, Dict[Any, TransitionInfo]] = dict()
+        self.transitions: defaultdict[Any, Dict[Any, TransitionInfo]] = defaultdict(dict)
         self.predecessor: GsmNode = predecessor
         self.prefix_access_pair = prefix_access_pair
 
@@ -187,17 +188,17 @@ class GsmNode:
             self.transitions[in_sym] = t
         return t
 
-    def transition_iterator(self) -> Iterable[Tuple[Tuple[Any, Any], TransitionInfo]]:
+    def transition_iterator(self) -> Iterable[Tuple[Any, Any, TransitionInfo]]:
         for in_sym, transitions in self.transitions.items():
             for out_sym, node in transitions.items():
-                yield (in_sym, out_sym), node
+                yield in_sym, out_sym, node
 
     def shallow_copy(self) -> 'GsmNode':
         node = GsmNode(self.prefix_access_pair, self.predecessor)
         for in_sym, t in self.transitions.items():
-            d = dict()
-            for out_sym, v in t.items():
-                d[out_sym] = copy(v)
+            d = dict() # appears to be faster than dict comprehension
+            for out_sym, ti in t.items():
+                d[out_sym] = TransitionInfo(ti.target, ti.count, ti.original_target, ti.original_count)
             node.transitions[in_sym] = d
         return node
 
@@ -219,7 +220,7 @@ class GsmNode:
         result = [self]
         backing_set = {self}
         for state in result:
-            for _, transition in state.transition_iterator():
+            for _, _, transition in state.transition_iterator():
                 child = transition.target
                 if child not in backing_set:
                     backing_set.add(child)
@@ -231,7 +232,7 @@ class GsmNode:
         backing_set = {self}
         while len(q) != 0:
             current = q.pop(0)
-            for _, transition in current.transition_iterator():
+            for _, _, transition in current.transition_iterator():
                 child = transition.target
                 if child in backing_set:
                     return False
@@ -324,7 +325,7 @@ class GsmNode:
                     return f'{node.get_prefix_output()} {node.count()}'
             else:
                 def state_label(node: GsmNode):
-                    return f'{sum(t.count for _, t in node.transition_iterator())}'
+                    return f'{sum(t.count for _, _, t in node.transition_iterator())}'
         if trans_label is None and "label" not in trans_props:
             if output_behavior == "moore":
                 def trans_label(node: GsmNode, in_sym, out_sym):
@@ -379,7 +380,7 @@ class GsmNode:
     def add_trace(self, trace: IOTrace):
         curr_node: GsmNode = self
         for in_sym, out_sym in trace:
-            transitions = curr_node.get_or_create_transitions(in_sym)
+            transitions = curr_node.transitions[in_sym]
             info = transitions.get(out_sym)
             if info is None:
                 node = GsmNode((in_sym, out_sym), curr_node)
@@ -397,7 +398,7 @@ class GsmNode:
 
         # step through inputs and add transitions
         for in_sym in inputs:
-            transitions = curr_node.get_or_create_transitions(in_sym)
+            transitions = curr_node.transitions[in_sym]
             t_infos = list(transitions.values())
             if len(t_infos) == 0:
                 node = GsmNode((in_sym, unknown_output), curr_node)
@@ -457,13 +458,13 @@ class GsmNode:
         for _, trans_self, trans_other in intersection_iterator(self.transitions, other.transitions):
             if unknown_output in trans_self or unknown_output in trans_other:
                 continue
-            if list(trans_self.keys()) != list(trans_other.keys()):
+            if trans_self.keys() != trans_other.keys():
                 return False
         return True
 
     def is_moore(self):
         for node in self.get_all_nodes():
-            for (in_sym, out_sym), transition in node.transition_iterator():
+            for in_sym, out_sym, transition in node.transition_iterator():
                 child_output = transition.target.get_prefix_output()
                 if out_sym is not unknown_output and child_output != out_sym:
                     return False
@@ -486,9 +487,6 @@ class GsmNode:
         return llc
 
     def count(self):
-        return sum(trans.count for _, trans in self.transition_iterator())
+        return sum(trans.count for _, _, trans in self.transition_iterator())
 
-
-class NodeOrders:
-    NoCompare = lambda n: 0
-    Default = functools.cmp_to_key(lambda a, b: -1 if a < b else 1)
+    default_order = functools.cmp_to_key(lambda a, b: -1 if a < b else 1)
