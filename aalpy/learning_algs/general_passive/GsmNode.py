@@ -64,8 +64,6 @@ def detect_data_format(data, check_consistency=False, guess=False):
     # - "traces": [[o, o, ...], ...]
 
     if isinstance(data, GsmNode):
-        if not data.is_tree():
-            raise ValueError("provided automaton is not a tree")
         return "tree"
 
     accepted_types = (Tuple, List)
@@ -432,6 +430,8 @@ class GsmNode:
             raise ValueError(f"invalid data format {data_format}. should be in {DataFormatRange}")
 
         if data_format == "tree":
+            if not data.is_tree():
+                raise ValueError("provided automaton is not a tree")
             return data
         root_node = GsmNode((None, unknown_output), None)
         if data_format == "labeled_sequences":
