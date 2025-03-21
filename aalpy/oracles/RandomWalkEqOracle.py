@@ -68,7 +68,7 @@ class RandomWalkEqOracle(Oracle):
 
                 self.sul.post()
                 return inputs
-            elif out_hyp is None:
+            elif out_hyp is None and self.automata_type != 'det':
                 if self.reset_after_cex:
                     self.random_steps_done = 0
                 self.sul.post()

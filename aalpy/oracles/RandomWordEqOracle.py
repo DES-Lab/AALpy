@@ -72,7 +72,7 @@ class RandomWordEqOracle(Oracle):
                     self.sul.post()
                     return inputs
 
-                elif out_hyp is None:
+                elif out_hyp is None and self.automata_type != 'det':
                     self.sul.post()
 
                     if self.reset_after_cex:
