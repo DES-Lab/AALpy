@@ -38,9 +38,6 @@ class StatePrefixEqOracle(Oracle):
         self.freq_dict = dict()
 
     def find_cex(self, hypothesis):
-        if self.max_tests and self.num_queries == self.max_tests:
-            return None
-
         states_to_cover = []
         for state in hypothesis.states:
             if state.prefix is None:
@@ -61,6 +58,9 @@ class StatePrefixEqOracle(Oracle):
             self.freq_dict[state.prefix] = self.freq_dict[state.prefix] + 1
 
             self.reset_hyp_and_sul(hypothesis)
+
+            if self.max_tests and self.num_queries == self.max_tests:
+                return None
 
             prefix = state.prefix
             for p in prefix:
