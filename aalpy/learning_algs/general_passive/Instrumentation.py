@@ -60,9 +60,9 @@ class ProgressReport(Instrumentation):
         self.nr_merged_states += 1
         self.print_status()
 
-    def learning_done(self, root, red_states):
+    def learning_done(self, root: GsmNode):
         print(f'\nLearning Time: {round(time.time() - self.previous_time, 2)}')
-        print(f'Learned {len(red_states)} state automaton via {self.nr_merged_states} merges.')
+        print(f'Learned {self.nr_red_states} state automaton via {self.nr_merged_states} merges.')
         if 2 < self.lvl:
             root.visualize("model", self.gsm.output_behavior)
 
