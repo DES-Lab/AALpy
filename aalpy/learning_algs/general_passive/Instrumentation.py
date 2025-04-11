@@ -1,4 +1,4 @@
-import time
+from time import perf_counter
 from typing import Dict, Optional
 
 from aalpy.learning_algs.general_passive.GeneralizedStateMerging import Instrumentation, Partitioning, \
@@ -29,10 +29,10 @@ class ProgressReport(Instrumentation):
         self.nr_merged_states = 0
         self.nr_red_states = 0
 
-        self.previous_time = time.time()
+        self.previous_time = perf_counter()
 
     def pta_construction_done(self, root):
-        print(f'PTA Construction Time: {round(time.time() - self.previous_time, 2)}')
+        print(f'PTA Construction Time: {round(perf_counter() - self.previous_time, 2)} s')
         if 1 < self.lvl:
             states = root.get_all_nodes()
             leafs = [state for state in states if len(state.transitions.keys()) == 0]
@@ -40,7 +40,7 @@ class ProgressReport(Instrumentation):
             self.pta_size = len(states)
             print(f'PTA has {len(states)} states leading to {len(leafs)} leafs')
             print(f'min / avg / max depth : {min(depth)} / {sum(depth) / len(depth)} / {max(depth)}')
-        self.previous_time = time.time()
+        self.previous_time = perf_counter()
 
     def print_status(self):
         reset_char = "\33[2K\r"
@@ -61,7 +61,7 @@ class ProgressReport(Instrumentation):
         self.print_status()
 
     def learning_done(self, root: GsmNode):
-        print(f'\nLearning Time: {round(time.time() - self.previous_time, 2)}')
+        print(f'\nLearning Time: {round(perf_counter() - self.previous_time, 2)} s')
         print(f'Learned {self.nr_red_states} state automaton via {self.nr_merged_states} merges.')
         if 2 < self.lvl:
             root.visualize("model", self.gsm.output_behavior)
