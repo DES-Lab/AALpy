@@ -51,6 +51,12 @@ class Dfa(DeterministicAutomaton[DfaState[InputType]]):
             return [state.is_accepting]
         return super(Dfa, self).compute_output_seq(state, sequence)
 
+    def execute_sequence(self, origin_state, seq):
+        if not seq:
+            return self.current_state.output
+        return super(Dfa, self).execute_sequence(origin_state, seq)
+
+
     def to_state_setup(self):
         state_setup_dict = {}
 
