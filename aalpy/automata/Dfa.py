@@ -53,7 +53,7 @@ class Dfa(DeterministicAutomaton[DfaState[InputType]]):
 
     def execute_sequence(self, origin_state, seq):
         if not seq:
-            return self.current_state.output
+            return origin_state.output
         return super(Dfa, self).execute_sequence(origin_state, seq)
 
 

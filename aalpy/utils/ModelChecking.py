@@ -235,13 +235,13 @@ def stop_based_on_confidence(hypothesis, property_based_stopping, print_level=2)
     return True
 
 
-def bisimilar(a1: DeterministicAutomaton, a2: DeterministicAutomaton, return_cex=False) -> Union[bool, None, list]:
+def bisimilar(a1: DeterministicAutomaton, a2: DeterministicAutomaton, return_cex=False) -> Union[bool, None, tuple]:
     """
     Checks whether the provided automata are bisimilar.
     If return_cex the function returns a counter example or None, otherwise a Boolean is returned.
 
     Returns:
-        object:
+        object: true or false if return_cex is set to False, otherwise None (no counterexample) or a counterexample
     """
 
     # TODO allow states as inputs instead of automata
@@ -259,15 +259,13 @@ def bisimilar(a1: DeterministicAutomaton, a2: DeterministicAutomaton, return_cex
     to_check: Queue[Tuple[AutomatonState, AutomatonState]] = Queue()
     to_check.put((a1.initial_state, a2.initial_state))
     requirements = dict()
-    requirements[(a1.initial_state, a2.initial_state)] = []
+    requirements[(a1.initial_state, a2.initial_state)] = ()
 
     while not to_check.empty():
         s1, s2 = to_check.get()
 
         # check output equivalence for Dfa / Moore
-        if (isinstance(s1, DfaState)) and s1.is_accepting != s2.is_accepting:
-            return requirements[(s1, s2)] if return_cex else False
-        if (isinstance(s1, MooreState) and s1.output != s2.output):
+        if isinstance(s1, (DfaState, MooreState)) and s1.output != s2.output:
             return requirements[(s1, s2)] if return_cex else False
 
         # check whether the same inputs are enabled + output equivalence for Mealy
@@ -275,12 +273,12 @@ def bisimilar(a1: DeterministicAutomaton, a2: DeterministicAutomaton, return_cex
         for t in it.chain(t1.keys(), filter(lambda x : x not in t1.keys(), t2.keys())):
             common = t in t1.keys() and t in t2.keys()
             if (not common) or (isinstance(s1, MealyState) and s1.output_fun[t] != s2.output_fun[t]) :
-                return requirements[(s1, s2)] + [t] if return_cex else False
+                return requirements[(s1, s2)] + (t,) if return_cex else False
 
         for t in t1.keys():
             c1, c2 = t1[t], t2[t]
             if (c1, c2) not in requirements:
-                requirements[(c1, c2)] = requirements[(s1, s2)] + [t]
+                requirements[(c1, c2)] = requirements[(s1, s2)] + (t,)
                 to_check.put((c1, c2))
 
     return None if return_cex else True
