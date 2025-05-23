@@ -35,7 +35,7 @@ class Instrumentation:
     def log_merge(self, part: Partitioning):
         pass
 
-    def learning_done(self, root: GsmNode, red_states: List[GsmNode]):
+    def learning_done(self, root: GsmNode):
         pass
 
 
@@ -192,7 +192,7 @@ class GeneralizedStateMerging:
             # FUTURE: caching for aggregating compatibility tests
             partition_candidates.clear()
 
-        instrumentation.learning_done(root, red_states)
+        instrumentation.learning_done(root)
 
         root = self.postprocessing(root)
         if convert:

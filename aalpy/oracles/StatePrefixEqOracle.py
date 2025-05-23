@@ -12,7 +12,7 @@ class StatePrefixEqOracle(Oracle):
     rand_walk_len exactly walk_per_state times during learning. Therefore excessive testing of initial states is
     avoided.
     """
-    def __init__(self, alphabet: list, sul: SUL, walks_per_state=10, walk_len=12, depth_first=False):
+    def __init__(self, alphabet: list, sul: SUL, walks_per_state=10, walk_len=12, max_tests=None, depth_first=True):
         """
         Args:
 
@@ -24,18 +24,20 @@ class StatePrefixEqOracle(Oracle):
 
             walk_len:length of random walk
 
-            depth_first:first explore newest states
+            max_tests:number of maximum tests. If set to None, this parameter will be ignored.
+
+            depth_first:first explore the newest states
         """
 
         super().__init__(alphabet, sul)
         self.walks_per_state = walks_per_state
         self.steps_per_walk = walk_len
         self.depth_first = depth_first
+        self.max_tests = max_tests
 
         self.freq_dict = dict()
 
     def find_cex(self, hypothesis):
-
         states_to_cover = []
         for state in hypothesis.states:
             if state.prefix is None:
@@ -56,6 +58,9 @@ class StatePrefixEqOracle(Oracle):
             self.freq_dict[state.prefix] = self.freq_dict[state.prefix] + 1
 
             self.reset_hyp_and_sul(hypothesis)
+
+            if self.max_tests and self.num_queries == self.max_tests:
+                return None
 
             prefix = state.prefix
             for p in prefix:
