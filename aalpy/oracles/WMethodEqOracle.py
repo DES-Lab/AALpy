@@ -85,7 +85,7 @@ class RandomWMethodEqOracle(Oracle):
     walk an element from the characterization set is added to the test case.
     """
 
-    def __init__(self, alphabet: list, sul: SUL, walks_per_state=12, walk_len=12):
+    def __init__(self, alphabet: list, sul: SUL, walks_per_state=25, walk_len=12):
         """
         Args:
 
