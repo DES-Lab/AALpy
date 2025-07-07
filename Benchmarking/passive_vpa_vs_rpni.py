@@ -8,7 +8,7 @@ from aalpy.utils.BenchmarkVpaModels import get_all_VPAs
 from statistics import mean, stdev
 
 all_data = dict()
-with open('papni_sequances.pickle', 'rb') as handle:
+with open('papni_sequences.pickle', 'rb') as handle:
     all_data = pickle.load(handle)
 
 
@@ -59,21 +59,21 @@ def compare_rpni_and_papni(test_data, rpni_model, papni_model):
     return [rpni_model.size, papni_model.size, rpni_error, papni_error]
 
 
-def get_sequances_from_active_sevpa(model):
+def get_sequences_from_active_sevpa(model):
     from aalpy import SUL, run_KV, RandomWordEqOracle, SevpaAlphabet
 
     class CustomSUL(SUL):
         def __init__(self, automatonSUL):
             super(CustomSUL, self).__init__()
             self.sul = automatonSUL
-            self.sequances = []
+            self.sequences = []
 
         def pre(self):
             self.tc = []
             self.sul.pre()
 
         def post(self):
-            self.sequances.append(self.tc)
+            self.sequences.append(self.tc)
             self.sul.post()
 
         def step(self, letter):
@@ -91,7 +91,7 @@ def get_sequances_from_active_sevpa(model):
     # eq_oracle = BreadthFirstExplorationEqOracle(vpa_alphabet.get_merged_alphabet(), sul, 7)
     _ = run_KV(alphabet, sul, eq_oracle, automaton_type='vpa', print_level=3)
 
-    return convert_i_o_traces_for_RPNI(sul.sequances)
+    return convert_i_o_traces_for_RPNI(sul.sequences)
 
 
 def split_data_to_learning_and_testing(data, learning_to_test_ratio=0.5):
@@ -104,20 +104,20 @@ def split_data_to_learning_and_testing(data, learning_to_test_ratio=0.5):
     # sorted(data, key=lambda x: len(x[0]))
     shuffle(data)
 
-    learning_sequances, test_sequances = [], []
+    learning_sequences, test_sequences = [], []
 
     l_pos, l_neg = 0, 0
     for seq, label in data:
         if label and l_pos <= num_learning_positive_seq:
-            learning_sequances.append((seq, label))
+            learning_sequences.append((seq, label))
             l_pos += 1
         elif not label and l_neg <= num_learning_negative_seq:
-            learning_sequances.append((seq, label))
+            learning_sequences.append((seq, label))
             l_neg += 1
         else:
-            test_sequances.append((seq, label))
+            test_sequences.append((seq, label))
 
-    return learning_sequances, test_sequances
+    return learning_sequences, test_sequences
 
 
 def run_experiment(experiment_id,
@@ -128,7 +128,7 @@ def run_experiment(experiment_id,
                    learning_to_test_ratio=0.5):
     if random_data_generation:
         data = generate_input_output_data_from_vpa(ground_truth_model,
-                                                   num_sequances=num_of_learning_seq,
+                                                   num_sequences=num_of_learning_seq,
                                                    max_seq_len=max_learning_seq_len,
                                                 )
     else:
@@ -150,7 +150,7 @@ def run_experiment(experiment_id,
         #         wm_negative += 1
         # print(wm_negative)
 
-        # data = get_sequances_from_active_sevpa(ground_truth_model)
+        # data = get_sequences_from_active_sevpa(ground_truth_model)
 
     vpa_alphabet = ground_truth_model.get_input_alphabet()
 

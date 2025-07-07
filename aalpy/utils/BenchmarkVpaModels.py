@@ -350,7 +350,7 @@ def vpa_for_even_parentheses():
     return vpa
 
 
-def gen_arithmetic_data(num_sequances=3000, min_seq_len=2, max_seq_len=8):
+def gen_arithmetic_data(num_sequences=3000, min_seq_len=2, max_seq_len=8):
     import ast
     from aalpy.base import SUL
     from aalpy.utils import convert_i_o_traces_for_RPNI
@@ -388,7 +388,7 @@ def gen_arithmetic_data(num_sequances=3000, min_seq_len=2, max_seq_len=8):
     alphabet = VpaAlphabet(internal_alphabet=['1', '+', ], call_alphabet=['(', ], return_alphabet=[')', ])
     merged_alphabet = alphabet.get_merged_alphabet()
     data = []
-    while len(data) < num_sequances:
+    while len(data) < num_sequences:
         seq = []
         for _ in range(random.randint(min_seq_len, max_seq_len)):
             seq.append(random.choice(merged_alphabet))
