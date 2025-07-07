@@ -49,7 +49,7 @@ from random import seed
 # for size in range(5000, 50001, 5000):
 #     print(size)
 #     data = generate_input_output_data_from_vpa(gt,
-#                                                num_sequances=size,
+#                                                num_sequences=size,
 #                                                max_seq_len=randint(6, 30))
 #
 #     y = run_RPNI(data, automaton_type='dfa', print_info=False)

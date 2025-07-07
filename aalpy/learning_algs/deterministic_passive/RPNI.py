@@ -80,7 +80,7 @@ def run_PAPNI(data, vpa_alphabet, algorithm='edsm', print_info=True):
 
     assert algorithm in {'gsm', 'classic', 'edsm'}
 
-    # preprocess input sequances to keep track of stack
+    # preprocess input sequences to keep track of stack
     papni_data = []
     for input_seq, label in data:
         # if input sequance is not balanced we do not consider it (it would lead to error state anyway)

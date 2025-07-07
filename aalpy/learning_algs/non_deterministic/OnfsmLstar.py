@@ -28,7 +28,7 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=5,
         n_sampling: number of times that each cell has to be updated. If this number is to low, all-weather condition
             will not hold and learning will not converge to the correct model. (Default value = 50)
 
-        samples: input output sequances provided to learning algorithm. List of ((input sequence), (output sequence)).
+        samples: input output sequences provided to learning algorithm. List of ((input sequence), (output sequence)).
 
         stochastic: if True, non deterministic learning will be performed but probabilities will be added to the
         returned model, making it a stochastic Mealy machine

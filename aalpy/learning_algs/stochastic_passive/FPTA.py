@@ -60,7 +60,7 @@ def create_fpta(data, automaton_type):
 
     for seq in data:
         if automaton_type != 'smm' and seq[0] != root_node.output:
-            print('All sequances passed to Alergia should have the same initial output!')
+            print('All sequences passed to Alergia should have the same initial output!')
             assert False
 
         curr_node = root_node

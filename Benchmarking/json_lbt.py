@@ -234,9 +234,9 @@ vpa_alphabet = VpaAlphabet(
 )
 
 
-def generate_dataset(num_sequances):
+def generate_dataset(num_sequences):
     dataset = set()
-    while len(dataset) <= num_sequances:
+    while len(dataset) <= num_sequences:
         ts, tt = generate_random_json(max_depth=2, max_elements=3)
         assert is_valid_json(ts), ts
         dataset.add((tuple(tt), True))
@@ -287,7 +287,7 @@ use_learned_model = False
 
 model_learning_dataset = []
 if not use_learned_model:
-    model_learning_dataset = generate_dataset(num_sequances=20000)
+    model_learning_dataset = generate_dataset(num_sequences=20000)
 
     learned_json_model = run_PAPNI(model_learning_dataset, vpa_alphabet)
     # learned_json_model.visualize()
@@ -307,10 +307,10 @@ results = defaultdict(list)
 for _ in range(num_learning_iterations):
     disagreements.clear()
 
-    test_dataset = generate_input_output_data_from_vpa(learned_json_model, num_sequances=10000, max_seq_len=16)
+    test_dataset = generate_input_output_data_from_vpa(learned_json_model, num_sequences=10000, max_seq_len=16)
     print(f"Num well-matched tests: {len([x for x in test_dataset if learned_json_model.is_balanced(x[0])])}")
 
-    num_new_sequances = 0
+    num_new_sequences = 0
 
     for seq, label in test_dataset:
 
@@ -330,9 +330,9 @@ for _ in range(num_learning_iterations):
             if (seq, label) in model_learning_dataset:
                 model_learning_dataset.remove((seq, label))
             model_learning_dataset.add((seq, not label))
-            num_new_sequances += 1
+            num_new_sequences += 1
 
-    print(f'Added {num_new_sequances} to learning set, total size {len(model_learning_dataset)}')
+    print(f'Added {num_new_sequences} to learning set, total size {len(model_learning_dataset)}')
     learned_json_model = run_PAPNI(model_learning_dataset, vpa_alphabet, print_info=False)
     print(f'Current model size: {learned_json_model.size}')
 

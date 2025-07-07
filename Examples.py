@@ -869,7 +869,7 @@ def rpni_check_model_example():
 
     input_al = model.get_input_alphabet()
 
-    data = generate_input_output_data_from_automata(model, num_sequances=2000,
+    data = generate_input_output_data_from_automata(model, num_sequences=2000,
                                                     min_seq_len=1, max_seq_len=12)
 
     data = convert_i_o_traces_for_RPNI(data)
@@ -1149,7 +1149,7 @@ def passive_vpa_learning_on_lists():
 def passive_vpa_learning_arithmetics():
     from aalpy.learning_algs import run_PAPNI
     from aalpy.utils.BenchmarkVpaModels import gen_arithmetic_data
-    arithmetic_data, vpa_alphabet = gen_arithmetic_data(num_sequances=4000, min_seq_len=2, max_seq_len=10)
+    arithmetic_data, vpa_alphabet = gen_arithmetic_data(num_sequences=4000, min_seq_len=2, max_seq_len=10)
 
     print(f"Alphabet: {vpa_alphabet}")
 
@@ -1168,7 +1168,7 @@ def passive_vpa_learning_on_all_benchmark_models():
 
     for gt in [vpa_L1(), vpa_L12(), vpa_for_odd_parentheses()]:
         vpa_alphabet = gt.input_alphabet
-        data = generate_input_output_data_from_vpa(gt, num_sequances=2000, max_seq_len=16)
+        data = generate_input_output_data_from_vpa(gt, num_sequences=2000, max_seq_len=16)
 
         papni = run_PAPNI(data, vpa_alphabet, algorithm='gsm', print_info=True)
 
@@ -1336,7 +1336,7 @@ def k_tails_example():
                                                    input_alphabet_size=3,
                                                    output_alphabet_size=3)
 
-    data = generate_input_output_data_from_automata(model, num_sequances=2000,
+    data = generate_input_output_data_from_automata(model, num_sequences=2000,
                                                     min_seq_len=1, max_seq_len=12,
                                                     sequance_type='io_traces')
 
