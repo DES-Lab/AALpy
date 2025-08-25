@@ -3,7 +3,7 @@ from collections import defaultdict
 from random import shuffle
 
 from aalpy import run_RPNI, run_PAPNI, AutomatonSUL
-from aalpy.utils import convert_i_o_traces_for_RPNI, generate_input_output_data_from_vpa
+from aalpy.utils import convert_i_o_traces_for_RPNI, generate_input_output_data_from_vpa, is_balanced
 from aalpy.utils.BenchmarkVpaModels import get_all_VPAs
 from statistics import mean, stdev
 
@@ -59,7 +59,7 @@ def compare_rpni_and_papni(test_data, rpni_model, papni_model):
     return [rpni_model.size, papni_model.size, rpni_error, papni_error]
 
 
-def get_sequences_from_active_sevpa(model):
+def get_sequences_from_active_sevpa(model, verbose=False):
     from aalpy import SUL, run_KV, RandomWordEqOracle, SevpaAlphabet
 
     class CustomSUL(SUL):
@@ -89,9 +89,9 @@ def get_sequences_from_active_sevpa(model):
     eq_oracle = RandomWordEqOracle(alphabet.get_merged_alphabet(), sul, num_walks=50000, min_walk_len=6,
                                    max_walk_len=30, reset_after_cex=True)
     # eq_oracle = BreadthFirstExplorationEqOracle(vpa_alphabet.get_merged_alphabet(), sul, 7)
-    _ = run_KV(alphabet, sul, eq_oracle, automaton_type='vpa', print_level=3)
+    lm = run_KV(alphabet, sul, eq_oracle, automaton_type='vpa', print_level=3 if verbose else 0)
 
-    return convert_i_o_traces_for_RPNI(sul.sequences)
+    return convert_i_o_traces_for_RPNI(sul.sequences), lm
 
 
 def split_data_to_learning_and_testing(data, learning_to_test_ratio=0.5):
@@ -183,12 +183,12 @@ def run_all_experiments_experiments(test_models, learning_to_test_ratio):
         print(res_str)
 
 
-def run_experiments_multiple_times(test_models, num_times):
+def run_experiments_multiple_times(test_models, num_times, learning_to_test_ratio=0.5):
     all_results = defaultdict(list)
     for idx, gt in enumerate(test_models):
         for _ in range(num_times):
             r = run_experiment(idx, gt, num_of_learning_seq=10000, max_learning_seq_len=50,
-                               random_data_generation=False, learning_to_test_ratio=0.5)
+                               random_data_generation=False, learning_to_test_ratio=learning_to_test_ratio)
 
             all_results[idx].append(r)
 
@@ -208,8 +208,53 @@ def run_experiments_multiple_times(test_models, num_times):
     with open('papni_rpni_eval_results.pickle', 'wb') as handle:
         pickle.dump(all_results, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
+def test_papni_based_on_sevpa_dataset():
+    all_models = get_all_VPAs()
 
-all_models = get_all_VPAs()
 
-run_all_experiments_experiments(all_models, learning_to_test_ratio=0.5)
-# run_experiments_multiple_times(all_models, 20)
+    for idx, gt in enumerate(all_models):
+        sevpa_papni_mismatch, papni_error, sevpa_error = 0, 0, 0
+
+        input_al = gt.get_input_alphabet()
+
+        sevpa_dataset, sevpa_model = get_sequences_from_active_sevpa(gt)
+        sevpa_dataset_set = set(sevpa_dataset)
+
+        papni_model = run_PAPNI(sevpa_dataset, input_al)
+
+        balanced_counter = 0
+        not_in_learning = 0
+        in_learning = 0
+
+        for seq, label in all_data[idx]:
+
+            if is_balanced(seq, input_al):
+                balanced_counter += 1
+
+                if (seq, label) not in sevpa_dataset_set:
+                    not_in_learning += 1
+                else:
+                    in_learning += 1
+
+            sevpa_model.reset_to_initial()
+            sevpa_output = sevpa_model.execute_sequence(sevpa_model.initial_state, seq)
+
+            papni_model.reset_to_initial()
+            papni_output = papni_model.execute_sequence(papni_model.initial_state, seq)
+
+            if sevpa_output != papni_output:
+                sevpa_papni_mismatch += 1
+            if papni_output[-1] != label:
+                papni_error += 1
+            if sevpa_output[-1] != label:
+                sevpa_error += 1
+
+        print('--------------------------------------')
+        print(f'Model Index {idx}; # well-matched {balanced_counter}, # unique tests {not_in_learning}')
+        print(f'Papni Error {papni_error}')
+        print(f'Sevpa Error {sevpa_error}')
+        print(f'Mismatch {sevpa_papni_mismatch}')
+
+        assert in_learning + not_in_learning == balanced_counter
+
+test_papni_based_on_sevpa_dataset()
