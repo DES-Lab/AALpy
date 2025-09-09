@@ -1,0 +1,8 @@
+digraph simpleABCmealy{
+s0 [label="s0"];
+s0 -> s0 [label="a/1"];
+s0 -> s0 [label="b/2"];
+s0 -> s0 [label="c/3"];
+__start0 [shape=none, label=""];
+__start0 -> s0 [label=""];
+}
