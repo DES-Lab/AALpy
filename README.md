@@ -1,12 +1,12 @@
 <div align="center">
 
-<picture style="align: center; padding-bottom: 3mm;">
+<picture style="align: center; padding-bottom: 3mm; padding-bottom: 8mm;">
   <source media="(prefers-color-scheme: dark)" srcset="./docs/logo_dark.png">
-  <img width=70% height=70% alt="AALpy Logo" src="./docs/logo_light.png">
+  <img width=60% height=60% alt="AALpy Logo" src="./docs/logo_light.png">
 </picture>
 
-<br/>
-<br/>
+<br>
+<br>
 
 [![Python application](https://github.com/DES-Lab/AALpy/actions/workflows/python-app.yml/badge.svg)](https://github.com/DES-Lab/AALpy/actions/workflows/python-app.yml)
 [![CodeQL](https://github.com/DES-Lab/AALpy/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/DES-Lab/AALpy/actions/workflows/codeql-analysis.yml)
