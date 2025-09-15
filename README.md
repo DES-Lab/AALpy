@@ -1,6 +1,6 @@
 <div align="center">
 
-<picture style="align: center; padding-bottom: 3mm; padding-bottom: 8mm;">
+<picture style="align: center; padding-left: 2mm; padding-bottom: 8mm;">
   <source media="(prefers-color-scheme: dark)" srcset="./docs/logo_dark.png">
   <img width=60% height=60% alt="AALpy Logo" src="./docs/logo_light.png">
 </picture>
