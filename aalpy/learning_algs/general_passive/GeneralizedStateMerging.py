@@ -3,7 +3,7 @@ from collections import deque
 from typing import Dict, Tuple, Callable, List, Optional
 
 from aalpy.learning_algs.general_passive.GsmNode import GsmNode, OutputBehavior, TransitionBehavior, TransitionInfo, \
-    OutputBehaviorRange, TransitionBehaviorRange, intersection_iterator, unknown_output, detect_data_format
+    OutputBehaviorRange, TransitionBehaviorRange, intersection_iterator, unknown_output, detect_data_format, IOHandler
 from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreCalculation, hoeffding_compatibility
 
 
@@ -46,11 +46,13 @@ class GeneralizedStateMerging:
                  score_calc: ScoreCalculation = None,
                  pta_preprocessing: Callable[[GsmNode], GsmNode] = None,
                  postprocessing: Callable[[GsmNode], GsmNode] = None,
+                 data_handler: IOHandler = None,
                  compatibility_on_pta: bool = False,
                  compatibility_on_futures: bool = False,
                  node_order: Callable[[GsmNode, GsmNode], bool] = None,
                  consider_only_min_blue=False,
-                 depth_first=False):
+                 depth_first=False,
+                 ):
 
         if output_behavior not in OutputBehaviorRange:
             raise ValueError(f"invalid output behavior {output_behavior}. should be in {OutputBehaviorRange}")
@@ -75,6 +77,8 @@ class GeneralizedStateMerging:
 
         self.pta_preprocessing = pta_preprocessing or (lambda x: x)
         self.postprocessing = postprocessing or (lambda x: x)
+
+        self.data_handler = data_handler or IOHandler()
 
         self.compatibility_on_pta = compatibility_on_pta
         self.compatibility_on_futures = compatibility_on_futures
@@ -102,7 +106,7 @@ class GeneralizedStateMerging:
             raise ValueError("learning from labeled_sequences is not possible for nondeterministic systems")
         if data_format == "traces" and self.transition_behavior == "deterministic":
             print("learning deterministic systems from (output) traces only. this rarely makes sense. is `data_format` set correctly?")
-        root = GsmNode.createPTA(data, self.output_behavior, data_format)
+        root = GsmNode.createPTA(data, self.output_behavior, data_format, self.data_handler)
 
         root = self.pta_preprocessing(root)
         instrumentation.pta_construction_done(root)
@@ -186,6 +190,7 @@ class GeneralizedStateMerging:
             for real_node, partition_node in best_candidate.red_mapping.items():
                 real_node.transitions = partition_node.transitions
                 real_node.predecessor = partition_node.predecessor
+                real_node.data = partition_node.data
                 real_node.prefix_access_pair = partition_node.prefix_access_pair
             instrumentation.log_merge(best_candidate)
             # FUTURE: optimizations for compatibility tests where merges can be orthogonal
@@ -240,7 +245,7 @@ class GeneralizedStateMerging:
             def update_partition(red_node: GsmNode, blue_node: Optional[GsmNode]) -> GsmNode:
                 p = partitioning.full_mapping.get(red_node) # could check smaller .red_mapping?
                 if p is None:
-                    p = red_node.shallow_copy()
+                    p = red_node.shallow_copy(self.data_handler)
                     partitioning.full_mapping[red_node] = p
                     partitioning.red_mapping[red_node] = p
                 if blue_node is not None:
@@ -266,6 +271,8 @@ class GeneralizedStateMerging:
             if not self.compatibility_on_futures:
                 if self.compute_local_compatibility(partition, blue) is False:
                     return partitioning
+
+            partition.data = self.data_handler.merge(partition.data, blue.data)
 
             # create implied merges for all common successors
             for in_sym, blue_transitions in blue.transitions.items():
@@ -307,6 +314,7 @@ def run_GSM(data: list, *,
             score_calc: ScoreCalculation = None,
             pta_preprocessing: Callable[[GsmNode], GsmNode] = None,
             postprocessing: Callable[[GsmNode], GsmNode] = None,
+            data_handler: IOHandler = None,
             compatibility_on_pta: bool = False,
             compatibility_on_futures: bool = False,
             node_order: Callable[[GsmNode, GsmNode], bool] = None,
@@ -357,6 +365,7 @@ def run_GSM(data: list, *,
         score_calc=score_calc,
         pta_preprocessing=pta_preprocessing,
         postprocessing=postprocessing,
+        data_handler=data_handler,
         compatibility_on_pta=compatibility_on_pta,
         compatibility_on_futures=compatibility_on_futures,
         node_order=node_order,

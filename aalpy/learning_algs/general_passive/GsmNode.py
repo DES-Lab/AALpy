@@ -3,9 +3,8 @@ import math
 import pathlib
 from collections import defaultdict
 from functools import total_ordering
-from typing import Dict, Any, List, Tuple, Iterable, Callable, Union, TypeVar, Iterator, Optional, Sequence
+from typing import Dict, Any, List, Tuple, Iterable, Callable, Union, TypeVar, Iterator, Optional, Sequence, Generic
 import pydot
-from copy import copy
 
 from aalpy.automata import StochasticMealyMachine, StochasticMealyState, MooreState, MooreMachine, NDMooreState, \
     NDMooreMachine, Mdp, MdpState, MealyMachine, MealyState, Onfsm, OnfsmState
@@ -13,6 +12,7 @@ from aalpy.base import Automaton
 
 Key = TypeVar("Key")
 Val = TypeVar("Val")
+T = TypeVar("T")
 
 OutputBehavior = str
 OutputBehaviorRange = ["moore", "mealy"]
@@ -96,6 +96,21 @@ def detect_data_format(data, check_consistency=False, guess=False):
         raise ValueError("ambiguous data format. data format needs to be specified explicitly.")
     return accepted_formats[0]
 
+class IOHandler(Generic[T]):
+    def abstract(self, in_val, out_val):
+        return in_val, out_val
+
+    def init_data(self) -> T:
+        return None
+
+    def aggregate_data(self, data: T, in_sym, out_value) -> T:
+        return None
+
+    def merge(self, x: T, y: T) -> T:
+        return None
+
+    def copy(self, x: T) -> T:
+        return None
 
 # TODO maybe split this for maintainability (and perfomance?)
 class TransitionInfo:
@@ -110,7 +125,7 @@ class TransitionInfo:
 
 # TODO add custom pickling code that flattens the Node structure in order to circumvent running into recursion issues for large models
 @total_ordering
-class GsmNode:
+class GsmNode(Generic[T]):
     """
     Generic class for observably deterministic automata.
 
@@ -120,13 +135,14 @@ class GsmNode:
 
     Transition count is preferred over state count as it allows to easily count transitions for non-tree-shaped automata
     """
-    __slots__ = ['transitions', 'predecessor', 'prefix_access_pair']
+    __slots__ = ['transitions', 'predecessor', 'prefix_access_pair', 'data']
 
-    def __init__(self, prefix_access_pair, predecessor: 'GsmNode' = None):
+    def __init__(self, prefix_access_pair, predecessor: 'GsmNode' = None, data: T = None): # TODO (data-ext) check all invocations
         # TODO try single dict
         self.transitions: defaultdict[Any, Dict[Any, TransitionInfo]] = defaultdict(dict)
         self.predecessor: GsmNode = predecessor
         self.prefix_access_pair = prefix_access_pair
+        self.data = data
 
     def __lt__(self, other, compare_length_only=False):
         own_l, other_l = self.get_prefix_length(), other.get_prefix_length()
@@ -191,8 +207,8 @@ class GsmNode:
             for out_sym, node in transitions.items():
                 yield in_sym, out_sym, node
 
-    def shallow_copy(self) -> 'GsmNode':
-        node = GsmNode(self.prefix_access_pair, self.predecessor)
+    def shallow_copy(self, data_handler: IOHandler) -> 'GsmNode': #TODO fix
+        node = GsmNode(self.prefix_access_pair, self.predecessor, data_handler.copy(self.data))
         for in_sym, t in self.transitions.items():
             d = dict() # appears to be faster than dict comprehension
             for out_sym, ti in t.items():
@@ -389,13 +405,15 @@ class GsmNode:
                     transitions[out_sym] = t_info
         return missing_trans
 
-    def add_trace(self, trace: IOTrace):
+    def add_trace(self, trace: IOTrace, data_handler: IOHandler[T]):
         curr_node: GsmNode = self
-        for in_sym, out_sym in trace:
+        for in_value, out_value in trace:
+            in_sym, out_sym = data_handler.abstract(in_value, out_value)
+            curr_node.data = data_handler.aggregate_data(curr_node.data, in_value, out_value)
             transitions = curr_node.transitions[in_sym]
             info = transitions.get(out_sym)
             if info is None:
-                node = GsmNode((in_sym, out_sym), curr_node)
+                node = GsmNode((in_sym, out_sym), curr_node, data_handler.init_data())
                 transitions[out_sym] = TransitionInfo(node, 1, node, 1)
             else:
                 info.count += 1
@@ -403,13 +421,15 @@ class GsmNode:
                 node = info.target
             curr_node = node
 
-    def add_labeled_sequence(self, example: IOExample):
+    def add_labeled_sequence(self, example: IOExample, data_handler: IOHandler[T] = None):
         inputs, output = example
         curr_node: GsmNode = self
         in_sym = None
 
         # step through inputs and add transitions
-        for in_sym in inputs:
+        for in_value in inputs:
+            in_sym = data_handler.abstract(in_value, None)
+            curr_node.data = data_handler.aggregate_data(curr_node.data, in_value, None)
             transitions = curr_node.transitions[in_sym]
             t_infos = list(transitions.values())
             if len(t_infos) == 0:
@@ -437,7 +457,7 @@ class GsmNode:
                 raise ValueError("nondeterminism encountered for GSM with labeled_sequences. not supported")
 
     @staticmethod
-    def createPTA(data, output_behavior, data_format=None) -> 'GsmNode':
+    def createPTA(data, output_behavior, data_format=None, data_handler: IOHandler[T] = None) -> 'GsmNode':
         if data_format is None:
             data_format = detect_data_format(data)
         if data_format not in DataFormatRange:
@@ -447,10 +467,10 @@ class GsmNode:
             if not data.is_tree():
                 raise ValueError("provided automaton is not a tree")
             return data
-        root_node = GsmNode((None, unknown_output), None)
+        root_node = GsmNode((None, unknown_output), None, data_handler.init_data())
         if data_format == "labeled_sequences":
             for example in data:
-                root_node.add_labeled_sequence(example)
+                root_node.add_labeled_sequence(example, data_handler)
         if data_format == "io_traces" or data_format == "traces":
             if output_behavior == "moore":
                 initial_output = data[0][0]
@@ -459,7 +479,7 @@ class GsmNode:
             for trace in data:
                 if data_format == "traces":
                     trace = (("step", t) for t in trace)
-                root_node.add_trace(trace)
+                root_node.add_trace(trace, data_handler)
         return root_node
 
     def is_locally_deterministic(self):
