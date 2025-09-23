@@ -6,6 +6,7 @@ from aalpy.automata import Dfa, MooreMachine, MealyMachine
 from aalpy.learning_algs import run_RPNI
 from aalpy.utils import load_automaton_from_file
 # from aalpy.utils.ModelChecking import bisimilar
+from aalpy.utils.ModelChecking import compare_automata
 
 correct_automata = {Dfa: load_automaton_from_file('../DotModels/SimpleABC/simple_abc_dfa.dot', automaton_type='dfa'),
                     MooreMachine: load_automaton_from_file('../DotModels/SimpleABC/simple_abc_moore.dot', automaton_type='moore'),
@@ -58,7 +59,11 @@ class DeterministicPassiveTest(unittest.TestCase):
 
                 is_eq = self.prove_equivalence(learned_model)
                 if not is_eq:
-                    print(oracle, automata)
+                    print("Learned:")
+                    print(learned_model)
+                    print(algorithm, automata_type[automata])
+                    cex = compare_automata(learned_model, correct_automaton)
+                    print(cex)
                     assert False
 
         assert True

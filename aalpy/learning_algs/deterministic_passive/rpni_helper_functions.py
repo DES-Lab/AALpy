@@ -59,10 +59,9 @@ def check_sequence(root_node, seq, automaton_type):
     curr_node = root_node
     for i, o in seq:
         if automaton_type == 'mealy':
-            input_outputs = {i: o for i, o in curr_node.children.keys()}
-            if i[0] not in input_outputs.keys() or o is not None and input_outputs[i[0]] != o:
+            if i not in curr_node.output or o is not None and curr_node.output[i] != o:
                 return False
-            curr_node = curr_node.children[(i[0], input_outputs[i[0]])]
+            curr_node = curr_node.children[i]
         else:
             # For dfa and moore, check if outputs are the same, iff output in test data is concrete (not None)
             curr_node = curr_node.children[i]
@@ -98,7 +97,7 @@ def createPTA(data, automaton_type):
     return root_node
 
 
-def extract_unique_sequences(root_node):
+def extract_unique_sequences(root_node, automaton_type):
     def get_leaf_nodes(root):
         leaves = []
 
@@ -119,7 +118,10 @@ def extract_unique_sequences(root_node):
         curr_node = root_node
         for i in node.prefix:
             curr_node = curr_node.children[i]
-            seq.append((i, curr_node.output))
+            if automaton_type == 'mealy':
+                seq.append((i, curr_node.output.get(i)))
+            else:
+                seq.append((i, curr_node.output))
         paths.append(seq)
 
     return paths
