@@ -34,6 +34,9 @@ class RpniNode:
         return id(self)  # TODO This is a hack
 
     def compatible_outputs(self, other):
+        """
+        Only allow merging of states that have same output(s).
+        """
         # None is compatible with everything
         if self.type != 'mealy':
             return self.output == other.output or self.output is None or other.output is None
