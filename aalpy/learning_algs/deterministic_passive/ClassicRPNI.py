@@ -12,7 +12,7 @@ class ClassicRPNI:
 
         pta_construction_start = time.time()
         self.root_node = createPTA(data, automaton_type)
-        self.test_data = extract_unique_sequences(self.root_node)
+        self.test_data = extract_unique_sequences(self.root_node, automaton_type)
 
         if self.print_info:
             print(f'PTA Construction Time: {round(time.time() - pta_construction_start, 2)}')
@@ -27,7 +27,7 @@ class ClassicRPNI:
             merged = False
 
             for red_state in red:
-                if not self._compatible_states(red_state, lex_min_blue):
+                if not red_state.compatible_outputs(lex_min_blue):
                     continue
                 merge_candidate = self._merge(red_state, lex_min_blue, copy_nodes=True)
                 if self._compatible(merge_candidate):
@@ -60,21 +60,6 @@ class ClassicRPNI:
         for sequence in self.test_data:
             if not check_sequence(root_node, sequence, automaton_type=self.automaton_type):
                 return False
-        return True
-
-    def _compatible_states(self, red_node, blue_node):
-        """
-        Only allow merging of states that have same output(s).
-        """
-        if self.automaton_type != 'mealy':
-            # None is compatible with everything
-            return red_node.output == blue_node.output or red_node.output is None or blue_node.output is None
-        else:
-            red_io = {i: o for i, o in red_node.children.keys()}
-            blue_io = {i: o for i, o in blue_node.children.keys()}
-            for common_i in set(red_io.keys()).intersection(blue_io.keys()):
-                if red_io[common_i] != blue_io[common_i]:
-                    return False
         return True
 
     def _merge(self, red_node, lex_min_blue, copy_nodes=False):
@@ -112,18 +97,12 @@ class ClassicRPNI:
                 red_node.children[i] = blue_node.children[i]
 
     def _fold_mealy(self, red_node, blue_node):
-        blue_io_map = {i: o for i, o in blue_node.children.keys()}
+        for i, o in blue_node.output.items():
+            red_node.output[i] = o
 
-        updated_keys = {}
-        for io, val in red_node.children.items():
-            o = blue_io_map[io[0]] if io[0] in blue_io_map.keys() else io[1]
-            updated_keys[(io[0], o)] = val
-
-        red_node.children = updated_keys
-
-        for io in blue_node.children.keys():
-            if io in red_node.children.keys():
-                self._fold_mealy(red_node.children[io], blue_node.children[io])
+        for i in blue_node.children.keys():
+            if i in red_node.children.keys():
+                self._fold_mealy(red_node.children[i], blue_node.children[i])
             else:
-                red_node.children[io] = blue_node.children[io]
+                red_node.children[i] = blue_node.children[i]
 

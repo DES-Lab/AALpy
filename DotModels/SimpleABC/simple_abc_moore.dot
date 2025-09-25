@@ -1,0 +1,21 @@
+digraph simpleABCmoore{
+s0 [label="s0|0", shape=record, style=rounded];
+s1 [label="s1|1", shape=record, style=rounded];
+s2 [label="s2|2", shape=record, style=rounded];
+s3 [label="s3|3", shape=record, style=rounded];
+s0 -> s1 [label="a"];
+s0 -> s2 [label="b"];
+s0 -> s3 [label="c"];
+s1 -> s1 [label="a"];
+s1 -> s2 [label="b"];
+s1 -> s3 [label="c"];
+s2 -> s1 [label="a"];
+s2 -> s2 [label="b"];
+s2 -> s3 [label="c"];
+s3 -> s1 [label="a"];
+s3 -> s2 [label="b"];
+s3 -> s3 [label="c"];
+__start0 [shape=none, label=""];
+__start0 -> s0 [label=""];
+}
+
