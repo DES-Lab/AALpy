@@ -144,14 +144,6 @@ def run_experiment(experiment_id,
         data += positive_seq[:5000]
         data += negative_seq[:10000 - len(data)]
 
-        # wm_negative = 0
-        # for seq, label in data:
-        #     if not label and ground_truth_model.is_balanced(seq):
-        #         wm_negative += 1
-        # print(wm_negative)
-
-        # data = get_sequences_from_active_sevpa(ground_truth_model)
-
     vpa_alphabet = ground_truth_model.get_input_alphabet()
 
     learning_data, test_data = split_data_to_learning_and_testing(data, learning_to_test_ratio=learning_to_test_ratio)
@@ -171,20 +163,10 @@ def run_experiment(experiment_id,
     comparison_results = comparison_results + [learning_set_size, num_test_size]
     return comparison_results
 
-
-def run_all_experiments_experiments(test_models, learning_to_test_ratio):
-    for idx, gt in enumerate(test_models):
-        results = run_experiment(idx, gt, num_of_learning_seq=10000, max_learning_seq_len=50,
-                                 random_data_generation=False, learning_to_test_ratio=learning_to_test_ratio)
-
-        res_str = f'GT {idx + 1}:\t Learning ({results[-2][0]}/{results[-2][1]}),\t Test ({results[-1][0]}/{results[-1][1]}),\t'
-        res_str += f'RPNI: size: {results[0]}, prec/rec/F1: {results[2]}, \t PAPNI size: {results[1]}, prec/rec/F1: {results[3]}'
-
-        print(res_str)
-
-
 def run_experiments_multiple_times(test_models, num_times, learning_to_test_ratio=0.5):
     all_results = defaultdict(list)
+    print(f'Running each experiment/model {num_times} times.')
+
     for idx, gt in enumerate(test_models):
         for _ in range(num_times):
             r = run_experiment(idx, gt, num_of_learning_seq=10000, max_learning_seq_len=50,
@@ -257,4 +239,7 @@ def test_papni_based_on_sevpa_dataset():
 
         assert in_learning + not_in_learning == balanced_counter
 
-test_papni_based_on_sevpa_dataset()
+#test_papni_based_on_sevpa_dataset()
+
+all_models = get_all_VPAs()
+run_experiments_multiple_times(all_models, num_times=2)
