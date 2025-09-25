@@ -7,6 +7,7 @@ from aalpy.utils import convert_i_o_traces_for_RPNI, generate_input_output_data_
 from aalpy.utils.BenchmarkVpaModels import get_all_VPAs
 from statistics import mean, stdev
 
+# Load positive and negativ sequances for all models
 all_data = dict()
 with open('papni_sequences.pickle', 'rb') as handle:
     all_data = pickle.load(handle)
@@ -59,6 +60,8 @@ def compare_rpni_and_papni(test_data, rpni_model, papni_model):
     return [rpni_model.size, papni_model.size, rpni_error, papni_error]
 
 
+# run KV for VPDA learning and record all sequences
+# these sequences should cover the whole characterizing set required to learn 1-SEVPA
 def get_sequences_from_active_sevpa(model, verbose=False):
     from aalpy import SUL, run_KV, RandomWordEqOracle, SevpaAlphabet
 
@@ -165,25 +168,24 @@ def run_experiment(experiment_id,
 
 def run_experiments_multiple_times(test_models, num_times, learning_to_test_ratio=0.5):
     all_results = defaultdict(list)
-    print(f'Running each experiment/model {num_times} times.')
+    print(f'Running experiment on each model {num_times} times.')
 
     for idx, gt in enumerate(test_models):
+        print('Experiment: ', idx)
         for _ in range(num_times):
             r = run_experiment(idx, gt, num_of_learning_seq=10000, max_learning_seq_len=50,
                                random_data_generation=False, learning_to_test_ratio=learning_to_test_ratio)
 
             all_results[idx].append(r)
 
-    for exp_idx, result in all_results.items():
-        print('Experiment: ', exp_idx)
-        rpni_results = [r[2] for r in result]
-        papni_results = [r[3] for r in result]
+        rpni_results = [r[2] for r in all_results[idx]]
+        papni_results = [r[3] for r in all_results[idx]]
 
         rpni_f1 = [r[2] for r in rpni_results]
         papni_f1 = [r[2] for r in papni_results]
 
-        print(f'RPNI  : min {min(rpni_f1)}, max {max(rpni_f1)}, mean {mean(rpni_f1)}, stddev {stdev(rpni_f1)}')
-        print(f'PAPNI : min {min(papni_f1)}, max {max(papni_f1)}, mean {mean(papni_f1)}, stddev {stdev(papni_f1)}')
+        print(f'RPNI  (F1) : min {min(rpni_f1)}, max {max(rpni_f1)}, mean {mean(rpni_f1)}, stddev {stdev(rpni_f1)}')
+        print(f'PAPNI (F1) : min {min(papni_f1)}, max {max(papni_f1)}, mean {mean(papni_f1)}, stddev {stdev(papni_f1)}')
         print('----------------------------------------------------------------')
 
     import pickle
@@ -242,4 +244,4 @@ def test_papni_based_on_sevpa_dataset():
 #test_papni_based_on_sevpa_dataset()
 
 all_models = get_all_VPAs()
-run_experiments_multiple_times(all_models, num_times=2)
+run_experiments_multiple_times(all_models, num_times=20, learning_to_test_ratio=0.5)
