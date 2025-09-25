@@ -59,7 +59,6 @@ class ClassicRPNI:
         """
         for sequence in self.test_data:
             if not check_sequence(root_node, sequence, automaton_type=self.automaton_type):
-                print(sequence)
                 return False
         return True
 
