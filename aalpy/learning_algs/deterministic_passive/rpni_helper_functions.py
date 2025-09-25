@@ -60,6 +60,11 @@ def check_sequence(root_node, seq, automaton_type):
     Checks whether each sequence in the dataset is valid in the current automaton.
     """
     curr_node = root_node
+    # Check initial output for Moore machines and the like
+    if automaton_type != 'mealy' and len(seq) != 0:
+        if seq[0] is not None and seq[0] != root_node.output:
+            return False
+        seq = seq[1:]
     for i, o in seq:
         if automaton_type == 'mealy':
             if i not in curr_node.output or o is not None and curr_node.output[i] != o:
@@ -117,7 +122,7 @@ def extract_unique_sequences(root_node, automaton_type):
     leaf_nodes = get_leaf_nodes(root_node)
     paths = []
     for node in leaf_nodes:
-        seq = []
+        seq = [] if automaton_type == 'mealy' else [root_node.output]
         curr_node = root_node
         for i in node.prefix:
             curr_node = curr_node.children[i]
