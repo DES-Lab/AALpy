@@ -19,6 +19,8 @@ class ProgressReport(Instrumentation):
         self.nr_merged_states = 0
         self.nr_red_states = 0
 
+        self.stats = dict()
+
         self.previous_time = None
 
     def reset(self, gsm: GeneralizedStateMerging):
@@ -29,23 +31,27 @@ class ProgressReport(Instrumentation):
         self.nr_merged_states = 0
         self.nr_red_states = 0
 
+        self.stats = dict()
         self.previous_time = perf_counter()
 
     def pta_construction_done(self, root):
-        print(f'PTA Construction Time: {round(perf_counter() - self.previous_time, 2)} s')
-        if 1 < self.lvl:
+        pta_const_time = perf_counter() - self.previous_time
+        self.stats["pta creation time"] = pta_const_time
+        print(f'PTA Construction Time: {round(pta_const_time, 2)} s')
+        if 0 < self.lvl:
             states = root.get_all_nodes()
             leafs = [state for state in states if len(state.transitions.keys()) == 0]
             depth = [state.get_prefix_length() for state in leafs]
             self.pta_size = len(states)
-            print(f'PTA has {len(states)} states leading to {len(leafs)} leafs')
-            print(f'min / avg / max depth : {min(depth)} / {sum(depth) / len(depth)} / {max(depth)}')
+            if 1 < self.lvl:
+                print(f'PTA has {len(states)} states leading to {len(leafs)} leafs')
+                print(f'min / avg / max depth : {min(depth)} / {sum(depth) / len(depth)} / {max(depth)}')
         self.previous_time = perf_counter()
 
     def print_status(self):
         reset_char = "\33[2K\r"
         print_str = reset_char + f'Current automaton size: {self.nr_red_states}'
-        if 1 < self.lvl and not self.gsm.compatibility_on_futures:
+        if 0 < self.lvl and not self.gsm.compatibility_on_futures:
             print_str += f' Merged: {self.nr_merged_states_total} Remaining: {self.pta_size - self.nr_red_states - self.nr_merged_states_total}'
         print(print_str, end="")
 
@@ -61,7 +67,10 @@ class ProgressReport(Instrumentation):
         self.print_status()
 
     def learning_done(self, root: GsmNode):
-        print(f'\nLearning Time: {round(perf_counter() - self.previous_time, 2)} s')
+        learning_time = perf_counter() - self.previous_time
+        self.stats["learning time"] = learning_time
+        self.stats["total time"] = learning_time + self.stats["pta creation time"]
+        print(f'\nLearning Time: {round(learning_time, 2)} s')
         print(f'Learned {self.nr_red_states} state automaton via {self.nr_merged_states} merges.')
         if 2 < self.lvl:
             root.visualize("model", self.gsm.output_behavior)
