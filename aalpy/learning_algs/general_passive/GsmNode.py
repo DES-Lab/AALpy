@@ -375,6 +375,20 @@ class GsmNode:
             file_ext = 'dot'
         graph.write(path=str(path) + "." + file_ext, prog=engine, format=format)
 
+    def make_input_complete(self) -> List[Tuple['GsmNode', Any, Any]]:
+        all_nodes = self.get_all_nodes()
+        inputs = {in_sym for node in all_nodes for in_sym in node.transitions}
+        missing_trans = []
+        for node in all_nodes:
+            for in_sym in inputs:
+                transitions = node.transitions[in_sym]
+                if len(transitions) == 0:
+                    out_sym = node.prefix_access_pair[1]
+                    missing_trans.append((node, in_sym, out_sym))
+                    t_info = TransitionInfo(node, 1, None, None)
+                    transitions[out_sym] = t_info
+        return missing_trans
+
     def add_trace(self, trace: IOTrace):
         curr_node: GsmNode = self
         for in_sym, out_sym in trace:
