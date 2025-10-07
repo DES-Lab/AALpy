@@ -10,20 +10,22 @@ class KWayStateCoverageEqOracle(Oracle):
     random walk at the end.
     """
 
-    def __init__(self, alphabet: list, sul: SUL, k=2, random_walk_len=20, method='permutations'):
+    def __init__(self, alphabet: list, sul: SUL, k=2, random_walk_len=20,
+                 method='permutations',
+                 num_test_lower_bound=None,
+                 num_test_upper_bound=None):
         """
 
         Args:
 
             alphabet: input alphabet
-
             sul: system under learning
-
             k: k value used for k-wise combinations/permutations of states
-
             random_walk_len: length of random walk performed at the end of each combination/permutation
-
             method: either 'combinations' or 'permutations'
+            num_test_lower_bound= either None or number a minimum number of test-cases to be performed in each testing round
+            num_test_upper_bound= either None or number a maximum number of test-cases to be performed in each testing round
+
         """
         super().__init__(alphabet, sul)
         assert k > 1 and method in ['combinations', 'permutations']
@@ -32,39 +34,24 @@ class KWayStateCoverageEqOracle(Oracle):
         self.fun = combinations if method == 'combinations' else permutations
         self.random_walk_len = random_walk_len
 
+        self.num_test_lower_bound = num_test_lower_bound
+        self.num_test_upper_bound = num_test_upper_bound
+
     def find_cex(self, hypothesis):
 
-        if len(hypothesis.states) == 1:
-            for _ in range(self.random_walk_len):
-                path = choices(self.alphabet, k=self.random_walk_len)
-                hypothesis.reset_to_initial()
-                self.sul.post()
-                self.sul.pre()
-                for i, p in enumerate(path):
-                    out_sul = self.sul.step(p)
-                    out_hyp = hypothesis.step(p)
-                    self.num_steps += 1
+        shuffle(hypothesis.states)
 
-                    if out_sul != out_hyp:
-                        self.sul.post()
-                        return path[:i + 1]
-
-        states = hypothesis.states
-        shuffle(states)
-
+        test_cases = []
         for comb in self.fun(hypothesis.states, self.k):
             prefixes = frozenset([c.prefix for c in comb])
             if prefixes in self.cache:
                 continue
-            else:
-                self.cache.add(prefixes)
+            self.cache.add(prefixes)
 
             index = 0
             path = comb[0].prefix
-
-            # in case of non-strongly connected automata test case might not be possible as a path between 2 states
-            # might not exist
             possible_test_case = True
+
             while index < len(comb) - 1:
                 path_between_states = hypothesis.get_shortest_path(comb[index], comb[index + 1])
                 index += 1
@@ -79,9 +66,23 @@ class KWayStateCoverageEqOracle(Oracle):
                 continue
 
             path += tuple(choices(self.alphabet, k=self.random_walk_len))
+            test_cases.append(path)
 
+        # lower bound (also accounts for single state hypothesis when a lower bound is not defined)
+        lower_bound = self.num_test_lower_bound
+        if len(hypothesis.states) == 1 and lower_bound is None:
+            lower_bound = 50
+
+        while lower_bound is not None and len(test_cases) < lower_bound:
+            path = tuple(choices(self.alphabet, k=self.random_walk_len))
+            test_cases.append(path)
+
+        # upper bound
+        if self.num_test_upper_bound is not None:
+            test_cases = test_cases[:self.num_test_upper_bound]
+
+        for path in test_cases:
             self.reset_hyp_and_sul(hypothesis)
-
             for i, p in enumerate(path):
                 out_sul = self.sul.step(p)
                 out_hyp = hypothesis.step(p)
