@@ -367,6 +367,7 @@ class ClassificationTree:
         u = cex[:len(cex) - len(v) - 1]
         assert (*u, a, *v) == cex
 
+        hypothesis.reset_to_initial()
         hypothesis.execute_sequence(hypothesis.initial_state, u)
         u_state = hypothesis.current_state
 
