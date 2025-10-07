@@ -55,6 +55,7 @@ class KWayTransitionCoverageEqOracle(Oracle):
             paths = self.generate_random_paths(hypothesis) + self.cached_paths
             self.cached_paths = self.greedy_set_cover(hypothesis, paths)
 
+            print('Num TC', len(self.cached_paths))
             for path in self.cached_paths:
                 counter_example = self.check_path(hypothesis, path.steps)
 

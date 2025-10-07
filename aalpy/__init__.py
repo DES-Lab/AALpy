@@ -57,8 +57,8 @@ from .oracles import (
     TransitionFocusOracle,
     UserInputEqOracle,
     WMethodEqOracle,
-    kWayStateCoverageEqOracle,
-    kWayTransitionCoverageEqOracle,
+    KWayStateCoverageEqOracle,
+    KWayTransitionCoverageEqOracle,
 )
 from .SULs import (
     AutomatonSUL, 
