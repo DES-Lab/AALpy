@@ -50,7 +50,8 @@ class MooreMachine(DeterministicAutomaton[MooreState[InputType, OutputType]]):
 
     def execute_sequence(self, origin_state, seq):
         if not seq:
-            return origin_state.output
+            self.current_state = origin_state
+            return self.current_state.output
         return super(MooreMachine, self).execute_sequence(origin_state, seq)
 
     def to_state_setup(self):
