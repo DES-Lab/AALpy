@@ -1,6 +1,7 @@
 import functools
 import math
 import pathlib
+from abc import abstractmethod
 from collections import defaultdict
 from functools import total_ordering
 from typing import Dict, Any, List, Tuple, Iterable, Callable, Union, TypeVar, Iterator, Optional, Sequence, Generic
@@ -97,6 +98,34 @@ def detect_data_format(data, check_consistency=False, guess=False):
     return accepted_formats[0]
 
 class IOHandler(Generic[T]):
+    @abstractmethod
+    def init(self, data, output_format, data_format):
+        ...
+
+    @abstractmethod
+    def abstract(self, in_val, out_val):
+        ...
+
+    @abstractmethod
+    def init_data(self) -> T:
+        ...
+
+    @abstractmethod
+    def aggregate_data(self, data: T, in_sym, out_value) -> T:
+        ...
+
+    @abstractmethod
+    def merge(self, x: T, y: T) -> T:
+        ...
+
+    @abstractmethod
+    def copy(self, x: T) -> T:
+        ...
+
+class NoIOHandler(IOHandler):
+    def init(self, data, output_format, data_format):
+        pass
+
     def abstract(self, in_val, out_val):
         return in_val, out_val
 
@@ -207,7 +236,7 @@ class GsmNode(Generic[T]):
             for out_sym, node in transitions.items():
                 yield in_sym, out_sym, node
 
-    def shallow_copy(self, data_handler: IOHandler) -> 'GsmNode': #TODO fix
+    def shallow_copy(self, data_handler: IOHandler) -> 'GsmNode':
         node = GsmNode(self.prefix_access_pair, self.predecessor, data_handler.copy(self.data))
         for in_sym, t in self.transitions.items():
             d = dict() # appears to be faster than dict comprehension
@@ -426,9 +455,12 @@ class GsmNode(Generic[T]):
         curr_node: GsmNode = self
         in_sym = None
 
+        if not isinstance(data_handler, NoIOHandler):
+            raise NotImplementedError("Data handling is not supported for learning from labeled sequences")
+
         # step through inputs and add transitions
         for in_value in inputs:
-            in_sym = data_handler.abstract(in_value, None)
+            in_sym, out_sym = data_handler.abstract(in_value, None)
             curr_node.data = data_handler.aggregate_data(curr_node.data, in_value, None)
             transitions = curr_node.transitions[in_sym]
             t_infos = list(transitions.values())
@@ -462,6 +494,8 @@ class GsmNode(Generic[T]):
             data_format = detect_data_format(data)
         if data_format not in DataFormatRange:
             raise ValueError(f"invalid data format {data_format}. should be in {DataFormatRange}")
+
+        data_handler.init(data, output_behavior, data_format)
 
         if data_format == "tree":
             if not data.is_tree():

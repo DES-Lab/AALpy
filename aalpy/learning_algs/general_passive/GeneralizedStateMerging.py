@@ -3,7 +3,8 @@ from collections import deque
 from typing import Dict, Tuple, Callable, List, Optional
 
 from aalpy.learning_algs.general_passive.GsmNode import GsmNode, OutputBehavior, TransitionBehavior, TransitionInfo, \
-    OutputBehaviorRange, TransitionBehaviorRange, intersection_iterator, unknown_output, detect_data_format, IOHandler
+    OutputBehaviorRange, TransitionBehaviorRange, intersection_iterator, unknown_output, detect_data_format, IOHandler, \
+    NoIOHandler
 from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreCalculation, hoeffding_compatibility
 
 
@@ -78,7 +79,7 @@ class GeneralizedStateMerging:
         self.pta_preprocessing = pta_preprocessing or (lambda x: x)
         self.postprocessing = postprocessing or (lambda x: x)
 
-        self.data_handler = data_handler or IOHandler()
+        self.data_handler = data_handler or NoIOHandler()
 
         self.compatibility_on_pta = compatibility_on_pta
         self.compatibility_on_futures = compatibility_on_futures
