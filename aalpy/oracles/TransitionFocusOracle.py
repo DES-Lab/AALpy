@@ -31,7 +31,7 @@ class TransitionFocusOracle(Oracle):
         for _ in range(self.num_walks):
             self.reset_hyp_and_sul(hypothesis)
 
-            curr_state = hypothesis.initial_state
+            curr_state = hypothesis.current_state
             inputs = []
             for _ in range(self.steps_per_walk):
                 if random.random() <= self.same_state_prob:
@@ -45,6 +45,8 @@ class TransitionFocusOracle(Oracle):
                 out_sul = self.sul.step(inputs[-1])
                 out_hyp = hypothesis.step(inputs[-1])
                 self.num_steps += 1
+
+                curr_state = hypothesis.current_state
 
                 if out_sul != out_hyp:
                     self.sul.post()
