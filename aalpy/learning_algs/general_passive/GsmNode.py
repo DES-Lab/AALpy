@@ -508,7 +508,7 @@ class GsmNode(Generic[T]):
         if data_format == "io_traces" or data_format == "traces":
             if output_behavior == "moore":
                 initial_output = data[0][0]
-                root_node.prefix_access_pair = (None, initial_output)
+                root_node.prefix_access_pair = data_handler.abstract(None, initial_output)
                 data = (d[1:] for d in data)
             for trace in data:
                 if data_format == "traces":
