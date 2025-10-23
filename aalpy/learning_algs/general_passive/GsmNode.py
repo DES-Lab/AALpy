@@ -111,7 +111,7 @@ class IOHandler(Generic[T]):
         ...
 
     @abstractmethod
-    def aggregate_data(self, data: T, in_sym, out_value) -> T:
+    def aggregate_data(self, src_node: 'GsmNode[T]', in_sym, out_value, dst_node: 'GsmNode[T]'):
         ...
 
     @abstractmethod
@@ -132,8 +132,8 @@ class NoIOHandler(IOHandler):
     def init_data(self) -> T:
         return None
 
-    def aggregate_data(self, data: T, in_sym, out_value) -> T:
-        return None
+    def aggregate_data(self, src_node: 'GsmNode[T]', in_sym, out_value, dst_node: 'GsmNode[T]'):
+        pass
 
     def merge(self, x: T, y: T) -> T:
         return None
@@ -438,7 +438,6 @@ class GsmNode(Generic[T]):
         curr_node: GsmNode = self
         for in_value, out_value in trace:
             in_sym, out_sym = data_handler.abstract(in_value, out_value)
-            curr_node.data = data_handler.aggregate_data(curr_node.data, in_value, out_value)
             transitions = curr_node.transitions[in_sym]
             info = transitions.get(out_sym)
             if info is None:
@@ -448,6 +447,7 @@ class GsmNode(Generic[T]):
                 info.count += 1
                 info.original_count += 1
                 node = info.target
+            data_handler.aggregate_data(curr_node, in_value, out_value, node)
             curr_node = node
 
     def add_labeled_sequence(self, example: IOExample, data_handler: IOHandler[T] = None):
@@ -461,7 +461,6 @@ class GsmNode(Generic[T]):
         # step through inputs and add transitions
         for in_value in inputs:
             in_sym, out_sym = data_handler.abstract(in_value, None)
-            curr_node.data = data_handler.aggregate_data(curr_node.data, in_value, None)
             transitions = curr_node.transitions[in_sym]
             t_infos = list(transitions.values())
             if len(t_infos) == 0:
@@ -476,6 +475,7 @@ class GsmNode(Generic[T]):
             else:
                 # This should never happen
                 raise ValueError("Nondeterminism encountered for GSM with labeled_sequences. not supported")
+            data_handler.aggregate_data(curr_node, in_value, None, node)
             curr_node = node
 
         # set last output
@@ -507,8 +507,16 @@ class GsmNode(Generic[T]):
                 root_node.add_labeled_sequence(example, data_handler)
         if data_format == "io_traces" or data_format == "traces":
             if output_behavior == "moore":
-                initial_output = data[0][0]
-                root_node.prefix_access_pair = data_handler.abstract(None, initial_output)
+                root_node.prefix_access_pair = data_handler.abstract(None, data[0][0])
+                initial_output_symbol = root_node.prefix_access_pair[1]
+
+                for trace in data:
+                    initial_output = trace[0]
+                    _, ios = data_handler.abstract(None, initial_output)
+                    if ios != initial_output_symbol:
+                        raise ValueError("expect unique initial output symbol for Moore behavior")
+                    data_handler.aggregate_data(None, None, initial_output, root_node)
+
                 data = (d[1:] for d in data)
             for trace in data:
                 if data_format == "traces":
