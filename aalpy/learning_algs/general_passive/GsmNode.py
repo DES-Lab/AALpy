@@ -501,6 +501,7 @@ class GsmNode(Generic[T]):
             if not data.is_tree():
                 raise ValueError("provided automaton is not a tree")
             return data
+        # TODO extract method for replaying data on dot model
         root_node = GsmNode((None, unknown_output), None, data_handler.init_data())
         if data_format == "labeled_sequences":
             for example in data:
