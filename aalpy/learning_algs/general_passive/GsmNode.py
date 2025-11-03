@@ -111,7 +111,7 @@ class IOHandler(Generic[T]):
         ...
 
     @abstractmethod
-    def aggregate_data(self, src_node: 'GsmNode[T]', in_sym, out_value, dst_node: 'GsmNode[T]'):
+    def aggregate_data(self, src_node: 'GsmNode[T]', in_value, out_value, dst_node: 'GsmNode[T]'):
         ...
 
     @abstractmethod
