@@ -82,9 +82,7 @@ class TestWMethodOracle(unittest.TestCase):
         assert len(real.states) == 6
         assert len(hyp.states) == 2
         alphabet = real.get_input_alphabet()
-        oracle = WMethodEqOracle(
-            alphabet, AutomatonSUL(real), len(real.states) + 1, shuffle_test_set=False
-        )
+        oracle = WMethodEqOracle(alphabet, AutomatonSUL(real), len(real.states) + 1)
         cex = oracle.find_cex(hyp)
         assert cex is not None, "Expected a counterexample, but got None"
 
@@ -98,9 +96,7 @@ class TestWMethodOracle(unittest.TestCase):
         assert len(real.states) == 6
         assert len(hyp.states) == 2
         alphabet = real.get_input_alphabet()
-        oracle = WMethodEqOracle(
-            alphabet, AutomatonSUL(real), len(real.states) + 1, shuffle_test_set=False
-        )
+        oracle = WMethodEqOracle(alphabet, AutomatonSUL(real), len(real.states) + 1)
         lstar_hyp = run_Lstar(alphabet, AutomatonSUL(real), oracle, "moore")
         # print(lstar_hyp)
         # visualize_automaton(lstar_hyp)
