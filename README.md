@@ -142,8 +142,8 @@ If you use AALpy in your research, please cite us with of the following:
 - [Extended version (preferred)](https://www.researchgate.net/publication/359517046_AALpy_an_active_automata_learning_library/citation/download)
 - [Tool paper](https://dblp.org/rec/conf/atva/MuskardinAPPT21.html?view=bibtex)
 
-If you have research suggestions or you need specific help concerning your research, feel free to start a [discussion](https://github.com/DES-Lab/AALpy/discussions) or contact [edi.muskardin@silicon-austria.com](mailto:edi.muskardin@silicon-austria.com).
-We are happy to help you and consult you in applying automata learning in various domains.
+If you have research suggestions or you need specific help concerning your research, feel free to start a [discussion](https://github.com/DES-Lab/AALpy/discussions).
+We are happy to help you and consult you in developing autoamta learning algorithms and in applying automata learning in various domains.
 
 ## Contributing
 Pull requests are welcome. For significant changes, please open an issue first to discuss what you would like to change.
