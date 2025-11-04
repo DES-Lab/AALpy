@@ -400,7 +400,12 @@ class DeterministicAutomaton(Automaton[AutomatonStateType]):
                 for new_block in new_blocks:
                     blocks.append(new_block)
 
-        char_set = list(set(char_set))
+        unique_char_set = []
+        for seq in char_set:
+            if seq not in unique_char_set:
+                unique_char_set.append(seq)
+        char_set = unique_char_set
+
         if return_same_states:
             return None, None
         return char_set
