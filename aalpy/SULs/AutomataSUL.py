@@ -8,14 +8,12 @@ class AutomatonSUL(SUL):
         self.automaton: Automaton = automaton
 
     def pre(self):
-        print('pre')
         self.automaton.reset_to_initial()
 
     def step(self, letter=None):
         return self.automaton.step(letter)
 
     def post(self):
-        print('post')
         pass
 
 
