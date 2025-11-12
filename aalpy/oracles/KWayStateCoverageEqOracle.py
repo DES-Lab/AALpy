@@ -92,4 +92,7 @@ class KWayStateCoverageEqOracle(Oracle):
                     self.sul.post()
                     return path[:i + 1]
 
+            # cleanup after the test case
+            self.sul.post()
+
         return None

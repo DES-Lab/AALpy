@@ -71,7 +71,9 @@ class WMethodEqOracle(Oracle):
                     if out_hyp != out_sul:
                         self.sul.post()
                         return seq[:ind + 1]
+
                 self.cache.add(seq)
+                self.sul.post()
 
         return None
 
@@ -138,5 +140,7 @@ class RandomWMethodEqOracle(Oracle):
                 if output_sul != output_hyp:
                     self.sul.post()
                     return test_case[:ind + 1]
+
+            self.sul.post()
 
         return None

@@ -50,9 +50,11 @@ class UserInputEqOracle(Oracle):
                     self.sul.post()
                     return inputs
             if inp == 'end':
+                self.sul.post()
                 return None
             if inp == 'reset':
                 inputs.clear()
+                self.sul.post()
                 self.reset_hyp_and_sul(hypothesis)
                 print('You are back in the initial state. Please provide an input: ')
                 continue

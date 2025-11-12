@@ -158,7 +158,7 @@ class KWayTransitionCoverageEqOracle(Oracle):
 
         return result
 
-    def generate_prefix_steps(self, hypothesis: Automaton) -> tuple:
+    def generate_prefix_steps(self, hypothesis: Automaton):
         for state in reversed(hypothesis.states):
             prefix = state.prefix
             for steps in sorted(product(self.alphabet, repeat=self.k), key=lambda k: random()):
@@ -202,5 +202,8 @@ class KWayTransitionCoverageEqOracle(Oracle):
             if out_sul != out_hyp:
                 self.sul.post()
                 return steps[:i + 1]
+
+        # cleanup after the test case
+        self.sul.post()
 
         return None

@@ -65,11 +65,12 @@ class RandomWordEqOracle(Oracle):
                 self.num_steps += 1
 
                 if self.automata_type == 'det' and out_sul != out_hyp:
+                    self.sul.post()
+
                     if self.reset_after_cex:
                         self.walk_lengths = [randint(self.min_walk_len, self.max_walk_len) for _ in range(self.num_walks)]
                         self.num_walks_done = 0
 
-                    self.sul.post()
                     return inputs
 
                 elif out_hyp is None and self.automata_type != 'det':
@@ -87,6 +88,9 @@ class RandomWordEqOracle(Oracle):
                         for i, o in zip(inputs, outputs):
                             cex.extend([i, o])
                         return cex
+
+            # cleanup after the test case
+            self.sul.post()
 
         return None
 

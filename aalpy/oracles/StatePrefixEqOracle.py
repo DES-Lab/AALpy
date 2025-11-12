@@ -80,4 +80,7 @@ class StatePrefixEqOracle(Oracle):
                     self.sul.post()
                     return prefix + suffix
 
+            # cleanup after the test case
+            self.sul.post()
+
         return None
