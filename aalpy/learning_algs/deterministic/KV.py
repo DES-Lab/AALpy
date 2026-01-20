@@ -29,7 +29,7 @@ def run_KV(alphabet: Union[list, SevpaAlphabet], sul: SUL, eq_oracle: Oracle, au
 
         automaton_type: type of automaton to be learned. One of 'dfa', 'mealy', 'moore', 'vpa'
 
-        cex_processing: Counterexample processing strategy. Either 'rs' (Riverst-Schapire), 'longest_prefix'.
+        cex_processing: Counterexample processing strategy. Either 'rs' (Rivest-Schapire), 'longest_prefix'.
             (Default value = 'rs'), 'longest_prefix', 'linear_fwd', 'linear_bwd', 'exponential_fwd', 'exponential_bwd'
 
         max_learning_rounds: number of learning rounds after which learning will terminate (Default value = None)

@@ -43,7 +43,7 @@ def stochastic_longest_prefix(cex, prefixes):
 
 
 def stochastic_rs(sul: SUL, cex: tuple, hypothesis):
-    """Riverst-Schapire counter example processing.
+    """Rivest-Schapire counter example processing.
 
     Args:
 
