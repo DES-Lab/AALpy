@@ -131,7 +131,7 @@ seed(2) # all experiments will be reproducible
 
 ## Selected Applications
 AALpy has been used to:
-- [Learn Models of Bluetooth Low-Energy](https://github.com/apferscher/ble-learning)
+- [Learn Models of Bluetooth Low Energy](https://github.com/apferscher/ble-learning)
 - [Find bugs in VIM text editor](https://github.com/DES-Lab/AALpy/discussions/13)
 - [Learn Input-Output Behavior of RNNs](https://github.com/DES-Lab/Extracting-FSM-From-RNNs)
 - [Learn Models of GIT](https://github.com/taburg/git-learning)
@@ -143,7 +143,7 @@ If you use AALpy in your research, please cite us with of the following:
 - [Tool paper](https://dblp.org/rec/conf/atva/MuskardinAPPT21.html?view=bibtex)
 
 If you have research suggestions or you need specific help concerning your research, feel free to start a [discussion](https://github.com/DES-Lab/AALpy/discussions).
-We are happy to help you and consult you in developing autoamta learning algorithms and in applying automata learning in various domains.
+We are happy to help you and consult you in developing automata learning algorithms and in applying automata learning in various domains.
 
 ## Contributing
 Pull requests are welcome. For significant changes, please open an issue first to discuss what you would like to change.
