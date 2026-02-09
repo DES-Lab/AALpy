@@ -285,20 +285,28 @@ def convert_i_o_traces_for_RPNI(sequences, automaton_type="mealy"):
     Eg. [[(1,'a'), (2,'b'), (3,'c')], [(6,'7'), (4,'e'), (3,'c')]] to
     [((1,), 'a'), ((1, 2), 'b'), ((1, 2, 3), 'c'), ((6,), '7'), ((6, 4), 'e'), ((6, 4, 3), 'c')]
     """
-    rpni_sequences = set()
+    rpni_sequences = []
+    seen = set()
 
     if automaton_type not in ["mealy", "moore", "dfa"]:
         raise ValueError()
 
     for s in sequences:
         if automaton_type in ["moore", "dfa"]:
-            rpni_sequences.add((tuple(), s[0]))
+            key = (tuple(), s[0])
+            if key not in seen:
+                seen.add(key)
+                rpni_sequences.append(key)
             s = s[1:]
+
         for i in range(len(s)):
             inputs = tuple([io[0] for io in s[:i + 1]])
-            rpni_sequences.add((inputs, s[i][1]))
+            key = (inputs, s[i][1])
+            if key not in seen:
+                seen.add(key)
+                rpni_sequences.append(key)
 
-    return list(rpni_sequences)
+    return rpni_sequences
 
 
 def visualize_classification_tree(root_node):
