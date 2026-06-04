@@ -1,19 +1,22 @@
+import time
 from collections import defaultdict, deque
+from itertools import chain
 from random import choice
 
 from aalpy.automata import MealyState, MealyMachine
-from aalpy.utils.HelperFunctions import all_suffixes
+from aalpy.utils.HelperFunctions import all_suffixes, print_learning_info
 
 
 class ModelState:
     def __init__(self, hs):
         self.hs = hs
-        self.state_w_values = dict()
+        self.state_w_values = {}
 
-        self.transitions = dict()
-        self.output_fun = dict()
+        self.transitions = {}
+        self.output_fun = {}
 
-        self.transition_w_values = dict()
+        self.transition_w_values = {}
+        self.learned_w_per_input = defaultdict(set)
 
     def get_paths_to_reachable_states(self, target_states):
         target_states = set(target_states)
@@ -58,7 +61,7 @@ class hW:
 
         self.interrupt = False
 
-        self.state_map = dict()
+        self.state_map = {}
 
         # Incremental h-ND index
         self._hs_cont_starts = defaultdict(set)    # hs_output -> {cont_start_pos, ...}
@@ -77,21 +80,12 @@ class hW:
             w for w in self.W
             if w == sequence
             or (preserve_h and w == self.homing_sequence)
-            or not (w != sequence and sequence[:len(w)] == w)
+            or sequence[:len(w)] != w
         ]
         return True
 
     def execute_homing_sequence(self):
-        observed_output = []
-
-        for i in self.homing_sequence:
-            output = self.sul.step(i)
-            if isinstance(output, tuple) and len(output) == 1:
-                output = output[0]
-            self.global_trace.append((i, output))
-            self.sul.num_steps += 1
-            observed_output.append(output)
-
+        observed_output = [self.step_wrapper(i) for i in self.homing_sequence]
         self.check_h_ND_consistency()
         return tuple(observed_output)
 
@@ -121,46 +115,49 @@ class hW:
         if h_len == 0:
             return True
 
-        # Incrementally scan only newly added trace positions for new hs occurrences
+        trace = self.global_trace
+        trace_len = len(trace)
+
+        # Scan newly added trace for hs occurrences. When a new continuation is
+        # found, eagerly register pairs (new, existing) in _pair_progress so the
+        # pair-comparison loop below never has to rebuild them from cont_starts.
         scan_start = max(0, self._h_nd_scan_pos - h_len + 1)
-        for i in range(scan_start, len(self.global_trace) - h_len + 1):
-            prefix_inputs = tuple(inp for inp, _ in self.global_trace[i:i + h_len])
-            if prefix_inputs == self.homing_sequence:
-                prefix_outputs = tuple(out for _, out in self.global_trace[i:i + h_len])
-                cont_start = i + h_len
-                self._hs_cont_starts[prefix_outputs].add(cont_start)
-        self._h_nd_scan_pos = len(self.global_trace)
+        for i in range(scan_start, trace_len - h_len + 1):
+            window = trace[i:i + h_len]
+            if tuple(inp for inp, _ in window) == self.homing_sequence:
+                prefix_outputs = tuple(out for _, out in window)
+                new_cont = i + h_len
+                if new_cont not in self._hs_cont_starts[prefix_outputs]:
+                    for existing in self._hs_cont_starts[prefix_outputs]:
+                        p1, p2 = (new_cont, existing) if new_cont < existing else (existing, new_cont)
+                        self._pair_progress[(p1, p2)] = 0
+                    self._hs_cont_starts[prefix_outputs].add(new_cont)
+        self._h_nd_scan_pos = trace_len
 
-        # Incrementally compare pairs — each pair advances only from where it last stopped
-        for prefix_outputs, cont_starts in self._hs_cont_starts.items():
-            if len(cont_starts) <= 1:
-                continue
-            cont_starts = tuple(sorted(cont_starts))
-            for idx_i in range(len(cont_starts)):
-                for idx_j in range(idx_i + 1, len(cont_starts)):
-                    p1, p2 = cont_starts[idx_i], cont_starts[idx_j]
-                    already = self._pair_progress.get((p1, p2), 0)
-                    if already == -1:
-                        continue  # inputs already diverged for this pair
+        # Advance every active pair. Diverged pairs are deleted rather than
+        # marked -1, so this loop only touches pairs that still need work.
+        to_delete = []
+        for (p1, p2), already in self._pair_progress.items():
+            compare_len = min(trace_len - p1, trace_len - p2)
+            for k in range(already, compare_len):
+                inp1, out1 = trace[p1 + k]
+                inp2, out2 = trace[p2 + k]
+                if inp1 != inp2:
+                    to_delete.append((p1, p2))
+                    break
+                if out1 != out2:
+                    self.homing_sequence += tuple(inp for inp, _ in trace[p1:p1 + k + 1])
+                    self.interrupt = True
+                    self.state_map.clear()
+                    self._reset_h_nd_index()
+                    self.add_to_W(self.homing_sequence, preserve_h=False)
+                    return False
+            else:
+                if compare_len > already:
+                    self._pair_progress[(p1, p2)] = compare_len
 
-                    compare_len = min(len(self.global_trace) - p1, len(self.global_trace) - p2)
-                    for k in range(already, compare_len):
-                        inp1, out1 = self.global_trace[p1 + k]
-                        inp2, out2 = self.global_trace[p2 + k]
-                        if inp1 != inp2:
-                            self._pair_progress[(p1, p2)] = -1
-                            break
-                        if out1 != out2:
-                            ext = tuple(inp for inp, _ in self.global_trace[p1:p1 + k + 1])
-                            self.homing_sequence += ext
-                            self.interrupt = True
-                            self.state_map.clear()
-                            self._reset_h_nd_index()
-
-                            self.add_to_W(self.homing_sequence, preserve_h=False)
-
-                            return False
-                        self._pair_progress[(p1, p2)] = k + 1
+        for pair in to_delete:
+            del self._pair_progress[pair]
 
         return True
 
@@ -179,7 +176,6 @@ class hW:
                         if hs1[k] != hs2[k]:
                             new_w = self.homing_sequence[k:]
                             if new_w and new_w not in self.W:
-                                print(f'  [w-ND] {hs1} ≡ {hs2} under W — adding w={new_w}  W={self.W + [new_w]}')
                                 self.add_to_W(new_w)
                                 self.state_map.clear()
                                 self.interrupt = True
@@ -249,57 +245,56 @@ class hW:
     def get_incomplete_transitions(self):
         incomplete_transitions = defaultdict(list)
         for hs, state in self.state_map.items():
-            learned_w_per_input = defaultdict(set)
-            for (i, w) in state.transition_w_values.keys():
-                learned_w_per_input[i].add(w)
             for i in self.input_alphabet:
-                missing_ws = [w for w in self.W if w not in learned_w_per_input[i]]
-                if missing_ws:
-                    incomplete_transitions[hs].append((i, missing_ws[0]))
+                first_missing = next((w for w in self.W if w not in state.learned_w_per_input[i]), None)
+                if first_missing is not None:
+                    incomplete_transitions[hs].append((i, first_missing))
         return incomplete_transitions
-
-    def _profile_key(self, base_key, w_values):
-        return ('profile', base_key, tuple(sorted(w_values.items())))
 
     def update_model_transitions(self):
         current_w_set = set(self.W)
         new_states = {}
 
         for hs, state in self.state_map.items():
+            # Pre-group transition_w_values by input in one pass instead of
+            # re-scanning the full dict for every input symbol.
+            by_input = defaultdict(dict)
+            for (i, w), output in state.transition_w_values.items():
+                if w in current_w_set:
+                    by_input[i][w] = output
+
             for i in self.input_alphabet:
-                w_for_input = {w: output for (ii, w), output in state.transition_w_values.items()
-                               if ii == i and w in current_w_set}
-                if len(w_for_input) == len(self.W):
-                    matched = None
-                    for _, destination_state in self.state_map.items():
-                        if w_for_input == destination_state.state_w_values:
-                            matched = destination_state
-                            break
-                    if matched is None:
-                        for _, destination_state in new_states.items():
-                            if w_for_input == destination_state.state_w_values:
-                                matched = destination_state
-                                break
-                    if matched is None:
-                        h = self.homing_sequence
-                        if h in w_for_input:
-                            new_key = w_for_input[h]
-                        else:
-                            candidates = [w for w in self.W if len(w) >= len(h) and w[:len(h)] == h]
-                            if not candidates:
-                                continue
-                            new_key = w_for_input[candidates[0]][:len(h)]
-                        existing = self.state_map.get(new_key) or new_states.get(new_key)
-                        if existing is not None and existing.state_w_values != w_for_input:
-                            new_key = self._profile_key(new_key, w_for_input)
-                        if new_key not in new_states and new_key not in self.state_map:
-                            new_state = ModelState(new_key)
-                            new_state.state_w_values = dict(w_for_input)
-                            new_states[new_key] = new_state
-                        matched = self.state_map.get(new_key) or new_states.get(new_key)
-                        if matched is None:
+                w_for_input = by_input.get(i, {})
+                if len(w_for_input) != len(self.W):
+                    continue
+
+                matched = None
+                for _, destination_state in chain(self.state_map.items(), new_states.items()):
+                    if w_for_input == destination_state.state_w_values:
+                        matched = destination_state
+                        break
+
+                if matched is None:
+                    h = self.homing_sequence
+                    if h in w_for_input:
+                        new_key = w_for_input[h]
+                    else:
+                        candidates = [w for w in self.W if len(w) >= len(h) and w[:len(h)] == h]
+                        if not candidates:
                             continue
-                    state.transitions[i] = matched
+                        new_key = w_for_input[candidates[0]][:len(h)]
+                    existing = self.state_map.get(new_key) or new_states.get(new_key)
+                    if existing is not None and existing.state_w_values != w_for_input:
+                        new_key = tuple(sorted(w_for_input.items()))
+                    if new_key not in new_states and new_key not in self.state_map:
+                        new_state = ModelState(new_key)
+                        new_state.state_w_values = dict(w_for_input)
+                        new_states[new_key] = new_state
+                    matched = self.state_map.get(new_key) or new_states.get(new_key)
+                    if matched is None:
+                        continue
+
+                state.transitions[i] = matched
         self.state_map.update(new_states)
 
     def _state_partitions(self):
@@ -365,7 +360,7 @@ class hW:
             wired_blocks.add(block)
             automata_state = block_states[block]
             for i in self.input_alphabet:
-                if i not in state.transitions.keys():
+                if i not in state.transitions:
                     automata_state.transitions[i] = automata_state
                     automata_state.output_fun[i] = 'dummy_output'
                 else:
@@ -387,8 +382,6 @@ class hW:
 
         mm = MealyMachine(start_state, reachable_states)
         mm.current_state = start_state
-        dummy_count = sum(1 for s in reachable_states for o in s.output_fun.values() if o == 'dummy_output')
-        print(f'  [create_model] {len(reachable_states)} states, {dummy_count} dummy transitions, current={current_hs}')
         return mm
 
     def create_hypothesis(self):
@@ -416,27 +409,20 @@ class hW:
                         self.interrupt = False
                         continue
             else:
-                complete = sum(1 for s in self.state_map.values() if len(s.state_w_values) == len(self.W))
-                print(f'  [create_hypothesis] states={len(self.state_map)} ({complete} complete)  hs={hs_response}  W={self.W}')
-
-                tail_node = self.state_map[hs_response]
                 incomplete_transitions = self.get_incomplete_transitions()
                 incomplete_states = list(incomplete_transitions.keys())
 
                 if not incomplete_states:
                     if self.is_complete():
-                        print(f'  [create_hypothesis] complete — exiting')
                         break
                     else:
                         continue
 
-                paths_to_reachable_states = tail_node.get_paths_to_reachable_states(incomplete_states)
+                paths_to_reachable_states = current_state.get_paths_to_reachable_states(incomplete_states)
 
                 if not paths_to_reachable_states:
                     if self.is_complete():
-                        print(f'  [create_hypothesis] complete — exiting')
                         break
-                    print(f'  [create_hypothesis] no path to incomplete states {incomplete_states} — returning partial model')
                     return self.create_model(hs_response)
 
                 alpha, reached_state = paths_to_reachable_states[0]
@@ -451,37 +437,50 @@ class hW:
                     self.interrupt = False
                     continue
 
-                self.state_map[reached_state].transition_w_values[(x, w)] = w_response
-                self.state_map[reached_state].output_fun[x] = output
+                target = self.state_map[reached_state]
+                target.transition_w_values[(x, w)] = w_response
+                target.learned_w_per_input[x].add(w)
+                target.output_fun[x] = output
 
                 self.update_model_transitions()
 
         hypothesis = self.create_model(hs_response)
         return hypothesis
 
-    def main_loop(self):
+    def main_loop(self, print_level=2):
+        start_time = time.time()
+        eq_query_time = 0
+
         initial_model = self.create_daisy_hypothesis()
 
+        eq_start = time.time()
         counter_example = self.find_counterexample(initial_model)
-        last_cex_input = tuple([counter_example[-1]])
+        eq_query_time += time.time() - eq_start
+
+        last_cex_input = (counter_example[-1],)
 
         self.homing_sequence = last_cex_input
         self.add_to_W(last_cex_input)
 
         self.sul.h = self.homing_sequence
 
-        iteration = 0
+        learning_rounds = 0
         while True:
-            iteration += 1
-            print(f'[main_loop] iter={iteration}  h={self.homing_sequence}  W={self.W}')
+            learning_rounds += 1
+
             hypothesis = self.create_hypothesis()
+
+            if print_level > 1:
+                print(f'Hypothesis {learning_rounds}: {hypothesis.size} states.')
+
+            eq_start = time.time()
             counter_example = self.find_counterexample(hypothesis)
+            eq_query_time += time.time() - eq_start
 
             if counter_example is None:
-                print(f'[main_loop] no counterexample — done')
                 break
 
-            cex_suffixes = sorted([tuple(s) for s in all_suffixes(counter_example)], key=len)
+            cex_suffixes = sorted((tuple(s) for s in all_suffixes(counter_example)), key=len)
             added_suffix = None
 
             for s in cex_suffixes:
@@ -493,21 +492,20 @@ class hW:
                 full_cex = tuple(counter_example)
                 added_suffix = self.homing_sequence + full_cex
                 if not self.add_to_W(added_suffix):
-                    print(f'  [main_loop] all suffixes already in W — stopping without duplicating {full_cex}')
                     break
 
             # Ensure h is always in W
             self.add_to_W(self.homing_sequence)
 
-            print(f'[main_loop] cex={counter_example}  +suffix={added_suffix}  W={self.W}')
             self.state_map.clear()
             self._reset_h_nd_index()
             self.interrupt = False
 
+        queries_before_initial_state = self.sul.num_queries
+
         if self.query_for_initial_state:
             initial_w_values = {}
             for w in self.W:
-                self.sul.num_queries += 1
                 initial_w_values[w] = tuple(self.sul.query(w))
 
             initial_hs_response = tuple(self.sul.query(self.homing_sequence))
@@ -527,6 +525,75 @@ class hW:
                                 break
                         break
 
-        print(f'[main_loop] learned {hypothesis.size} states  resets={self.sul.num_queries}  steps={self.sul.num_steps}')
+        total_time = round(time.time() - start_time, 2)
+        eq_query_time = round(eq_query_time, 2)
+        learning_time = round(total_time - eq_query_time, 2)
 
-        return hypothesis
+        info = {
+            'learning_rounds': learning_rounds,
+            'automaton_size': hypothesis.size,
+            'queries_learning': self.sul.num_queries,
+            'queries_eq_oracle': 0, # oracle does not reset
+            'steps_learning': self.sul.num_steps,
+            'steps_eq_oracle': self.total_testing_steps,
+            'learning_time': learning_time,
+            'eq_oracle_time': eq_query_time,
+            'total_time': total_time,
+            'homing_sequence': self.homing_sequence,
+            'characterization_set': self.W,
+        }
+
+        if self.query_for_initial_state:
+            info['queries_initial_state'] = self.sul.num_queries - queries_before_initial_state
+
+        if print_level > 0:
+            print_learning_info(info)
+
+        return hypothesis, info
+
+
+def run_HW(alphabet: list, sul, num_testing_steps=100, reset_testing_counter=True,
+           query_for_initial_state=False, return_data=False, print_level=2):
+    """
+    Executes the hW (homing-sequence Witness) learning algorithm.
+
+    Args:
+
+        alphabet: input alphabet
+
+        sul: system under learning
+
+        num_testing_steps: number of random steps used per equivalence check (Default value = 100)
+
+        reset_testing_counter: reset the testing step counter after each counterexample (Default value = True)
+
+        query_for_initial_state: if True, query the SUL to identify the true initial state (Default value = False)
+
+        max_learning_rounds: stop after these many rounds if set (Default value = None)
+
+        return_data: if True, return a (hypothesis, info) tuple instead of just the hypothesis
+            (Default value = False)
+
+        print_level: 0 - None, 1 - just results, 2 - current round and hypothesis size, 3 - educational/debug
+            (Default value = 2)
+
+    Returns:
+
+        learned Mealy machine (or (machine, info dict) if return_data is True)
+    """
+    assert print_level in [0, 1, 2, 3]
+
+    hw = hW(
+        input_al=alphabet,
+        sul=sul,
+        num_testing_steps=num_testing_steps,
+        reset_testing_counter=reset_testing_counter,
+        query_for_initial_state=query_for_initial_state,
+    )
+
+    hypothesis, info = hw.main_loop(print_level=print_level)
+
+    if return_data:
+        return hypothesis, info
+
+    return hypothesis
