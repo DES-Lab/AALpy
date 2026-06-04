@@ -1,11 +1,8 @@
 from collections import defaultdict, deque
 from random import choice
 
-from aalpy.SULs import MealySUL
 from aalpy.automata import MealyState, MealyMachine
-from aalpy.utils import get_Angluin_dfa, load_automaton_from_file, generate_random_deterministic_automata
 from aalpy.utils.HelperFunctions import all_suffixes
-from aalpy.utils.ModelChecking import bisimilar
 
 
 class ModelState:
@@ -13,83 +10,95 @@ class ModelState:
         self.hs = hs
         self.state_w_values = dict()
 
-        self.tail = None
         self.transitions = dict()
         self.output_fun = dict()
 
         self.transition_w_values = dict()
 
-    def find_shortest_path(self, target_state):
-        if self.hs == target_state:
-            return ()
+    def get_paths_to_reachable_states(self, target_states):
+        target_states = set(target_states)
+        if self.hs in target_states:
+            return [((), self.hs)]
 
-        # Queue stores tuples of (current_node, path_taken)
         queue = deque([(self, ())])
         visited = set()
 
         while queue:
             current_node, path_taken = queue.popleft()
-
-            if current_node.hs == target_state:
-                return path_taken
-
             if current_node in visited:
                 continue
-
             visited.add(current_node)
 
             for input_sequence, next_node in current_node.transitions.items():
-                path_taken += tuple([input_sequence, ])
-                queue.append((next_node, path_taken))
+                next_path = path_taken + (input_sequence,)
+                if next_node.hs in target_states:
+                    return [(next_path, next_node.hs)]
+                queue.append((next_node, next_path))
 
-        return None
-
-    def get_paths_to_reachable_states(self, target_states):
-        paths = []
-        for t in target_states:
-            path = self.find_shortest_path(t)
-            if path is not None:
-                paths.append((path, t))
-
-        paths.sort(key=lambda x: len(x[0]))
-        return paths
+        return []
 
 
 class hW:
-    def __init__(self, input_al, sul, query_for_initial_state=False):
+    def __init__(self, input_al, sul,
+                 num_testing_steps=100,
+                 reset_testing_counter=True,
+                 query_for_initial_state=False):
+
         self.input_alphabet = input_al
         self.sul = sul
+        self.total_testing_steps = 0
+        self.num_testing_steps = num_testing_steps
+        self.reset_testing_counter = reset_testing_counter
         self.query_for_initial_state = query_for_initial_state
 
         self.homing_sequence = ()
         self.W = []
 
         self.global_trace = []
-        # self.current_homing_sequence_outputs = dict()
 
         self.interrupt = False
 
         self.state_map = dict()
-        self.transition_map = defaultdict(dict)
-        self.output_map = defaultdict(dict)
 
-        # TODO remove at the end
+        # Incremental h-ND index
+        self._hs_cont_starts = defaultdict(set)    # hs_output -> {cont_start_pos, ...}
+        self._pair_progress = {}                   # (p1, p2) -> steps compared (-1 = inputs diverged)
+        self._h_nd_scan_pos = 0                    # how far global_trace has been scanned
+
         sul.pre()
+
+    def add_to_W(self, sequence, preserve_h=True):
+        sequence = tuple(sequence)
+        if sequence in self.W:
+            return False
+
+        self.W.append(sequence)
+        self.W = [
+            w for w in self.W
+            if w == sequence
+            or (preserve_h and w == self.homing_sequence)
+            or not (w != sequence and sequence[:len(w)] == w)
+        ]
+        return True
 
     def execute_homing_sequence(self):
         observed_output = []
 
         for i in self.homing_sequence:
-            observed_output.append(self.step_wrapper(i))
+            output = self.sul.step(i)
+            if isinstance(output, tuple) and len(output) == 1:
+                output = output[0]
+            self.global_trace.append((i, output))
+            self.sul.num_steps += 1
+            observed_output.append(output)
 
+        self.check_h_ND_consistency()
         return tuple(observed_output)
 
     def execute_sequence(self, seq_under_test: tuple):
-
         observed_output = []
         for i in seq_under_test:
             observed_output.append(self.step_wrapper(i))
-
         return tuple(observed_output)
 
     def create_daisy_hypothesis(self):
@@ -98,257 +107,343 @@ class hW:
             o = self.step_wrapper(i)
             state.transitions[i] = state
             state.output_fun[i] = o
-        mm = MealyMachine(MealyState('dummy'), [state])
+        mm = MealyMachine(state, [state])
         mm.current_state = mm.states[0]
         return mm
 
+    def _reset_h_nd_index(self):
+        self._hs_cont_starts.clear()
+        self._pair_progress.clear()
+        self._h_nd_scan_pos = len(self.global_trace)
+
     def check_h_ND_consistency(self):
-        same_output_hs_continuations = defaultdict(list)
-        # extract all continuations
-        for i in range(len(self.global_trace)):
-            prefix_inputs = tuple([i for i, _ in self.global_trace[i:i + len(self.homing_sequence)]])
+        h_len = len(self.homing_sequence)
+        if h_len == 0:
+            return True
+
+        # Incrementally scan only newly added trace positions for new hs occurrences
+        scan_start = max(0, self._h_nd_scan_pos - h_len + 1)
+        for i in range(scan_start, len(self.global_trace) - h_len + 1):
+            prefix_inputs = tuple(inp for inp, _ in self.global_trace[i:i + h_len])
             if prefix_inputs == self.homing_sequence:
-                prefix_outputs = tuple([o for _, o in self.global_trace[i:i + len(self.homing_sequence)]])
-                cont_inputs = tuple([i for i, _ in self.global_trace[i + len(self.homing_sequence):]])
-                cont_outputs = [o for _, o in self.global_trace[i + len(self.homing_sequence):]]
-                if not cont_inputs:
-                    continue
-                same_output_hs_continuations[prefix_outputs].append((cont_inputs, cont_outputs))
+                prefix_outputs = tuple(out for _, out in self.global_trace[i:i + h_len])
+                cont_start = i + h_len
+                self._hs_cont_starts[prefix_outputs].add(cont_start)
+        self._h_nd_scan_pos = len(self.global_trace)
 
-        for hs_output in same_output_hs_continuations.keys():
-            if hs_output not in self.state_map.keys():
-                self.state_map[hs_output] = ModelState(hs_output)
-
-        for hs_continuations in same_output_hs_continuations.values():
-            if len(hs_continuations) <= 1:
+        # Incrementally compare pairs — each pair advances only from where it last stopped
+        for prefix_outputs, cont_starts in self._hs_cont_starts.items():
+            if len(cont_starts) <= 1:
                 continue
-            hs_continuations.sort(key=lambda x: len(x[0]))
+            cont_starts = tuple(sorted(cont_starts))
+            for idx_i in range(len(cont_starts)):
+                for idx_j in range(idx_i + 1, len(cont_starts)):
+                    p1, p2 = cont_starts[idx_i], cont_starts[idx_j]
+                    already = self._pair_progress.get((p1, p2), 0)
+                    if already == -1:
+                        continue  # inputs already diverged for this pair
 
-            for i in range(len(hs_continuations)):
-                for j in range(i + 1, len(hs_continuations)):
-                    cont_1, cont_2 = hs_continuations[i], hs_continuations[j]
-                    for diff_index in range(len(cont_1[0])):
-                        if cont_1[0][diff_index] != cont_2[0][diff_index]:
+                    compare_len = min(len(self.global_trace) - p1, len(self.global_trace) - p2)
+                    for k in range(already, compare_len):
+                        inp1, out1 = self.global_trace[p1 + k]
+                        inp2, out2 = self.global_trace[p2 + k]
+                        if inp1 != inp2:
+                            self._pair_progress[(p1, p2)] = -1
                             break
-                        if cont_1[1][diff_index] != cont_2[1][diff_index]:
-
-                            # extend the homing sequence
-                            # self.homing_sequence.extend(cont_1[0][:diff_index + 1])
-                            self.homing_sequence += tuple(cont_1[0][:diff_index + 1])
-
+                        if out1 != out2:
+                            ext = tuple(inp for inp, _ in self.global_trace[p1:p1 + k + 1])
+                            self.homing_sequence += ext
                             self.interrupt = True
-
-                            # reset the homing sequence output dictionary
                             self.state_map.clear()
+                            self._reset_h_nd_index()
 
-                            # add h to W if not already present
-                            prefix_already_in_W = False
-                            for w in self.W:
-                                if self.homing_sequence == tuple(w[:len(self.homing_sequence)]):
-                                    prefix_already_in_W = True
-                                    break
-
-                            if not prefix_already_in_W:
-                                self.W.append(self.homing_sequence)
-
-                                # clean W set of any prefix of h
-                                w_to_remove = []
-                                for w in self.W:
-                                    if w != self.homing_sequence and w == tuple(self.homing_sequence[:len(w)]):
-                                        w_to_remove.append(w)
-
-                                for w in w_to_remove:
-                                    self.W.remove(w)
+                            self.add_to_W(self.homing_sequence, preserve_h=False)
 
                             return False
+                        self._pair_progress[(p1, p2)] = k + 1
 
         return True
 
-    def check_w_ND_consistency(self, connectivity_graph):
-        same_states = []
-        graph_nodes = list(connectivity_graph.items())
-        state_continuations = defaultdict(list)
-
-        for ind, (h, graph_node) in enumerate(graph_nodes):
-            for h_prime, graph_node_prime in graph_nodes[ind + 1:]:
-                if graph_node.transitions and graph_node.transitions == graph_node_prime.transitions:
-                    s1, s2 = tuple(zip(self.homing_sequence, h)), tuple(zip(self.homing_sequence, h_prime))
-                    same_states.append((s1, s2))
-
-                    # extract continuation sequences for states
-                    for s in [s1, s2]:
-                        for i in range(len(self.global_trace)):
-                            if tuple(self.global_trace[i:i + len(s)]) == s:
-                                state_continuations[s].append(self.global_trace[i + len(s):])
-
-        for s1, s2 in same_states:
-            for s1_cont in state_continuations[s1]:
-                for s2_cont in state_continuations[s2]:
-                    disagreement_index = -1
-                    for i in range(min(len(s1_cont), len(s2_cont))):
-                        # if inputs are not the same break
-                        if s1_cont[i][0] != s2_cont[i][0]:
+    def check_w_ND_from_state_map(self):
+        states = list(self.state_map.items())
+        for i in range(len(states)):
+            hs1, s1 = states[i]
+            if len(s1.state_w_values) != len(self.W):
+                continue
+            for j in range(i + 1, len(states)):
+                hs2, s2 = states[j]
+                if len(s2.state_w_values) != len(self.W):
+                    continue
+                if s1.state_w_values == s2.state_w_values and hs1 != hs2:
+                    for k in range(min(len(hs1), len(hs2))):
+                        if hs1[k] != hs2[k]:
+                            new_w = self.homing_sequence[k:]
+                            if new_w and new_w not in self.W:
+                                print(f'  [w-ND] {hs1} ≡ {hs2} under W — adding w={new_w}  W={self.W + [new_w]}')
+                                self.add_to_W(new_w)
+                                self.state_map.clear()
+                                self.interrupt = True
+                                return False
                             break
-                        if s1_cont[i] != s2_cont[i]:
-                            disagreement_index = i
-                            break
-
-                    if disagreement_index >= 0:
-                        print(s1_cont[disagreement_index:])
-                        print(s2_cont[disagreement_index:])
-                        print('REEE')
-                        exit(523)
+        return True
 
     def step_wrapper(self, letter):
         output = self.sul.step(letter)
+        if isinstance(output, tuple) and len(output) == 1:
+            output = output[0]
         self.global_trace.append((letter, output))
         self.sul.num_steps += 1
-        if self.homing_sequence:
-            self.check_h_ND_consistency()
         return output
 
+    def _find_ce_via_dummy(self, hypothesis, start_state=None):
+        start_state = start_state or hypothesis.initial_state or hypothesis.current_state
+        queue = deque([(start_state, [])])
+        visited = set()
+
+        while queue:
+            state, path = queue.popleft()
+            if state in visited:
+                continue
+            visited.add(state)
+
+            for i in self.input_alphabet:
+                if state.output_fun.get(i) == 'dummy_output':
+                    return path + [i]
+                next_state = state.transitions.get(i)
+                if next_state is not None:
+                    queue.append((next_state, path + [i]))
+        return None
+
     def find_counterexample(self, hypothesis):
+        dummy_cex = self._find_ce_via_dummy(hypothesis)
+        if dummy_cex is not None:
+            return dummy_cex
 
         cex = []
-        for _ in range(40):
+        for _ in range(self.num_testing_steps):
+            self.total_testing_steps += 1
             random_input = choice(self.input_alphabet)
             cex.append(random_input)
             o_sul = self.step_wrapper(random_input)
             o_hyp = hypothesis.step(random_input)
-
             if o_sul != o_hyp:
-                return cex
+                if self.reset_testing_counter:
+                    self.total_testing_steps = 0
 
+                return cex
+            if self.interrupt:
+                return None
         return None
 
-    def all_states_defined(self):
-        for state in self.state_map.values():
-            if len(state.state_w_values) != len(self.W):
-                return False
+    def is_complete(self):
+        if not self.state_map:
+            return False
+        for hs, state in self.state_map.items():
+            for i in self.input_alphabet:
+                if i not in state.transitions:
+                    return False
+                if state.transitions[i].hs not in self.state_map:
+                    return False
         return True
 
     def get_incomplete_transitions(self):
         incomplete_transitions = defaultdict(list)
         for hs, state in self.state_map.items():
+            learned_w_per_input = defaultdict(set)
+            for (i, w) in state.transition_w_values.keys():
+                learned_w_per_input[i].add(w)
             for i in self.input_alphabet:
-                for w in self.W:
-                    if (i, w) not in state.transition_w_values.keys():
-                        incomplete_transitions[hs].append((i, w))
-
+                missing_ws = [w for w in self.W if w not in learned_w_per_input[i]]
+                if missing_ws:
+                    incomplete_transitions[hs].append((i, missing_ws[0]))
         return incomplete_transitions
 
-    def get_tail(self, x):
-        return self.state_map[x].state_w_values[self.homing_sequence]
+    def _profile_key(self, base_key, w_values):
+        return ('profile', base_key, tuple(sorted(w_values.items())))
 
     def update_model_transitions(self):
+        current_w_set = set(self.W)
+        new_states = {}
+
         for hs, state in self.state_map.items():
             for i in self.input_alphabet:
-                w_for_input = {w: output for (ii, w), output in state.transition_w_values.items() if ii == i}
-                if len(w_for_input.keys()) == len(self.W):
+                w_for_input = {w: output for (ii, w), output in state.transition_w_values.items()
+                               if ii == i and w in current_w_set}
+                if len(w_for_input) == len(self.W):
+                    matched = None
                     for _, destination_state in self.state_map.items():
                         if w_for_input == destination_state.state_w_values:
-                            state.transitions[i] = destination_state.tail
+                            matched = destination_state
                             break
+                    if matched is None:
+                        for _, destination_state in new_states.items():
+                            if w_for_input == destination_state.state_w_values:
+                                matched = destination_state
+                                break
+                    if matched is None:
+                        h = self.homing_sequence
+                        if h in w_for_input:
+                            new_key = w_for_input[h]
+                        else:
+                            candidates = [w for w in self.W if len(w) >= len(h) and w[:len(h)] == h]
+                            if not candidates:
+                                continue
+                            new_key = w_for_input[candidates[0]][:len(h)]
+                        existing = self.state_map.get(new_key) or new_states.get(new_key)
+                        if existing is not None and existing.state_w_values != w_for_input:
+                            new_key = self._profile_key(new_key, w_for_input)
+                        if new_key not in new_states and new_key not in self.state_map:
+                            new_state = ModelState(new_key)
+                            new_state.state_w_values = dict(w_for_input)
+                            new_states[new_key] = new_state
+                        matched = self.state_map.get(new_key) or new_states.get(new_key)
+                        if matched is None:
+                            continue
+                    state.transitions[i] = matched
+        self.state_map.update(new_states)
+
+    def _state_partitions(self):
+        states = list(self.state_map.values())
+        block_of = {}
+        output_blocks = {}
+        for state in states:
+            signature = tuple(state.output_fun.get(i) for i in self.input_alphabet)
+            output_blocks.setdefault(signature, len(output_blocks))
+            block_of[state.hs] = output_blocks[signature]
+
+        changed = True
+        while changed:
+            changed = False
+            next_blocks = {}
+            next_block_of = {}
+            for state in states:
+                signature = tuple(
+                    (
+                        i,
+                        state.output_fun.get(i),
+                        block_of.get(state.transitions[i].hs) if i in state.transitions else None
+                    )
+                    for i in self.input_alphabet
+                )
+                next_blocks.setdefault(signature, len(next_blocks))
+                next_block_of[state.hs] = next_blocks[signature]
+            if next_block_of != block_of:
+                changed = True
+                block_of = next_block_of
+        return block_of
+
+    def _model_state_h_output(self, state):
+        outputs = []
+        for i in self.homing_sequence:
+            if i not in state.output_fun or i not in state.transitions:
+                return None
+            outputs.append(state.output_fun[i])
+            state = state.transitions[i]
+        return tuple(outputs)
 
     def create_model(self, current_hs):
-        dummy_state = MealyState('dummy')
+        block_of = self._state_partitions()
+        block_representatives = {}
+        for hs, block in block_of.items():
+            block_representatives.setdefault(block, hs)
 
-        automata_states = dict()
-        for hs, state in self.state_map.items():
-            automata_states[hs] = MealyState(f's{len(automata_states)}')
-            automata_states[hs].prefix = hs
+        automata_states = {}
+        block_states = {}
+        for block, hs in block_representatives.items():
+            mealy_state = MealyState(f's{len(block_states)}')
+            mealy_state.prefix = hs
+            mealy_state.prefixes = {k for k, b in block_of.items() if b == block}
+            block_states[block] = mealy_state
+            for prefix in mealy_state.prefixes:
+                automata_states[prefix] = mealy_state
 
+        wired_blocks = set()
         for hs, state in self.state_map.items():
+            block = block_of[hs]
+            if block in wired_blocks:
+                continue
+            wired_blocks.add(block)
+            automata_state = block_states[block]
             for i in self.input_alphabet:
                 if i not in state.transitions.keys():
-                    automata_states[hs].transitions[i] = dummy_state
-                    automata_states[hs].output_fun[i] = 'dummy_output'
+                    automata_state.transitions[i] = automata_state
+                    automata_state.output_fun[i] = 'dummy_output'
                 else:
-                    automata_states[hs].transitions[i] = automata_states[state.transitions[i].hs]
-                    automata_states[hs].output_fun[i] = state.output_fun[i]
-                # w_for_input = {w: output for (ii, w), output in state.transition_w_values.items() if ii == i}
-                # # match to element from state definition
-                # print(f'Origin: {hs}, {i}, Target: {w_for_input}')
-                # trans_found = False
-                # for _, destination_state in self.state_map.items():
-                #     if w_for_input == destination_state.state_w_values:
-                #         automata_states[hs].transitions[i] = automata_states[destination_state.hs]
-                #         automata_states[hs].output_fun[i] = state.output_fun[i]
-                #         trans_found = True
-                #         # break
-                #     if not trans_found:
-                #         print(52252)
-                #     else:
-                #         break
+                    automata_state.transitions[i] = automata_states[state.transitions[i].hs]
+                    automata_state.output_fun[i] = state.output_fun[i]
 
-        mm = MealyMachine(dummy_state, list(automata_states.values()))
-        mm.current_state = automata_states[self.get_tail(current_hs)]
-        print(mm)
+        start_state = automata_states[current_hs]
+        reachable_states = []
+        queue = deque([start_state])
+        seen = set()
+        while queue:
+            state = queue.popleft()
+            if state in seen:
+                continue
+            seen.add(state)
+            reachable_states.append(state)
+            for next_state in state.transitions.values():
+                queue.append(next_state)
+
+        mm = MealyMachine(start_state, reachable_states)
+        mm.current_state = start_state
+        dummy_count = sum(1 for s in reachable_states for o in s.output_fun.values() if o == 'dummy_output')
+        print(f'  [create_model] {len(reachable_states)} states, {dummy_count} dummy transitions, current={current_hs}')
         return mm
 
     def create_hypothesis(self):
-
         while True:
-            # line 6
             hs_response = self.execute_homing_sequence()
 
-            # Check if querying a homing sequence yielded an interrupt
             if self.interrupt:
                 self.interrupt = False
                 continue
 
-            if hs_response not in self.state_map.keys():
+            if hs_response not in self.state_map:
                 self.state_map[hs_response] = ModelState(hs_response)
 
             current_state = self.state_map[hs_response]
 
-            # if hs_response is undefined for some w
-            if len(current_state.state_w_values.keys()) != len(self.W):
+            if len(current_state.state_w_values) != len(self.W):
                 for w in self.W:
-                    if w not in current_state.state_w_values.keys():
+                    if w not in current_state.state_w_values:
                         w_response = self.execute_sequence(w)
-
                         if not self.interrupt:
                             current_state.state_w_values[w] = w_response
                         break
-            # state is defined
+                if not self.interrupt and len(current_state.state_w_values) == len(self.W):
+                    if not self.check_w_ND_from_state_map():
+                        self.interrupt = False
+                        continue
             else:
-                print('State Definition')
-                for h, state in self.state_map.items():
-                    print(h, state.state_w_values)
+                complete = sum(1 for s in self.state_map.values() if len(s.state_w_values) == len(self.W))
+                print(f'  [create_hypothesis] states={len(self.state_map)} ({complete} complete)  hs={hs_response}  W={self.W}')
 
-                # ensure tails is defined
-                if self.state_map[hs_response].tail is None:
-                    self.state_map[hs_response].tail = self.state_map[self.get_tail(hs_response)]
-                # for state in self.state_map.values():
-                #     if state.tail is None:
-                #         state.tail = self.state_map[self.get_tail(state.hs)]
-
-                # self.check_w_ND_consistency(connectivity_graph)
-
-                # get tail state
-                tail_node = self.state_map[hs_response].tail
-
+                tail_node = self.state_map[hs_response]
                 incomplete_transitions = self.get_incomplete_transitions()
-
-                incomplete_states = [incomplete_h for incomplete_h in incomplete_transitions.keys()]
+                incomplete_states = list(incomplete_transitions.keys())
 
                 if not incomplete_states:
-                    break
+                    if self.is_complete():
+                        print(f'  [create_hypothesis] complete — exiting')
+                        break
+                    else:
+                        continue
 
                 paths_to_reachable_states = tail_node.get_paths_to_reachable_states(incomplete_states)
 
                 if not paths_to_reachable_states:
-                    break
+                    if self.is_complete():
+                        print(f'  [create_hypothesis] complete — exiting')
+                        break
+                    print(f'  [create_hypothesis] no path to incomplete states {incomplete_states} — returning partial model')
+                    return self.create_model(hs_response)
 
                 alpha, reached_state = paths_to_reachable_states[0]
-
                 x = incomplete_transitions[reached_state][0][0]
                 w = incomplete_transitions[reached_state][0][1]
 
-                # execute sequence to reach a state
                 self.execute_sequence(alpha)
-
                 output = self.step_wrapper(x)
                 w_response = self.execute_sequence(w)
 
@@ -356,94 +451,82 @@ class hW:
                     self.interrupt = False
                     continue
 
-                # This should not be here, but without it it does not work
-                #if w == self.homing_sequence:
-                #     self.state_map[reached_state].transitions[x] = self.state_map[w_response]
-
-                # TODO TAILS MIGHT BE A PROBLEM!
                 self.state_map[reached_state].transition_w_values[(x, w)] = w_response
                 self.state_map[reached_state].output_fun[x] = output
 
                 self.update_model_transitions()
 
         hypothesis = self.create_model(hs_response)
-
         return hypothesis
 
     def main_loop(self):
-
         initial_model = self.create_daisy_hypothesis()
 
         counter_example = self.find_counterexample(initial_model)
         last_cex_input = tuple([counter_example[-1]])
 
-        # set HS and W to the first counterexample
         self.homing_sequence = last_cex_input
-        self.W.append(last_cex_input)
+        self.add_to_W(last_cex_input)
 
-        # add reference of homing sequance to SUL wrapper
         self.sul.h = self.homing_sequence
 
+        iteration = 0
         while True:
+            iteration += 1
+            print(f'[main_loop] iter={iteration}  h={self.homing_sequence}  W={self.W}')
             hypothesis = self.create_hypothesis()
             counter_example = self.find_counterexample(hypothesis)
 
             if counter_example is None:
+                print(f'[main_loop] no counterexample — done')
                 break
 
-            cex_suffixes = all_suffixes(counter_example)
-            suffix_added = False
+            cex_suffixes = sorted([tuple(s) for s in all_suffixes(counter_example)], key=len)
+            added_suffix = None
 
             for s in cex_suffixes:
-                for w in self.W:
-                    if s == w[-len(s):] or s in self.W:
-                        continue
-
-                    self.W.append(s)
-                    suffix_added = True
-                    break
-                if suffix_added:
+                if self.add_to_W(s):
+                    added_suffix = s
                     break
 
-            print(self.W)
+            if added_suffix is None:
+                full_cex = tuple(counter_example)
+                added_suffix = self.homing_sequence + full_cex
+                if not self.add_to_W(added_suffix):
+                    print(f'  [main_loop] all suffixes already in W — stopping without duplicating {full_cex}')
+                    break
+
+            # Ensure h is always in W
+            self.add_to_W(self.homing_sequence)
+
+            print(f'[main_loop] cex={counter_example}  +suffix={added_suffix}  W={self.W}')
             self.state_map.clear()
+            self._reset_h_nd_index()
+            self.interrupt = False
 
         if self.query_for_initial_state:
-            # reset
-            self.sul.pre()
-            self.sul.num_queries += 1
+            initial_w_values = {}
+            for w in self.W:
+                self.sul.num_queries += 1
+                initial_w_values[w] = tuple(self.sul.query(w))
 
-            # call query as reset would mess up the global trace
-            initial_state_hs = tuple(self.sul.query(self.homing_sequence))
-            for s in hypothesis.states:
-                if s.prefix == initial_state_hs:
-                    hypothesis.initial_state = s
+            initial_hs_response = tuple(self.sul.query(self.homing_sequence))
+            for r, model_state in self.state_map.items():
+                if model_state.state_w_values == initial_w_values:
+                    for s in hypothesis.states:
+                        if s.prefix == r or r in getattr(s, 'prefixes', set()):
+                            hypothesis.initial_state = s
+                            break
                     break
+            else:
+                for r, model_state in self.state_map.items():
+                    if self._model_state_h_output(model_state) == initial_hs_response:
+                        for s in hypothesis.states:
+                            if s.prefix == r or r in getattr(s, 'prefixes', set()):
+                                hypothesis.initial_state = s
+                                break
+                        break
 
-        print(f'h-Learning learned {hypothesis.size} states.')
-        print(f'Num Resets: {self.sul.num_queries}')
-        print(f'Num Steps : {self.sul.num_steps}')
+        print(f'[main_loop] learned {hypothesis.size} states  resets={self.sul.num_queries}  steps={self.sul.num_steps}')
 
         return hypothesis
-
-
-# model = load_automaton_from_file('DotModels/Angluin_Mealy.dot', 'mealy')
-# model = load_automaton_from_file('DotModels/hw_model.dot', 'mealy')
-model = load_automaton_from_file('DotModels/Small_Mealy.dot', 'mealy')
-# model = get_Angluin_dfa()
-# print(model.compute_charaterization_set())
-from random import seed
-
-seed(1)
-# model = generate_random_deterministic_automata('mealy', num_states=7, input_alphabet_size=3, output_alphabet_size=3)
-# print(model)
-# exit()
-assert model.is_strongly_connected()
-
-sul = MealySUL(model)
-input_alphabet = model.get_input_alphabet()
-
-learner = hW(input_alphabet, sul, query_for_initial_state=True)
-learned_model = learner.main_loop()
-assert learned_model.is_minimal()
-assert bisimilar(model, learned_model)
