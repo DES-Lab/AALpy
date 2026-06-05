@@ -1,6 +1,5 @@
 import time
 from collections import defaultdict, deque
-from itertools import chain
 from random import choice
 
 from aalpy.automata import MealyState, MealyMachine
@@ -17,28 +16,13 @@ class ModelState:
 
         self.transition_w_values = {}
         self.learned_w_per_input = defaultdict(set)
+        self.transition_target_key = {}  # input -> hs_response of post-h target state
 
-    def get_paths_to_reachable_states(self, target_states):
-        target_states = set(target_states)
-        if self.hs in target_states:
-            return [((), self.hs)]
 
-        queue = deque([(self, ())])
-        visited = set()
-
-        while queue:
-            current_node, path_taken = queue.popleft()
-            if current_node in visited:
-                continue
-            visited.add(current_node)
-
-            for input_sequence, next_node in current_node.transitions.items():
-                next_path = path_taken + (input_sequence,)
-                if next_node.hs in target_states:
-                    return [(next_path, next_node.hs)]
-                queue.append((next_node, next_path))
-
-        return []
+class PendingState:
+    def __init__(self, hs, state_w_values):
+        self.hs = hs
+        self.state_w_values = dict(state_w_values)
 
 
 class hW:
@@ -47,7 +31,7 @@ class hW:
                  reset_testing_counter=True,
                  query_for_initial_state=False):
 
-        self.input_alphabet = input_al
+        self.input_alphabet = input_al # to ensure determinism if passed as set
         self.sul = sul
         self.total_testing_steps = 0
         self.num_testing_steps = num_testing_steps
@@ -62,11 +46,15 @@ class hW:
         self.interrupt = False
 
         self.state_map = {}
+        self._states_by_w_profile = {}
+        self._ambiguous_w_profiles = set()
 
         # Incremental h-ND index
-        self._hs_cont_starts = defaultdict(set)    # hs_output -> {cont_start_pos, ...}
-        self._pair_progress = {}                   # (p1, p2) -> steps compared (-1 = inputs diverged)
+        self._hs_cont_starts = defaultdict(list)   # hs_output -> [cont_start_pos, ...] (ordered for determinism)
+        self._pair_progress = {}                   # (p1, p2) -> steps compared
         self._h_nd_scan_pos = 0                    # how far global_trace has been scanned
+
+        self._pending_pool = {}                    # w_profile -> PendingState (dedup to prevent state explosion)
 
         sul.pre()
 
@@ -110,6 +98,33 @@ class hW:
         self._pair_progress.clear()
         self._h_nd_scan_pos = len(self.global_trace)
 
+    def _reset_state_data(self):
+        self.state_map.clear()
+        self._states_by_w_profile.clear()
+        self._ambiguous_w_profiles.clear()
+        self._pending_pool.clear()
+        self._reset_h_nd_index()
+
+    def _is_profile_key(self, key):
+        return isinstance(key, tuple) and key and isinstance(key[0], tuple)
+
+    def _refine_w_if_profile_explosion(self):
+        profile_keys = sum(1 for key in self.state_map if self._is_profile_key(key))
+
+        real_keys = max(1, len(self.state_map) - profile_keys)
+        if profile_keys <= real_keys:
+            return False
+
+        for symbol in reversed(self.input_alphabet):
+            suffix = (symbol,)
+            if suffix not in self.W:
+                self.add_to_W(suffix)
+                self._reset_state_data()
+                self.interrupt = True
+                return True
+
+        return False
+
     def check_h_ND_consistency(self):
         h_len = len(self.homing_sequence)
         if h_len == 0:
@@ -122,16 +137,19 @@ class hW:
         # found, eagerly register pairs (new, existing) in _pair_progress so the
         # pair-comparison loop below never has to rebuild them from cont_starts.
         scan_start = max(0, self._h_nd_scan_pos - h_len + 1)
+        h = self.homing_sequence
         for i in range(scan_start, trace_len - h_len + 1):
-            window = trace[i:i + h_len]
-            if tuple(inp for inp, _ in window) == self.homing_sequence:
-                prefix_outputs = tuple(out for _, out in window)
+            for j in range(h_len):
+                if trace[i + j][0] != h[j]:
+                    break
+            else:
+                prefix_outputs = tuple(trace[i + j][1] for j in range(h_len))
                 new_cont = i + h_len
                 if new_cont not in self._hs_cont_starts[prefix_outputs]:
                     for existing in self._hs_cont_starts[prefix_outputs]:
                         p1, p2 = (new_cont, existing) if new_cont < existing else (existing, new_cont)
                         self._pair_progress[(p1, p2)] = 0
-                    self._hs_cont_starts[prefix_outputs].add(new_cont)
+                    self._hs_cont_starts[prefix_outputs].append(new_cont)
         self._h_nd_scan_pos = trace_len
 
         # Advance every active pair. Diverged pairs are deleted rather than
@@ -148,8 +166,7 @@ class hW:
                 if out1 != out2:
                     self.homing_sequence += tuple(inp for inp, _ in trace[p1:p1 + k + 1])
                     self.interrupt = True
-                    self.state_map.clear()
-                    self._reset_h_nd_index()
+                    self._reset_state_data()
                     self.add_to_W(self.homing_sequence, preserve_h=False)
                     return False
             else:
@@ -177,7 +194,7 @@ class hW:
                             new_w = self.homing_sequence[k:]
                             if new_w and new_w not in self.W:
                                 self.add_to_W(new_w)
-                                self.state_map.clear()
+                                self._reset_state_data()
                                 self.interrupt = True
                                 return False
                             break
@@ -191,30 +208,7 @@ class hW:
         self.sul.num_steps += 1
         return output
 
-    def _find_ce_via_dummy(self, hypothesis, start_state=None):
-        start_state = start_state or hypothesis.initial_state or hypothesis.current_state
-        queue = deque([(start_state, [])])
-        visited = set()
-
-        while queue:
-            state, path = queue.popleft()
-            if state in visited:
-                continue
-            visited.add(state)
-
-            for i in self.input_alphabet:
-                if state.output_fun.get(i) == 'dummy_output':
-                    return path + [i]
-                next_state = state.transitions.get(i)
-                if next_state is not None:
-                    queue.append((next_state, path + [i]))
-        return None
-
     def find_counterexample(self, hypothesis):
-        dummy_cex = self._find_ce_via_dummy(hypothesis)
-        if dummy_cex is not None:
-            return dummy_cex
-
         cex = []
         for _ in range(self.num_testing_steps):
             self.total_testing_steps += 1
@@ -222,6 +216,7 @@ class hW:
             cex.append(random_input)
             o_sul = self.step_wrapper(random_input)
             o_hyp = hypothesis.step(random_input)
+
             if o_sul != o_hyp:
                 if self.reset_testing_counter:
                     self.total_testing_steps = 0
@@ -238,18 +233,228 @@ class hW:
             for i in self.input_alphabet:
                 if i not in state.transitions:
                     return False
+                if not isinstance(state.transitions[i], ModelState):
+                    return False
                 if state.transitions[i].hs not in self.state_map:
                     return False
         return True
 
-    def get_incomplete_transitions(self):
-        incomplete_transitions = defaultdict(list)
-        for hs, state in self.state_map.items():
-            for i in self.input_alphabet:
-                first_missing = next((w for w in self.W if w not in state.learned_w_per_input[i]), None)
-                if first_missing is not None:
-                    incomplete_transitions[hs].append((i, first_missing))
-        return incomplete_transitions
+    def _first_missing_transition_query(self, state):
+        for i in self.input_alphabet:
+            learned = state.learned_w_per_input[i]
+            if len(learned) == len(self.W):
+                continue
+            for w in self.W:
+                if w not in learned:
+                    return i, w
+        return None
+
+    def find_reachable_incomplete_transition(self, start_state):
+        queue = deque([(start_state, (), None, None)])
+        visited = set()
+        pending_candidates = []
+
+        while True:
+            while queue:
+                state, path, parent, parent_input = queue.popleft()
+                if isinstance(state, PendingState):
+                    pending_candidates.append((state, path, parent, parent_input))
+                    continue
+
+                if state in visited:
+                    continue
+
+                visited.add(state)
+
+                missing = self._first_missing_transition_query(state)
+                if missing is not None:
+                    x, w = missing
+                    return path, state.hs, x, w
+
+                for input_sequence, next_state in state.transitions.items():
+                    queue.append((next_state, path + (input_sequence,), state, input_sequence))
+
+            if not pending_candidates:
+                return None
+
+            pending, path, parent, parent_input = pending_candidates.pop(0)
+            state = self._materialize_pending_state(pending)
+            if parent is not None:
+                parent.transitions[parent_input] = state
+            queue.append((state, path, parent, parent_input))
+
+    def _w_profile(self, w_values):
+        return tuple(sorted(w_values.items()))
+
+    def _register_w_profile(self, state):
+        if len(state.state_w_values) != len(self.W):
+            return
+
+        profile = self._w_profile(state.state_w_values)
+        if profile in self._ambiguous_w_profiles:
+            return
+
+        existing = self._states_by_w_profile.get(profile)
+        if existing is None:
+            self._states_by_w_profile[profile] = state
+        elif existing is not state:
+            self._states_by_w_profile.pop(profile, None)
+            self._ambiguous_w_profiles.add(profile)
+
+    def _find_state_by_w_values(self, w_values, new_states=None):
+        profile = self._w_profile(w_values)
+        if profile not in self._ambiguous_w_profiles:
+            matched = self._states_by_w_profile.get(profile)
+            if matched is not None:
+                return matched
+
+        for destination_state in self.state_map.values():
+            if w_values == destination_state.state_w_values:
+                return destination_state
+
+        if new_states:
+            for destination_state in new_states.values():
+                if w_values == destination_state.state_w_values:
+                    return destination_state
+
+        return None
+
+    def _is_consistent_profile(self, known_values, w_values):
+        return all(
+            w_values.get(k) == v
+            for k, v in known_values.items()
+            if k in w_values
+        )
+
+    def _find_consistent_partial_match(self, w_values, new_states=None):
+        """Return the unique state whose known w-values are a consistent (non-empty)
+        subset of w_values, or None if there is no such state or the match is ambiguous.
+        When a unique match is found its state_w_values are updated with the new values."""
+        partial_match = None
+        candidates = self.state_map.values()
+        if new_states:
+            candidates = list(candidates) + list(new_states.values())
+
+        for state in candidates:
+            if not state.state_w_values:
+                continue
+            if self._is_consistent_profile(state.state_w_values, w_values):
+                if partial_match is not None:
+                    return None  # ambiguous
+                partial_match = state
+        if partial_match is not None:
+            partial_match.state_w_values.update(w_values)
+            if len(partial_match.state_w_values) == len(self.W):
+                self._register_w_profile(partial_match)
+        return partial_match
+
+    def _key_from_w_values(self, w_values, existing_states=None):
+        h = self.homing_sequence
+        if h in w_values:
+            new_key = w_values[h]
+        else:
+            candidates = [w for w in self.W if len(w) >= len(h) and w[:len(h)] == h]
+            if not candidates:
+                return None
+            new_key = w_values[candidates[0]][:len(h)]
+
+        existing = self.state_map.get(new_key)
+        if existing is None and existing_states:
+            existing = existing_states.get(new_key)
+        if existing is not None and existing.state_w_values != w_values:
+            conflicts = any(
+                existing.state_w_values.get(k) != v
+                for k, v in w_values.items()
+                if k in existing.state_w_values
+            )
+            if conflicts:
+                new_key = tuple(sorted(w_values.items()))
+        return new_key
+
+    def _pending_or_existing_state(self, w_values, new_states=None):
+        matched = self._find_state_by_w_values(w_values, new_states)
+        if matched is not None:
+            return matched
+
+        new_key = self._key_from_w_values(w_values, new_states)
+        if new_key is None:
+            return None
+
+        matched = self.state_map.get(new_key)
+        if matched is None and new_states:
+            matched = new_states.get(new_key)
+        if matched is not None:
+            return matched
+
+        profile = self._w_profile(w_values)
+        pending = self._pending_pool.get(profile)
+        if pending is None:
+            pending = PendingState(new_key, w_values)
+            self._pending_pool[profile] = pending
+        return pending
+
+    def _materialize_pending_state(self, pending):
+        # pending.hs is already a full W-profile key (set by _key_from_w_values).
+        # Check for an exact match first (handles the case where the same state
+        # was rekeyed or materialized earlier under the same full-profile key).
+        matched = self._find_state_by_w_values(pending.state_w_values)
+        if matched is not None:
+            return matched
+
+        existing = self.state_map.get(pending.hs)
+        if existing is not None:
+            return existing
+
+        state = ModelState(pending.hs)
+        state.state_w_values = dict(pending.state_w_values)
+        self.state_map[state.hs] = state
+        self._register_w_profile(state)
+        return state
+
+    def _rekey_completed_state(self, old_key, state):
+        """Move a fully-W-queried state from its temporary homing-sequence-response
+        key to its stable full-W-profile key.
+
+        If a transition-derived state with that full-profile key already exists
+        (materialized from a PendingState before this direct visit), merge the two
+        into one, transferring all learned transition data and redirecting all
+        pointers.  Keep the old h-response key as an alias so the outer loop can
+        still find the state by its homing response without re-querying W.
+        """
+        new_key = tuple(sorted(state.state_w_values.items()))
+        if new_key == old_key:
+            return state
+
+        existing = self.state_map.get(new_key)
+        # Add new_key as an additional alias (keeps old_key working too).
+        self.state_map[new_key] = state
+        state.hs = new_key
+
+        if existing is not None and existing is not state:
+            # Transfer learned transition data from the transition-derived state
+            # into the now-complete directly-visited state.
+            for (i, w), out in existing.transition_w_values.items():
+                if (i, w) not in state.transition_w_values:
+                    state.transition_w_values[(i, w)] = out
+            for i, learned in existing.learned_w_per_input.items():
+                state.learned_w_per_input[i].update(learned)
+            for i, out in existing.output_fun.items():
+                if i not in state.output_fun:
+                    state.output_fun[i] = out
+            for i, trans in existing.transitions.items():
+                if i not in state.transitions:
+                    state.transitions[i] = trans
+            # Redirect any transitions pointing to the old duplicate → canonical.
+            for s in self.state_map.values():
+                for i, t in list(s.transitions.items()):
+                    if t is existing:
+                        s.transitions[i] = state
+            # Remove the now-orphaned duplicate entry (find it by identity).
+            for k, v in list(self.state_map.items()):
+                if v is existing and k != new_key:
+                    del self.state_map[k]
+
+        return state
 
     def update_model_transitions(self):
         current_w_set = set(self.W)
@@ -268,34 +473,27 @@ class hW:
                 if len(w_for_input) != len(self.W):
                     continue
 
-                matched = None
-                for _, destination_state in chain(self.state_map.items(), new_states.items()):
-                    if w_for_input == destination_state.state_w_values:
-                        matched = destination_state
-                        break
-
+                matched = self._pending_or_existing_state(w_for_input, new_states)
                 if matched is None:
-                    h = self.homing_sequence
-                    if h in w_for_input:
-                        new_key = w_for_input[h]
-                    else:
-                        candidates = [w for w in self.W if len(w) >= len(h) and w[:len(h)] == h]
-                        if not candidates:
-                            continue
-                        new_key = w_for_input[candidates[0]][:len(h)]
-                    existing = self.state_map.get(new_key) or new_states.get(new_key)
-                    if existing is not None and existing.state_w_values != w_for_input:
-                        new_key = tuple(sorted(w_for_input.items()))
-                    if new_key not in new_states and new_key not in self.state_map:
-                        new_state = ModelState(new_key)
-                        new_state.state_w_values = dict(w_for_input)
-                        new_states[new_key] = new_state
-                    matched = self.state_map.get(new_key) or new_states.get(new_key)
-                    if matched is None:
-                        continue
-
+                    continue
                 state.transitions[i] = matched
         self.state_map.update(new_states)
+
+    def update_model_transition(self, state, i):
+        if len(state.learned_w_per_input[i]) != len(self.W):
+            return False
+
+        w_for_input = {
+            w: output
+            for (ii, w), output in state.transition_w_values.items()
+            if ii == i and w in state.learned_w_per_input[i]
+        }
+        matched = self._pending_or_existing_state(w_for_input)
+        if matched is None:
+            return False
+
+        state.transitions[i] = matched
+        return False
 
     def _state_partitions(self):
         states = list(self.state_map.values())
@@ -316,7 +514,9 @@ class hW:
                     (
                         i,
                         state.output_fun.get(i),
-                        block_of.get(state.transitions[i].hs) if i in state.transitions else None
+                        block_of.get(state.transitions[i].hs)
+                        if i in state.transitions and isinstance(state.transitions[i], ModelState)
+                        else None
                     )
                     for i in self.input_alphabet
                 )
@@ -360,10 +560,7 @@ class hW:
             wired_blocks.add(block)
             automata_state = block_states[block]
             for i in self.input_alphabet:
-                if i not in state.transitions:
-                    automata_state.transitions[i] = automata_state
-                    automata_state.output_fun[i] = 'dummy_output'
-                else:
+                if i in state.transitions and isinstance(state.transitions[i], ModelState):
                     automata_state.transitions[i] = automata_states[state.transitions[i].hs]
                     automata_state.output_fun[i] = state.output_fun[i]
 
@@ -405,29 +602,18 @@ class hW:
                             current_state.state_w_values[w] = w_response
                         break
                 if not self.interrupt and len(current_state.state_w_values) == len(self.W):
+                    self._register_w_profile(current_state)
                     if not self.check_w_ND_from_state_map():
                         self.interrupt = False
                         continue
             else:
-                incomplete_transitions = self.get_incomplete_transitions()
-                incomplete_states = list(incomplete_transitions.keys())
-
-                if not incomplete_states:
-                    if self.is_complete():
-                        break
-                    else:
-                        continue
-
-                paths_to_reachable_states = current_state.get_paths_to_reachable_states(incomplete_states)
-
-                if not paths_to_reachable_states:
+                reachable_incomplete = self.find_reachable_incomplete_transition(current_state)
+                if reachable_incomplete is None:
                     if self.is_complete():
                         break
                     return self.create_model(hs_response)
 
-                alpha, reached_state = paths_to_reachable_states[0]
-                x = incomplete_transitions[reached_state][0][0]
-                w = incomplete_transitions[reached_state][0][1]
+                alpha, reached_state, x, w = reachable_incomplete
 
                 self.execute_sequence(alpha)
                 output = self.step_wrapper(x)
@@ -442,7 +628,7 @@ class hW:
                 target.learned_w_per_input[x].add(w)
                 target.output_fun[x] = output
 
-                self.update_model_transitions()
+                self.update_model_transition(target, x)
 
         hypothesis = self.create_model(hs_response)
         return hypothesis
@@ -497,8 +683,7 @@ class hW:
             # Ensure h is always in W
             self.add_to_W(self.homing_sequence)
 
-            self.state_map.clear()
-            self._reset_h_nd_index()
+            self._reset_state_data()
             self.interrupt = False
 
         queries_before_initial_state = self.sul.num_queries
@@ -511,8 +696,9 @@ class hW:
             initial_hs_response = tuple(self.sul.query(self.homing_sequence))
             for r, model_state in self.state_map.items():
                 if model_state.state_w_values == initial_w_values:
+                    canonical = model_state.hs  # use canonical key after rekeying
                     for s in hypothesis.states:
-                        if s.prefix == r or r in getattr(s, 'prefixes', set()):
+                        if s.prefix == canonical or canonical in getattr(s, 'prefixes', set()):
                             hypothesis.initial_state = s
                             break
                     break
