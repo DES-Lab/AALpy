@@ -819,8 +819,14 @@ class hW:
         return hypothesis, info
 
 
-def run_hW(alphabet: list, sul, automaton_type='mealy', num_testing_steps=200, reset_testing_counter=True,
-           query_for_initial_state=True, H=None, W=None, return_data=False, print_level=2):
+def run_hW(alphabet: list, sul, automaton_type='mealy',
+           num_testing_steps=200,
+           reset_testing_counter=True,
+           query_for_initial_state=True,
+           provided_homing_sequence=None,
+           provided_characterization_set=None,
+           return_data=False,
+           print_level=2):
     """
     Executes the hW resetless learning algorithm.
     Algorithm description can be found in "hW-inference: A heuristic approach to retrieve models through
@@ -845,10 +851,10 @@ def run_hW(alphabet: list, sul, automaton_type='mealy', num_testing_steps=200, r
 
         query_for_initial_state: if True, query the SUL to identify the true initial state (Default value = True)
 
-        H: optional user-provided homing sequence. If supplied, hW starts with this sequence instead of deriving an
+        provided_homing_sequence: optional user-provided homing sequence. If supplied, hW starts with this sequence instead of deriving an
             initial one from the daisy hypothesis counterexample. (Default value = None)
 
-        W: optional user-provided characterization set. If supplied, hW starts with these suffixes instead of an empty
+        provided_characterization_set: optional user-provided characterization set. If supplied, hW starts with these suffixes instead of an empty
             characterization set. For Moore machines and DFAs, the empty suffix is added automatically.
             (Default value = None)
 
@@ -873,8 +879,8 @@ def run_hW(alphabet: list, sul, automaton_type='mealy', num_testing_steps=200, r
         num_testing_steps=num_testing_steps,
         reset_testing_counter=reset_testing_counter,
         query_for_initial_state=query_for_initial_state,
-        H=H,
-        W=W,
+        H=provided_homing_sequence,
+        W=provided_characterization_set,
     )
 
     hypothesis, info = hw.main_loop(print_level=print_level)
