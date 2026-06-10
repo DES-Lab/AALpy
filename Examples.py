@@ -1364,7 +1364,7 @@ def hW_resetless_learning_example():
     sul = AutomatonSUL(model)
     input_alphabet = model.get_input_alphabet()
 
-    assert model.is_minimal() and model.is_minimal()
+    assert model.is_minimal() and model.is_strongly_connected()
 
     learned_model = run_hW(input_alphabet,
                            sul,
