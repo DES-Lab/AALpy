@@ -2,11 +2,15 @@ import time
 from collections import defaultdict, deque
 from random import choice
 
-from aalpy.automata import MealyState, MealyMachine
+from aalpy.automata import MealyState, MealyMachine, MooreState, MooreMachine, DfaState, Dfa
 from aalpy.utils.HelperFunctions import all_suffixes, print_learning_info
 
 
 class ModelState:
+    """
+    A state of the conjecture under construction.
+    """
+
     def __init__(self, hs):
         self.hs = hs
         self.state_w_values = {}
@@ -19,11 +23,30 @@ class ModelState:
 
 
 class hW:
+    """Adaptation of hW resetless inference (Groz et al.) capable of learning Mealy and Moore machines, as well as DFAs.
+
+    States are identified by their responses to the characterization set W after an
+    application of the homing sequence h; both h and W are refined on the fly.
+
+    Optimizations:
+    - all query answers are cached, and answers are additionally mined from the
+      already-observed trace (_mine_h_w_response), so nothing is asked twice
+    - homing is skipped whenever the SUL's current state is still known, e.g. after
+      cache hits or probes fully predicted by the conjecture (tracked_state)
+    - h non-determinism is checked incrementally over the global trace, skipping
+      self-overlapping h occurrences that would blow up the index quadratically
+    """
+
     def __init__(self, input_al, sul,
+                 automaton_type='mealy',
                  num_testing_steps=200,
                  reset_testing_counter=True,
-                 query_for_initial_state=False):
+                 query_for_initial_state=False,
+                 H=None,
+                 W=None):
 
+        assert automaton_type in ('mealy', 'moore')
+        self.is_moore = automaton_type == 'moore'
         self.input_alphabet = input_al # to ensure determinism if passed as set
         self.sul = sul
         self.total_testing_steps = 0
@@ -31,28 +54,49 @@ class hW:
         self.reset_testing_counter = reset_testing_counter
         self.query_for_initial_state = query_for_initial_state
 
-        self.homing_sequence = ()
+        self.homing_sequence = tuple(H) if H is not None else ()
         self.W = []
+        self._user_provided_h = H is not None
 
         self.global_trace = []
 
         self.interrupt = False
 
-        self.state_map = {}                      # full W-profile -> ModelState
-        self.h_response_map = {}                 # h-response -> partial or complete ModelState
-        self.dictionary = {}                     # (h_response, alpha, x, w) -> (alpha_out, x_out, w_out)
-        self.h_w_dictionary = {}                 # (h, h_response, w) -> w_out
+        self.state_map = {}                # full W-profile -> ModelState
+        self.h_response_map = {}           # h-response -> partial or complete ModelState
+        self.dictionary = {}               # (h, h_response, alpha, x, w) -> (alpha_out, x_out, w_out)
+        self.h_w_dictionary = {}           # (h, h_response, w) -> w_out
         self._conjecture_probe_seen = set()
+        self._aut_state_by_hs = {}         # hs -> automaton state of the latest created model
 
-        # Incremental h-ND index
-        self._hs_cont_starts = defaultdict(list)   # hs_output -> [cont_start_pos, ...] (ordered for determinism)
-        self._pair_progress = {}                   # (p1, p2) -> steps compared
+        # incremental h-ND index over global_trace
+        self._hs_cont_starts = defaultdict(list)   # h-response -> [continuation start positions]
+        self._hs_cont_set = set()                  # all registered continuation starts (O(1) membership)
+        self._pair_progress = {}                   # (p1, p2) -> compared continuation length so far
         self._h_nd_scan_pos = 0                    # how far global_trace has been scanned
+        self._next_occ_min_start = 0               # earliest start of the next registered h occurrence
 
         # reset/initialize the SUL
         sul.pre()
 
+        if W is not None:
+            for w in W:
+                self.add_to_W(tuple(w))
+        if self.is_moore:
+            self.add_to_W(())
+        if self._user_provided_h:
+            self.add_h_to_W()
+
+    @staticmethod
+    def _unwrap_output(output):
+        """Unpack 1-element output tuples returned by some SULs."""
+        if isinstance(output, tuple) and len(output) == 1:
+            return output[0]
+        return output
+
     def add_to_W(self, sequence, preserve_h=True):
+        """Add a sequence to W and drop its proper prefixes (h and the Moore empty
+        suffix are always kept). Returns True if W changed."""
         sequence = tuple(sequence)
         if sequence in self.W:
             return False
@@ -62,11 +106,13 @@ class hW:
             w for w in self.W
             if w == sequence
             or (preserve_h and w == self.homing_sequence)
+            or (self.is_moore and w == ())
             or sequence[:len(w)] != w
         ]
         return True
 
     def add_h_to_W(self):
+        """Ensure h (or an extension of it) is part of W."""
         h = self.homing_sequence
         if h in self.W:
             return False
@@ -74,27 +120,38 @@ class hW:
             return False
         return self.add_to_W(h, preserve_h=False)
 
+    def step_wrapper(self, letter):
+        """Single SUL step that is recorded in the global trace."""
+        output = self._unwrap_output(self.sul.step(letter))
+        self.global_trace.append((letter, output))
+        self.sul.num_steps += 1
+        return output
+
     def execute_homing_sequence(self):
-        observed_output = [self.step_wrapper(i) for i in self.homing_sequence]
+        """Execute h, run the non-determinism check, and return the observed response."""
+        response = tuple(self.step_wrapper(i) for i in self.homing_sequence)
         self.check_h_ND_consistency()
-        return tuple(observed_output)
+        return response
 
     def execute_sequence(self, seq_under_test: tuple):
-        observed_output = []
-        for i in seq_under_test:
-            observed_output.append(self.step_wrapper(i))
-        return tuple(observed_output)
+        """Execute a sequence and return its outputs. The empty sequence (Moore only)
+        reads the current state output without moving the SUL."""
+        if not seq_under_test and self.is_moore:
+            return (self._unwrap_output(self.sul.step(None)),)
+        return tuple(self.step_wrapper(i) for i in seq_under_test)
 
     def execute_conjecture_path(self, start_state, path):
+        """Walk path on the SUL while verifying outputs against the conjecture.
+        On a mismatch, extend W with the failing prefix (or drop the stale transition
+        data if the prefix is already in W) and return None.
+        Returns (reached state, observed outputs) on success."""
         state = start_state
         observed_outputs = []
         for pos, i in enumerate(path):
             observed_output = self.step_wrapper(i)
             observed_outputs.append(observed_output)
-            expected_output = state.output_fun.get(i)
-            if expected_output != observed_output:
-                suffix = path[:pos + 1]
-                if self.add_to_W(suffix):
+            if state.output_fun.get(i) != observed_output:
+                if self.add_to_W(path[:pos + 1]):
                     self._reset_state_data()
                     self.interrupt = True
                 else:
@@ -109,68 +166,89 @@ class hW:
         return state, tuple(observed_outputs)
 
     def create_daisy_hypothesis(self):
-        state = MealyState('s0')
+        """Single-state hypothesis with self-loops; its first counterexample seeds h."""
+        if self.is_moore:
+            state = MooreState('s0', output=self._unwrap_output(self.sul.step(None)))
+        else:
+            state = MealyState('s0')
         for i in self.input_alphabet:
-            o = self.step_wrapper(i)
+            output = self.step_wrapper(i)
             state.transitions[i] = state
-            state.output_fun[i] = o
-        mm = MealyMachine(state, [state])
-        mm.current_state = mm.states[0]
+            if not self.is_moore:
+                state.output_fun[i] = output
+
+        machine_class = MooreMachine if self.is_moore else MealyMachine
+        mm = machine_class(state, [state])
+        mm.current_state = state
         return mm
 
     def _reset_h_nd_index(self):
         self._hs_cont_starts.clear()
+        self._hs_cont_set.clear()
         self._pair_progress.clear()
         self._h_nd_scan_pos = len(self.global_trace)
+        self._next_occ_min_start = self._h_nd_scan_pos
 
-    def _reset_state_data(self):
+    def _reset_state_data(self, reset_h_index=False):
+        """Discard the identified states. The h-ND index depends only on h, not on W,
+        so W-driven resets keep it (preserving comparison progress and minable data)."""
         self.state_map.clear()
         self.h_response_map.clear()
         self._conjecture_probe_seen.clear()
-        self._reset_h_nd_index()
+        if reset_h_index:
+            self._reset_h_nd_index()
 
     def _all_states(self):
+        """All known states, complete and partial, without duplicates."""
         seen = set()
         states = []
         for state in list(self.state_map.values()) + list(self.h_response_map.values()):
-            if id(state) in seen:
-                continue
-            seen.add(id(state))
-            states.append(state)
+            if id(state) not in seen:
+                seen.add(id(state))
+                states.append(state)
         return states
 
     def check_h_ND_consistency(self):
-        h_len = len(self.homing_sequence)
+        """Detect non-determinism of h: two same-response h occurrences whose
+        continuations agree on inputs but differ in outputs. On detection h is
+        extended with the diverging input sequence and all state data is reset.
+
+        Incremental: the trace is scanned once, and registered continuation pairs
+        remember how far they have been compared. Self-overlapping h occurrences
+        (e.g. h = i^k inside a longer run of i) are skipped, as their continuations
+        share long input prefixes and would grow the pair index quadratically."""
+        h = self.homing_sequence
+        h_len = len(h)
         if h_len == 0:
             return True
 
         trace = self.global_trace
         trace_len = len(trace)
 
-        # Scan newly added trace for hs occurrences. When a new continuation is
-        # found, eagerly register pairs (new, existing) in _pair_progress so the
-        # pair-comparison loop below never has to rebuild them from cont_starts.
+        # scan the newly added part of the trace for h occurrences; a new
+        # continuation is eagerly paired with all same-response continuations
         scan_start = max(0, self._h_nd_scan_pos - h_len + 1)
-        h = self.homing_sequence
         for i in range(scan_start, trace_len - h_len + 1):
             for j in range(h_len):
                 if trace[i + j][0] != h[j]:
                     break
             else:
-                prefix_outputs = tuple(trace[i + j][1] for j in range(h_len))
                 new_cont = i + h_len
-                if new_cont not in self._hs_cont_starts[prefix_outputs]:
-                    for existing in self._hs_cont_starts[prefix_outputs]:
-                        p1, p2 = (new_cont, existing) if new_cont < existing else (existing, new_cont)
-                        self._pair_progress[(p1, p2)] = 0
-                    self._hs_cont_starts[prefix_outputs].append(new_cont)
+                if new_cont in self._hs_cont_set or i < self._next_occ_min_start:
+                    continue
+                h_response = tuple(trace[i + j][1] for j in range(h_len))
+                for existing in self._hs_cont_starts[h_response]:
+                    pair = (new_cont, existing) if new_cont < existing else (existing, new_cont)
+                    self._pair_progress[pair] = 0
+                self._hs_cont_starts[h_response].append(new_cont)
+                self._hs_cont_set.add(new_cont)
+                self._next_occ_min_start = new_cont
         self._h_nd_scan_pos = trace_len
 
-        # Advance every active pair. Diverged pairs are deleted rather than
-        # marked -1, so this loop only touches pairs that still need work.
+        # advance every active pair; pairs whose inputs diverged are deleted
         to_delete = []
         for (p1, p2), already in self._pair_progress.items():
-            compare_len = min(trace_len - p1, trace_len - p2)
+            compare_len = trace_len - p2  # p1 < p2, so p2's continuation is the shorter one
             for k in range(already, compare_len):
                 inp1, out1 = trace[p1 + k]
                 inp2, out2 = trace[p2 + k]
@@ -180,7 +258,7 @@ class hW:
                 if out1 != out2:
                     self.homing_sequence += tuple(inp for inp, _ in trace[p1:p1 + k + 1])
                     self.interrupt = True
-                    self._reset_state_data()
+                    self._reset_state_data(reset_h_index=True)
                     self.add_h_to_W()
                     return False
             else:
@@ -192,105 +270,47 @@ class hW:
 
         return True
 
-    def check_w_ND_from_state_map(self):
-        states = [(state.hs, state) for state in self._all_states()]
-        for i in range(len(states)):
-            hs1, s1 = states[i]
-            if len(s1.state_w_values) != len(self.W):
-                continue
-            for j in range(i + 1, len(states)):
-                hs2, s2 = states[j]
-                if len(s2.state_w_values) != len(self.W):
-                    continue
-                if s1.state_w_values == s2.state_w_values and hs1 != hs2:
-                    for k in range(min(len(hs1), len(hs2))):
-                        if hs1[k] != hs2[k]:
-                            new_w = self.homing_sequence[k:]
-                            if new_w and new_w not in self.W:
-                                self.add_to_W(new_w)
-                                self._reset_state_data()
-                                self.interrupt = True
-                                return False
-                            break
-        return True
-
-    def step_wrapper(self, letter):
-        output = self.sul.step(letter)
-        if isinstance(output, tuple) and len(output) == 1:
-            output = output[0]
-        self.global_trace.append((letter, output))
-        self.sul.num_steps += 1
-        return output
-
     def find_counterexample(self, hypothesis):
-        cex = []
-
+        """Random-walk equivalence check (no resets). Returns the executed inputs up
+        to and including the first output mismatch, or None."""
         if self.reset_testing_counter:
             current_test_steps = self.num_testing_steps
         else:
             current_test_steps = max(self.num_testing_steps - self.total_testing_steps, 0)
 
+        cex = []
         for _ in range(current_test_steps):
             self.total_testing_steps += 1
             random_input = choice(self.input_alphabet)
             cex.append(random_input)
-            o_sul = self.step_wrapper(random_input)
-            o_hyp = hypothesis.step(random_input)
 
-            if o_sul != o_hyp:
+            if self.step_wrapper(random_input) != hypothesis.step(random_input):
                 return cex
-
-            if self.interrupt:
-                return None
 
         return None
 
     def is_complete(self):
+        """True if every identified state has all transitions leading to identified states."""
         if not self.state_map:
             return False
-
-        for hs, state in self.state_map.items():
-            for i in self.input_alphabet:
-                if i not in state.transitions:
-                    return False
-                if not isinstance(state.transitions[i], ModelState):
-                    return False
-                if state.transitions[i].hs not in self.state_map:
-                    return False
-        return True
+        return all(
+            i in state.transitions and state.transitions[i].hs in self.state_map
+            for state in self.state_map.values()
+            for i in self.input_alphabet
+        )
 
     def _first_missing_transition_query(self, state):
+        """First (input, w) pair whose response is not yet known for this state."""
         for i in self.input_alphabet:
             learned = state.learned_w_per_input[i]
-            if len(learned) == len(self.W):
-                continue
-            for w in self.W:
-                if w not in learned:
-                    return i, w
-        return None
-
-    def find_reachable_incomplete_transition(self, start_state):
-        queue = deque([(start_state, ())])
-        visited = set()
-
-        while queue:
-            state, path = queue.popleft()
-            if state in visited:
-                continue
-
-            visited.add(state)
-
-            missing = self._first_missing_transition_query(state)
-            if missing is not None:
-                x, w = missing
-                return path, state, x, w
-
-            for input_sequence, next_state in state.transitions.items():
-                queue.append((next_state, path + (input_sequence,)))
-
+            if len(learned) != len(self.W):
+                for w in self.W:
+                    if w not in learned:
+                        return i, w
         return None
 
     def _reachable_state_paths(self, start_state):
+        """(state, shortest input path) pairs for all states reachable in the conjecture."""
         queue = deque([(start_state, ())])
         visited = set()
         reachable = []
@@ -303,12 +323,27 @@ class hW:
             reachable.append((state, path))
 
             for i, next_state in state.transitions.items():
-                if isinstance(next_state, ModelState):
-                    queue.append((next_state, path + (i,)))
+                queue.append((next_state, path + (i,)))
 
         return reachable
 
+    def find_reachable_incomplete_transition(self, start_state):
+        """Closest reachable state with an unknown (input, w) response, as
+        (path, state, input, w), or None if everything reachable is complete."""
+        for state, path in self._reachable_state_paths(start_state):
+            missing = self._first_missing_transition_query(state)
+            if missing is not None:
+                return path, state, missing[0], missing[1]
+        return None
+
     def _simulate_from_state(self, state, sequence):
+        """Outputs and end state of running sequence through the conjecture, or
+        (None, ...) if the required data is not known yet."""
+        if not sequence and self.is_moore:
+            state_out = state.state_w_values.get(())
+            if state_out is None:
+                return None, state
+            return (state_out,), state
         outputs = []
         for i in sequence:
             if i not in state.output_fun or i not in state.transitions:
@@ -317,20 +352,44 @@ class hW:
             state = state.transitions[i]
         return tuple(outputs), state
 
+    def _empty_suffix_response_after_h(self, h_response):
+        """(Moore) The response to the empty suffix is the last output of h,
+        so it comes for free with every homing."""
+        if not self.is_moore or self.homing_sequence == ():
+            return None
+        return (h_response[-1],)
+
+    def _mine_h_w_response(self, hs_response, w):
+        """Recover the response to w after an h occurrence with hs_response from
+        already-observed trace data, avoiding a fresh query."""
+        if not w:
+            return None
+        trace = self.global_trace
+        w_len = len(w)
+        for cont in self._hs_cont_starts.get(hs_response, ()):
+            if cont + w_len > len(trace):
+                continue
+            for k in range(w_len):
+                if trace[cont + k][0] != w[k]:
+                    break
+            else:
+                return tuple(trace[cont + k][1] for k in range(w_len))
+        return None
+
     def _apply_conjecture_probe(self, current_state, path, w, kind):
+        """Execute path + h + w on the SUL to expose a suspected inconsistency.
+        `kind` distinguishes the check that requested the probe, so each probe runs
+        at most once. Returns True if anything was executed."""
         key = (kind, current_state.hs, path, w, self.homing_sequence)
         if key in self._conjecture_probe_seen:
             return False
         self._conjecture_probe_seen.add(key)
 
         alpha_result = self.execute_conjecture_path(current_state, path)
-        if self.interrupt:
-            return True
-        if alpha_result is None:
+        if self.interrupt or alpha_result is None:
             return True
 
-        self.execute_sequence(self.homing_sequence)
-        self.check_h_ND_consistency()
+        self.execute_homing_sequence()
         if self.interrupt:
             return True
 
@@ -339,28 +398,25 @@ class hW:
         return True
 
     def check_conjecture_inconsistencies(self, current_state):
-        reachable = self._reachable_state_paths(current_state)
-
-        for state, path in reachable:
+        """Look for internal inconsistencies of the conjecture: a state whose
+        predicted responses after h disagree with the state mapped to that
+        h-response, or two states that h cannot separate but W can. A probe is
+        executed to expose the first inconsistency found; returns True if so."""
+        states_after_h = []
+        for state, path in self._reachable_state_paths(current_state):
             h_response, state_after_h = self._simulate_from_state(state, self.homing_sequence)
-            if h_response is None:
-                continue
+            if h_response is not None and state_after_h is not None:
+                states_after_h.append((h_response, state_after_h, path))
 
+        for h_response, state_after_h, path in states_after_h:
             mapped_state = self.h_response_map.get(h_response)
             if mapped_state is None or len(mapped_state.state_w_values) != len(self.W):
                 continue
 
             for w in self.W:
-                expected = mapped_state.state_w_values.get(w)
                 actual, _ = self._simulate_from_state(state_after_h, w)
-                if actual is not None and expected != actual:
+                if actual is not None and mapped_state.state_w_values.get(w) != actual:
                     return self._apply_conjecture_probe(current_state, path, w, 'H')
-
-        states_after_h = []
-        for state, path in reachable:
-            h_response, state_after_h = self._simulate_from_state(state, self.homing_sequence)
-            if h_response is not None and state_after_h is not None:
-                states_after_h.append((h_response, state_after_h, path))
 
         for i in range(len(states_after_h)):
             h_response, state_after_h, path = states_after_h[i]
@@ -385,44 +441,27 @@ class hW:
     def _w_profile(self, w_values):
         return tuple(sorted(w_values.items()))
 
-    def _find_state_by_w_values(self, w_values, new_states=None):
+    def _state_for_w_values(self, w_values):
+        """State matching these W responses; checked against identified states first,
+        then against partially identified ones. Created and registered if not found."""
         profile = self._w_profile(w_values)
         matched = self.state_map.get(profile)
+        if matched is None:
+            for candidate in self.h_response_map.values():
+                if candidate.state_w_values == w_values:
+                    matched = candidate
+                    break
         if matched is not None:
             return matched
 
-        if new_states:
-            matched = new_states.get(profile)
-            if matched is not None:
-                return matched
-
-        for destination_state in self.h_response_map.values():
-            if w_values == destination_state.state_w_values:
-                return destination_state
-
-        return None
-
-    def _state_for_w_values(self, w_values, new_states=None):
-        matched = self._find_state_by_w_values(w_values, new_states)
-        if matched is not None:
-            return matched
-
-        new_key = self._w_profile(w_values)
-        matched = self.state_map.get(new_key)
-        if matched is None and new_states:
-            matched = new_states.get(new_key)
-        if matched is not None:
-            return matched
-
-        state = ModelState(new_key)
+        state = ModelState(profile)
         state.state_w_values = dict(w_values)
-        if new_states is not None:
-            new_states[new_key] = state
-        else:
-            self.state_map[new_key] = state
+        self.state_map[profile] = state
         return state
 
     def _merge_states(self, canonical, duplicate):
+        """Fold everything learned about duplicate into canonical and redirect all
+        references to it."""
         for (i, w), out in duplicate.transition_w_values.items():
             canonical.transition_w_values.setdefault((i, w), out)
         for i, learned in duplicate.learned_w_per_input.items():
@@ -442,6 +481,8 @@ class hW:
                 self.h_response_map[h_response] = canonical
 
     def _complete_h_response_state(self, h_response, state):
+        """Re-key a state identified by its h-response to its full W-profile,
+        merging it with an existing state if the profile is already known."""
         profile = self._w_profile(state.state_w_values)
         existing = self.state_map.get(profile)
 
@@ -456,116 +497,83 @@ class hW:
             self.h_response_map[h_response] = existing
         return existing
 
-    def update_model_transitions(self):
-        current_w_set = set(self.W)
-        new_states = {}
-
-        for hs, state in self.state_map.items():
-            # Pre-group transition_w_values by input in one pass instead of
-            # re-scanning the full dict for every input symbol.
-            by_input = defaultdict(dict)
-            for (i, w), output in state.transition_w_values.items():
-                if w in current_w_set:
-                    by_input[i][w] = output
-
-            for i in self.input_alphabet:
-                w_for_input = by_input.get(i, {})
-                if len(w_for_input) != len(self.W):
-                    continue
-
-                matched = self._state_for_w_values(w_for_input, new_states)
-                if matched is None:
-                    continue
-                state.transitions[i] = matched
-        self.state_map.update(new_states)
-
     def update_model_transition(self, state, i):
-        if len(state.learned_w_per_input[i]) != len(self.W):
-            return False
+        """Set state's i-transition once the responses to every w in W are known."""
+        learned = state.learned_w_per_input[i]
+        if len(learned) != len(self.W):
+            return
+        w_for_input = {w: state.transition_w_values[(i, w)] for w in learned}
+        state.transitions[i] = self._state_for_w_values(w_for_input)
 
-        w_for_input = {
-            w: output
-            for (ii, w), output in state.transition_w_values.items()
-            if ii == i and w in state.learned_w_per_input[i]
-        }
-        matched = self._state_for_w_values(w_for_input)
-        if matched is None:
-            return False
-
-        state.transitions[i] = matched
-        return False
+    def _partition_signature(self, state, block_of):
+        """Refinement signature: state output (Moore) or transition outputs (Mealy),
+        plus the current block of each successor."""
+        signature = [state.state_w_values.get(())] if self.is_moore else []
+        for i in self.input_alphabet:
+            successor = state.transitions.get(i)
+            block = block_of.get(successor.hs) if successor is not None else None
+            if self.is_moore:
+                signature.append((i, block))
+            else:
+                signature.append((i, state.output_fun.get(i), block))
+        return tuple(signature)
 
     def _state_partitions(self):
+        """Group equivalent identified states into blocks via partition refinement.
+        Returns hs -> block index."""
         states = [s for s in self.state_map.values() if len(s.state_w_values) == len(self.W)]
 
         block_of = {}
-        output_blocks = {}
-        for state in states:
-            signature = tuple(state.output_fun.get(i) for i in self.input_alphabet)
-            output_blocks.setdefault(signature, len(output_blocks))
-            block_of[state.hs] = output_blocks[signature]
-
-        changed = True
-        while changed:
-            changed = False
-            next_blocks = {}
+        while True:
+            signatures = {}
             next_block_of = {}
             for state in states:
-                signature = tuple(
-                    (
-                        i,
-                        state.output_fun.get(i),
-                        block_of.get(state.transitions[i].hs)
-                        if i in state.transitions and isinstance(state.transitions[i], ModelState)
-                        else None
-                    )
-                    for i in self.input_alphabet
-                )
-                next_blocks.setdefault(signature, len(next_blocks))
-                next_block_of[state.hs] = next_blocks[signature]
-            if next_block_of != block_of:
-                changed = True
-                block_of = next_block_of
-
-        return block_of
-
-    def _model_state_h_output(self, state):
-        outputs = []
-        for i in self.homing_sequence:
-            if i not in state.output_fun or i not in state.transitions:
-                return None
-            outputs.append(state.output_fun[i])
-            state = state.transitions[i]
-        return tuple(outputs)
+                signature = self._partition_signature(state, block_of)
+                next_block_of[state.hs] = signatures.setdefault(signature, len(signatures))
+            if next_block_of == block_of:
+                return block_of
+            block_of = next_block_of
 
     def create_model(self, current_hs):
+        """Build a Moore/Mealy machine from the state blocks, starting (and keeping
+        only states reachable) from the state identified by current_hs."""
         block_of = self._state_partitions()
-        block_representatives = {}
-        for hs, block in block_of.items():
-            block_representatives.setdefault(block, hs)
 
+        # one automaton state per block, built from the block's first member
         block_states = {}
-        automata_states = {}
-        for block, hs in block_representatives.items():
-            mealy_state = MealyState(f's{len(block_states)}')
-            mealy_state.prefix = hs
-            block_states[block] = mealy_state
-            automata_states[hs] = mealy_state
+        for hs, block in block_of.items():
+            if block in block_states:
+                continue
+            model_state = self.state_map[hs]
+            state_id = f's{len(block_states)}'
+            if self.is_moore:
+                raw_out = model_state.state_w_values.get(())
+                state_output = raw_out[0] if isinstance(raw_out, tuple) and len(raw_out) == 1 else raw_out
+                aut_state = MooreState(state_id, output=state_output)
+            else:
+                aut_state = MealyState(state_id)
+            aut_state.prefix = hs
+            block_states[block] = aut_state
 
-        for block, hs in block_representatives.items():
+        self._aut_state_by_hs = {hs: block_states[block] for hs, block in block_of.items()}
+
+        for hs, block in block_of.items():
+            if block_states[block].prefix != hs:
+                continue  # transitions are taken from the block representative only
             state = self.state_map[hs]
             automata_state = block_states[block]
-            for i in self.input_alphabet:
-                if i in state.transitions and isinstance(state.transitions[i], ModelState):
-                    target_block = block_of.get(state.transitions[i].hs)
-                    if target_block is not None:
-                        automata_state.transitions[i] = block_states[target_block]
+            for i, successor in state.transitions.items():
+                target_block = block_of.get(successor.hs)
+                if target_block is not None:
+                    automata_state.transitions[i] = block_states[target_block]
+                    if not self.is_moore:
                         automata_state.output_fun[i] = state.output_fun[i]
 
-        start_state = automata_states.get(current_hs)
+        start_state = self._aut_state_by_hs.get(current_hs)
         if start_state is None:
             start_state = next(iter(block_states.values()))
 
+        # keep only states reachable from the start state
         reachable_states = []
         queue = deque([start_state])
         seen = set()
@@ -575,55 +583,93 @@ class hW:
                 continue
             seen.add(state)
             reachable_states.append(state)
-            for next_state in state.transitions.values():
-                queue.append(next_state)
+            queue.extend(state.transitions.values())
 
+        # close still-unknown transitions with self-loops
         for s in reachable_states:
             for i in self.input_alphabet:
                 if i not in s.transitions:
                     s.transitions[i] = s
-                    s.output_fun.setdefault(i, None)
+                    if not self.is_moore:
+                        s.output_fun.setdefault(i, None)
 
-        mm = MealyMachine(start_state, reachable_states)
+        machine_class = MooreMachine if self.is_moore else MealyMachine
+        mm = machine_class(start_state, reachable_states)
         mm.current_state = start_state
         return mm
 
+    def _track_through_conjecture(self, target, x, w, w_response):
+        """Follow the conjecture from target through x and w. Returns the state the
+        SUL is in after the probe, or None if any transition along the way is unknown
+        or a recorded output disagrees with the observed w_response."""
+        state = target.transitions.get(x)
+        if state is None:
+            return None
+        for idx, inp in enumerate(w):
+            next_state = state.transitions.get(inp)
+            if next_state is None or state.output_fun.get(inp) != w_response[idx]:
+                return None
+            state = next_state
+        return state
+
     def create_hypothesis(self):
+        """Main learning loop: localize via h, identify the current state's W
+        responses, then learn outgoing transitions of reachable states until the
+        conjecture is complete and consistent."""
+        # When the SUL's current state is known (nothing was executed since the last
+        # localization, or the conjecture fully predicts the probe just executed),
+        # the next iteration skips the homing sequence entirely.
+        tracked_state = None
         while True:
-            hs_response = self.execute_homing_sequence()
+            if tracked_state is not None:
+                current_state = tracked_state
+                hs_response = current_state.hs  # profile stands in for the h-response in cache keys
+                tracked_state = None
+            else:
+                hs_response = self.execute_homing_sequence()
 
-            if self.interrupt:
-                self.interrupt = False
-                continue
+                if self.interrupt:
+                    self.interrupt = False
+                    continue
 
-            current_state = self.h_response_map.get(hs_response)
-            if current_state is None:
-                current_state = ModelState(hs_response)
-                self.h_response_map[hs_response] = current_state
+                current_state = self.h_response_map.get(hs_response)
+                if current_state is None:
+                    current_state = ModelState(hs_response)
+                    self.h_response_map[hs_response] = current_state
 
             if len(current_state.state_w_values) != len(self.W):
+                # identify the current state: resolve as many w responses as possible
+                # without moving the SUL (cache, Moore shortcut, trace mining) and
+                # execute at most one w query per homing
+                executed_query = False
                 for w in self.W:
-                    if w not in current_state.state_w_values:
-                        dict_key = (self.homing_sequence, hs_response, w)
-                        w_response = self.h_w_dictionary.get(dict_key)
-                        if w_response is None:
-                            w_response = self.execute_sequence(w)
-                            if not self.interrupt:
-                                self.h_w_dictionary[dict_key] = w_response
-                        if not self.interrupt:
-                            current_state.state_w_values[w] = w_response
+                    if w in current_state.state_w_values:
+                        continue
+                    dict_key = (self.homing_sequence, hs_response, w)
+                    w_response = self.h_w_dictionary.get(dict_key)
+                    if w_response is None and w == ():
+                        w_response = self._empty_suffix_response_after_h(hs_response)
+                    if w_response is None:
+                        w_response = self._mine_h_w_response(hs_response, w)
+                    if w_response is None:
+                        w_response = self.execute_sequence(w)
+                        executed_query = True
+                        if self.interrupt:
+                            break
+                    self.h_w_dictionary[dict_key] = w_response
+                    current_state.state_w_values[w] = w_response
+                    if executed_query:
                         break
                 if not self.interrupt and len(current_state.state_w_values) == len(self.W):
                     current_state = self._complete_h_response_state(hs_response, current_state)
-                    if not self.check_w_ND_from_state_map():
-                        self.interrupt = False
-                        continue
+                    if not executed_query:
+                        # completed without moving the SUL: still located at this state
+                        tracked_state = current_state
             else:
                 reachable_incomplete = self.find_reachable_incomplete_transition(current_state)
                 if reachable_incomplete is None:
                     if self.check_conjecture_inconsistencies(current_state):
-                        if self.interrupt:
-                            self.interrupt = False
+                        self.interrupt = False
                         continue
                     if self.is_complete():
                         break
@@ -646,15 +692,21 @@ class hW:
                         target = reached_after_alpha
 
                     output = self.step_wrapper(x)
-                    w_response = self.execute_sequence(w)
+                    if self.is_moore and w == ():
+                        w_response = (output,)
+                    else:
+                        w_response = self.execute_sequence(w)
 
                     if not self.interrupt:
                         self.dictionary[dict_key] = (alpha_response, output, w_response)
                 else:
                     _, output, w_response = cached
+                    # answered from cache, the SUL did not move
+                    tracked_state = current_state
 
                 if self.interrupt:
                     self.interrupt = False
+                    tracked_state = None
                     continue
 
                 target.transition_w_values[(x, w)] = w_response
@@ -663,25 +715,30 @@ class hW:
 
                 self.update_model_transition(target, x)
 
-        hypothesis = self.create_model(current_state.hs)
-        return hypothesis
+                if tracked_state is None:
+                    tracked_state = self._track_through_conjecture(target, x, w, w_response)
+
+        return self.create_model(current_state.hs)
 
     def main_loop(self, print_level=2):
+        """Outer loop: bootstrap h, alternate hypothesis construction with random-walk
+        equivalence checks, refine W from counterexamples, and assemble the result."""
         start_time = time.time()
         eq_query_time = 0
 
-        initial_model = self.create_daisy_hypothesis()
+        if not self._user_provided_h:
+            # h starts as the last input of the daisy hypothesis' first counterexample
+            initial_model = self.create_daisy_hypothesis()
 
-        eq_start = time.time()
-        counter_example = self.find_counterexample(initial_model)
-        eq_query_time += time.time() - eq_start
+            eq_start = time.time()
+            counter_example = self.find_counterexample(initial_model)
+            eq_query_time += time.time() - eq_start
 
-        last_cex_input = (counter_example[-1],)
-
-        self.homing_sequence = last_cex_input
-        self.add_to_W(last_cex_input)
-
-        self.sul.h = self.homing_sequence
+            last_cex_input = (counter_example[-1],)
+            self.homing_sequence = last_cex_input
+            if self.is_moore:
+                self.add_to_W(())
+            self.add_to_W(last_cex_input)
 
         learning_rounds = 0
         while True:
@@ -699,26 +756,20 @@ class hW:
             if counter_example is None:
                 break
 
-            cex_suffixes = sorted((tuple(s) for s in all_suffixes(counter_example)), key=len)
+            # extend W with the shortest new suffix of the counterexample
             added_suffix = None
-
-            for s in cex_suffixes:
+            for s in sorted((tuple(s) for s in all_suffixes(counter_example)), key=len):
                 if self.add_to_W(s):
                     added_suffix = s
                     break
 
             if added_suffix is None:
-                full_cex = tuple(counter_example)
-                added_suffix = self.homing_sequence + full_cex
-                if not self.add_to_W(added_suffix):
+                if not self.add_to_W(self.homing_sequence + tuple(counter_example)):
                     break
 
-            # Ensure h is always in W
             self.add_h_to_W()
-
             self._reset_state_data()
             self.interrupt = False
-
 
         # finalize initial reset cleanup
         self.sul.post()
@@ -726,27 +777,20 @@ class hW:
         queries_before_initial_state = self.sul.num_queries
 
         if self.query_for_initial_state:
-            initial_w_values = {}
-            for w in self.W:
-                initial_w_values[w] = tuple(self.sul.query(w))
-
-            initial_hs_response = tuple(self.sul.query(self.homing_sequence))
-            for r, model_state in self.state_map.items():
-                if model_state.state_w_values == initial_w_values:
-                    canonical = model_state.hs  # use canonical key after rekeying
-                    for s in hypothesis.states:
-                        if s.prefix == canonical or canonical in getattr(s, 'prefixes', set()):
-                            hypothesis.initial_state = s
-                            break
-                    break
-            else:
-                for r, model_state in self.state_map.items():
-                    if self._model_state_h_output(model_state) == initial_hs_response:
-                        for s in hypothesis.states:
-                            if s.prefix == r or r in getattr(s, 'prefixes', set()):
-                                hypothesis.initial_state = s
-                                break
-                        break
+            # find the model state matching the SUL's reset behavior, by W responses
+            # first and by h-response as a fallback
+            initial_w_values = {w: tuple(self.sul.query(w)) for w in self.W}
+            initial_model_state = next(
+                (ms for ms in self.state_map.values() if ms.state_w_values == initial_w_values), None)
+            if initial_model_state is None:
+                initial_hs_response = tuple(self.sul.query(self.homing_sequence))
+                initial_model_state = next(
+                    (ms for ms in self.state_map.values()
+                     if self._simulate_from_state(ms, self.homing_sequence)[0] == initial_hs_response), None)
+            if initial_model_state is not None:
+                candidate = self._aut_state_by_hs.get(initial_model_state.hs)
+                if candidate is not None and candidate in hypothesis.states:
+                    hypothesis.initial_state = candidate
 
         total_time = round(time.time() - start_time, 2)
         eq_query_time = round(eq_query_time, 2)
@@ -775,8 +819,8 @@ class hW:
         return hypothesis, info
 
 
-def run_hW(alphabet: list, sul, num_testing_steps=200, reset_testing_counter=True,
-           query_for_initial_state=True, return_data=False, print_level=2):
+def run_hW(alphabet: list, sul, automaton_type='mealy', num_testing_steps=200, reset_testing_counter=True,
+           query_for_initial_state=True, H=None, W=None, return_data=False, print_level=2):
     """
     Executes the hW resetless learning algorithm.
     Algorithm description can be found in "hW-inference: A heuristic approach to retrieve models through
@@ -791,11 +835,22 @@ def run_hW(alphabet: list, sul, num_testing_steps=200, reset_testing_counter=Tru
 
         sul: system under learning
 
-        num_testing_steps: number of random steps used per equivalence check (Default value = 100)
+        automaton_type: type of automaton to be learned. Either 'mealy', 'moore', or 'dfa'. For 'moore' and 'dfa'
+            the algorithm treats outputs as state properties (Moore semantics). 'dfa' additionally casts the final
+            Moore machine to a Dfa, treating True/False outputs as accepting/rejecting states. (Default value = 'mealy')
+
+        num_testing_steps: number of random steps used per equivalence check (Default value = 200)
 
         reset_testing_counter: reset the testing step counter after each counterexample (Default value = True)
 
         query_for_initial_state: if True, query the SUL to identify the true initial state (Default value = True)
+
+        H: optional user-provided homing sequence. If supplied, hW starts with this sequence instead of deriving an
+            initial one from the daisy hypothesis counterexample. (Default value = None)
+
+        W: optional user-provided characterization set. If supplied, hW starts with these suffixes instead of an empty
+            characterization set. For Moore machines and DFAs, the empty suffix is added automatically.
+            (Default value = None)
 
         return_data: if True, return a (hypothesis, info) tuple instead of just the hypothesis
             (Default value = False)
@@ -805,19 +860,39 @@ def run_hW(alphabet: list, sul, num_testing_steps=200, reset_testing_counter=Tru
 
     Returns:
 
-        learned Mealy machine (or (machine, info dict) if return_data is True)
+        learned automaton of type automaton_type (or (automaton, info dict) if return_data is True)
     """
     assert print_level in [0, 1, 2, 3]
+    assert automaton_type in ('mealy', 'moore', 'dfa')
 
+    # DFAs are learned as Moore machines and cast to a Dfa afterwards
     hw = hW(
         input_al=alphabet,
         sul=sul,
+        automaton_type='moore' if automaton_type == 'dfa' else automaton_type,
         num_testing_steps=num_testing_steps,
         reset_testing_counter=reset_testing_counter,
         query_for_initial_state=query_for_initial_state,
+        H=H,
+        W=W,
     )
 
     hypothesis, info = hw.main_loop(print_level=print_level)
+
+    if automaton_type == 'dfa':
+        dfa_states = []
+        state_map = {}
+        for moore_s in hypothesis.states:
+            dfa_s = DfaState(moore_s.state_id, is_accepting=bool(moore_s.output))
+            dfa_s.prefix = getattr(moore_s, 'prefix', None)
+            state_map[moore_s] = dfa_s
+            dfa_states.append(dfa_s)
+        for moore_s in hypothesis.states:
+            dfa_s = state_map[moore_s]
+            for letter, target in moore_s.transitions.items():
+                dfa_s.transitions[letter] = state_map[target]
+        hypothesis = Dfa(state_map[hypothesis.initial_state], dfa_states)
+        hypothesis.current_state = hypothesis.initial_state
 
     if return_data:
         return hypothesis, info
