@@ -95,8 +95,10 @@ class hW:
         return output
 
     def add_to_W(self, sequence, preserve_h=True):
-        """Add a sequence to W and drop its proper prefixes (h and the Moore empty
-        suffix are always kept). Returns True if W changed."""
+        """
+        Add a sequence to W and drop its proper prefixes (h and the Moore empty
+        suffix are always kept). Returns True if W changed.
+        """
         sequence = tuple(sequence)
         if sequence in self.W:
             return False
@@ -134,17 +136,21 @@ class hW:
         return response
 
     def execute_sequence(self, seq_under_test: tuple):
-        """Execute a sequence and return its outputs. The empty sequence (Moore only)
-        reads the current state output without moving the SUL."""
+        """
+        Execute a sequence and return its outputs. The empty sequence (Moore only)
+        reads the current state output without moving the SUL.
+        """
         if not seq_under_test and self.is_moore:
             return (self._unwrap_output(self.sul.step(None)),)
         return tuple(self.step_wrapper(i) for i in seq_under_test)
 
     def execute_conjecture_path(self, start_state, path):
-        """Walk path on the SUL while verifying outputs against the conjecture.
+        """
+        Walk path on the SUL while verifying outputs against the conjecture.
         On a mismatch, extend W with the failing prefix (or drop the stale transition
         data if the prefix is already in W) and return None.
-        Returns (reached state, observed outputs) on success."""
+        Returns (reached state, observed outputs) on success.
+        """
         state = start_state
         observed_outputs = []
         for pos, i in enumerate(path):
@@ -190,8 +196,10 @@ class hW:
         self._next_occ_min_start = self._h_nd_scan_pos
 
     def _reset_state_data(self, reset_h_index=False):
-        """Discard the identified states. The h-ND index depends only on h, not on W,
-        so W-driven resets keep it (preserving comparison progress and minable data)."""
+        """
+        Discard the identified states. The h-ND index depends only on h, not on W,
+        so W-driven resets keep it (preserving comparison progress and minable data).
+        """
         self.state_map.clear()
         self.h_response_map.clear()
         self._conjecture_probe_seen.clear()
@@ -209,14 +217,16 @@ class hW:
         return states
 
     def check_h_ND_consistency(self):
-        """Detect non-determinism of h: two same-response h occurrences whose
+        """
+        Detect non-determinism of h: two same-response h occurrences whose
         continuations agree on inputs but differ in outputs. On detection h is
         extended with the diverging input sequence and all state data is reset.
 
         Incremental: the trace is scanned once, and registered continuation pairs
         remember how far they have been compared. Self-overlapping h occurrences
         (e.g. h = i^k inside a longer run of i) are skipped, as their continuations
-        share long input prefixes and would grow the pair index quadratically."""
+        share long input prefixes and would grow the pair index quadratically.
+        """
         h = self.homing_sequence
         h_len = len(h)
         if h_len == 0:
@@ -271,8 +281,10 @@ class hW:
         return True
 
     def find_counterexample(self, hypothesis):
-        """Random-walk equivalence check (no resets). Returns the executed inputs up
-        to and including the first output mismatch, or None."""
+        """
+        Random-walk equivalence check (no resets). Returns the executed inputs up
+        to and including the first output mismatch, or None.
+        """
         if self.reset_testing_counter:
             current_test_steps = self.num_testing_steps
         else:
@@ -328,8 +340,10 @@ class hW:
         return reachable
 
     def find_reachable_incomplete_transition(self, start_state):
-        """Closest reachable state with an unknown (input, w) response, as
-        (path, state, input, w), or None if everything reachable is complete."""
+        """
+        Closest reachable state with an unknown (input, w) response, as
+        (path, state, input, w), or None if everything reachable is complete.
+        """
         for state, path in self._reachable_state_paths(start_state):
             missing = self._first_missing_transition_query(state)
             if missing is not None:
@@ -353,15 +367,19 @@ class hW:
         return tuple(outputs), state
 
     def _empty_suffix_response_after_h(self, h_response):
-        """(Moore) The response to the empty suffix is the last output of h,
-        so it comes for free with every homing."""
+        """
+        (Moore) The response to the empty suffix is the last output of h,
+        so it comes for free with every homing.
+        """
         if not self.is_moore or self.homing_sequence == ():
             return None
         return (h_response[-1],)
 
     def _mine_h_w_response(self, hs_response, w):
-        """Recover the response to w after an h occurrence with hs_response from
-        already-observed trace data, avoiding a fresh query."""
+        """
+        Recover the response to w after an h occurrence with hs_response from
+        already-observed trace data, avoiding a fresh query.
+        """
         if not w:
             return None
         trace = self.global_trace
@@ -377,9 +395,11 @@ class hW:
         return None
 
     def _apply_conjecture_probe(self, current_state, path, w, kind):
-        """Execute path + h + w on the SUL to expose a suspected inconsistency.
+        """
+        Execute path + h + w on the SUL to expose a suspected inconsistency.
         `kind` distinguishes the check that requested the probe, so each probe runs
-        at most once. Returns True if anything was executed."""
+        at most once. Returns True if anything was executed.
+        """
         key = (kind, current_state.hs, path, w, self.homing_sequence)
         if key in self._conjecture_probe_seen:
             return False
@@ -398,10 +418,12 @@ class hW:
         return True
 
     def check_conjecture_inconsistencies(self, current_state):
-        """Look for internal inconsistencies of the conjecture: a state whose
+        """
+        Look for internal inconsistencies of the conjecture: a state whose
         predicted responses after h disagree with the state mapped to that
         h-response, or two states that h cannot separate but W can. A probe is
-        executed to expose the first inconsistency found; returns True if so."""
+        executed to expose the first inconsistency found; returns True if so.
+        """
         states_after_h = []
         for state, path in self._reachable_state_paths(current_state):
             h_response, state_after_h = self._simulate_from_state(state, self.homing_sequence)
@@ -442,8 +464,10 @@ class hW:
         return tuple(sorted(w_values.items()))
 
     def _state_for_w_values(self, w_values):
-        """State matching these W responses; checked against identified states first,
-        then against partially identified ones. Created and registered if not found."""
+        """
+        State matching these W responses; checked against identified states first,
+        then against partially identified ones. Created and registered if not found.
+        """
         profile = self._w_profile(w_values)
         matched = self.state_map.get(profile)
         if matched is None:
@@ -460,8 +484,10 @@ class hW:
         return state
 
     def _merge_states(self, canonical, duplicate):
-        """Fold everything learned about duplicate into canonical and redirect all
-        references to it."""
+        """
+        Fold everything learned about duplicate into canonical and redirect all
+        references to it.
+        """
         for (i, w), out in duplicate.transition_w_values.items():
             canonical.transition_w_values.setdefault((i, w), out)
         for i, learned in duplicate.learned_w_per_input.items():
@@ -481,8 +507,10 @@ class hW:
                 self.h_response_map[h_response] = canonical
 
     def _complete_h_response_state(self, h_response, state):
-        """Re-key a state identified by its h-response to its full W-profile,
-        merging it with an existing state if the profile is already known."""
+        """
+        Re-key a state identified by its h-response to its full W-profile,
+        merging it with an existing state if the profile is already known.
+        """
         profile = self._w_profile(state.state_w_values)
         existing = self.state_map.get(profile)
 
@@ -498,7 +526,9 @@ class hW:
         return existing
 
     def update_model_transition(self, state, i):
-        """Set state's i-transition once the responses to every w in W are known."""
+        """
+        Set state's i-transition once the responses to every w in W are known.
+        """
         learned = state.learned_w_per_input[i]
         if len(learned) != len(self.W):
             return
@@ -506,8 +536,10 @@ class hW:
         state.transitions[i] = self._state_for_w_values(w_for_input)
 
     def _partition_signature(self, state, block_of):
-        """Refinement signature: state output (Moore) or transition outputs (Mealy),
-        plus the current block of each successor."""
+        """
+        Refinement signature: state output (Moore) or transition outputs (Mealy),
+        plus the current block of each successor.
+        """
         signature = [state.state_w_values.get(())] if self.is_moore else []
         for i in self.input_alphabet:
             successor = state.transitions.get(i)
@@ -519,8 +551,10 @@ class hW:
         return tuple(signature)
 
     def _state_partitions(self):
-        """Group equivalent identified states into blocks via partition refinement.
-        Returns hs -> block index."""
+        """
+        Group equivalent identified states into blocks via partition refinement.
+        Returns hs -> block index.
+        """
         states = [s for s in self.state_map.values() if len(s.state_w_values) == len(self.W)]
 
         block_of = {}
@@ -535,8 +569,10 @@ class hW:
             block_of = next_block_of
 
     def create_model(self, current_hs):
-        """Build a Moore/Mealy machine from the state blocks, starting (and keeping
-        only states reachable) from the state identified by current_hs."""
+        """
+        Build a Moore/Mealy machine from the state blocks, starting (and keeping
+        only states reachable) from the state identified by current_hs.
+        """
         block_of = self._state_partitions()
 
         # one automaton state per block, built from the block's first member
@@ -599,9 +635,11 @@ class hW:
         return mm
 
     def _track_through_conjecture(self, target, x, w, w_response):
-        """Follow the conjecture from target through x and w. Returns the state the
+        """
+        Follow the conjecture from target through x and w. Returns the state the
         SUL is in after the probe, or None if any transition along the way is unknown
-        or a recorded output disagrees with the observed w_response."""
+        or a recorded output disagrees with the observed w_response.
+        """
         state = target.transitions.get(x)
         if state is None:
             return None
@@ -613,9 +651,11 @@ class hW:
         return state
 
     def create_hypothesis(self):
-        """Main learning loop: localize via h, identify the current state's W
+        """
+        Main learning loop: localize via h, identify the current state's W
         responses, then learn outgoing transitions of reachable states until the
         conjecture is complete and consistent."""
+
         # When the SUL's current state is known (nothing was executed since the last
         # localization, or the conjecture fully predicts the probe just executed),
         # the next iteration skips the homing sequence entirely.
@@ -886,19 +926,7 @@ def run_hW(alphabet: list, sul, automaton_type='mealy',
     hypothesis, info = hw.main_loop(print_level=print_level)
 
     if automaton_type == 'dfa':
-        dfa_states = []
-        state_map = {}
-        for moore_s in hypothesis.states:
-            dfa_s = DfaState(moore_s.state_id, is_accepting=bool(moore_s.output))
-            dfa_s.prefix = getattr(moore_s, 'prefix', None)
-            state_map[moore_s] = dfa_s
-            dfa_states.append(dfa_s)
-        for moore_s in hypothesis.states:
-            dfa_s = state_map[moore_s]
-            for letter, target in moore_s.transitions.items():
-                dfa_s.transitions[letter] = state_map[target]
-        hypothesis = Dfa(state_map[hypothesis.initial_state], dfa_states)
-        hypothesis.current_state = hypothesis.initial_state
+        hypothesis = MooreMachine.to_dfa(hypothesis)
 
     if return_data:
         return hypothesis, info
