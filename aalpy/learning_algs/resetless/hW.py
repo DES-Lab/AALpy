@@ -38,7 +38,7 @@ class hW:
     """
 
     def __init__(self, input_al, sul,
-                 automaton_type='mealy',
+                 automaton_type,
                  num_testing_steps=200,
                  reset_testing_counter=True,
                  query_for_initial_state=False,
@@ -132,7 +132,10 @@ class hW:
     def execute_homing_sequence(self):
         """Execute h, run the non-determinism check, and return the observed response."""
         response = tuple(self.step_wrapper(i) for i in self.homing_sequence)
-        self.check_h_ND_consistency()
+        # a deliberate homing execution must always enter the h-ND index, even if it
+        # overlaps an incidental occurrence registered just before it
+        forced = len(self.global_trace) if self.homing_sequence else None
+        self.check_h_ND_consistency(forced_cont_start=forced)
         return response
 
     def execute_sequence(self, seq_under_test: tuple):
@@ -216,16 +219,18 @@ class hW:
                 states.append(state)
         return states
 
-    def check_h_ND_consistency(self):
+    def check_h_ND_consistency(self, forced_cont_start=None):
         """
         Detect non-determinism of h: two same-response h occurrences whose
         continuations agree on inputs but differ in outputs. On detection h is
         extended with the diverging input sequence and all state data is reset.
 
         Incremental: the trace is scanned once, and registered continuation pairs
-        remember how far they have been compared. Self-overlapping h occurrences
-        (e.g. h = i^k inside a longer run of i) are skipped, as their continuations
-        share long input prefixes and would grow the pair index quadratically.
+        remember how far they have been compared. Self-overlapping incidental h
+        occurrences (e.g. h = i^k inside a longer run of i) are skipped, as their
+        continuations share long input prefixes and would grow the pair index
+        quadratically. Deliberate homing executions are exempt from that skip
+        (forced_cont_start), otherwise their non-determinism could go undetected.
         """
         h = self.homing_sequence
         h_len = len(h)
@@ -244,7 +249,9 @@ class hW:
                     break
             else:
                 new_cont = i + h_len
-                if new_cont in self._hs_cont_set or i < self._next_occ_min_start:
+                if new_cont in self._hs_cont_set:
+                    continue
+                if i < self._next_occ_min_start and new_cont != forced_cont_start:
                     continue
                 h_response = tuple(trace[i + j][1] for j in range(h_len))
                 for existing in self._hs_cont_starts[h_response]:
@@ -803,9 +810,15 @@ class hW:
                     added_suffix = s
                     break
 
-            if added_suffix is None:
-                if not self.add_to_W(self.homing_sequence + tuple(counter_example)):
-                    break
+            if added_suffix is None and not self.add_to_W(self.homing_sequence + tuple(counter_example)):
+                # the counterexample distinguishes states that (h, W) could not
+                # separate, so the recorded identification data must be wrong:
+                # refine h, which also invalidates all cached query answers
+                self.homing_sequence += tuple(counter_example)
+                self.add_h_to_W()
+                self._reset_state_data(reset_h_index=True)
+                self.interrupt = False
+                continue
 
             self.add_h_to_W()
             self._reset_state_data()
@@ -859,7 +872,7 @@ class hW:
         return hypothesis, info
 
 
-def run_hW(alphabet: list, sul, automaton_type='mealy',
+def run_hW(alphabet: list, sul, automaton_type,
            num_testing_steps=200,
            reset_testing_counter=True,
            query_for_initial_state=True,
