@@ -1368,6 +1368,7 @@ def hW_resetless_learning_example():
 
     learned_model = run_hW(input_alphabet,
                            sul,
+                           automaton_type='mealy',
                            num_testing_steps=200,
                            reset_testing_counter=True,
                            query_for_initial_state=True)
