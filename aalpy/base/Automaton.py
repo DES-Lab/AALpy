@@ -237,14 +237,40 @@ class DeterministicAutomaton(Automaton[AutomatonStateType]):
 
             True if strongly connected, False otherwise
 
-        """
-        import itertools
+        """        
+        if not self.states:
+            return True
 
-        state_comb_list = itertools.permutations(self.states, 2)
-        for state_comb in state_comb_list:
-            if self.get_shortest_path(state_comb[0], state_comb[1]) is None:
-                return False
-        return True
+        # strongly connected iff some state reaches all states and is reached by
+        # all states; two linear traversals instead of one search per state pair
+        all_states = set(self.states)
+        root = self.states[0]
+
+        visited = {root}
+        stack = [root]
+        while stack:
+            for successor in stack.pop().transitions.values():
+                if successor not in visited and successor in all_states:
+                    visited.add(successor)
+                    stack.append(successor)
+        if visited != all_states:
+            return False
+
+        predecessors = {state: [] for state in self.states}
+        for state in self.states:
+            for successor in state.transitions.values():
+                if successor in all_states:
+                    predecessors[successor].append(state)
+
+        visited = {root}
+        stack = [root]
+        while stack:
+            for predecessor in predecessors[stack.pop()]:
+                if predecessor not in visited:
+                    visited.add(predecessor)
+                    stack.append(predecessor)
+                    
+        return visited == all_states
 
     def output_step(self, state, letter):
         """
