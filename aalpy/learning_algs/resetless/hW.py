@@ -2,7 +2,7 @@ import time
 from collections import defaultdict, deque
 from random import choice
 
-from aalpy.automata import MealyState, MealyMachine, MooreState, MooreMachine, DfaState, Dfa
+from aalpy.automata import MealyState, MealyMachine, MooreState, MooreMachine
 from aalpy.utils.HelperFunctions import all_suffixes, print_learning_info
 
 
@@ -147,12 +147,26 @@ class hW:
             return (self._unwrap_output(self.sul.step(None)),)
         return tuple(self.step_wrapper(i) for i in seq_under_test)
 
+    def _add_shortest_new_suffix_to_W(self, sequence):
+        """
+        Extend W with the shortest suffix of sequence not yet in W (the
+        counterexample processing rule). Returns True if W changed.
+        """
+        for s in sorted((tuple(s) for s in all_suffixes(sequence)), key=len):
+            if self.add_to_W(s):
+                return True
+        return False
+
     def execute_conjecture_path(self, start_state, path):
         """
         Walk path on the SUL while verifying outputs against the conjecture.
         On a mismatch, extend W with the failing prefix (or drop the stale transition
         data if the prefix is already in W) and return None.
         Returns (reached state, observed outputs) on success.
+
+        Adding the full prefix (instead of a suffix as for counterexamples) is
+        deliberate: it benchmarks measurably better here, as the prefix starts at
+        the very state pair that the conjecture confused.
         """
         state = start_state
         observed_outputs = []
@@ -171,6 +185,7 @@ class hW:
                         if key[0] == i:
                             del state.transition_w_values[key]
                 return None
+
             state = state.transitions[i]
         return state, tuple(observed_outputs)
 
@@ -307,6 +322,47 @@ class hW:
                 return cex
 
         return None
+
+    def _trace_step_explained_by(self, state, letter, output):
+        """Target state if the hypothesis state reproduces this trace step, else None."""
+        target = state.transitions.get(letter)
+        if target is None:
+            return None
+        predicted = target.output if self.is_moore else state.output_fun.get(letter)
+        return target if predicted == output else None
+
+    def find_counterexample_in_trace(self, hypothesis):
+        """
+        Search the already-observed global trace for a sub-trace that no hypothesis
+        state can explain (Sec. 6.1 of the hW paper); used as a free backstop when
+        the random walk finds no counterexample. Returns the inputs of such a
+        sub-trace, or None.
+
+        A single forward pass suffices: if some state explains trace[0..j], its
+        intermediate states explain every sub-trace of it, so the alive set only
+        empties if an unexplained sub-trace exists.
+        """
+        alive = set(hypothesis.states)
+        for j, (letter, output) in enumerate(self.global_trace):
+            alive = {t for q in alive
+                     if (t := self._trace_step_explained_by(q, letter, output)) is not None}
+            if not alive:
+                return self._shorten_trace_counterexample(hypothesis.states, j)
+        return None
+
+    def _shorten_trace_counterexample(self, states, end):
+        """Inputs of trace [i..end] for the latest start i that no state can explain."""
+        trace = self.global_trace
+        explaining = set(states)  # states explaining trace[i+1..end]
+        start = 0
+        for i in range(end, -1, -1):
+            letter, output = trace[i]
+            explaining = {q for q in states
+                          if self._trace_step_explained_by(q, letter, output) in explaining}
+            if not explaining:
+                start = i
+                break
+        return [letter for letter, _ in trace[start:end + 1]]
 
     def is_complete(self):
         """True if every identified state has all transitions leading to identified states."""
@@ -798,19 +854,19 @@ class hW:
 
             eq_start = time.time()
             counter_example = self.find_counterexample(hypothesis)
+            if counter_example is None:
+                # backstop at zero SUL cost: the observed trace may refute a
+                # hypothesis that the random walk failed to disprove
+                counter_example = self.find_counterexample_in_trace(hypothesis)
             eq_query_time += time.time() - eq_start
 
             if counter_example is None:
                 break
 
             # extend W with the shortest new suffix of the counterexample
-            added_suffix = None
-            for s in sorted((tuple(s) for s in all_suffixes(counter_example)), key=len):
-                if self.add_to_W(s):
-                    added_suffix = s
-                    break
+            added_suffix = self._add_shortest_new_suffix_to_W(counter_example)
 
-            if added_suffix is None and not self.add_to_W(self.homing_sequence + tuple(counter_example)):
+            if not added_suffix and not self.add_to_W(self.homing_sequence + tuple(counter_example)):
                 # the counterexample distinguishes states that (h, W) could not
                 # separate, so the recorded identification data must be wrong:
                 # refine h, which also invalidates all cached query answers
