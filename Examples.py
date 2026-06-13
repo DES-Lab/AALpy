@@ -1350,7 +1350,7 @@ def k_tails_example():
 
 
 def hW_resetless_learning_example():
-    from aalpy import bisimilar, generate_random_deterministic_automata, run_hW, AutomatonSUL
+    from aalpy import bisimilar, generate_random_deterministic_automata, run_hW, RandomhWOracle, AutomatonSUL
     from random import seed
     seed(1)
 
@@ -1366,11 +1366,12 @@ def hW_resetless_learning_example():
 
     assert model.is_minimal() and model.is_strongly_connected()
 
+    eq_oralce = RandomhWOracle(num_testing_steps=200, reset_testing_counter=True)
+
     learned_model = run_hW(input_alphabet,
                            sul,
+                           eq_oralce,
                            automaton_type='mealy',
-                           num_testing_steps=200,
-                           reset_testing_counter=True,
                            query_for_initial_state=True)
 
     assert learned_model.is_minimal()

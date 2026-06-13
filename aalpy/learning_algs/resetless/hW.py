@@ -1,25 +1,10 @@
 import time
-from collections import defaultdict, deque
-from random import choice
+from collections import deque
 
 from aalpy.automata import MealyState, MealyMachine, MooreState, MooreMachine
 from aalpy.utils.HelperFunctions import all_suffixes, print_learning_info
-
-
-class ModelState:
-    """
-    A state of the conjecture under construction.
-    """
-
-    def __init__(self, hs):
-        self.hs = hs
-        self.state_w_values = {}
-
-        self.transitions = {}
-        self.output_fun = {}
-
-        self.transition_w_values = {}
-        self.learned_w_per_input = defaultdict(set)
+from .hW_datastructures import ModelState, HomingSequenceIndex
+from .resetless_oracles import find_counterexample_in_trace
 
 
 class hW:
@@ -35,12 +20,13 @@ class hW:
       cache hits or probes fully predicted by the conjecture (tracked_state)
     - h non-determinism is checked incrementally over the global trace, skipping
       self-overlapping h occurrences that would blow up the index quadratically
+    - on h non-determinism, h is extended by the shortest diverging witness among
+      all pairs that diverged in the same check
     """
 
     def __init__(self, input_al, sul,
                  automaton_type,
-                 num_testing_steps=200,
-                 reset_testing_counter=True,
+                 eq_oracle,
                  query_for_initial_state=False,
                  H=None,
                  W=None):
@@ -49,9 +35,6 @@ class hW:
         self.is_moore = automaton_type == 'moore'
         self.input_alphabet = input_al # to ensure determinism if passed as set
         self.sul = sul
-        self.total_testing_steps = 0
-        self.num_testing_steps = num_testing_steps
-        self.reset_testing_counter = reset_testing_counter
         self.query_for_initial_state = query_for_initial_state
 
         self.homing_sequence = tuple(H) if H is not None else ()
@@ -70,11 +53,11 @@ class hW:
         self._aut_state_by_hs = {}         # hs -> automaton state of the latest created model
 
         # incremental h-ND index over global_trace
-        self._hs_cont_starts = defaultdict(list)   # h-response -> [continuation start positions]
-        self._hs_cont_set = set()                  # all registered continuation starts (O(1) membership)
-        self._pair_progress = {}                   # (p1, p2) -> compared continuation length so far
-        self._h_nd_scan_pos = 0                    # how far global_trace has been scanned
-        self._next_occ_min_start = 0               # earliest start of the next registered h occurrence
+        self.h_index = HomingSequenceIndex()
+
+        # equivalence oracle used during the learning rounds
+        self.oracle = eq_oracle
+        self.oracle.learner = self
 
         # reset/initialize the SUL
         sul.pre()
@@ -206,13 +189,6 @@ class hW:
         mm.current_state = state
         return mm
 
-    def _reset_h_nd_index(self):
-        self._hs_cont_starts.clear()
-        self._hs_cont_set.clear()
-        self._pair_progress.clear()
-        self._h_nd_scan_pos = len(self.global_trace)
-        self._next_occ_min_start = self._h_nd_scan_pos
-
     def _reset_state_data(self, reset_h_index=False):
         """
         Discard the identified states. The h-ND index depends only on h, not on W,
@@ -222,7 +198,7 @@ class hW:
         self.h_response_map.clear()
         self._conjecture_probe_seen.clear()
         if reset_h_index:
-            self._reset_h_nd_index()
+            self.h_index.reset(len(self.global_trace))
 
     def _all_states(self):
         """All known states, complete and partial, without duplicates."""
@@ -239,130 +215,16 @@ class hW:
         Detect non-determinism of h: two same-response h occurrences whose
         continuations agree on inputs but differ in outputs. On detection h is
         extended with the diverging input sequence and all state data is reset.
-
-        Incremental: the trace is scanned once, and registered continuation pairs
-        remember how far they have been compared. Self-overlapping incidental h
-        occurrences (e.g. h = i^k inside a longer run of i) are skipped, as their
-        continuations share long input prefixes and would grow the pair index
-        quadratically. Deliberate homing executions are exempt from that skip
-        (forced_cont_start), otherwise their non-determinism could go undetected.
         """
-        h = self.homing_sequence
-        h_len = len(h)
-        if h_len == 0:
+        extension = self.h_index.scan(self.global_trace, self.homing_sequence, forced_cont_start)
+        if extension is None:
             return True
 
-        trace = self.global_trace
-        trace_len = len(trace)
-
-        # scan the newly added part of the trace for h occurrences; a new
-        # continuation is eagerly paired with all same-response continuations
-        scan_start = max(0, self._h_nd_scan_pos - h_len + 1)
-        for i in range(scan_start, trace_len - h_len + 1):
-            for j in range(h_len):
-                if trace[i + j][0] != h[j]:
-                    break
-            else:
-                new_cont = i + h_len
-                if new_cont in self._hs_cont_set:
-                    continue
-                if i < self._next_occ_min_start and new_cont != forced_cont_start:
-                    continue
-                h_response = tuple(trace[i + j][1] for j in range(h_len))
-                for existing in self._hs_cont_starts[h_response]:
-                    pair = (new_cont, existing) if new_cont < existing else (existing, new_cont)
-                    self._pair_progress[pair] = 0
-                self._hs_cont_starts[h_response].append(new_cont)
-                self._hs_cont_set.add(new_cont)
-                self._next_occ_min_start = new_cont
-        self._h_nd_scan_pos = trace_len
-
-        # advance every active pair; pairs whose inputs diverged are deleted
-        to_delete = []
-        for (p1, p2), already in self._pair_progress.items():
-            compare_len = trace_len - p2  # p1 < p2, so p2's continuation is the shorter one
-            for k in range(already, compare_len):
-                inp1, out1 = trace[p1 + k]
-                inp2, out2 = trace[p2 + k]
-                if inp1 != inp2:
-                    to_delete.append((p1, p2))
-                    break
-                if out1 != out2:
-                    self.homing_sequence += tuple(inp for inp, _ in trace[p1:p1 + k + 1])
-                    self.interrupt = True
-                    self._reset_state_data(reset_h_index=True)
-                    self.add_h_to_W()
-                    return False
-            else:
-                if compare_len > already:
-                    self._pair_progress[(p1, p2)] = compare_len
-
-        for pair in to_delete:
-            del self._pair_progress[pair]
-
-        return True
-
-    def find_counterexample(self, hypothesis):
-        """
-        Random-walk equivalence check (no resets). Returns the executed inputs up
-        to and including the first output mismatch, or None.
-        """
-        if self.reset_testing_counter:
-            current_test_steps = self.num_testing_steps
-        else:
-            current_test_steps = max(self.num_testing_steps - self.total_testing_steps, 0)
-
-        cex = []
-        for _ in range(current_test_steps):
-            self.total_testing_steps += 1
-            random_input = choice(self.input_alphabet)
-            cex.append(random_input)
-
-            if self.step_wrapper(random_input) != hypothesis.step(random_input):
-                return cex
-
-        return None
-
-    def _trace_step_explained_by(self, state, letter, output):
-        """Target state if the hypothesis state reproduces this trace step, else None."""
-        target = state.transitions.get(letter)
-        if target is None:
-            return None
-        predicted = target.output if self.is_moore else state.output_fun.get(letter)
-        return target if predicted == output else None
-
-    def find_counterexample_in_trace(self, hypothesis):
-        """
-        Search the already-observed global trace for a sub-trace that no hypothesis
-        state can explain (Sec. 6.1 of the hW paper); used as a free backstop when
-        the random walk finds no counterexample. Returns the inputs of such a
-        sub-trace, or None.
-
-        A single forward pass suffices: if some state explains trace[0..j], its
-        intermediate states explain every sub-trace of it, so the alive set only
-        empties if an unexplained sub-trace exists.
-        """
-        alive = set(hypothesis.states)
-        for j, (letter, output) in enumerate(self.global_trace):
-            alive = {t for q in alive
-                     if (t := self._trace_step_explained_by(q, letter, output)) is not None}
-            if not alive:
-                return self._shorten_trace_counterexample(hypothesis.states, j)
-        return None
-
-    def _shorten_trace_counterexample(self, states, end):
-        """Inputs of trace [i..end] for the latest start i that no state can explain."""
-        trace = self.global_trace
-        explaining = set(states)  # states explaining trace[i+1..end]
-        start = 0
-        for i in range(end, -1, -1):
-            letter, output = trace[i]
-            explaining = {q for q in states
-                          if self._trace_step_explained_by(q, letter, output) in explaining}
-            if not explaining:
-                start = i
-                break
-        return [letter for letter, _ in trace[start:end + 1]]
+        self.homing_sequence += extension
+        self.interrupt = True
+        self._reset_state_data(reset_h_index=True)
+        self.add_h_to_W()
+        return False
 
     def is_complete(self):
         """True if every identified state has all transitions leading to identified states."""
@@ -407,10 +269,22 @@ class hW:
         Closest reachable state with an unknown (input, w) response, as
         (path, state, input, w), or None if everything reachable is complete.
         """
-        for state, path in self._reachable_state_paths(start_state):
+        queue = deque([(start_state, ())])
+        visited = set()
+
+        while queue:
+            state, path = queue.popleft()
+            if state in visited:
+                continue
+            visited.add(state)
+
             missing = self._first_missing_transition_query(state)
             if missing is not None:
                 return path, state, missing[0], missing[1]
+
+            for i, next_state in state.transitions.items():
+                queue.append((next_state, path + (i,)))
+
         return None
 
     def _simulate_from_state(self, state, sequence):
@@ -447,7 +321,7 @@ class hW:
             return None
         trace = self.global_trace
         w_len = len(w)
-        for cont in self._hs_cont_starts.get(hs_response, ()):
+        for cont in self.h_index.continuation_starts(hs_response):
             if cont + w_len > len(trace):
                 continue
             for k in range(w_len):
@@ -824,17 +698,19 @@ class hW:
         return self.create_model(current_state.hs)
 
     def main_loop(self, print_level=2):
-        """Outer loop: bootstrap h, alternate hypothesis construction with random-walk
-        equivalence checks, refine W from counterexamples, and assemble the result."""
+        """Outer loop: bootstrap h, alternate hypothesis construction with equivalence
+        checks from the configured oracle, refine W from counterexamples, and assemble
+        the result."""
         start_time = time.time()
         eq_query_time = 0
 
         if not self._user_provided_h:
-            # h starts as the last input of the daisy hypothesis' first counterexample
+            # the initial h is the last input of the first counterexample to the
+            # daisy hypothesis, found with the configured equivalence oracle
             initial_model = self.create_daisy_hypothesis()
 
             eq_start = time.time()
-            counter_example = self.find_counterexample(initial_model)
+            counter_example = self.oracle.find_counterexample(initial_model)
             eq_query_time += time.time() - eq_start
 
             last_cex_input = (counter_example[-1],)
@@ -853,11 +729,11 @@ class hW:
                 print(f'Hypothesis {learning_rounds}: {hypothesis.size} states.')
 
             eq_start = time.time()
-            counter_example = self.find_counterexample(hypothesis)
+            counter_example = self.oracle.find_counterexample(hypothesis)
             if counter_example is None:
                 # backstop at zero SUL cost: the observed trace may refute a
-                # hypothesis that the random walk failed to disprove
-                counter_example = self.find_counterexample_in_trace(hypothesis)
+                # hypothesis that the oracle failed to disprove
+                counter_example = find_counterexample_in_trace(self, hypothesis)
             eq_query_time += time.time() - eq_start
 
             if counter_example is None:
@@ -911,7 +787,7 @@ class hW:
             'queries_learning': self.sul.num_queries,
             'queries_eq_oracle': 0, # oracle does not reset
             'steps_learning': self.sul.num_steps,
-            'steps_eq_oracle': self.total_testing_steps,
+            'steps_eq_oracle': self.oracle.num_steps,
             'learning_time': learning_time,
             'eq_oracle_time': eq_query_time,
             'total_time': total_time,
@@ -928,9 +804,7 @@ class hW:
         return hypothesis, info
 
 
-def run_hW(alphabet: list, sul, automaton_type,
-           num_testing_steps=200,
-           reset_testing_counter=True,
+def run_hW(alphabet: list, sul, eq_oracle, automaton_type,
            query_for_initial_state=True,
            provided_homing_sequence=None,
            provided_characterization_set=None,
@@ -950,13 +824,14 @@ def run_hW(alphabet: list, sul, automaton_type,
 
         sul: system under learning
 
+        eq_oracle: resetless equivalence oracle (an hWOracle instance) used during the learning rounds, e.g.
+            RandomhWOracle(num_testing_steps, reset_testing_counter) or
+            RandomWphWOracle(random_walk_length, num_test_origin_states). All testing-budget configuration lives
+            on the oracle itself.
+
         automaton_type: type of automaton to be learned. Either 'mealy', 'moore', or 'dfa'. For 'moore' and 'dfa'
             the algorithm treats outputs as state properties (Moore semantics). 'dfa' additionally casts the final
-            Moore machine to a Dfa, treating True/False outputs as accepting/rejecting states. (Default value = 'mealy')
-
-        num_testing_steps: number of random steps used per equivalence check (Default value = 200)
-
-        reset_testing_counter: reset the testing step counter after each counterexample (Default value = True)
+            Moore machine to a Dfa, treating True/False outputs as accepting/rejecting states.
 
         query_for_initial_state: if True, query the SUL to identify the true initial state (Default value = True)
 
@@ -985,8 +860,7 @@ def run_hW(alphabet: list, sul, automaton_type,
         input_al=alphabet,
         sul=sul,
         automaton_type='moore' if automaton_type == 'dfa' else automaton_type,
-        num_testing_steps=num_testing_steps,
-        reset_testing_counter=reset_testing_counter,
+        eq_oracle=eq_oracle,
         query_for_initial_state=query_for_initial_state,
         H=provided_homing_sequence,
         W=provided_characterization_set,
