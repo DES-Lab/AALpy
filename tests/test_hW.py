@@ -1,6 +1,7 @@
 import pytest
 
-from aalpy import generate_random_deterministic_automata, bisimilar, run_hW, RandomhWOracle, RandomWphWOracle
+from aalpy import generate_random_deterministic_automata, bisimilar, run_hW, RandomhWOracle, RandomWphWOracle, \
+    AutomatonSUL
 from aalpy.SULs import MealySUL
 
 SEEDS = list(range(50))
@@ -70,9 +71,6 @@ def test_hw_seed(automaton_type, seed_val, num_states, input_size, output_size):
                      query_for_initial_state=True)
 
     assert learned_model.is_minimal()
-
-    print(learned_model)
-    print(model)
     assert bisimilar(model, learned_model)
 
 
@@ -107,7 +105,7 @@ def test_hw_eq_oracle(oracle_name, seed_val, num_states, input_size, output_size
     if not model.is_minimal() or not model.is_strongly_connected():
         pytest.skip(f"seed {seed_val} does not produce a minimal, strongly connected model")
 
-    sul = MealySUL(model)
+    sul = AutomatonSUL(model)
     input_alphabet = model.get_input_alphabet()
 
     if oracle_name == 'wp':
