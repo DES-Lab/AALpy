@@ -47,6 +47,7 @@ class SamplingBasedObservationTable:
         self.compatibility_classes_representatives = None
         self.compatibility_class = dict()
         self.freq_query_cache = dict()
+        self._row_compatibility_cache = dict()
 
         self.unambiguity_values = []
 
@@ -132,6 +133,7 @@ class SamplingBasedObservationTable:
             for e in self.E:
                 self.T[s][e] = self.teacher.frequency_query(s, e)
                 self.freq_query_cache[s + e] = self.T[s][e]
+        self._row_compatibility_cache.clear()
 
     def get_extended_s(self, element_of_s=None):
         """Generator returning all elements of the extended S set.
@@ -406,7 +408,7 @@ class SamplingBasedObservationTable:
                 if len(self.unambiguity_values) < num_last:
                     continue
                 last_n_unamb = self.unambiguity_values[-num_last:]
-                if abs(max(last_n_unamb) - min(last_n_unamb) <= diff):
+                if abs(max(last_n_unamb) - min(last_n_unamb)) <= diff:
                     return True
 
         if print_unambiguity and learning_round % 5 == 0:
@@ -472,19 +474,27 @@ class SamplingBasedObservationTable:
           True if rows are compatible, False otherwise
 
         """
+        cache_key = (frozenset((s1, s2)), e_ignore, len(self.E))
+        if cache_key in self._row_compatibility_cache:
+            return self._row_compatibility_cache[cache_key]
+
         if self.automaton_type == 'mdp' and s1[-1] != s2[-1]:
+            self._row_compatibility_cache[cache_key] = False
             return False
 
         for e in self.E:
             if e == e_ignore:
                 continue
             if self.are_cells_incompatible(s1, s2, e):
+                self._row_compatibility_cache[cache_key] = False
                 return False
+        self._row_compatibility_cache[cache_key] = True
         return True
 
     def update_compatibility_classes(self):
         """Updates the compatibility classes and stores their representatives."""
         self.compatibility_class.clear()
+        self._row_compatibility_cache.clear()
 
         class_rank_pair = []
         for s in self.S:
@@ -519,6 +529,34 @@ class SamplingBasedObservationTable:
                 tmp_classes.remove(sp)
 
         self.compatibility_classes_representatives = representatives
+        self._ensure_access_closed_representatives()
+
+    def _ensure_access_closed_representatives(self):
+        """
+        Representatives are used as hypothesis access rows. If a long row becomes a representative while one of its
+        access prefixes is still only a member of another compatibility class, the generated hypothesis can contain an
+        unreachable state. Keep representative access paths prefix-closed to preserve connected hypotheses.
+        """
+        representative_set = set(self.compatibility_classes_representatives)
+
+        for representative in list(self.compatibility_classes_representatives):
+            for prefix in self._proper_access_prefixes(representative):
+                if prefix not in self.S or prefix in representative_set:
+                    continue
+
+                for class_members in self.compatibility_class.values():
+                    if prefix in class_members:
+                        class_members.remove(prefix)
+                        break
+
+                self.compatibility_class[prefix] = []
+                self.compatibility_classes_representatives.append(prefix)
+                representative_set.add(prefix)
+
+    def _proper_access_prefixes(self, row):
+        first_prefix_len = 3 if self.automaton_type == 'mdp' else 2
+        for prefix_len in range(first_prefix_len, len(row), 2):
+            yield row[:prefix_len]
 
     def chaos_counterexample(self, hypothesis):
         """ Check whether the chaos state is reachable.
