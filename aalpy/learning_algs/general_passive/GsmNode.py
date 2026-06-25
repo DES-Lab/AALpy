@@ -142,13 +142,13 @@ class NoIOHandler(IOHandler):
         return None
 
 # TODO maybe split this for maintainability (and perfomance?)
-class TransitionInfo:
+class TransitionInfo(Generic[T]):
     __slots__ = ["target", "count", "original_target", "original_count"]
 
     def __init__(self, target, count, original_target, original_count):
-        self.target: 'GsmNode' = target
+        self.target: 'GsmNode[T]' = target
         self.count: int = count
-        self.original_target: 'GsmNode' = original_target
+        self.original_target: 'GsmNode[T]' = original_target
         self.original_count: int = original_count
 
 
@@ -166,9 +166,9 @@ class GsmNode(Generic[T]):
     """
     __slots__ = ['transitions', 'predecessor', 'prefix_access_pair', 'data']
 
-    def __init__(self, prefix_access_pair, predecessor: 'GsmNode' = None, data: T = None): # TODO (data-ext) check all invocations
+    def __init__(self, prefix_access_pair, predecessor: 'GsmNode[T]' = None, data: T = None): # TODO (data-ext) check all invocations
         # TODO try single dict
-        self.transitions: defaultdict[Any, Dict[Any, TransitionInfo]] = defaultdict(dict)
+        self.transitions: defaultdict[Any, Dict[Any, TransitionInfo[T]]] = defaultdict(dict)
         self.predecessor: GsmNode = predecessor
         self.prefix_access_pair = prefix_access_pair
         self.data = data
