@@ -11,19 +11,17 @@ class WMethodEqOracle(Oracle):
     finite-state machines'.
     """
 
-    def __init__(self, alphabet: list, sul: SUL, max_number_of_states, shuffle_test_set=True):
+    def __init__(self, alphabet: list, sul: SUL, max_number_of_states):
         """
         Args:
 
             alphabet: input alphabet
             sul: system under learning
             max_number_of_states: maximum number of states in the automaton
-            shuffle_test_set: if True, test cases will be shuffled
         """
 
         super().__init__(alphabet, sul)
         self.m = max_number_of_states
-        self.shuffle = shuffle_test_set
         self.cache = set()
 
     def test_suite(self, cover, depth, char_set):
@@ -73,7 +71,9 @@ class WMethodEqOracle(Oracle):
                     if out_hyp != out_sul:
                         self.sul.post()
                         return seq[:ind + 1]
+
                 self.cache.add(seq)
+                self.sul.post()
 
         return None
 
@@ -140,5 +140,7 @@ class RandomWMethodEqOracle(Oracle):
                 if output_sul != output_hyp:
                     self.sul.post()
                     return test_case[:ind + 1]
+
+            self.sul.post()
 
         return None

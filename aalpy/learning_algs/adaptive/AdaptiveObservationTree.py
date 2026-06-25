@@ -398,11 +398,10 @@ class AdaptiveObservationTree(ObservationTree):
                 if frontier_state and Apartness.compute_witness(basis_state, frontier_state, self) is not None:
                     continue
 
-                reference.execute_sequence(
-                    reference.initial_state, frontier_state_access)
+                reference.execute_sequence(reference.initial_state, frontier_state_access)
                 state_one = reference.current_state
-                reference.execute_sequence(
-                    reference.initial_state, basis_state_access)
+
+                reference.execute_sequence(reference.initial_state, basis_state_access)
                 state_two = reference.current_state
 
                 sep_seq = self.find_distinguishing_seq_partial(reference,

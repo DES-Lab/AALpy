@@ -331,7 +331,7 @@ def compare_automata(aut_1: DeterministicAutomaton, aut_2: DeterministicAutomato
     # be reached
     failsafe_counter = 0
     failsafe_stopping = num_cex * 100
-    while len(found_cex) < num_cex or failsafe_counter == failsafe_stopping:
+    while len(found_cex) < num_cex and failsafe_counter < failsafe_stopping:
         cex = eq_oracle.find_cex(test_automaton)
         # if no counterexample can be found terminate the loop
         if cex is None:

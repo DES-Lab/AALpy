@@ -70,6 +70,9 @@ class CacheBasedEqOracle(Oracle):
                     self.sul.post()
                     return inputs
 
+            # cleanup after the test case
+            self.sul.post()
+
         return None
 
     def get_paths(self, t, paths=None, current_path=None):

@@ -121,6 +121,8 @@ class ObservationTree:
         self.witness_cache = {}
         # Maps the basis states to hypothesis states
         self.states_dict = dict()
+        # Reverse map used during counterexample processing.
+        self.state_to_tree_node = dict()
 
     def insert_observation(self, inputs, outputs):
         # Insert an observation into the tree using sequences of inputs and outputs
@@ -256,7 +258,7 @@ class ObservationTree:
 
     def check_frontier_consistency(self):
         """
-        Checks if all the states are correctly defined and creates new frontier states when possible 
+        Checks if all the states are correctly defined and creates new frontier states when possible
         """
         for basis_state in self.basis:
             for i in self.alphabet:
@@ -455,6 +457,7 @@ class ObservationTree:
     def construct_hypothesis_states(self):
         # Construct the hypothesis states from the basis
         self.states_dict = dict()
+        self.state_to_tree_node = dict()
         state_counter = 0
 
         for basis_state in self.basis:
@@ -467,6 +470,7 @@ class ObservationTree:
                     state_id, output=basis_state.output)
             else:
                 self.states_dict[basis_state] = MealyState(state_id)
+            self.state_to_tree_node[self.states_dict[basis_state]] = basis_state
             state_counter += 1
 
     def construct_hypothesis_transitions(self):
@@ -560,8 +564,7 @@ class ObservationTree:
 
         hyp_state = self._get_automaton_successor(
             hypothesis, hypothesis.initial_state, cex_inputs)
-        hyp_node = list(self.states_dict.keys())[list(
-            self.states_dict.values()).index(hyp_state)]
+        hyp_node = self._get_tree_node_for_hyp_state(hyp_state)
 
         prefix = []
         current_state = self.root
@@ -577,8 +580,7 @@ class ObservationTree:
 
         hyp_state_p = self._get_automaton_successor(
             hypothesis, hypothesis.initial_state, sigma1)
-        hyp_node_p = list(self.states_dict.keys())[list(
-            self.states_dict.values()).index(hyp_state_p)]
+        hyp_node_p = self._get_tree_node_for_hyp_state(hyp_state_p)
         hyp_p_access = self.get_transfer_sequence(self.root, hyp_node_p)
 
         witness = Apartness.compute_witness(tree_node, hyp_node, self)
@@ -607,3 +609,9 @@ class ObservationTree:
             automaton.current_state = automaton.current_state.transitions[inp]
 
         return automaton.current_state
+
+    def _get_tree_node_for_hyp_state(self, hyp_state):
+        try:
+            return self.state_to_tree_node[hyp_state]
+        except KeyError as exc:
+            raise RuntimeError("Hypothesis state is not mapped to an observation-tree node.")

@@ -47,6 +47,5 @@ class Oracle(ABC):
 
         """
         hypothesis.reset_to_initial()
-        self.sul.post()
         self.sul.pre()
         self.num_queries += 1

@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aalpy"
+version = "1.6.1"
+description = "An active automata learning library"
+readme = "README.md"
+requires-python = ">=3.6"
+license = { text = "MIT" }
+authors = [
+{ name = "Edi Muskardin" }
+]
+dependencies = [
+"pydot"
+]
+
+classifiers = [
+"Programming Language :: Python :: 3",
+"License :: OSI Approved :: MIT License",
+"Operating System :: OS Independent"
+]
+
+[project.urls]
+Homepage = "https://github.com/DES-Lab/AALpy"
+
+[tool.setuptools]
+license-files = ["LICENSE.txt"]
+
+[tool.setuptools.packages.find]
+include = ["aalpy*"]

@@ -50,7 +50,8 @@ class MooreMachine(DeterministicAutomaton[MooreState[InputType, OutputType]]):
 
     def execute_sequence(self, origin_state, seq):
         if not seq:
-            return origin_state.output
+            self.current_state = origin_state
+            return self.current_state.output
         return super(MooreMachine, self).execute_sequence(origin_state, seq)
 
     def to_state_setup(self):
@@ -106,3 +107,24 @@ class MooreMachine(DeterministicAutomaton[MooreState[InputType, OutputType]]):
             state.prefix = mm.get_shortest_path(mm.initial_state, state)
 
         return mm
+
+    @staticmethod
+    def to_dfa(moore_machine):
+        from aalpy.automata.Dfa import Dfa, DfaState
+
+        if not all(isinstance(state.output, bool) for state in moore_machine.states):
+            raise ValueError('Only Moore machines with boolean state outputs can be cast to a Dfa.')
+
+        dfa_state_map = {}
+        for moore_state in moore_machine.states:
+            dfa_state = DfaState(moore_state.state_id, is_accepting=moore_state.output)
+            dfa_state.prefix = moore_state.prefix
+            dfa_state_map[moore_state] = dfa_state
+
+        for moore_state in moore_machine.states:
+            for letter, target in moore_state.transitions.items():
+                dfa_state_map[moore_state].transitions[letter] = dfa_state_map[target]
+
+        dfa = Dfa(dfa_state_map[moore_machine.initial_state], list(dfa_state_map.values()))
+        dfa.current_state = dfa.initial_state
+        return dfa

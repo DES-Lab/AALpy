@@ -48,6 +48,7 @@ class RandomWalkEqOracle(Oracle):
             self.random_steps_done += 1
 
             if random.random() <= self.reset_prob:
+                self.sul.post()
                 self.reset_hyp_and_sul(hypothesis)
                 inputs.clear()
                 outputs.clear()

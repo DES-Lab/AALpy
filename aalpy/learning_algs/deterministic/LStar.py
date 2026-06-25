@@ -36,7 +36,7 @@ def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, sampl
         closing_strategy: closing strategy used in the close method. Either 'longest_first', 'shortest_first' or
             'single' (Default value = 'shortest_first')
 
-        cex_processing: Counterexample processing strategy. Either None, 'rs' (Riverst-Schapire), 'longest_prefix'.
+        cex_processing: Counterexample processing strategy. Either None, 'rs' (Rivest-Schapire), 'longest_prefix'.
             (Default value = 'rs'), 'longest_prefix', 'linear_fwd', 'linear_bwd', 'exponential_fwd', 'exponential_bwd'
 
         e_set_suffix_closed: True option ensures that E set is suffix closed,

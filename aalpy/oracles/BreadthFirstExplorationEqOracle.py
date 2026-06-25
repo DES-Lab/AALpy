@@ -47,4 +47,7 @@ class BreadthFirstExplorationEqOracle(Oracle):
                     self.sul.post()
                     return test_case[:ind + 1]
 
+            # cleanup after the test case
+            self.sul.post()
+
         return None

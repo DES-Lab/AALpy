@@ -40,7 +40,11 @@ from .learning_algs import (
     run_RPNI,
     run_stochastic_Lstar,
     run_GSM,
-    run_PAPNI
+    run_PAPNI,
+    run_hW,
+    hWOracle,
+    RandomhWOracle,
+    RandomWphWOracle
 )
 from .oracles import (
     BreadthFirstExplorationEqOracle,
@@ -57,8 +61,8 @@ from .oracles import (
     TransitionFocusOracle,
     UserInputEqOracle,
     WMethodEqOracle,
-    kWayStateCoverageEqOracle,
-    kWayTransitionCoverageEqOracle,
+    KWayStateCoverageEqOracle,
+    KWayTransitionCoverageEqOracle,
 )
 from .SULs import (
     AutomatonSUL, 

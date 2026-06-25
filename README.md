@@ -34,12 +34,12 @@ AALpy also features a Generalized State Merging (GSM) framework based on the [Re
 
 <div align="center">
    
-| **Automata Type** |                      **Supported Formalisms**                     | **Active Algorithms**                                          |              **Passive Algorithms**                |
-|-------------------|:-----------------------------------------------------------------:|---------------------------------------------------------|-------------------------------|
-| Deterministic     |                 DFAs <br /> Mealy Machines <br /> Moore Machines                 | L* <br /> KV <br />  L#           |        RPNI <br /> EDSM       |
-| Non-Deterministic |                      ONFSM <br /> Non-deterministic Moore Machines <br /> Abstracted ONFSM                      | L*<sub>ONFSM</sub>                                |  k-tails    |  
+| **Automata Type** |                      **Supported Formalisms**                     | **Active Algorithms**                    |              **Passive Algorithms**                |
+|-------------------|:-----------------------------------------------------------------:|------------------------------------------|-------------------------------|
+| Deterministic     |                 DFAs <br /> Mealy Machines <br /> Moore Machines                 | L* <br /> KV <br />  L#  <br /> hW       |        RPNI <br /> EDSM       |
+| Non-Deterministic |                      ONFSM <br /> Non-deterministic Moore Machines <br /> Abstracted ONFSM                      | L*<sub>ONFSM</sub>                       |  k-tails    |  
 | Stochastic        | Markov Decision Processes <br /> Stochastic Mealy Machines <br /> Markov Chains | L*<sub>MDP</sub> <br /> L*<sub>SMM</sub> | Alergia <br /> IoAlergia <br /> Alergia<sub>EDSM</sub> |    
-| Pushdown          |          VPA/SEVPA                                                            | KV<sub>VPA</sub>                  |    PAPNI      |    
+| Pushdown          |          VPA/SEVPA                                                            | KV<sub>VPA</sub>                         |    PAPNI      |    
 </div>
 
 ## Installation
@@ -131,7 +131,7 @@ seed(2) # all experiments will be reproducible
 
 ## Selected Applications
 AALpy has been used to:
-- [Learn Models of Bluetooth Low-Energy](https://github.com/apferscher/ble-learning)
+- [Learn Models of Bluetooth Low Energy](https://github.com/apferscher/ble-learning)
 - [Find bugs in VIM text editor](https://github.com/DES-Lab/AALpy/discussions/13)
 - [Learn Input-Output Behavior of RNNs](https://github.com/DES-Lab/Extracting-FSM-From-RNNs)
 - [Learn Models of GIT](https://github.com/taburg/git-learning)
@@ -142,8 +142,8 @@ If you use AALpy in your research, please cite us with of the following:
 - [Extended version (preferred)](https://www.researchgate.net/publication/359517046_AALpy_an_active_automata_learning_library/citation/download)
 - [Tool paper](https://dblp.org/rec/conf/atva/MuskardinAPPT21.html?view=bibtex)
 
-If you have research suggestions or you need specific help concerning your research, feel free to start a [discussion](https://github.com/DES-Lab/AALpy/discussions) or contact [edi.muskardin@silicon-austria.com](mailto:edi.muskardin@silicon-austria.com).
-We are happy to help you and consult you in applying automata learning in various domains.
+If you have research suggestions or you need specific help concerning your research, feel free to start a [discussion](https://github.com/DES-Lab/AALpy/discussions).
+We are happy to help you and consult you in developing automata learning algorithms and in applying automata learning in various domains.
 
 ## Contributing
 Pull requests are welcome. For significant changes, please open an issue first to discuss what you would like to change.

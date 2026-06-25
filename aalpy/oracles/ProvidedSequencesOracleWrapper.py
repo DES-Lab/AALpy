@@ -33,6 +33,9 @@ class ProvidedSequencesOracleWrapper(Oracle):
                     self.sul.post()
                     return tuple(inputs)
 
+            # cleanup after the test case
+            self.sul.post()
+
             self.provided_counterexamples.remove(provided_cex)
 
         cex = self.oracle.find_cex(hypothesis)

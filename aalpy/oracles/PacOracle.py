@@ -43,4 +43,7 @@ class PacOracle(Oracle):
                     self.sul.post()
                     return inputs
 
+            # cleanup after the test case
+            self.sul.post()
+
         return None

@@ -46,7 +46,7 @@ def longest_prefix_cex_processing(s_union_s_dot_a: list, cex: tuple, closedness=
 def rs_cex_processing(sul: SUL, cex: tuple, hypothesis, suffix_closedness=True, closedness='suffix',
                       is_vpa=False, lower=None, upper=None):
     """
-    Riverst-Schapire counter example processing.
+    Rivest-Schapire counter example processing.
 
     Args:
 

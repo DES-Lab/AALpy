@@ -106,7 +106,9 @@ class WpMethodEqOracle(Oracle):
                     if out_hyp != out_sul:
                         self.sul.post()
                         return seq[: ind + 1]
+
                 self.cache.add(seq)
+                self.sul.post()
 
         return None
 
@@ -164,4 +166,7 @@ class RandomWpMethodEqOracle(Oracle):
                 if out_hyp != out_sul:
                     self.sul.post()
                     return input[: ind + 1]
+
+            self.sul.post()
+
         return None
