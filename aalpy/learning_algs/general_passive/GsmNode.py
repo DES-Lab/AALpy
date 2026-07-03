@@ -1,5 +1,4 @@
 import functools
-import math
 import pathlib
 from collections import defaultdict
 from functools import total_ordering
@@ -9,7 +8,12 @@ import pydot
 from aalpy.automata import StochasticMealyMachine, StochasticMealyState, MooreState, MooreMachine, NDMooreState, \
     NDMooreMachine, Mdp, MdpState, MealyMachine, MealyState, Onfsm, OnfsmState
 from aalpy.base import Automaton
-from aalpy.learning_algs.general_passive.IOHandler import IOHandler, NoIOHandler
+from aalpy.learning_algs.general_passive.IOHandler import (
+    IOHandler,
+    NoIOHandler,
+    StochasticData,
+    CountData,
+)
 
 Key = TypeVar("Key")
 Val = TypeVar("Val")
@@ -104,17 +108,6 @@ def detect_data_format(data, check_consistency=False, guess=False):
         raise ValueError("ambiguous data format. data format needs to be specified explicitly.")
     return accepted_formats[0]
 
-# TODO maybe split this for maintainability (and perfomance?)
-class TransitionInfo(Generic[T]):
-    __slots__ = ["target", "count", "original_target", "original_count"]
-
-    def __init__(self, target, count, original_target, original_count):
-        self.target: 'GsmNode[T]' = target
-        self.count: int = count
-        self.original_target: 'GsmNode[T]' = original_target
-        self.original_count: int = original_count
-
-
 # TODO add custom pickling code that flattens the Node structure in order to circumvent running into recursion issues for large models
 @total_ordering
 class GsmNode(Generic[T]):
@@ -131,7 +124,7 @@ class GsmNode(Generic[T]):
 
     def __init__(self, prefix_access_pair, predecessor: 'GsmNode[T]' = None, data: T = None): # TODO (data-ext) check all invocations
         # TODO try single dict
-        self.transitions: defaultdict[Any, Dict[Any, TransitionInfo[T]]] = defaultdict(dict)
+        self.transitions: defaultdict[Any, Dict[Any, GsmNode[T]]] = defaultdict(dict)
         self.predecessor: GsmNode = predecessor
         self.prefix_access_pair = prefix_access_pair
         self.data = data
@@ -188,28 +181,25 @@ class GsmNode(Generic[T]):
             current = current.predecessor
         return current
 
-    def get_or_create_transitions(self, in_sym) -> Dict[Any, TransitionInfo]:
+    def get_or_create_transitions(self, in_sym) -> Dict[Any, 'GsmNode[T]']:
         t = self.transitions.get(in_sym)
         if t is None:
             t = dict()
             self.transitions[in_sym] = t
         return t
 
-    def transition_iterator(self) -> Iterable[Tuple[Any, Any, TransitionInfo]]:
+    def transition_iterator(self) -> Iterable[Tuple[Any, Any, 'GsmNode[T]']]:
         for in_sym, transitions in self.transitions.items():
             for out_sym, node in transitions.items():
                 yield in_sym, out_sym, node
 
-    def shallow_copy(self, data_handler: IOHandler) -> 'GsmNode':
+    def shallow_copy(self, data_handler: IOHandler) -> 'GsmNode[T]':
         node = GsmNode(self.prefix_access_pair, self.predecessor, data_handler.copy(self.data))
         for in_sym, t in self.transitions.items():
-            d = dict() # appears to be faster than dict comprehension
-            for out_sym, ti in t.items():
-                d[out_sym] = TransitionInfo(ti.target, ti.count, ti.original_target, ti.original_count)
-            node.transitions[in_sym] = d
+            node.transitions[in_sym] = t.copy()
         return node
 
-    def get_by_prefix(self, seq: IOTrace) -> Optional['GsmNode']:
+    def get_by_prefix(self, seq: IOTrace) -> Optional['GsmNode[T]']:
         node: GsmNode = self
         for in_sym, out_sym in seq:
             if in_sym is None:  # ignore initial transition of Node.get_prefix()
@@ -217,18 +207,16 @@ class GsmNode(Generic[T]):
             trans = node.transitions.get(in_sym)
             if trans is None:
                 return None
-            t_info = trans.get(out_sym)
-            if t_info is None:
+            node = trans.get(out_sym)
+            if node is None:
                 return None
-            node = t_info.target
         return node
 
-    def get_all_nodes(self) -> List['GsmNode']:
+    def get_all_nodes(self) -> List['GsmNode[T]']:
         result = [self]
         backing_set = {self}
         for state in result:
-            for _, _, transition in state.transition_iterator():
-                child = transition.target
+            for _, _, child in state.transition_iterator():
                 if child not in backing_set:
                     backing_set.add(child)
                     result.append(child)
@@ -239,8 +227,7 @@ class GsmNode(Generic[T]):
         backing_set = {self}
         while len(q) != 0:
             current = q.pop(0)
-            for _, _, transition in current.transition_iterator():
-                child = transition.target
+            for _, _, child in current.transition_iterator():
                 if child in backing_set:
                     return False
                 q.append(child)
@@ -290,11 +277,13 @@ class GsmNode(Generic[T]):
         # add transitions
         for node in nodes:
             state = state_map[node]
+            if automaton_class in [Mdp, StochasticMealyMachine]:
+                if not isinstance(node.data, StochasticData):
+                    raise TypeError(f"No probability in information available for {automaton_class.__name__}")
+                prob_info = node.data.get_probabilities()
             for in_sym, transitions in node.transitions.items():
-                total = sum(t.count for t in transitions.values())
                 for out_sym, target_node in transitions.items():
-                    target_state = state_map[target_node.target]
-                    count = target_node.count
+                    target_state = state_map[target_node]
                     if automaton_class is MooreMachine:
                         state.transitions[in_sym] = target_state
                     elif automaton_class is MealyMachine:
@@ -305,9 +294,9 @@ class GsmNode(Generic[T]):
                     elif automaton_class is Onfsm:
                         state.transitions[in_sym].append((out_sym, target_state))
                     elif automaton_class is Mdp:
-                        state.transitions[in_sym].append((target_state, count / total))
+                        state.transitions[in_sym].append((target_state, prob_info[in_sym][out_sym]))
                     elif automaton_class is StochasticMealyMachine:
-                        state.transitions[in_sym].append((target_state, out_sym, count / total))
+                        state.transitions[in_sym].append((target_state, out_sym, prob_info[in_sym][out_sym]))
 
         return automaton_class(initial_state, list(state_map.values()))
 
@@ -327,19 +316,23 @@ class GsmNode(Generic[T]):
         if trans_props is None:
             trans_props = dict()
         if state_label is None:
-            if output_behavior == "moore":
-                def state_label(node: GsmNode):
-                    return f'{node.get_prefix_output()} {node.count()}'
-            else:
-                def state_label(node: GsmNode):
-                    return f'{sum(t.count for _, _, t in node.transition_iterator())}'
+            def state_label(node: GsmNode):
+                label_parts = []
+                if output_behavior == "moore":
+                    label_parts.append(str(node.get_prefix_output()))
+                if isinstance(node.data, CountData):
+                    label_parts.append(str(node.data.count()))
+                return " ".join(label_parts)
         if trans_label is None and "label" not in trans_props:
-            if output_behavior == "moore":
-                def trans_label(node: GsmNode, in_sym, out_sym):
-                    return f'{in_sym} [{node.transitions[in_sym][out_sym].count}]'
-            else:
-                def trans_label(node: GsmNode, in_sym, out_sym):
-                    return f'{in_sym} / {out_sym} [{node.transitions[in_sym][out_sym].count}]'
+            def trans_label(node: GsmNode, in_sym, out_sym):
+                label_parts = []
+                if output_behavior == "moore":
+                    label_parts.append(str(in_sym))
+                else:
+                    label_parts.append(f'{in_sym} / {out_sym}')
+                if isinstance(node.data, CountData):
+                    label_parts.append(f'[{node.data.transition_count[in_sym][out_sym]}]')
+                return " ".join(label_parts)
         if state_color is None:
             def state_color(x): return "black"
         if trans_color is None:
@@ -370,7 +363,7 @@ class GsmNode(Generic[T]):
             for in_sym, options in node.transitions.items():
                 for out_sym, c in options.items():
                     arg_dict = {key: fun(node, in_sym, out_sym) for key, fun in trans_props.items()}
-                    graph.add_edge(pydot.Edge(node_naming(node), node_naming(c.target), **arg_dict))
+                    graph.add_edge(pydot.Edge(node_naming(node), node_naming(c), **arg_dict))
 
         # add initial state
         # TODO maybe add option to parameterize this
@@ -406,8 +399,7 @@ class GsmNode(Generic[T]):
                         raise NotImplementedError()
                     elif ic_mode == "root":
                         successor = self
-                    t_info = TransitionInfo(successor, 1, None, None)
-                    transitions[out_sym] = t_info
+                    transitions[out_sym] = successor
         return missing_trans
 
     def add_trace(self, trace: IOTrace, data_handler: IOHandler[T]):
@@ -415,14 +407,10 @@ class GsmNode(Generic[T]):
         for in_value, out_value in trace:
             in_sym, out_sym = data_handler.abstract(in_value, out_value)
             transitions = curr_node.transitions[in_sym]
-            info = transitions.get(out_sym)
-            if info is None:
+            node = transitions.get(out_sym)
+            if node is None:
                 node = GsmNode((in_sym, out_sym), curr_node, data_handler.init_data())
-                transitions[out_sym] = TransitionInfo(node, 1, node, 1)
-            else:
-                info.count += 1
-                info.original_count += 1
-                node = info.target
+                transitions[out_sym] = node
             data_handler.aggregate_data(curr_node, in_value, out_value, node)
             curr_node = node
 
@@ -438,16 +426,12 @@ class GsmNode(Generic[T]):
         for in_value in inputs:
             in_sym, out_sym = data_handler.abstract(in_value, None)
             transitions = curr_node.transitions[in_sym]
-            t_infos = list(transitions.values())
-            if len(t_infos) == 0:
+            successors = list(transitions.values())
+            if len(successors) == 0:
                 node = GsmNode((in_sym, unknown_output), curr_node)
-                t_info = TransitionInfo(node, 1, node, 1)
-                transitions[unknown_output] = t_info
-            elif len(t_infos) == 1:
-                t_info = t_infos[0]
-                t_info.count += 1
-                t_info.original_count += 1
-                node = t_info.target
+                transitions[unknown_output] = node
+            elif len(successors) == 1:
+                node = successors[0]
             else:
                 # This should never happen
                 raise ValueError("Nondeterminism encountered for GSM with labeled_sequences. not supported")
@@ -517,8 +501,8 @@ class GsmNode(Generic[T]):
 
     def is_moore(self):
         for node in self.get_all_nodes():
-            for in_sym, out_sym, transition in node.transition_iterator():
-                child_output = transition.target.get_prefix_output()
+            for in_sym, out_sym, next_node in node.transition_iterator():
+                child_output = next_node.get_prefix_output()
                 if out_sym is not unknown_output and child_output != out_sym:
                     return False
         return True
@@ -527,19 +511,5 @@ class GsmNode(Generic[T]):
         so = self.get_prefix_output()
         oo = other.get_prefix_output()
         return so == oo or so is unknown_output or oo is unknown_output
-
-    def local_log_likelihood_contribution(self):
-        llc = 0
-        for in_sym, trans in self.transitions.items():
-            total_count = 0
-            for out_sym, info in trans.items():
-                total_count += info.count
-                llc += info.count * math.log(info.count)
-            if total_count != 0:
-                llc -= total_count * math.log(total_count)
-        return llc
-
-    def count(self):
-        return sum(trans.count for _, _, trans in self.transition_iterator())
 
     default_order = functools.cmp_to_key(lambda a, b: -1 if a < b else 1)

@@ -146,7 +146,7 @@ def run_Alergia_EDSM(data, automaton_type, eps=0.05, print_info=False):
             self.ioa_compatibility = hoeffding_compatibility(epsilon)
             self.evidence = 0
 
-        def reset(self):
+        def initialize_merge(self, red: GsmNode, blue: GsmNode) -> bool | None:
             self.evidence = 0
 
         def local_compatibility(self, a: GsmNode, b: GsmNode):
