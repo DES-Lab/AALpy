@@ -1,7 +1,6 @@
 import functools
 import math
 import pathlib
-from abc import abstractmethod
 from collections import defaultdict
 from functools import total_ordering
 from typing import Dict, Any, List, Tuple, Iterable, Callable, Union, TypeVar, Iterator, Optional, Sequence, Generic
@@ -10,6 +9,7 @@ import pydot
 from aalpy.automata import StochasticMealyMachine, StochasticMealyState, MooreState, MooreMachine, NDMooreState, \
     NDMooreMachine, Mdp, MdpState, MealyMachine, MealyState, Onfsm, OnfsmState
 from aalpy.base import Automaton
+from aalpy.learning_algs.general_passive.IOHandler import IOHandler, NoIOHandler
 
 Key = TypeVar("Key")
 Val = TypeVar("Val")
@@ -103,50 +103,6 @@ def detect_data_format(data, check_consistency=False, guess=False):
     if len(accepted_formats) != 1 and not guess:
         raise ValueError("ambiguous data format. data format needs to be specified explicitly.")
     return accepted_formats[0]
-
-class IOHandler(Generic[T]):
-    @abstractmethod
-    def init(self, data, output_format, data_format):
-        ...
-
-    @abstractmethod
-    def abstract(self, in_val, out_val):
-        ...
-
-    @abstractmethod
-    def init_data(self) -> T:
-        ...
-
-    @abstractmethod
-    def aggregate_data(self, src_node: 'GsmNode[T]', in_value, out_value, dst_node: 'GsmNode[T]'):
-        ...
-
-    @abstractmethod
-    def merge(self, x: T, y: T) -> T:
-        ...
-
-    @abstractmethod
-    def copy(self, x: T) -> T:
-        ...
-
-class NoIOHandler(IOHandler):
-    def init(self, data, output_format, data_format):
-        pass
-
-    def abstract(self, in_val, out_val):
-        return in_val, out_val
-
-    def init_data(self) -> T:
-        return None
-
-    def aggregate_data(self, src_node: 'GsmNode[T]', in_sym, out_value, dst_node: 'GsmNode[T]'):
-        pass
-
-    def merge(self, x: T, y: T) -> T:
-        return None
-
-    def copy(self, x: T) -> T:
-        return None
 
 # TODO maybe split this for maintainability (and perfomance?)
 class TransitionInfo(Generic[T]):
