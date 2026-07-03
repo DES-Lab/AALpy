@@ -428,7 +428,13 @@ class GsmNode(Generic[T]):
             file_ext = 'dot'
         graph.write(path=str(path) + "." + file_ext, prog=engine, format=format)
 
-    def make_input_complete(self) -> List[Tuple['GsmNode', Any, Any]]:
+    def make_input_complete(self, ic_mode=None) -> List[Tuple['GsmNode', Any, Any]]:
+        ic_modes = ["self-loop", "sink-state", "root"]
+        if ic_mode is None:
+            ic_mode = ic_modes[0]
+        if ic_mode not in ic_modes:
+            raise ValueError(f"Invalid ic_mode {ic_mode}. Should be one of {ic_modes}")
+
         all_nodes = self.get_all_nodes()
         inputs = {in_sym for node in all_nodes for in_sym in node.transitions}
         missing_trans = []
@@ -438,7 +444,13 @@ class GsmNode(Generic[T]):
                 if len(transitions) == 0:
                     out_sym = node.prefix_access_pair[1]
                     missing_trans.append((node, in_sym, out_sym))
-                    t_info = TransitionInfo(node, 1, None, None)
+                    if ic_mode == "self-loop":
+                        successor = node
+                    elif ic_mode == "sink-state":
+                        raise NotImplementedError()
+                    elif ic_mode == "root":
+                        successor = self
+                    t_info = TransitionInfo(successor, 1, None, None)
                     transitions[out_sym] = t_info
         return missing_trans
 
