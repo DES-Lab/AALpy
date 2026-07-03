@@ -50,3 +50,28 @@ class NoIOHandler(NoAbstractionIOHandler[T]):
 
     def copy(self, x: T) -> T:
         return None
+
+class CopyOnWriteIOHandler(IOHandler[T], ABC):
+    def __init__(self):
+        self.copied_on_write = set()
+
+    def init_merge(self, red: 'GsmNode[T]', blue: 'GsmNode[T]'):
+        self.copied_on_write.clear()
+
+    def merge(self, x: T, y: T) -> T:
+        if id(x) not in self.copied_on_write:
+            x = self.copy_on_write(x)
+            self.copied_on_write.add(id(x))
+        self.merge_into_x(x, y)
+        return x
+
+    @abstractmethod
+    def merge_into_x(self, x: T, y: T):
+        pass
+
+    @abstractmethod
+    def copy_on_write(self, x: T) -> T:
+        pass
+
+    def copy(self, x: T) -> T:
+        return x
