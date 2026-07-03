@@ -210,8 +210,9 @@ class GsmNode(Generic[T]):
         return self.prefix_access_pair[0]
 
     def resolve_unknown_prefix_output(self, value):
-        if self.get_prefix_output() is unknown_output:
-            self.prefix_access_pair = (self.get_prefix_input(), value)
+        p_in, p_out = self.prefix_access_pair
+        if p_out is unknown_output:
+            self.prefix_access_pair = (p_in, value)
 
     def get_prefix(self, include_output=True):
         node = self
@@ -309,16 +310,16 @@ class GsmNode(Generic[T]):
             ("mealy", "stochastic"): (StochasticMealyMachine, StochasticMealyState),
         }
 
-        AutomatonClass, StateClass = type_dict[(output_behavior, transition_behavior)]
+        automaton_class, state_class = type_dict[(output_behavior, transition_behavior)]
 
         # create states
         state_map = dict()
         for i, node in enumerate(nodes):
             state_id = f's{i}'
             if output_behavior == "mealy":
-                state = StateClass(state_id)
+                state = state_class(state_id)
             elif output_behavior == "moore":
-                state = StateClass(state_id, node.get_prefix_output())
+                state = state_class(state_id, node.get_prefix_output())
             state_map[node] = state
             if set_prefix:
                 if transition_behavior == "deterministic":
@@ -338,21 +339,21 @@ class GsmNode(Generic[T]):
                 for out_sym, target_node in transitions.items():
                     target_state = state_map[target_node.target]
                     count = target_node.count
-                    if AutomatonClass is MooreMachine:
+                    if automaton_class is MooreMachine:
                         state.transitions[in_sym] = target_state
-                    elif AutomatonClass is MealyMachine:
+                    elif automaton_class is MealyMachine:
                         state.transitions[in_sym] = target_state
                         state.output_fun[in_sym] = out_sym
-                    elif AutomatonClass is NDMooreMachine:
+                    elif automaton_class is NDMooreMachine:
                         state.transitions[in_sym].append(target_state)
-                    elif AutomatonClass is Onfsm:
+                    elif automaton_class is Onfsm:
                         state.transitions[in_sym].append((out_sym, target_state))
-                    elif AutomatonClass is Mdp:
+                    elif automaton_class is Mdp:
                         state.transitions[in_sym].append((target_state, count / total))
-                    elif AutomatonClass is StochasticMealyMachine:
+                    elif automaton_class is StochasticMealyMachine:
                         state.transitions[in_sym].append((target_state, out_sym, count / total))
 
-        return AutomatonClass(initial_state, list(state_map.values()))
+        return automaton_class(initial_state, list(state_map.values()))
 
     def visualize(self, path: Union[str, pathlib.Path], output_behavior: OutputBehavior = "mealy", format: str = "dot",
                   engine="dot", *,
