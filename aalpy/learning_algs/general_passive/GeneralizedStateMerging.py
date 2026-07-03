@@ -252,6 +252,7 @@ class GeneralizedStateMerging:
                 if blue_node is not None:
                     partitioning.full_mapping[blue_node] = p
                 return p
+        self.data_handler.init_merge(red, blue)
 
         # rewire the blue node's parent
         blue_parent = update_partition(blue.predecessor, None)
