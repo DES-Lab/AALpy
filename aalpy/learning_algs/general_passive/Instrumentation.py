@@ -52,7 +52,10 @@ class ProgressReport(Instrumentation):
         reset_char = "\33[2K\r"
         print_str = reset_char + f'Current automaton size: {self.nr_red_states}'
         if 0 < self.lvl and not self.gsm.compatibility_on_futures:
-            print_str += f' Merged: {self.nr_merged_states_total} Remaining: {self.pta_size - self.nr_red_states - self.nr_merged_states_total}'
+            time_taken = round(perf_counter() - self.previous_time, 2)
+            mps = round(self.nr_merged_states_total / time_taken, 2)
+            remaining_merges = self.pta_size - self.nr_red_states - self.nr_merged_states_total
+            print_str += f' Merged: {self.nr_merged_states_total} Remaining: {remaining_merges} ({time_taken} s -> {mps} merges / second)'
         print(print_str, end="")
 
     def log_promote(self, node: GsmNode):
