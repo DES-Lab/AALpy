@@ -117,6 +117,7 @@ class GeneralizedStateMerging:
 
         # sorted list of states already considered
         red_states = [root]
+        red_states_backing_set = {root}
 
         partition_candidates: Dict[Tuple[GsmNode, GsmNode], Partitioning] = dict()
         while True:
@@ -125,10 +126,12 @@ class GeneralizedStateMerging:
                 red_states.sort(key=self.node_order)
 
             # get blue states
+            # TODO: eliminate explicit blue set construction.
+            #  should be constructed from merge/promotion info
             blue_states = []
             for r in red_states:
                 for c in r.child_iterator():
-                    if c in red_states:
+                    if c in red_states_backing_set:
                         continue
                     blue_states.append(c)
                     if self.consider_only_min_blue and self.node_order is GsmNode.default_order:
@@ -170,6 +173,7 @@ class GeneralizedStateMerging:
                 # no merge candidates for this blue state -> promote
                 if all(part.score is False for part in current_candidates.values()):
                     red_states.append(blue_state)
+                    red_states_backing_set.add(blue_state)
                     instrumentation.log_promote(blue_state)
                     promotion = True
                     break
