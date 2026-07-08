@@ -228,8 +228,8 @@ def differential_info(part: Dict[GsmNode[CountData], GsmNode[CountData]]):
     partial_llh_old = sum(node.data.local_log_likelihood_contribution() for node in relevant_nodes_old)
     partial_llh_new = sum(node.data.local_log_likelihood_contribution() for node in relevant_nodes_new)
 
-    num_params_old = sum(1 for node in relevant_nodes_old for _ in node.transition_iterator())
-    num_params_new = sum(1 for node in relevant_nodes_new for _ in node.transition_iterator())
+    num_params_old = sum(1 for node in relevant_nodes_old for _ in node.child_iterator())
+    num_params_new = sum(1 for node in relevant_nodes_new for _ in node.child_iterator())
 
     return partial_llh_old - partial_llh_new, num_params_old - num_params_new
 

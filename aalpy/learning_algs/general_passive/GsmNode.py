@@ -193,6 +193,10 @@ class GsmNode(Generic[T]):
             for out_sym, node in transitions.items():
                 yield in_sym, out_sym, node
 
+    def child_iterator(self) -> Iterable['GsmNode[T]']:
+        for transitions in self.transitions.values():
+            yield from transitions.values()
+
     def shallow_copy(self, data_handler: IOHandler) -> 'GsmNode[T]':
         node = GsmNode(self.prefix_access_pair, self.predecessor, data_handler.copy(self.data))
         for in_sym, t in self.transitions.items():
@@ -218,7 +222,7 @@ class GsmNode(Generic[T]):
         result = [self]
         backing_set = {self}
         for state in result:
-            for _, _, child in state.transition_iterator():
+            for child in state.child_iterator():
                 if child not in backing_set:
                     backing_set.add(child)
                     result.append(child)
@@ -229,7 +233,7 @@ class GsmNode(Generic[T]):
         backing_set = {self}
         while len(q) != 0:
             current = q.pop(0)
-            for _, _, child in current.transition_iterator():
+            for child in current.child_iterator():
                 if child in backing_set:
                     return False
                 q.append(child)

@@ -127,7 +127,7 @@ class GeneralizedStateMerging:
             # get blue states
             blue_states = []
             for r in red_states:
-                for _, _, c in r.transition_iterator():
+                for c in r.child_iterator():
                     if c in red_states:
                         continue
                     blue_states.append(c)
