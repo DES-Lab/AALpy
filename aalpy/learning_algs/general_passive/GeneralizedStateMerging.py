@@ -19,6 +19,7 @@ class Partitioning:
         self.score = False
         self.red_mapping: Dict[GsmNode, GsmNode] = dict()
         self.full_mapping: Dict[GsmNode, GsmNode] = dict()
+        self.new_blue = []
 
 
 class Instrumentation:
@@ -119,36 +120,29 @@ class GeneralizedStateMerging:
         # sorted list of states already considered
         red_states = [root]
         red_states_backing_set = {root}
+        blue_states = list(root.child_iterator())
 
         partition_candidates: Dict[Tuple[GsmNode, GsmNode], Partitioning] = dict()
         while True:
-            # sort states. states are always sorted using default order on original prefix
-            if self.node_order is not GsmNode.default_order:
-                red_states.sort(key=self.node_order)
-
-            # get blue states
-            # TODO: eliminate explicit blue set construction.
-            #  should be constructed from merge/promotion info
-            blue_states = []
-            for r in red_states:
-                for c in r.child_iterator():
-                    if c in red_states_backing_set:
-                        continue
-                    blue_states.append(c)
-                    if self.consider_only_min_blue and self.node_order is GsmNode.default_order:
-                        break
-
             # no blue states left -> done
             if len(blue_states) == 0:
                 break
+
+            blue_states_to_consider = blue_states
             if self.consider_only_min_blue: # does it make sense to check the score function here?
-                blue_states = [min(blue_states, key=self.node_order)]
+                blue_states_to_consider = [min(blue_states, key=self.node_order)]
+
+            # could make this sort unconditional, but i think this is closer to the original in any case?
             if self.node_order is not GsmNode.default_order:
-                blue_states.sort(key=self.node_order)
+                blue_states_to_consider.sort(key=self.node_order)
+
+            # sort red states. states are always sorted using default order on original prefix
+            if self.node_order is not GsmNode.default_order:
+                red_states.sort(key=self.node_order)
 
             # loop over blue states
             promotion = False
-            for blue_state in blue_states:
+            for blue_state in blue_states_to_consider:
                 # FUTURE: Parallelize
                 # FUTURE: Save partitions?
 
@@ -159,7 +153,7 @@ class GeneralizedStateMerging:
                 for red_state in red_states:
                     partition = partition_candidates.get((red_state, blue_state))
                     if partition is None:
-                        partition = self._partition_from_merge(red_state, blue_state)
+                        partition = self._partition_from_merge(red_state, blue_state, red_states_backing_set)
                     if partition.score is True:
                         perfect_partitioning = partition
                         break
@@ -175,6 +169,8 @@ class GeneralizedStateMerging:
                 if all(part.score is False for part in current_candidates.values()):
                     red_states.append(blue_state)
                     red_states_backing_set.add(blue_state)
+                    blue_states.remove(blue_state)
+                    blue_states.extend(blue_state.child_iterator())
                     instrumentation.log_promote(blue_state)
                     promotion = True
                     break
@@ -195,6 +191,8 @@ class GeneralizedStateMerging:
                 real_node.predecessor = partition_node.predecessor
                 real_node.data = partition_node.data
                 real_node.prefix_access_pair = partition_node.prefix_access_pair
+            blue_states.extend(best_candidate.new_blue)
+            blue_states.remove(best_candidate.blue)
             instrumentation.log_merge(best_candidate)
             # FUTURE: optimizations for compatibility tests where merges can be orthogonal
             # FUTURE: caching for aggregating compatibility tests
@@ -207,7 +205,7 @@ class GeneralizedStateMerging:
             root = root.to_automaton(self.output_behavior, self.transition_behavior)
         return root
 
-    def _partition_from_merge(self, red: GsmNode, blue: GsmNode) -> Partitioning:
+    def _partition_from_merge(self, red: GsmNode, blue: GsmNode, red_nodes: set[GsmNode]) -> Partitioning:
         # Compatibility check based on partitions.
         # assumes that blue is a tree and red is not reachable from blue
 
@@ -219,6 +217,7 @@ class GeneralizedStateMerging:
             return partitioning
         elif early_verdict is True:
             # early accept -> can manipulate nodes directly
+            red_partitions = red_nodes
             def update_partition(red_node: GsmNode, blue_node: Optional[GsmNode]) -> GsmNode:
                 return red_node
 
@@ -226,15 +225,23 @@ class GeneralizedStateMerging:
                 return part.transitions[in_symbol]
         else:
             # uncertain -> need to construct partitioning
+            red_partitions: set[GsmNode] = set()
             def update_partition(red_node: GsmNode, blue_node: Optional[GsmNode]) -> GsmNode:
                 p = partitioning.full_mapping.get(red_node) # could check smaller .red_mapping?
                 if p is None:
+                    # there is no partition yet for the 'red' node -> lazily copy
                     p = copy(red_node)
                     p.data = self.data_handler.copy(red_node.data)
                     p.transitions = red_node.transitions.copy()
 
+                    # add to partition table
                     partitioning.full_mapping[red_node] = p
                     partitioning.red_mapping[red_node] = p
+
+                    # check whether the partition is (proper) red
+                    if red_node in red_nodes:
+                        red_partitions.add(p)
+                assert red_node not in red_nodes or p in red_partitions
                 if blue_node is not None:
                     partitioning.full_mapping[blue_node] = p
                 return p
@@ -295,7 +302,10 @@ class GeneralizedStateMerging:
                     if partition_successor is not None:
                         q.append((partition_successor, blue_successor))
                     else:
-                        # blue child is blue after merging if there is a red state in blue's partition
+                        # blue_successor is blue after merging if the partition is red
+                        if partition in red_partitions:
+                            partitioning.new_blue.append(blue_successor)
+                        # add new transition to partition
                         partition_transitions[out_sym] = blue_successor
                         # update predecessor of blue child
                         blue_target_partition = update_partition(blue_successor, None)
