@@ -88,8 +88,6 @@ class GeneralizedStateMerging:
         self.depth_first = depth_first
 
     def compute_local_compatibility(self, a: GsmNode, b: GsmNode):
-        if self.output_behavior == "moore" and not GsmNode.moore_compatible(a, b):
-            return False
         if self.transition_behavior == "deterministic" and not GsmNode.deterministic_compatible(a, b):
             return False
         return self.score_calc.local_compatibility(a, b)
@@ -211,6 +209,11 @@ class GeneralizedStateMerging:
 
         partitioning = Partitioning(red, blue)
 
+        # for Moore machines the outputs have to match. but only once since Moore-ness is preserved for implied merges
+        if self.output_behavior == "moore" and not GsmNode.moore_compatible(red, blue):
+            return partitioning
+
+        # check whether there is an early verdict and adapt helper functions accordingly
         early_verdict = self.score_calc.initialize_merge(red, blue) if self.use_early_verdicts else None
         if early_verdict is False:
             # early reject -> return failing partitioning
