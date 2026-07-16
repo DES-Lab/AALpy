@@ -53,7 +53,7 @@ def hoeffding_compatibility(eps, compare_original=True) -> LocalCompatibilityFun
                 continue  # parameter combinations require this check
             threshold = eps_fact * (sqrt(1 / a_total) + sqrt(1 / b_total))
             # iterate over outputs that appear in either distribution
-            for out_sym, ac, bc in union_iterator(a_trans, b_trans):
+            for out_sym, ac, bc in union_iterator(a_trans, b_trans, 0):
                 if abs(ac / a_total - bc / b_total) > threshold:
                     return False
         return True

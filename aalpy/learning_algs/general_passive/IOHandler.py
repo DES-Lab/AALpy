@@ -161,6 +161,8 @@ class CountOnPTAHandler(CountHandler):
         return CountOnPTAData()
 
     def aggregate_data(self, src_node: 'GsmNode[CountOnPTAData]', in_value, out_value, dst_node: 'GsmNode[CountOnPTAData]'):
+        if src_node is None:
+            return
         src_node.data.transition_count[in_value][out_value] += 1
         src_node.data.pta_count[in_value][out_value] += 1
         src_node.data.shadow_pta[in_value][out_value] = dst_node

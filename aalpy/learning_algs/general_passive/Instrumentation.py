@@ -99,6 +99,8 @@ class MergeViolationDebugger(Instrumentation):
         if old_red is None:
             self.map[node] = new_red
             self.log.append(("promote", new_red_prefix))
+        elif node is None:
+            self.log.append(("broken promote", new_red_prefix))
         elif old_red is not new_red:
             print(f"Erroneous promotion detected:")
             print(f"  Ground truth: {node.get_prefix()}")

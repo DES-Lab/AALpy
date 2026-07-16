@@ -35,7 +35,7 @@ IOExample = Tuple[Sequence[Any], Any]
 StateFunction = Callable[['GsmNode'], str]
 TransitionFunction = Callable[['GsmNode', Any, Any], str]
 
-unknown_output = None  # can be set to a special value if required
+unknown_output = object()  # can be set to a special value if required
 
 
 def intersection_iterator(a: Dict[Key, Val], b: Dict[Key, Val], sort_by_length=False) -> Iterator[Tuple[Key, Val, Val]]:
@@ -209,7 +209,9 @@ class GsmNode(Generic[T]):
                 return None
             node = trans.get(out_sym)
             if node is None:
-                return None
+                node = trans.get(unknown_output)
+                if node is None:
+                    return None
         return node
 
     def get_all_nodes(self) -> List['GsmNode[T]']:
