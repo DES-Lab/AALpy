@@ -1,5 +1,6 @@
 import functools
 from collections import deque
+from copy import copy
 from typing import Dict, Tuple, Callable, List, Optional
 
 from aalpy.learning_algs.general_passive.GsmNode import GsmNode, OutputBehavior, TransitionBehavior, \
@@ -220,23 +221,39 @@ class GeneralizedStateMerging:
             # early accept -> can manipulate nodes directly
             def update_partition(red_node: GsmNode, blue_node: Optional[GsmNode]) -> GsmNode:
                 return red_node
+
+            def get_partition_trans(part: GsmNode, in_symbol):
+                return part.transitions[in_symbol]
         else:
             # uncertain -> need to construct partitioning
             def update_partition(red_node: GsmNode, blue_node: Optional[GsmNode]) -> GsmNode:
                 p = partitioning.full_mapping.get(red_node) # could check smaller .red_mapping?
                 if p is None:
-                    p = red_node.shallow_copy(self.data_handler) # TODO maybe don't do a full copy here
+                    p = copy(red_node)
+                    p.data = self.data_handler.copy(red_node.data)
+                    p.transitions = red_node.transitions.copy()
+
                     partitioning.full_mapping[red_node] = p
                     partitioning.red_mapping[red_node] = p
                 if blue_node is not None:
                     partitioning.full_mapping[blue_node] = p
                 return p
+
+            cow_set = set()
+            def get_partition_trans(part: GsmNode, in_symbol):
+                trans = part.transitions[in_symbol]
+                if id(trans) not in cow_set:
+                    trans = trans.copy()
+                    part.transitions[in_symbol] = trans
+                    cow_set.add(id(trans))
+                return trans
+
         self.data_handler.init_merge(red, blue)
 
         # rewire the blue node's parent
         blue_parent = update_partition(blue.predecessor, None)
         blue_in_sym, blue_out_sym = blue.prefix_access_pair
-        blue_parent.transitions[blue_in_sym][blue_out_sym] = red
+        get_partition_trans(blue_parent, blue_in_sym)[blue_out_sym] = red
 
         partition = update_partition(red, None)
         if self.output_behavior == "moore":
@@ -256,7 +273,7 @@ class GeneralizedStateMerging:
 
             # create implied merges for all common successors
             for in_sym, blue_transitions in blue.transitions.items():
-                partition_transitions = partition.transitions[in_sym]
+                partition_transitions = get_partition_trans(partition, in_sym)
                 for out_sym, blue_successor in blue_transitions.items():
                     partition_successor = partition_transitions.get(out_sym)
                     # handle unknown output

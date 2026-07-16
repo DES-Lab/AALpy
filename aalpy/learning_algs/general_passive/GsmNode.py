@@ -197,12 +197,6 @@ class GsmNode(Generic[T]):
         for transitions in self.transitions.values():
             yield from transitions.values()
 
-    def shallow_copy(self, data_handler: IOHandler) -> 'GsmNode[T]':
-        node = GsmNode(self.prefix_access_pair, self.predecessor, data_handler.copy(self.data))
-        for in_sym, t in self.transitions.items():
-            node.transitions[in_sym] = t.copy()
-        return node
-
     def get_by_prefix(self, seq: IOTrace) -> Optional['GsmNode[T]']:
         node: GsmNode = self
         for in_sym, out_sym in seq:
