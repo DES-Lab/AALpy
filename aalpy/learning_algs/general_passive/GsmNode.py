@@ -391,14 +391,14 @@ class GsmNode(Generic[T]):
             for in_sym in inputs:
                 transitions = node.transitions[in_sym]
                 if len(transitions) == 0:
-                    out_sym = node.prefix_access_pair[1]
-                    missing_trans.append((node, in_sym, out_sym))
                     if ic_mode == "self-loop":
                         successor = node
                     elif ic_mode == "sink-state":
                         raise NotImplementedError()
                     elif ic_mode == "root":
                         successor = self
+                    out_sym = successor.prefix_access_pair[1]
+                    missing_trans.append((node, in_sym, out_sym))
                     transitions[out_sym] = successor
         return missing_trans
 

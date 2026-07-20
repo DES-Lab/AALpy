@@ -53,7 +53,7 @@ class ProgressReport(Instrumentation):
         print_str = reset_char + f'Current automaton size: {self.nr_red_states}'
         if 0 < self.lvl and not self.gsm.use_early_verdicts:
             time_taken = round(perf_counter() - self.previous_time, 2)
-            mps = round(self.nr_merged_states_total / time_taken, 2)
+            mps = round(self.nr_merged_states_total / time_taken, 2) if time_taken != 0 else "inf"
             remaining_merges = self.pta_size - self.nr_red_states - self.nr_merged_states_total
             print_str += f' Merged: {self.nr_merged_states_total} Remaining: {remaining_merges} ({time_taken} s -> {mps} merges / second)'
         print(print_str, end="")
