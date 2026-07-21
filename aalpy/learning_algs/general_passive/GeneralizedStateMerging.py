@@ -10,8 +10,6 @@ from aalpy.learning_algs.general_passive.GsmNode import GsmNode, OutputBehavior,
 from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreCalculation, hoeffding_compatibility
 
 
-defer_merge = object()
-
 # TODO add option for making checking of futures and partition non mutual exclusive?
 #  Easiest done by adding a new method / field to ScoreCalculation
 
@@ -313,7 +311,7 @@ class GeneralizedStateMerging:
                 if local_compat is False or moore_check:
                     partitioning.score = False
                     return
-                if local_compat is defer_merge:
+                if local_compat is None:
                     partitioning.remaining_merges.append((red, blue))
                     continue
 

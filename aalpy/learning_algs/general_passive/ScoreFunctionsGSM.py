@@ -1,12 +1,11 @@
 from collections import deque
 from math import sqrt, log
-from typing import Callable, Dict, List, Iterable, Any, Tuple
+from typing import Callable, Dict, List, Iterable, Any, Tuple, Optional
 
-from aalpy.learning_algs.general_passive.GsmNode import GsmNode, intersection_iterator, union_iterator, \
-    CountData
+from aalpy.learning_algs.general_passive.GsmNode import GsmNode, intersection_iterator, union_iterator, CountData
 from aalpy.learning_algs.general_passive.IOHandler import ShadowPTAData
 
-LocalCompatibilityFunction = Callable[[GsmNode, GsmNode], bool]
+LocalCompatibilityFunction = Callable[[GsmNode, GsmNode], Optional[bool]]
 ScoreFunction = Callable[[Dict[GsmNode, GsmNode]], Any]
 AggregationFunction = Callable[[Iterable], Any]
 
