@@ -25,6 +25,9 @@ class ScoreCalculation:
     def initialize_merge(self, red: GsmNode, blue: GsmNode) -> Any:
         return None
 
+    def promotion_score(self, promotion_candidate: GsmNode) -> Any:
+        return True
+
     @staticmethod
     def default_local_compatibility(a: GsmNode, b: GsmNode):
         return True

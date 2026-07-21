@@ -2,7 +2,7 @@ import functools
 import warnings
 from collections import deque
 from copy import copy
-from typing import Dict, Tuple, Callable, List, Optional
+from typing import Dict, Tuple, Callable, List, Optional, Any
 
 from aalpy.learning_algs.general_passive.GsmNode import GsmNode, OutputBehavior, TransitionBehavior, \
     OutputBehaviorRange, TransitionBehaviorRange, intersection_iterator, unknown_output, detect_data_format, IOHandler, \
@@ -114,7 +114,7 @@ class GeneralizedStateMerging:
             if not root.is_deterministic():
                 warnings.warn("required deterministic automaton but input data is nondeterministic")
 
-        # sorted list of states already considered
+        # sorted list of states already considered as distinct
         red_states = [root]
         red_states_backing_set = {root}
         blue_states = list(root.child_iterator())
@@ -138,7 +138,8 @@ class GeneralizedStateMerging:
                 red_states.sort(key=self.node_order)
 
             # loop over blue states
-            promotion = False
+            best_promotion_candidate = None
+            best_promotion_score = None
             for blue_state in blue_states_to_consider:
                 # FUTURE: Parallelize
                 # FUTURE: Save partitions?
@@ -156,46 +157,54 @@ class GeneralizedStateMerging:
                         perfect_partitioning = partitioning
                         break
                     current_candidates[red_state] = partitioning
-                assert red_state is not None
 
                 # partition with perfect score found: don't consider anything else
                 if perfect_partitioning:
                     partition_candidates = {(red_state, blue_state): perfect_partitioning}
                     break
 
-                # no merge candidates for this blue state -> promote
-                if all(part.score is False for part in current_candidates.values()):
-                    red_states.append(blue_state)
-                    red_states_backing_set.add(blue_state)
-                    blue_states.remove(blue_state)
-                    blue_states.extend(blue_state.child_iterator())
-                    instrumentation.log_promote(blue_state)
-                    promotion = True
-                    break
-
                 # update tracking dict with new candidates
-                new_candidates = (((red, blue_state), part) for red, part in current_candidates.items() if
-                                  part.score is not False)
+                new_candidates = (((red, blue_state), part) for red, part in current_candidates.items())
                 partition_candidates.update(new_candidates)
 
-            # a state was promoted -> don't clear candidates
-            if promotion:
-                continue
+                # no merge candidates for this blue state -> promotion candidate
+                if all(part.score is False for part in current_candidates.values()):
+                    score = self.score_calc.promotion_score(blue_state)
+                    if best_promotion_candidate is None or score is True or best_promotion_score < score:
+                        best_promotion_candidate = blue_state
+                        best_promotion_score = score
+                    if score is True:
+                        break
 
-            # find best partitioning and clear candidates
-            best_candidate = max(partition_candidates.values(), key=lambda part: part.score)
-            for real_node, partition_node in best_candidate.red_mapping.items():
-                real_node.transitions = partition_node.transitions
-                real_node.predecessor = partition_node.predecessor
-                real_node.data = partition_node.data
-                real_node.prefix_access_pair = partition_node.prefix_access_pair
-            self._partition_from_merge(best_candidate, red_states_backing_set, False)
-            blue_states.extend(best_candidate.new_blue)
-            blue_states.remove(best_candidate.blue)
-            instrumentation.log_merge(best_candidate)
-            # FUTURE: optimizations for compatibility tests where merges can be orthogonal
-            # FUTURE: caching for aggregating compatibility tests
-            partition_candidates.clear()
+            # check for state promotion
+            if best_promotion_candidate is not None:
+                # a state was promoted -> only forget scores for this blue node
+                for red in red_states:
+                    del partition_candidates[(red, best_promotion_candidate)]
+                    
+                # promote best candidate
+                red_states.append(best_promotion_candidate)
+                red_states_backing_set.add(best_promotion_candidate)
+                blue_states.remove(best_promotion_candidate)
+                blue_states.extend(best_promotion_candidate.child_iterator())
+                instrumentation.log_promote(best_promotion_candidate)
+            else:
+                # find best partitioning and apply
+                best_candidate = max(partition_candidates.values(), key=lambda part: part.score)
+                for real_node, partition_node in best_candidate.red_mapping.items():
+                    real_node.transitions = partition_node.transitions
+                    real_node.predecessor = partition_node.predecessor
+                    real_node.data = partition_node.data
+                    real_node.prefix_access_pair = partition_node.prefix_access_pair
+                self._partition_from_merge(best_candidate, red_states_backing_set, False)
+                blue_states.extend(best_candidate.new_blue)
+                blue_states.remove(best_candidate.blue)
+                instrumentation.log_merge(best_candidate)
+
+                # a merge was performed -> merge scores are invalidated
+                # FUTURE: optimizations for compatibility tests where merges can be orthogonal
+                # FUTURE: caching for aggregating compatibility tests
+                partition_candidates.clear()
 
         instrumentation.learning_done(root)
 
