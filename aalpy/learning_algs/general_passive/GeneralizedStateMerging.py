@@ -1,4 +1,5 @@
 import functools
+import warnings
 from collections import deque
 from copy import copy
 from typing import Dict, Tuple, Callable, List, Optional
@@ -68,7 +69,7 @@ class GeneralizedStateMerging:
 
         if score_calc is None:
             if transition_behavior == "deterministic":
-                score_calc = ScoreCalculation()
+                score_calc = ScoreCalculation(GsmNode.deterministic_compatible)
             elif transition_behavior == "nondeterministic" :
                 raise ValueError("Missing score_calc for nondeterministic transition behavior. No default available.")
             elif transition_behavior == "stochastic" :
@@ -89,11 +90,6 @@ class GeneralizedStateMerging:
 
         self.consider_only_min_blue = consider_only_min_blue
         self.depth_first = depth_first
-
-    def compute_local_compatibility(self, a: GsmNode, b: GsmNode):
-        if self.transition_behavior == "deterministic" and not GsmNode.deterministic_compatible(a, b):
-            return False
-        return self.score_calc.local_compatibility(a, b)
 
     # TODO: make more generic by adding the option to use a different algorithm than red blue
     #  for selecting potential merge candidates. Maybe using inheritance with abstract `run`.
@@ -116,7 +112,7 @@ class GeneralizedStateMerging:
 
         if self.transition_behavior == "deterministic":
             if not root.is_deterministic():
-                raise ValueError("required deterministic automaton but input data is nondeterministic")
+                warnings.warn("required deterministic automaton but input data is nondeterministic")
 
         # sorted list of states already considered
         red_states = [root]
@@ -303,7 +299,7 @@ class GeneralizedStateMerging:
             partition = update_partition(red, blue)
 
             if first_pass:
-                local_compat = self.compute_local_compatibility(partition, blue)
+                local_compat = self.score_calc.local_compatibility(partition, blue)
                 if local_compat is False:
                     partitioning.score = False
                     return
