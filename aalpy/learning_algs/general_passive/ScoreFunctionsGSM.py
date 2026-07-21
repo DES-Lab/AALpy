@@ -67,24 +67,12 @@ class CheckFutureScore(ScoreCalculation):
     def __init__(self,
                  local_compatibility: LocalCompatibilityFunction = None,
                  score_function: ScoreFunction = None,
-                 output_behavior = "moore",
-                 transition_behavior = "deterministic",
                  compatibility_on_pta = False,
                  depth_first = False
                  ):
         super().__init__(local_compatibility, score_function)
-        # TODO: auto init from GSM
-        self.output_behavior = output_behavior
-        self.transition_behavior = transition_behavior
         self.compatibility_on_pta = compatibility_on_pta
         self.depth_first = depth_first
-
-    def compute_local_compatibility(self, a: GsmNode, b: GsmNode):
-        if self.output_behavior == "moore" and not GsmNode.moore_compatible(a, b):
-            return False
-        if self.transition_behavior == "deterministic" and not GsmNode.deterministic_compatible(a, b):
-            return False
-        return self.local_compatibility(a, b)
 
     def initialize_merge(self, red: GsmNode, blue: GsmNode) -> bool | None:
         if self.compatibility_on_pta and not isinstance(red.data, ShadowPTAData):
@@ -96,7 +84,7 @@ class CheckFutureScore(ScoreCalculation):
         while len(q) != 0:
             red, blue = pop()
 
-            if self.compute_local_compatibility(red, blue) is False:
+            if not self.local_compatibility(red, blue):
                 return False
 
             if not self.compatibility_on_pta:
