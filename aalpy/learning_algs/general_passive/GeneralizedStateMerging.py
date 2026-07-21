@@ -22,6 +22,7 @@ class Partitioning:
         self.full_mapping: Dict[GsmNode, GsmNode] = dict()
         self.new_blue = []
         self.remaining_merges = None
+        self.nr_merged_states = 0
 
 
 class Instrumentation:
@@ -304,6 +305,7 @@ class GeneralizedStateMerging:
         while len(q) != 0:
             red, blue = pop()
             partition = update_partition(red, blue)
+            partitioning.nr_merged_states += 1
 
             if first_pass:
                 local_compat = self.score_calc.local_compatibility(partition, blue)

@@ -51,7 +51,7 @@ class ProgressReport(Instrumentation):
     def print_status(self):
         reset_char = "\33[2K\r"
         print_str = reset_char + f'Current automaton size: {self.nr_red_states}'
-        if 0 < self.lvl and not self.gsm.use_early_verdicts:
+        if 0 < self.lvl:
             time_taken = round(perf_counter() - self.previous_time, 2)
             mps = round(self.nr_merged_states_total / time_taken, 2) if time_taken != 0 else "inf"
             remaining_merges = self.pta_size - self.nr_red_states - self.nr_merged_states_total
@@ -65,7 +65,7 @@ class ProgressReport(Instrumentation):
 
     def log_merge(self, part: Partitioning):
         self.log.append(["merge", (part.red.get_prefix(), part.blue.get_prefix())])
-        self.nr_merged_states_total += len(part.full_mapping) - len(part.red_mapping)
+        self.nr_merged_states_total += part.nr_merged_states
         self.nr_merged_states += 1
         self.print_status()
 
