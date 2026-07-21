@@ -309,7 +309,8 @@ class GeneralizedStateMerging:
 
             if first_pass:
                 local_compat = self.score_calc.local_compatibility(partition, blue)
-                if local_compat is False:
+                moore_check = self.output_behavior == "moore" and self.transition_behavior == "deterministic" and not GsmNode.moore_compatible(red, blue)
+                if local_compat is False or moore_check:
                     partitioning.score = False
                     return
                 if local_compat is defer_merge:
