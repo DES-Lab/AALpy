@@ -53,7 +53,6 @@ class GeneralizedStateMerging:
                  pta_preprocessing: Callable[[GsmNode], GsmNode] = None,
                  postprocessing: Callable[[GsmNode], GsmNode] = None,
                  data_handler: IOHandler = None,
-                 use_early_verdicts: bool = False,
                  node_order: Callable[[GsmNode, GsmNode], bool] = None,
                  consider_only_min_blue=False,
                  depth_first=False,
@@ -84,8 +83,6 @@ class GeneralizedStateMerging:
         self.postprocessing = postprocessing or (lambda x: x)
 
         self.data_handler = data_handler or NoIOHandler()
-
-        self.use_early_verdicts = use_early_verdicts
 
         self.consider_only_min_blue = consider_only_min_blue
         self.depth_first = depth_first
@@ -229,7 +226,7 @@ class GeneralizedStateMerging:
                 return
             # check whether there is an early verdict and adapt helper functions accordingly
             # TODO maybe split init from early verdict and also call init (maybe with first_pass as an argument) in both cases
-            partitioning.score = self.score_calc.initialize_merge(red, blue) if self.use_early_verdicts else None
+            partitioning.score = self.score_calc.initialize_merge(red, blue)
             if partitioning.score is not None:
                 return
             partitioning.remaining_merges = []
@@ -363,7 +360,6 @@ def run_GSM(data: list, *,
             pta_preprocessing: Callable[[GsmNode], GsmNode] = None,
             postprocessing: Callable[[GsmNode], GsmNode] = None,
             data_handler: IOHandler = None,
-            use_early_verdicts: bool = False,
             node_order: Callable[[GsmNode, GsmNode], bool] = None,
             consider_only_min_blue=False,
             depth_first=False,
@@ -387,8 +383,6 @@ def run_GSM(data: list, *,
 
         postprocessing: A postprocessing function applied to the learned automaton.
 
-        use_early_verdicts: Whether to use potential early verdicts from the score object. Defaults to False.
-
         node_order: Order in which merge candidates are considered. Defaults to short-lex.
 
         consider_only_min_blue: Whether to consider merge candidates from all blue nodes or just a single.
@@ -411,7 +405,6 @@ def run_GSM(data: list, *,
         pta_preprocessing=pta_preprocessing,
         postprocessing=postprocessing,
         data_handler=data_handler,
-        use_early_verdicts=use_early_verdicts,
         node_order=node_order,
         consider_only_min_blue=consider_only_min_blue,
         depth_first=depth_first,
