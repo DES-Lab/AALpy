@@ -22,7 +22,7 @@ class ScoreCalculation:
         if not hasattr(self, "score_function"):
             self.score_function: ScoreFunction = score_function or self.default_score_function
 
-    def initialize_merge(self, red: GsmNode, blue: GsmNode) -> bool | None:
+    def initialize_merge(self, red: GsmNode, blue: GsmNode) -> Any:
         return None
 
     @staticmethod

@@ -11,7 +11,7 @@ class IOHandler(Generic[T]):
     def init(self, data, output_format, data_format):
         ...
 
-    def init_merge(self, red: 'GsmNode[T]', blue: 'GsmNode[T]'):
+    def init_merge(self, red: 'GsmNode[T]', blue: 'GsmNode[T]', first_pass: bool):
         pass
 
     @abstractmethod
@@ -58,11 +58,13 @@ class CopyOnWriteIOHandler(IOHandler[T], ABC):
     def __init__(self):
         self.copied_on_write = set()
 
-    def init_merge(self, red: 'GsmNode[T]', blue: 'GsmNode[T]'):
-        self.copied_on_write.clear()
+    def init_merge(self, red: 'GsmNode[T]', blue: 'GsmNode[T]', first_pass: bool):
+        self.first_pass = first_pass
+        if first_pass:
+            self.copied_on_write.clear()
 
     def merge(self, x: T, y: T) -> T:
-        if id(x) not in self.copied_on_write:
+        if self.first_pass and id(x) not in self.copied_on_write:
             x = self.copy_on_write(x)
             self.copied_on_write.add(id(x))
         self.merge_into_x(x, y)

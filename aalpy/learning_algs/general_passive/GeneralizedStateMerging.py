@@ -9,6 +9,8 @@ from aalpy.learning_algs.general_passive.GsmNode import GsmNode, OutputBehavior,
 from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreCalculation, hoeffding_compatibility
 
 
+defer_merge = object()
+
 # TODO add option for making checking of futures and partition non mutual exclusive?
 #  Easiest done by adding a new method / field to ScoreCalculation
 
@@ -16,10 +18,11 @@ class Partitioning:
     def __init__(self, red: GsmNode, blue: GsmNode):
         self.red: GsmNode = red
         self.blue: GsmNode = blue
-        self.score = False
+        self.score = None
         self.red_mapping: Dict[GsmNode, GsmNode] = dict()
         self.full_mapping: Dict[GsmNode, GsmNode] = dict()
         self.new_blue = []
+        self.remaining_merges = None
 
 
 class Instrumentation:
@@ -149,13 +152,14 @@ class GeneralizedStateMerging:
                 perfect_partitioning = None
                 red_state = None
                 for red_state in red_states:
-                    partition = partition_candidates.get((red_state, blue_state))
-                    if partition is None:
-                        partition = self._partition_from_merge(red_state, blue_state, red_states_backing_set)
-                    if partition.score is True:
-                        perfect_partitioning = partition
+                    partitioning = partition_candidates.get((red_state, blue_state))
+                    if partitioning is None:
+                        partitioning = Partitioning(red_state, blue_state)
+                        self._partition_from_merge(partitioning, red_states_backing_set, True)
+                    if partitioning.score is True:
+                        perfect_partitioning = partitioning
                         break
-                    current_candidates[red_state] = partition
+                    current_candidates[red_state] = partitioning
                 assert red_state is not None
 
                 # partition with perfect score found: don't consider anything else
@@ -189,6 +193,7 @@ class GeneralizedStateMerging:
                 real_node.predecessor = partition_node.predecessor
                 real_node.data = partition_node.data
                 real_node.prefix_access_pair = partition_node.prefix_access_pair
+            self._partition_from_merge(best_candidate, red_states_backing_set, False)
             blue_states.extend(best_candidate.new_blue)
             blue_states.remove(best_candidate.blue)
             instrumentation.log_merge(best_candidate)
@@ -203,30 +208,28 @@ class GeneralizedStateMerging:
             root = root.to_automaton(self.output_behavior, self.transition_behavior)
         return root
 
-    def _partition_from_merge(self, red: GsmNode, blue: GsmNode, red_nodes: set[GsmNode]) -> Partitioning:
+    def _partition_from_merge(self, partitioning: Partitioning, red_nodes: set[GsmNode], first_pass):
         # Compatibility check based on partitions.
         # assumes that blue is a tree and red is not reachable from blue
+        # works in two passes:
+        # - first pass: create partial partitioning sufficient for score calculation
+        # - second pass: merge has been accepted, partitioning needs to be completed
 
-        partitioning = Partitioning(red, blue)
+        red = partitioning.red
+        blue = partitioning.blue
 
-        # for Moore machines the outputs have to match. but only once since Moore-ness is preserved for implied merges
-        if self.output_behavior == "moore" and not GsmNode.moore_compatible(red, blue):
-            return partitioning
+        if first_pass:
+            # for Moore machines the outputs have to match. but only once since Moore-ness is preserved for implied merges
+            if self.output_behavior == "moore" and not GsmNode.moore_compatible(red, blue):
+                partitioning.score = False
+                return
+            # check whether there is an early verdict and adapt helper functions accordingly
+            # TODO maybe split init from early verdict and also call init (maybe with first_pass as an argument) in both cases
+            partitioning.score = self.score_calc.initialize_merge(red, blue) if self.use_early_verdicts else None
+            if partitioning.score is not None:
+                return
+            partitioning.remaining_merges = []
 
-        # check whether there is an early verdict and adapt helper functions accordingly
-        early_verdict = self.score_calc.initialize_merge(red, blue) if self.use_early_verdicts else None
-        if early_verdict is False:
-            # early reject -> return failing partitioning
-            return partitioning
-        elif early_verdict is True:
-            # early accept -> can manipulate nodes directly
-            red_partitions = red_nodes
-            def update_partition(red_node: GsmNode, blue_node: Optional[GsmNode]) -> GsmNode:
-                return red_node
-
-            def get_partition_trans(part: GsmNode, in_symbol):
-                return part.transitions[in_symbol]
-        else:
             # uncertain -> need to construct partitioning
             red_partitions: set[GsmNode] = set()
             def update_partition(red_node: GsmNode, blue_node: Optional[GsmNode]) -> GsmNode:
@@ -257,27 +260,56 @@ class GeneralizedStateMerging:
                     part.transitions[in_symbol] = trans
                     cow_set.add(id(trans))
                 return trans
+        elif partitioning.remaining_merges is None or len(partitioning.remaining_merges) != 0:
+            # best scoring merge candidate -> can manipulate nodes directly
+            red_partitions = red_nodes
+            def update_partition(red_node: GsmNode, blue_node: Optional[GsmNode]) -> GsmNode:
+                return red_node
 
-        self.data_handler.init_merge(red, blue)
+            def get_partition_trans(part: GsmNode, in_symbol):
+                return part.transitions[in_symbol]
+        else:
+            return
 
-        # rewire the blue node's parent
-        blue_parent = update_partition(blue.predecessor, None)
-        blue_in_sym, blue_out_sym = blue.prefix_access_pair
-        get_partition_trans(blue_parent, blue_in_sym)[blue_out_sym] = red
+        self.data_handler.init_merge(red, blue, first_pass)
+        q: deque[Tuple[GsmNode, GsmNode]] = deque()
 
-        partition = update_partition(red, None)
-        if self.output_behavior == "moore":
-            partition.resolve_unknown_prefix_output(blue_out_sym)
+        if first_pass or partitioning.remaining_merges is None:
+            # initialize the merge. this should happen only once:
+            # - in the first pass if there is no early verdict
+            # - in the second pass if there is an early verdict
+            assert (first_pass and partitioning.score is None) or (not first_pass and partitioning.score is not None)
+
+            # rewire the blue node's parent
+            blue_parent = update_partition(blue.predecessor, None)
+            blue_in_sym, blue_out_sym = blue.prefix_access_pair
+            get_partition_trans(blue_parent, blue_in_sym)[blue_out_sym] = red
+
+            # create a partition for the red node and check, whether the new output data is available
+            partition = update_partition(red, None)
+            if self.output_behavior == "moore":
+                partition.resolve_unknown_prefix_output(blue_out_sym)
+
+            # initialize the work queue to the initial merge pair
+            q.append((red, blue))
+        else:
+            # work on the remaining merges
+            q.extend(partitioning.remaining_merges)
 
         # loop over implied merges
-        q: deque[Tuple[GsmNode, GsmNode]] = deque([(red, blue)])
         pop = q.pop if self.depth_first else q.popleft
         while len(q) != 0:
             red, blue = pop()
             partition = update_partition(red, blue)
 
-            if early_verdict is None and self.compute_local_compatibility(partition, blue) is False:
-                return partitioning
+            if first_pass:
+                local_compat = self.compute_local_compatibility(partition, blue)
+                if local_compat is False:
+                    partitioning.score = False
+                    return
+                if local_compat is defer_merge:
+                    partitioning.remaining_merges.append((red, blue))
+                    continue
 
             partition.data = self.data_handler.merge(partition.data, blue.data)
 
@@ -314,8 +346,8 @@ class GeneralizedStateMerging:
                         blue_target_partition = update_partition(blue_successor, None)
                         blue_target_partition.predecessor = red
 
-        partitioning.score = self.score_calc.score_function(partitioning.full_mapping)
-        return partitioning
+        if first_pass:
+            partitioning.score = self.score_calc.score_function(partitioning.full_mapping)
 
 
 def run_GSM(data: list, *,
