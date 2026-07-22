@@ -7,7 +7,9 @@ from typing import Dict, Tuple, Callable, List, Optional, Any
 from aalpy.learning_algs.general_passive.GsmNode import GsmNode, OutputBehavior, TransitionBehavior, \
     OutputBehaviorRange, TransitionBehaviorRange, intersection_iterator, unknown_output, detect_data_format, IOHandler, \
     NoIOHandler
-from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreCalculation, hoeffding_compatibility
+from aalpy.learning_algs.general_passive.IOHandler import CountOnPTAHandler
+from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreCalculation, hoeffding_compatibility, \
+    CheckFutureScore
 
 
 # TODO add option for making checking of futures and partition non mutual exclusive?
@@ -71,7 +73,10 @@ class GeneralizedStateMerging:
             elif transition_behavior == "nondeterministic" :
                 raise ValueError("Missing score_calc for nondeterministic transition behavior. No default available.")
             elif transition_behavior == "stochastic" :
-                score_calc = ScoreCalculation(hoeffding_compatibility(0.005, True))
+                score_calc = CheckFutureScore(hoeffding_compatibility(0.005, True), compatibility_on_pta=True)
+                if data_handler is not None:
+                    raise ValueError("Using default algorithm for stochastic systems but a data_handler was provided.")
+                data_handler = CountOnPTAHandler()
         self.score_calc: ScoreCalculation = score_calc
 
         if node_order is None:
