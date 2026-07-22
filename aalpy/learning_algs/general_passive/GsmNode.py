@@ -404,11 +404,12 @@ class GsmNode(Generic[T]):
     def add_trace(self, trace: IOTrace, data_handler: IOHandler[T]):
         curr_node: GsmNode = self
         for in_value, out_value in trace:
-            in_sym, out_sym = data_handler.abstract(in_value, out_value)
+            prefix_access_pair = data_handler.abstract(in_value, out_value)
+            in_sym, out_sym = prefix_access_pair
             transitions = curr_node.transitions[in_sym]
             node = transitions.get(out_sym)
             if node is None:
-                node = GsmNode((in_sym, out_sym), curr_node, data_handler.init_data())
+                node = GsmNode(prefix_access_pair, curr_node, data_handler.init_data())
                 transitions[out_sym] = node
             data_handler.aggregate_data(curr_node, in_value, out_value, node)
             curr_node = node
