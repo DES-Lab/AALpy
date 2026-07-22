@@ -36,10 +36,9 @@ StateFunction = Callable[['GsmNode'], str]
 TransitionFunction = Callable[['GsmNode', Any, Any], str]
 
 unknown_output = object()  # can be set to a special value if required
-
+missing = object()
 
 def intersection_iterator(a: Dict[Key, Val], b: Dict[Key, Val], sort_by_length=False) -> Iterator[Tuple[Key, Val, Val]]:
-    missing = object()
     if sort_by_length and len(b) < len(a):
         for key, b_val in b.items():
             a_val = a.get(key, missing)
