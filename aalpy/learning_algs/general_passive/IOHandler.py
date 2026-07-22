@@ -89,10 +89,13 @@ class StochasticData(ABC):
 
 CountDict = dict[Any, dict[Any, int]]
 
+def int_dict_increment(c_dict, out_sym, cnt):
+    c_dict[out_sym] = c_dict.get(out_sym, 0) + cnt
+
 class CountData(StochasticData):
     def __init__(self):
         # TODO get rid of this indirection
-        self.transition_count: CountDict = CountData.default_ctor()
+        self.transition_count: CountDict = defaultdict(dict)
 
     def local_log_likelihood_contribution(self):
         llc = 0
@@ -109,10 +112,6 @@ class CountData(StochasticData):
         return sum(sum(trans.values()) for trans in self.transition_count.values())
 
     @staticmethod
-    def default_ctor():
-        return defaultdict(lambda: defaultdict(int))
-
-    @staticmethod
     def merge(x: CountDict, y: CountDict) -> CountDict:
         for in_sym, y_o_dict in y.items():
             x_o_dict = x.get(in_sym, None)
@@ -120,7 +119,7 @@ class CountData(StochasticData):
                 x[in_sym] = y_o_dict
                 continue
             for out_sym, count in y_o_dict.items():
-                x_o_dict[out_sym] += count
+                int_dict_increment(x_o_dict, out_sym, count)
         return x
 
     def get_probabilities(self) -> ProbabilityDict:
@@ -135,14 +134,15 @@ class CountHandler(NoAbstractionIOHandler[CountData], CopyOnWriteIOHandler):
         return CountData()
 
     def aggregate_data(self, src_node: 'GsmNode[CountData]', in_value, out_value, dst_node: 'GsmNode[CountData]'):
-        src_node.data.transition_count[in_value][out_value] += 1
+        if src_node is not None:
+            int_dict_increment(src_node.data.transition_count[in_value], out_value, 1)
 
     def merge_into_x(self, x: CountData, y: CountData):
         CountData.merge(x.transition_count, y.transition_count)
 
     def copy_on_write(self, x: CountData) -> CountData:
         new_x = copy(x)
-        new_x.transition_count = CountData.default_ctor()
+        new_x.transition_count = defaultdict(dict)
         for in_sym, trans in x.transition_count.items():
             new_x.transition_count[in_sym] = trans.copy()
         return x
@@ -156,7 +156,7 @@ class CountOnPTAData(ShadowPTAData, CountData):
     def __init__(self):
         ShadowPTAData.__init__(self)
         CountData.__init__(self)
-        self.pta_count: CountDict = CountData.default_ctor()
+        self.pta_count: CountDict = defaultdict(dict)
 
 class CountOnPTAHandler(CountHandler):
     def init_data(self) -> CountOnPTAData:
@@ -165,6 +165,6 @@ class CountOnPTAHandler(CountHandler):
     def aggregate_data(self, src_node: 'GsmNode[CountOnPTAData]', in_value, out_value, dst_node: 'GsmNode[CountOnPTAData]'):
         if src_node is None:
             return
-        src_node.data.transition_count[in_value][out_value] += 1
-        src_node.data.pta_count[in_value][out_value] += 1
+        int_dict_increment(src_node.data.transition_count[in_value], out_value, 1)
+        int_dict_increment(src_node.data.pta_count[in_value], out_value, 1)
         src_node.data.shadow_pta[in_value][out_value] = dst_node
