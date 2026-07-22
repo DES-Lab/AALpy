@@ -44,11 +44,17 @@ class ScoreCalculation:
 
 def hoeffding_compatibility(eps, compare_original=True) -> LocalCompatibilityFunction:
     eps_fact = sqrt(0.5 * log(2 / eps))
-    count_dict_name = "pta_count" if compare_original else "transition_count"
 
     def similar(a: GsmNode[CountData], b: GsmNode[CountData]):
         # iterate over inputs that are common to both states
-        for in_sym, a_trans, b_trans in intersection_iterator(getattr(a.data, count_dict_name), getattr(b.data, count_dict_name)):
+        if compare_original:
+            a_dict = a.data.pta_count
+            b_dict = b.data.pta_count
+        else:
+            a_dict = a.data.transition_count
+            b_dict = b.data.transition_count
+
+        for in_sym, a_trans, b_trans in intersection_iterator(a_dict, b_dict, True):
             # could create appropriate dict here
             a_total, b_total = (sum(trans.values()) for trans in (a_trans, b_trans))
             if a_total == 0 or b_total == 0:
