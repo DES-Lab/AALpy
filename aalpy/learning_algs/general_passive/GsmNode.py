@@ -1,7 +1,6 @@
 import functools
 import pathlib
 from collections import defaultdict
-from functools import total_ordering
 from typing import Dict, Any, List, Tuple, Iterable, Callable, Union, TypeVar, Iterator, Optional, Sequence, Generic
 import pydot
 
@@ -63,7 +62,6 @@ def union_iterator(a: Dict[Key, Val], b: Dict[Key, Val], default: Val = None) ->
         a_val = a.get(key, default)
         yield key, a_val, b_val
 
-
 # TODO reuse in RPNI
 def detect_data_format(data, check_consistency=False, guess=False):
     # The different data formats are
@@ -108,7 +106,6 @@ def detect_data_format(data, check_consistency=False, guess=False):
     return accepted_formats[0]
 
 # TODO add custom pickling code that flattens the Node structure in order to circumvent running into recursion issues for large models
-@total_ordering
 class GsmNode(Generic[T]):
     """
     Generic class for observably deterministic automata.
@@ -127,19 +124,6 @@ class GsmNode(Generic[T]):
         self.predecessor: GsmNode = predecessor
         self.prefix_access_pair = prefix_access_pair
         self.data = data
-
-    def __lt__(self, other, compare_length_only=False):
-        own_l, other_l = self.get_prefix_length(), other.get_prefix_length()
-        if own_l != other_l:
-            return own_l < other_l
-        if compare_length_only:
-            return False
-        own_p = self.get_prefix()
-        other_p = other.get_prefix()
-        try:
-            return own_p < other_p
-        except TypeError:
-            return [str(x) for x in own_p] < [str(x) for x in other_p]
 
     # TODO implicit prefixes as currently implemented require O(length) time for prefix calculations (e.g. to determine the minimal blue node)
     # other options would be to have more efficient explicit prefixes such as shared list representations
@@ -512,4 +496,18 @@ class GsmNode(Generic[T]):
         oo = other.get_prefix_output()
         return so == oo or so is unknown_output or oo is unknown_output
 
-    default_order = functools.cmp_to_key(lambda a, b: -1 if a < b else 1)
+
+    insertion_order = object()
+
+    def short_lex_order(self, other, compare_length_only=False):
+        own_l, other_l = self.get_prefix_length(), other.get_prefix_length()
+        if own_l != other_l:
+            return own_l < other_l
+        if compare_length_only:
+            return False
+        own_p = self.get_prefix()
+        other_p = other.get_prefix()
+        try:
+            return own_p < other_p
+        except TypeError:
+            return [str(x) for x in own_p] < [str(x) for x in other_p]

@@ -55,9 +55,9 @@ class GeneralizedStateMerging:
                  pta_preprocessing: Callable[[GsmNode], GsmNode] = None,
                  postprocessing: Callable[[GsmNode], GsmNode] = None,
                  data_handler: IOHandler = None,
-                 node_order: Callable[[GsmNode, GsmNode], bool] = None,
-                 consider_only_min_blue=False,
-                 depth_first=False,
+                 node_order: Callable[[GsmNode], Any] = None,
+                 consider_only_min_blue = False,
+                 depth_first = False,
                  ):
 
         if output_behavior not in OutputBehaviorRange:
@@ -79,10 +79,9 @@ class GeneralizedStateMerging:
                 data_handler = CountOnPTAHandler()
         self.score_calc: ScoreCalculation = score_calc
 
-        if node_order is None:
-            self.node_order = GsmNode.default_order
-        else:
-            self.node_order = functools.cmp_to_key(lambda a, b: -1 if node_order(a, b) else 1)
+        if node_order == "short-lex":
+            node_order = functools.cmp_to_key(lambda a, b: -1 if GsmNode.short_lex_order(a, b) else 1)
+        self.node_order = node_order
 
         self.pta_preprocessing = pta_preprocessing or (lambda x: x)
         self.postprocessing = postprocessing or (lambda x: x)
@@ -128,14 +127,17 @@ class GeneralizedStateMerging:
 
             blue_states_to_consider = blue_states
             if self.consider_only_min_blue: # does it make sense to check the score function here?
-                blue_states_to_consider = [min(blue_states, key=self.node_order)]
+                if self.node_order is None:
+                    blue_states_to_consider = [blue_states[0]]
+                else:
+                    blue_states_to_consider = [min(blue_states, key=self.node_order)]
 
             # could make this sort unconditional, but i think this is closer to the original in any case?
-            if self.node_order is not GsmNode.default_order:
+            if self.node_order is not None:
                 blue_states_to_consider.sort(key=self.node_order)
 
             # sort red states. states are always sorted using default order on original prefix
-            if self.node_order is not GsmNode.default_order:
+            if self.node_order is not None:
                 red_states.sort(key=self.node_order)
 
             # loop over blue states
@@ -365,7 +367,7 @@ def run_GSM(data: list, *,
             pta_preprocessing: Callable[[GsmNode], GsmNode] = None,
             postprocessing: Callable[[GsmNode], GsmNode] = None,
             data_handler: IOHandler = None,
-            node_order: Callable[[GsmNode, GsmNode], bool] = None,
+            node_order: Callable[[GsmNode], Any] = None,
             consider_only_min_blue=False,
             depth_first=False,
             instrumentation=None,
@@ -388,7 +390,8 @@ def run_GSM(data: list, *,
 
         postprocessing: A postprocessing function applied to the learned automaton.
 
-        node_order: Order in which merge candidates are considered. Defaults to short-lex.
+        node_order: Sorting key which determines the order in which merge candidates are considered.
+            Defaults to insertion order
 
         consider_only_min_blue: Whether to consider merge candidates from all blue nodes or just a single.
 
