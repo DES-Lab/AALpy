@@ -93,7 +93,7 @@ class CheckFutureScore(ScoreCalculation):
         while len(q) != 0:
             red, blue = pop()
 
-            if not self.local_compatibility(red, blue):
+            if self.local_compatibility(red, blue) is False:
                 return False
 
             evidence += 1
