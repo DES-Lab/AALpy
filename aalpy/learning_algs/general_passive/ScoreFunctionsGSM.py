@@ -24,10 +24,10 @@ class ScoreCalculation:
         :param LocalCompatibilityFunction local_compatibility: Function determining local compatibility of two nodes.
         :param ScoreFunction score_function: Function computing the score of a full merge partition.
         """
-        # This is a hack that gives a simple implementation where we can easily - determine whether the default is
-        # overridden (for optimization) - override behavior in a functional way by providing the functions as
-        # arguments (no extra class) - override behavior in a stateful way by implementing a new class that provides
-        # `local_compatibility` and / or `score_function` methods
+        # This is a hack that gives a simple implementation where we can easily
+        # - determine whether the default is overridden (for optimization)
+        # - override behavior in a functional way by providing the functions as arguments (no extra class)
+        # - override behavior in a stateful way by implementing a new class that provides `local_compatibility` and / or `score_function` methods
         if not hasattr(self, "local_compatibility"):
             self.local_compatibility: LocalCompatibilityFunction = local_compatibility or self.default_local_compatibility
         if not hasattr(self, "score_function"):

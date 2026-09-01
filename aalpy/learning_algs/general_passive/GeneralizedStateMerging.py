@@ -108,7 +108,7 @@ class GeneralizedStateMerging:
         :param ScoreCalculation score_calc: Local compatibility / global score calculation to use.
         :param Callable[[GsmNode], GsmNode] pta_preprocessing: Pre-processing function applied to the constructed PTA.
         :param Callable[[GsmNode], GsmNode] postprocessing: Post-processing function applied to the learned model.
-        :param Callable[[GsmNode, GsmNode], bool] node_order: Order in which merge candidates are considered.
+        :param Callable[[GsmNode], Any] node_order: Comparison key to determine the order in which merge candidates are considered.
         :param bool consider_only_min_blue: Whether to only consider the minimal blue node in each round.
         :param bool depth_first: Whether compatibility is checked depth-first instead of breadth-first.
         """
@@ -183,11 +183,7 @@ class GeneralizedStateMerging:
         blue_states = list(root.child_iterator())
 
         partition_candidates: dict[tuple[GsmNode, GsmNode], Partitioning] = dict()
-        while True:
-            # no blue states left -> done
-            if len(blue_states) == 0:
-                break
-
+        while len(blue_states) != 0:
             blue_states_to_consider = blue_states
             if self.consider_only_min_blue: # does it make sense to check the score function here?
                 if self.node_order is None:
@@ -197,10 +193,8 @@ class GeneralizedStateMerging:
 
             # could make this sort unconditional, but i think this is closer to the original in any case?
             if self.node_order is not None:
+                # TODO: this could be done using insort as long as the order is static?
                 blue_states_to_consider.sort(key=self.node_order)
-
-            # sort red states. states are always sorted using default order on original prefix
-            if self.node_order is not None:
                 red_states.sort(key=self.node_order)
 
             # loop over blue states
@@ -296,10 +290,12 @@ class GeneralizedStateMerging:
         blue = partitioning.blue
 
         if first_pass:
-            # for Moore machines the outputs have to match. but only once since Moore-ness is preserved for implied merges
+            # for Moore machines the outputs have to match. for prefix-closed data (io-traces) this check is sufficient
+            # since Moore-ness is preserved for implied merges.
             if self.output_behavior == "moore" and not GsmNode.moore_compatible(red, blue):
                 partitioning.score = False
                 return
+
             # check whether there is an early verdict and adapt helper functions accordingly
             # TODO maybe split init from early verdict and also call init (maybe with first_pass as an argument) in both cases
             partitioning.score = self.score_calc.initialize_merge(red, blue)
@@ -346,6 +342,7 @@ class GeneralizedStateMerging:
             def get_partition_trans(part: GsmNode, in_symbol):
                 return part.transitions[in_symbol]
         else:
+            # first pass already did all the work
             return
 
         self.data_handler.init_merge(red, blue, first_pass)
@@ -453,7 +450,7 @@ def run_GSM(data: list, *,
     :param Callable[[GsmNode], GsmNode] pta_preprocessing: A pre-processing function applied to the PTA.
     :param Callable[[GsmNode], GsmNode] postprocessing: A postprocessing function applied to the learned automaton.
     :param IOHandler data_handler: IOHandler object governing abstraction and aggregation of data
-    :param Callable[[GsmNode, GsmNode], bool] node_order: Sorting key which determines the order in which merge candidates are considered. Defaults to insertion order
+    :param Callable[[GsmNode], Any] node_order: Sorting key which determines the order in which merge candidates are considered. Defaults to insertion order
     :param bool consider_only_min_blue: Whether to consider merge candidates from all blue nodes or just a single.
     :param bool depth_first: Whether compatibility is checked depth- or breadth-first.
     :param Instrumentation | None instrumentation: Instrumentation object for reporting progress or debugging.
