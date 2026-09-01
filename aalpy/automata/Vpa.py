@@ -1,7 +1,9 @@
+# Visibly Pushdown Automaton (VPA) state and automaton implementation.
 import random
 from collections import defaultdict
-from typing import List, Dict
+from collections.abc import Hashable
 
+from aalpy.automata import Dfa
 from aalpy.base import Automaton, AutomatonState
 
 
@@ -10,26 +12,33 @@ class VpaAlphabet:
     The Alphabet of a VPA.
 
     Attributes:
-        internal_alphabet (List[str]): Letters for internal transitions.
-        call_alphabet (List[str]): Letters for push transitions.
-        return_alphabet (List[str]): Letters for pop transitions.
-        exclusive_call_return_pairs (Dict[str, str]): A dictionary representing exclusive pairs
+        internal_alphabet (list[str]): Letters for internal transitions.
+        call_alphabet (list[str]): Letters for push transitions.
+        return_alphabet (list[str]): Letters for pop transitions.
+        exclusive_call_return_pairs (dict[str, str]): A dictionary representing exclusive pairs
             of call and return symbols.
     """
 
-    def __init__(self, internal_alphabet: List[str], call_alphabet: List[str], return_alphabet: List[str],
-                 exclusive_call_return_pairs: Dict[str, str] = None):
+    def __init__(self, internal_alphabet: list[str], call_alphabet: list[str], return_alphabet: list[str],
+                 exclusive_call_return_pairs: dict[str, str] | None = None) -> None:
+        """
+        Creates a VPA alphabet.
+
+        :param list[str] internal_alphabet: Letters for internal transitions.
+        :param list[str] call_alphabet: Letters for push transitions.
+        :param list[str] return_alphabet: Letters for pop transitions.
+        :param dict[str, str] | None exclusive_call_return_pairs: Exclusive pairs of call and return symbols.
+        """
         self.internal_alphabet = internal_alphabet
         self.call_alphabet = call_alphabet
         self.return_alphabet = return_alphabet
         self.exclusive_call_return_pairs = exclusive_call_return_pairs
 
-    def get_merged_alphabet(self) -> List[str]:
+    def get_merged_alphabet(self) -> list[str]:
         """
         Get the merged alphabet, including internal, call, and return symbols.
 
-        Returns:
-            List[str]: A list of all symbols in the alphabet.
+        :return list[str]: A list of all symbols in the alphabet.
         """
         alphabet = list()
         alphabet.extend(self.internal_alphabet)
@@ -39,8 +48,7 @@ class VpaAlphabet:
 
     def __str__(self) -> str:
         """
-        Returns:
-            str: A string representation of the alphabet.
+        :return str: A string representation of the alphabet.
         """
         return f'Internal: {self.internal_alphabet} Call: {self.call_alphabet} Return: {self.return_alphabet}'
 
@@ -50,9 +58,15 @@ class VpaState(AutomatonState):
     Single state of a VPA.
     """
 
-    def __init__(self, state_id, is_accepting=False):
+    def __init__(self, state_id: Hashable, is_accepting: bool = False) -> None:
+        """
+        Creates a VPA state.
+
+        :param Hashable state_id: Unique identifier of the state.
+        :param bool is_accepting: Whether the state is an accepting state.
+        """
         super().__init__(state_id)
-        self.transitions = defaultdict(list)
+        self.transitions: dict[str, list[VpaTransition]] = defaultdict(list)
         self.is_accepting = is_accepting
 
 
@@ -68,14 +82,27 @@ class VpaTransition:
         stack_guard: The stack symbol to be pushed/popped.
     """
 
-    def __init__(self, start: VpaState, target: VpaState, symbol, action, stack_guard=None):
+    def __init__(self, start: VpaState, target: VpaState, symbol: str, action: str | None,
+                 stack_guard: str | None = None) -> None:
+        """
+        Creates a VPA transition.
+
+        :param VpaState start: The starting state of the transition.
+        :param VpaState target: The target state of the transition.
+        :param str symbol: The symbol associated with the transition.
+        :param str | None action: The action performed during the transition (push | pop | None).
+        :param str | None stack_guard: The stack symbol to be pushed/popped.
+        """
         self.start = start
         self.target_state = target
         self.letter = symbol
         self.action = action
         self.stack_guard = stack_guard
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """
+        :return str: A string representation of the transition.
+        """
         return f"{self.letter}: {self.start.state_id} --> {self.target_state.state_id} | {self.action}: {self.stack_guard}"
 
 
@@ -85,7 +112,13 @@ class Vpa(Automaton):
     """
     error_state = VpaState("ErrorSinkState", False)
 
-    def __init__(self, initial_state: VpaState, states):
+    def __init__(self, initial_state: VpaState, states: list[VpaState]) -> None:
+        """
+        Creates a VPA.
+
+        :param VpaState initial_state: Initial state of the VPA.
+        :param list[VpaState] states: All states of the VPA.
+        """
         super().__init__(initial_state, states)
         self.initial_state = initial_state
         self.states = states
@@ -98,22 +131,25 @@ class Vpa(Automaton):
         self.call_set = set(self.input_alphabet.call_alphabet)
         self.return_set = set(self.input_alphabet.return_alphabet)
 
-    def reset_to_initial(self):
+    def reset_to_initial(self) -> None:
+        """
+        Resets the current state and stack of the VPA to the initial configuration.
+        """
         self.current_state = self.initial_state
         self.stack = []
 
-    def top(self):
+    def top(self) -> str | list:
+        """
+        :return str | list: The top of the stack, or an empty list if the stack is empty.
+        """
         return self.stack[-1] if self.stack else []
 
-    def step(self, letter):
+    def step(self, letter: str | None) -> bool:
         """
         Perform a single step on the VPA by transitioning with the given input letter.
 
-        Args:
-            letter: A single input that is looked up in the transition table of the VpaState.
-
-        Returns:
-            bool: True if the reached state is an accepting state and the stack is empty, False otherwise.
+        :param str | None letter: A single input that is looked up in the transition table of the VpaState.
+        :return bool: True if the reached state is an accepting state and the stack is empty, False otherwise.
         """
         if self.current_state == Vpa.error_state:
             return False
@@ -150,7 +186,31 @@ class Vpa(Automaton):
 
         return self.current_state.is_accepting and self.stack == []
 
-    def to_state_setup(self):
+    def execute_sequence(self, origin_state: VpaState, seq: list[str], stack: list) -> list[bool]:
+        """
+        Executes an input sequence on the VPA starting from a given state and stack configuration.
+
+        A VPA's actual configuration is the pair (state, stack), not just the state, since the stack is
+        what makes call/return symbols visibly balanced. The generic Automaton.execute_sequence only
+        resets current_state, so it cannot start from a well-defined configuration on its own; stack is
+        therefore a required parameter here rather than defaulted, so callers always state explicitly
+        which configuration they mean to start from (pass [] to start fresh from origin_state).
+
+        :param VpaState origin_state: State from which the sequence execution starts.
+        :param list[str] seq: Input sequence to execute.
+        :param list stack: Stack content to start from.
+        :return list[bool]: The output response for the executed sequence.
+        """
+        self.current_state = origin_state
+        self.stack = list(stack)
+        return [self.step(s) for s in seq]
+
+    def to_state_setup(self) -> dict:
+        """
+        Converts the VPA to a state setup dictionary.
+
+        :return dict: Map from state_id to tuple(is_accepting, transitions_dict).
+        """
         state_setup_dict = {}
 
         # ensure prefixes are computed
@@ -159,11 +219,17 @@ class Vpa(Automaton):
         sorted_states = sorted(self.states, key=lambda x: len(x.prefix) if x.prefix is not None else len(self.states))
         for s in sorted_states:
             state_setup_dict[s.state_id] = (
-                s.is_accepting, {k: (v.target_state.state_id, v.action) for k, v in s.transitions.items()})
+                s.is_accepting,
+                {k: [(t.target_state.state_id, t.action, t.stack_guard) for t in v] for k, v in s.transitions.items()})
 
         return state_setup_dict
 
     def get_input_alphabet(self) -> VpaAlphabet:
+        """
+        Computes the input alphabet of the VPA from its transitions.
+
+        :return VpaAlphabet: The input alphabet.
+        """
         int_alphabet, ret_alphabet, call_alphabet = [], [], []
         for state in self.states:
             for transition_list in state.transitions.values():
@@ -181,13 +247,9 @@ class Vpa(Automaton):
 
     def is_input_complete(self) -> bool:
         """
-        Check whether all states have defined transition for all inputs
-        :return: true if automaton is input complete
+        Check whether all states have defined transition for all inputs.
 
-        Returns:
-
-            True if input complete, False otherwise
-
+        :return bool: True if automaton is input complete, False otherwise.
         """
         alphabet = set(self.get_input_alphabet().get_merged_alphabet())
         for state in self.states:
@@ -196,7 +258,7 @@ class Vpa(Automaton):
         return True
 
     @staticmethod
-    def from_state_setup(state_setup: dict, **kwargs):
+    def from_state_setup(state_setup: dict, **kwargs) -> 'Vpa':
         """
         Create a VPA from a state setup.
 
@@ -214,16 +276,12 @@ class Vpa(Automaton):
                     "]": [("q2", 'pop', "[")]
                 }),
 
-            Args:
-                state_setup (dict): A dictionary mapping from state IDs to tuples containing
-                    (is_accepting: bool, transitions_dict: dict), where transitions_dict maps input symbols to
-                    lists of tuples (target_state_id, action, stack_guard).
-                init_state_id (str): The state ID for the initial state of the VPA.
-                input_alphabet (VpaAlphabet): The alphabet for the VPA.
-
-            Returns:
-                Vpa: The constructed Variable Pushdown Automaton.
-            """
+        :param dict state_setup: A dictionary mapping from state IDs to tuples containing
+            (is_accepting: bool, transitions_dict: dict), where transitions_dict maps input symbols to
+            lists of tuples (target_state_id, action, stack_guard).
+        :param init_state_id: The state ID for the initial state of the VPA, passed via kwargs.
+        :return Vpa: The constructed Visibly Pushdown Automaton.
+        """
         # state_setup should map from state_id to tuple(is_accepting and transitions_dict)
 
         init_state_id = kwargs['init_state_id']
@@ -248,21 +306,24 @@ class Vpa(Automaton):
         vpa = Vpa(init_state, states)
         return vpa
 
-    def is_balanced(self, seq):
+    def is_balanced(self, seq: list[str]) -> bool:
+        """
+        Checks whether an input sequence has balanced call and return symbols with respect to the VPA's alphabet.
+
+        :param list[str] seq: The input sequence to check.
+        :return bool: True if the sequence is balanced, False otherwise.
+        """
         from aalpy.utils import is_balanced
         return is_balanced(seq, self.input_alphabet)
 
-    def generate_random_accepting_word(self, min_steps=4, max_steps=20):
+    def generate_random_accepting_word(self, min_steps: int = 4, max_steps: int = 20) -> list[str] | None:
         """
         Generate a random valid sequence for a given VPDA.
 
-        Args:
-
-            min_steps : Minimum number of steps
-            max_steps : Maximum number of steps before the process terminates
-
-        Returns:
-            list: A list of input symbols (the generated sequence) leading to an accepting state.
+        :param int min_steps: Minimum number of steps.
+        :param int max_steps: Maximum number of steps before the process terminates.
+        :return list[str] | None: A list of input symbols (the generated sequence) leading to an accepting state,
+            or None if a sequence could not be generated.
         """
 
         sequence = []
@@ -301,7 +362,15 @@ class Vpa(Automaton):
         return None
 
 
-def vpa_from_dfa_representation(dfa_repr, vpa_alphabet):
+def vpa_from_dfa_representation(dfa_repr: Dfa, vpa_alphabet: VpaAlphabet) -> Vpa:
+    """
+    Converts a DFA representation of a VPA (where call/return symbols may be encoded as tuples with the top of
+    stack) into an equivalent Vpa.
+
+    :param Dfa dfa_repr: The DFA representation to convert.
+    :param VpaAlphabet vpa_alphabet: The alphabet of the resulting VPA.
+    :return Vpa: The constructed VPA.
+    """
     vpa_states = dict()
     for dfa_state in dfa_repr.states:
         vpa_state = VpaState(state_id=dfa_state.state_id, is_accepting=dfa_state.is_accepting)

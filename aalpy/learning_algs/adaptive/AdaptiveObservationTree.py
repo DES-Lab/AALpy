@@ -1,3 +1,6 @@
+# Observation tree implementation for Adaptive L#, extending L#'s tree with rebuilding and state matching support.
+from typing import Any
+
 from aalpy.automata import MealyMachine, MealyState
 from aalpy.learning_algs.adaptive.StateMatching import TotalStateMatching, ApproximateStateMatching
 from aalpy.learning_algs.deterministic.Apartness import Apartness
@@ -8,12 +11,23 @@ from aalpy.automata import Dfa, DfaState, MealyState, MealyMachine, MooreMachine
 
 
 class AdaptiveObservationTree(ObservationTree):
-    def __init__(self, alphabet, sul, references, automaton_type, extension_rule, separation_rule, rebuilding=True, state_matching="Approximate"):
+    def __init__(self, alphabet: list, sul: SUL, references: list, automaton_type: str,
+                 extension_rule: str | None, separation_rule: str, rebuilding: bool = True,
+                 state_matching: str | None = "Approximate") -> None:
         """
         Initialize the tree with a root node and the alphabet
         A temporary new basis is needed for the prioritized promotion rule
         The rebuild states counter counts the number of states found with rebuilding excluding the root
         The matching states counter counts the number of states found with match refinement and match separation (NOT prioritized separation)
+
+        :param list alphabet: input alphabet
+        :param SUL sul: system under learning
+        :param list references: a list of reference models
+        :param str automaton_type: type of automaton to be learned. Either 'dfa', 'mealy' or 'moore'
+        :param str | None extension_rule: strategy used during the extension rule
+        :param str separation_rule: strategy used during the separation rule
+        :param bool rebuilding: whether to rebuild the observation tree from the references
+        :param str | None state_matching: state matching strategy, either None, "Total" or "Approximate"
         """
         super().__init__(alphabet, sul, automaton_type, extension_rule, separation_rule)
         self.references = references
@@ -50,10 +64,12 @@ class AdaptiveObservationTree(ObservationTree):
             self.state_matcher.initialize_matching(self)
 
 
-    def build_hypothesis(self):
+    def build_hypothesis(self) -> Automaton:
         """
         Builds the hypothesis which will be sent to the SUL and checks consistency
         This is either done with or without matching rules
+
+        :return Automaton: the constructed hypothesis
         """
         while True:
             if self.state_matching:
@@ -69,9 +85,9 @@ class AdaptiveObservationTree(ObservationTree):
             cex_outputs = self.get_observation(counter_example)
             self.process_counter_example(hypothesis, counter_example, cex_outputs)
 
-    def make_observation_tree_adequate_matching(self):
+    def make_observation_tree_adequate_matching(self) -> None:
         """
-        Updates the frontier and basis based on several rules 
+        Updates the frontier and basis based on several rules
         Terminates when the observation tree is adequate and no progress has been made in one round
         The separation rule is only used when prioritized separation did not make progress
         The matching rules are only used when the observation tree is already adequate
@@ -97,7 +113,7 @@ class AdaptiveObservationTree(ObservationTree):
                 if old_basis < len(self.basis):
                     self.matching_states += len(self.basis) - old_basis
 
-    def make_frontiers_identified_with_matching(self):
+    def make_frontiers_identified_with_matching(self) -> None:
         """
         Loop over all frontier states to identify them using prioritized identification,
         Only enabled when L# is running with the SepSeq separation rule
@@ -106,11 +122,13 @@ class AdaptiveObservationTree(ObservationTree):
             for frontier_state in self.frontier_to_basis_dict:
                 self.identify_frontier_with_matching(frontier_state)
 
-    def identify_frontier_with_matching(self, frontier_state):
+    def identify_frontier_with_matching(self, frontier_state: Any) -> None:
         """
         Determines the reference state which matches the frontier state (by looking at the basis parent)
-        Then finds the state identifiers for the matched reference state 
+        Then finds the state identifiers for the matched reference state
         Tries to identify the frontier state using the state identifiers of the matched state
+
+        :param Any frontier_state: frontier state to be identified
         """
         if frontier_state not in self.frontier_to_basis_dict:
             raise Exception(
@@ -129,10 +147,13 @@ class AdaptiveObservationTree(ObservationTree):
             identifiers = self.characterization_map[frontier_match]
             self.identify_frontier_with_identifiers(frontier_state, identifiers)
 
-    def identify_frontier_with_identifiers(self, frontier_state, identifiers):
-        """ 
+    def identify_frontier_with_identifiers(self, frontier_state: Any, identifiers: list) -> None:
+        """
         Loops through all candidates states and checks whether they can be separated using one
         of the state identifiers of the state matched with the frontier state
+
+        :param Any frontier_state: frontier state to be identified
+        :param list identifiers: state identifiers of the matched reference state
         """
         basis_candidates = self.frontier_to_basis_dict.get(frontier_state)
 
@@ -160,7 +181,7 @@ class AdaptiveObservationTree(ObservationTree):
                 if len(self.frontier_to_basis_dict.get(frontier_state)) < 2:
                     return
 
-    def match_refinement(self):
+    def match_refinement(self) -> None:
         # Loops over the basis states to refine the match for each basis state
         old_basis = list(self.basis)
         for basis_state in old_basis:
@@ -169,10 +190,16 @@ class AdaptiveObservationTree(ObservationTree):
                 self.refine_matches_basis(basis_state, matches)
                 self.update_frontier_and_basis()
 
-    def find_distinguishing_seq_partial(self, model, state1, state2, alphabet):
+    def find_distinguishing_seq_partial(self, model: Automaton, state1: Any, state2: Any, alphabet: list) -> list | None:
         """
         A BFS to determine an input sequence that distinguishes two states in the automaton
         Can handle partial models
+
+        :param Automaton model: automaton in which the states live
+        :param Any state1: first state
+        :param Any state2: second state
+        :param list alphabet: input alphabet
+        :return list | None: distinguishing sequence, or None if none was found
         """
         visited = set()
         to_explore = [(state1, state2, [])]
@@ -194,10 +221,13 @@ class AdaptiveObservationTree(ObservationTree):
 
         return None
 
-    def refine_matches_basis(self, basis_state, matches):
-        """ 
+    def refine_matches_basis(self, basis_state: Any, matches: list) -> None:
+        """
         Loops over the matched reference states and separates them using a separating sequence
         Returns when only one matching reference state remains, or some states are not distinguishable
+
+        :param Any basis_state: basis state whose matches are refined
+        :param list matches: matched reference states
         """
         for i in range(0, len(matches)):
             for j in range(i+1, len(matches)):
@@ -223,8 +253,8 @@ class AdaptiveObservationTree(ObservationTree):
                 if len(current_matches) < 2:
                     return
 
-    def match_separation(self):
-        """ 
+    def match_separation(self) -> None:
+        """
         Loops over frontier states and calls the match separation with as goal isolation of the frontier state
         """
         matched_states = []
@@ -248,9 +278,13 @@ class AdaptiveObservationTree(ObservationTree):
                     matched_states, frontier_state, basis_candidates)
                 self.update_frontier_and_basis()
 
-    def match_separation_frontier(self, matched_states, frontier_state, basis_candidates):
-        """ 
+    def match_separation_frontier(self, matched_states: list, frontier_state: Any, basis_candidates: list) -> None:
+        """
         Tries to isolate the frontier state if it matches a reference state that currently is not matched to any basis state
+
+        :param list matched_states: reference states already matched to a basis state
+        :param Any frontier_state: frontier state to be isolated
+        :param list basis_candidates: candidate basis states for the frontier state
         """
         parent_basis = frontier_state.parent
         inp = frontier_state.input_to_parent
@@ -276,7 +310,7 @@ class AdaptiveObservationTree(ObservationTree):
                 self.insert_observation(inputs, outputs)
                 self.update_basis_candidates(frontier_state)
 
-    def promote_frontier_state(self):
+    def promote_frontier_state(self) -> None:
         """
         Searches for an isolated frontier state and adds it to the basis states if
         it is not associated with another basis state
@@ -294,10 +328,13 @@ class AdaptiveObservationTree(ObservationTree):
                         new_basis_list.append(new_basis)
                 break
 
-    def insert_observation(self, inputs, outputs):
+    def insert_observation(self, inputs: list, outputs: list) -> None:
         """
         Insert an observation into the tree using sequences of inputs and outputs
         If state matching is enabled, ensure that the matching is updated
+
+        :param list inputs: input sequence
+        :param list outputs: output sequence
         """
         if len(inputs) != len(outputs):
             raise ValueError("Inputs and outputs must have the same length.")
@@ -311,11 +348,14 @@ class AdaptiveObservationTree(ObservationTree):
                     input_val, output_val)
 
 
-    def extend_node_and_update_matching(self, inputs, outputs):
-        """ 
-        Extends the observation tree with new inputs 
+    def extend_node_and_update_matching(self, inputs: list, outputs: list) -> None:
+        """
+        Extends the observation tree with new inputs
         Splits the input sequence in "already defined" part and the "new inputs" part
         If the inputs are not already present in the tree, we update the matching
+
+        :param list inputs: input sequence
+        :param list outputs: output sequence
         """
         to_recalc = []
         split = None
@@ -334,8 +374,8 @@ class AdaptiveObservationTree(ObservationTree):
 
     # Functions related to rebuilding the observation tree
 
-    def rebuild_obs_tree(self):
-        """ 
+    def rebuild_obs_tree(self) -> None:
+        """
         Rebuilds the observation tree by finding pairs of frontier and basis states that occur in the same reference model
         Then posing output queries to try to distinguish them in the SUL
         Try to apply the prioritized promotion rule
@@ -353,7 +393,7 @@ class AdaptiveObservationTree(ObservationTree):
         self.basis = self.new_basis
         self.update_frontier_and_basis()
 
-    def prioritized_promotion(self):
+    def prioritized_promotion(self) -> None:
         """
         Promotes an isolated frontier state with an access sequence in the prefix set of one of the references
         """
@@ -367,10 +407,12 @@ class AdaptiveObservationTree(ObservationTree):
                     self.new_basis.append(ob_tree_state)
                     self.rebuild_states += 1
 
-    def find_frontier_new_basis(self):
-        """ 
-        This function find a frontier and basis state pair which both occur in one of the reference models 
-        Because they occur in the same reference model, we have a separating sequence to distinguish them 
+    def find_frontier_new_basis(self) -> tuple | None:
+        """
+        This function find a frontier and basis state pair which both occur in one of the reference models
+        Because they occur in the same reference model, we have a separating sequence to distinguish them
+
+        :return tuple | None: (basis_state_access, frontier_state_access, separating_sequence), or None if not found
         """
         for basis_state_one in self.new_basis:
             for inp in self.alphabet:
@@ -383,11 +425,15 @@ class AdaptiveObservationTree(ObservationTree):
                     return self.find_basis_frontier_pair(frontier_state, frontier_state_access)
         return None
 
-    def find_basis_frontier_pair(self, frontier_state, frontier_state_access):
-        """ 
+    def find_basis_frontier_pair(self, frontier_state: Any, frontier_state_access: tuple) -> tuple | None:
+        """
         Find a basis state and reference model such that the prefixes of the
             basis state and frontier state are in the reference model prefix set
         Find a separating sequence that separates the frontier and basis state
+
+        :param Any frontier_state: frontier state
+        :param tuple frontier_state_access: access sequence of the frontier state
+        :return tuple | None: (basis_state_access, frontier_state_access, separating_sequence), or None if not found
         """
         for basis_state in self.new_basis:
             basis_state_access = self.get_access_sequence(basis_state)
@@ -411,9 +457,12 @@ class AdaptiveObservationTree(ObservationTree):
                     return basis_state_access, frontier_state_access, tuple(sep_seq)
         return None
 
-    def insert_observation_rebuilding(self, inputs, outputs):
+    def insert_observation_rebuilding(self, inputs: list, outputs: list) -> None:
         """
         Insert an observation into the tree using sequences of inputs and outputs
+
+        :param list inputs: input sequence
+        :param list outputs: output sequence
         """
         if len(inputs) != len(outputs):
             raise ValueError("Inputs and outputs must have the same length.")
@@ -429,9 +478,12 @@ class AdaptiveObservationTree(ObservationTree):
         if split:
             self.initial_OQs.append(split)
 
-    def apart_from_all(self, frontier_state):
-        """ 
+    def apart_from_all(self, frontier_state: Any) -> bool:
+        """
         Checks if a frontier state is apart from all new basis states
+
+        :param Any frontier_state: frontier state to check
+        :return bool: True if the frontier state is apart from all new basis states
         """
         for basis_state in self.new_basis:
             if not Apartness.states_are_apart(basis_state, frontier_state, self):
@@ -439,10 +491,14 @@ class AdaptiveObservationTree(ObservationTree):
         return True
 
     # Functions related to finding the combined model
-    
-    def add_ref_transitions_to_states(self, reference, reference_id):
-        """ 
+
+    def add_ref_transitions_to_states(self, reference: Automaton, reference_id: int) -> list:
+        """
         Makes a copy of the states of a reference with a unique state id and only transitions with the new input alphabet
+
+        :param Automaton reference: reference model
+        :param int reference_id: index of the reference model
+        :return list: copied states of the reference model
         """
         automaton_state = {'dfa': DfaState, 'mealy': MealyState, 'moore': MooreState}
         states = [automaton_state[self.automaton_type](f"s({reference_id},{ref_state})")
@@ -461,29 +517,37 @@ class AdaptiveObservationTree(ObservationTree):
                     states[state_id].transitions[inp] = states[old_index]
         return states
 
-    def compute_prefix_map(self, reference, reference_id):
-        """ 
+    def compute_prefix_map(self, reference: Automaton, reference_id: int) -> None:
+        """
         Computes the prefixes of a reference model and stores them in a prefix map
+
+        :param Automaton reference: reference model
+        :param int reference_id: index of the reference model
         """
         for state in reference.states:
             state.prefix = reference.get_shortest_path(
                 reference.initial_state, state)
         self.prefixes_map[reference_id] = [state.prefix for state in reference.states if state.prefix is not None]
 
-    def compute_characterization_map(self, reference, states):
-        """ 
+    def compute_characterization_map(self, reference: Automaton, states: list) -> None:
+        """
         Computes the separating sequences of a reference model and stores them in a characterization map
+
+        :param Automaton reference: reference model
+        :param list states: copied states corresponding to the reference model's states
         """
         for state, ref_state in zip(states, reference.states):
             all_sepseqs = state_characterization_set(reference, reference.get_input_alphabet(), ref_state)
             unique_sepseqs = list(dict.fromkeys(all_sepseqs))
             self.characterization_map[state] = unique_sepseqs
 
-    def get_combined_model(self):
-        """ 
+    def get_combined_model(self) -> Automaton | None:
+        """
         Builds a combined model from the reference models
         Compute the prefix and characterization maps used during construction of the combined model
         The resulting mealy machine may be partial
+
+        :return Automaton | None: the combined model, or None if no usable references were found
         """
         automaton_class = {'dfa': Dfa, 'mealy': MealyMachine, 'moore': MooreMachine}
         all_states = []

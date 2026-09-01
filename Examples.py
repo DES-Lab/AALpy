@@ -1277,7 +1277,7 @@ def example_Alergia_extension():
             self.evidence += 1
             return self.ioa_compatibility(a, b)
 
-        def score_function(self, part: dict[GsmNode, GsmNode]):
+        def score_function(self, part):
             return self.evidence
 
     epsilon = 0.05

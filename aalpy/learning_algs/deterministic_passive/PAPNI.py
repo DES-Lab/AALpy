@@ -1,22 +1,20 @@
+# Passive automata learning for pushdown automata (PAPNI), built on top of RPNI/EDSM over stack-annotated data.
 from aalpy.utils import is_balanced
-from aalpy.automata.Vpa import vpa_from_dfa_representation
+from aalpy.automata.Vpa import vpa_from_dfa_representation, Vpa, VpaAlphabet
 
-def run_PAPNI(data, vpa_alphabet, algorithm='edsm', print_info=True):
+
+def run_PAPNI(data: list, vpa_alphabet: VpaAlphabet, algorithm: str = 'edsm', print_info: bool = True) -> Vpa | None:
     """
     Run PAPNI, a deterministic passive model learning algorithm of deterministic pushdown automata.
     Resulting model conforms to the provided data.
 
-    Args:
-
-        data: sequence of input sequences and corresponding label. Eg. [[(i1,i2,i3, ...), label], ...]
-        vpa_alphabet:  grouping of alphabet elements to call symbols, return symbols, and internal symbols. Call symbols
-        push to stack, return symbols pop from stack, and internal symbols do not affect the stack.
-        algorithm: either 'gsm' for classic RPNI or 'edsm' for evidence driven state merging variant of RPNI
-        print_info: print learning progress and runtime information
-
-    Returns:
-
-        VPA conforming to the data, or None if data is non-deterministic.
+    :param list data: sequence of input sequences and corresponding label. Eg. [[(i1,i2,i3, ...), label], ...]
+    :param VpaAlphabet vpa_alphabet: grouping of alphabet elements to call symbols, return symbols, and internal
+        symbols. Call symbols push to stack, return symbols pop from stack, and internal symbols do not affect the
+        stack.
+    :param str algorithm: either 'gsm' for classic RPNI or 'edsm' for evidence driven state merging variant of RPNI
+    :param bool print_info: print learning progress and runtime information
+    :return Vpa | None: VPA conforming to the data, or None if data is non-deterministic.
     """
     from aalpy.learning_algs import run_EDSM, run_RPNI
     assert algorithm in {'gsm', 'classic', 'edsm'}

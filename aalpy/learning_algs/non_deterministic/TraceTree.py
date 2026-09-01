@@ -1,29 +1,46 @@
+# Tree structure used by ONFSM learning algorithms to keep track of all observed input/output traces.
 from collections import defaultdict
+from typing import Any
+
+from aalpy.automata import Onfsm
 
 
 class Node:
+    """
+    Single node of a :class:`TraceTree`, representing one observed input/output pair.
+    """
+
     __slots__ = ['output', 'children', 'parent', 'frequency_counter']
 
-    def __init__(self, output):
+    def __init__(self, output: Any) -> None:
+        """
+        Creates a trace tree node.
+
+        :param Any output: Output associated with this node.
+        """
         self.output = output
-        self.children = defaultdict(list)
-        self.parent = None
+        self.children: dict[Any, list['Node']] = defaultdict(list)
+        self.parent: Node | None = None
 
         # frq counter
         self.frequency_counter = 0
 
-    def get_child(self, inp, out):
+    def get_child(self, inp: Any, out: Any) -> 'Node | None':
         """
-        Args:
-          inp:
-          out:
+        Looks up the child reached via the given input/output pair.
 
-        Returns:
-
+        :param Any inp: Input.
+        :param Any out: Output.
+        :return Node | None: Matching child node, or None if not found.
         """
         return next((child for child in self.children[inp] if child.output == out), None)
 
-    def get_prefix(self):
+    def get_prefix(self) -> tuple:
+        """
+        Reconstructs the sequence of outputs leading from the root to this node.
+
+        :return tuple: Sequence of outputs on the path from the root to this node.
+        """
         prefix = ()
         curr_node = self
         while curr_node.parent is not None:
@@ -37,22 +54,25 @@ class TraceTree:
     Tree used for keeping track of seen observations.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """
+        Creates an empty trace tree containing only the root node.
+        """
         self.root_node = Node(None)
-        self.curr_node = None
+        self.curr_node: Node | None = None
 
-    def reset(self):
+    def reset(self) -> None:
+        """
+        Resets the current node cursor back to the root node.
+        """
         self.curr_node = self.root_node
 
-    def add_to_tree(self, inp, out):
+    def add_to_tree(self, inp: Any, out: Any) -> None:
         """
-        Adds new element to tree and makes it the current node
+        Adds new element to tree and makes it the current node.
 
-        Args:
-
-          inp: Input
-          out: Output
-
+        :param Any inp: Input.
+        :param Any out: Output.
         """
         if inp not in self.curr_node.children.keys() or \
                 out not in {child.output for child in self.curr_node.children[inp]}:
@@ -63,22 +83,25 @@ class TraceTree:
         self.curr_node = self.curr_node.get_child(inp, out)
         self.curr_node.frequency_counter += 1
 
-    def add_trace(self, inputs, outputs):
+    def add_trace(self, inputs: tuple, outputs: tuple) -> None:
+        """
+        Adds a whole input/output trace to the tree, starting from the root.
+
+        :param tuple inputs: Sequence of inputs.
+        :param tuple outputs: Sequence of outputs.
+        """
         self.reset()
         for i, o in zip(inputs, outputs):
             self.add_to_tree(i, o)
 
-    def get_to_node(self, inputs, outputs):
+    def get_to_node(self, inputs: tuple, outputs: tuple) -> Node | None:
         """
-        Follows the path described by inp and out and returns the node which is reached
+        Follows the path described by inputs and outputs and returns the node which is reached.
 
-        Args:
-          inputs: Inputs
-          outputs: Outputs
-
-        Returns:
-
-          Node that is reached when following the given input and output through the tree
+        :param tuple inputs: Sequence of inputs.
+        :param tuple outputs: Sequence of outputs.
+        :return Node | None: Node that is reached when following the given input and output through the tree,
+            or None if the path does not exist.
         """
         curr_node = self.root_node
         for i, o in zip(inputs, outputs):
@@ -89,17 +112,14 @@ class TraceTree:
 
         return curr_node
 
-    def get_all_traces(self, prefix, e=None):
+    def get_all_traces(self, prefix: tuple[tuple, tuple], e: tuple) -> list[tuple]:
         """
+        Follows `prefix` (an (inputs, outputs) pair) through the tree, and for the reached node returns all
+        traces of outputs corresponding to the input sequence `e`.
 
-        Args:
-
-          prefix: prefix
-          e: List of inputs
-
-        Returns:
-
-          Traces of outputs corresponding to the input-sequence given by e
+        :param tuple[tuple, tuple] prefix: (inputs, outputs) pair identifying the starting node.
+        :param tuple e: Sequence of inputs to be traced from the starting node.
+        :return list[tuple]: Traces of outputs corresponding to the input sequence given by e.
         """
 
         if not prefix or not e:
@@ -125,16 +145,13 @@ class TraceTree:
         cell = [node.get_prefix()[-len(e):] for node in reached_nodes]
         return cell
 
-    def get_table(self, s, e):
+    def get_table(self, s: list, e: list) -> dict:
         """
-        Generates a table from the tree
+        Generates a table from the tree.
 
-        Args:
-          s: rows from S, S_dot_A, or both which should be presented in the table.
-          e: E
-
-        Returns:
-          a table in a format that can be used for printing.
+        :param list s: Rows from S, S_dot_A, or both which should be presented in the table.
+        :param list e: E set (suffixes).
+        :return dict: A table in a format that can be used for printing.
         """
         result = {}
         for prefix in s:
@@ -145,7 +162,13 @@ class TraceTree:
 
         return result
 
-    def find_cex_in_cache(self, hypothesis):
+    def find_cex_in_cache(self, hypothesis: Onfsm) -> tuple[list, list] | None:
+        """
+        Searches the cached traces for a counterexample against the given hypothesis, without querying the SUL.
+
+        :param Onfsm hypothesis: Current hypothesis.
+        :return tuple[list, list] | None: (inputs, outputs) counterexample, or None if none is found in the cache.
+        """
 
         queue = [(self.root_node, tuple())]
         while queue:
@@ -168,7 +191,14 @@ class TraceTree:
 
         return None
 
-    def get_s_e_sampling_frequency(self, prefix, suffix):
+    def get_s_e_sampling_frequency(self, prefix: tuple[tuple, tuple], suffix: tuple) -> int:
+        """
+        Counts how many times the path described by `prefix` followed by `suffix` has been observed.
+
+        :param tuple[tuple, tuple] prefix: (inputs, outputs) pair identifying the starting node.
+        :param tuple suffix: Sequence of inputs to be traced from the starting node.
+        :return int: Number of times the given path has been sampled.
+        """
         sampling_frequency = 0
         curr_node = self.root_node
         for i, o in zip(prefix[0], prefix[1]):
@@ -189,7 +219,14 @@ class TraceTree:
 
         return sampling_frequency
 
-    def get_sampling_distributions(self, prefix, input_from_alphabet):
+    def get_sampling_distributions(self, prefix: tuple[tuple, tuple], input_from_alphabet: Any) -> dict:
+        """
+        Computes the empirical output probability distribution observed after `prefix` on a given input.
+
+        :param tuple[tuple, tuple] prefix: (inputs, outputs) pair identifying the starting node.
+        :param Any input_from_alphabet: Single input from the alphabet.
+        :return dict: Map from observed output to its empirical probability.
+        """
         sampling_distribution = {}
         curr_node = self.root_node
         for i, o in zip(prefix[0], prefix[1]):

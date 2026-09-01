@@ -1,5 +1,7 @@
+# Sampling-based stochastic L* algorithm for learning MDPs and stochastic Mealy machines.
 import time
 
+from aalpy.automata import Mdp, StochasticMealyMachine
 from aalpy.base import SUL, Oracle
 from aalpy.learning_algs.stochastic.DifferenceChecker import AdvancedHoeffdingChecker, HoeffdingChecker, \
     ChiSquareChecker, DifferenceChecker
@@ -21,63 +23,44 @@ diff_checker_options = {'classic': HoeffdingChecker(),
 available_oracles, available_oracles_error_msg = get_available_oracles_and_err_msg()
 
 
-def run_stochastic_Lstar(input_alphabet, sul: SUL, eq_oracle: Oracle, target_unambiguity=0.99,
-                         min_rounds=10, max_rounds=200, automaton_type='mdp', strategy='normal',
-                         cex_processing=None, samples_cex_strategy=None, stopping_range_dict='strict', custom_oracle=False,
-                         return_data=False, property_based_stopping=None, n_c=20, n_resample=100, print_level=2):
+def run_stochastic_Lstar(input_alphabet: list, sul: SUL, eq_oracle: Oracle, target_unambiguity: float = 0.99,
+                         min_rounds: int = 10, max_rounds: int | None = 200, automaton_type: str = 'mdp',
+                         strategy: str | DifferenceChecker = 'normal',
+                         cex_processing: str | None = None, samples_cex_strategy: str | None = None,
+                         stopping_range_dict: dict | str = 'strict', custom_oracle: bool = False,
+                         return_data: bool = False, property_based_stopping: tuple | None = None,
+                         n_c: int = 20, n_resample: int = 100, print_level: int = 2) \
+        -> 'Mdp | StochasticMealyMachine | tuple[Mdp | StochasticMealyMachine, dict]':
     """
     Learning of Markov Decision Processes and Stochastic Mealy machines based on 'L*-Based Learning of Markov Decision
     Processes' and 'Active Model Learning of Stochastic Reactive Systems' by Tappler et al.
 
-    Args:
-
-        input_alphabet: input alphabet
-
-        sul: system under learning
-
-        eq_oracle: equivalence oracle
-
-        target_unambiguity: target unambiguity value (default 0.99)
-
-        min_rounds: minimum number of learning rounds (Default value = 10)
-
-        max_rounds: if learning_rounds >= max_rounds, learning will stop (Default value = 200)
-
-        automaton_type: either 'mdp' or 'smm' (Default value = 'mdp')
-
-        strategy: either one of ['classic', 'normal', 'chi2'] or a object implementing DifferenceChecker class,
-            default value is 'normal'. Classic strategy is the one presented
-            in the seed paper, 'normal' is the updated version and chi2 is based on chi squared.
-
-        cex_processing: cex processing strategy, None , 'longest_prefix' or 'rs' (rs is experimental)
-
-        samples_cex_strategy: strategy for finding counterexamples in the trace tree. None, 'bfs' or
-            "random:<#traces to check:int>:<stop probability for single trace in [0,1)>" eg. random:200:0.2
-
-        stopping_range_dict: Values in form of a dictionary, or 'strict', 'relaxed' to use predefined stopping
-        criteria. Custom values: Dictionary where keys encode the last n unambiguity values which need to be in range
-        of its value in order to perform early stopping. Eg. {5: 0.001, 10: 0.01} would stop if last 5 hypothesis had
-        unambiguity values when max(last_5_vals) - (last_5_vals) <= 0.001.
-
-        property_based_stopping: A tuple containing (path to the properties file, correct values of each property,
-            allowed error for each property. Recommended one is 0.02 (2%)).
-
-        custom_oracle: if True, warning about oracle type will be removed and custom oracle can be used
-
-        return_data: if True, map containing all information like number of queries... will be returned
-            (Default value = False)
-
-        n_c: cutoff for a cell to be considered complete (Default value = 20), only used with 'classic' strategy
-
-        n_resample: resampling size (Default value = 100), only used with 'classic' strategy
-
-        print_level: 0 - None, 1 - just results, 2 - current round and hypothesis size, 3 - educational/debug
-            (Default value = 2)
-
-
-    Returns:
-
-      learned MDP/SMM
+    :param list input_alphabet: Input alphabet.
+    :param SUL sul: System under learning.
+    :param Oracle eq_oracle: Equivalence oracle.
+    :param float target_unambiguity: Target unambiguity value.
+    :param int min_rounds: Minimum number of learning rounds.
+    :param int | None max_rounds: If learning_rounds >= max_rounds, learning will stop.
+    :param str automaton_type: Either 'mdp' or 'smm'.
+    :param str | DifferenceChecker strategy: Either one of ['classic', 'normal', 'chi2'] or an object implementing
+        DifferenceChecker class. Classic strategy is the one presented in the seed paper, 'normal' is the updated
+        version and chi2 is based on chi squared.
+    :param str | None cex_processing: Cex processing strategy, None, 'longest_prefix' or 'rs' (rs is experimental).
+    :param str | None samples_cex_strategy: Strategy for finding counterexamples in the trace tree. None, 'bfs' or
+        "random:<#traces to check:int>:<stop probability for single trace in [0,1)>" eg. random:200:0.2.
+    :param dict | str stopping_range_dict: Values in form of a dictionary, or 'strict', 'relaxed' to use predefined
+        stopping criteria. Custom values: Dictionary where keys encode the last n unambiguity values which need to
+        be in range of its value in order to perform early stopping. Eg. {5: 0.001, 10: 0.01} would stop if last 5
+        hypothesis had unambiguity values when max(last_5_vals) - (last_5_vals) <= 0.001.
+    :param bool custom_oracle: If True, warning about oracle type will be removed and custom oracle can be used.
+    :param bool return_data: If True, map containing all information like number of queries... will be returned.
+    :param tuple | None property_based_stopping: A tuple containing (path to the properties file, correct values of
+        each property, allowed error for each property. Recommended one is 0.02 (2%)).
+    :param int n_c: Cutoff for a cell to be considered complete, only used with 'classic' strategy.
+    :param int n_resample: Resampling size, only used with 'classic' strategy.
+    :param int print_level: 0 - None, 1 - just results, 2 - current round and hypothesis size, 3 - educational/debug.
+    :return Mdp | StochasticMealyMachine | tuple[Mdp | StochasticMealyMachine, dict]: Learned MDP/SMM, or a
+        (hypothesis, info) pair if return_data is True.
     """
 
     assert samples_cex_strategy in cex_sampling_options or samples_cex_strategy.startswith('random')

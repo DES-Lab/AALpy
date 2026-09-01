@@ -1,25 +1,52 @@
+# Sampling-based teacher that maintains a multiset of observed traces for stochastic L*.
 from collections import defaultdict
 from random import choice, random
+from typing import Any
 
-from aalpy.base import SUL
+from aalpy.automata import Mdp, StochasticMealyMachine
+from aalpy.base import SUL, Oracle
 from aalpy.learning_algs.stochastic.DifferenceChecker import DifferenceChecker
 
 
 class StochasticSUL(SUL):
-    def __init__(self, sul, teacher):
+    """
+    SUL wrapper that forwards every performed step to the stochastic teacher's trace tree.
+    """
+
+    def __init__(self, sul: SUL, teacher: 'StochasticTeacher') -> None:
+        """
+        Create a stochastic SUL wrapper.
+
+        :param SUL sul: The wrapped system under learning.
+        :param StochasticTeacher teacher: Teacher whose trace tree is updated on every step.
+        """
         super().__init__()
         self.sul = sul
         self.teacher = teacher
 
-    def pre(self):
+    def pre(self) -> None:
+        """
+        Reset the current node of the teacher's trace tree to the root and reset the wrapped SUL.
+
+        :return None: The return value of the wrapped SUL's pre() call.
+        """
         self.num_queries += 1
         self.teacher.back_to_root()
         return self.sul.pre()
 
-    def post(self):
+    def post(self) -> None:
+        """
+        Perform cleanup on the wrapped system under learning.
+        """
         self.sul.post()
 
-    def step(self, letter):
+    def step(self, letter: Any) -> Any:
+        """
+        Execute an action on the wrapped SUL and record it in the teacher's trace tree.
+
+        :param Any letter: Single input that is executed on the SUL.
+        :return Any: Output received after executing the input.
+        """
         self.num_steps += 1
         out = self.sul.step(letter)
         self.teacher.add(letter, out)
@@ -31,47 +58,46 @@ class Node:
     Node of the cache/multiset of all traces.
     """
 
-    def __init__(self, output):
+    def __init__(self, output: Any) -> None:
+        """
+        Create a trace tree node.
+
+        :param Any output: Output associated with this node.
+        """
         self.output = output
         self.frequency = 0
         self.children = defaultdict(dict)
         self.input_frequencies = defaultdict(int)
 
-    def get_child(self, inp, out):
+    def get_child(self, inp: Any, out: Any) -> 'Node | None':
         """
+        Get the child reached by performing `inp` and observing `out`.
 
-        Args:
-
-            inp: input
-            out: output
-
-        Returns:
-
-            Child with output that equals to `out` reached when performing `inp`. If such child does not exist,
-            return None.
+        :param Any inp: Input.
+        :param Any out: Output.
+        :return Node | None: Child with output that equals to `out` reached when performing `inp`.
+            If such child does not exist, return None.
         """
         if inp not in self.children.keys() or out not in self.children[inp].keys():
             return None
         return self.children[inp][out]
 
-    def get_frequency_sum(self, input_letter):
+    def get_frequency_sum(self, input_letter: Any) -> int:
         """
-        Returns:
+        Get the number of times an input was observed in the current node.
 
-            number of times input was observed in current state
+        :param Any input_letter: Input.
+        :return int: Number of times input was observed in current state.
         """
         return self.input_frequencies[input_letter]
 
-    def get_output_frequencies(self, input_letter):
+    def get_output_frequencies(self, input_letter: Any) -> dict:
         """
-        Args:
+        Get the observed output frequencies for a given input in the current node.
 
-            input_letter: input
-
-        Returns:
-
-            observed outputs and their frequencies for given `input_letter` in the current state
-
+        :param Any input_letter: Input.
+        :return dict: Observed outputs and their frequencies for given `input_letter` in the
+            current state.
         """
         if input_letter not in self.children.keys():
             return dict()
@@ -84,8 +110,19 @@ class StochasticTeacher:
     Whenever new traces are sampled in the course of learning, they are added to S.
     """
 
-    def __init__(self, sul: SUL, n_c, eq_oracle, automaton_type, compatibility_checker: DifferenceChecker,
-                 samples_cex_strategy=None):
+    def __init__(self, sul: SUL, n_c: int, eq_oracle: Oracle, automaton_type: str,
+                 compatibility_checker: DifferenceChecker, samples_cex_strategy: str | None = None) -> None:
+        """
+        Create a stochastic teacher.
+
+        :param SUL sul: System under learning.
+        :param int n_c: Number of samples required to consider a cell complete.
+        :param Oracle eq_oracle: Equivalence oracle used to find counterexamples.
+        :param str automaton_type: Type of automaton being learned, e.g. 'mdp' or 'smm'.
+        :param DifferenceChecker compatibility_checker: Checker used to compare output distributions.
+        :param str | None samples_cex_strategy: Strategy used to search for a counterexample in the
+            sample tree before querying the equivalence oracle ('bfs' or 'random:<n>:<p>').
+        """
         self.automaton_type = automaton_type
         if automaton_type == 'mdp':
             self.initial_value = sul.query(tuple())
@@ -108,19 +145,18 @@ class StochasticTeacher:
         self.last_cex = None
         self.last_tree_cex = None
 
-    def back_to_root(self):
+    def back_to_root(self) -> None:
+        """
+        Reset the current node to the root of the trace tree.
+        """
         self.curr_node = self.root_node
 
-    def add(self, inp, out):
+    def add(self, inp: Any, out: Any) -> None:
         """
-        Adds a input/output to the tree.
+        Add an input/output pair to the trace tree.
 
-        Args:
-
-            inp: input
-            out: output
-
-
+        :param Any inp: Input.
+        :param Any out: Output.
         """
         self.curr_node.input_frequencies[inp] += 1
         if inp not in self.curr_node.children.keys() or out not in self.curr_node.children[inp].keys():
@@ -130,19 +166,13 @@ class StochasticTeacher:
         self.curr_node = self.curr_node.children[inp][out]
         self.curr_node.frequency += 1
 
-    def frequency_query(self, s: tuple, e: tuple):
-        """Output frequencies observed after trace s + e.
+    def frequency_query(self, s: tuple, e: tuple) -> dict:
+        """
+        Get the output frequencies observed after trace s + e.
 
-        Args:
-
-            s: sequence from S set
-            e: sequence from E set
-
-
-        Returns:
-
-            sum of output frequencies
-
+        :param tuple s: Sequence from S set.
+        :param tuple e: Sequence from E set.
+        :return dict: Sum of output frequencies.
         """
         if self.automaton_type == 'mdp':
             s = s[1:]
@@ -163,20 +193,14 @@ class StochasticTeacher:
             self.complete_query_cache.add(s + e)
         return output_freq
 
-    def complete_query(self, s: tuple, e: tuple):
+    def complete_query(self, s: tuple, e: tuple) -> bool:
         """
-        Given a test sequences returns true if sufficient information is available to estimate an output distribution
-        from frequency queries; returns false otherwise.
+        Determine whether sufficient information is available to estimate an output distribution
+        from frequency queries for a given test sequence.
 
-        Args:
-
-            s: sequence from S set
-            e: sequence from E set
-
-        Returns:
-
-            True if cell is completed, false otherwise
-
+        :param tuple s: Sequence from S set.
+        :param tuple e: Sequence from E set.
+        :return bool: True if cell is completed, false otherwise.
         """
 
         # extract inputs and outputs
@@ -208,19 +232,13 @@ class StochasticTeacher:
             self.complete_query_cache.add(s + e)
         return sum_freq >= self.n_c
 
-    def tree_query(self, pta_root):
+    def tree_query(self, pta_root: Node) -> None:
         """
-        Execute a refine query based on input/output trace. If at some point real outputs differ from expected
-        outputs, trace to that point is added to the tree, otherwise whole trace is executed.
+        Execute a refine query based on an input/output trace sampled from the trace tree. If at
+        some point real outputs differ from expected outputs, the trace up to that point is added
+        to the tree, otherwise the whole trace is executed.
 
-        Args:
-
-            pta_root: root of the PTA
-
-        Returns:
-
-            number of steps taken
-
+        :param Node pta_root: Root of the PTA.
         """
         self.sul.pre()
         curr_node = pta_root
@@ -264,7 +282,14 @@ class StochasticTeacher:
                 self.sul.post()
                 return
 
-    def single_dfs_for_cex(self, stop_prob, hypothesis):
+    def single_dfs_for_cex(self, stop_prob: float, hypothesis: Mdp | StochasticMealyMachine) -> tuple | None:
+        """
+        Perform a single randomized depth-first search over the trace tree for a counterexample.
+
+        :param float stop_prob: Probability of stopping the search at each step.
+        :param Mdp | StochasticMealyMachine hypothesis: Current hypothesis.
+        :return tuple | None: Counterexample trace, or None if none was found in this pass.
+        """
         curr_node = self.root_node
         curr_state = hypothesis.initial_state
         if self.automaton_type == "mdp":
@@ -303,14 +328,29 @@ class StochasticTeacher:
                 curr_state = next_state
                 trace = trace + (i,) + (o,)
 
-    def dfs_for_cex_in_tree(self, hypothesis, nr_traces, stop_prob):
+    def dfs_for_cex_in_tree(self, hypothesis: Mdp | StochasticMealyMachine, nr_traces: int,
+                             stop_prob: float) -> tuple | None:
+        """
+        Repeatedly search the trace tree for a counterexample using randomized depth-first search.
+
+        :param Mdp | StochasticMealyMachine hypothesis: Current hypothesis.
+        :param int nr_traces: Number of search attempts to perform.
+        :param float stop_prob: Probability of stopping each search early.
+        :return tuple | None: Counterexample trace, or None if none was found.
+        """
         for i in range(nr_traces):
             cex = self.single_dfs_for_cex(stop_prob, hypothesis)
             if cex:
                 return cex
         return None
 
-    def bfs_for_cex_in_tree(self, hypothesis):
+    def bfs_for_cex_in_tree(self, hypothesis: Mdp | StochasticMealyMachine) -> tuple | None:
+        """
+        Search the trace tree for a counterexample using breadth-first search.
+
+        :param Mdp | StochasticMealyMachine hypothesis: Current hypothesis.
+        :return tuple | None: Counterexample trace, or None if none was found.
+        """
         # BFS for cex
         if self.automaton_type == "mdp":
             to_check = [(self.root_node, hypothesis.initial_state, tuple(self.initial_value))]
@@ -341,18 +381,13 @@ class StochasticTeacher:
                     to_check.append((c, next_state, new_trace))
         return None
 
-    def equivalence_query(self, hypothesis):
+    def equivalence_query(self, hypothesis: Mdp | StochasticMealyMachine) -> tuple | None:
         """
-        Finds and returns a counterexample
+        Find and return a counterexample, preferring cached or tree-based candidates before
+        falling back to the wrapped equivalence oracle.
 
-        Args:
-
-            hypothesis: current hypothesis
-
-        Returns:
-
-            counterexample
-
+        :param Mdp | StochasticMealyMachine hypothesis: Current hypothesis.
+        :return tuple | None: Counterexample, or None if none was found.
         """
         if self.last_cex and not self.is_cex_processed(hypothesis, self.last_cex):
             return self.last_cex
@@ -380,7 +415,15 @@ class StochasticTeacher:
         self.last_cex = cex
         return cex
 
-    def is_cex_processed(self, hypothesis, cex):
+    def is_cex_processed(self, hypothesis: Mdp | StochasticMealyMachine, cex: tuple) -> bool:
+        """
+        Check whether a previously found counterexample is still a valid counterexample on the
+        given hypothesis.
+
+        :param Mdp | StochasticMealyMachine hypothesis: Current hypothesis.
+        :param tuple cex: Previously found counterexample.
+        :return bool: True if the counterexample is still valid (unprocessed), False otherwise.
+        """
         if self.automaton_type == 'mdp':
             cex = cex[1:]
         last_inp = cex[-1]

@@ -1,6 +1,7 @@
+# L* (Angluin) active learning algorithm based on the observation table.
 import time
 
-from aalpy.base import Oracle, SUL
+from aalpy.base import Automaton, Oracle, SUL
 from aalpy.utils.HelperFunctions import extend_set, print_learning_info, print_observation_table, all_prefixes
 from .CounterExampleProcessing import longest_prefix_cex_processing, rs_cex_processing, \
     counterexample_successfully_processed, linear_cex_processing, exponential_cex_processing
@@ -13,53 +14,40 @@ closedness_options = ['suffix_all', 'suffix_single']
 print_options = [0, 1, 2, 3]
 
 
-def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type, samples=None,
-              closing_strategy='shortest_first', cex_processing='rs',
-              e_set_suffix_closed=False, all_prefixes_in_obs_table=True,
-              max_learning_rounds=None, cache_and_non_det_check=True, return_data=False, print_level=2):
+def run_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type: str, samples: list | None = None,
+              closing_strategy: str = 'shortest_first', cex_processing: str | None = 'rs',
+              e_set_suffix_closed: bool = False, all_prefixes_in_obs_table: bool = True,
+              max_learning_rounds: int | None = None, cache_and_non_det_check: bool = True,
+              return_data: bool = False, print_level: int = 2) -> Automaton | tuple[Automaton, dict]:
     """
     Executes L* algorithm.
 
-    Args:
-
-        alphabet: input alphabet
-
-        sul: system under learning
-
-        eq_oracle: equivalence oracle
-
-        automaton_type: type of automaton to be learned. Either 'dfa', 'mealy' or 'moore'.
-
-        samples: input output traces provided to the learning algorithm. They are added to cache and could reduce
-        total interaction with the system. Syntax: list of [(input_sequence, output_sequence)] or None
-
-        closing_strategy: closing strategy used in the close method. Either 'longest_first', 'shortest_first' or
-            'single' (Default value = 'shortest_first')
-
-        cex_processing: Counterexample processing strategy. Either None, 'rs' (Rivest-Schapire), 'longest_prefix'.
-            (Default value = 'rs'), 'longest_prefix', 'linear_fwd', 'linear_bwd', 'exponential_fwd', 'exponential_bwd'
-
-        e_set_suffix_closed: True option ensures that E set is suffix closed,
-            False adds just a single suffix per counterexample.
-
-        all_prefixes_in_obs_table: if True, entries of observation table will contain the whole output of the whole
-            suffix, otherwise just the last output meaning that all prefixes of the suffix will be added.
-            If False, just a single suffix will be added.
-
-        max_learning_rounds: number of learning rounds after which learning will terminate (Default value = None)
-
-        cache_and_non_det_check: Use caching and non-determinism checks (Default value = True)
-
-        return_data: if True, a map containing all information(runtime/#queries/#steps) will be returned
-            (Default value = False)
-
-        print_level: 0 - None, 1 - just results, 2 - current round and hypothesis size, 3 - educational/debug
-            (Default value = 2)
-
-    Returns:
-
-        automaton of type automaton_type (dict containing all information about learning if 'return_data' is True)
-
+    :param list alphabet: Input alphabet.
+    :param SUL sul: System under learning.
+    :param Oracle eq_oracle: Equivalence oracle.
+    :param str automaton_type: Type of automaton to be learned. Either 'dfa', 'mealy' or 'moore'.
+    :param list | None samples: Input output traces provided to the learning algorithm. They are added to cache
+        and could reduce total interaction with the system. Syntax: list of [(input_sequence, output_sequence)]
+        or None.
+    :param str closing_strategy: Closing strategy used in the close method. Either 'longest_first',
+        'shortest_first' or 'single' (Default value = 'shortest_first').
+    :param str | None cex_processing: Counterexample processing strategy. Either None, 'rs' (Rivest-Schapire),
+        'longest_prefix'. (Default value = 'rs'), 'longest_prefix', 'linear_fwd', 'linear_bwd', 'exponential_fwd',
+        'exponential_bwd'.
+    :param bool e_set_suffix_closed: True option ensures that E set is suffix closed, False adds just a single
+        suffix per counterexample.
+    :param bool all_prefixes_in_obs_table: If True, entries of observation table will contain the whole output of
+        the whole suffix, otherwise just the last output meaning that all prefixes of the suffix will be added.
+        If False, just a single suffix will be added.
+    :param int | None max_learning_rounds: Number of learning rounds after which learning will terminate
+        (Default value = None).
+    :param bool cache_and_non_det_check: Use caching and non-determinism checks (Default value = True).
+    :param bool return_data: If True, a map containing all information (runtime/#queries/#steps) will be returned
+        (Default value = False).
+    :param int print_level: 0 - None, 1 - just results, 2 - current round and hypothesis size, 3 -
+        educational/debug (Default value = 2).
+    :return Automaton | tuple[Automaton, dict]: Automaton of type automaton_type (or a tuple of the automaton and
+        a dict containing all information about learning if 'return_data' is True).
     """
 
     assert cex_processing in counterexample_processing_strategy

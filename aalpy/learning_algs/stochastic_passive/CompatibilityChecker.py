@@ -1,3 +1,4 @@
+# Compatibility checkers used by Alergia/IOAlergia to decide whether two FPTA states may be merged.
 from abc import ABC, abstractmethod
 from math import sqrt, log
 
@@ -5,18 +6,47 @@ from aalpy.learning_algs.stochastic_passive.FPTA import AlergiaPtaNode
 
 
 class CompatibilityChecker(ABC):
+    """
+    Abstract class implemented by all compatibility checkers used to decide whether two states of the FPTA are
+    statistically different (and thus should not be merged).
+    """
 
     @abstractmethod
     def are_states_different(self, a: AlergiaPtaNode, b: AlergiaPtaNode, **kwargs) -> bool:
+        """
+        Checks whether two FPTA nodes are statistically different.
+
+        :param AlergiaPtaNode a: First node.
+        :param AlergiaPtaNode b: Second node.
+        :param kwargs: Additional implementation-specific arguments.
+        :return bool: True if the nodes are statistically different, False otherwise.
+        """
         pass
 
 
 class HoeffdingCompatibility(CompatibilityChecker):
-    def __init__(self, eps):
+    """
+    Compatibility checker based on the Hoeffding bound, comparing observed output frequency distributions of two
+    FPTA nodes.
+    """
+
+    def __init__(self, eps: float) -> None:
+        """
+        Creates a Hoeffding-bound-based compatibility checker.
+
+        :param float eps: Epsilon value controlling the strictness of the Hoeffding bound.
+        """
         self.eps = eps
         self.log_term = sqrt(0.5 * log(2 / self.eps))
 
-    def hoeffding_bound(self, a: dict, b: dict):
+    def hoeffding_bound(self, a: dict, b: dict) -> bool:
+        """
+        Checks whether two output frequency distributions differ by more than the Hoeffding bound.
+
+        :param dict a: Frequency distribution of the first node.
+        :param dict b: Frequency distribution of the second node.
+        :return bool: True if the distributions differ by more than the Hoeffding bound, False otherwise.
+        """
         n1 = sum(a.values())
         n2 = sum(b.values())
 
@@ -33,7 +63,16 @@ class HoeffdingCompatibility(CompatibilityChecker):
                 return True
         return False
 
-    def are_states_different(self, a: AlergiaPtaNode, b: AlergiaPtaNode, **kwargs):
+    def are_states_different(self, a: AlergiaPtaNode, b: AlergiaPtaNode, **kwargs) -> bool:
+        """
+        Checks whether two FPTA nodes are statistically different based on the Hoeffding bound, conditioned on
+        inputs in the IOAlergia case.
+
+        :param AlergiaPtaNode a: First node.
+        :param AlergiaPtaNode b: Second node.
+        :param kwargs: Unused, present for interface compatibility.
+        :return bool: True if the nodes are statistically different, False otherwise.
+        """
 
         # no data available for any node
         if len(a.original_input_frequency) * len(b.original_children) == 0:

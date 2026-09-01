@@ -1,7 +1,9 @@
+# Equivalence oracle that performs random walks with a per-step reset probability.
 import random
 
 from aalpy.automata import Onfsm, Mdp, StochasticMealyMachine
 from aalpy.base import Oracle, SUL
+from aalpy.base.Automaton import Automaton
 
 automaton_dict = {Onfsm: 'onfsm', Mdp: 'mdp', StochasticMealyMachine: 'smm'}
 
@@ -12,20 +14,17 @@ class RandomWalkEqOracle(Oracle):
     that the system will reset and a new query asked.
     """
 
-    def __init__(self, alphabet: list, sul: SUL, num_steps=5000, reset_after_cex=True, reset_prob=0.09):
+    def __init__(self, alphabet: list, sul: SUL, num_steps: int = 5000, reset_after_cex: bool = True,
+                 reset_prob: float = 0.09) -> None:
         """
+        Constructs the oracle.
 
-        Args:
-            alphabet: input alphabet
-
-            sul: system under learning
-
-            num_steps: number of steps to be preformed
-
-            reset_after_cex: if true, num_steps will be preformed after every counter example, else the total number
-                or steps will equal to num_steps
-
-            reset_prob: probability that the new query will be asked
+        :param list alphabet: Input alphabet.
+        :param SUL sul: System under learning.
+        :param int num_steps: Number of steps to be performed.
+        :param bool reset_after_cex: If true, num_steps will be performed after every counterexample, else the
+            total number of steps will equal num_steps.
+        :param float reset_prob: Probability that a new query will be asked after each step.
         """
 
         super().__init__(alphabet, sul)
@@ -35,7 +34,14 @@ class RandomWalkEqOracle(Oracle):
         self.random_steps_done = 0
         self.automata_type = None
 
-    def find_cex(self, hypothesis):
+    def find_cex(self, hypothesis: Automaton) -> tuple | list | None:
+        """
+        Performs a random walk, resetting probabilistically, until a counterexample is found or the step limit
+        is reached.
+
+        :param Automaton hypothesis: Current hypothesis.
+        :return tuple | list | None: Counterexample inputs, None if no counterexample is found.
+        """
         if not self.automata_type:
             self.automata_type = automaton_dict.get(type(hypothesis), 'det')
 
@@ -85,6 +91,9 @@ class RandomWalkEqOracle(Oracle):
 
         return None
 
-    def reset_counter(self):
+    def reset_counter(self) -> None:
+        """
+        Resets the count of random steps performed since the last reset/counterexample.
+        """
         if self.reset_after_cex:
             self.random_steps_done = 0

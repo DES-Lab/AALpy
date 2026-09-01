@@ -1,7 +1,9 @@
+# Miscellaneous helper functions used across learning algorithms, oracles and utilities.
 import random
 import string
 from itertools import product
 from collections import defaultdict
+from typing import Any
 
 from aalpy import Mdp, MarkovChain, McState, MooreMachine, Dfa, DfaState
 
@@ -10,12 +12,10 @@ def extend_set(list_to_extend: list, new_elements: list) -> list:
     """
     Helper function to extend a list while maintaining set property.
     They are stored as lists, so with this function set property is maintained.
-    :return
 
-    Returns:
-
-        list of elements that were added to the set
-
+    :param list list_to_extend: List that is extended in place.
+    :param list new_elements: Elements to add if not already present.
+    :return list: List of elements that were added to the set.
     """
     set_repr = set(list_to_extend)
     added_elements = [s for s in new_elements if s not in set_repr]
@@ -23,43 +23,32 @@ def extend_set(list_to_extend: list, new_elements: list) -> list:
     return added_elements
 
 
-def all_prefixes(li):
+def all_prefixes(li: list) -> list[tuple]:
     """
     Returns all prefixes of a list.
 
-    Args:
-      li: list from which to compute all prefixes
-
-    Returns:
-      list of all prefixes
-
+    :param list li: List from which to compute all prefixes.
+    :return list[tuple]: List of all prefixes.
     """
     return [tuple(li[:i + 1]) for i in range(len(li))]
 
 
-def all_suffixes(li):
+def all_suffixes(li: list) -> list[tuple]:
     """
     Returns all suffixes of a list.
 
-    Args:
-      li: list from which to compute all suffixes
-
-    Returns:
-      list of all suffixes
-
+    :param list li: List from which to compute all suffixes.
+    :return list[tuple]: List of all suffixes.
     """
     return [tuple(li[len(li) - i - 1:]) for i in range(len(li))]
 
 
-def profile_function(function: callable, sort_key='cumtime'):
+def profile_function(function: callable, sort_key: str = 'cumtime') -> None:
     """
+    Profiles a callable and prints the profiling results.
 
-    Args:
-      function: callable: 
-      sort_key:  (Default value = 'cumtime')
-
-    Returns:
-        prints the profiling results
+    :param callable function: Callable to profile.
+    :param str sort_key: Key used to sort the profiling statistics (Default value = 'cumtime').
     """
     import cProfile
     pr = cProfile.Profile()
@@ -69,25 +58,23 @@ def profile_function(function: callable, sort_key='cumtime'):
     pr.print_stats(sort=sort_key)
 
 
-def random_string_generator(size=10, chars=string.ascii_lowercase + string.digits):
+def random_string_generator(size: int = 10, chars: str = string.ascii_lowercase + string.digits) -> str:
     """
+    Generates a random string.
 
-    Args:
-
-      size:  (Default value = 10)
-      chars:  (Default value = string.ascii_lowercase + string.digits)
-
-    Returns:
-
-        a random string of length size
+    :param int size: Length of the generated string (Default value = 10).
+    :param str chars: Pool of characters to choose from (Default value = string.ascii_lowercase + string.digits).
+    :return str: A random string of length size.
     """
     import random
     return ''.join(random.choice(chars) for _ in range(size))
 
 
-def print_learning_info(info: dict):
+def print_learning_info(info: dict[str, Any]) -> None:
     """
     Print learning statistics.
+
+    :param dict[str, Any] info: Dictionary of learning statistics as produced by a learning algorithm's info dict.
     """
     print('-----------------------------------')
     print('Learning Finished.')
@@ -112,15 +99,12 @@ def print_learning_info(info: dict):
     print('-----------------------------------')
 
 
-def print_observation_table(ot, table_type):
+def print_observation_table(ot: Any, table_type: str) -> None:
     """
     Prints the whole observation table.
 
-    Args:
-
-        ot: observation table
-        table_type: 'det', 'non-det', or 'stoc'
-
+    :param Any ot: Observation table.
+    :param str table_type: 'det', 'non-det', 'abstracted-non-det', or 'stoc'.
     """
     if table_type == 'det':
         s_set, extended_s, e_set, table = ot.S, ot.s_dot_a(), ot.E, ot.T
@@ -171,41 +155,41 @@ def print_observation_table(ot, table_type):
     print('-' * row_len)
 
 
-def is_suffix_of(suffix, trace) -> bool:
+def is_suffix_of(suffix: tuple, trace: tuple) -> bool:
     """
+    Checks whether a sequence is a suffix of another sequence.
 
-    Args:
-      suffix: target suffix
-      trace: trace in question
-
-    Returns:
-
-        True if suffix is the suffix of trace.
+    :param tuple suffix: Target suffix.
+    :param tuple trace: Trace in question.
+    :return bool: True if suffix is the suffix of trace.
     """
+    if len(suffix) == 0:
+        return True
     if len(trace) < len(suffix):
         return False
     else:
         return trace[-len(suffix):] == suffix
 
 
-def get_cex_prefixes(cex, automaton_type):
+def get_cex_prefixes(cex: tuple, automaton_type: str) -> list[tuple]:
     """
     Returns all prefixes of the stochastic automaton.
 
-    Args:
-        cex: counterexample
-        automaton_type: `mdp` or `smm`
-
-    Returns:
-
-        all prefixes of the counterexample based on the `automaton_type`
+    :param tuple cex: Counterexample.
+    :param str automaton_type: `mdp` or `smm`.
+    :return list[tuple]: All prefixes of the counterexample based on the `automaton_type`.
     """
     if automaton_type == 'mdp':
         return [tuple(cex[:i + 1]) for i in range(0, len(cex), 2)]
     return [tuple(cex[:i]) for i in range(0, len(cex) + 1, 2)]
 
 
-def get_available_oracles_and_err_msg():
+def get_available_oracles_and_err_msg() -> tuple[set, str]:
+    """
+    Looks up the equivalence oracles that are supported for non-deterministic and stochastic learning.
+
+    :return tuple[set, str]: Set of available oracle classes and a warning message describing the restriction.
+    """
     from aalpy.oracles import RandomWalkEqOracle
     from aalpy.oracles import RandomWordEqOracle
     available_oracles = {RandomWalkEqOracle, RandomWordEqOracle}
@@ -217,7 +201,7 @@ def get_available_oracles_and_err_msg():
     return available_oracles, available_oracles_msg
 
 
-def make_input_complete(automaton, missing_transition_go_to='self_loop'):
+def make_input_complete(automaton: Any, missing_transition_go_to: str = 'self_loop') -> Any:
     """
     Makes the automaton input complete/enabled. If a input is not defined in a state, it will lead to the self loop.
     In case of Mealy Machines, Stochastic Mealy machines and ONFSM 'epsilon' is used as output.
@@ -226,14 +210,9 @@ def make_input_complete(automaton, missing_transition_go_to='self_loop'):
     (Mealy machines and their derivatives), 'epsilon' is used as an output value. If a state has an output value,
     it is either False (in case of DFA) or 'sink_state' in case of Moore machines and its derivatives.
 
-    Args:
-
-        automaton: automaton that is potentially not input complete
-        missing_transition_go_to: either 'self_loop' or 'sink_state'.
-
-    Returns:
-
-        an input complete automaton
+    :param Any automaton: Automaton that is potentially not input complete.
+    :param str missing_transition_go_to: Either 'self_loop' or 'sink_state'.
+    :return Any: An input complete automaton.
     """
     from aalpy.base import DeterministicAutomaton
     from aalpy.automata import Dfa, MooreState, MealyMachine, Mdp, StochasticMealyMachine, Onfsm, \
@@ -279,11 +258,15 @@ def make_input_complete(automaton, missing_transition_go_to='self_loop'):
     return automaton
 
 
-def convert_i_o_traces_for_RPNI(sequences, automaton_type="mealy"):
+def convert_i_o_traces_for_RPNI(sequences: list, automaton_type: str = "mealy") -> list[tuple]:
     """
     Converts a list of input-output sequences to RPNI format.
     Eg. [[(1,'a'), (2,'b'), (3,'c')], [(6,'7'), (4,'e'), (3,'c')]] to
     [((1,), 'a'), ((1, 2), 'b'), ((1, 2, 3), 'c'), ((6,), '7'), ((6, 4), 'e'), ((6, 4, 3), 'c')]
+
+    :param list sequences: List of input-output traces.
+    :param str automaton_type: Either "mealy", "moore" or "dfa".
+    :return list[tuple]: List of (input_sequence, output) pairs in RPNI format.
     """
     rpni_sequences = []
     seen = set()
@@ -309,7 +292,12 @@ def convert_i_o_traces_for_RPNI(sequences, automaton_type="mealy"):
     return rpni_sequences
 
 
-def visualize_classification_tree(root_node):
+def visualize_classification_tree(root_node: Any) -> None:
+    """
+    Visualizes a classification tree and writes it to a PDF file.
+
+    :param Any root_node: Root node of the classification tree.
+    """
     from pydot import Dot, Node, Edge
 
     graph = Dot('classification_tree', graph_type='digraph')
@@ -336,7 +324,14 @@ def visualize_classification_tree(root_node):
     graph.write(path='classification_tree.pdf', format='pdf')
 
 
-def is_balanced(input_seq, vpa_alphabet):
+def is_balanced(input_seq: list, vpa_alphabet: Any) -> bool:
+    """
+    Checks whether an input sequence is balanced with respect to a VPA alphabet's call/return symbols.
+
+    :param list input_seq: Input sequence to check.
+    :param Any vpa_alphabet: VPA alphabet, exposing call_alphabet and return_alphabet.
+    :return bool: True if the sequence is balanced, False otherwise.
+    """
     counter = 0
     for i in input_seq:
         if i in vpa_alphabet.call_alphabet:
@@ -348,8 +343,18 @@ def is_balanced(input_seq, vpa_alphabet):
     return counter == 0
 
 
-def generate_input_output_data_from_automata(model, num_sequences=4000, min_seq_len=1, max_seq_len=16,
-                                             sequance_type='io_traces'):
+def generate_input_output_data_from_automata(model: Any, num_sequences: int = 4000, min_seq_len: int = 1,
+                                             max_seq_len: int = 16, sequance_type: str = 'io_traces') -> list:
+    """
+    Generates random input-output data by executing random input sequences on an automaton.
+
+    :param Any model: Automaton from which the data is generated.
+    :param int num_sequences: Number of sequences to generate.
+    :param int min_seq_len: Minimum sequence length.
+    :param int max_seq_len: Maximum sequence length.
+    :param str sequance_type: Either 'io_traces' or 'labeled_sequences'.
+    :return list: The generated dataset.
+    """
     assert sequance_type in {'io_traces', 'labeled_sequences'}
 
     alphabet = model.get_input_alphabet()
@@ -371,7 +376,18 @@ def generate_input_output_data_from_automata(model, num_sequences=4000, min_seq_
     return dataset
 
 
-def generate_input_output_data_from_vpa(vpa, num_sequences=1000, max_seq_len=16, max_attempts=None):
+def generate_input_output_data_from_vpa(vpa: Any, num_sequences: int = 1000, max_seq_len: int = 16,
+                                        max_attempts: int | None = None) -> list[tuple]:
+    """
+    Generates random input-output data by executing random (mostly balanced) input sequences on a VPA.
+
+    :param Any vpa: Visibly pushdown automaton from which the data is generated.
+    :param int num_sequences: Number of sequences to generate.
+    :param int max_seq_len: Maximum sequence length.
+    :param int | None max_attempts: Maximum number of generation attempts before giving up (Default value = None,
+        meaning num_sequences * 50).
+    :return list[tuple]: List of (input_sequence, output) pairs.
+    """
     alphabet = vpa.input_alphabet.get_merged_alphabet()
     data_set, in_set = [], set()
 
@@ -411,15 +427,25 @@ def generate_input_output_data_from_vpa(vpa, num_sequences=1000, max_seq_len=16,
     return data_set
 
 
-def product_with_possible_empty_iterable(*iterables, repeat=1):
+def product_with_possible_empty_iterable(*iterables: Any, repeat: int = 1) -> product:
     """
     Words like regular product, but if one of the iterables is empty it will just ignore it, instead of returning [].
+
+    :param Any iterables: Iterables to compute the product of.
+    :param int repeat: Number of times to repeat the product computation.
+    :return product: Cartesian product of the non-empty iterables.
     """
     non_empty_iterables = [it for it in iterables if it]
     return product(*non_empty_iterables, repeat=repeat)
 
 
 def dfa_from_moore(moore_model: MooreMachine) -> Dfa:
+    """
+    Converts a Moore machine with a Boolean (or None) output domain to a DFA.
+
+    :param MooreMachine moore_model: Moore machine to convert.
+    :return Dfa: The equivalent DFA.
+    """
     dfa_state_map = dict()
     # define states
     for moore_state in moore_model.states:
@@ -439,7 +465,15 @@ def dfa_from_moore(moore_model: MooreMachine) -> Dfa:
     initial_state = dfa_state_map[moore_model.initial_state.state_id]
     return Dfa(initial_state, list(dfa_state_map.values()))
 
-def mc_from_mdp(mdp: Mdp, input_symbol=None) -> MarkovChain:
+def mc_from_mdp(mdp: Mdp, input_symbol: Any = None) -> MarkovChain:
+    """
+    Converts an MDP with a single (or explicitly chosen) input symbol to a Markov chain.
+
+    :param Mdp mdp: MDP to convert.
+    :param Any input_symbol: Input symbol to use for the conversion (Default value = None, meaning the MDP's only
+        input symbol is used).
+    :return MarkovChain: The equivalent Markov chain.
+    """
     alphabet = mdp.get_input_alphabet()
     if len(alphabet) != 1 and input_symbol is None:
         raise ValueError('Cannot convert MDP with several inputs to Markov chain.')
@@ -456,8 +490,14 @@ def mc_from_mdp(mdp: Mdp, input_symbol=None) -> MarkovChain:
     initial_state = state_map[mdp.initial_state.state_id]
     return MarkovChain(initial_state, list(state_map.values()))
 
-def mc_format_to_mdp(data):
-    # a hack to learn MC's with GSM -> treat them as MDP with a single input
+def mc_format_to_mdp(data: list) -> list:
+    """
+    Converts Markov chain formatted data to MDP format by treating it as an MDP with a single input.
+    a hack to learn MC's with GSM -> treat them as MDP with a single input
+
+    :param list data: List of Markov chain sequences.
+    :return list: List of sequences reformatted as MDP input-output sequences.
+    """
     augmented_data = []
     for sequence in data:
         new_sequence = [sequence[0]]

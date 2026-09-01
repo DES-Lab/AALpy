@@ -1,16 +1,21 @@
+# Equivalence oracles based on the Wp-method and its randomized variant.
 import random
+from collections.abc import Iterator
+
 from aalpy.base.Oracle import Oracle
 from aalpy.base.SUL import SUL
+from aalpy.base.Automaton import Automaton, AutomatonState
 from itertools import chain, product
 
 
-def state_characterization_set(hypothesis, alphabet, state):
+def state_characterization_set(hypothesis: Automaton, alphabet: list, state: AutomatonState) -> list[tuple]:
     """
-    Return a list of sequences that distinguish the given state from all other states in the hypothesis.
-    Args:
-        hypothesis: hypothesis automaton
-        alphabet: input alphabet
-        state: state for which to find distinguishing sequences
+    Returns a list of sequences that distinguish the given state from all other states in the hypothesis.
+
+    :param Automaton hypothesis: Hypothesis automaton.
+    :param list alphabet: Input alphabet.
+    :param AutomatonState state: State for which to find distinguishing sequences.
+    :return list[tuple]: List of distinguishing sequences.
     """
     result = []
     for i in range(len(hypothesis.states)):
@@ -22,14 +27,15 @@ def state_characterization_set(hypothesis, alphabet, state):
     return result
 
 
-def first_phase_it(alphabet, state_cover, depth, char_set):
+def first_phase_it(alphabet: list, state_cover: set, depth: int, char_set: list) -> Iterator[tuple]:
     """
-    Return an iterator that generates all possible sequences for the first phase of the Wp-method.
-    Args:
-        alphabet: input alphabet
-        state_cover: list of states to cover
-        depth: maximum length of middle part
-        char_set: characterization set
+    Returns an iterator that generates all possible sequences for the first phase of the Wp-method.
+
+    :param list alphabet: Input alphabet.
+    :param set state_cover: Set of state prefixes to cover.
+    :param int depth: Maximum length of middle part.
+    :param list char_set: Characterization set.
+    :return Iterator[tuple]: Iterator of generated test sequences.
     """
     char_set = char_set or [()]
     for d in range(depth):
@@ -40,14 +46,15 @@ def first_phase_it(alphabet, state_cover, depth, char_set):
                     yield s + m + c
 
 
-def second_phase_it(hyp, alphabet, difference, depth):
+def second_phase_it(hyp: Automaton, alphabet: list, difference: set, depth: int) -> Iterator[tuple]:
     """
-    Return an iterator that generates all possible sequences for the second phase of the Wp-method.
-    Args:
-        hyp: hypothesis automaton
-        alphabet: input alphabet
-        difference: set of sequences that are in the transition cover but not in the state cover
-        depth: maximum length of middle part
+    Returns an iterator that generates all possible sequences for the second phase of the Wp-method.
+
+    :param Automaton hyp: Hypothesis automaton.
+    :param list alphabet: Input alphabet.
+    :param set difference: Set of sequences that are in the transition cover but not in the state cover.
+    :param int depth: Maximum length of middle part.
+    :return Iterator[tuple]: Iterator of generated test sequences.
     """
     state_mapping = {}
     for d in range(depth):
@@ -68,12 +75,25 @@ class WpMethodEqOracle(Oracle):
     Implements the Wp-method equivalence oracle.
     """
 
-    def __init__(self, alphabet: list, sul: SUL, max_number_of_states=4):
+    def __init__(self, alphabet: list, sul: SUL, max_number_of_states: int = 4) -> None:
+        """
+        Constructs the oracle.
+
+        :param list alphabet: Input alphabet.
+        :param SUL sul: System under learning.
+        :param int max_number_of_states: Maximum number of states in the automaton.
+        """
         super().__init__(alphabet, sul)
         self.m = max_number_of_states
         self.cache = set()
 
-    def find_cex(self, hypothesis):
+    def find_cex(self, hypothesis: Automaton) -> tuple | None:
+        """
+        Runs the Wp-method test suite (first and second phase) against the SUL until a counterexample is found.
+
+        :param Automaton hypothesis: Current hypothesis.
+        :return tuple | None: Counterexample inputs, None if no counterexample is found.
+        """
         if not hypothesis.characterization_set:
             hypothesis.characterization_set = hypothesis.compute_characterization_set()
 
@@ -124,13 +144,29 @@ class RandomWpMethodEqOracle(Oracle):
     """
 
     def __init__(
-        self, alphabet: list, sul: SUL, min_length=1, expected_length=10, num_tests=1000,):
+        self, alphabet: list, sul: SUL, min_length: int = 1, expected_length: int = 10,
+            num_tests: int = 1000,) -> None:
+        """
+        Constructs the oracle.
+
+        :param list alphabet: Input alphabet.
+        :param SUL sul: System under learning.
+        :param int min_length: Minimum length of the random middle part.
+        :param int expected_length: Expected length of the random middle part (geometric distribution parameter).
+        :param int num_tests: Number of random tests to perform.
+        """
         super().__init__(alphabet, sul)
         self.min_length = min_length
         self.expected_length = expected_length
         self.bound = num_tests
 
-    def find_cex(self, hypothesis):
+    def find_cex(self, hypothesis: Automaton) -> tuple | None:
+        """
+        Samples random tests (prefix + random word + suffix) until a counterexample is found.
+
+        :param Automaton hypothesis: Current hypothesis.
+        :return tuple | None: Counterexample inputs, None if no counterexample is found.
+        """
         # fix for non-minimal intermediate hypothesis that can occur in KV
         hypothesis.characterization_set = hypothesis.compute_characterization_set()
         if not hypothesis.characterization_set:

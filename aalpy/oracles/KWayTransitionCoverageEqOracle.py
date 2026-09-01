@@ -1,4 +1,6 @@
+# Equivalence oracle that selects test cases based on k-way transition coverage.
 from collections import namedtuple
+from collections.abc import Iterator
 from itertools import product
 from random import choices, randint, random
 
@@ -20,25 +22,27 @@ class KWayTransitionCoverageEqOracle(Oracle):
                  max_path_len: int = 50,
                  max_number_of_steps: int = 0,
                  optimize: str = 'steps',
-                 random_walk_len=10,
-                 num_test_lower_bound=None,
-                 num_test_upper_bound=None,
-                 ):
+                 random_walk_len: int = 10,
+                 num_test_lower_bound: int | None = None,
+                 num_test_upper_bound: int | None = None,
+                 ) -> None:
         """
-        Args:
+        Constructs the oracle.
 
-            alphabet: input alphabet
-            sul: system under learning
-            k: k value used for K-Way transitions, i.e the number of steps between the start and the end of a transition
-            method: defines how the queries are generated 'random' or 'prefix'
-            num_generate_paths: number of random queries used to find the optimal subset
-            max_path_len: the maximum step size of a generated path
-            max_number_of_steps: maximum number of steps that will be executed on the SUL (0 = no limit)
-            optimize: minimize either the number of  'steps' or 'queries' that are executed
-            random_walk_len: the number of steps that are added by 'prefix' generated paths
-            num_test_lower_bound= either None or number a minimum number of test-cases to be performed in each testing round
-            num_test_upper_bound= either None or number a maximum number of test-cases to be performed in each testing round
-
+        :param list alphabet: Input alphabet.
+        :param SUL sul: System under learning.
+        :param int k: k value used for K-Way transitions, i.e the number of steps between the start and the end of
+            a transition.
+        :param str method: Defines how the queries are generated, 'random' or 'prefix'.
+        :param int num_generate_paths: Number of random queries used to find the optimal subset.
+        :param int max_path_len: The maximum step size of a generated path.
+        :param int max_number_of_steps: Maximum number of steps that will be executed on the SUL (0 = no limit).
+        :param str optimize: Minimize either the number of 'steps' or 'queries' that are executed.
+        :param int random_walk_len: The number of steps that are added by 'prefix' generated paths.
+        :param int | None num_test_lower_bound: Either None or a minimum number of test-cases to be performed in
+            each testing round.
+        :param int | None num_test_upper_bound: Either None or a maximum number of test-cases to be performed in
+            each testing round.
         """
         super().__init__(alphabet, sul)
         assert k >= 2
@@ -61,7 +65,13 @@ class KWayTransitionCoverageEqOracle(Oracle):
 
         self.cached_paths = list()
 
-    def find_cex(self, hypothesis: Automaton):
+    def find_cex(self, hypothesis: Automaton) -> tuple | list | None:
+        """
+        Generates paths covering k-way transitions and executes them until a counterexample is found.
+
+        :param Automaton hypothesis: Current hypothesis.
+        :return tuple | list | None: Counterexample inputs, None if no counterexample is found.
+        """
         if self.method == 'random':
             paths = self.generate_random_paths(hypothesis) + self.cached_paths
             self.cached_paths = self.greedy_set_cover(hypothesis, paths)
@@ -111,7 +121,14 @@ class KWayTransitionCoverageEqOracle(Oracle):
 
         return None
 
-    def greedy_set_cover(self, hypothesis: Automaton, paths: list):
+    def greedy_set_cover(self, hypothesis: Automaton, paths: list) -> list:
+        """
+        Greedily selects a subset of paths that covers as many k-way transitions as possible.
+
+        :param Automaton hypothesis: Current hypothesis.
+        :param list paths: Candidate paths to choose from.
+        :return list: Selected subset of paths achieving (close to) full k-way transition coverage.
+        """
         result = list()
         covered = set()
         step_count = 0
@@ -135,7 +152,14 @@ class KWayTransitionCoverageEqOracle(Oracle):
 
         return result
 
-    def select_optimal_path(self, covered: set, paths: list) -> Path:
+    def select_optimal_path(self, covered: set, paths: list) -> Path | None:
+        """
+        Selects the path that contributes the most new coverage among the candidates.
+
+        :param set covered: Set of k-way transitions already covered.
+        :param list paths: Candidate paths to choose from.
+        :return Path | None: The path that adds the most new coverage, None if no path adds any.
+        """
         result = None
 
         if self.optimize == 'steps':
@@ -148,6 +172,12 @@ class KWayTransitionCoverageEqOracle(Oracle):
         return result if len(result.kWayTransitions - covered) != 0 else None
 
     def generate_random_paths(self, hypothesis: Automaton) -> list:
+        """
+        Generates a batch of random-length paths of random inputs.
+
+        :param Automaton hypothesis: Current hypothesis.
+        :return list: List of generated Path instances.
+        """
         result = list()
 
         for _ in range(self.num_generate_paths):
@@ -158,13 +188,26 @@ class KWayTransitionCoverageEqOracle(Oracle):
 
         return result
 
-    def generate_prefix_steps(self, hypothesis: Automaton):
+    def generate_prefix_steps(self, hypothesis: Automaton) -> Iterator[tuple]:
+        """
+        Yields paths built from each state's prefix, followed by all k-length continuations, and a random walk.
+
+        :param Automaton hypothesis: Current hypothesis.
+        :return Iterator[tuple]: Iterator of generated input sequences.
+        """
         for state in reversed(hypothesis.states):
             prefix = state.prefix
             for steps in sorted(product(self.alphabet, repeat=self.k), key=lambda k: random()):
                 yield prefix + steps + tuple(choices(self.alphabet, k=self.random_walk_len))
 
     def create_path(self, hypothesis: Automaton, steps: tuple) -> Path:
+        """
+        Executes the given steps on the hypothesis and records the k-way transitions it covers.
+
+        :param Automaton hypothesis: Current hypothesis.
+        :param tuple steps: Input sequence to execute on the hypothesis.
+        :return Path: The path with its start/end states, steps, and covered k-way transitions.
+        """
         transitions = set()
         transitions_log = list()
 
@@ -190,7 +233,14 @@ class KWayTransitionCoverageEqOracle(Oracle):
 
         return Path(hypothesis.initial_state, end_states[-1], steps, transitions, transitions_log)
 
-    def check_path(self, hypothesis: Automaton, steps: tuple):
+    def check_path(self, hypothesis: Automaton, steps: tuple) -> tuple | None:
+        """
+        Executes an input sequence step by step on both SUL and hypothesis, checking for output divergence.
+
+        :param Automaton hypothesis: Current hypothesis.
+        :param tuple steps: Input sequence to execute.
+        :return tuple | None: Counterexample inputs (prefix of steps), None if no counterexample is found.
+        """
         self.reset_hyp_and_sul(hypothesis)
 
         for i, s in enumerate(steps):

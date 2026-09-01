@@ -1,7 +1,9 @@
+# Equivalence oracle that performs full-reset random walks of random length in a predefined range.
 from statistics import mean
 
 from aalpy.automata import Onfsm, Mdp, StochasticMealyMachine
 from aalpy.base import Oracle, SUL
+from aalpy.base.Automaton import Automaton
 from random import randint, choice
 
 automaton_dict = {Onfsm: 'onfsm', Mdp: 'mdp', StochasticMealyMachine: 'smm'}
@@ -12,22 +14,18 @@ class RandomWordEqOracle(Oracle):
     Equivalence oracle where queries are of random length in a predefined range.
     """
 
-    def __init__(self, alphabet: list, sul: SUL, num_walks=500, min_walk_len=10, max_walk_len=30,
-                 reset_after_cex=True):
+    def __init__(self, alphabet: list, sul: SUL, num_walks: int = 500, min_walk_len: int = 10,
+                 max_walk_len: int = 30, reset_after_cex: bool = True) -> None:
         """
-        Args:
-            alphabet: input alphabet
+        Constructs the oracle.
 
-            sul: system under learning
-
-            num_walks: number of walks to perform during search for cex
-
-            min_walk_len: minimum length of each walk
-
-            max_walk_len: maximum length of each walk
-
-            reset_after_cex: if True, num_walks will be preformed after every counter example, else the total number
-                or walks will equal to num_walks
+        :param list alphabet: Input alphabet.
+        :param SUL sul: System under learning.
+        :param int num_walks: Number of walks to perform during search for a counterexample.
+        :param int min_walk_len: Minimum length of each walk.
+        :param int max_walk_len: Maximum length of each walk.
+        :param bool reset_after_cex: If True, num_walks will be performed after every counterexample, else the
+            total number of walks will equal num_walks.
         """
 
         super().__init__(alphabet, sul)
@@ -40,7 +38,14 @@ class RandomWordEqOracle(Oracle):
 
         self.walk_lengths = [randint(min_walk_len, max_walk_len) for _ in range(num_walks)]
 
-    def find_cex(self, hypothesis):
+    def find_cex(self, hypothesis: Automaton) -> tuple | list | None:
+        """
+        Performs random-length walks from the initial state until a counterexample is found or num_walks is
+        reached.
+
+        :param Automaton hypothesis: Current hypothesis.
+        :return tuple | list | None: Counterexample inputs, None if no counterexample is found.
+        """
         if not self.automata_type:
             self.automata_type = automaton_dict.get(type(hypothesis), 'det')
 
@@ -94,6 +99,9 @@ class RandomWordEqOracle(Oracle):
 
         return None
 
-    def reset_counter(self):
+    def reset_counter(self) -> None:
+        """
+        Resets the count of walks performed since the last reset/counterexample.
+        """
         if self.reset_after_cex:
             self.num_walks_done = 0

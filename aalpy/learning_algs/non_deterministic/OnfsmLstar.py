@@ -1,5 +1,7 @@
+# L*-based active learning algorithm for observable non-deterministic finite state machines (ONFSMs).
 import time
 
+from aalpy.automata import Onfsm, StochasticMealyMachine
 from aalpy.base import SUL, Oracle
 from aalpy.learning_algs.non_deterministic.NonDeterministicSULWrapper import NonDeterministicSULWrapper
 from aalpy.learning_algs.non_deterministic.OnfsmObservationTable import NonDetObservationTable
@@ -11,39 +13,31 @@ print_options = [0, 1, 2, 3]
 available_oracles, available_oracles_error_msg = get_available_oracles_and_err_msg()
 
 
-def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=5, samples=None, stochastic=False,
-                      max_learning_rounds=None, return_data=False, print_level=2):
+def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling: int = 5,
+                       samples: list[tuple[tuple, tuple]] | None = None, stochastic: bool = False,
+                       max_learning_rounds: int | None = None, return_data: bool = False,
+                       print_level: int = 2) -> Onfsm | StochasticMealyMachine | tuple[Onfsm | StochasticMealyMachine, dict]:
     """
     A ONFSM learning algorithm that does not rely on all weather assumption (once an input is queried, all possible
     outputs are observed).
 
-    Args:
-
-        alphabet: input alphabet
-
-        sul: system under learning
-
-        eq_oracle: equivalence oracle
-
-        n_sampling: number of times that each cell has to be updated. If this number is to low, all-weather condition
-            will not hold and learning will not converge to the correct model. (Default value = 50)
-
-        samples: input output sequences provided to learning algorithm. List of ((input sequence), (output sequence)).
-
-        stochastic: if True, non deterministic learning will be performed but probabilities will be added to the
-        returned model, making it a stochastic Mealy machine
-
-        max_learning_rounds: if max_learning_rounds is reached, learning will stop (Default value = None)
-
-        return_data: if True, map containing all information like number of queries... will be returned
-            (Default value = False)
-
-        print_level: 0 - None, 1 - just results, 2 - current round and hypothesis size, 3 - educational/debug
-            (Default value = 2)
-
-    Returns:
-        learned ONFSM
-
+    :param list alphabet: Input alphabet.
+    :param SUL sul: System under learning.
+    :param Oracle eq_oracle: Equivalence oracle.
+    :param int n_sampling: Number of times that each cell has to be updated. If this number is too low, all-weather
+        condition will not hold and learning will not converge to the correct model. (Default value = 5)
+    :param list[tuple[tuple, tuple]] | None samples: Input output sequences provided to learning algorithm. List of
+        ((input sequence), (output sequence)).
+    :param bool stochastic: If True, non deterministic learning will be performed but probabilities will be added to
+        the returned model, making it a stochastic Mealy machine.
+    :param int | None max_learning_rounds: If max_learning_rounds is reached, learning will stop (Default value =
+        None).
+    :param bool return_data: If True, map containing all information like number of queries... will be returned
+        (Default value = False).
+    :param int print_level: 0 - None, 1 - just results, 2 - current round and hypothesis size, 3 -
+        educational/debug (Default value = 2).
+    :return Onfsm | StochasticMealyMachine | tuple[Onfsm | StochasticMealyMachine, dict]: Learned ONFSM, or a
+        (learned ONFSM, learning info) pair if return_data is True.
     """
 
     start_time = time.time()
@@ -139,7 +133,14 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling=5,
     return hypothesis
 
 
-def counterexample_not_valid(hypothesis, cex):
+def counterexample_not_valid(hypothesis: Onfsm, cex: tuple[list, list] | None) -> bool:
+    """
+    Checks whether a previously found counterexample is still valid (not yet covered) against the given hypothesis.
+
+    :param Onfsm hypothesis: Current hypothesis.
+    :param tuple[list, list] | None cex: (inputs, outputs) counterexample to check, or None.
+    :return bool: True if there is no counterexample or the hypothesis already covers it, False otherwise.
+    """
     if cex is None:
         return True
     hypothesis.reset_to_initial()

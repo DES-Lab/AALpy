@@ -1,10 +1,13 @@
+# Resetless hW active automata learning algorithm (Groz et al.), plus its top-level entry point run_hW.
 import time
 from collections import deque
+from typing import Any
 
 from aalpy.automata import MealyState, MealyMachine, MooreState, MooreMachine
+from aalpy.base import Automaton, SUL
 from aalpy.utils.HelperFunctions import all_suffixes, print_learning_info
 from .hW_datastructures import ModelState, HomingSequenceIndex
-from .resetless_oracles import find_counterexample_in_trace
+from .resetless_oracles import hWOracle, find_counterexample_in_trace
 
 
 class hW:
@@ -24,12 +27,23 @@ class hW:
       all pairs that diverged in the same check
     """
 
-    def __init__(self, input_al, sul,
-                 automaton_type,
-                 eq_oracle,
-                 query_for_initial_state=False,
-                 H=None,
-                 W=None):
+    def __init__(self, input_al: list, sul: SUL,
+                 automaton_type: str,
+                 eq_oracle: hWOracle,
+                 query_for_initial_state: bool = False,
+                 H: tuple | None = None,
+                 W: list | None = None) -> None:
+        """
+        Creates the hW learner and performs the initial SUL reset/W setup.
+
+        :param list input_al: input alphabet.
+        :param SUL sul: system under learning.
+        :param str automaton_type: type of automaton to be learned, either 'mealy' or 'moore'.
+        :param hWOracle eq_oracle: resetless equivalence oracle used during the learning rounds.
+        :param bool query_for_initial_state: if True, query the SUL to identify the true initial state.
+        :param tuple | None H: optional user-provided homing sequence.
+        :param list | None W: optional user-provided characterization set.
+        """
 
         assert automaton_type in ('mealy', 'moore')
         self.is_moore = automaton_type == 'moore'
@@ -71,16 +85,26 @@ class hW:
             self.add_h_to_W()
 
     @staticmethod
-    def _unwrap_output(output):
-        """Unpack 1-element output tuples returned by some SULs."""
+    def _unwrap_output(output: Any) -> Any:
+        """
+        Unpack 1-element output tuples returned by some SULs.
+
+        :param Any output: output as returned by the SUL.
+        :return Any: unwrapped output.
+        """
         if isinstance(output, tuple) and len(output) == 1:
             return output[0]
         return output
 
-    def add_to_W(self, sequence, preserve_h=True):
+    def add_to_W(self, sequence: tuple, preserve_h: bool = True) -> bool:
         """
         Add a sequence to W and drop its proper prefixes (h and the Moore empty
-        suffix are always kept). Returns True if W changed.
+        suffix are always kept).
+
+        :param tuple sequence: sequence to add to W.
+        :param bool preserve_h: if True, the current homing sequence is kept in W even if it is a proper prefix
+            of sequence.
+        :return bool: True if W changed.
         """
         sequence = tuple(sequence)
         if sequence in self.W:
@@ -96,8 +120,12 @@ class hW:
         ]
         return True
 
-    def add_h_to_W(self):
-        """Ensure h (or an extension of it) is part of W."""
+    def add_h_to_W(self) -> bool:
+        """
+        Ensure h (or an extension of it) is part of W.
+
+        :return bool: True if W changed.
+        """
         h = self.homing_sequence
         if h in self.W:
             return False
@@ -105,15 +133,24 @@ class hW:
             return False
         return self.add_to_W(h, preserve_h=False)
 
-    def step_wrapper(self, letter):
-        """Single SUL step that is recorded in the global trace."""
+    def step_wrapper(self, letter: Any) -> Any:
+        """
+        Single SUL step that is recorded in the global trace.
+
+        :param Any letter: input executed on the SUL.
+        :return Any: output observed after executing the input.
+        """
         output = self._unwrap_output(self.sul.step(letter))
         self.global_trace.append((letter, output))
         self.sul.num_steps += 1
         return output
 
-    def execute_homing_sequence(self):
-        """Execute h, run the non-determinism check, and return the observed response."""
+    def execute_homing_sequence(self) -> tuple:
+        """
+        Execute h, run the non-determinism check, and return the observed response.
+
+        :return tuple: response observed for the homing sequence.
+        """
         response = tuple(self.step_wrapper(i) for i in self.homing_sequence)
         # a deliberate homing execution must always enter the h-ND index, even if it
         # overlaps an incidental occurrence registered just before it
@@ -121,35 +158,44 @@ class hW:
         self.check_h_ND_consistency(forced_cont_start=forced)
         return response
 
-    def execute_sequence(self, seq_under_test: tuple):
+    def execute_sequence(self, seq_under_test: tuple) -> tuple:
         """
         Execute a sequence and return its outputs. The empty sequence (Moore only)
         reads the current state output without moving the SUL.
+
+        :param tuple seq_under_test: sequence to execute.
+        :return tuple: outputs observed for the sequence.
         """
         if not seq_under_test and self.is_moore:
             return (self._unwrap_output(self.sul.step(None)),)
         return tuple(self.step_wrapper(i) for i in seq_under_test)
 
-    def _add_shortest_new_suffix_to_W(self, sequence):
+    def _add_shortest_new_suffix_to_W(self, sequence: tuple) -> bool:
         """
         Extend W with the shortest suffix of sequence not yet in W (the
-        counterexample processing rule). Returns True if W changed.
+        counterexample processing rule).
+
+        :param tuple sequence: sequence whose suffixes are candidates for extending W.
+        :return bool: True if W changed.
         """
         for s in sorted((tuple(s) for s in all_suffixes(sequence)), key=len):
             if self.add_to_W(s):
                 return True
         return False
 
-    def execute_conjecture_path(self, start_state, path):
+    def execute_conjecture_path(self, start_state: ModelState, path: tuple) -> tuple[ModelState, tuple] | None:
         """
         Walk path on the SUL while verifying outputs against the conjecture.
         On a mismatch, extend W with the failing prefix (or drop the stale transition
         data if the prefix is already in W) and return None.
-        Returns (reached state, observed outputs) on success.
 
         Adding the full prefix (instead of a suffix as for counterexamples) is
         deliberate: it benchmarks measurably better here, as the prefix starts at
         the very state pair that the conjecture confused.
+
+        :param ModelState start_state: conjecture state the path starts from.
+        :param tuple path: input sequence to walk.
+        :return tuple[ModelState, tuple] | None: (reached state, observed outputs) on success, None on a mismatch.
         """
         state = start_state
         observed_outputs = []
@@ -172,8 +218,12 @@ class hW:
             state = state.transitions[i]
         return state, tuple(observed_outputs)
 
-    def create_daisy_hypothesis(self):
-        """Single-state hypothesis with self-loops; its first counterexample seeds h."""
+    def create_daisy_hypothesis(self) -> Automaton:
+        """
+        Single-state hypothesis with self-loops; its first counterexample seeds h.
+
+        :return Automaton: single-state Mealy or Moore machine.
+        """
         if self.is_moore:
             state = MooreState('s0', output=self._unwrap_output(self.sul.step(None)))
         else:
@@ -189,10 +239,12 @@ class hW:
         mm.current_state = state
         return mm
 
-    def _reset_state_data(self, reset_h_index=False):
+    def _reset_state_data(self, reset_h_index: bool = False) -> None:
         """
         Discard the identified states. The h-ND index depends only on h, not on W,
         so W-driven resets keep it (preserving comparison progress and minable data).
+
+        :param bool reset_h_index: if True, also reset the incremental h-ND index.
         """
         self.state_map.clear()
         self.h_response_map.clear()
@@ -200,8 +252,12 @@ class hW:
         if reset_h_index:
             self.h_index.reset(len(self.global_trace))
 
-    def _all_states(self):
-        """All known states, complete and partial, without duplicates."""
+    def _all_states(self) -> list:
+        """
+        All known states, complete and partial, without duplicates.
+
+        :return list: list of ModelState instances.
+        """
         seen = set()
         states = []
         for state in list(self.state_map.values()) + list(self.h_response_map.values()):
@@ -210,11 +266,15 @@ class hW:
                 states.append(state)
         return states
 
-    def check_h_ND_consistency(self, forced_cont_start=None):
+    def check_h_ND_consistency(self, forced_cont_start: int | None = None) -> bool:
         """
         Detect non-determinism of h: two same-response h occurrences whose
         continuations agree on inputs but differ in outputs. On detection h is
         extended with the diverging input sequence and all state data is reset.
+
+        :param int | None forced_cont_start: continuation start that must be registered in the h-ND index
+            even if it would otherwise be skipped as self-overlapping.
+        :return bool: True if h is still consistent, False if it was extended.
         """
         extension = self.h_index.scan(self.global_trace, self.homing_sequence, forced_cont_start)
         if extension is None:
@@ -226,8 +286,12 @@ class hW:
         self.add_h_to_W()
         return False
 
-    def is_complete(self):
-        """True if every identified state has all transitions leading to identified states."""
+    def is_complete(self) -> bool:
+        """
+        True if every identified state has all transitions leading to identified states.
+
+        :return bool: True if the conjecture is complete.
+        """
         if not self.state_map:
             return False
         return all(
@@ -236,8 +300,13 @@ class hW:
             for i in self.input_alphabet
         )
 
-    def _first_missing_transition_query(self, state):
-        """First (input, w) pair whose response is not yet known for this state."""
+    def _first_missing_transition_query(self, state: ModelState) -> tuple | None:
+        """
+        First (input, w) pair whose response is not yet known for this state.
+
+        :param ModelState state: state to check.
+        :return tuple | None: (input, w) pair, or None if all responses are known.
+        """
         for i in self.input_alphabet:
             learned = state.learned_w_per_input[i]
             if len(learned) != len(self.W):
@@ -246,8 +315,13 @@ class hW:
                         return i, w
         return None
 
-    def _reachable_state_paths(self, start_state):
-        """(state, shortest input path) pairs for all states reachable in the conjecture."""
+    def _reachable_state_paths(self, start_state: ModelState) -> list:
+        """
+        (state, shortest input path) pairs for all states reachable in the conjecture.
+
+        :param ModelState start_state: state to start the search from.
+        :return list: list of (ModelState, tuple) pairs.
+        """
         queue = deque([(start_state, ())])
         visited = set()
         reachable = []
@@ -264,10 +338,12 @@ class hW:
 
         return reachable
 
-    def find_reachable_incomplete_transition(self, start_state):
+    def find_reachable_incomplete_transition(self, start_state: ModelState) -> tuple | None:
         """
-        Closest reachable state with an unknown (input, w) response, as
-        (path, state, input, w), or None if everything reachable is complete.
+        Closest reachable state with an unknown (input, w) response.
+
+        :param ModelState start_state: state to start the search from.
+        :return tuple | None: (path, state, input, w), or None if everything reachable is complete.
         """
         queue = deque([(start_state, ())])
         visited = set()
@@ -287,9 +363,15 @@ class hW:
 
         return None
 
-    def _simulate_from_state(self, state, sequence):
-        """Outputs and end state of running sequence through the conjecture, or
-        (None, ...) if the required data is not known yet."""
+    def _simulate_from_state(self, state: ModelState, sequence: tuple) -> tuple:
+        """
+        Outputs and end state of running sequence through the conjecture, or
+        (None, ...) if the required data is not known yet.
+
+        :param ModelState state: state to start simulating from.
+        :param tuple sequence: sequence to simulate.
+        :return tuple: (outputs, end_state), or (None, ...) if not known.
+        """
         if not sequence and self.is_moore:
             state_out = state.state_w_values.get(())
             if state_out is None:
@@ -303,19 +385,26 @@ class hW:
             state = state.transitions[i]
         return tuple(outputs), state
 
-    def _empty_suffix_response_after_h(self, h_response):
+    def _empty_suffix_response_after_h(self, h_response: tuple) -> tuple | None:
         """
         (Moore) The response to the empty suffix is the last output of h,
         so it comes for free with every homing.
+
+        :param tuple h_response: response observed for the homing sequence.
+        :return tuple | None: response to the empty suffix, or None if it cannot be derived for free.
         """
         if not self.is_moore or self.homing_sequence == ():
             return None
         return (h_response[-1],)
 
-    def _mine_h_w_response(self, hs_response, w):
+    def _mine_h_w_response(self, hs_response: tuple, w: tuple) -> tuple | None:
         """
         Recover the response to w after an h occurrence with hs_response from
         already-observed trace data, avoiding a fresh query.
+
+        :param tuple hs_response: response observed for the homing sequence occurrence.
+        :param tuple w: suffix whose response is being recovered.
+        :return tuple | None: recovered response, or None if it could not be mined from the trace.
         """
         if not w:
             return None
@@ -331,11 +420,17 @@ class hW:
                 return tuple(trace[cont + k][1] for k in range(w_len))
         return None
 
-    def _apply_conjecture_probe(self, current_state, path, w, kind):
+    def _apply_conjecture_probe(self, current_state: ModelState, path: tuple, w: tuple, kind: str) -> bool:
         """
         Execute path + h + w on the SUL to expose a suspected inconsistency.
         `kind` distinguishes the check that requested the probe, so each probe runs
-        at most once. Returns True if anything was executed.
+        at most once.
+
+        :param ModelState current_state: conjecture state the probe starts from.
+        :param tuple path: prefix path executed before homing.
+        :param tuple w: suffix executed after homing.
+        :param str kind: identifier of the check that requested the probe.
+        :return bool: True if anything was executed.
         """
         key = (kind, current_state.hs, path, w, self.homing_sequence)
         if key in self._conjecture_probe_seen:
@@ -354,12 +449,15 @@ class hW:
         self.check_h_ND_consistency()
         return True
 
-    def check_conjecture_inconsistencies(self, current_state):
+    def check_conjecture_inconsistencies(self, current_state: ModelState) -> bool:
         """
         Look for internal inconsistencies of the conjecture: a state whose
         predicted responses after h disagree with the state mapped to that
         h-response, or two states that h cannot separate but W can. A probe is
-        executed to expose the first inconsistency found; returns True if so.
+        executed to expose the first inconsistency found.
+
+        :param ModelState current_state: state the SUL is currently located at.
+        :return bool: True if a probe was executed to expose an inconsistency.
         """
         states_after_h = []
         for state, path in self._reachable_state_paths(current_state):
@@ -397,13 +495,22 @@ class hW:
 
         return False
 
-    def _w_profile(self, w_values):
+    def _w_profile(self, w_values: dict) -> tuple:
+        """
+        Canonical hashable profile of a state's W responses.
+
+        :param dict w_values: mapping of W suffixes to observed responses.
+        :return tuple: sorted (suffix, response) pairs.
+        """
         return tuple(sorted(w_values.items()))
 
-    def _state_for_w_values(self, w_values):
+    def _state_for_w_values(self, w_values: dict) -> ModelState:
         """
         State matching these W responses; checked against identified states first,
         then against partially identified ones. Created and registered if not found.
+
+        :param dict w_values: mapping of W suffixes to observed responses.
+        :return ModelState: matching (or newly created) state.
         """
         profile = self._w_profile(w_values)
         matched = self.state_map.get(profile)
@@ -420,10 +527,13 @@ class hW:
         self.state_map[profile] = state
         return state
 
-    def _merge_states(self, canonical, duplicate):
+    def _merge_states(self, canonical: ModelState, duplicate: ModelState) -> None:
         """
         Fold everything learned about duplicate into canonical and redirect all
         references to it.
+
+        :param ModelState canonical: state that survives the merge.
+        :param ModelState duplicate: state whose data is merged into canonical and discarded.
         """
         for (i, w), out in duplicate.transition_w_values.items():
             canonical.transition_w_values.setdefault((i, w), out)
@@ -443,10 +553,14 @@ class hW:
             if state is duplicate:
                 self.h_response_map[h_response] = canonical
 
-    def _complete_h_response_state(self, h_response, state):
+    def _complete_h_response_state(self, h_response: tuple, state: ModelState) -> ModelState:
         """
         Re-key a state identified by its h-response to its full W-profile,
         merging it with an existing state if the profile is already known.
+
+        :param tuple h_response: h-response the state was previously keyed by.
+        :param ModelState state: state being completed.
+        :return ModelState: the resulting (possibly merged) state.
         """
         profile = self._w_profile(state.state_w_values)
         existing = self.state_map.get(profile)
@@ -462,9 +576,12 @@ class hW:
             self.h_response_map[h_response] = existing
         return existing
 
-    def update_model_transition(self, state, i):
+    def update_model_transition(self, state: ModelState, i: Any) -> None:
         """
         Set state's i-transition once the responses to every w in W are known.
+
+        :param ModelState state: state whose transition is updated.
+        :param Any i: input whose transition is updated.
         """
         learned = state.learned_w_per_input[i]
         if len(learned) != len(self.W):
@@ -472,10 +589,14 @@ class hW:
         w_for_input = {w: state.transition_w_values[(i, w)] for w in learned}
         state.transitions[i] = self._state_for_w_values(w_for_input)
 
-    def _partition_signature(self, state, block_of):
+    def _partition_signature(self, state: ModelState, block_of: dict) -> tuple:
         """
         Refinement signature: state output (Moore) or transition outputs (Mealy),
         plus the current block of each successor.
+
+        :param ModelState state: state to compute the signature for.
+        :param dict block_of: mapping of state hs to current block index.
+        :return tuple: refinement signature.
         """
         signature = [state.state_w_values.get(())] if self.is_moore else []
         for i in self.input_alphabet:
@@ -487,10 +608,11 @@ class hW:
                 signature.append((i, state.output_fun.get(i), block))
         return tuple(signature)
 
-    def _state_partitions(self):
+    def _state_partitions(self) -> dict:
         """
         Group equivalent identified states into blocks via partition refinement.
-        Returns hs -> block index.
+
+        :return dict: mapping of state hs to block index.
         """
         states = [s for s in self.state_map.values() if len(s.state_w_values) == len(self.W)]
 
@@ -505,10 +627,13 @@ class hW:
                 return block_of
             block_of = next_block_of
 
-    def create_model(self, current_hs):
+    def create_model(self, current_hs: tuple) -> Automaton:
         """
         Build a Moore/Mealy machine from the state blocks, starting (and keeping
         only states reachable) from the state identified by current_hs.
+
+        :param tuple current_hs: hs of the state the resulting model should start from.
+        :return Automaton: constructed Mealy or Moore machine.
         """
         block_of = self._state_partitions()
 
@@ -571,11 +696,16 @@ class hW:
         mm.current_state = start_state
         return mm
 
-    def _track_through_conjecture(self, target, x, w, w_response):
+    def _track_through_conjecture(self, target: Any, x: Any, w: tuple, w_response: tuple) -> Any | None:
         """
-        Follow the conjecture from target through x and w. Returns the state the
-        SUL is in after the probe, or None if any transition along the way is unknown
-        or a recorded output disagrees with the observed w_response.
+        Follow the conjecture from target through x and w.
+
+        :param Any target: conjecture state the probe started from.
+        :param Any x: input executed right after target.
+        :param tuple w: suffix executed after x.
+        :param tuple w_response: outputs observed for w.
+        :return Any | None: the state the SUL is in after the probe, or None if any transition along the way is
+            unknown or a recorded output disagrees with the observed w_response.
         """
         state = target.transitions.get(x)
         if state is None:
@@ -587,11 +717,14 @@ class hW:
             state = next_state
         return state
 
-    def create_hypothesis(self):
+    def create_hypothesis(self) -> Automaton:
         """
         Main learning loop: localize via h, identify the current state's W
         responses, then learn outgoing transitions of reachable states until the
-        conjecture is complete and consistent."""
+        conjecture is complete and consistent.
+
+        :return Automaton: the constructed hypothesis.
+        """
 
         # When the SUL's current state is known (nothing was executed since the last
         # localization, or the conjecture fully predicts the probe just executed),
@@ -697,10 +830,15 @@ class hW:
 
         return self.create_model(current_state.hs)
 
-    def main_loop(self, print_level=2):
-        """Outer loop: bootstrap h, alternate hypothesis construction with equivalence
+    def main_loop(self, print_level: int = 2) -> tuple[Automaton, dict]:
+        """
+        Outer loop: bootstrap h, alternate hypothesis construction with equivalence
         checks from the configured oracle, refine W from counterexamples, and assemble
-        the result."""
+        the result.
+
+        :param int print_level: 0 - None, 1 - just results, 2 - current round and hypothesis size, 3 - educational/debug.
+        :return tuple[Automaton, dict]: the learned hypothesis and a dict with learning statistics.
+        """
         start_time = time.time()
         eq_query_time = 0
 
@@ -710,7 +848,7 @@ class hW:
             initial_model = self.create_daisy_hypothesis()
 
             eq_start = time.time()
-            counter_example = self.oracle.find_counterexample(initial_model)
+            counter_example = self.oracle.find_cex(initial_model)
             eq_query_time += time.time() - eq_start
 
             last_cex_input = (counter_example[-1],)
@@ -729,7 +867,7 @@ class hW:
                 print(f'Hypothesis {learning_rounds}: {hypothesis.size} states.')
 
             eq_start = time.time()
-            counter_example = self.oracle.find_counterexample(hypothesis)
+            counter_example = self.oracle.find_cex(hypothesis)
             if counter_example is None:
                 # backstop at zero SUL cost: the observed trace may refute a
                 # hypothesis that the oracle failed to disprove
@@ -804,12 +942,12 @@ class hW:
         return hypothesis, info
 
 
-def run_hW(alphabet: list, sul, eq_oracle, automaton_type,
-           query_for_initial_state=True,
-           provided_homing_sequence=None,
-           provided_characterization_set=None,
-           return_data=False,
-           print_level=2):
+def run_hW(alphabet: list, sul: SUL, eq_oracle: hWOracle, automaton_type: str,
+           query_for_initial_state: bool = True,
+           provided_homing_sequence: tuple | None = None,
+           provided_characterization_set: list | None = None,
+           return_data: bool = False,
+           print_level: int = 2) -> Automaton | tuple[Automaton, dict]:
     """
     Executes the hW resetless learning algorithm.
     Algorithm description can be found in "hW-inference: A heuristic approach to retrieve models through
@@ -818,39 +956,29 @@ def run_hW(alphabet: list, sul, eq_oracle, automaton_type,
     The implementation does not strictly follow all aspects of the described algorithm, but relies on in for the most
     part.
 
-    Args:
-
-        alphabet: input alphabet
-
-        sul: system under learning
-
-        eq_oracle: resetless equivalence oracle (an hWOracle instance) used during the learning rounds, e.g.
-            RandomhWOracle(num_testing_steps, reset_testing_counter) or
-            RandomWphWOracle(random_walk_length, num_test_origin_states). All testing-budget configuration lives
-            on the oracle itself.
-
-        automaton_type: type of automaton to be learned. Either 'mealy', 'moore', or 'dfa'. For 'moore' and 'dfa'
-            the algorithm treats outputs as state properties (Moore semantics). 'dfa' additionally casts the final
-            Moore machine to a Dfa, treating True/False outputs as accepting/rejecting states.
-
-        query_for_initial_state: if True, query the SUL to identify the true initial state (Default value = True)
-
-        provided_homing_sequence: optional user-provided homing sequence. If supplied, hW starts with this sequence instead of deriving an
-            initial one from the daisy hypothesis counterexample. (Default value = None)
-
-        provided_characterization_set: optional user-provided characterization set. If supplied, hW starts with these suffixes instead of an empty
-            characterization set. For Moore machines and DFAs, the empty suffix is added automatically.
-            (Default value = None)
-
-        return_data: if True, return a (hypothesis, info) tuple instead of just the hypothesis
-            (Default value = False)
-
-        print_level: 0 - None, 1 - just results, 2 - current round and hypothesis size, 3 - educational/debug
-            (Default value = 2)
-
-    Returns:
-
-        learned automaton of type automaton_type (or (automaton, info dict) if return_data is True)
+    :param list alphabet: input alphabet
+    :param SUL sul: system under learning
+    :param hWOracle eq_oracle: resetless equivalence oracle (an hWOracle instance) used during the learning rounds,
+        e.g. RandomhWOracle(num_testing_steps, reset_testing_counter) or
+        RandomWphWOracle(random_walk_length, num_test_origin_states). All testing-budget configuration lives
+        on the oracle itself.
+    :param str automaton_type: type of automaton to be learned. Either 'mealy', 'moore', or 'dfa'. For 'moore' and
+        'dfa' the algorithm treats outputs as state properties (Moore semantics). 'dfa' additionally casts the
+        final Moore machine to a Dfa, treating True/False outputs as accepting/rejecting states.
+    :param bool query_for_initial_state: if True, query the SUL to identify the true initial state
+        (Default value = True)
+    :param tuple | None provided_homing_sequence: optional user-provided homing sequence. If supplied, hW starts
+        with this sequence instead of deriving an initial one from the daisy hypothesis counterexample.
+        (Default value = None)
+    :param list | None provided_characterization_set: optional user-provided characterization set. If supplied, hW
+        starts with these suffixes instead of an empty characterization set. For Moore machines and DFAs, the
+        empty suffix is added automatically. (Default value = None)
+    :param bool return_data: if True, return a (hypothesis, info) tuple instead of just the hypothesis
+        (Default value = False)
+    :param int print_level: 0 - None, 1 - just results, 2 - current round and hypothesis size, 3 - educational/debug
+        (Default value = 2)
+    :return Automaton | tuple[Automaton, dict]: learned automaton of type automaton_type (or (automaton, info dict)
+        if return_data is True)
     """
     assert print_level in [0, 1, 2, 3]
     assert automaton_type in ('mealy', 'moore', 'dfa')

@@ -1,3 +1,4 @@
+# Observation table used by the ONFSM L* learning algorithm.
 from collections import Counter
 
 from aalpy.automata import Onfsm, OnfsmState, StochasticMealyState, StochasticMealyMachine
@@ -5,16 +6,17 @@ from aalpy.learning_algs.non_deterministic.NonDeterministicSULWrapper import Non
 
 
 class NonDetObservationTable:
+    """
+    Observation table for learning observable non-deterministic finite state machines (ONFSMs).
+    """
 
-    def __init__(self, alphabet: list, sul: NonDeterministicSULWrapper, n_sampling):
+    def __init__(self, alphabet: list, sul: NonDeterministicSULWrapper, n_sampling: int) -> None:
         """
         Construction of the non-deterministic observation table.
 
-        Args:
-
-            alphabet: input alphabet
-            sul: system under learning
-            n_sampling: number of samples to be performed for each cell
+        :param list alphabet: Input alphabet.
+        :param NonDeterministicSULWrapper sul: System under learning.
+        :param int n_sampling: Number of samples to be performed for each cell.
         """
         assert alphabet is not None and sul is not None
 
@@ -40,13 +42,12 @@ class NonDetObservationTable:
 
         self.pruned_nodes = set()
 
-    def get_row_to_close(self):
+    def get_row_to_close(self) -> tuple[tuple, tuple] | None:
         """
-        Get row for that need to be closed.
+        Get row that needs to be closed.
 
-        Returns:
-
-            row that will be moved to S set and closed
+        :return tuple[tuple, tuple] | None: Row that will be moved to the S set and closed, or None if all rows
+            are already closed.
         """
 
         s_rows = set()
@@ -65,15 +66,14 @@ class NonDetObservationTable:
         self.closing_counter = 0
         return None
 
-    def get_extended_S(self, row_prefix=None):
+    def get_extended_S(self, row_prefix: tuple[tuple, tuple] | None = None) -> list[tuple[tuple, tuple]]:
         """
-        Helper generator function that returns extended S, or S.A set.
+        Helper function that returns extended S, or S.A set.
         For all values in the cell, create a new row where inputs is parent input plus element of alphabet, and
         output is parent output plus value in cell.
 
-        Returns:
-
-            extended S set.
+        :param tuple[tuple, tuple] | None row_prefix: If given, only extend this single row instead of all of S.
+        :return list[tuple[tuple, tuple]]: Extended S set.
         """
 
         rows = self.S if row_prefix is None else [row_prefix]
@@ -89,7 +89,14 @@ class NonDetObservationTable:
                         S_dot_A.append(new_row)
         return S_dot_A
 
-    def query_missing_observations(self, s=None, e=None):
+    def query_missing_observations(self, s: list[tuple[tuple, tuple]] | None = None,
+                                    e: list[tuple] | None = None) -> None:
+        """
+        Queries the SUL until every cell for the given rows/columns has been sampled at least `n_samples` times.
+
+        :param list[tuple[tuple, tuple]] | None s: Rows to query, defaults to all of S plus the extended S set.
+        :param list[tuple] | None e: Columns (suffixes) to query, defaults to all of E.
+        """
         s_set = s if s is not None else self.S + self.get_extended_S()
         e_set = e if e is not None else self.E
 
@@ -98,19 +105,13 @@ class NonDetObservationTable:
                 while self.sul.cache.get_s_e_sampling_frequency(s, e) < self.n_samples:
                     self.sul.query(s[0] + e)
 
-    def row_to_hashable(self, row_prefix):
+    def row_to_hashable(self, row_prefix: tuple[tuple, tuple]) -> tuple:
         """
-        Creates the hashable representation of the row. Frozenset is used as the order of element in each cell does not
-        matter
+        Creates the hashable representation of the row. Frozenset is used as the order of element in each cell does
+        not matter.
 
-        Args:
-
-            row_prefix: prefix of the row in the observation table
-
-        Returns:
-
-            hashable representation of the row
-
+        :param tuple[tuple, tuple] row_prefix: Prefix of the row in the observation table.
+        :return tuple: Hashable representation of the row.
         """
         row_repr = tuple()
 
@@ -124,11 +125,10 @@ class NonDetObservationTable:
 
         return row_repr
 
-    def clean_obs_table(self):
+    def clean_obs_table(self) -> None:
         """
         Moves duplicates from S to S_dot_A. The entries in S_dot_A which are based on the moved row get deleted.
         The table will be smaller and more efficient.
-
         """
 
         tmp_S = self.S.copy()
@@ -151,14 +151,13 @@ class NonDetObservationTable:
             else:
                 hashed_rows_from_s.add(hashed_s_row)
 
-    def gen_hypothesis(self, stochastic=False):
+    def gen_hypothesis(self, stochastic: bool = False) -> Onfsm | StochasticMealyMachine:
         """
         Generate automaton based on the values found in the observation table.
         If stochastic is set to True, returns a Stochastic Mealy Machine.
 
-        Returns:
-
-            Current hypothesis
+        :param bool stochastic: If True, a Stochastic Mealy Machine is generated instead of an ONFSM.
+        :return Onfsm | StochasticMealyMachine: Current hypothesis.
         """
 
         state_distinguish = dict()

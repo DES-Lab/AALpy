@@ -1,7 +1,9 @@
+# Probably approximately correct (PAC) equivalence oracle.
 from math import ceil, log
 from random import choice, randint
 
 from aalpy.base import Oracle, SUL
+from aalpy.base.Automaton import Automaton
 
 
 class PacOracle(Oracle):
@@ -13,8 +15,18 @@ class PacOracle(Oracle):
     Queries are of random length in a predefined range.
     """
 
-    def __init__(self, alphabet: list, sul: SUL, epsilon=0.01, delta=0.01, min_walk_len=10, max_walk_len=25):
+    def __init__(self, alphabet: list, sul: SUL, epsilon: float = 0.01, delta: float = 0.01,
+                 min_walk_len: int = 10, max_walk_len: int = 25) -> None:
+        """
+        Constructs the oracle.
 
+        :param list alphabet: Input alphabet.
+        :param SUL sul: System under learning.
+        :param float epsilon: Generalization error.
+        :param float delta: Confidence.
+        :param int min_walk_len: Minimum length of each random query.
+        :param int max_walk_len: Maximum length of each random query.
+        """
         super().__init__(alphabet, sul)
         self.min_walk_len = min_walk_len
         self.max_walk_len = max_walk_len
@@ -22,7 +34,13 @@ class PacOracle(Oracle):
         self.delta = delta
         self.round = 0
 
-    def find_cex(self, hypothesis):
+    def find_cex(self, hypothesis: Automaton) -> list | None:
+        """
+        Performs a number of random-length queries, growing per round, until a counterexample is found.
+
+        :param Automaton hypothesis: Current hypothesis.
+        :return list | None: Counterexample inputs, None if no counterexample is found.
+        """
         self.round += 1
         num_test_cases = 1 / self.epsilon * (log(1 / self.delta) + self.round * log(2))
 

@@ -1,9 +1,15 @@
+# Collection of example VPAs (Visibly Pushdown Automata) used for benchmarking learning algorithms.
 import random
 
 from aalpy.automata.Vpa import Vpa, VpaAlphabet
 
 
-def vpa_L1():
+def vpa_L1() -> Vpa:
+    """
+    Builds an example VPA for language L1.
+
+    :return Vpa: The constructed VPA.
+    """
     # we always ensure that n >= 1
 
     call_set = ['a']
@@ -21,7 +27,12 @@ def vpa_L1():
     return vpa
 
 
-def vpa_L2():
+def vpa_L2() -> Vpa:
+    """
+    Builds an example VPA for language L2.
+
+    :return Vpa: The constructed VPA.
+    """
     call_set = ['a', 'b']
     return_set = ['c', 'd']
     internal_set = []
@@ -40,7 +51,12 @@ def vpa_L2():
     return vpa
 
 
-def vpa_for_L3():
+def vpa_for_L3() -> Vpa:
+    """
+    Builds an example VPA for language L3.
+
+    :return Vpa: The constructed VPA.
+    """
     call_set = ['a', 'c', 'b', 'd']
     return_set = ['e', 'g', 'f', 'h']
     internal_set = []
@@ -69,7 +85,12 @@ def vpa_for_L3():
     return vpa
 
 
-def vpa_L3():
+def vpa_L3() -> Vpa:
+    """
+    Builds an example VPA for a variant of language L3.
+
+    :return Vpa: The constructed VPA.
+    """
     call_set = ['a', 'b']
     return_set = ['c', 'd']
     internal_set = []
@@ -90,7 +111,12 @@ def vpa_L3():
     return vpa
 
 
-def vpa_L4():
+def vpa_L4() -> Vpa:
+    """
+    Builds an example VPA for language L4 (Dyck order 2).
+
+    :return Vpa: The constructed VPA.
+    """
     # Dyck order 2
 
     call_set = ['(', '[']
@@ -113,7 +139,12 @@ def vpa_L4():
     return vpa
 
 
-def vpa_L6():
+def vpa_L6() -> Vpa:
+    """
+    Builds an example VPA for language L6 (Dyck order 3).
+
+    :return Vpa: The constructed VPA.
+    """
     # Dyck order 3
 
     call_set = ['(', '[', '{']
@@ -139,7 +170,12 @@ def vpa_L6():
     return vpa
 
 
-def vpa_L8():
+def vpa_L8() -> Vpa:
+    """
+    Builds an example VPA for language L8 (Dyck order 4).
+
+    :return Vpa: The constructed VPA.
+    """
     # Dyck order 4
 
     call_set = ['(', '[', '{', '<']
@@ -168,7 +204,12 @@ def vpa_L8():
     return vpa
 
 
-def vpa_L9():
+def vpa_L9() -> Vpa:
+    """
+    Builds an example VPA for language L9 (Dyck order 2, single-nested).
+
+    :return Vpa: The constructed VPA.
+    """
     # Dyck order 2 (single-nested)
 
     call_set = ['(', '[']
@@ -194,7 +235,12 @@ def vpa_L9():
     return vpa
 
 
-def vpa_L10():
+def vpa_L10() -> Vpa:
+    """
+    Builds an example VPA for language L10 (Dyck order 1 with internal symbols).
+
+    :return Vpa: The constructed VPA.
+    """
     # Dyck order 1
 
     call_set = ['(']
@@ -220,7 +266,12 @@ def vpa_L10():
     return vpa
 
 
-def vpa_L11():
+def vpa_L11() -> Vpa:
+    """
+    Builds an example VPA for language L11 (Dyck order 2 with internal symbols).
+
+    :return Vpa: The constructed VPA.
+    """
     # Dyck order 2
 
     call_set = ['(', '[']
@@ -249,7 +300,12 @@ def vpa_L11():
     return vpa
 
 
-def vpa_L12():
+def vpa_L12() -> Vpa:
+    """
+    Builds an example VPA for language L12 (Dyck order 1 with a multi-letter internal sequence).
+
+    :return Vpa: The constructed VPA.
+    """
     # Dyck order 1
 
     call_set = ['(']
@@ -277,7 +333,12 @@ def vpa_L12():
     return vpa
 
 
-def vpa_for_L16():
+def vpa_for_L16() -> Vpa:
+    """
+    Builds an example VPA for a small testing language L16.
+
+    :return Vpa: The constructed VPA.
+    """
     # just a testing language
 
     call_set = ['a']
@@ -297,7 +358,13 @@ def vpa_for_L16():
     return vpa
 
 
-def vpa_for_odd_parentheses():
+def vpa_for_odd_parentheses() -> Vpa:
+    """
+    Builds a VPA accepting only an odd number of fully balanced parentheses, e.g. () and ((()))), but
+    rejecting odd pairs or multiple groups.
+
+    :return Vpa: The constructed VPA.
+    """
     # VPA for accepting only odd number of fully balanced parentheses
     # It accepts patterns like () and ((()))), but rejects odd pairs or multiple groups
 
@@ -324,7 +391,12 @@ def vpa_for_odd_parentheses():
     return vpa
 
 
-def vpa_for_even_parentheses():
+def vpa_for_even_parentheses() -> Vpa:
+    """
+    Builds a VPA accepting only an even number of fully balanced parentheses.
+
+    :return Vpa: The constructed VPA.
+    """
     # VPA for accepting only even number of fully balanced parentheses
 
     call_set = ['(']
@@ -350,23 +422,53 @@ def vpa_for_even_parentheses():
     return vpa
 
 
-def gen_arithmetic_data(num_sequences=3000, min_seq_len=2, max_seq_len=8):
+def gen_arithmetic_data(num_sequences: int = 3000, min_seq_len: int = 2, max_seq_len: int = 8) \
+        -> tuple[list, VpaAlphabet]:
+    """
+    Generates random arithmetic-expression traces (using a validating SUL based on Python's ast module) in the
+    format expected by RPNI.
+
+    :param int num_sequences: Number of traces to generate.
+    :param int min_seq_len: Minimum length of a generated sequence.
+    :param int max_seq_len: Maximum length of a generated sequence.
+    :return tuple[list, VpaAlphabet]: The generated traces in RPNI input/output format, and the used VPA alphabet.
+    """
     import ast
     from aalpy.base import SUL
     from aalpy.utils import convert_i_o_traces_for_RPNI
 
     class ArithmeticSUL(SUL):
-        def __init__(self):
+        """
+        SUL that validates whether the string under test is a syntactically valid arithmetic expression.
+        """
+
+        def __init__(self) -> None:
+            """
+            Creates the arithmetic-expression SUL with an empty string under test.
+            """
             super().__init__()
             self.string_under_test = ''
 
-        def pre(self):
+        def pre(self) -> None:
+            """
+            Resets the string under test.
+            """
             self.string_under_test = ''
 
-        def post(self):
+        def post(self) -> None:
+            """
+            No cleanup necessary.
+            """
             pass
 
-        def step(self, letter):
+        def step(self, letter: str | None) -> bool:
+            """
+            Appends the letter to the string under test and checks whether it still parses as a valid
+            arithmetic expression.
+
+            :param str | None letter: Next token to append, or None.
+            :return bool: True if the string under test is a valid arithmetic expression.
+            """
             if letter:
                 self.string_under_test += ' ' + letter if len(self.string_under_test) > 0 else letter
 
@@ -401,7 +503,12 @@ def gen_arithmetic_data(num_sequences=3000, min_seq_len=2, max_seq_len=8):
     return rpni_format, alphabet
 
 
-def vpa_json():
+def vpa_json() -> Vpa:
+    """
+    Builds an example VPA that recognizes a simplified JSON-like structure.
+
+    :return Vpa: The constructed VPA.
+    """
     # Define call, return, and internal symbols for JSON
     call_set = ['{', '[']
     return_set = ['}', ']']
@@ -457,7 +564,12 @@ def vpa_json():
     return vpa
 
 
-def get_all_VPAs():
+def get_all_VPAs() -> list[Vpa]:
+    """
+    Loads and builds all example VPAs, including one loaded from a DOT file.
+
+    :return list[Vpa]: All example VPAs.
+    """
     from aalpy import load_automaton_from_file
     arithmetics_vpa = load_automaton_from_file('../DotModels/arithmetics.dot', 'vpa')
     return [vpa_L1(), vpa_L2(), vpa_L3(), vpa_L4(),

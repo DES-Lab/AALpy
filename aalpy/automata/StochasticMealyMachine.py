@@ -1,6 +1,8 @@
+# Stochastic Mealy machine state and automaton implementation, and conversion to an equivalent MDP.
 import random
 from collections import defaultdict
-from typing import Generic, Tuple, List, Dict
+from collections.abc import Hashable
+from typing import Generic
 
 from aalpy.automata import MdpState, Mdp
 from aalpy.base import Automaton, AutomatonState
@@ -8,32 +10,48 @@ from aalpy.base.Automaton import OutputType, InputType
 
 
 class StochasticMealyState(AutomatonState, Generic[InputType, OutputType]):
+    """
+    Single state of a stochastic Mealy machine. Each transition is a tuple (newNode, output, probability).
+    """
 
-    def __init__(self, state_id):
+    def __init__(self, state_id: Hashable) -> None:
+        """
+        Creates a stochastic Mealy machine state.
+
+        :param Hashable state_id: Unique identifier of the state.
+        """
         super().__init__(state_id)
         # Each transition is a tuple (newNode, output, probability)
-        self.transitions: Dict[InputType, List[Tuple[StochasticMealyState, OutputType, float]]] = defaultdict(list)
+        self.transitions: dict[InputType, list[tuple[StochasticMealyState[InputType, OutputType], OutputType, float]]] = defaultdict(list)
 
 
 class StochasticMealyMachine(Automaton[StochasticMealyState[InputType, OutputType]]):
+    """
+    Stochastic Mealy machine, where outputs and successor states depend on the input and a probability
+    distribution over the current state's transitions.
+    """
 
-    def __init__(self, initial_state: StochasticMealyState, states: list):
+    def __init__(self, initial_state: StochasticMealyState, states: list) -> None:
+        """
+        Creates a stochastic Mealy machine.
+
+        :param StochasticMealyState initial_state: Initial state of the stochastic Mealy machine.
+        :param list states: All states of the stochastic Mealy machine.
+        """
         super().__init__(initial_state, states)
 
-    def reset_to_initial(self):
+    def reset_to_initial(self) -> None:
+        """
+        Resets the current state of the stochastic Mealy machine to the initial state.
+        """
         self.current_state = self.initial_state
 
-    def step(self, letter):
+    def step(self, letter: InputType) -> OutputType:
         """
         Next step is determined based on transition probabilities of the current state.
 
-        Args:
-
-           letter: input
-
-        Returns:
-
-           output of the current state
+        :param InputType letter: Input.
+        :return OutputType: Output of the current state.
         """
         prob = random.random()
         probability_distributions = [i[2] for i in self.current_state.transitions[letter]]
@@ -48,18 +66,12 @@ class StochasticMealyMachine(Automaton[StochasticMealyState[InputType, OutputTyp
         self.current_state = transition[0]
         return transition[1]
 
-    def step_to(self, inp, out):
+    def step_to(self, inp: InputType, out: OutputType) -> OutputType | None:
         """Performs a step on the automaton based on the input `inp` and output `out`.
 
-        Args:
-
-            inp: input
-            out: output
-
-        Returns:
-
-            output of the reached state, None otherwise
-
+        :param InputType inp: Input.
+        :param OutputType out: Output.
+        :return OutputType | None: Output of the reached state, None otherwise.
         """
         for (new_state, output, prob) in self.current_state.transitions[inp]:
             if output == out:
@@ -67,10 +79,21 @@ class StochasticMealyMachine(Automaton[StochasticMealyState[InputType, OutputTyp
                 return out
         return None
 
-    def to_mdp(self):
+    def to_mdp(self) -> Mdp:
+        """
+        Converts the stochastic Mealy machine to an equivalent MDP.
+
+        :return Mdp: The equivalent MDP.
+        """
         return smm_to_mdp_conversion(self)
 
-    def to_state_setup(self):
+    def to_state_setup(self) -> dict:
+        """
+        Converts the stochastic Mealy machine to a state setup dictionary.
+
+        :return dict: Map from state_id to transitions_dict mapping input to a list of (target_state_id, output,
+            probability) tuples.
+        """
         state_setup_dict = {}
 
         # ensure initial state is first in the list
@@ -85,7 +108,15 @@ class StochasticMealyMachine(Automaton[StochasticMealyState[InputType, OutputTyp
         return state_setup_dict
 
     @staticmethod
-    def from_state_setup(state_setup : dict, **kwargs):
+    def from_state_setup(state_setup: dict, **kwargs) -> 'StochasticMealyMachine':
+        """
+        Creates a stochastic Mealy machine from a state setup dictionary. The first state in the state setup is
+        the initial state.
+
+        :param dict state_setup: Map from state_id to transitions_dict mapping input to a list of
+            (target_state_id, output, probability) tuples.
+        :return StochasticMealyMachine: The constructed stochastic Mealy machine.
+        """
         states_map = {key: StochasticMealyState(key) for key in state_setup.keys()}
 
         for key, values in state_setup.items():
@@ -98,17 +129,12 @@ class StochasticMealyMachine(Automaton[StochasticMealyState[InputType, OutputTyp
         return StochasticMealyMachine(initial_state, list(states_map.values()))
 
 
-def smm_to_mdp_conversion(smm: StochasticMealyMachine):
+def smm_to_mdp_conversion(smm: StochasticMealyMachine) -> Mdp:
     """
     Convert SMM to MDP.
 
-    Args:
-      smm: StochasticMealyMachine: SMM to convert
-
-    Returns:
-
-        equivalent MDP
-
+    :param StochasticMealyMachine smm: SMM to convert.
+    :return Mdp: Equivalent MDP.
     """
     inputs = smm.get_input_alphabet()
     mdp_states = []

@@ -1,11 +1,16 @@
+# State matching strategies used by Adaptive L# to match observation tree basis states to reference model states.
 from abc import abstractmethod
+from typing import Any
 
 
 class StateMatching:
-    def __init__(self, alphabet, combined_model):
+    def __init__(self, alphabet: list, combined_model: Any) -> None:
         """
         Initializes the super class for state matching
-         """
+
+        :param list alphabet: input alphabet
+        :param Any combined_model: combined model built from the reference models
+        """
         self.alphabet = alphabet
         self.combined_model = combined_model
 
@@ -14,25 +19,28 @@ class StateMatching:
         self.best_score = {}
 
     @abstractmethod
-    def add_entry_basis(self, basis_state):
+    def add_entry_basis(self, basis_state: Any, aut_type: str) -> None:
         pass
 
     @abstractmethod
-    def update_best_score(self, basis_state):
+    def update_best_score(self, basis_state: Any) -> float:
         pass
 
     @abstractmethod
-    def update_score(self, ob_tree, basis_state, reference_state, basis_state_access, defined_after_access, new_part):
+    def update_score(self, ob_tree: Any, basis_state: Any, reference_state: Any, basis_state_access: tuple,
+                      defined_after_access: tuple, new_part: tuple) -> None:
         pass
 
     @abstractmethod
-    def update_best_match(self, basis_state, score):
+    def update_best_match(self, basis_state: Any, score: float) -> None:
         pass
 
-    def initialize_matching(self, ob_tree):
-        """ 
-        Initializes the matching by adding an entry for every basis state found during rebuilding 
+    def initialize_matching(self, ob_tree: Any) -> None:
+        """
+        Initializes the matching by adding an entry for every basis state found during rebuilding
         Updates the matching for the output queries posed during rebuilding
+
+        :param Any ob_tree: adaptive observation tree
         """
         for basis_state in ob_tree.basis:
             self.add_entry_basis(basis_state, ob_tree.automaton_type)
@@ -46,14 +54,18 @@ class StateMatching:
             self.update_matching(to_recalc, (defined_part, new_part), ob_tree)
 
 
-    def update_matching(self, to_recalc, split, ob_tree):
-        """ 
+    def update_matching(self, to_recalc: list, split: tuple, ob_tree: Any) -> None:
+        """
         Updates the matching for the to be recalculated basis states
         The split contains the already defined part and the new part of an output query
 
         For every basis state, we determine the defined part and new part AFTER accessing the basis state
         Then for every reference model check if the defined part uses only inputs valid in the reference model
         If these are all valid, we calculate the score of the new part
+
+        :param list to_recalc: basis states to recalculate the matching for
+        :param tuple split: (defined_part, new_part) of an output query
+        :param Any ob_tree: adaptive observation tree
         """
         defined_part, orig_new_part = split
 
@@ -78,9 +90,12 @@ class StateMatching:
 
 
 
-    def update_matching_basis(self, basis_state, ob_tree):
-        """ 
+    def update_matching_basis(self, basis_state: Any, ob_tree: Any) -> None:
+        """
         Initializes and updates the matching for a newly added basis state
+
+        :param Any basis_state: newly added basis state
+        :param Any ob_tree: adaptive observation tree
         """
         self.add_entry_basis(basis_state, ob_tree.automaton_type)
         longest_words = list(self.find_longest_words(basis_state, ob_tree, []))
@@ -94,10 +109,15 @@ class StateMatching:
 
             self.update_matching([basis_state], split, ob_tree)
 
-    def find_longest_words(self, current_state, ob_tree, all_seqs):
-        """ 
+    def find_longest_words(self, current_state: Any, ob_tree: Any, all_seqs: list) -> list:
+        """
         Finds prefix closed words in the observation tree starting from the current state
         DFS-like procedure
+
+        :param Any current_state: current node in the observation tree
+        :param Any ob_tree: adaptive observation tree
+        :param list all_seqs: accumulator of found sequences
+        :return list: prefix closed input sequences
         """
         leaf = True
         for inp in self.alphabet:
@@ -112,17 +132,27 @@ class StateMatching:
             all_seqs.append(ob_tree.get_access_sequence(current_state))
         return all_seqs
 
-    def validate_reference_input(self, inputs, reference_state):
+    def validate_reference_input(self, inputs: tuple, reference_state: Any) -> bool:
         """
         Check if all inputs are valid (part of the alphabet of the reference model)
+
+        :param tuple inputs: input sequence to validate
+        :param Any reference_state: reference model state
+        :return bool: True if all inputs are valid for the reference state
         """
         for input_val in inputs:
             if input_val not in reference_state.transitions:
                 return False
         return True
 
-    def is_prefix_of(self, str1, str2):
-        """ Checks if input sequence str1 is a prefix of str2 """
+    def is_prefix_of(self, str1: tuple, str2: tuple) -> bool:
+        """
+        Checks if input sequence str1 is a prefix of str2
+
+        :param tuple str1: candidate prefix sequence
+        :param tuple str2: sequence to check against
+        :return bool: True if str1 is a prefix of str2
+        """
         if len(str1) > len(str2):
             return False
         for i in range(0, len(str1)):
@@ -130,8 +160,14 @@ class StateMatching:
                 return False
         return True
 
-    def find_longest_common_part(self, str1, str2):
-        """ Finds the longest common prefix of input sequences str1 and str2 """
+    def find_longest_common_part(self, str1: tuple, str2: tuple) -> tuple:
+        """
+        Finds the longest common prefix of input sequences str1 and str2
+
+        :param tuple str1: first sequence
+        :param tuple str2: second sequence
+        :return tuple: (common_prefix, remaining_suffix_of_str2)
+        """
         so_far = []
         for i in range(0, len(str2)):
             if str2[i] == str1[i]:
@@ -140,10 +176,12 @@ class StateMatching:
                 return tuple(so_far), tuple(str2[i:])
         return tuple(so_far), tuple()
 
-    def print_match_table(self, ob_tree):
+    def print_match_table(self, ob_tree: Any) -> None:
         """
         Prints the match table
         Code based on https://stackoverflow.com/questions/13214809/pretty-print-2d-list
+
+        :param Any ob_tree: adaptive observation tree
         """
         print(f"Mapping of basis state ids to access sequences")
         for basis_state in ob_tree.basis:
@@ -165,23 +203,34 @@ class StateMatching:
 
 
 class TotalStateMatching(StateMatching):
-    """ 
+    """
     Total State Matching is an instance of State Matching
 
-    A basis and reference state match if all inputs sequences (over the shared alphabet) defined from the basis state 
+    A basis and reference state match if all inputs sequences (over the shared alphabet) defined from the basis state
     give EXACTLY the same outputs
     """
 
-    def __init__(self, alphabet, combined_model):
+    def __init__(self, alphabet: list, combined_model: Any) -> None:
+        """
+        Initializes total state matching.
+
+        :param list alphabet: input alphabet
+        :param Any combined_model: combined model built from the reference models
+        """
         super().__init__(alphabet, combined_model)
 
-    def add_entry_basis(self, basis_state, aut_type):
-        """ Initializes a new matching row with 1 or empty word evaluation"""
+    def add_entry_basis(self, basis_state: Any, aut_type: str) -> None:
+        """
+        Initializes a new matching row with 1 or empty word evaluation
+
+        :param Any basis_state: basis state to add an entry for
+        :param str aut_type: automaton type ('dfa', 'mealy' or 'moore')
+        """
         if aut_type == 'mealy':
             self.matchings[basis_state] = {ref_state: 1 for ref_state in self.combined_model.states}
         else:
             self.matchings[basis_state] = dict()
-            basis_out = basis_state.output 
+            basis_out = basis_state.output
             for ref_state in self.combined_model.states:
                 if aut_type == 'dfa':
                     ref_out = ref_state.is_accepting
@@ -192,14 +241,24 @@ class TotalStateMatching(StateMatching):
                 else:
                     self.matchings[basis_state][ref_state] = 0
 
-    def update_best_score(self, basis_state):
-        """ Updates the best score for a basis state """
+    def update_best_score(self, basis_state: Any) -> float:
+        """
+        Updates the best score for a basis state
+
+        :param Any basis_state: basis state to update the best score for
+        :return float: best score for the basis state
+        """
         score = max([self.matchings[basis_state][ref_state] for ref_state in self.combined_model.states])
         self.best_score[basis_state] = score
         return score
 
-    def update_best_match(self, basis_state, score):
-        """ Updates the best match for a basis state """
+    def update_best_match(self, basis_state: Any, score: float) -> None:
+        """
+        Updates the best match for a basis state
+
+        :param Any basis_state: basis state to update the best match for
+        :param float score: best score computed for the basis state
+        """
         if score == 0:
             self.best_match[basis_state] = []
         else:
@@ -210,21 +269,39 @@ class TotalStateMatching(StateMatching):
 
             self.best_match[basis_state] = matches
 
-    def update_score(self, ob_tree, basis_state, reference_state, basis_state_access, defined_after_access, new_part):
-        # calls update score for either mealy or moore/dfa 
+    def update_score(self, ob_tree: Any, basis_state: Any, reference_state: Any, basis_state_access: tuple,
+                      defined_after_access: tuple, new_part: tuple) -> None:
+        """
+        Calls update score for either mealy or moore/dfa
+
+        :param Any ob_tree: adaptive observation tree
+        :param Any basis_state: basis state being scored
+        :param Any reference_state: reference model state being compared
+        :param tuple basis_state_access: access sequence of the basis state
+        :param tuple defined_after_access: already defined part after accessing the basis state
+        :param tuple new_part: new part of the output query
+        """
         if ob_tree.automaton_type == 'mealy':
             return self.update_score_mealy(ob_tree, basis_state, reference_state, basis_state_access, defined_after_access, new_part)
         else:
             return self.update_score_moore(ob_tree, basis_state, reference_state, basis_state_access, defined_after_access, new_part)
 
 
-    def update_score_mealy(self, ob_tree, basis_state, reference_state, basis_state_access, defined_after_access, new_part):
-        """ 
-        Updates the matching score for a basis and reference state based on the: 
+    def update_score_mealy(self, ob_tree: Any, basis_state: Any, reference_state: Any, basis_state_access: tuple,
+                            defined_after_access: tuple, new_part: tuple) -> None:
+        """
+        Updates the matching score for a basis and reference state based on the:
             basis access, already defined part after access and the new part
         For every input in the new part, we take a step in the ob_tree and in the combined model
         If the combined model has no transition for some input (because it is not in the reference alphabet), we return
         If the outputs differ, we set the matching to 0
+
+        :param Any ob_tree: adaptive observation tree
+        :param Any basis_state: basis state being scored
+        :param Any reference_state: reference model state being compared
+        :param tuple basis_state_access: access sequence of the basis state
+        :param tuple defined_after_access: already defined part after accessing the basis state
+        :param tuple new_part: new part of the output query
         """
         if self.matchings[basis_state][reference_state] == 0:
             return
@@ -245,12 +322,20 @@ class TotalStateMatching(StateMatching):
                 return
             current_ob_state = current_ob_state.get_successor(inp)
 
-    def update_score_moore(self, ob_tree, basis_state, reference_state, basis_state_access, defined_after_access, new_part):
-        """ 
-        Updates the matching score for a basis and reference state based on the: 
+    def update_score_moore(self, ob_tree: Any, basis_state: Any, reference_state: Any, basis_state_access: tuple,
+                            defined_after_access: tuple, new_part: tuple) -> None:
+        """
+        Updates the matching score for a basis and reference state based on the:
             basis access, already defined part after access and the new part
         For every input in the new part, we take a step in the ob_tree and in the combined model
         If the outputs differ, we set the matching to 0
+
+        :param Any ob_tree: adaptive observation tree
+        :param Any basis_state: basis state being scored
+        :param Any reference_state: reference model state being compared
+        :param tuple basis_state_access: access sequence of the basis state
+        :param tuple defined_after_access: already defined part after accessing the basis state
+        :param tuple new_part: new part of the output query
         """
         orig_ref = reference_state
         if self.matchings[basis_state][reference_state] == 0:
@@ -262,7 +347,7 @@ class TotalStateMatching(StateMatching):
         reference_state = self.combined_model.current_state
 
         # need to test the empty word
-        if defined_after_access == (): 
+        if defined_after_access == ():
             if reference_state.is_accepting != current_ob_state.output:
                 self.matchings[basis_state][orig_ref] = 0
                 return
@@ -283,25 +368,36 @@ class TotalStateMatching(StateMatching):
 
 
 class ApproximateStateMatching(StateMatching):
-    """ 
+    """
     Approximate State Matching is an instance of State Matching
 
-    A basis matches a reference state if the reference state has the highest ratio of matching outputs over 
+    A basis matches a reference state if the reference state has the highest ratio of matching outputs over
     all inputs sequences (over the shared alphabet) defined from the basis state compared to the other reference states
     """
 
-    def __init__(self, alphabet, combined_model):
+    def __init__(self, alphabet: list, combined_model: Any) -> None:
+        """
+        Initializes approximate state matching.
+
+        :param list alphabet: input alphabet
+        :param Any combined_model: combined model built from the reference models
+        """
         super().__init__(alphabet, combined_model)
         self.unmatched = set()
 
-    def add_entry_basis(self, basis_state, aut_type):
-        """ Initializes a new matching row with [0,0] or empty word evaluation """
+    def add_entry_basis(self, basis_state: Any, aut_type: str) -> None:
+        """
+        Initializes a new matching row with [0,0] or empty word evaluation
+
+        :param Any basis_state: basis state to add an entry for
+        :param str aut_type: automaton type ('dfa', 'mealy' or 'moore')
+        """
         if aut_type == 'mealy':
             self.matchings[basis_state] = {ref_state: [0, 0]
                                         for ref_state in self.combined_model.states}
         else:
             self.matchings[basis_state] = dict()
-            basis_out = basis_state.output 
+            basis_out = basis_state.output
             for ref_state in self.combined_model.states:
                 if aut_type == 'dfa':
                     ref_out = ref_state.is_accepting
@@ -312,21 +408,37 @@ class ApproximateStateMatching(StateMatching):
                 else:
                     self.matchings[basis_state][ref_state] = [0,1]
 
-    def get_score(self, basis_state, ref_state):
-        """ Gets the score for a basis and reference states """
+    def get_score(self, basis_state: Any, ref_state: Any) -> float:
+        """
+        Gets the score for a basis and reference states
+
+        :param Any basis_state: basis state
+        :param Any ref_state: reference model state
+        :return float: matching score between the two states
+        """
         if self.matchings[basis_state][ref_state][1] == 0:
             return 0
         return self.matchings[basis_state][ref_state][0]/self.matchings[basis_state][ref_state][1]
 
-    def update_best_score(self, basis_state):
-        """ Updates the best score for a basis state """
+    def update_best_score(self, basis_state: Any) -> float:
+        """
+        Updates the best score for a basis state
+
+        :param Any basis_state: basis state to update the best score for
+        :return float: best score for the basis state
+        """
         score = max([self.get_score(basis_state, ref_state)
                     for ref_state in self.combined_model.states])
         self.best_score[basis_state] = round(score, 2)
         return score
 
-    def update_best_match(self, basis_state, score):
-        """ Updates the best match for a basis state """
+    def update_best_match(self, basis_state: Any, score: float) -> None:
+        """
+        Updates the best match for a basis state
+
+        :param Any basis_state: basis state to update the best match for
+        :param float score: best score computed for the basis state
+        """
         if score == 0:
             self.best_match[basis_state] = []
         else:
@@ -337,21 +449,39 @@ class ApproximateStateMatching(StateMatching):
 
             self.best_match[basis_state] = matches
 
-    def update_score(self, ob_tree, basis_state, reference_state, basis_state_access, defined_after_access, new_part):
-        # calls update score for either mealy or moore/dfa 
+    def update_score(self, ob_tree: Any, basis_state: Any, reference_state: Any, basis_state_access: tuple,
+                      defined_after_access: tuple, new_part: tuple) -> None:
+        """
+        Calls update score for either mealy or moore/dfa
+
+        :param Any ob_tree: adaptive observation tree
+        :param Any basis_state: basis state being scored
+        :param Any reference_state: reference model state being compared
+        :param tuple basis_state_access: access sequence of the basis state
+        :param tuple defined_after_access: already defined part after accessing the basis state
+        :param tuple new_part: new part of the output query
+        """
         if ob_tree.automaton_type == 'mealy':
             return self.update_score_mealy(ob_tree, basis_state, reference_state, basis_state_access, defined_after_access, new_part)
         else:
             return self.update_score_moore(ob_tree, basis_state, reference_state, basis_state_access, defined_after_access, new_part)
 
-    def update_score_mealy(self, ob_tree, basis_state, reference_state, basis_state_access, defined_after_access, new_part):
-        """ 
-        Updates the matching score for a basis and reference state based on the: 
+    def update_score_mealy(self, ob_tree: Any, basis_state: Any, reference_state: Any, basis_state_access: tuple,
+                            defined_after_access: tuple, new_part: tuple) -> None:
+        """
+        Updates the matching score for a basis and reference state based on the:
             basis access, already defined part after access and the new part
         For every input in the new part, we take a step in the ob_tree and in the combined model
         If the combined model has no transition for some input (because it is not in the reference alphabet), we return
         If the outputs are equivalent, we add [1,1]
         If the outputs differ, we add [0,1]
+
+        :param Any ob_tree: adaptive observation tree
+        :param Any basis_state: basis state being scored
+        :param Any reference_state: reference model state being compared
+        :param tuple basis_state_access: access sequence of the basis state
+        :param tuple defined_after_access: already defined part after accessing the basis state
+        :param tuple new_part: new part of the output query
         """
         current_ob_state = ob_tree.get_successor(tuple(basis_state_access) + tuple(defined_after_access))
 
@@ -368,14 +498,22 @@ class ApproximateStateMatching(StateMatching):
                 self.matchings[basis_state][reference_state][0] += 1
             current_ob_state = current_ob_state.get_successor(inp)
 
-    def update_score_moore(self, ob_tree, basis_state, reference_state, basis_state_access, defined_after_access, new_part):
-        """ 
-        Updates the matching score for a basis and reference state based on the: 
+    def update_score_moore(self, ob_tree: Any, basis_state: Any, reference_state: Any, basis_state_access: tuple,
+                            defined_after_access: tuple, new_part: tuple) -> None:
+        """
+        Updates the matching score for a basis and reference state based on the:
             basis access, already defined part after access and the new part
         For every input in the new part, we take a step in the ob_tree and in the combined model
         If the combined model has no transition for some input (because it is not in the reference alphabet), we return
         If the outputs are equivalent, we add [1,1]
         If the outputs differ, we add [0,1]
+
+        :param Any ob_tree: adaptive observation tree
+        :param Any basis_state: basis state being scored
+        :param Any reference_state: reference model state being compared
+        :param tuple basis_state_access: access sequence of the basis state
+        :param tuple defined_after_access: already defined part after accessing the basis state
+        :param tuple new_part: new part of the output query
         """
         orig_ref = reference_state
         current_ob_state = ob_tree.get_successor(tuple(basis_state_access) + tuple(defined_after_access))

@@ -1,10 +1,11 @@
+# Classification tree (discrimination tree) used by the KV learning algorithm.
 from collections import defaultdict
 from itertools import product
-from typing import Union
 
 from aalpy.automata import DfaState, Dfa, MealyState, MealyMachine, MooreState, MooreMachine, \
     SevpaAlphabet, SevpaState, SevpaTransition, Sevpa
 from aalpy.base import SUL
+
 from aalpy.learning_algs.deterministic.CounterExampleProcessing import rs_cex_processing, linear_cex_processing, \
     exponential_cex_processing
 
@@ -12,40 +13,82 @@ automaton_class = {'dfa': Dfa, 'mealy': MealyMachine, 'moore': MooreMachine}
 
 
 class CTNode:
+    """
+    Base class for a classification tree node.
+    """
+
     __slots__ = ['parent', 'path_to_node']
 
-    def __init__(self, parent, path_to_node):
+    def __init__(self, parent: 'CTNode | None', path_to_node) -> None:
+        """
+        Creates a classification tree node.
+
+        :param CTNode | None parent: Parent node, or None for the root.
+        :param path_to_node: Output value labeling the edge from the parent to this node.
+        """
         self.parent = parent
         self.path_to_node = path_to_node
 
-    def is_leaf(self):
+    def is_leaf(self) -> bool:
+        """
+        :return bool: True if this node is a leaf node.
+        """
         pass
 
 
 class CTInternalNode(CTNode):
+    """
+    Internal node of a classification tree, labeled with a distinguishing string and holding a child per
+    observed output.
+    """
+
     __slots__ = ['distinguishing_string', 'children']
 
-    def __init__(self, distinguishing_string: tuple, parent, path_to_node):
+    def __init__(self, distinguishing_string: tuple, parent: 'CTNode | None', path_to_node) -> None:
+        """
+        Creates an internal classification tree node.
+
+        :param tuple distinguishing_string: Sequence used to distinguish the states in this subtree.
+        :param CTNode | None parent: Parent node, or None for the root.
+        :param path_to_node: Output value labeling the edge from the parent to this node.
+        """
         super().__init__(parent, path_to_node)
         self.distinguishing_string = distinguishing_string
         self.children = defaultdict(None)  # {True: None, False: None}
 
-    def is_leaf(self):
+    def is_leaf(self) -> bool:
+        """
+        :return bool: Always False for internal nodes.
+        """
         return False
 
 
 class CTLeafNode(CTNode):
+    """
+    Leaf node of a classification tree, corresponding to a single hypothesis state identified by its access string.
+    """
+
     __slots__ = ['access_string']
 
-    def __init__(self, access_string: tuple, parent, path_to_node):
+    def __init__(self, access_string: tuple, parent: 'CTNode | None', path_to_node) -> None:
+        """
+        Creates a leaf classification tree node.
+
+        :param tuple access_string: Access string of the hypothesis state represented by this leaf.
+        :param CTNode | None parent: Parent node, or None for the root.
+        :param path_to_node: Output value labeling the edge from the parent to this node.
+        """
         super().__init__(parent, path_to_node)
         self.access_string = access_string
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__} '{self.access_string}'"
 
     @property
     def output(self):
+        """
+        :return: The output value labeling the edge from this leaf's topmost ancestor's child down to it.
+        """
         c, p = self, self.parent
         while p.parent:
             c = p
@@ -55,12 +98,29 @@ class CTLeafNode(CTNode):
                 return output
         assert False
 
-    def is_leaf(self):
+    def is_leaf(self) -> bool:
+        """
+        :return bool: Always True for leaf nodes.
+        """
         return True
 
 
 class ClassificationTree:
-    def __init__(self, alphabet: Union[list, SevpaAlphabet], sul: SUL, automaton_type: str, cex: tuple):
+    """
+    Classification tree used by the KV algorithm to sift words to hypothesis states and to construct/update the
+    hypothesis based on counterexamples.
+    """
+
+    def __init__(self, alphabet: list | SevpaAlphabet, sul: SUL, automaton_type: str, cex: tuple) -> None:
+        """
+        Creates a classification tree, initialized with a root distinguishing the initial hypothesis state and the
+        state reached by the initial counterexample.
+
+        :param list | SevpaAlphabet alphabet: Input alphabet.
+        :param SUL sul: System under learning.
+        :param str automaton_type: Automaton type, one of ['dfa', 'mealy', 'moore', 'vpa'].
+        :param tuple cex: Initial counterexample used to seed the tree.
+        """
         self.sul = sul
         self.alphabet = alphabet
         self.automaton_type = automaton_type
@@ -108,7 +168,7 @@ class ClassificationTree:
         self.new_states = list(self.leaf_nodes.values())
         self.transitions_to_update = []
 
-    def _sift(self, word):
+    def _sift(self, word: tuple) -> CTLeafNode:
         """
         Sifting a word into the classification tree.
         Starting at the root, at every inner node (a CTInternalNode),
@@ -116,13 +176,8 @@ class ClassificationTree:
         membership query (word * node.distinguishing_string). Repeated until a leaf
         (a CTLeafNode) is reached, which is the result of the sifting.
 
-        Args:
-
-            word: the word to sift into the discrimination tree (a tuple of all letters)
-
-        Returns:
-
-            the CTLeafNode that is reached by the sifting operation.
+        :param tuple word: The word to sift into the discrimination tree (a tuple of all letters).
+        :return CTLeafNode: The CTLeafNode that is reached by the sifting operation.
         """
 
         node = self.root
@@ -146,6 +201,12 @@ class ClassificationTree:
         return node
 
     def update_hypothesis(self):
+        """
+        For each CTLeafNode of this CT, creates a state in the hypothesis that is labeled by that node's access
+        string (the start state is the empty word), then computes transitions by sifting.
+
+        :return: The constructed hypothesis automaton.
+        """
         # for each CTLeafNode of this CT,
         # create a state in the hypothesis that is labeled by that
         # node's access string. The start state is the empty word
@@ -248,24 +309,18 @@ class ClassificationTree:
         return automaton_class[self.automaton_type](initial_state=self.initial_state,
                                                     states=list(self.hypothesis_states.values()))
 
-    def _least_common_ancestor(self, node_1_id, node_2_id):
+    def _least_common_ancestor(self, node_1_id: tuple, node_2_id: tuple) -> tuple:
         """
         Find the distinguishing string of the least common ancestor
         of the leaf nodes node_1 and node_2. Both nodes have to exist.
         Adapted from https://www.geeksforgeeks.org/lowest-common-ancestor-binary-tree-set-1/
 
-        Args:
-
-            node_1_id: first leaf node's id
-            node_2_id: second leaf node's id
-
-        Returns:
-
-            the distinguishing string of the lca
-
+        :param tuple node_1_id: First leaf node's access string (id).
+        :param tuple node_2_id: Second leaf node's access string (id).
+        :return tuple: The distinguishing string of the LCA.
         """
 
-        def ancestor(parent, node):
+        def ancestor(parent: CTNode, node: tuple) -> bool:
             for child in parent.children.values():
                 if child.is_leaf():
                     if child.access_string == node:
@@ -276,7 +331,7 @@ class ClassificationTree:
                         return True
             return False
 
-        def findLCA(n1_id, n2_id):
+        def findLCA(n1_id: tuple, n2_id: tuple) -> CTInternalNode | None:
             node = self.leaf_nodes[n1_id]
             parent = node.parent
             while parent:
@@ -290,7 +345,7 @@ class ClassificationTree:
 
         return findLCA(node_1_id, node_2_id).distinguishing_string
 
-    def update(self, cex: tuple, hypothesis):
+    def update(self, cex: tuple, hypothesis) -> None:
         """
         Updates the classification tree based on a counterexample.
         - For each prefix cex[:i] of the counterexample, get
@@ -305,10 +360,8 @@ class ClassificationTree:
           The internal node is labeled with the distinguishing string (cex[j-1],*d),
           where d is the distinguishing string of the LCA of s_i and s_star_i.
 
-        Args:
-            cex: the counterexample used to update the tree
-            hypothesis: the former (wrong) hypothesis
-
+        :param tuple cex: The counterexample used to update the tree.
+        :param hypothesis: The former (wrong) hypothesis.
         """
         j = d = None
         for i in range(1, len(cex) + 1):
@@ -332,7 +385,7 @@ class ClassificationTree:
                               new_leaf_access_string=tuple(cex[:j - 1]) or tuple(),
                               new_leaf_position=self.sul.query((*cex[:j - 1], *(cex[j - 1], *d)))[-1])
 
-    def process_counterexample(self, cex: tuple, hypothesis, cex_processing_fun):
+    def process_counterexample(self, cex: tuple, hypothesis, cex_processing_fun: str) -> None:
         """
         Updates the classification tree based on a counterexample,
         using Rivest & Schapire counterexample processing
@@ -343,11 +396,9 @@ class ClassificationTree:
           The internal node is labeled with the distinguishing string (cex[j-1],*d),
           where d is the distinguishing string of the LCA of s_i and s_star_i.
 
-        Args:
-            cex: the counterexample used to update the tree
-            hypothesis: the former (wrong) hypothesis
-            cex_processing_fun: string choosing which cex_processing to use
-
+        :param tuple cex: The counterexample used to update the tree.
+        :param hypothesis: The former (wrong) hypothesis.
+        :param str cex_processing_fun: String choosing which cex_processing to use.
         """
         v = None
         if 'linear' in cex_processing_fun:
@@ -400,7 +451,8 @@ class ClassificationTree:
                               new_leaf_access_string=new_leaf_access_string,
                               new_leaf_position=new_leaf_position)
 
-    def _insert_new_leaf(self, discriminator, old_leaf_access_string, new_leaf_access_string, new_leaf_position):
+    def _insert_new_leaf(self, discriminator: tuple, old_leaf_access_string: tuple, new_leaf_access_string: tuple,
+                         new_leaf_position) -> None:
         """
         Inserts a new leaf in the classification tree by:
         - moving the leaf node specified by <old_leaf_access_string> down one level
@@ -411,14 +463,12 @@ class ClassificationTree:
 
         where one of the resulting nodes keeps the old
         node's access string and the other gets new_leaf_access_string.
-        Args:
-            discriminator: The distinguishing string of the new internal node
-            old_leaf_access_string: The access string specifying the leaf node to be 'split' (or rather moved down)
-            new_leaf_access_string: The access string of the leaf node that will be created
-            new_leaf_position: The path from the new internal node to the new leaf node
 
-        Returns:
-
+        :param tuple discriminator: The distinguishing string of the new internal node.
+        :param tuple old_leaf_access_string: The access string specifying the leaf node to be 'split' (or rather
+            moved down).
+        :param tuple new_leaf_access_string: The access string of the leaf node that will be created.
+        :param new_leaf_position: The path from the new internal node to the new leaf node.
         """
         if self.automaton_type == "dfa" or self.automaton_type == 'vpa':
             other_leaf_position = not new_leaf_position

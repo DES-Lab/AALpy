@@ -1,4 +1,6 @@
-from typing import Generic, Dict
+# Mealy machine state and automaton implementation, where outputs are associated with transitions.
+from collections.abc import Hashable
+from typing import Generic
 
 from aalpy.base import AutomatonState, DeterministicAutomaton
 from aalpy.base.Automaton import OutputType, InputType
@@ -9,34 +11,49 @@ class MealyState(AutomatonState, Generic[InputType, OutputType]):
     Single state of a Mealy machine. Each state has an output_fun dictionary that maps inputs to outputs.
     """
 
-    def __init__(self, state_id):
+    def __init__(self, state_id: Hashable) -> None:
+        """
+        Creates a Mealy machine state.
+
+        :param Hashable state_id: Unique identifier of the state.
+        """
         super().__init__(state_id)
-        self.transitions : Dict[InputType, MealyState] = dict()
-        self.output_fun : Dict[InputType, OutputType] = dict()
+        self.transitions: dict[InputType, MealyState[InputType, OutputType]] = dict()
+        self.output_fun: dict[InputType, OutputType] = dict()
 
 
 class MealyMachine(DeterministicAutomaton[MealyState[InputType, OutputType]]):
+    """
+    Deterministic Mealy machine, where outputs depend on the input and the current state.
+    """
 
-    def __init__(self, initial_state: MealyState, states):
+    def __init__(self, initial_state: MealyState, states: list[MealyState]) -> None:
+        """
+        Creates a Mealy machine.
+
+        :param MealyState initial_state: Initial state of the Mealy machine.
+        :param list[MealyState] states: All states of the Mealy machine.
+        """
         super().__init__(initial_state, states)
 
-    def step(self, letter):
+    def step(self, letter: InputType) -> OutputType:
         """
-        In Mealy machines, outputs depend on the input and the current state.
+        Performs a single step on the Mealy machine. In Mealy machines, outputs depend on the input and the
+        current state.
 
-            Args:
-
-                letter: single input that is looked up in the transition and output functions
-
-            Returns:
-
-                output corresponding to the input from the current state
+        :param InputType letter: Single input that is looked up in the transition and output functions.
+        :return OutputType: Output corresponding to the input from the current state.
         """
         output = self.current_state.output_fun[letter]
         self.current_state = self.current_state.transitions[letter]
         return output
 
-    def to_state_setup(self):
+    def to_state_setup(self) -> dict:
+        """
+        Converts the Mealy machine to a state setup dictionary.
+
+        :return dict: Map from state_id to a transitions_dict mapping input to (output, target_state_id).
+        """
         state_setup_dict = {}
 
         # ensure prefixes are computed
@@ -49,9 +66,13 @@ class MealyMachine(DeterministicAutomaton[MealyState[InputType, OutputType]]):
         return state_setup_dict
 
     @staticmethod
-    def from_state_setup(state_setup : dict, **kwargs):
+    def from_state_setup(state_setup: dict, **kwargs) -> 'MealyMachine':
         """
-            First state in the state setup is the initial state.
+        Creates a Mealy machine from a state setup dictionary. The first state in the state setup is the initial
+        state.
+
+        Example state setup::
+
             state_setup = {
                 "a": {"x": ("o1", "b1"), "y": ("o2", "a")},
                 "b1": {"x": ("o3", "b2"), "y": ("o1", "a")},
@@ -61,15 +82,8 @@ class MealyMachine(DeterministicAutomaton[MealyState[InputType, OutputType]]):
                 "c": {"x": ("o3", "a"), "y": ("o5", "a")},
             }
 
-
-        Args:
-
-            state_setup:
-                state_setup should map from state_id to tuple(transitions_dict).
-
-        Returns:
-
-            Mealy Machine
+        :param dict state_setup: Map from state_id to a transitions_dict mapping input to (output, target_state_id).
+        :return MealyMachine: The constructed Mealy machine.
         """
         # state_setup should map from state_id to tuple(transitions_dict).
         # Each entry in transition dict is <input> : <output, new_state_id>

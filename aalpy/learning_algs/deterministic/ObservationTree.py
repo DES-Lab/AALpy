@@ -1,14 +1,27 @@
+# Observation tree data structure and hypothesis construction/counterexample handling for the L# algorithm.
+from typing import Any
+
 from .ADS import Ads
 from .Apartness import Apartness
 from ... import Dfa, DfaState, MealyState, MealyMachine, MooreMachine, MooreState
 
 aut_type = ['dfa', 'mealy', 'moore']
 
+
 class MooreNode:
+    """
+    Single node of the observation tree for DFA/Moore machines, storing its output and successors.
+    """
+
     _id_counter = 0
     __slots__ = ['id', 'output', 'successors', 'parent', 'input_to_parent']
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: 'MooreNode | None' = None) -> None:
+        """
+        Creates a Moore/DFA observation-tree node.
+
+        :param MooreNode | None parent: Parent node, or None for the root.
+        """
         MooreNode._id_counter += 1
         self.id = MooreNode._id_counter
         self.output = None
@@ -16,22 +29,39 @@ class MooreNode:
         self.parent = parent
         self.input_to_parent = None
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.id)
 
-    def add_successor(self, input_val, output_val, successor_node):
-        """ Adds a successor node to the current node based on input """
+    def add_successor(self, input_val: Any, output_val: Any, successor_node: 'MooreNode') -> None:
+        """
+        Adds a successor node to the current node based on input.
+
+        :param Any input_val: Input leading to the successor.
+        :param Any output_val: Output observed at the successor.
+        :param MooreNode successor_node: The successor node.
+        """
         self.successors[input_val] = successor_node
         self.successors[input_val].output = output_val
 
-    def get_successor(self, input_val):
-        """ Returns the successor node for the given input """
+    def get_successor(self, input_val: Any) -> 'MooreNode | None':
+        """
+        Returns the successor node for the given input.
+
+        :param Any input_val: Input to look up.
+        :return MooreNode | None: The successor node, or None if not present.
+        """
         if input_val in self.successors:
             return self.successors[input_val]
         return None
 
-    def extend_and_get(self, inp, output):
-        """ Extend the node with a new successor and return the successor node """
+    def extend_and_get(self, inp: Any, output: Any) -> 'MooreNode':
+        """
+        Extend the node with a new successor and return the successor node.
+
+        :param Any inp: Input leading to the (possibly new) successor.
+        :param Any output: Output observed at the successor.
+        :return MooreNode: The (possibly newly created) successor node.
+        """
         if inp in self.successors:
             return self.successors[inp]
         successor_node = MooreNode(parent=self)
@@ -40,42 +70,76 @@ class MooreNode:
         return successor_node
 
     @property
-    def id_counter(self):
+    def id_counter(self) -> int:
+        """
+        :return int: Total number of Moore/DFA observation-tree nodes created so far.
+        """
         return self._id_counter
 
 
 class MealyNode:
+    """
+    Single node of the observation tree for Mealy machines, storing (output, successor) pairs per input.
+    """
+
     _id_counter = 0
     __slots__ = ['id', 'successors', 'parent', 'input_to_parent']
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: 'MealyNode | None' = None) -> None:
+        """
+        Creates a Mealy observation-tree node.
+
+        :param MealyNode | None parent: Parent node, or None for the root.
+        """
         MealyNode._id_counter += 1
         self.id = MealyNode._id_counter
         self.successors = {}
         self.parent = parent
         self.input_to_parent = None
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.id)
 
-    def add_successor(self, input_val, output_val, successor_node):
-        """ Adds a successor node to the current node based on input """
+    def add_successor(self, input_val: Any, output_val: Any, successor_node: 'MealyNode') -> None:
+        """
+        Adds a successor node to the current node based on input.
+
+        :param Any input_val: Input leading to the successor.
+        :param Any output_val: Output observed for this input.
+        :param MealyNode successor_node: The successor node.
+        """
         self.successors[input_val] = (output_val, successor_node)
 
-    def get_successor(self, input_val):
-        """ Returns the successor node for the given input """
+    def get_successor(self, input_val: Any) -> 'MealyNode | None':
+        """
+        Returns the successor node for the given input.
+
+        :param Any input_val: Input to look up.
+        :return MealyNode | None: The successor node, or None if not present.
+        """
         if input_val in self.successors:
             return self.successors[input_val][1]
         return None
 
-    def get_output(self, input_val):
-        """ Returns the output for the given input """
+    def get_output(self, input_val: Any) -> Any:
+        """
+        Returns the output for the given input.
+
+        :param Any input_val: Input to look up.
+        :return Any: The observed output, or None if not present.
+        """
         if input_val in self.successors:
             return self.successors[input_val][0]
         return None
 
-    def extend_and_get(self, inp, output):
-        """ Extend the node with a new successor and return the successor node """
+    def extend_and_get(self, inp: Any, output: Any) -> 'MealyNode':
+        """
+        Extend the node with a new successor and return the successor node.
+
+        :param Any inp: Input leading to the (possibly new) successor.
+        :param Any output: Output observed for this input.
+        :return MealyNode: The (possibly newly created) successor node.
+        """
         if inp in self.successors:
             out = self.successors[inp][0]
             if out != output:
@@ -88,14 +152,29 @@ class MealyNode:
         return successor_node
 
     @property
-    def id_counter(self):
+    def id_counter(self) -> int:
+        """
+        :return int: Total number of Mealy observation-tree nodes created so far.
+        """
         return self._id_counter
 
 
 class ObservationTree:
-    def __init__(self, alphabet, sul, automaton_type, extension_rule, separation_rule):
+    """
+    Observation tree used by the L# algorithm. Stores all input/output observations made so far, tracks basis
+    (identified) and frontier (candidate) states, and constructs/updates hypotheses using apartness.
+    """
+
+    def __init__(self, alphabet: list, sul, automaton_type: str, extension_rule: str | None,
+                separation_rule: str) -> None:
         """
-        Initialize the tree with a root node and the alphabet
+        Initialize the tree with a root node and the alphabet.
+
+        :param list alphabet: Input alphabet.
+        :param SUL sul: System under learning.
+        :param str automaton_type: Automaton type, one of ['dfa', 'mealy', 'moore'].
+        :param str | None extension_rule: Extension rule, one of [None, 'SepSeq', 'ADS'].
+        :param str separation_rule: Separation rule, one of ['SepSeq', 'ADS'].
         """
         assert automaton_type in aut_type
         assert alphabet is not None and sul is not None
@@ -124,8 +203,13 @@ class ObservationTree:
         # Reverse map used during counterexample processing.
         self.state_to_tree_node = dict()
 
-    def insert_observation(self, inputs, outputs):
-        # Insert an observation into the tree using sequences of inputs and outputs
+    def insert_observation(self, inputs: list, outputs: list) -> None:
+        """
+        Insert an observation into the tree using sequences of inputs and outputs.
+
+        :param list inputs: Input sequence.
+        :param list outputs: Output sequence observed for the inputs.
+        """
         if len(inputs) != len(outputs):
             raise ValueError("Inputs and outputs must have the same length.")
 
@@ -133,8 +217,13 @@ class ObservationTree:
         for input_val, output_val in zip(inputs, outputs):
             current_node = current_node.extend_and_get(input_val, output_val)
 
-    def get_observation(self, inputs):
-        # Retrieve the list of outputs based on a given input sequence
+    def get_observation(self, inputs: list) -> list | None:
+        """
+        Retrieve the list of outputs based on a given input sequence.
+
+        :param list inputs: Input sequence to look up from the root.
+        :return list | None: List of outputs, or None if the sequence is not in the tree.
+        """
         current_node = self.root
         observation = []
         for input_val in inputs:
@@ -143,31 +232,50 @@ class ObservationTree:
                 current_node = current_node.get_successor(input_val)
             else:
                 current_node = current_node.get_successor(input_val)
+                if current_node is None:
+                    return None
+
                 output = current_node.output
             if output is None:
                 return None
             observation.append(output)
         return observation
 
-    def get_outputs(self, basis_state, inputs):
-        # Retrieve the list of outputs based on a basis state and a given input sequence
+    def get_outputs(self, basis_state, inputs: list) -> list | None:
+        """
+        Retrieve the list of outputs based on a basis state and a given input sequence.
+
+        :param basis_state: Basis observation-tree node to start from.
+        :param list inputs: Input sequence to look up.
+        :return list | None: List of outputs, or None if the sequence is not in the tree.
+        """
         prefix = self.get_transfer_sequence(self.root, basis_state)
         current_node = self.get_successor(prefix)
         observation = []
         for input_val in inputs:
             if self.automaton_type == 'mealy':
                 output = current_node.get_output(input_val)
+                current_node = current_node.get_successor(input_val)
             else:
+                current_node = current_node.get_successor(input_val)
+                if current_node is None:
+                    return None
+
                 output = current_node.output
+
             if output is None:
                 return None
             observation.append(output)
-            current_node = current_node.get_successor(input_val)
 
         return observation
 
-    def get_successor(self, inputs):
-        # Retrieve the node (subtree) corresponding to the given input sequence
+    def get_successor(self, inputs: list):
+        """
+        Retrieve the node (subtree) corresponding to the given input sequence.
+
+        :param list inputs: Input sequence from the root.
+        :return: The observation-tree node reached, or None if the sequence is not in the tree.
+        """
         current_node = self.root
         for input_val in inputs:
             successor_node = current_node.get_successor(input_val)
@@ -177,8 +285,14 @@ class ObservationTree:
 
         return current_node
 
-    def get_transfer_sequence(self, from_node, to_node):
-        # Get the transfer sequence (inputs) that moves from one node to another
+    def get_transfer_sequence(self, from_node, to_node) -> list | None:
+        """
+        Get the transfer sequence (inputs) that moves from one node to another.
+
+        :param from_node: Observation-tree node to start from.
+        :param to_node: Observation-tree node to reach.
+        :return list | None: The transfer input sequence, or None if `to_node` is not a descendant of `from_node`.
+        """
         transfer_sequence = []
         current_node = to_node
 
@@ -191,8 +305,13 @@ class ObservationTree:
         transfer_sequence.reverse()
         return transfer_sequence
 
-    def get_access_sequence(self, to_node):
-        # Get the transfer sequence (inputs) that moves from one node to another
+    def get_access_sequence(self, to_node) -> tuple | None:
+        """
+        Get the transfer sequence (inputs) that moves from one node to another.
+
+        :param to_node: Observation-tree node to reach from the root.
+        :return tuple | None: The access sequence, or None if `to_node` is not reachable from the root.
+        """
         transfer_sequence = []
         current_node = to_node
 
@@ -205,21 +324,28 @@ class ObservationTree:
         transfer_sequence.reverse()
         return tuple(transfer_sequence)
 
-    def get_size(self):
+    def get_size(self) -> int:
+        """
+        :return int: Total number of nodes created in this observation tree.
+        """
         return self.root.id_counter
 
     # Functions related to finding new basis and frontier states
-    def update_frontier_and_basis(self):
-        # Updates the frontier to basis map, promotes a frontier state and checks for consistency
+    def update_frontier_and_basis(self) -> None:
+        """
+        Updates the frontier to basis map, promotes a frontier state and checks for consistency.
+        """
         self.update_frontier_to_basis_dict()
         self.promote_frontier_state()
         self.check_frontier_consistency()
         self.update_frontier_to_basis_dict()
 
-    def update_basis_candidates(self, frontier_state):
+    def update_basis_candidates(self, frontier_state) -> None:
         """
         Updates the basis candidates for the specified frontier state.
         Removes basis states that are deemed apart from the frontier state.
+
+        :param frontier_state: Frontier observation-tree node to update candidates for.
         """
         if frontier_state not in self.frontier_to_basis_dict:
             print(
@@ -230,7 +356,7 @@ class ObservationTree:
         self.frontier_to_basis_dict[frontier_state] = [basis_state for basis_state in basis_list
                                                        if not Apartness.states_are_apart(frontier_state, basis_state, self)]
 
-    def update_frontier_to_basis_dict(self):
+    def update_frontier_to_basis_dict(self) -> None:
         """
         Checks for basis candidates (basis states with the same behavior) for each frontier state.
         If a frontier state and a basis state are "apart", the basis state is removed from the basis list.
@@ -241,9 +367,10 @@ class ObservationTree:
                 basis_state for basis_state in basis_list
                 if not Apartness.states_are_apart(frontier_state, basis_state, self)]
 
-    def promote_frontier_state(self):
+    def promote_frontier_state(self) -> None:
         """
-        Searches for an isolated frontier state and adds it to the basis states if it is not associated with another basis state
+        Searches for an isolated frontier state and adds it to the basis states if it is not associated with
+        another basis state.
         """
         for iso_frontier_state, basis_list in self.frontier_to_basis_dict.items():
             if not basis_list:
@@ -256,9 +383,9 @@ class ObservationTree:
                         new_basis_list.append(new_basis)
                 break
 
-    def check_frontier_consistency(self):
+    def check_frontier_consistency(self) -> None:
         """
-        Checks if all the states are correctly defined and creates new frontier states when possible
+        Checks if all the states are correctly defined and creates new frontier states when possible.
         """
         for basis_state in self.basis:
             for i in self.alphabet:
@@ -271,9 +398,13 @@ class ObservationTree:
                     if not Apartness.states_are_apart(new_basis_state, maybe_frontier, self)
                 ]
 
-    def is_observation_tree_adequate(self):
-        # Check if the frontier state have only 1 basis candidate, and if all basis
-        # states have some output for every input.
+    def is_observation_tree_adequate(self) -> bool:
+        """
+        Check if the frontier state have only 1 basis candidate, and if all basis states have some output for
+        every input.
+
+        :return bool: True if the observation tree is adequate to build a hypothesis, False otherwise.
+        """
         self.check_frontier_consistency()
         for _, basis_list in self.frontier_to_basis_dict.items():
             if len(basis_list) != 1:
@@ -290,8 +421,10 @@ class ObservationTree:
 
         return True
 
-    def make_basis_complete(self):
-        # Explore new frontier states and adding them to the frontier to basis map
+    def make_basis_complete(self) -> None:
+        """
+        Explore new frontier states and add them to the frontier to basis map.
+        """
         for basis_state in self.basis:
             for inp in self.alphabet:
                 if basis_state.get_successor(inp) is None:
@@ -300,14 +433,25 @@ class ObservationTree:
                     basis_candidates = self.find_basis_candidates(new_frontier)
                     self.frontier_to_basis_dict[new_frontier] = basis_candidates
 
-    def find_basis_candidates(self, new_frontier):
+    def find_basis_candidates(self, new_frontier) -> set:
+        """
+        Finds basis states that are not apart from the given frontier state.
+
+        :param new_frontier: Frontier observation-tree node to find candidates for.
+        :return set: Set of basis states that could correspond to `new_frontier`.
+        """
         return {
             new_basis_state for new_basis_state in self.basis
             if not Apartness.states_are_apart(new_basis_state, new_frontier, self)
         }
 
-    def explore_frontier(self, basis_state, inp):
-        # Explores a specific frontier state (basis state + input) by passing a query to the SUL
+    def explore_frontier(self, basis_state, inp: Any) -> None:
+        """
+        Explores a specific frontier state (basis state + input) by passing a query to the SUL.
+
+        :param basis_state: Basis observation-tree node to extend.
+        :param Any inp: Input to explore from `basis_state`.
+        """
         if self.extension_rule is None or (self.extension_rule == "SepSeq" and len(self.basis) == 1):
             inputs = self.get_transfer_sequence(self.root, basis_state)
             inputs.append(inp)
@@ -330,13 +474,26 @@ class ObservationTree:
             outputs = self.sul.query(inputs)
             self.insert_observation(inputs, outputs)
 
-    def adaptive_output_query(self, prefix, infix, ads):
-        # Adds input to the prefix and calls the base function
+    def adaptive_output_query(self, prefix: list, infix: Any, ads: Ads) -> tuple[list, list]:
+        """
+        Adds input to the prefix and calls the base function.
+
+        :param list prefix: Prefix input sequence (transfer sequence to the basis state).
+        :param Any infix: Input to append to the prefix before the adaptive query.
+        :param Ads ads: Adaptive distinguishing sequence to use for the query.
+        :return tuple[list, list]: The (possibly extended) inputs and the outputs received.
+        """
         prefix.append(infix)
         return self.adaptive_output_query_base(prefix, ads)
 
-    def adaptive_output_query_base(self, prefix, ads):
-        # Query the tree for a result, if unsuccessful query the SUL and update the tree
+    def adaptive_output_query_base(self, prefix: list, ads: Ads) -> tuple[list, list]:
+        """
+        Query the tree for a result, if unsuccessful query the SUL and update the tree.
+
+        :param list prefix: Input sequence from the root to the node the ADS should be run from.
+        :param Ads ads: Adaptive distinguishing sequence to use for the query.
+        :return tuple[list, list]: The inputs sent and the outputs received.
+        """
         from_node = self.get_successor(prefix)
         if from_node:
             tree_in, tree_out = self._answer_ads_from_tree(ads, from_node)
@@ -358,8 +515,15 @@ class ObservationTree:
 
         return sul_in, outputs
 
-    def _answer_ads_from_tree(self, ads, from_node):
-        # searches the tree based on the inputs returning the inputs/outputs when all ads inputs are used
+    def _answer_ads_from_tree(self, ads: Ads, from_node) -> tuple[list | None, list | None]:
+        """
+        Searches the tree based on the inputs, returning the inputs/outputs when all ADS inputs are used.
+
+        :param Ads ads: Adaptive distinguishing sequence being answered.
+        :param from_node: Observation-tree node to start answering the ADS from.
+        :return tuple[list | None, list | None]: Inputs sent and outputs received, or (None, None) if the tree
+            cannot answer the full ADS.
+        """
         prev_output = None
         inputs_sent = []
         outputs_received = []
@@ -369,6 +533,19 @@ class ObservationTree:
             next_input = ads.next_input(prev_output)
             if next_input is None:
                 break
+
+            # For DFA/Moore, the root of an Ads is labelled with the tuple() sentinel (see
+            # Ads.construct_ads): it splits the block on the states' own output, without sending an
+            # actual input. Previously this branch was missing here (unlike in
+            # SUL.adaptive_query, which does handle it), so current_node.get_successor(tuple())
+            # always returned None and this method always reported "cannot answer from tree" for
+            # DFA/Moore -- even when the tree already had the answer -- forcing a real SUL query on
+            # every single ADS-based extension/separation step. Mirror adaptive_query's handling:
+            # just read the node's own output without moving to a successor or recording an input.
+            if next_input == tuple() and self.automaton_type != 'mealy':
+                prev_output = outputs_received[-1] if outputs_received else current_node.output
+                continue
+
             inputs_sent.append(next_input)
 
             if self.automaton_type == 'mealy':
@@ -389,10 +566,14 @@ class ObservationTree:
         ads.reset_to_root()
         return inputs_sent, outputs_received
 
-    def get_or_compute_witness(self, state_one, state_two):
+    def get_or_compute_witness(self, state_one, state_two) -> list | None:
         """
         Get witness by checking cache and computing it otherwise.
         Only add pairs (a,b) with a < b.
+
+        :param state_one: First observation-tree node (basis state).
+        :param state_two: Second observation-tree node (basis state).
+        :return list | None: Distinguishing input sequence between the two states, or None.
         """
         if state_one.id < state_two.id:
             pair = (state_one.id, state_two.id)
@@ -406,13 +587,19 @@ class ObservationTree:
         self.witness_cache[pair] = witness
         return witness
 
-    def make_frontiers_identified(self):
-        # Loop over all frontier states to identify them
+    def make_frontiers_identified(self) -> None:
+        """
+        Loop over all frontier states to identify them.
+        """
         for frontier_state in self.frontier_to_basis_dict:
             self.identify_frontier(frontier_state)
 
-    def identify_frontier(self, frontier_state):
-        # Identify a specific frontier state
+    def identify_frontier(self, frontier_state) -> None:
+        """
+        Identify a specific frontier state.
+
+        :param frontier_state: Frontier observation-tree node to identify.
+        """
         if frontier_state not in self.frontier_to_basis_dict:
             raise Exception(
                 f"Warning: {frontier_state} not found in frontier_to_basis_dict.")
@@ -433,8 +620,13 @@ class ObservationTree:
         if len(self.frontier_to_basis_dict.get(frontier_state)) == old_candidate_size:
             raise RuntimeError("Identification did not increase the norm")
 
-    def _identify_frontier_sepseq(self, frontier_state):
-        # Specifically identify frontier states using separating sequences
+    def _identify_frontier_sepseq(self, frontier_state) -> tuple[list, list]:
+        """
+        Specifically identify frontier states using separating sequences.
+
+        :param frontier_state: Frontier observation-tree node to identify.
+        :return tuple[list, list]: Inputs sent and outputs received.
+        """
         basis_candidates = self.frontier_to_basis_dict.get(frontier_state)
         basis_one = basis_candidates[0]
         basis_two = basis_candidates[1]
@@ -447,15 +639,22 @@ class ObservationTree:
 
         return inputs, outputs
 
-    def _identify_frontier_ads(self, frontier_state):
-        # Specifically identify frontier states using ADS
+    def _identify_frontier_ads(self, frontier_state) -> tuple[list, list]:
+        """
+        Specifically identify frontier states using ADS.
+
+        :param frontier_state: Frontier observation-tree node to identify.
+        :return tuple[list, list]: Inputs sent and outputs received.
+        """
         basis_candidates = self.frontier_to_basis_dict.get(frontier_state)
         ads = Ads(self, basis_candidates)
         ads.reset_to_root()
         return self.adaptive_output_query_base(self.get_transfer_sequence(self.root, frontier_state), ads)
 
-    def construct_hypothesis_states(self):
-        # Construct the hypothesis states from the basis
+    def construct_hypothesis_states(self) -> None:
+        """
+        Construct the hypothesis states from the basis.
+        """
         self.states_dict = dict()
         self.state_to_tree_node = dict()
         state_counter = 0
@@ -473,8 +672,10 @@ class ObservationTree:
             self.state_to_tree_node[self.states_dict[basis_state]] = basis_state
             state_counter += 1
 
-    def construct_hypothesis_transitions(self):
-        # Construct the hypothesis transitions from the basis, frontier and basis to frontier mapping
+    def construct_hypothesis_transitions(self) -> None:
+        """
+        Construct the hypothesis transitions from the basis, frontier and basis to frontier mapping.
+        """
         for basis_state in self.basis:
             for input_val in self.alphabet:
                 # set transition
@@ -497,7 +698,11 @@ class ObservationTree:
                         input_val)
 
     def construct_hypothesis(self):
-        # Construct a hypothesis (Mealy Machine) based on the observation tree
+        """
+        Construct a hypothesis automaton based on the observation tree.
+
+        :return: The constructed hypothesis automaton (Dfa, MealyMachine or MooreMachine).
+        """
         self.construct_hypothesis_states()
         self.construct_hypothesis_transitions()
 
@@ -510,7 +715,11 @@ class ObservationTree:
         return hypothesis
 
     def build_hypothesis(self):
-        # Builds the hypothesis which will be sent to the SUL and checks consistency
+        """
+        Builds the hypothesis which will be sent to the SUL and checks consistency.
+
+        :return: The constructed, consistent hypothesis automaton.
+        """
         while True:
             self.make_observation_tree_adequate()
             hypothesis = self.construct_hypothesis()
@@ -522,8 +731,10 @@ class ObservationTree:
             cex_outputs = self.get_observation(counter_example)
             self.process_counter_example(hypothesis, counter_example, cex_outputs)
 
-    def make_observation_tree_adequate(self):
-        # Updates the frontier and basis based on extension and separation rule
+    def make_observation_tree_adequate(self) -> None:
+        """
+        Updates the frontier and basis based on extension and separation rule until the tree is adequate.
+        """
         self.update_frontier_and_basis()
         while not self.is_observation_tree_adequate():
             self.make_basis_complete()
@@ -532,10 +743,14 @@ class ObservationTree:
 
     # Counterexample Processing
 
-    def process_counter_example(self, hypothesis, cex_inputs, cex_outputs):
+    def process_counter_example(self, hypothesis, cex_inputs: list, cex_outputs: list) -> None:
         """
         Inserts the counter example into the observation tree and searches for the
-        input-output sequence which is different
+        input-output sequence which is different.
+
+        :param hypothesis: Hypothesis on which the counterexample was found.
+        :param list cex_inputs: Counterexample input sequence.
+        :param list cex_outputs: Outputs observed on the SUL for `cex_inputs`.
         """
         self.insert_observation(cex_inputs, cex_outputs)
         hyp_outputs = hypothesis.compute_output_seq(
@@ -545,16 +760,26 @@ class ObservationTree:
         self._process_binary_search(
             hypothesis, cex_inputs[:prefix_index], cex_outputs[:prefix_index])
 
-    def _get_counter_example_prefix_index(self, cex_outputs, hyp_outputs):
-        """ Checks at which index the output functions differ """
+    def _get_counter_example_prefix_index(self, cex_outputs: list, hyp_outputs: list) -> int:
+        """
+        Checks at which index the output functions differ.
+
+        :param list cex_outputs: Outputs observed on the SUL.
+        :param list hyp_outputs: Outputs computed on the hypothesis.
+        :return int: Index of the first differing output.
+        """
         for index in range(len(cex_outputs)):
             if cex_outputs[index] != hyp_outputs[index]:
                 return index
         raise RuntimeError("counterexample and hypothesis outputs are equal")
 
-    def _process_binary_search(self, hypothesis, cex_inputs, cex_outputs):
+    def _process_binary_search(self, hypothesis, cex_inputs: list, cex_outputs: list) -> None:
         """
-        use binary search on the counter example to compute a witness between the real system and the hypothesis
+        Use binary search on the counter example to compute a witness between the real system and the hypothesis.
+
+        :param hypothesis: Hypothesis on which the counterexample was found.
+        :param list cex_inputs: Counterexample input sequence (prefix up to the divergence point).
+        :param list cex_outputs: Outputs observed on the SUL for `cex_inputs`.
         """
         tree_node = self.get_successor(cex_inputs)
         self.update_frontier_and_basis()
@@ -603,7 +828,15 @@ class ObservationTree:
             self._process_binary_search(
                 hypothesis, new_inputs, query_outputs[:len(new_inputs)])
 
-    def _get_automaton_successor(self, automaton, from_state, inputs):
+    def _get_automaton_successor(self, automaton, from_state, inputs: list):
+        """
+        Executes an input sequence on the given automaton starting from a state and returns the reached state.
+
+        :param automaton: Automaton to execute the sequence on.
+        :param from_state: State to start execution from.
+        :param list inputs: Input sequence to execute.
+        :return: The state reached after executing `inputs`.
+        """
         automaton.current_state = from_state
         for inp in inputs:
             automaton.current_state = automaton.current_state.transitions[inp]
@@ -611,6 +844,12 @@ class ObservationTree:
         return automaton.current_state
 
     def _get_tree_node_for_hyp_state(self, hyp_state):
+        """
+        Looks up the observation-tree node corresponding to a hypothesis state.
+
+        :param hyp_state: Hypothesis state to look up.
+        :return: The corresponding observation-tree node.
+        """
         try:
             return self.state_to_tree_node[hyp_state]
         except KeyError as exc:

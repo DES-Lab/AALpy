@@ -1,6 +1,8 @@
+# Markov decision process state and automaton implementation, where transitions are probabilistic given an input.
 import random
 from collections import defaultdict
-from typing import Dict, Generic, List, Tuple
+from collections.abc import Hashable
+from typing import Generic
 
 from aalpy.base import Automaton, AutomatonState
 from aalpy.base.Automaton import OutputType, InputType
@@ -8,34 +10,45 @@ from aalpy.base.Automaton import OutputType, InputType
 
 class MdpState(AutomatonState, Generic[InputType, OutputType]):
     """
-    For transitions, each transition is a tuple (Node(output), probability)
+    Single state of an MDP. For transitions, each transition is a tuple (Node(output), probability).
     """
-    def __init__(self, state_id, output=None):
+
+    def __init__(self, state_id: Hashable, output: OutputType | None = None) -> None:
+        """
+        Creates an MDP state.
+
+        :param Hashable state_id: Unique identifier of the state.
+        :param OutputType | None output: Output value associated with the state.
+        """
         super().__init__(state_id)
-        self.output: OutputType = output
+        self.output: OutputType | None = output
         # each transition is a tuple (Node(output), probability)
-        self.transitions: Dict[InputType, List[Tuple[MdpState, float]]] = defaultdict(list)
+        self.transitions: dict[InputType, list[tuple[MdpState[InputType, OutputType], float]]] = defaultdict(list)
 
 
 class Mdp(Automaton[MdpState[InputType, OutputType]]):
     """Markov Decision Process."""
 
-    def __init__(self, initial_state: MdpState, states: list):
+    def __init__(self, initial_state: MdpState, states: list) -> None:
+        """
+        Creates an MDP.
+
+        :param MdpState initial_state: Initial state of the MDP.
+        :param list states: All states of the MDP.
+        """
         super().__init__(initial_state, states)
 
-    def reset_to_initial(self):
+    def reset_to_initial(self) -> None:
+        """
+        Resets the current state of the MDP to the initial state.
+        """
         self.current_state = self.initial_state
 
-    def step(self, letter):
+    def step(self, letter: InputType | None) -> OutputType:
         """Next step is determined based on transition probabilities of the current state.
 
-        Args:
-
-            letter: input
-
-        Returns:
-
-            output of the current state
+        :param InputType | None letter: Input.
+        :return OutputType: Output of the current state.
         """
         if letter is None:
             return self.current_state.output
@@ -48,17 +61,12 @@ class Mdp(Automaton[MdpState[InputType, OutputType]]):
         self.current_state = new_state
         return self.current_state.output
 
-    def step_to(self, inp, out):
+    def step_to(self, inp: InputType, out: OutputType) -> OutputType | None:
         """Performs a step on the automaton based on the input `inp` and output `out`.
 
-        Args:
-
-            inp: input
-            out: output
-
-        Returns:
-
-            output of the reached state, None otherwise
+        :param InputType inp: Input.
+        :param OutputType out: Output.
+        :return OutputType | None: Output of the reached state, None otherwise.
         """
         for new_state in self.current_state.transitions[inp]:
             if new_state[0].output == out:
@@ -66,7 +74,12 @@ class Mdp(Automaton[MdpState[InputType, OutputType]]):
                 return out
         return None
 
-    def to_state_setup(self):
+    def to_state_setup(self) -> dict:
+        """
+        Converts the MDP to a state setup dictionary.
+
+        :return dict: Map from state_id to tuple(output, transitions_dict).
+        """
         state_setup_dict = {}
 
         # ensure initial state is first in the list
@@ -81,7 +94,13 @@ class Mdp(Automaton[MdpState[InputType, OutputType]]):
         return state_setup_dict
 
     @staticmethod
-    def from_state_setup(state_setup: dict, **kwargs):
+    def from_state_setup(state_setup: dict, **kwargs) -> 'Mdp':
+        """
+        Creates an MDP from a state setup dictionary. The first state in the state setup is the initial state.
+
+        :param dict state_setup: Map from state_id to tuple(output, transitions_dict).
+        :return Mdp: The constructed MDP.
+        """
         states_map = {key: MdpState(key, output=value[0]) for key, value in state_setup.items()}
 
         for key, values in state_setup.items():

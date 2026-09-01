@@ -1,4 +1,7 @@
+# Data structures backing the hW learner: the conjecture's states and the incremental
+# homing-sequence non-determinism index over the global trace.
 from collections import defaultdict
+from typing import Any
 
 
 class ModelState:
@@ -6,7 +9,12 @@ class ModelState:
     A state of the conjecture under construction.
     """
 
-    def __init__(self, hs):
+    def __init__(self, hs: Any) -> None:
+        """
+        Creates a conjecture state identified by its h-response or W-profile.
+
+        :param Any hs: h-response (partially identified state) or W-profile (fully identified state).
+        """
         self.hs = hs
         self.state_w_values = {}
 
@@ -31,18 +39,23 @@ class HomingSequenceIndex:
     non-determinism could go undetected.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """
+        Creates an empty index over an (initially empty) global trace.
+        """
         self._hs_cont_starts = defaultdict(list)   # h-response -> [continuation start positions]
         self._hs_cont_set = set()                  # all registered continuation starts (O(1) membership)
         self._pair_progress = {}                   # (p1, p2) -> compared continuation length so far
         self._scan_pos = 0                         # how far the trace has been scanned
         self._next_occ_min_start = 0               # earliest start of the next registered h occurrence
 
-    def reset(self, trace_len):
+    def reset(self, trace_len: int) -> None:
         """
         Clear the index. The old trace was produced under the previous h and can
         contain many incidental occurrences of the extended h; rescanning it makes
         h grow and forces avoidable relearning.
+
+        :param int trace_len: length of the global trace at the point of the reset.
         """
         self._hs_cont_starts.clear()
         self._hs_cont_set.clear()
@@ -50,16 +63,27 @@ class HomingSequenceIndex:
         self._scan_pos = trace_len
         self._next_occ_min_start = trace_len
 
-    def continuation_starts(self, hs_response):
-        """Continuation start positions recorded for the given h-response."""
+    def continuation_starts(self, hs_response: tuple) -> tuple:
+        """
+        Continuation start positions recorded for the given h-response.
+
+        :param tuple hs_response: observed response to a homing sequence occurrence.
+        :return tuple: continuation start positions for that response.
+        """
         return self._hs_cont_starts.get(hs_response, ())
 
-    def scan(self, trace, h, forced_cont_start=None):
+    def scan(self, trace: list, h: tuple, forced_cont_start: int | None = None) -> tuple | None:
         """
         Register h occurrences in the newly added part of the trace, advance every
         active continuation pair, and report non-determinism of h. Returns the
         diverging input sequence to extend h with (the shortest witness among all
         pairs that diverged in this call), or None if h is still consistent.
+
+        :param list trace: global trace of (input, output) pairs observed so far.
+        :param tuple h: current homing sequence.
+        :param int | None forced_cont_start: continuation start that must be registered even if it
+            would otherwise be skipped as a self-overlapping occurrence.
+        :return tuple | None: diverging input sequence to extend h with, or None if h is consistent.
         """
         h_len = len(h)
         if h_len == 0:

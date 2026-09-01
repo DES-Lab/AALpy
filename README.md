@@ -14,7 +14,7 @@
 
 [![GitHub issues](https://img.shields.io/github/issues/DES-Lab/AALpy)](https://github.com/DES-Lab/AALpy/issues)
 ![GitHub pull requests](https://img.shields.io/github/issues-pr/des-lab/aalpy)
-[![Python 3.6](https://img.shields.io/badge/python-3.6%2B-blue)](https://www.python.org/downloads/release/python-360/)
+[![Python 3.10](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/downloads/release/python-3100/)
 ![PyPI - Wheel](https://img.shields.io/pypi/wheel/aalpy)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
@@ -52,7 +52,9 @@ To install current version of the master branch (it might contain bugfixes and a
 ```bash
 pip install https://github.com/DES-Lab/AALpy/archive/master.zip
 ```
-The minimum required version of Python is 3.6.  
+The minimum required version of Python is 3.10.
+If you want to use older Python version (>= 3.6), you can use AALpy versions up to 1.6.2.
+
 Ensure that you have [Graphviz](https://graphviz.org/) installed and added to your path if you want to visualize models.
 
 For manual installation, clone the repo and install `pydot` (the only dependency).
@@ -144,6 +146,24 @@ If you use AALpy in your research, please cite us with of the following:
 
 If you have research suggestions or you need specific help concerning your research, feel free to start a [discussion](https://github.com/DES-Lab/AALpy/discussions).
 We are happy to help you and consult you in developing automata learning algorithms and in applying automata learning in various domains.
+
+
+## Testing
+
+Install the test dependencies once (`pytest` and `pytest-timeout` aren't needed to use AALpy itself, only to run its test suite):
+```bash
+pip install -e .[test]
+```
+
+Then, from the repository root, run AALpy's test suite:
+```bash
+pytest
+```
+
+For a more comprehensive test suite, which covers more seeds per learning experiment, run:
+```bash
+pytest --exhaustive
+```
 
 ## Contributing
 Pull requests are welcome. For significant changes, please open an issue first to discuss what you would like to change.

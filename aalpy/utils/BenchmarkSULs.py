@@ -1,6 +1,14 @@
-def get_Angluin_dfa():
-    from aalpy.automata import Dfa
+# Hand-crafted example automata and systems under learning used throughout benchmarks, examples and tests.
+from typing import Any
 
+from aalpy.automata import Dfa, Onfsm, OnfsmState, Mdp, MdpState, StochasticMealyMachine, StochasticMealyState
+from aalpy.base import SUL
+
+
+def get_Angluin_dfa() -> Dfa:
+    """
+    :return Dfa: The classical DFA example used by Angluin to illustrate L*.
+    """
     angluin_dfa = {
         'q0': (True, {'a': 'q1', 'b': 'q2'}),
         'q1': (False, {'a': 'q0', 'b': 'q3'}),
@@ -11,13 +19,13 @@ def get_Angluin_dfa():
     return Dfa.from_state_setup(angluin_dfa)
 
 
-def get_benchmark_ONFSM():
+def get_benchmark_ONFSM() -> Onfsm:
     """
     Returns ONFSM presented in 'Learning Finite State Models of Observable Nondeterministic Systems in a Testing
     Context'.
-    """
-    from aalpy.automata import Onfsm, OnfsmState
 
+    :return Onfsm: The example ONFSM.
+    """
     a = OnfsmState('q0')
     b = OnfsmState('q1')
     c = OnfsmState('g2')
@@ -40,12 +48,12 @@ def get_benchmark_ONFSM():
     return Onfsm(a, [a, b, c, d])
 
 
-def get_ONFSM():
+def get_ONFSM() -> Onfsm:
     """
     Returns example of an ONFSM.
-    """
-    from aalpy.automata import Onfsm, OnfsmState
 
+    :return Onfsm: The example ONFSM.
+    """
     q0 = OnfsmState('q0')
     q1 = OnfsmState('q1')
     q2 = OnfsmState('q2')
@@ -86,9 +94,10 @@ def get_ONFSM():
     return Onfsm(q0, [q0, q1, q2, q3, q4, q5, q6, q7, q8])
 
 
-def get_faulty_coffee_machine_MDP():
-    from aalpy.automata import Mdp, MdpState
-
+def get_faulty_coffee_machine_MDP() -> Mdp:
+    """
+    :return Mdp: An MDP modeling a coffee machine that occasionally serves coffee without the beep step.
+    """
     q0 = MdpState("q0", "init")
     q1 = MdpState("q1", "beep")
     q2 = MdpState("q2", "coffee")
@@ -106,9 +115,10 @@ def get_faulty_coffee_machine_MDP():
     return mdp
 
 
-def get_weird_coffee_machine_MDP():
-    from aalpy.automata import Mdp, MdpState
-
+def get_weird_coffee_machine_MDP() -> Mdp:
+    """
+    :return Mdp: An MDP modeling a coffee machine with an alternate 'koin' input path that can crash the machine.
+    """
     q0 = MdpState("q0", "init")
     q1 = MdpState("q1", "beep")
     q2 = MdpState("q2", "coffee")
@@ -154,9 +164,11 @@ def get_weird_coffee_machine_MDP():
     return mdp
 
 
-def get_faulty_coffee_machine_SMM():
-    from aalpy.automata import StochasticMealyMachine, StochasticMealyState
-
+def get_faulty_coffee_machine_SMM() -> StochasticMealyMachine:
+    """
+    :return StochasticMealyMachine: A stochastic Mealy machine modeling a coffee machine that occasionally serves
+        coffee without the beep step.
+    """
     s0 = StochasticMealyState('q0')
     s1 = StochasticMealyState('q1')
     s2 = StochasticMealyState('q2')
@@ -174,9 +186,10 @@ def get_faulty_coffee_machine_SMM():
     return smm
 
 
-def get_minimal_faulty_coffee_machine_SMM():
-    from aalpy.automata import StochasticMealyMachine, StochasticMealyState
-
+def get_minimal_faulty_coffee_machine_SMM() -> StochasticMealyMachine:
+    """
+    :return StochasticMealyMachine: A minimal 2-state stochastic Mealy machine modeling the faulty coffee machine.
+    """
     s0 = StochasticMealyState('q0')
     s1 = StochasticMealyState('q1')
 
@@ -191,9 +204,10 @@ def get_minimal_faulty_coffee_machine_SMM():
     return smm
 
 
-def get_faulty_mqtt_SMM():
-    from aalpy.automata import StochasticMealyMachine, StochasticMealyState
-
+def get_faulty_mqtt_SMM() -> StochasticMealyMachine:
+    """
+    :return StochasticMealyMachine: A stochastic Mealy machine modeling a faulty MQTT broker.
+    """
     s0 = StochasticMealyState('q0')
     s1 = StochasticMealyState('q1')
     s2 = StochasticMealyState('q2')
@@ -223,9 +237,11 @@ def get_faulty_mqtt_SMM():
     return smm
 
 
-def get_small_gridworld():
-    from aalpy.automata import StochasticMealyMachine, StochasticMealyState
-
+def get_small_gridworld() -> StochasticMealyMachine:
+    """
+    :return StochasticMealyMachine: A stochastic Mealy machine modeling a small 2x2 gridworld with mud and grass
+        tiles.
+    """
     s0 = StochasticMealyState('q0')
     s1 = StochasticMealyState('q1')
     s2 = StochasticMealyState('q2')
@@ -274,12 +290,24 @@ def get_small_gridworld():
 
 
 class MockMqttExample:
+    """
+    Mock implementation of an MQTT broker's connect/publish/subscribe API, used as a system under learning.
+    """
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """
+        Creates the mock broker in its initial, disconnected state.
+        """
         self.state = 'CONCLOSED'
         self.topics = set()
 
-    def subscribe(self, topic: str):
+    def subscribe(self, topic: str) -> str:
+        """
+        Subscribes to a topic, unless it contains a newline or a null character.
+
+        :param str topic: Topic to subscribe to.
+        :return str: The resulting broker state.
+        """
         if '\n' in topic or '\u0000' in topic:
             self.state = 'CONCLOSED'
             self.topics.clear()
@@ -289,7 +317,13 @@ class MockMqttExample:
 
         return self.state
 
-    def unsubscribe(self, topic):
+    def unsubscribe(self, topic: str) -> str:
+        """
+        Unsubscribes from a topic, unless it contains a newline or a null character.
+
+        :param str topic: Topic to unsubscribe from.
+        :return str: The resulting broker state.
+        """
         if '\n' in topic or '\u0000' in topic:
             self.state = 'CONCLOSED'
             self.topics.clear()
@@ -300,7 +334,12 @@ class MockMqttExample:
 
         return self.state
 
-    def connect(self):
+    def connect(self) -> str:
+        """
+        Connects the mock broker, or resets it if already connected.
+
+        :return str: The resulting broker state.
+        """
         if self.state == 'CONCLOSED':
             self.state = 'CONNACK'
         else:
@@ -308,12 +347,23 @@ class MockMqttExample:
             self.state = 'CONCLOSED'
         return self.state
 
-    def disconnect(self):
+    def disconnect(self) -> str:
+        """
+        Disconnects the mock broker and clears its subscribed topics.
+
+        :return str: The resulting broker state.
+        """
         self.state = 'CONCLOSED'
         self.topics.clear()
         return self.state
 
-    def publish(self, topic):
+    def publish(self, topic: str) -> str:
+        """
+        Publishes to a topic, unless it contains a newline or a null character.
+
+        :param str topic: Topic to publish to.
+        :return str: The resulting broker state.
+        """
         if '\n' in topic or '\u0000' in topic:
             self.state = 'CONCLOSED'
             self.topics.clear()
@@ -332,7 +382,13 @@ class DateValidator:
     The format of the dates is %d/%m/%Y'
     """
 
-    def is_date_accepted(self, date_string: str):
+    def is_date_accepted(self, date_string: str) -> bool:
+        """
+        Checks whether a date string is accepted by the validator.
+
+        :param str date_string: Date string in %d/%m/%Y format.
+        :return bool: True if the date is accepted, False otherwise.
+        """
         values = date_string.split('/')
         if len(values) != 3:
             return False
@@ -358,9 +414,10 @@ class DateValidator:
         return True
 
 
-def get_small_pomdp():
-    from aalpy.automata import Mdp, MdpState
-
+def get_small_pomdp() -> Mdp:
+    """
+    :return Mdp: An MDP with partially observable states (a small POMDP-like example).
+    """
     q0 = MdpState("q0", "init")
     q1 = MdpState("q1", "beep")
     q2 = MdpState("q2", "beep")
@@ -387,7 +444,15 @@ def get_small_pomdp():
     return Mdp(q0, [q0, q1, q2, q3, q4])
 
 
-def is_balanced(test_string, call_return_map, allow_empty_string):
+def is_balanced(test_string: str, call_return_map: dict, allow_empty_string: bool) -> bool:
+    """
+    Checks whether a string of call/return symbols is balanced with respect to a call-return mapping.
+
+    :param str test_string: The string to check.
+    :param dict call_return_map: Map from call (opening) symbols to their matching return (closing) symbols.
+    :param bool allow_empty_string: Whether an empty string counts as balanced.
+    :return bool: True if the string is balanced, False otherwise.
+    """
     stack = []
     # Create a set of open and close characters for faster lookup
     open_chars = set(call_return_map.keys())
@@ -408,23 +473,50 @@ def is_balanced(test_string, call_return_map, allow_empty_string):
     return not stack if allow_empty_string else not stack and len(test_string) > 0
 
 
-def get_balanced_string_sul(call_return_map, allow_empty_string):
-    from aalpy.base import SUL
+def get_balanced_string_sul(call_return_map: dict, allow_empty_string: bool) -> SUL:
+    """
+    Creates a SUL that accepts balanced strings of call/return symbols.
 
+    :param dict call_return_map: Map from call (opening) symbols to their matching return (closing) symbols.
+    :param bool allow_empty_string: Whether an empty string counts as balanced.
+    :return SUL: The constructed SUL.
+    """
     class BalancedStringSUL(SUL):
-        def __init__(self, call_return_map, allow_empty_string):
+        """
+        System under learning that checks whether the sequence of inputs seen so far is a balanced string.
+        """
+
+        def __init__(self, call_return_map: dict, allow_empty_string: bool) -> None:
+            """
+            Creates a balanced-string SUL.
+
+            :param dict call_return_map: Map from call (opening) symbols to their matching return (closing) symbols.
+            :param bool allow_empty_string: Whether an empty string counts as balanced.
+            """
             super(BalancedStringSUL, self).__init__()
             self.call_return_map = call_return_map
             self.allow_empty_string = allow_empty_string
             self.sting_under_test = []
 
-        def pre(self):
+        def pre(self) -> None:
+            """
+            Resets the accumulated string under test.
+            """
             self.sting_under_test = []
 
-        def post(self):
+        def post(self) -> None:
+            """
+            Performs no additional cleanup.
+            """
             pass
 
-        def step(self, letter):
+        def step(self, letter: Any) -> bool:
+            """
+            Appends the letter to the string under test and checks whether it is balanced.
+
+            :param Any letter: Single element of the input alphabet.
+            :return bool: True if the accumulated string is balanced, False otherwise.
+            """
             if letter:
                 self.sting_under_test += letter
             return is_balanced(self.sting_under_test, self.call_return_map, self.allow_empty_string)

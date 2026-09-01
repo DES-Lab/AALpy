@@ -1,7 +1,10 @@
+# Equivalence oracles based on the W-method and its randomized variant.
+from collections.abc import Iterator
 from random import shuffle, choice, randint
 
 from aalpy.base.Oracle import Oracle
 from aalpy.base.SUL import SUL
+from aalpy.base.Automaton import Automaton
 from itertools import product
 
 
@@ -11,29 +14,28 @@ class WMethodEqOracle(Oracle):
     finite-state machines'.
     """
 
-    def __init__(self, alphabet: list, sul: SUL, max_number_of_states):
+    def __init__(self, alphabet: list, sul: SUL, max_number_of_states: int) -> None:
         """
-        Args:
+        Constructs the oracle.
 
-            alphabet: input alphabet
-            sul: system under learning
-            max_number_of_states: maximum number of states in the automaton
+        :param list alphabet: Input alphabet.
+        :param SUL sul: System under learning.
+        :param int max_number_of_states: Maximum number of states in the automaton.
         """
 
         super().__init__(alphabet, sul)
         self.m = max_number_of_states
         self.cache = set()
 
-    def test_suite(self, cover, depth, char_set):
+    def test_suite(self, cover: list, depth: int, char_set: list) -> Iterator[tuple]:
         """
-        Construct the test suite for the W Method using
-        the provided state cover and characterization set,
+        Constructs the test suite for the W Method using the provided state cover and characterization set,
         exploring up to a given depth.
-        Args:
 
-            cover: list of states to cover
-            depth: maximum length of middle part
-            char_set: characterization set
+        :param list cover: List of states to cover.
+        :param int depth: Maximum length of middle part.
+        :param list char_set: Characterization set.
+        :return Iterator[tuple]: Iterator of generated test sequences.
         """
         # fix the length of the middle part per loop
         # to avoid generating large sequences early on
@@ -44,8 +46,13 @@ class WMethodEqOracle(Oracle):
                 for (s, c) in product(cover, char_set):
                     yield s + m + c
 
-    def find_cex(self, hypothesis):
+    def find_cex(self, hypothesis: Automaton) -> tuple | None:
+        """
+        Runs the W-method test suite against the SUL until a counterexample is found.
 
+        :param Automaton hypothesis: Current hypothesis.
+        :return tuple | None: Counterexample inputs, None if no counterexample is found.
+        """
         if not hypothesis.characterization_set:
             hypothesis.characterization_set = hypothesis.compute_characterization_set()
 
@@ -85,17 +92,14 @@ class RandomWMethodEqOracle(Oracle):
     walk an element from the characterization set is added to the test case.
     """
 
-    def __init__(self, alphabet: list, sul: SUL, walks_per_state=25, walk_len=12):
+    def __init__(self, alphabet: list, sul: SUL, walks_per_state: int = 25, walk_len: int = 12) -> None:
         """
-        Args:
+        Constructs the oracle.
 
-            alphabet: input alphabet
-
-            sul: system under learning
-
-            walks_per_state: number of random walks that should start from each state
-
-            walk_len: length of random walk
+        :param list alphabet: Input alphabet.
+        :param SUL sul: System under learning.
+        :param int walks_per_state: Number of random walks that should start from each state.
+        :param int walk_len: Length of random walk.
         """
 
         super().__init__(alphabet, sul)
@@ -103,8 +107,14 @@ class RandomWMethodEqOracle(Oracle):
         self.random_walk_len = walk_len
         self.freq_dict = dict()
 
-    def find_cex(self, hypothesis):
+    def find_cex(self, hypothesis: Automaton) -> tuple | None:
+        """
+        Performs random walks from each state, ending with a characterizing suffix, until a counterexample is
+        found.
 
+        :param Automaton hypothesis: Current hypothesis.
+        :return tuple | None: Counterexample inputs, None if no counterexample is found.
+        """
         if not hypothesis.characterization_set:
             hypothesis.characterization_set = hypothesis.compute_characterization_set()
             # fix for non-minimal intermediate hypothesis that can occur in KV

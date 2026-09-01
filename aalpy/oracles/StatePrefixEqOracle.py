@@ -1,7 +1,9 @@
+# Equivalence oracle that starts guided random walks from every state of the hypothesis.
 import random
 
 from aalpy.base.Oracle import Oracle
 from aalpy.base.SUL import SUL
+from aalpy.base.Automaton import Automaton
 
 
 class StatePrefixEqOracle(Oracle):
@@ -12,21 +14,17 @@ class StatePrefixEqOracle(Oracle):
     rand_walk_len exactly walk_per_state times during learning. Therefore excessive testing of initial states is
     avoided.
     """
-    def __init__(self, alphabet: list, sul: SUL, walks_per_state=25, walk_len=12, max_tests=None, depth_first=True):
+    def __init__(self, alphabet: list, sul: SUL, walks_per_state: int = 25, walk_len: int = 12,
+                 max_tests: int | None = None, depth_first: bool = True) -> None:
         """
-        Args:
+        Constructs the oracle.
 
-            alphabet: input alphabet
-
-            sul: system under learning
-
-            walks_per_state:individual walks per state of the automaton over the whole learning process
-
-            walk_len:length of random walk
-
-            max_tests:number of maximum tests. If set to None, this parameter will be ignored.
-
-            depth_first:first explore the newest states
+        :param list alphabet: Input alphabet.
+        :param SUL sul: System under learning.
+        :param int walks_per_state: Individual walks per state of the automaton over the whole learning process.
+        :param int walk_len: Length of random walk.
+        :param int | None max_tests: Number of maximum tests. If set to None, this parameter will be ignored.
+        :param bool depth_first: First explore the newest states.
         """
 
         super().__init__(alphabet, sul)
@@ -37,7 +35,13 @@ class StatePrefixEqOracle(Oracle):
 
         self.freq_dict = dict()
 
-    def find_cex(self, hypothesis):
+    def find_cex(self, hypothesis: Automaton) -> tuple | None:
+        """
+        Starts random walks from every state that still needs coverage until a counterexample is found.
+
+        :param Automaton hypothesis: Current hypothesis.
+        :return tuple | None: Counterexample inputs, None if no counterexample is found.
+        """
         states_to_cover = []
         for state in hypothesis.states:
             if state.prefix is None:

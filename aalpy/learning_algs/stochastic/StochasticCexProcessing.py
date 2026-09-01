@@ -1,18 +1,15 @@
-from aalpy.automata import Mdp
+# Counterexample processing strategies used by stochastic L* to extract new suffixes.
+from aalpy.automata import Mdp, StochasticMealyMachine
 from aalpy.base import SUL
 
 
-def stochastic_longest_prefix(cex, prefixes):
+def stochastic_longest_prefix(cex: tuple, prefixes: list) -> tuple:
     """
     Counterexample processing based on Shabaz-Groz cex processing.
 
-    Args:
-
-        cex: counterexample
-        prefixes: all prefixes in the observation table
-    Returns:
-
-        Single suffix.
+    :param tuple cex: Counterexample.
+    :param list prefixes: All prefixes in the observation table.
+    :return tuple: Single suffix.
     """
     prefixes = list(prefixes)
     prefixes.sort(key=len, reverse=True)
@@ -42,18 +39,14 @@ def stochastic_longest_prefix(cex, prefixes):
     return suffixes
 
 
-def stochastic_rs(sul: SUL, cex: tuple, hypothesis):
-    """Rivest-Schapire counter example processing.
+def stochastic_rs(sul: SUL, cex: tuple, hypothesis: Mdp | StochasticMealyMachine) -> list[tuple]:
+    """
+    Rivest-Schapire counterexample processing.
 
-    Args:
-
-        sul: system under learning
-        cex: found counterexample
-        hypothesis: hypothesis on which counterexample was found
-    Returns:
-
-        suffixes to be added to the E set
-
+    :param SUL sul: System under learning.
+    :param tuple cex: Found counterexample.
+    :param Mdp | StochasticMealyMachine hypothesis: Hypothesis on which counterexample was found.
+    :return list[tuple]: Suffixes to be added to the E set.
     """
     # cex_out = self.sul.query(tuple(cex))
 

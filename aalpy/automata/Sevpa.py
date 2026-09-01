@@ -1,6 +1,7 @@
+# 1-Module Single Entry Visibly Pushdown Automaton (1-SEVPA) state and automaton implementation.
 import random
 from collections import defaultdict, deque
-from typing import Union, List, Dict
+from collections.abc import Hashable
 
 from aalpy.base import Automaton, AutomatonState
 
@@ -10,26 +11,33 @@ class SevpaAlphabet:
     The Alphabet of a 1-SEVPA.
 
     Attributes:
-        internal_alphabet (List[str]): Letters for internal transitions.
-        call_alphabet (List[str]): Letters for push transitions.
-        return_alphabet (List[str]): Letters for pop transitions.
-        exclusive_call_return_pairs (Dict[str, str]): A dictionary representing exclusive pairs
+        internal_alphabet (list[str]): Letters for internal transitions.
+        call_alphabet (list[str]): Letters for push transitions.
+        return_alphabet (list[str]): Letters for pop transitions.
+        exclusive_call_return_pairs (dict[str, str]): A dictionary representing exclusive pairs
             of call and return symbols.
     """
 
-    def __init__(self, internal_alphabet: List[str], call_alphabet: List[str], return_alphabet: List[str],
-                 exclusive_call_return_pairs: Dict[str, str] = None):
+    def __init__(self, internal_alphabet: list[str], call_alphabet: list[str], return_alphabet: list[str],
+                 exclusive_call_return_pairs: dict[str, str] | None = None) -> None:
+        """
+        Creates a 1-SEVPA alphabet.
+
+        :param list[str] internal_alphabet: Letters for internal transitions.
+        :param list[str] call_alphabet: Letters for push transitions.
+        :param list[str] return_alphabet: Letters for pop transitions.
+        :param dict[str, str] | None exclusive_call_return_pairs: Exclusive pairs of call and return symbols.
+        """
         self.internal_alphabet = internal_alphabet
         self.call_alphabet = call_alphabet
         self.return_alphabet = return_alphabet
         self.exclusive_call_return_pairs = exclusive_call_return_pairs
 
-    def get_merged_alphabet(self) -> List[str]:
+    def get_merged_alphabet(self) -> list[str]:
         """
         Get the merged alphabet, including internal, call, and return symbols.
 
-        Returns:
-            List[str]: A list of all symbols in the alphabet.
+        :return list[str]: A list of all symbols in the alphabet.
         """
         alphabet = list()
         alphabet.extend(self.internal_alphabet)
@@ -39,8 +47,7 @@ class SevpaAlphabet:
 
     def __str__(self) -> str:
         """
-        Returns:
-            str: A string representation of the alphabet.
+        :return str: A string representation of the alphabet.
         """
         return f'Internal: {self.internal_alphabet} Call: {self.call_alphabet} Return: {self.return_alphabet}'
 
@@ -50,10 +57,16 @@ class SevpaState(AutomatonState):
     Single state of a 1-SEVPA.
     """
 
-    def __init__(self, state_id, is_accepting=False):
+    def __init__(self, state_id: Hashable, is_accepting: bool = False) -> None:
+        """
+        Creates a 1-SEVPA state.
+
+        :param Hashable state_id: Unique identifier of the state.
+        :param bool is_accepting: Whether the state is an accepting state.
+        """
         super().__init__(state_id)
         # list of SevpaTransition
-        self.transitions = defaultdict(list)
+        self.transitions: dict[str, list['SevpaTransition']] = defaultdict(list)
         self.is_accepting = is_accepting
 
 
@@ -68,16 +81,23 @@ class SevpaTransition:
         stack_guard: Pair of (automaton_state_id, call_letter)
     """
 
-    def __init__(self, target: SevpaState, letter, action, stack_guard=None):
+    def __init__(self, target: SevpaState, letter: str, action: str | None, stack_guard: tuple | None = None) -> None:
+        """
+        Creates a 1-SEVPA transition.
+
+        :param SevpaState target: The target state of the transition.
+        :param str letter: The symbol associated with the transition.
+        :param str | None action: The action performed during the transition (pop | None).
+        :param tuple | None stack_guard: Pair of (automaton_state_id, call_letter).
+        """
         self.target_state = target
         self.letter = letter
         self.action = action
         self.stack_guard = stack_guard
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
-        Returns:
-            str: A string representation of the transition.
+        :return str: A string representation of the transition.
         """
         return f'{self.letter} --> {self.target_state.state_id}' + \
                f' | {self.action}: {self.stack_guard}' if self.stack_guard else ''
@@ -89,7 +109,13 @@ class Sevpa(Automaton):
     """
     empty = "_"
 
-    def __init__(self, initial_state: SevpaState, states: List[SevpaState]):
+    def __init__(self, initial_state: SevpaState, states: list[SevpaState]) -> None:
+        """
+        Creates a 1-SEVPA.
+
+        :param SevpaState initial_state: Initial state of the 1-SEVPA.
+        :param list[SevpaState] states: All states of the 1-SEVPA.
+        """
         super().__init__(initial_state, states)
         self.initial_state = initial_state
         self.states = states
@@ -103,22 +129,24 @@ class Sevpa(Automaton):
         self.call_set = set(self.input_alphabet.call_alphabet)
         self.return_set = set(self.input_alphabet.return_alphabet)
 
-    def reset_to_initial(self):
+    def reset_to_initial(self) -> bool:
+        """
+        Resets the current state and stack of the 1-SEVPA to the initial configuration.
+
+        :return bool: True if the initial state is accepting and the stack is empty, False otherwise.
+        """
         super().reset_to_initial()
         self.current_state = self.initial_state
         self.stack = [self.empty]
         self.error_state_reached = False
         return self.current_state.is_accepting and self.stack[-1] == self.empty
 
-    def step(self, letter):
+    def step(self, letter: str | None) -> bool:
         """
         Perform a single step on the 1-SEVPA by transitioning with the given input letter.
 
-        Args:
-            letter: A single input that is looked up in the transition table of the SevpaState.
-
-        Returns:
-            bool: True if the reached state is an accepting state and the stack is empty, False otherwise.
+        :param str | None letter: A single input that is looked up in the transition table of the SevpaState.
+        :return bool: True if the reached state is an accepting state and the stack is empty, False otherwise.
         """
         if self.error_state_reached:
             return False
@@ -161,23 +189,45 @@ class Sevpa(Automaton):
 
         return self.current_state.is_accepting and self.stack[-1] == self.empty
 
-    def get_state_by_id(self, state_id) -> Union[SevpaState, None]:
+    def get_state_by_id(self, state_id: Hashable) -> SevpaState | None:
+        """
+        Looks up a state by its state_id.
+
+        :param Hashable state_id: Identifier of the state to look up.
+        :return SevpaState | None: The state with the given id, or None if not found.
+        """
         for state in self.states:
             if state.state_id == state_id:
                 return state
         return None
 
     def is_input_complete(self) -> bool:
+        """
+        Not yet implemented.
+        """
         pass
 
-    def execute_sequence(self, origin_state, seq):
+    def execute_sequence(self, origin_state: SevpaState, seq: list[str]) -> list[bool]:
+        """
+        Executes an input sequence on the 1-SEVPA starting from the initial state.
+
+        :param SevpaState origin_state: State from which the sequence execution starts, must share the initial
+            state's prefix.
+        :param list[str] seq: Input sequence to execute.
+        :return list[bool]: The output response for each step of the executed sequence.
+        """
         if origin_state.prefix != self.initial_state.prefix:
             assert False, 'execute_sequence for Sevpa only is only supported from the initial state.'
         self.reset_to_initial()
         self.current_state = origin_state
         return [self.step(s) for s in seq]
 
-    def to_state_setup(self):
+    def to_state_setup(self) -> dict:
+        """
+        Converts the 1-SEVPA to a state setup dictionary.
+
+        :return dict: Map from state_id to tuple(is_accepting, transitions_dict).
+        """
         state_setup_dict = {}
 
         sorted_states = sorted(self.states, key=lambda x: x.state_id)
@@ -195,7 +245,14 @@ class Sevpa(Automaton):
         return state_setup_dict
 
     @staticmethod
-    def from_state_setup(state_setup: dict, **kwargs):
+    def from_state_setup(state_setup: dict, **kwargs) -> 'Sevpa':
+        """
+        Creates a 1-SEVPA from a state setup dictionary.
+
+        :param dict state_setup: Map from state_id to tuple(is_accepting, transitions_dict).
+        :param init_state_id: State id of the initial state, passed via kwargs.
+        :return Sevpa: The constructed 1-SEVPA.
+        """
 
         init_state_id = kwargs['init_state_id']
 
@@ -223,7 +280,7 @@ class Sevpa(Automaton):
         init_state = states[init_state_id]
         return Sevpa(init_state, [state for state in states.values()])
 
-    def transform_access_string(self, state=None, stack_content=None) -> List[str]:
+    def transform_access_string(self, state: SevpaState | None = None, stack_content: list | None = None) -> list[str]:
         """
         Transform the access string by omitting redundant call and return letters, as well as internal letters.
 
@@ -233,12 +290,11 @@ class Sevpa(Automaton):
                 - Append the call letter
             Append the state prefix from the state where you are calling this function from.
 
-        Args:
-            state: The state from which the transformation is initiated (default: initial state).
-            stack_content: The content of the stack for transformation (default: Current Stack content).
-
-        Returns:
-            List[str]: The transformed access string.
+        :param SevpaState | None state: The state from which the transformation is initiated (default: initial
+            state).
+        :param list | None stack_content: The content of the stack for transformation (default: current stack
+            content).
+        :return list[str]: The transformed access string.
         """
         word = []
         calling_state = self.initial_state if not state else state
@@ -258,19 +314,16 @@ class Sevpa(Automaton):
         return word
 
     @staticmethod
-    def create_daisy_hypothesis(initial_state, alphabet):
+    def create_daisy_hypothesis(initial_state: SevpaState, alphabet: SevpaAlphabet) -> 'Sevpa':
         """
         Create a Daisy Hypothesis 1-SEVPA using the given initial state and alphabet.
 
         This function creates self-loop transitions for the internal state on every internal letter.
         Additionally, it creates self-loop transitions with a pop action for every call letter.
 
-        Args:
-            initial_state (SevpaState): The initial state of the 1-SEVPA.
-            alphabet (SevpaAlphabet): The alphabet for the 1-SEVPA.
-
-        Returns:
-            Sevpa: The created 1-SEVPA with the specified initial state and alphabet.
+        :param SevpaState initial_state: The initial state of the 1-SEVPA.
+        :param SevpaAlphabet alphabet: The alphabet for the 1-SEVPA.
+        :return Sevpa: The created 1-SEVPA with the specified initial state and alphabet.
         """
         for i in alphabet.internal_alphabet:
             trans = SevpaTransition(target=initial_state, letter=i, action=None)
@@ -284,7 +337,12 @@ class Sevpa(Automaton):
 
         return Sevpa(initial_state, [initial_state])
 
-    def get_input_alphabet(self):
+    def get_input_alphabet(self) -> SevpaAlphabet:
+        """
+        Computes the input alphabet of the 1-SEVPA from its transitions.
+
+        :return SevpaAlphabet: The input alphabet.
+        """
 
         int_alphabet, ret_alphabet, call_alphabet = [], [], []
         for state in self.states:
@@ -301,7 +359,7 @@ class Sevpa(Automaton):
 
         return SevpaAlphabet(int_alphabet, call_alphabet, ret_alphabet)
 
-    def get_error_state(self):
+    def get_error_state(self) -> SevpaState | None:
         """
         A state is an error state iff:
             - if all transitions self loop to itself
@@ -311,6 +369,8 @@ class Sevpa(Automaton):
                 - the pop transitions from the initial state which pop the q2+call-symbol from the stack lead to q2 as well
 
             - Not an error state if it is the initial state or an accepting state
+
+        :return SevpaState | None: The error state, or None if there is none.
         """
 
         for state in self.states:
@@ -353,7 +413,12 @@ class Sevpa(Automaton):
 
         return None
 
-    def delete_state(self, state_to_remove):
+    def delete_state(self, state_to_remove: SevpaState | None) -> None:
+        """
+        Removes a state and all transitions referencing it from the 1-SEVPA.
+
+        :param SevpaState | None state_to_remove: The state to remove. If None, the method returns without effect.
+        """
 
         if state_to_remove is not None:
             self.states.remove(state_to_remove)
@@ -377,7 +442,7 @@ class Sevpa(Automaton):
                 del state.transitions[letter]
                 state.transitions[letter] = cleaned_transitions
 
-    def get_allowed_call_transitions(self):
+    def get_allowed_call_transitions(self) -> dict[str, set]:
         """
         Returns a dict of states that are allowed to push a call letters on the stack.
 
@@ -387,8 +452,8 @@ class Sevpa(Automaton):
         States are not allowed to push something somthing on the stack if there is no possibility to pop the
         stack guard, where their state_id is used, from the stack, which would lead into a dead-end otherwise.
 
-        Returns:
-        - dict: A dictionary where keys are the call_letters and values are sets of the allowed states.
+        :return dict[str, set]: A dictionary where keys are the call_letters and values are sets of the allowed
+            states.
         """
 
         # get all states that are connected via internal transitions by using BFS
@@ -412,16 +477,13 @@ class Sevpa(Automaton):
 
         return allowed_call_transitions
 
-    def get_accepting_words_bfs(self, min_word_length: int = 0, num_words: int = 1) -> list:
+    def get_accepting_words_bfs(self, min_word_length: int = 0, num_words: int = 1) -> list[tuple]:
         """
         Generate a list of random words that are accepted by the automaton using the breadth-first search approach.
 
-        Args:
-        - min_word_length (int): Minimum length of the generated words.
-        - amount_words (int): Number of words to generate.
-
-        Returns:
-        - set: A set of randomly generated words that are accepted by the automaton.
+        :param int min_word_length: Minimum length of the generated words.
+        :param int num_words: Number of words to generate.
+        :return list[tuple]: A list of randomly generated words that are accepted by the automaton.
         """
         allowed_call_trans = self.get_allowed_call_transitions()
         self.reset_to_initial()
@@ -461,12 +523,9 @@ class Sevpa(Automaton):
         Only internal letters and return letters will be chosen. If a return letter is randomly chosen a random
         stack guard will be selected. Then the stack needed stack configuration will be searched by using BFS
 
-        Args:
-        - return_letter_prob (float): Probability for selecting a letter from the return alphabet.
-        - min_len (int): Minimum length of the generated word.
-
-        Returns:
-        - list: A randomly generated word that gets accepted by the automaton.
+        :param float return_letter_prob: Probability for selecting a letter from the return alphabet.
+        :param int min_len: Minimum length of the generated word.
+        :return list: A randomly generated word that gets accepted by the automaton.
         """
         assert return_letter_prob <= 1.0
         word = []

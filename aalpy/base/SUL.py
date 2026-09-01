@@ -1,4 +1,6 @@
+# Abstract base class for systems under learning (SULs), plus a caching SUL decorator.
 from abc import ABC, abstractmethod
+from typing import Any
 
 from aalpy.base.CacheTree import CacheTree, CacheDict
 
@@ -10,7 +12,10 @@ class SUL(ABC):
     passed to the learning algorithm and the equivalence oracle.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """
+        Creates a SUL with zeroed query/step counters.
+        """
         self.num_queries = 0
         self.num_steps = 0
         self.num_cached_queries = 0
@@ -20,14 +25,9 @@ class SUL(ABC):
         Performs a membership query on the SUL. Before the query, pre() method is called and after the query post()
         method is called. Each letter in the word (input in the input sequence) is executed using the step method.
 
-        Args:
-
-            word: membership query (word consisting of letters/inputs)
-
-        Returns:
-
-            list of outputs, where the i-th output corresponds to the output of the system after the i-th input
-
+        :param tuple word: Membership query (word consisting of letters/inputs).
+        :return list: List of outputs, where the i-th output corresponds to the output of the system after the
+            i-th input.
         """
         self.pre()
         # Empty string for DFA
@@ -40,24 +40,24 @@ class SUL(ABC):
         self.num_steps += len(word)
         return out
 
-    def io_query(self, word : tuple):
+    def io_query(self, word: tuple) -> list[tuple]:
+        """
+        Performs a membership query and pairs each input with its corresponding output.
+
+        :param tuple word: Membership query (word consisting of letters/inputs).
+        :return list[tuple]: List of (input, output) pairs.
+        """
         return list(zip(word, self.query(word)))
 
-    def adaptive_query(self, word, ads):
+    def adaptive_query(self, word: list, ads: Any) -> tuple[list, list]:
         """
-
         Performs an adaptive output query on the SUL. Before the query, pre() method is called and after the query post()
         method is called. The ADS is a tree like object, the next input depends on the previous input-output pairs. Each input is executed using the step method. Currently only implemented for Mealy machines
 
-        Args:
-
-            word: membership query (word consisting of letters/inputs)
-
-            ads: adaptive distinguishing suffix
-
-        Returns:
-
-            list of outputs, where the i-th output corresponds to the output of the system after the i-th input
+        :param list word: Membership query (word consisting of letters/inputs).
+        :param Any ads: Adaptive distinguishing suffix.
+        :return tuple[list, list]: The (possibly extended) word and the list of outputs received, where the i-th
+            output corresponds to the output of the system after the i-th input.
         """
         self.pre()
 
@@ -81,7 +81,7 @@ class SUL(ABC):
                     last_output = self.step(None)
             else:
                 word.append(next_input)
-                output = self.step(next_input) 
+                output = self.step(next_input)
                 outputs_received.append(output)
                 last_output = output
                 self.num_steps += 1
@@ -92,32 +92,26 @@ class SUL(ABC):
         return word, outputs_received
 
     @abstractmethod
-    def pre(self):
+    def pre(self) -> None:
         """
         Resets the system. Called after post method in the equivalence query.
         """
         pass
 
     @abstractmethod
-    def post(self):
+    def post(self) -> None:
         """
         Performs additional cleanup on the system in necessary. Called before pre method in the equivalence query.
         """
         pass
 
     @abstractmethod
-    def step(self, letter):
+    def step(self, letter: Any) -> Any:
         """
         Executes an action on the system under learning and returns its result.
 
-        Args:
-
-            letter: Single input that is executed on the SUL.
-
-        Returns:
-
-            Output received after executing the input.
-
+        :param Any letter: Single input that is executed on the SUL.
+        :return Any: Output received after executing the input.
         """
         pass
 
@@ -128,30 +122,31 @@ class CacheSUL(SUL):
     This multiset/cache is encoded as a tree.
     """
 
-    def __init__(self, sul: SUL, cache_type='tree'):
+    def __init__(self, sul: SUL, cache_type: str = 'tree') -> None:
+        """
+        Creates a caching wrapper around a SUL.
+
+        :param SUL sul: The wrapped system under learning.
+        :param str cache_type: Either 'tree' for a CacheTree or any other value for a CacheDict.
+        """
         super().__init__()
         self.sul = sul
         self.cache = CacheTree() if cache_type == 'tree' else CacheDict()
 
-    def query(self, word):
+    def query(self, word: tuple) -> list:
         """
         Performs a membership query on the SUL if and only if `word` is not a prefix of any trace in the cache.
         Before the query, pre() method is called and after the query post()
         method is called. Each letter in the word (input in the input sequence) is executed using the step method.
 
-        Args:
-
-            word: membership query (word consisting of letters/inputs)
-
-        Returns:
-
-            list of outputs, where the i-th output corresponds to the output of the system after the i-th input
-
+        :param tuple word: Membership query (word consisting of letters/inputs).
+        :return list: List of outputs, where the i-th output corresponds to the output of the system after the
+            i-th input.
         """
         cached_query = self.cache.in_cache(word)
         if cached_query:
             self.num_cached_queries += 1
-            return cached_query
+            return list(cached_query)
 
         # get outputs using default query method
         out = self.sul.query(word)
@@ -165,28 +160,25 @@ class CacheSUL(SUL):
         self.num_steps += len(word)
         return out
 
-    def pre(self):
+    def pre(self) -> None:
         """
         Reset the system under learning and current node in the cache tree.
         """
         self.cache.reset()
         self.sul.pre()
 
-    def post(self):
+    def post(self) -> None:
+        """
+        Performs cleanup on the wrapped system under learning.
+        """
         self.sul.post()
 
-    def step(self, letter):
+    def step(self, letter: Any) -> Any:
         """
         Executes an action on the system under learning, adds it to the cache and returns its result.
 
-        Args:
-
-           letter: Single input that is executed on the SUL.
-
-        Returns:
-
-           Output received after executing the input.
-
+        :param Any letter: Single input that is executed on the SUL.
+        :return Any: Output received after executing the input.
         """
         out = self.sul.step(letter)
         self.cache.step_in_cache(letter, out)

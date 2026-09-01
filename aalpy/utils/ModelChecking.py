@@ -1,10 +1,11 @@
+# Model checking utilities: PRISM export, property evaluation, bisimilarity and test-case generation.
 import itertools as it
 import os
 import re
 from collections import defaultdict
 from queue import Queue
 from random import choices
-from typing import Tuple, Union
+from typing import Any
 
 import aalpy.paths
 from aalpy.SULs import AutomatonSUL
@@ -15,7 +16,13 @@ from aalpy.base import DeterministicAutomaton, SUL, AutomatonState
 prism_prob_output_regex = re.compile("Result: (\d+\.\d+)")
 
 
-def get_properties_file(exp_name):
+def get_properties_file(exp_name: str) -> str:
+    """
+    Looks up the path to the properties file of a predefined stochastic experiment.
+
+    :param str exp_name: Name of the experiment.
+    :return str: Path to the corresponding properties file.
+    """
     property_files = {
         'first_grid': aalpy.paths.path_to_properties + 'first_eval.props',
         'second_grid': aalpy.paths.path_to_properties + 'second_eval.props',
@@ -28,7 +35,13 @@ def get_properties_file(exp_name):
     return property_files[exp_name]
 
 
-def get_correct_prop_values(exp_name):
+def get_correct_prop_values(exp_name: str) -> list:
+    """
+    Looks up the reference (ground truth) property values of a predefined stochastic experiment.
+
+    :param str exp_name: Name of the experiment.
+    :return list: List of correct property values.
+    """
     correct_model_properties = {
         'first_grid': {'prob1': 0.96217534, 'prob2': 0.6499274956800001, 'prob3': 0.6911765746880001},
         'second_grid': {'prob1': 0.93480795088125, 'prob2': 0.6711947700000002, 'prob3': 0.9742903305241055,
@@ -50,32 +63,41 @@ def get_correct_prop_values(exp_name):
     return list(correct_model_properties[exp_name].values())
 
 
-def _target_string(target, orig_id_to_int_id):
+def _target_string(target: tuple, orig_id_to_int_id: dict) -> str:
+    """
+    Formats a single MDP transition target as a PRISM update expression.
+
+    :param tuple target: Tuple of (target_state, probability).
+    :param dict orig_id_to_int_id: Map from original state ids to PRISM integer location ids.
+    :return str: The PRISM update expression string.
+    """
     target_state = target[0]
     target_prob = target[1]
     target_id = orig_id_to_int_id[target_state.state_id]
     return f"{target_prob} : (loc'={target_id})"
 
 
-def _sanitize_for_prism(symbol):
+def _sanitize_for_prism(symbol: str) -> str:
+    """
+    Sanitizes a symbol that clashes with a PRISM keyword.
+
+    :param str symbol: Symbol to sanitize.
+    :return str: The original symbol, or a mangled version if it is a PRISM keyword.
+    """
     if symbol in ["mdp", "init", "module", "endmodule", "label"]:
         return "___" + symbol + "___"
     else:
         return symbol
 
 
-def mdp_2_prism_format(mdp: Mdp, name: str, output_path=None):
+def mdp_2_prism_format(mdp: Mdp, name: str, output_path: str | None = None) -> str:
     """
-    Translates MDP to Prims modelling language.
+    Translates MDP to Prism modelling language.
 
-    Args:
-
-        mdp: markov decision process
-
-        name: name of the mdp/experiment
-
-        output_path: output file (Default value = None)
-
+    :param Mdp mdp: Markov decision process.
+    :param str name: Name of the mdp/experiment.
+    :param str | None output_path: Output file to which the model is written (Default value = None).
+    :return str: The Prism model as a string.
     """
     module_string = "mdp"
     module_string += os.linesep
@@ -123,7 +145,14 @@ def mdp_2_prism_format(mdp: Mdp, name: str, output_path=None):
     return module_string
 
 
-def evaluate_all_properties(prism_file_name, properties_file_name):
+def evaluate_all_properties(prism_file_name: str, properties_file_name: str) -> dict[str, float]:
+    """
+    Runs PRISM on a model file against a properties file and collects the resulting probabilities.
+
+    :param str prism_file_name: Path to the PRISM model file.
+    :param str properties_file_name: Path to the properties file.
+    :return dict[str, float]: Map from property name (e.g. 'prop1') to its computed probability.
+    """
     import subprocess
     import io
     from os import path
@@ -148,16 +177,13 @@ def evaluate_all_properties(prism_file_name, properties_file_name):
     return results
 
 
-def model_check_properties(model: Mdp, properties: str):
+def model_check_properties(model: Mdp, properties: str) -> dict[str, float]:
     """
+    Model checks a set of properties against an MDP using PRISM.
 
-    Args:
-        model: Markov Decision Process that serves as a basis for model checking.
-        properties: Properties file. It should point to a file under the path_to_properties folder.
-
-    Returns:
-
-        results of model checking
+    :param Mdp model: Markov Decision Process that serves as a basis for model checking.
+    :param str properties: Properties file. It should point to a file under the path_to_properties folder.
+    :return dict[str, float]: Results of model checking.
     """
     from os import remove
     from aalpy.utils import mdp_2_prism_format
@@ -172,21 +198,17 @@ def model_check_properties(model: Mdp, properties: str):
     return data
 
 
-def model_check_experiment(path_to_properties, correct_prop_values, mdp, precision=4):
+def model_check_experiment(path_to_properties: str, correct_prop_values: list, mdp: Mdp, precision: int = 4) -> tuple[dict, dict]:
     """
     For our stochastic experiments you can use this function.
     For example, check learn_stochastic_system_and_do_model_checking in Examples.py
 
-    Args:
-        path_to_properties: path to the properties file
-        correct_prop_values: correct values of all properties. In list, where property at index i corresponds to the
-            i-th element of the list.
-        mdp: MDP
-        precision: precision to which round up results
-
-    Returns:
-
-        results of model checking and absolute differance to the correct results
+    :param str path_to_properties: Path to the properties file.
+    :param list correct_prop_values: Correct values of all properties. In list, where property at index i corresponds
+        to the i-th element of the list.
+    :param Mdp mdp: MDP.
+    :param int precision: Precision to which round up results.
+    :return tuple[dict, dict]: Results of model checking and absolute difference to the correct results.
     """
     model_checking_results = model_check_properties(mdp, path_to_properties)
 
@@ -198,18 +220,15 @@ def model_check_experiment(path_to_properties, correct_prop_values, mdp, precisi
     return results, diff_2_correct
 
 
-def stop_based_on_confidence(hypothesis, property_based_stopping, print_level=2):
+def stop_based_on_confidence(hypothesis: Any, property_based_stopping: tuple, print_level: int = 2) -> bool:
     """
+    Determines whether learning should stop based on model checking confidence.
 
-    Args:
-
-        hypothesis: Markov decision process
-        property_based_stopping: a tuple (path to properties file, list of correct property values, max allowed error)
-        print_level: 2 or 3 if output of model checking is to be printed during learning
-
-    Returns:
-
-        True if absolute error for all properties is smaller then property_based_stopping[2]
+    :param Any hypothesis: Markov decision process (or StochasticMealyMachine, converted internally to an MDP).
+    :param tuple property_based_stopping: A tuple (path to properties file, list of correct property values,
+        max allowed error).
+    :param int print_level: 2 or 3 if output of model checking is to be printed during learning.
+    :return bool: True if absolute error for all properties is smaller then property_based_stopping[2].
     """
     from aalpy.automata.StochasticMealyMachine import smm_to_mdp_conversion
 
@@ -235,13 +254,16 @@ def stop_based_on_confidence(hypothesis, property_based_stopping, print_level=2)
     return True
 
 
-def bisimilar(a1: DeterministicAutomaton, a2: DeterministicAutomaton, return_cex=False) -> Union[bool, None, tuple]:
+def bisimilar(a1: DeterministicAutomaton, a2: DeterministicAutomaton, return_cex: bool = False) -> bool | None | tuple:
     """
     Checks whether the provided automata are bisimilar.
     If return_cex the function returns a counter example or None, otherwise a Boolean is returned.
 
-    Returns:
-        object: true or false if return_cex is set to False, otherwise None (no counterexample) or a counterexample
+    :param DeterministicAutomaton a1: First automaton.
+    :param DeterministicAutomaton a2: Second automaton.
+    :param bool return_cex: Whether to return a counterexample instead of a boolean.
+    :return bool | None | tuple: True or false if return_cex is set to False, otherwise None (no counterexample) or
+        a counterexample.
     """
 
     # TODO allow states as inputs instead of automata
@@ -256,7 +278,7 @@ def bisimilar(a1: DeterministicAutomaton, a2: DeterministicAutomaton, return_cex
         raise NotImplementedError(
             f"bisimilarity is not implemented for {a1.__class__.__name__}. Supported: {', '.join(t.__name__ for t in supported_automaton_types)}")
 
-    to_check: Queue[Tuple[AutomatonState, AutomatonState]] = Queue()
+    to_check: Queue[tuple[AutomatonState, AutomatonState]] = Queue()
     to_check.put((a1.initial_state, a2.initial_state))
     requirements = dict()
     requirements[(a1.initial_state, a2.initial_state)] = ()
@@ -284,23 +306,17 @@ def bisimilar(a1: DeterministicAutomaton, a2: DeterministicAutomaton, return_cex
     return None if return_cex else True
 
 
-def compare_automata(aut_1: DeterministicAutomaton, aut_2: DeterministicAutomaton, num_cex=10):
+def compare_automata(aut_1: DeterministicAutomaton, aut_2: DeterministicAutomaton, num_cex: int = 10) -> list:
     """
     Finds cases of non-conformance between first and second automaton. This is done by performing RandomW equivalence
     check. It is possible that number of found counterexamples is smaller than num_cex, as no counterexample will be a
     suffix of a previously found counterexample.
 
-    Args:
-
-        aut_1: first automaton
-
-        aut_2: second automaton
-
-        num_cex: max. number of searches for counterexamples
-
-    Returns:
-
-        A list of input sequences that revel different behaviour on both automata. Counterexamples are sorted by length.
+    :param DeterministicAutomaton aut_1: First automaton.
+    :param DeterministicAutomaton aut_2: Second automaton.
+    :param int num_cex: Max. number of searches for counterexamples.
+    :return list: A list of input sequences that revel different behaviour on both automata. Counterexamples are
+        sorted by length.
     """
     #
     from aalpy.oracles import RandomWMethodEqOracle
@@ -346,43 +362,60 @@ def compare_automata(aut_1: DeterministicAutomaton, aut_2: DeterministicAutomato
 
 
 class TestCaseWrapperSUL(SUL):
-    def __init__(self, sul):
+    """
+    SUL wrapper that records every membership query as a test case (input sequence, output sequence).
+    """
+
+    def __init__(self, sul: SUL) -> None:
+        """
+        Creates a test-case-recording wrapper around a SUL.
+
+        :param SUL sul: The wrapped system under learning.
+        """
         super().__init__()
         self.sul = sul
         self.test_cases = []
         self.test_case_inputs = None
         self.test_case_outputs = None
 
-    def pre(self):
+    def pre(self) -> None:
+        """
+        Resets the recorded input/output buffers and the wrapped SUL.
+        """
         self.test_case_inputs = []
         self.test_case_outputs = []
         return self.sul.pre()
 
-    def post(self):
+    def post(self) -> None:
+        """
+        Stores the recorded query as a test case and performs cleanup on the wrapped SUL.
+        """
         if self.test_case_inputs and self.test_case_outputs:
             self.test_cases.append((tuple(self.test_case_inputs), tuple(self.test_case_outputs)))
         return self.sul.post()
 
-    def step(self, letter):
+    def step(self, letter: Any) -> Any:
+        """
+        Executes an action on the wrapped SUL and records the input/output pair.
+
+        :param Any letter: Single input that is executed on the SUL.
+        :return Any: Output received after executing the input.
+        """
         output = self.sul.step(letter)
         self.test_case_inputs.append(letter)
         self.test_case_outputs.append(output)
         return output
 
 
-def generate_test_cases(automaton: DeterministicAutomaton, oracle):
+def generate_test_cases(automaton: DeterministicAutomaton, oracle: Any) -> list:
     """
     Uses parametrized eq. oracle to construct test cases on the automaton.
     If automaton are big (200+ states), increase recursion depth if necessary (eg. sys.setrecursionlimit(10000)).
 
-    Args:
-
-        automaton: deterministic automaton that serves as a basis for test case generation
-        oracle: oracle that will construct test-cases and record inputs and outputs
-
-    Returns:
-
-        List of test cases, where each testcase is a tuple containing two elements, and input and an output sequance.
+    :param DeterministicAutomaton automaton: Deterministic automaton that serves as a basis for test case generation.
+    :param Any oracle: Oracle that will construct test-cases and record inputs and outputs.
+    :return list: List of test cases, where each testcase is a tuple containing two elements, and input and an
+        output sequance.
     """
     from copy import deepcopy
 
@@ -397,22 +430,25 @@ def generate_test_cases(automaton: DeterministicAutomaton, oracle):
     return wrapped_sul.test_cases
 
 
-def statistical_model_checking(model, goals, max_num_steps, num_tests=105967):
+def statistical_model_checking(model: Any, goals: set, max_num_steps: int, num_tests: int = 105967) -> float:
+    """
+    Estimates the probability of reaching a goal output within a bounded number of steps by sampling random tests.
+
+    :param Any model: Model on which model checking is performed.
+    :param set goals: Set of goal outputs.
+    :param int max_num_steps: Bounded length of tests.
+    :param int num_tests: Num of tests that will be performed.
+    :return float: Num of tests containing element of goals set / num_tests.
     """
 
+    def compute_output_sequence(model: Any, seq: list) -> set:
+        """
+        Executes an input sequence on the model from its initial state and collects the observed outputs.
 
-    Args:
-        model: model on which model checking is performed
-        goals: set of goal outputs
-        max_num_steps: bounded length of tests
-        num_tests: num of tests that will be performed
-
-    Returns:
-
-        num of tests containing element of goals set / num_tests
-    """
-
-    def compute_output_sequence(model, seq):
+        :param Any model: Model on which the sequence is executed.
+        :param list seq: Input sequence to execute.
+        :return set: Set of observed outputs.
+        """
         model.reset_to_initial()
         observed_outputs = {model.step(i) for i in seq}
         return observed_outputs

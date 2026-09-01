@@ -1,18 +1,25 @@
+# Instrumentation implementations for the general passive state-merging algorithm:
+# progress reporting and a debugging helper that checks merges/promotions against ground truth.
 from time import perf_counter
-from typing import Dict, Optional
 
-from aalpy.learning_algs.general_passive.GeneralizedStateMerging import Instrumentation, Partitioning, \
-    GeneralizedStateMerging
+from aalpy.learning_algs.general_passive.GeneralizedStateMerging import Partitioning, GeneralizedStateMerging, \
+    Instrumentation
 from aalpy.learning_algs.general_passive.GsmNode import GsmNode
 
-
 class ProgressReport(Instrumentation):
-    def __init__(self, lvl):
+    """Instrumentation that prints progress information (timing, state/merge counts) during learning."""
+
+    def __init__(self, lvl: int) -> None:
+        """
+        Create a progress reporter.
+
+        :param int lvl: Verbosity level; 0 disables detailed tracking, higher values print more information.
+        """
         super().__init__()
         self.lvl = lvl
         if lvl < 1:
             return
-        self.gsm: Optional[GeneralizedStateMerging] = None
+        self.gsm: GeneralizedStateMerging | None = None
         self.log = []
         self.pta_size = None
         self.nr_merged_states_total = 0
@@ -23,7 +30,12 @@ class ProgressReport(Instrumentation):
 
         self.previous_time = None
 
-    def reset(self, gsm: GeneralizedStateMerging):
+    def reset(self, gsm: GeneralizedStateMerging) -> None:
+        """
+        Reset all tracked statistics at the start of a learning run.
+
+        :param GeneralizedStateMerging gsm: The GSM instance being run.
+        """
         self.gsm = gsm
         self.log = []
         self.pta_size = None
@@ -34,7 +46,12 @@ class ProgressReport(Instrumentation):
         self.stats = dict()
         self.previous_time = perf_counter()
 
-    def pta_construction_done(self, root):
+    def pta_construction_done(self, root: GsmNode) -> None:
+        """
+        Record and print statistics about the constructed PTA.
+
+        :param GsmNode root: Root node of the constructed PTA.
+        """
         pta_const_time = perf_counter() - self.previous_time
         self.stats["pta creation time"] = pta_const_time
         print(f'PTA Construction Time: {round(pta_const_time, 2)} s')
@@ -48,7 +65,10 @@ class ProgressReport(Instrumentation):
                 print(f'min / avg / max depth : {min(depth)} / {sum(depth) / len(depth)} / {max(depth)}')
         self.previous_time = perf_counter()
 
-    def print_status(self):
+    def print_status(self) -> None:
+        """
+        Print the current learning progress (automaton size, merges, remaining states) to stdout.
+        """
         reset_char = "\33[2K\r"
         print_str = reset_char + f'Current automaton size: {self.nr_red_states}'
         if 0 < self.lvl:
@@ -58,18 +78,33 @@ class ProgressReport(Instrumentation):
             print_str += f' Merged: {self.nr_merged_states_total} Remaining: {remaining_merges} ({time_taken} s -> {mps} merges / second)'
         print(print_str, end="")
 
-    def log_promote(self, node: GsmNode):
+    def log_promote(self, node: GsmNode) -> None:
+        """
+        Record a promotion of a blue node to red.
+
+        :param GsmNode node: The promoted node.
+        """
         self.log.append(["promote", (node.get_prefix(),)])
         self.nr_red_states += 1
         self.print_status()
 
-    def log_merge(self, part: Partitioning):
+    def log_merge(self, part: Partitioning) -> None:
+        """
+        Record a merge of a blue node into a red node.
+
+        :param Partitioning part: The partitioning describing the performed merge.
+        """
         self.log.append(["merge", (part.red.get_prefix(), part.blue.get_prefix())])
         self.nr_merged_states_total += part.nr_merged_states
         self.nr_merged_states += 1
         self.print_status()
 
-    def learning_done(self, root: GsmNode):
+    def learning_done(self, root: GsmNode) -> None:
+        """
+        Record and print final statistics once learning has finished.
+
+        :param GsmNode root: Root node of the learned model.
+        """
         learning_time = perf_counter() - self.previous_time
         self.stats["learning time"] = learning_time
         self.stats["total time"] = learning_time + self.stats["pta creation time"]
@@ -80,19 +115,36 @@ class ProgressReport(Instrumentation):
 
 
 class MergeViolationDebugger(Instrumentation):
-    def __init__(self, ground_truth: GsmNode):
+    """Instrumentation that cross-checks merges and promotions against a known ground-truth model."""
+
+    def __init__(self, ground_truth: GsmNode) -> None:
+        """
+        Create a debugger that compares merges/promotions to a ground-truth GsmNode tree.
+
+        :param GsmNode ground_truth: Root node of the ground-truth model.
+        """
         super().__init__()
         self.root = ground_truth
-        self.map: Dict[GsmNode, GsmNode] = dict()
+        self.map: dict[GsmNode, GsmNode] = dict()
         self.log = []
-        self.gsm: Optional[GeneralizedStateMerging] = None
+        self.gsm: GeneralizedStateMerging | None = None
 
-    def reset(self, gsm: GeneralizedStateMerging):
+    def reset(self, gsm: GeneralizedStateMerging) -> None:
+        """
+        Reset tracked state at the start of a learning run.
+
+        :param GeneralizedStateMerging gsm: The GSM instance being run.
+        """
         self.gsm = gsm
         self.map = dict()
         self.log = []
 
-    def log_promote(self, new_red: GsmNode):
+    def log_promote(self, new_red: GsmNode) -> None:
+        """
+        Check a promotion against the ground truth and record whether it was correct.
+
+        :param GsmNode new_red: The promoted node.
+        """
         new_red_prefix = new_red.get_prefix()
         node = self.root.get_by_prefix(new_red_prefix)
         old_red = self.map.get(node)
@@ -108,7 +160,12 @@ class MergeViolationDebugger(Instrumentation):
             print(f"  Representative (new): {new_red_prefix}")
             self.log.append(("wrong promote", new_red_prefix))
 
-    def log_merge(self, part: Partitioning):
+    def log_merge(self, part: Partitioning) -> None:
+        """
+        Check a merge against the ground truth and record whether it was correct.
+
+        :param Partitioning part: The partitioning describing the performed merge.
+        """
         red_prefix = part.red.get_prefix()
         blue_prefix = part.blue.get_prefix()
         red_node = self.root.get_by_prefix(red_prefix)
