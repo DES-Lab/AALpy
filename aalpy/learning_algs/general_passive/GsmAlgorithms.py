@@ -145,7 +145,7 @@ def run_Alergia_EDSM(data: list, automaton_type: str, eps: float = 0.05, print_i
             self.ioa_compatibility = hoeffding_compatibility(epsilon)
             self.evidence = 0
 
-        def initialize_merge(self, red: GsmNode, blue: GsmNode) -> bool | None:
+        def initialize_merge(self, red: GsmNode, blue: GsmNode, first_pass: bool):
             """
             Reset the accumulated evidence counter.
             """

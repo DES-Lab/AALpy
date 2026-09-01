@@ -2,6 +2,7 @@
 # state-merging algorithm (local compatibility checks and global merge scores).
 from collections import deque
 from collections.abc import Callable, Iterable
+from functools import total_ordering
 from math import sqrt, log
 from typing import Any
 
@@ -12,6 +13,19 @@ LocalCompatibilityFunction = Callable[[GsmNode, GsmNode], bool | None]
 ScoreFunction = Callable[[dict[GsmNode, GsmNode]], Any]
 AggregationFunction = Callable[[Iterable], Any]
 
+
+class SpecialScores:
+    @total_ordering
+    class _SpecialScore:
+        def __init__(self, ideal: bool):
+            self.ideal = ideal
+
+        def __lt__(self, other):
+            return not self.ideal
+
+    InstantAccept = _SpecialScore(True)
+    InstantReject = _SpecialScore(False)
+    NoScore = None
 
 class ScoreCalculation:
     """Bundles a local compatibility check and a global score function used during state merging."""
@@ -33,11 +47,20 @@ class ScoreCalculation:
         if not hasattr(self, "score_function"):
             self.score_function: ScoreFunction = score_function or self.default_score_function
 
-    def initialize_merge(self, red: GsmNode, blue: GsmNode) -> Any:
+    def initialize_merge(self, red: GsmNode, blue: GsmNode, first_pass: bool) -> Any:
+        """
+        Callback at the beginning of the evaluation of a merge candidate.
+
+        :param GsmNode red: GsmNode representing the red node of the merge candidate.
+        :param GsmNode blue: GsmNode representing the blue node of the merge candidate.
+        :param bool first_pass: Whether this is the first pass (in which the partitioning is only partially constructed)
+          or the second pass (in which the partitioning is completed)
+        :return: Either an early score for the merge candidate or `None`.
+        """
         return None
 
     def promotion_score(self, promotion_candidate: GsmNode) -> Any:
-        return True
+        return SpecialScores.InstantAccept
 
     @staticmethod
     def default_local_compatibility(a: GsmNode, b: GsmNode) -> bool:
@@ -51,14 +74,14 @@ class ScoreCalculation:
         return True
 
     @staticmethod
-    def default_score_function(part: dict[GsmNode, GsmNode]) -> bool:
+    def default_score_function(part: dict[GsmNode, GsmNode]) -> Any:
         """
         Default score function: any partition is acceptable.
 
         :param dict[GsmNode, GsmNode] part: Mapping of original nodes to their merged partition representative.
-        :return bool: Always True.
+        :return Any: Always accept.
         """
-        return True
+        return SpecialScores.InstantAccept
 
     def has_score_function(self) -> bool:
         """
@@ -123,7 +146,7 @@ class CheckFutureScore(ScoreCalculation):
         self.depth_first = depth_first
         self.edsm = edsm
 
-    def initialize_merge(self, red: GsmNode, blue: GsmNode) -> Any:
+    def initialize_merge(self, red: GsmNode, blue: GsmNode, first_pass: bool) -> Any:
         if self.compatibility_on_pta and not isinstance(red.data, ShadowPTAData):
             raise TypeError("compatibility_on_pta is set but no PTA data is available")
 
@@ -136,7 +159,7 @@ class CheckFutureScore(ScoreCalculation):
             red, blue = pop()
 
             if self.local_compatibility(red, blue) is False:
-                return False
+                return SpecialScores.InstantReject
 
             evidence += 1
 
@@ -155,7 +178,7 @@ class CheckFutureScore(ScoreCalculation):
             return None
         if self.edsm:
             return evidence
-        return True
+        return SpecialScores.InstantAccept
 
 class ScoreWithKTail(ScoreCalculation):
     """Applies k-Tails to a compatibility function: Compatibility is only evaluated up to a certain depth k."""
@@ -173,9 +196,9 @@ class ScoreWithKTail(ScoreCalculation):
 
         self.depth_offset = None
 
-    def initialize_merge(self, red: GsmNode, blue: GsmNode) -> bool:
+    def initialize_merge(self, red: GsmNode, blue: GsmNode, first_pass: bool) -> Any:
         self.depth_offset = None
-        return self.other_score.initialize_merge(red, blue)
+        return self.other_score.initialize_merge(red, blue, first_pass)
 
     def local_compatibility(self, a: GsmNode, b: GsmNode) -> bool:
         """
@@ -214,9 +237,9 @@ class ScoreWithSinks(ScoreCalculation):
 
         self.is_first = True
 
-    def initialize_merge(self, red: GsmNode, blue: GsmNode) -> bool | None:
+    def initialize_merge(self, red: GsmNode, blue: GsmNode, first_pass: bool) -> Any:
         self.is_first = True
-        return self.other_score.initialize_merge(red, blue)
+        return self.other_score.initialize_merge(red, blue, first_pass)
 
     def local_compatibility(self, a: GsmNode, b: GsmNode) -> bool:
         """
@@ -256,14 +279,9 @@ class ScoreCombinator(ScoreCalculation):
         self.aggregate_compatibility = aggregate_compatibility or self.default_aggregate_compatibility
         self.aggregate_score = aggregate_score or self.default_aggregate_score
 
-    def initialize_merge(self, red: GsmNode, blue: GsmNode) -> bool | None:
-        all_true = True
-        for score in self.scores:
-            verdict = score.initialize_merge(red, blue)
-            if verdict is False:
-                return False
-            all_true = all_true and verdict
-        return all_true or None
+    def initialize_merge(self, red: GsmNode, blue: GsmNode, first_pass: bool) -> Any:
+        scores = [score.initialize_merge(red, blue, first_pass) for score in self.scores]
+        return self.aggregate_score(scores)
 
     def local_compatibility(self, a: GsmNode, b: GsmNode) -> Any:
         """
@@ -317,14 +335,14 @@ def local_to_global_compatibility(local_fun: LocalCompatibilityFunction) -> Scor
     partition, original.
 
     :param LocalCompatibilityFunction local_fun: Local compatibility function to lift to a global score function.
-    :return ScoreFunction: Global score function returning False if any local check fails, True otherwise.
+    :return ScoreFunction: Global score function rejecting if any local check fails and greedily accepting otherwise.
     """
 
-    def fun(part: dict[GsmNode, GsmNode]) -> bool:
+    def fun(part: dict[GsmNode, GsmNode]) -> Any:
         for old_node, new_node in part.items():
             if local_fun(new_node, old_node) is False:  # Follows local_fun(red, blue)
-                return False
-        return True
+                return SpecialScores.InstantReject
+        return SpecialScores.InstantAccept
 
     return fun
 
@@ -372,7 +390,7 @@ def make_greedy(score: Any) -> Any:
     :param Any score: A plain value, callable score function, or ScoreCalculation instance.
     :return Any: The transformed score, callable, or ScoreCalculation.
     """
-    return transform_score(score, lambda x: x is not False)
+    return transform_score(score, lambda x: x is not False and x is not SpecialScores.InstantReject)
 
 
 def lower_threshold(score: Any, thresh: Any) -> Any:
@@ -383,7 +401,7 @@ def lower_threshold(score: Any, thresh: Any) -> Any:
     :param Any thresh: Threshold the score must exceed to be accepted.
     :return Any: The transformed score, callable, or ScoreCalculation.
     """
-    return transform_score(score, lambda x: x if thresh < x else False)
+    return transform_score(score, lambda x: x if thresh < x else SpecialScores.InstantReject)
 
 
 def AIC_score(alpha: float = 0) -> ScoreFunction:

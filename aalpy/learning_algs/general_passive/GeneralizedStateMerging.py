@@ -12,7 +12,7 @@ from aalpy.learning_algs.general_passive.GsmNode import GsmNode, OutputBehavior,
     TransitionBehaviorRange, unknown_output, detect_data_format, IOHandler, NoIOHandler, DataFormat
 from aalpy.learning_algs.general_passive.IOHandler import CountOnPTAHandler
 from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreCalculation, hoeffding_compatibility, \
-    CheckFutureScore
+    CheckFutureScore, SpecialScores
 
 
 # TODO add option for making checking of futures and partition non mutual exclusive?
@@ -198,59 +198,55 @@ class GeneralizedStateMerging:
                 red_states.sort(key=self.node_order)
 
             # loop over blue states
-            best_promotion_candidate = None
-            best_promotion_score = None
+            best_candidate = None
+            best_score = None
             for blue_state in blue_states_to_consider:
                 # FUTURE: Parallelize
                 # FUTURE: Save partitions?
 
                 # calculate partitions resulting from merges with red states if necessary
-                current_candidates: dict[GsmNode, Partitioning] = dict()
-                perfect_partitioning = None
-                red_state = None
+                no_viable_merge_for_blue = True
                 for red_state in red_states:
                     partitioning = partition_candidates.get((red_state, blue_state))
                     if partitioning is None:
                         partitioning = Partitioning(red_state, blue_state)
                         self._partition_from_merge(partitioning, red_states_backing_set, True)
-                    if partitioning.score is True:
-                        perfect_partitioning = partitioning
+                        partition_candidates[(red_state, blue_state)] = partitioning
+                        if best_candidate is None or best_score < partitioning.score:
+                            best_candidate = partitioning
+                            best_score = partitioning.score
+                    no_viable_merge_for_blue &= partitioning.score is SpecialScores.InstantReject
+                    if partitioning.score is SpecialScores.InstantAccept:
                         break
-                    current_candidates[red_state] = partitioning
 
                 # partition with perfect score found: don't consider anything else
-                if perfect_partitioning:
-                    partition_candidates = {(red_state, blue_state): perfect_partitioning}
+                if best_score is SpecialScores.InstantAccept:
+                    partition_candidates = {(best_candidate.red, best_candidate.blue):  best_candidate}
                     break
 
-                # update tracking dict with new candidates
-                new_candidates = (((red, blue_state), part) for red, part in current_candidates.items())
-                partition_candidates.update(new_candidates)
-
                 # no merge candidates for this blue state -> promotion candidate
-                if all(part.score is False for part in current_candidates.values()):
+                if no_viable_merge_for_blue:
                     score = self.score_calc.promotion_score(blue_state)
-                    if best_promotion_candidate is None or score is True or best_promotion_score < score:
-                        best_promotion_candidate = blue_state
-                        best_promotion_score = score
-                    if score is True:
+                    if best_candidate is None or best_score < score:
+                        best_candidate = blue_state
+                        best_score = score
+                    if score is SpecialScores.InstantAccept:
                         break
 
             # check for state promotion
-            if best_promotion_candidate is not None:
+            if isinstance(best_candidate, GsmNode):
                 # a state was promoted -> only forget scores for this blue node
                 for red in red_states:
-                    del partition_candidates[(red, best_promotion_candidate)]
+                    del partition_candidates[(red, best_candidate)]
                     
                 # promote best candidate
-                red_states.append(best_promotion_candidate)
-                red_states_backing_set.add(best_promotion_candidate)
-                blue_states.remove(best_promotion_candidate)
-                blue_states.extend(best_promotion_candidate.child_iterator())
-                instrumentation.log_promote(best_promotion_candidate)
-            else:
-                # find best partitioning and apply
-                best_candidate = max(partition_candidates.values(), key=lambda part: part.score)
+                red_states.append(best_candidate)
+                red_states_backing_set.add(best_candidate)
+                blue_states.remove(best_candidate)
+                blue_states.extend(best_candidate.child_iterator())
+                instrumentation.log_promote(best_candidate)
+            elif isinstance(best_candidate, Partitioning):
+                # apply best merge candidate
                 for real_node, partition_node in best_candidate.red_mapping.items():
                     real_node.transitions = partition_node.transitions
                     real_node.predecessor = partition_node.predecessor
@@ -265,6 +261,8 @@ class GeneralizedStateMerging:
                 # FUTURE: optimizations for compatibility tests where merges can be orthogonal
                 # FUTURE: caching for aggregating compatibility tests
                 partition_candidates.clear()
+            else:
+                assert False and "best candidate is neither a merge nor a promotion"
 
         instrumentation.learning_done(root)
 
@@ -293,12 +291,12 @@ class GeneralizedStateMerging:
             # for Moore machines the outputs have to match. for prefix-closed data (io-traces) this check is sufficient
             # since Moore-ness is preserved for implied merges.
             if self.output_behavior == "moore" and not GsmNode.moore_compatible(red, blue):
-                partitioning.score = False
+                partitioning.score = SpecialScores.InstantReject
                 return
 
             # check whether there is an early verdict and adapt helper functions accordingly
-            # TODO maybe split init from early verdict and also call init (maybe with first_pass as an argument) in both cases
-            partitioning.score = self.score_calc.initialize_merge(red, blue)
+            # TODO maybe split init from early verdict
+            partitioning.score = self.score_calc.initialize_merge(red, blue, first_pass)
             if partitioning.score is not None:
                 return
             partitioning.remaining_merges = []
@@ -334,6 +332,8 @@ class GeneralizedStateMerging:
                     cow_set.add(id(trans))
                 return trans
         elif partitioning.remaining_merges is None or len(partitioning.remaining_merges) != 0:
+            self.score_calc.initialize_merge(red, blue, first_pass)
+
             # best scoring merge candidate -> can manipulate nodes directly
             red_partitions = red_nodes
             def update_partition(red_node: GsmNode, blue_node: GsmNode | None) -> GsmNode:
@@ -381,7 +381,7 @@ class GeneralizedStateMerging:
                 local_compat = self.score_calc.local_compatibility(partition, blue)
                 moore_check = self.output_behavior == "moore" and self.transition_behavior == "deterministic" and not GsmNode.moore_compatible(red, blue)
                 if local_compat is False or moore_check:
-                    partitioning.score = False
+                    partitioning.score = SpecialScores.InstantReject
                     return
                 if local_compat is None:
                     partitioning.remaining_merges.append((red, blue))
