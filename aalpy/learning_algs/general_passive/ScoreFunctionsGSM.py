@@ -139,12 +139,10 @@ class CheckFutureScore(ScoreCalculation):
                  score_function: ScoreFunction = None,
                  compatibility_on_pta = False,
                  depth_first = False,
-                 edsm = False,
                  ):
         super().__init__(local_compatibility, score_function)
         self.compatibility_on_pta = compatibility_on_pta
         self.depth_first = depth_first
-        self.edsm = edsm
 
     def initialize_merge(self, red: GsmNode, blue: GsmNode, first_pass: bool) -> Any:
         if self.compatibility_on_pta and not isinstance(red.data, ShadowPTAData):
@@ -153,31 +151,25 @@ class CheckFutureScore(ScoreCalculation):
         q: deque[tuple[GsmNode, GsmNode]] = deque([(red, blue)])
         pop = q.pop if self.depth_first else q.popleft
 
-        evidence = 0
-
         while len(q) != 0:
             red, blue = pop()
 
             if self.local_compatibility(red, blue) is False:
                 return SpecialScores.InstantReject
 
-            evidence += 1
-
-            if not self.compatibility_on_pta:
-                for in_sym, red_trans, blue_trans in intersection_iterator(red.transitions, blue.transitions, True):
-                    for out_sym, red_child, blue_child in intersection_iterator(red_trans, blue_trans):
-                        q.append((red_child, blue_child))
-            else:
+            if self.compatibility_on_pta:
                 red_data: ShadowPTAData = red.data
                 blue_data: ShadowPTAData = blue.data
                 for in_sym, red_trans, blue_trans in intersection_iterator(red_data.shadow_pta, blue_data.shadow_pta, True):
                     for out_sym, red_child, blue_child in intersection_iterator(red_trans, blue_trans):
                         q.append((red_child,blue_child))
+            else:
+                for in_sym, red_trans, blue_trans in intersection_iterator(red.transitions, blue.transitions, True):
+                    for out_sym, red_child, blue_child in intersection_iterator(red_trans, blue_trans):
+                        q.append((red_child, blue_child))
 
         if self.has_score_function():
             return None
-        if self.edsm:
-            return evidence
         return SpecialScores.InstantAccept
 
 class ScoreWithKTail(ScoreCalculation):
