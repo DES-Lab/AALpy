@@ -223,24 +223,11 @@ class GsmNode(Generic[T]):
             current = current.predecessor
         return current
 
-    def get_or_create_transitions(self, in_sym: Any) -> dict[Any, 'GsmNode[T]']:
-        """
-        Get the transition dictionary for the given input symbol, creating it if necessary.
-
-        :param Any in_sym: Input symbol.
-        :return dict[Any, TransitionInfo]: Mapping of output symbol to transition info for this input.
-        """
-        t = self.transitions.get(in_sym)
-        if t is None:
-            t = dict()
-            self.transitions[in_sym] = t
-        return t
-
     def transition_iterator(self) -> Iterable[tuple[Any, Any, 'GsmNode[T]']]:
         """
         Iterate over all outgoing transitions of this node.
 
-        :return Iterable[tuple[Any, Any, TransitionInfo]]: Iterable of (input, output, transition info) triples.
+        :return Iterable[tuple[Any, Any, GsmNode]]: Iterable of (input, output, successor) triples.
         """
         for in_sym, transitions in self.transitions.items():
             for out_sym, node in transitions.items():
@@ -248,7 +235,7 @@ class GsmNode(Generic[T]):
 
     def child_iterator(self) -> Iterable['GsmNode[T]']:
         """
-        Iterate over all possible succesors of this node.
+        Iterate over all possible successors of this node.
 
         :return Iterable[GsmNode[T]]: Iterable of successor nodes.
         """
@@ -662,9 +649,6 @@ class GsmNode(Generic[T]):
         so = self.get_prefix_output()
         oo = other.get_prefix_output()
         return so == oo or so is unknown_output or oo is unknown_output
-
-    # TODO maybe group orders?
-    insertion_order = object()
 
     def short_lex_order(self, other: 'GsmNode', compare_length_only: bool = False):
         """
