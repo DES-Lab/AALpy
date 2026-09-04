@@ -9,8 +9,8 @@ from typing import Callable, Any
 
 from aalpy import Automaton
 from aalpy.learning_algs.general_passive.GsmNode import GsmNode, OutputBehavior, TransitionBehavior, OutputBehaviorRange, \
-    TransitionBehaviorRange, unknown_output, detect_data_format, IOHandler, NoIOHandler, DataFormat
-from aalpy.learning_algs.general_passive.IOHandler import CountOnPTAHandler, CountHandler
+    TransitionBehaviorRange, unknown_output, detect_data_format, DataHandler, NoOpDataHandler, DataFormat
+from aalpy.learning_algs.general_passive.DataHandler import CountOnPTADataHandler, CountDataHandler
 from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreCalculation, hoeffding_compatibility, \
     SimpleFutureBasedScore, SpecialScores
 
@@ -95,7 +95,7 @@ class GeneralizedStateMerging:
                  score_calc: ScoreCalculation = None,
                  pta_preprocessing: Callable[[GsmNode], GsmNode] = None,
                  postprocessing: Callable[[GsmNode], GsmNode] = None,
-                 data_handler: IOHandler = None,
+                 data_handler: DataHandler = None,
                  node_order: Callable[[GsmNode], Any] = None,
                  consider_only_min_blue = False,
                  depth_first = False,
@@ -108,7 +108,7 @@ class GeneralizedStateMerging:
         :param ScoreCalculation score_calc: Local compatibility / global score calculation to use.
         :param Callable[[GsmNode], GsmNode] pta_preprocessing: Pre-processing function applied to the constructed PTA.
         :param Callable[[GsmNode], GsmNode] postprocessing: Post-processing function applied to the learned model.
-        :param IOHandler data_handler: IOHandler object governing abstraction and aggregation of data
+        :param DataHandler data_handler: IOHandler object governing abstraction and aggregation of data
         :param Callable[[GsmNode], Any] node_order: Comparison key to determine the order in which merge candidates are considered.
         :param bool consider_only_min_blue: Whether to only consider the minimal blue node in each round.
         :param bool depth_first: Whether compatibility is checked depth-first instead of breadth-first.
@@ -130,7 +130,7 @@ class GeneralizedStateMerging:
                 score_calc = SimpleFutureBasedScore(hoeffding_compatibility(0.005, True), compatibility_on_pta=True)
                 if data_handler is not None:
                     raise ValueError("Using default algorithm for stochastic systems but a data_handler was provided.")
-                data_handler = CountOnPTAHandler()
+                data_handler = CountOnPTADataHandler()
         self.score_calc: ScoreCalculation = score_calc
 
         if isinstance(node_order, str) and node_order == "short-lex":
@@ -141,7 +141,7 @@ class GeneralizedStateMerging:
         self.postprocessing = postprocessing or (lambda x: x)
 
         if data_handler is None:
-            data_handler = CountHandler() if transition_behavior == "stochastic" else NoIOHandler()
+            data_handler = CountDataHandler() if transition_behavior == "stochastic" else NoOpDataHandler()
         self.data_handler = data_handler
 
         self.consider_only_min_blue = consider_only_min_blue
@@ -436,7 +436,7 @@ def run_GSM(data: list, *,
             score_calc: ScoreCalculation = None,
             pta_preprocessing: Callable[[GsmNode], GsmNode] = None,
             postprocessing: Callable[[GsmNode], GsmNode] = None,
-            data_handler: IOHandler = None,
+            data_handler: DataHandler = None,
             node_order: Callable[[GsmNode], Any] = None,
             consider_only_min_blue=False,
             depth_first=False,
@@ -453,7 +453,7 @@ def run_GSM(data: list, *,
     :param ScoreCalculation score_calc: A ScoreCalculation object which determines how compatibility and merge scores are calculated.
     :param Callable[[GsmNode], GsmNode] pta_preprocessing: A pre-processing function applied to the PTA.
     :param Callable[[GsmNode], GsmNode] postprocessing: A postprocessing function applied to the learned automaton.
-    :param IOHandler data_handler: IOHandler object governing abstraction and aggregation of data
+    :param DataHandler data_handler: IOHandler object governing abstraction and aggregation of data
     :param Callable[[GsmNode], Any] node_order: Sorting key which determines the order in which merge candidates are considered. Defaults to insertion order
     :param bool consider_only_min_blue: Whether to consider merge candidates from all blue nodes or just a single.
     :param bool depth_first: Whether compatibility is checked depth- or breadth-first.

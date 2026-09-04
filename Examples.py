@@ -1253,7 +1253,7 @@ def gsm_likelihood_ratio():
 
 def example_Alergia_extension():
     from typing import Any
-    from aalpy.learning_algs.general_passive.IOHandler import CountOnPTAHandler
+    from aalpy.learning_algs.general_passive.DataHandler import CountOnPTADataHandler
     from aalpy.learning_algs.general_passive.GeneralizedStateMerging import run_GSM
     from aalpy.learning_algs.general_passive.GsmNode import GsmNode
     from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import hoeffding_compatibility, SimpleFutureBasedScore, SpecialScores
@@ -1289,14 +1289,15 @@ def example_Alergia_extension():
     }
 
     for name, score in scores.items():
-        learned_model = run_GSM(traces, output_behavior="moore", transition_behavior="stochastic", score_calc=score, data_handler=CountOnPTAHandler())
+        learned_model = run_GSM(traces, output_behavior="moore", transition_behavior="stochastic", score_calc=score,
+                                data_handler=CountOnPTADataHandler())
         learned_model.visualize(name)
 
 
 def gsm_IOAlergia_domain_knowldege():
     from aalpy.learning_algs.general_passive.GeneralizedStateMerging import run_GSM
     from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import hoeffding_compatibility, SimpleFutureBasedScore
-    from aalpy.learning_algs.general_passive.IOHandler import CountOnPTAHandler
+    from aalpy.learning_algs.general_passive.DataHandler import CountOnPTADataHandler
     from aalpy.learning_algs.general_passive.GsmNode import GsmNode
     from aalpy.utils.Sampling import get_io_traces, sample_with_length_limits
     from aalpy import load_automaton_from_file
@@ -1326,7 +1327,8 @@ def gsm_IOAlergia_domain_knowldege():
         "IOA+DK": SimpleFutureBasedScore(ioa_compat_domain_knowledge, compatibility_on_pta=True),
     }
     for name, score in scores.items():
-        learned_model = run_GSM(traces, output_behavior="moore", transition_behavior="stochastic", score_calc=score, data_handler=CountOnPTAHandler())
+        learned_model = run_GSM(traces, output_behavior="moore", transition_behavior="stochastic", score_calc=score,
+                                data_handler=CountOnPTADataHandler())
         learned_model.visualize(name)
 
 def k_tails_example():

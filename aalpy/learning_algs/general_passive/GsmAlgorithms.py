@@ -6,7 +6,7 @@ from functools import partial
 from aalpy import DeterministicAutomaton, Onfsm, NDMooreMachine
 from aalpy.base import Automaton
 from aalpy.learning_algs.general_passive.GeneralizedStateMerging import run_GSM
-from aalpy.learning_algs.general_passive.IOHandler import CountOnPTAHandler
+from aalpy.learning_algs.general_passive.DataHandler import CountOnPTADataHandler
 from aalpy.learning_algs.general_passive.Instrumentation import ProgressReport
 from aalpy.learning_algs.general_passive.GsmNode import GsmNode
 from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreCalculation, ScoreWithKTail, ScoreIOAlergiaWithEDSM
@@ -146,7 +146,7 @@ def run_Alergia_GSM(data: list, automaton_type: str, eps: float = 0.05, compat_o
         learning_data,
         output_behavior=output_behaviour,
         transition_behavior="stochastic",
-        data_handler=CountOnPTAHandler(),
+        data_handler=CountOnPTADataHandler(),
         score_calc=ScoreIOAlergiaWithEDSM(eps, compat_on_pta_trans, compat_on_pta_count, edsm),
         instrumentation=instrumentation,
         data_format='io_traces',

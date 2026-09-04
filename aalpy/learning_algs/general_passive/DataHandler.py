@@ -6,7 +6,7 @@ from typing import Generic, TypeVar, Any
 
 T = TypeVar("T")
 
-class IOHandler(Generic[T]):
+class DataHandler(Generic[T]):
     @abstractmethod
     def init(self, data, output_format, data_format):
         ...
@@ -34,14 +34,14 @@ class IOHandler(Generic[T]):
     def copy(self, x: T) -> T:
         ...
 
-class NoAbstractionIOHandler(IOHandler[T], ABC):
+class NoAbstractionDataHandler(DataHandler[T], ABC):
     def init(self, data, output_format, data_format):
         pass
 
     def abstract(self, in_val, out_val):
         return in_val, out_val
 
-class NoIOHandler(NoAbstractionIOHandler[T]):
+class NoOpDataHandler(NoAbstractionDataHandler[T]):
     def init_data(self) -> T:
         return None
 
@@ -54,7 +54,7 @@ class NoIOHandler(NoAbstractionIOHandler[T]):
     def copy(self, x: T) -> T:
         return None
 
-class CopyOnWriteIOHandler(IOHandler[T], ABC):
+class CopyOnWriteDataHandler(DataHandler[T], ABC):
     def __init__(self):
         self.copied_on_write = set()
 
@@ -129,7 +129,7 @@ class CountData(StochasticData):
             ret[in_sym] = {out_sym: count / total_count for out_sym, count in trans.items()}
         return ret
 
-class CountHandler(NoAbstractionIOHandler[CountData], CopyOnWriteIOHandler):
+class CountDataHandler(NoAbstractionDataHandler[CountData], CopyOnWriteDataHandler):
     def init_data(self) -> CountData:
         return CountData()
 
@@ -158,7 +158,7 @@ class CountOnPTAData(ShadowPTAData, CountData):
         CountData.__init__(self)
         self.pta_count: CountDict = defaultdict(dict)
 
-class CountOnPTAHandler(CountHandler):
+class CountOnPTADataHandler(CountDataHandler):
     def init_data(self) -> CountOnPTAData:
         return CountOnPTAData()
 

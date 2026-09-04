@@ -7,7 +7,7 @@ from math import sqrt, log
 from typing import Any
 
 from aalpy.learning_algs.general_passive.GsmNode import GsmNode, intersection_iterator, union_iterator, CountData
-from aalpy.learning_algs.general_passive.IOHandler import ShadowPTAData, CountOnPTAData
+from aalpy.learning_algs.general_passive.DataHandler import ShadowPTAData, CountOnPTAData
 
 LocalCompatibilityFunction = Callable[[GsmNode, GsmNode], bool | None]
 ScoreFunction = Callable[[dict[GsmNode, GsmNode]], Any]

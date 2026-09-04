@@ -9,7 +9,7 @@ import pydot
 from aalpy.automata import StochasticMealyMachine, StochasticMealyState, MooreState, MooreMachine, NDMooreState, \
     NDMooreMachine, Mdp, MdpState, MealyMachine, MealyState, Onfsm, OnfsmState
 from aalpy.base import Automaton
-from aalpy.learning_algs.general_passive.IOHandler import IOHandler, NoIOHandler, StochasticData, CountData
+from aalpy.learning_algs.general_passive.DataHandler import DataHandler, NoOpDataHandler, StochasticData, CountData
 
 
 Key = TypeVar("Key")
@@ -491,12 +491,12 @@ class GsmNode(Generic[T]):
                     transitions[out_sym] = successor
         return missing_trans
 
-    def add_trace(self, trace: IOTrace, data_handler: IOHandler[T]):
+    def add_trace(self, trace: IOTrace, data_handler: DataHandler[T]):
         """
         Add an IO trace to the tree rooted at this node, extending it with new nodes as necessary.
 
         :param IOTrace trace: Sequence of (input, output) pairs to add.
-        :param IOHandler[T] data_handler: IOHandler used for abstraction and aggregation of trace data
+        :param DataHandler[T] data_handler: IOHandler used for abstraction and aggregation of trace data
         """
         curr_node: GsmNode = self
         for in_value, out_value in trace:
@@ -510,18 +510,18 @@ class GsmNode(Generic[T]):
             data_handler.aggregate_data(curr_node, in_value, out_value, node)
             curr_node = node
 
-    def add_labeled_sequence(self, example: IOExample, data_handler: IOHandler[T] = None):
+    def add_labeled_sequence(self, example: IOExample, data_handler: DataHandler[T] = None):
         """
         Add a labeled input sequence (inputs with a single label attached at the end) to the tree.
 
         :param IOExample example: (inputs, output) pair, where output labels the state reached by inputs.
-        :param IOHandler[T] data_handler: IOHandler used for abstraction and aggregation of trace data
+        :param DataHandler[T] data_handler: IOHandler used for abstraction and aggregation of trace data
         """
         inputs, output = example
         curr_node: GsmNode = self
         in_sym = None
 
-        if not isinstance(data_handler, NoIOHandler):
+        if not isinstance(data_handler, NoOpDataHandler):
             raise NotImplementedError("Data handling is not supported for learning from labeled sequences")
 
         # step through inputs and add transitions
@@ -551,14 +551,14 @@ class GsmNode(Generic[T]):
                 raise ValueError("nondeterminism encountered for GSM with labeled_sequences. not supported")
 
     @staticmethod
-    def createPTA(data: Any, output_behavior: OutputBehavior, data_format: DataFormat = None, data_handler: IOHandler[T] = None) -> 'GsmNode':
+    def createPTA(data: Any, output_behavior: OutputBehavior, data_format: DataFormat = None, data_handler: DataHandler[T] = None) -> 'GsmNode':
         """
         Build a prefix tree acceptor (PTA) from the given data.
 
         :param Any data: Learning data, in one of the supported data formats (or already a GsmNode tree).
         :param OutputBehavior output_behavior: Either "moore" or "mealy".
         :param DataFormat | None data_format: Explicit data format, or None to auto-detect.
-        :param IOHandler[T] data_handler: IOHandler used for abstraction and aggregation of trace data
+        :param DataHandler[T] data_handler: IOHandler used for abstraction and aggregation of trace data
         :return GsmNode: The root node of the constructed (or passed-through) PTA.
         """
         if data_format is None:
