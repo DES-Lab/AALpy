@@ -41,4 +41,5 @@ from .HelperFunctions import (
     is_balanced,
     generate_input_output_data_from_automata,
     generate_input_output_data_from_vpa,
+    get_characterizing_sequences,
 )
