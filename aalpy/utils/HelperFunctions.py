@@ -427,6 +427,55 @@ def generate_input_output_data_from_vpa(vpa: Any, num_sequences: int = 1000, max
     return data_set
 
 
+def get_characterizing_sequences(vpa: Any, characterizing_set: list | None = None) -> list[tuple]:
+    """
+    Computes a labeled data set that characterizes a VPA, in the format expected by run_PAPNI.
+
+    The data set is the characteristic sample of the congruence characterizing visibly pushdown languages (Alur,
+    Kumar, Madhusudan and Viswanathan, "Congruences for Visibly Pushdown Languages", ICALP 2005). Every well-matched
+    word of the transition cover of the minimal single-entry VPA is plugged into every context of the characterizing
+    set. The transition cover covers every state and every transition of the canonical model, and the characterizing
+    set gives, for every two of its words that belong to different congruence classes, a context in which exactly
+    one of the two is accepted, so no state merging algorithm can merge them without contradicting the data. All
+    resulting sequences are well-matched by construction, which is what a passive learner of visibly pushdown
+    languages needs, as such a learner only takes well-matched sequences into account.
+
+    The data set is derived from the VPA and from the congruence alone. No learning algorithm is involved, so the
+    data set is a property of the VPA rather than of any particular learner.
+
+    Note that this characterizes the canonical single-entry VPA, which is not the model class of every learner. A
+    learner working on a stack-aware alphabet, such as PAPNI, learns a deterministic automaton whose states are the
+    classes of the right congruence on *arbitrary* prefixes (the congruence ~ of the same paper, Section 3.2). Two
+    prefixes reaching different stack heights are separated by that congruence only by a word that is well-matched
+    after one of them and not after the other, and such a word is not well-matched overall, so it is exactly what
+    those learners discard. No sample of well-matched sequences can supply that evidence, which is why the data set
+    characterizes the language rather than any one learner's model of it. Vpa.compute_characterizing_set and
+    vpa_call_symbol_conflicts document the two ends of this gap.
+
+    :param Any vpa: VPA for which the data is generated.
+    :param list | None characterizing_set: Characterizing set to use (Default value = None, meaning that
+        Vpa.compute_characterizing_set is called).
+    :return list[tuple]: List of (input_sequence, label) pairs.
+    """
+    from aalpy.automata.Vpa import apply_vpa_context, vpa_configuration_output, vpa_transition_cover
+
+    if characterizing_set is None:
+        characterizing_set = vpa.compute_characterizing_set()
+
+    data, seen = [], set()
+
+    for word in vpa_transition_cover(vpa):
+        for left, right in characterizing_set:
+            sequence = tuple(left) + tuple(word) + tuple(right)
+            if sequence in seen:
+                continue
+            seen.add(sequence)
+            reached = apply_vpa_context(vpa, (vpa.initial_state, ()), sequence)
+            data.append((sequence, vpa_configuration_output(reached)))
+
+    return data
+
+
 def product_with_possible_empty_iterable(*iterables: Any, repeat: int = 1) -> product:
     """
     Words like regular product, but if one of the iterables is empty it will just ignore it, instead of returning [].

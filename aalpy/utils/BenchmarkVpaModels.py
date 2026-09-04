@@ -507,6 +507,15 @@ def vpa_json() -> Vpa:
     """
     Builds an example VPA that recognizes a simplified JSON-like structure.
 
+    A word is a value, where a value is either 'val', an object '{...}', or an array '[...]'. Objects and arrays hold
+    a comma separated list of items, and an item is a value optionally prefixed by a 'key' ':' pair.
+
+    Whether a 'key' ':' prefix is allowed is deliberately not tied to the surrounding bracket: after a return
+    transition, a VPA only sees the bracket it just popped, which is the one of the value that was closed, and not
+    the one of the structure the value is nested in. Distinguishing members of an object from elements of an array
+    after a nested value would therefore require pushing the enclosing context onto the stack, which puts the model
+    outside of the class of VPAs that identify a stack symbol with the call symbol that pushed it.
+
     :return Vpa: The constructed VPA.
     """
     # Define call, return, and internal symbols for JSON
@@ -523,39 +532,33 @@ def vpa_json() -> Vpa:
 
     # Define states and transitions
     state_setup = {
+        # Expecting an item, that is, a value that may be prefixed by a key
         "q0": (False, {
-            "{": [("q1", 'push', '{')],
-            "[": [("q2", 'push', '[')],
-            "}": [("q0", 'pop', '{')],
-            "]": [("q0", 'pop', '[')],
-            "key": [("q3", None, None)],  # Expect a key in an object
-
-        }),
-
-        # Array parsing state
-        "q2": (False, {
-            "val": [("q5", None, None)],  # Allow multiple values in an array
-            "[": [("q2", 'push', '[')],  # Nested arrays
-            "]": [("q0", 'pop', '[')],  # End of array
+            "key": [("q1", None, None)],  # Key of an object member
+            "val": [("q3", None, None)],  # Plain value
+            "{": [("q0", 'push', '{')],  # Start of an object
+            "[": [("q0", 'push', '[')],  # Start of an array
+            "}": [("q3", 'pop', '{')],  # End of an empty object
+            "]": [("q3", 'pop', '[')],  # End of an empty array
         }),
 
         # After parsing a key
-        "q3": (False, {
-            ":": [("q4", None, None)],  # Key-value separator
+        "q1": (False, {
+            ":": [("q2", None, None)],  # Key-value separator
         }),
 
-        # After parsing a key-value separator
-        "q4": (False, {
-            "val": [("q5", None, None)],  # Expecting a value
+        # After parsing a key-value separator, expecting a value
+        "q2": (False, {
+            "val": [("q3", None, None)],  # Plain value
             "{": [("q0", 'push', '{')],  # Nested object
-            "[": [("q2", 'push', '[')],  # Nested array
+            "[": [("q0", 'push', '[')],  # Nested array
         }),
 
-        # After parsing a value in an object
-        "q5": (False, {
-            ",": [("q4", None, None)],  # Another key-value pair
-            "}": [("q0", 'pop', '{')],  # End of object
-            "]": [("q0", 'pop', '[')],  # End of object
+        # After parsing a value, accepting once the structure is closed
+        "q3": (True, {
+            ",": [("q0", None, None)],  # Another item
+            "}": [("q3", 'pop', '{')],  # End of an object
+            "]": [("q3", 'pop', '[')],  # End of an array
         }),
     }
 

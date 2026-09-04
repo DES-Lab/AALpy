@@ -89,6 +89,7 @@ from .utils import (
     generate_random_sevpa,
     generate_random_smm,
     generate_test_cases,
+    get_characterizing_sequences,
     get_correct_prop_values,
     get_properties_file,
     load_automaton_from_file,
