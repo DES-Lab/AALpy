@@ -7,7 +7,7 @@ from math import sqrt, log
 from typing import Any
 
 from aalpy.learning_algs.general_passive.GsmNode import GsmNode, intersection_iterator, union_iterator, CountData
-from aalpy.learning_algs.general_passive.IOHandler import ShadowPTAData
+from aalpy.learning_algs.general_passive.IOHandler import ShadowPTAData, CountOnPTAData
 
 LocalCompatibilityFunction = Callable[[GsmNode, GsmNode], bool | None]
 ScoreFunction = Callable[[dict[GsmNode, GsmNode]], Any]
@@ -23,8 +23,11 @@ class SpecialScores:
         def __lt__(self, other):
             return not self.ideal
 
-    InstantAccept = _SpecialScore(True)
-    InstantReject = _SpecialScore(False)
+        def __bool__(self):
+            return self.ideal
+
+    ImmediateAccept = _SpecialScore(True)
+    ImmediateReject = _SpecialScore(False)
     NoScore = None
 
 class ScoreCalculation:
@@ -60,7 +63,14 @@ class ScoreCalculation:
         return None
 
     def promotion_score(self, promotion_candidate: GsmNode) -> Any:
-        return SpecialScores.InstantAccept
+        """
+        Computes the score of a promotion candidate. By default, promotion candidates are immediately accepted. Override
+        this function to implement promotion scoring.
+
+        :param GsmNode promotion_candidate: GsmNode which is to be promoted.
+        :return Any: The score of the promotion candidate. Default is ImmediateAccept.
+        """
+        return SpecialScores.ImmediateAccept
 
     @staticmethod
     def default_local_compatibility(a: GsmNode, b: GsmNode) -> bool:
@@ -81,7 +91,7 @@ class ScoreCalculation:
         :param dict[GsmNode, GsmNode] part: Mapping of original nodes to their merged partition representative.
         :return Any: Always accept.
         """
-        return SpecialScores.InstantAccept
+        return SpecialScores.ImmediateAccept
 
     def has_score_function(self) -> bool:
         """
@@ -90,14 +100,6 @@ class ScoreCalculation:
         :return bool: True if score_function was overridden.
         """
         return self.score_function is not self.default_score_function
-
-    def has_local_compatibility(self) -> bool:
-        """
-        Check whether a non-default local compatibility function is configured.
-
-        :return bool: True if local_compatibility was overridden.
-        """
-        return self.local_compatibility is not self.default_local_compatibility
 
 
 def hoeffding_compatibility(eps: float, compare_original: bool = True) -> LocalCompatibilityFunction:
@@ -133,13 +135,27 @@ def hoeffding_compatibility(eps: float, compare_original: bool = True) -> LocalC
 
     return similar
 
-class CheckFutureScore(ScoreCalculation):
+class SimpleFutureBasedScore(ScoreCalculation):
+    """
+    ScoreCalculation that checks local compatibility only on common futures (as in Alergia) and not during the
+    construction of the partitioning. As long as no scoring (based on the partitioning) is used, this results in a
+    significant speedup.
+    """
     def __init__(self,
                  local_compatibility: LocalCompatibilityFunction = None,
                  score_function: ScoreFunction = None,
                  compatibility_on_pta = False,
                  depth_first = False,
                  ):
+        """
+        Create a new CheckFutureScore instance.
+
+        :param LocalCompatibilityFunction local_compatibility: Compatibility criterion used to check futures.
+        :param ScoreFunction score_function: The score function to rank merge candidates. Values other than None (default)
+          negate the speedup.
+        :param bool compatibility_on_pta: Whether compatibility should be checked on the PTA or the partially merged automaton
+        :param bool depth_first: Whether to traverse the implied merges DFS or BFS. Defaults to True (BFS).
+        """
         super().__init__(local_compatibility, score_function)
         self.compatibility_on_pta = compatibility_on_pta
         self.depth_first = depth_first
@@ -155,7 +171,7 @@ class CheckFutureScore(ScoreCalculation):
             red, blue = pop()
 
             if self.local_compatibility(red, blue) is False:
-                return SpecialScores.InstantReject
+                return SpecialScores.ImmediateReject
 
             if self.compatibility_on_pta:
                 red_data: ShadowPTAData = red.data
@@ -169,8 +185,28 @@ class CheckFutureScore(ScoreCalculation):
                         q.append((red_child, blue_child))
 
         if self.has_score_function():
-            return None
-        return SpecialScores.InstantAccept
+            return SpecialScores.NoScore
+        return SpecialScores.ImmediateAccept
+
+
+class ScoreIOAlergiaWithEDSM(SimpleFutureBasedScore):
+    def __init__(self, eps: float, compat_on_pta: bool, compat_on_pta_data: bool, edsm: bool):
+        self.compat = hoeffding_compatibility(eps, compat_on_pta_data)
+        SimpleFutureBasedScore.__init__(self, None, compatibility_on_pta=compat_on_pta)
+        self.edsm = edsm
+        self.score = None
+
+    def initialize_merge(self, red: GsmNode, blue: GsmNode, first_pass: bool) -> Any:
+        self.score = 0
+        verdict = super().initialize_merge(red, blue, first_pass)
+        if self.edsm is False or verdict is SpecialScores.ImmediateReject:
+            return verdict
+        return self.score
+
+    def local_compatibility(self, red: GsmNode, blue: GsmNode) -> float:
+        self.score += 1
+        return self.compat(red, blue)
+
 
 class ScoreWithKTail(ScoreCalculation):
     """Applies k-Tails to a compatibility function: Compatibility is only evaluated up to a certain depth k."""
@@ -189,10 +225,10 @@ class ScoreWithKTail(ScoreCalculation):
         self.depth_offset = None
 
     def initialize_merge(self, red: GsmNode, blue: GsmNode, first_pass: bool) -> Any:
-        self.depth_offset = None
+        self.depth_offset = blue.get_prefix_length()
         return self.other_score.initialize_merge(red, blue, first_pass)
 
-    def local_compatibility(self, a: GsmNode, b: GsmNode) -> bool:
+    def local_compatibility(self, a: GsmNode, b: GsmNode) -> bool | None:
         """
         Check local compatibility, treating nodes beyond depth k as automatically compatible.
 
@@ -201,11 +237,9 @@ class ScoreWithKTail(ScoreCalculation):
         :return bool: True if compatible (or beyond depth k), False otherwise.
         """
         # assuming b is tree shaped.
-        if self.depth_offset is None:
-            self.depth_offset = b.get_prefix_length()
         depth = b.get_prefix_length() - self.depth_offset
         if self.k <= depth:
-            return True
+            return None
 
         return self.other_score.local_compatibility(a, b)
 
@@ -227,10 +261,10 @@ class ScoreWithSinks(ScoreCalculation):
         self.sink_cond = sink_cond
         self.allow_sink_merge = allow_sink_merge
 
-        self.is_first = True
-
     def initialize_merge(self, red: GsmNode, blue: GsmNode, first_pass: bool) -> Any:
-        self.is_first = True
+        a_sink, b_sink = self.sink_cond(red), self.sink_cond(blue)
+        if (a_sink or b_sink) and not (a_sink and b_sink and self.allow_sink_merge):
+            return SpecialScores.ImmediateReject
         return self.other_score.initialize_merge(red, blue, first_pass)
 
     def local_compatibility(self, a: GsmNode, b: GsmNode) -> bool:
@@ -241,13 +275,6 @@ class ScoreWithSinks(ScoreCalculation):
         :param GsmNode b: Second (blue) node.
         :return bool: True if compatible according to the sink condition and the wrapped score calculation.
         """
-        if self.is_first:
-            self.is_first = False
-            a_sink, b_sink = self.sink_cond(a), self.sink_cond(b)
-            if a_sink != b_sink:
-                return False
-            if a_sink and b_sink and not self.allow_sink_merge:
-                return False
         return self.other_score.local_compatibility(a, b)
 
 
@@ -333,10 +360,52 @@ def local_to_global_compatibility(local_fun: LocalCompatibilityFunction) -> Scor
     def fun(part: dict[GsmNode, GsmNode]) -> Any:
         for old_node, new_node in part.items():
             if local_fun(new_node, old_node) is False:  # Follows local_fun(red, blue)
-                return SpecialScores.InstantReject
-        return SpecialScores.InstantAccept
+                return SpecialScores.ImmediateReject
+        return SpecialScores.ImmediateAccept
 
     return fun
+
+
+def transform_score(transform: Callable) -> Any:
+    """
+    Lifts an operation on a score value to score functions and ScoreCalculation objects. Intended as a decorator
+
+    :param Callable transform: Function to apply to the (eventual) score value.
+    :return Any: Decorated transformation applicable to a score, callable, or ScoreCalculation.
+    """
+    def fun(score: Any, *args) -> Any:
+        if isinstance(score, Callable):
+            return lambda partitioning: transform(score(partitioning), *args)
+        if isinstance(score, ScoreCalculation):
+            original_score_function = score.score_function
+            score.score_function = lambda partitioning: transform(original_score_function(partitioning), *args)
+            return score
+        return transform(score, *args)
+
+    return fun
+
+@transform_score
+def greedy_score(score: Any) -> Any:
+    """
+    Transform a score into a greedy (boolean) score: accept anything but a False/reject result.
+
+    :param Any score: A plain value, callable score function, or ScoreCalculation instance.
+    :return Any: The transformed score, callable, or ScoreCalculation.
+    """
+    should_accept = score is not False and score is not SpecialScores.ImmediateReject
+    return SpecialScores.ImmediateAccept if should_accept else SpecialScores.ImmediateReject
+
+
+@transform_score
+def lower_threshold(score: Any, thresh: Any) -> Any:
+    """
+    Transform a score so that it is rejected (False) unless it exceeds a threshold.
+
+    :param Any score: A plain value, callable score function, or ScoreCalculation instance.
+    :param Any thresh: Threshold the score must exceed to be accepted.
+    :return Any: The transformed score, callable, or ScoreCalculation.
+    """
+    return score if thresh <= score else SpecialScores.ImmediateReject
 
 
 def differential_info(part: dict[GsmNode[CountData], GsmNode[CountData]]) -> tuple[float, int]:
@@ -358,44 +427,6 @@ def differential_info(part: dict[GsmNode[CountData], GsmNode[CountData]]) -> tup
     return partial_llh_old - partial_llh_new, num_params_old - num_params_new
 
 
-def transform_score(score: Any, transform: Callable) -> Any:
-    """
-    Apply a transformation to a score, a score function, or a ScoreCalculation's score function.
-
-    :param Any score: A plain value, a callable score function, or a ScoreCalculation instance.
-    :param Callable transform: Function to apply to the (eventual) score value.
-    :return Any: The transformed score, callable, or ScoreCalculation.
-    """
-    if isinstance(score, Callable):
-        return lambda *args: transform(score(*args))
-    if isinstance(score, ScoreCalculation):
-        original_score_function = score.score_function
-        score.score_function = lambda *args: transform(original_score_function(*args))
-        return score
-    return transform(score)
-
-
-def make_greedy(score: Any) -> Any:
-    """
-    Transform a score into a greedy (boolean) score: accept anything but a False/reject result.
-
-    :param Any score: A plain value, callable score function, or ScoreCalculation instance.
-    :return Any: The transformed score, callable, or ScoreCalculation.
-    """
-    return transform_score(score, lambda x: x is not False and x is not SpecialScores.InstantReject)
-
-
-def lower_threshold(score: Any, thresh: Any) -> Any:
-    """
-    Transform a score so that it is rejected (False) unless it exceeds a threshold.
-
-    :param Any score: A plain value, callable score function, or ScoreCalculation instance.
-    :param Any thresh: Threshold the score must exceed to be accepted.
-    :return Any: The transformed score, callable, or ScoreCalculation.
-    """
-    return transform_score(score, lambda x: x if thresh < x else SpecialScores.InstantReject)
-
-
 def AIC_score(alpha: float = 0) -> ScoreFunction:
     """
     Build a score function based on the Akaike information criterion (AIC).
@@ -410,7 +441,7 @@ def AIC_score(alpha: float = 0) -> ScoreFunction:
     return score
 
 
-def EDSM_frequency_score(min_evidence: int = -1) -> ScoreFunction:
+def EDSM_frequency_score(min_evidence: int = 0) -> ScoreFunction:
     """
     Build a score function counting the total evidence (transition count) contradicted by a merge.
 

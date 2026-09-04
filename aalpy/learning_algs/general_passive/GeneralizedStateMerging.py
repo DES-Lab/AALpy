@@ -10,9 +10,9 @@ from typing import Callable, Any
 from aalpy import Automaton
 from aalpy.learning_algs.general_passive.GsmNode import GsmNode, OutputBehavior, TransitionBehavior, OutputBehaviorRange, \
     TransitionBehaviorRange, unknown_output, detect_data_format, IOHandler, NoIOHandler, DataFormat
-from aalpy.learning_algs.general_passive.IOHandler import CountOnPTAHandler
+from aalpy.learning_algs.general_passive.IOHandler import CountOnPTAHandler, CountHandler
 from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreCalculation, hoeffding_compatibility, \
-    CheckFutureScore, SpecialScores
+    SimpleFutureBasedScore, SpecialScores
 
 
 # TODO add option for making checking of futures and partition non mutual exclusive?
@@ -30,7 +30,7 @@ class Partitioning:
         """
         self.red: GsmNode = red
         self.blue: GsmNode = blue
-        self.score = None
+        self.score = SpecialScores.NoScore
         self.red_mapping: dict[GsmNode, GsmNode] = dict()
         self.full_mapping: dict[GsmNode, GsmNode] = dict()
         self.new_blue = []
@@ -108,6 +108,7 @@ class GeneralizedStateMerging:
         :param ScoreCalculation score_calc: Local compatibility / global score calculation to use.
         :param Callable[[GsmNode], GsmNode] pta_preprocessing: Pre-processing function applied to the constructed PTA.
         :param Callable[[GsmNode], GsmNode] postprocessing: Post-processing function applied to the learned model.
+        :param IOHandler data_handler: IOHandler object governing abstraction and aggregation of data
         :param Callable[[GsmNode], Any] node_order: Comparison key to determine the order in which merge candidates are considered.
         :param bool consider_only_min_blue: Whether to only consider the minimal blue node in each round.
         :param bool depth_first: Whether compatibility is checked depth-first instead of breadth-first.
@@ -126,7 +127,7 @@ class GeneralizedStateMerging:
             elif transition_behavior == "nondeterministic" :
                 raise ValueError("Missing score_calc for nondeterministic transition behavior. No default available.")
             elif transition_behavior == "stochastic" :
-                score_calc = CheckFutureScore(hoeffding_compatibility(0.005, True), compatibility_on_pta=True)
+                score_calc = SimpleFutureBasedScore(hoeffding_compatibility(0.005, True), compatibility_on_pta=True)
                 if data_handler is not None:
                     raise ValueError("Using default algorithm for stochastic systems but a data_handler was provided.")
                 data_handler = CountOnPTAHandler()
@@ -139,7 +140,9 @@ class GeneralizedStateMerging:
         self.pta_preprocessing = pta_preprocessing or (lambda x: x)
         self.postprocessing = postprocessing or (lambda x: x)
 
-        self.data_handler = data_handler or NoIOHandler()
+        if data_handler is None:
+            data_handler = CountHandler() if transition_behavior == "stochastic" else NoIOHandler()
+        self.data_handler = data_handler
 
         self.consider_only_min_blue = consider_only_min_blue
         self.depth_first = depth_first
@@ -215,12 +218,12 @@ class GeneralizedStateMerging:
                         if best_candidate is None or best_score < partitioning.score:
                             best_candidate = partitioning
                             best_score = partitioning.score
-                    no_viable_merge_for_blue &= partitioning.score is SpecialScores.InstantReject
-                    if partitioning.score is SpecialScores.InstantAccept:
+                    no_viable_merge_for_blue &= partitioning.score is SpecialScores.ImmediateReject
+                    if partitioning.score is SpecialScores.ImmediateAccept:
                         break
 
                 # partition with perfect score found: don't consider anything else
-                if best_score is SpecialScores.InstantAccept:
+                if best_score is SpecialScores.ImmediateAccept:
                     partition_candidates = {(best_candidate.red, best_candidate.blue):  best_candidate}
                     break
 
@@ -230,7 +233,7 @@ class GeneralizedStateMerging:
                     if best_candidate is None or best_score < score:
                         best_candidate = blue_state
                         best_score = score
-                    if score is SpecialScores.InstantAccept:
+                    if score is SpecialScores.ImmediateAccept:
                         break
 
             # check for state promotion
@@ -287,17 +290,18 @@ class GeneralizedStateMerging:
         red = partitioning.red
         blue = partitioning.blue
 
+        # TODO: consider extracting main loop and split preample into two functions
         if first_pass:
             # for Moore machines the outputs have to match. for prefix-closed data (io-traces) this check is sufficient
             # since Moore-ness is preserved for implied merges.
             if self.output_behavior == "moore" and not GsmNode.moore_compatible(red, blue):
-                partitioning.score = SpecialScores.InstantReject
+                partitioning.score = SpecialScores.ImmediateReject
                 return
 
             # check whether there is an early verdict and adapt helper functions accordingly
             # TODO maybe split init from early verdict
             partitioning.score = self.score_calc.initialize_merge(red, blue, first_pass)
-            if partitioning.score is not None:
+            if partitioning.score is not SpecialScores.NoScore:
                 return
             partitioning.remaining_merges = []
 
@@ -352,7 +356,7 @@ class GeneralizedStateMerging:
             # initialize the merge. this should happen only once:
             # - in the first pass if there is no early verdict
             # - in the second pass if there is an early verdict
-            assert (first_pass and partitioning.score is None) or (not first_pass and partitioning.score is not None)
+            assert first_pass == (partitioning.score is SpecialScores.NoScore)
 
             # rewire the blue node's parent
             blue_parent = update_partition(blue.predecessor, None)
@@ -381,7 +385,7 @@ class GeneralizedStateMerging:
                 local_compat = self.score_calc.local_compatibility(partition, blue)
                 moore_check = self.output_behavior == "moore" and self.transition_behavior == "deterministic" and not GsmNode.moore_compatible(red, blue)
                 if local_compat is False or moore_check:
-                    partitioning.score = SpecialScores.InstantReject
+                    partitioning.score = SpecialScores.ImmediateReject
                     return
                 if local_compat is None:
                     partitioning.remaining_merges.append((red, blue))
