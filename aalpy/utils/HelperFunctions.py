@@ -443,14 +443,13 @@ def get_characterizing_sequences(vpa: Any, characterizing_set: list | None = Non
     The data set is derived from the VPA and from the congruence alone. No learning algorithm is involved, so the
     data set is a property of the VPA rather than of any particular learner.
 
-    Note that this characterizes the canonical single-entry VPA, which is not the model class of every learner. A
-    learner working on a stack-aware alphabet, such as PAPNI, learns a deterministic automaton whose states are the
-    classes of the right congruence on *arbitrary* prefixes (the congruence ~ of the same paper, Section 3.2). Two
-    prefixes reaching different stack heights are separated by that congruence only by a word that is well-matched
-    after one of them and not after the other, and such a word is not well-matched overall, so it is exactly what
-    those learners discard. No sample of well-matched sequences can supply that evidence, which is why the data set
-    characterizes the language rather than any one learner's model of it. Vpa.compute_characterizing_set and
-    vpa_call_symbol_conflicts document the two ends of this gap.
+    Note that this characterizes the canonical single-entry VPA, which is the model PAPNI learns, but not the model
+    class of every learner. A learner working on a stack-aware alphabet learns a deterministic automaton whose
+    states are the classes of the right congruence on *arbitrary* prefixes (the congruence ~ of the same paper,
+    Section 3.2). Two prefixes reaching different stack heights are separated by that congruence only by a word that
+    is well-matched after one of them and not after the other, and such a word is not well-matched overall, so it is
+    exactly what those learners discard. No sample of well-matched sequences can supply that evidence, which is why
+    the data set characterizes the language rather than any one learner's model of it.
 
     :param Any vpa: VPA for which the data is generated.
     :param list | None characterizing_set: Characterizing set to use (Default value = None, meaning that

@@ -109,17 +109,20 @@ class Sevpa(Automaton):
     """
     empty = "_"
 
-    def __init__(self, initial_state: SevpaState, states: list[SevpaState]) -> None:
+    def __init__(self, initial_state: SevpaState, states: list[SevpaState],
+                 input_alphabet: SevpaAlphabet | None = None) -> None:
         """
         Creates a 1-SEVPA.
 
         :param SevpaState initial_state: Initial state of the 1-SEVPA.
         :param list[SevpaState] states: All states of the 1-SEVPA.
+        :param SevpaAlphabet | None input_alphabet: Input alphabet of the 1-SEVPA (Default value = None, meaning
+            that it is recovered from the transitions, which loses the symbols that no transition happens to use).
         """
         super().__init__(initial_state, states)
         self.initial_state = initial_state
         self.states = states
-        self.input_alphabet = self.get_input_alphabet()
+        self.input_alphabet = input_alphabet if input_alphabet else self.get_input_alphabet()
         self.current_state = None
         self.stack = []
         self.error_state_reached = False
