@@ -1142,7 +1142,7 @@ def passive_vpa_learning_on_lists():
         (('[', '1', '(', ']', '1', ')'), False),
     ]
 
-    papni = run_PAPNI(list_data, vpa_alphabet, algorithm='gsm', print_info=True)
+    papni = run_PAPNI(list_data, vpa_alphabet, print_info=True)
     papni.visualize()
 
 
@@ -1170,11 +1170,11 @@ def passive_vpa_learning_on_all_benchmark_models():
         vpa_alphabet = gt.input_alphabet
         data = generate_input_output_data_from_vpa(gt, num_sequences=2000, max_seq_len=16)
 
-        papni = run_PAPNI(data, vpa_alphabet, algorithm='gsm', print_info=True)
+        papni = run_PAPNI(data, vpa_alphabet, print_info=True)
 
         for seq, o in data:
             papni.reset_to_initial()
-            learned_output = papni.execute_sequence(papni.initial_state, seq)[-1]
+            learned_output = papni.execute_sequence(papni.initial_state, seq, [])[-1]
             if o != learned_output:
                 print(seq, o, learned_output)
                 assert False, 'Papni Learned Model not consistent with data.'

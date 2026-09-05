@@ -3,7 +3,7 @@ import random
 from collections import defaultdict, deque
 from collections.abc import Hashable
 
-from aalpy.automata import Dfa
+from aalpy.automata.Sevpa import Sevpa, SevpaAlphabet
 from aalpy.base import Automaton, AutomatonState
 
 
@@ -112,17 +112,20 @@ class Vpa(Automaton):
     """
     error_state = VpaState("ErrorSinkState", False)
 
-    def __init__(self, initial_state: VpaState, states: list[VpaState]) -> None:
+    def __init__(self, initial_state: VpaState, states: list[VpaState],
+                 input_alphabet: VpaAlphabet | None = None) -> None:
         """
         Creates a VPA.
 
         :param VpaState initial_state: Initial state of the VPA.
         :param list[VpaState] states: All states of the VPA.
+        :param VpaAlphabet | None input_alphabet: Input alphabet of the VPA (Default value = None, meaning that it
+            is recovered from the transitions, which loses the symbols that no transition happens to use).
         """
         super().__init__(initial_state, states)
         self.initial_state = initial_state
         self.states = states
-        self.input_alphabet = self.get_input_alphabet()
+        self.input_alphabet = input_alphabet if input_alphabet else self.get_input_alphabet()
         self.current_state = None
         self.stack = []
 
@@ -824,10 +827,10 @@ def vpa_call_symbol_conflicts(vpa: Vpa) -> dict:
     """
     Looks up the call symbols that push more than one stack symbol.
 
-    PAPNI encodes a return symbol together with the call symbol that pushed the popped stack symbol, so it can only
-    represent VPAs in which the pushed stack symbol is determined by the call symbol. A VPA that pushes different
-    stack symbols for the same call symbol has a language that is in general not expressible by any model PAPNI can
-    return, no matter which data it is given.
+    A VPA that pushes only one stack symbol per call symbol carries no information about the state a call was read
+    in, so it needs no stack alphabet beyond its call alphabet. A learner that identifies the two cannot return a
+    model equivalent to a VPA with such a conflict, no matter which data it is given. PAPNI is not such a learner,
+    as the stack symbols of the model it learns are (state at the call, call symbol) pairs.
 
     :param Vpa vpa: VPA to inspect.
     :return dict: Map from call symbol to the set of stack symbols it pushes, for call symbols pushing more than one.
@@ -882,41 +885,42 @@ def find_vpa_counterexample(vpa: Vpa, other: Vpa, max_stack_height: int = 5,
     return None
 
 
-def vpa_from_dfa_representation(dfa_repr: Dfa, vpa_alphabet: VpaAlphabet) -> Vpa:
+def vpa_from_sevpa(sevpa: Sevpa, vpa_alphabet: SevpaAlphabet | VpaAlphabet | None = None) -> Vpa:
     """
-    Converts a DFA representation of a VPA (where call/return symbols may be encoded as tuples with the top of
-    stack) into an equivalent Vpa.
+    Converts a 1-SEVPA into an equivalent Vpa.
 
-    :param Dfa dfa_repr: The DFA representation to convert.
-    :param VpaAlphabet vpa_alphabet: The alphabet of the resulting VPA.
+    A 1-SEVPA is a VPA in which the call transitions are implicit: every call symbol pushes the pair (state the
+    call is read in, call symbol) and continues from the initial state. Those transitions are made explicit here,
+    while the internal and pop transitions are carried over unchanged.
+
+    :param Sevpa sevpa: The 1-SEVPA to convert.
+    :param SevpaAlphabet | VpaAlphabet | None vpa_alphabet: Alphabet of the resulting VPA (Default value = None,
+        meaning that the alphabet of the 1-SEVPA is used). Passing it keeps the symbols that no transition of the
+        1-SEVPA happens to use.
     :return Vpa: The constructed VPA.
     """
-    vpa_states = dict()
-    for dfa_state in dfa_repr.states:
-        vpa_state = VpaState(state_id=dfa_state.state_id, is_accepting=dfa_state.is_accepting)
-        vpa_states[dfa_state.state_id] = vpa_state
+    if vpa_alphabet is None:
+        vpa_alphabet = sevpa.get_input_alphabet()
 
-    for dfa_state in dfa_repr.states:
+    vpa_states = {state.state_id: VpaState(state_id=state.state_id, is_accepting=state.is_accepting)
+                  for state in sevpa.states}
+    initial_state = vpa_states[sevpa.initial_state.state_id]
 
-        for input_symbol, reached_dfa_state in dfa_state.transitions.items():
-            origin_state = vpa_states[dfa_state.state_id]
-            reached_state = vpa_states[reached_dfa_state.state_id]
+    for state in sevpa.states:
+        origin_state = vpa_states[state.state_id]
 
-            top_of_stack = None
-            if isinstance(input_symbol, tuple):
-                input_symbol, top_of_stack = input_symbol[0], input_symbol[1]
+        # the call transitions of a 1-SEVPA are not stored, as they are the same for every state
+        for call_symbol in vpa_alphabet.call_alphabet:
+            origin_state.transitions[call_symbol].append(
+                VpaTransition(origin_state, initial_state, call_symbol, 'push', (state.state_id, call_symbol)))
 
-            if input_symbol in vpa_alphabet.return_alphabet:
-                transition = VpaTransition(origin_state, reached_state, input_symbol, 'pop', top_of_stack)
-            else:
-                action = 'push' if input_symbol in vpa_alphabet.call_alphabet else None
-                stack_guard = input_symbol if action == 'push' else None
-                transition = VpaTransition(origin_state, reached_state, input_symbol,
-                                           action, stack_guard)
+        for transitions in state.transitions.values():
+            for transition in transitions:
+                reached_state = vpa_states[transition.target_state.state_id]
+                origin_state.transitions[transition.letter].append(
+                    VpaTransition(origin_state, reached_state, transition.letter,
+                                  transition.action, transition.stack_guard))
 
-            origin_state.transitions[input_symbol].append(transition)
-
-    initial_state = vpa_states[dfa_repr.initial_state.state_id]
-    learned_model = Vpa(initial_state, list(vpa_states.values()))
-
-    return learned_model
+    return Vpa(initial_state, list(vpa_states.values()),
+               VpaAlphabet(list(vpa_alphabet.internal_alphabet), list(vpa_alphabet.call_alphabet),
+                           list(vpa_alphabet.return_alphabet)))
