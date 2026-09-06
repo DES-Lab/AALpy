@@ -160,7 +160,9 @@ class Vpa(Automaton):
         if letter is None:
             return self.current_state.is_accepting and self.stack == []
 
-        transitions = self.current_state.transitions[letter]
+        # read without inserting: transitions is a defaultdict, and probing helpers such as
+        # vpa_step_configuration would otherwise permanently add empty entries to the model
+        transitions = self.current_state.transitions.get(letter, ())
 
         taken_transition = None
 
@@ -283,6 +285,8 @@ class Vpa(Automaton):
             (is_accepting: bool, transitions_dict: dict), where transitions_dict maps input symbols to
             lists of tuples (target_state_id, action, stack_guard).
         :param init_state_id: The state ID for the initial state of the VPA, passed via kwargs.
+        :param input_alphabet: Input alphabet of the VPA, passed via kwargs (Default value = None, meaning that it
+            is recovered from the transitions, which loses the symbols that no transition happens to use).
         :return Vpa: The constructed Visibly Pushdown Automaton.
         """
         # state_setup should map from state_id to tuple(is_accepting and transitions_dict)
@@ -306,8 +310,9 @@ class Vpa(Automaton):
         # states to list
         states = [state for state in states.values()]
 
-        vpa = Vpa(init_state, states)
-        return vpa
+        # the alphabet is forwarded rather than recovered from the transitions, which would lose the symbols
+        # that no transition of the model happens to use
+        return Vpa(init_state, states, kwargs.get('input_alphabet'))
 
     def is_balanced(self, seq: list[str]) -> bool:
         """
@@ -319,7 +324,7 @@ class Vpa(Automaton):
         from aalpy.utils import is_balanced
         return is_balanced(seq, self.input_alphabet)
 
-    def compute_characterizing_set(self) -> list[tuple]:
+    def compute_characterizing_set(self, congruence: 'VpaCongruence | None' = None) -> list[tuple]:
         """
         Computes a characterizing set of the VPA, that is, a set of contexts that tells apart all congruence classes
         of the visibly pushdown language it accepts.
@@ -342,13 +347,16 @@ class Vpa(Automaton):
         found by VpaCongruence, which decides the congruence exactly rather than by searching words up to a bound,
         so the returned set separates *every* pair of classes that any context whatsoever separates.
 
+        :param VpaCongruence | None congruence: Congruence of this VPA (Default value = None, meaning that it is
+            computed here). Deciding the congruence dominates the runtime, so an already computed one is worth
+            passing.
         :return list[tuple]: The characterizing set, a list of (left, right) context pairs.
         """
-        congruence = VpaCongruence(self)
+        congruence = congruence or VpaCongruence(self)
 
         # a class is represented by the transduction of its words, and by a shortest word realizing it
         representatives = {}
-        for word in vpa_transition_cover(self):
+        for word in vpa_transition_cover(self, congruence):
             representatives.setdefault(vpa_word_transduction(self, word), word)
 
         characterizing_set = [((), ())]
@@ -707,7 +715,9 @@ class VpaCongruence:
         :param dict separable: Pairs separable with the remaining stack, mapped to their witnesses.
         :return dict: Pairs separable with the extended stack, mapped to their witnesses.
         """
-        key = (stack_symbol, frozenset(separable))
+        # the witnesses are part of the key: two stacks can separate the very same pairs by different right
+        # halves, and a right half built for the other stack has the wrong number of returns for this one
+        key = (stack_symbol, frozenset(separable.items()))
         if key in self._pre_cache:
             return self._pre_cache[key]
 
@@ -762,7 +772,7 @@ class VpaCongruence:
         return left_halves
 
 
-def vpa_well_matched_cover(vpa: Vpa) -> dict:
+def vpa_well_matched_cover(vpa: Vpa, congruence: 'VpaCongruence | None' = None) -> dict:
     """
     Enumerates the transductions of the well-matched words of a VPA, with a witness word for each.
 
@@ -770,12 +780,14 @@ def vpa_well_matched_cover(vpa: Vpa) -> dict:
     single-entry VPA are the classes of well-matched words, so covering all transductions covers all of them.
 
     :param Vpa vpa: VPA whose well-matched words are enumerated.
+    :param VpaCongruence | None congruence: Congruence of the VPA (Default value = None, meaning that it is
+        computed here). Deciding the congruence dominates the runtime, so an already computed one is worth passing.
     :return dict: Map from transduction to a witness well-matched word realizing it.
     """
-    return VpaCongruence(vpa).transductions
+    return (congruence or VpaCongruence(vpa)).transductions
 
 
-def vpa_transition_cover(vpa: Vpa) -> list[tuple]:
+def vpa_transition_cover(vpa: Vpa, congruence: 'VpaCongruence | None' = None) -> list[tuple]:
     """
     Computes a transition cover of the minimal single-entry VPA of the language of a VPA, as a list of well-matched
     words.
@@ -785,10 +797,12 @@ def vpa_transition_cover(vpa: Vpa) -> list[tuple]:
     by w i and by w' c w r for all covered w, w' therefore exercises every transition of it.
 
     :param Vpa vpa: VPA whose transition cover is computed.
+    :param VpaCongruence | None congruence: Congruence of the VPA (Default value = None, meaning that it is
+        computed here). Deciding the congruence dominates the runtime, so an already computed one is worth passing.
     :return list[tuple]: Well-matched words covering all states and all transitions.
     """
     alphabet = vpa.input_alphabet
-    cover_words = list(vpa_well_matched_cover(vpa).values())
+    cover_words = list(vpa_well_matched_cover(vpa, congruence).values())
 
     transition_cover, seen = list(cover_words), set(cover_words)
     for word in cover_words:
@@ -866,17 +880,21 @@ def find_vpa_counterexample(vpa: Vpa, other: Vpa, max_stack_height: int = 5,
 
     while queue and len(visited) < max_search_nodes:
         word, configuration, other_configuration = queue.popleft()
-        # only well-matched words are members/non-members of the accepted language
-        if not configuration[1] and \
-                vpa_configuration_output(configuration) != vpa_configuration_output(other_configuration):
+        # only well-matched words are members/non-members of the accepted language. other_configuration is None
+        # once the word popped from an empty stack in the other VPA, which the two need not agree on, since the
+        # call/return alphabets of the two VPAs need not be the same. No continuation is then accepted by it.
+        other_output = other_configuration is not None and vpa_configuration_output(other_configuration)
+        if not configuration[1] and vpa_configuration_output(configuration) != other_output:
             return word
 
         for letter in alphabet:
             reached = vpa_step_configuration(vpa, configuration, letter)
             if reached is None or len(reached[1]) > max_stack_height:
                 continue
-            other_reached = vpa_step_configuration(other, other_configuration, letter)
-            key = (vpa_configuration_key(reached), vpa_configuration_key(other_reached))
+            other_reached = vpa_step_configuration(other, other_configuration, letter) \
+                if other_configuration is not None else None
+            key = (vpa_configuration_key(reached),
+                   vpa_configuration_key(other_reached) if other_reached is not None else None)
             if key in visited:
                 continue
             visited.add(key)
