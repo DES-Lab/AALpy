@@ -30,8 +30,9 @@ def run_PAPNI(data: list, vpa_alphabet: SevpaAlphabet | VpaAlphabet, automaton_t
     papni = PAPNI(data, vpa_alphabet, print_info)
 
     if papni.conflicting_data:
-        print('Data provided to PAPNI is not deterministic. Ensure that the data is deterministic, '
-              'or consider using Alergia.')
+        if print_info:
+            print('Data provided to PAPNI is not deterministic. Ensure that the data is deterministic, '
+                  'or consider using Alergia.')
         return None
 
     learned_model = papni.run_papni()
@@ -83,6 +84,13 @@ class PAPNI:
         self.labels = dict()
         self.conflicting_data = False
 
+        # the label of every class that holds a labeled word, maintained as the classes are merged, with its own
+        # trail so that it is rolled back with them. Carrying it along keeps a merge from having to rescan the
+        # data to find out whether it put an accepted and a rejected word in the same class.
+        self.class_label = dict()
+        self.label_trail = []
+        self.label_conflict = False
+
         block_tree_construction_start = time.time()
         # the empty word is the initial state of the learned model, so it is a class even if the data is empty
         self.parent[()] = ()
@@ -94,6 +102,9 @@ class PAPNI:
             self._collect(input_seq)
             if self.labels.setdefault(input_seq, label) != label:
                 self.conflicting_data = True
+
+        # every word is still a class of its own, so it carries its own label
+        self.class_label.update(self.labels)
 
         # length-lexicographic order over the words, with the symbols compared by repr so that an alphabet mixing
         # types stays totally ordered. The rank is what the merging compares, so it is looked up rather than rebuilt
@@ -121,13 +132,15 @@ class PAPNI:
                 continue
 
             for red_word in red:
-                mark = len(self.trail)
+                mark = (len(self.trail), len(self.label_trail))
+                self.label_conflict = False
                 self._union(word, red_word)
                 merge_candidate = self._close(extensions)
                 if self._compatible():
                     extensions = merge_candidate
                     # nothing below this point can be rolled back any more, the merge is part of the model
                     self.trail.clear()
+                    self.label_trail.clear()
                     break
                 self._undo(mark)
             else:
@@ -174,26 +187,32 @@ class PAPNI:
 
     def _collect(self, word: tuple) -> None:
         """
-        Registers every well-matched prefix of a word, and recursively of every block enclosed in it, together with
-        the extension leading from one prefix to the next. A registered word is always fully decomposed, so a word
-        that is already known needs no further work.
+        Registers every well-matched prefix of a word, and of every block enclosed in it, together with the
+        extension leading from one prefix to the next. A registered word is always fully decomposed, so a word that
+        is already known needs no further work.
+
+        The enclosed blocks are worked off through an explicit worklist rather than by recursing, so that deeply
+        nested data does not exhaust the interpreter stack.
 
         :param tuple word: Well-matched word to register.
         """
-        if word in self.parent:
-            return
-        self.parent[word] = word
+        pending = [word]
+        while pending:
+            word = pending.pop()
+            if word in self.parent:
+                continue
+            self.parent[word] = word
 
-        prefix = ()
-        for item in self._split_items(word):
-            if item[0] == 'int':
-                following = prefix + (item[1],)
-            else:
-                following = prefix + (item[1],) + item[2] + (item[3],)
-                self._collect(item[2])
-            self.parent.setdefault(following, following)
-            self.extensions[(prefix, item)] = following
-            prefix = following
+            prefix = ()
+            for item in self._split_items(word):
+                if item[0] == 'int':
+                    following = prefix + (item[1],)
+                else:
+                    following = prefix + (item[1],) + item[2] + (item[3],)
+                    pending.append(item[2])
+                self.parent.setdefault(following, following)
+                self.extensions[(prefix, item)] = following
+                prefix = following
 
     def _find(self, word: tuple) -> tuple:
         """
@@ -225,6 +244,15 @@ class PAPNI:
         if self.rank[second] < self.rank[first]:
             first, second = second, first
         self._reassign(second, first)
+
+        # the absorbed class hands its label to the kept one, which is where a conflict with the data shows up
+        if second in self.class_label:
+            label = self.class_label[second]
+            if first not in self.class_label:
+                self.label_trail.append((first, False, None))
+                self.class_label[first] = label
+            elif self.class_label[first] != label:
+                self.label_conflict = True
         return True
 
     def _reassign(self, word: tuple, root: tuple) -> None:
@@ -238,15 +266,24 @@ class PAPNI:
         self.trail.append((word, self.parent[word]))
         self.parent[word] = root
 
-    def _undo(self, mark: int) -> None:
+    def _undo(self, mark: tuple) -> None:
         """
-        Rolls the union-find back to the state it was in when the trail had the given length.
+        Rolls the union-find and the class labels back to the state they were in when the trails had the given
+        lengths.
 
-        :param int mark: Length of the trail to roll back to.
+        :param tuple mark: Lengths of the parent trail and of the label trail to roll back to.
         """
-        for word, previous in reversed(self.trail[mark:]):
+        parent_mark, label_mark = mark
+        for word, previous in reversed(self.trail[parent_mark:]):
             self.parent[word] = previous
-        del self.trail[mark:]
+        del self.trail[parent_mark:]
+
+        for root, had_label, previous in reversed(self.label_trail[label_mark:]):
+            if had_label:
+                self.class_label[root] = previous
+            else:
+                del self.class_label[root]
+        del self.label_trail[label_mark:]
 
     def _item_key(self, item: tuple) -> tuple:
         """
@@ -276,7 +313,8 @@ class PAPNI:
                 else:
                     closed[key] = target
             extensions = closed
-            if not changed:
+            # the merge is already known to contradict the data, so closing it up further is wasted work
+            if not changed or self.label_conflict:
                 return closed
 
     def _compatible(self) -> bool:
@@ -284,14 +322,13 @@ class PAPNI:
         Check if current classes are compatible with the data, that is, no class holds both an accepted and a
         rejected sequence.
 
+        Classes only ever grow, so a class holding two different labels is exactly a class that took in a label
+        differing from the one it already had. _union notices that as it happens, which is why the answer is read
+        off a flag here rather than by going over the data again.
+
         :return bool: True if the classes are compatible with all labeled sequences, False otherwise.
         """
-        outputs = dict()
-        for word, label in self.labels.items():
-            root = self._find(word)
-            if outputs.setdefault(root, label) != label:
-                return False
-        return True
+        return not self.label_conflict
 
     def _to_sevpa(self, extensions: dict) -> Sevpa:
         """

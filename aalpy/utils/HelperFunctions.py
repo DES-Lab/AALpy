@@ -456,21 +456,27 @@ def get_characterizing_sequences(vpa: Any, characterizing_set: list | None = Non
         Vpa.compute_characterizing_set is called).
     :return list[tuple]: List of (input_sequence, label) pairs.
     """
-    from aalpy.automata.Vpa import apply_vpa_context, vpa_configuration_output, vpa_transition_cover
+    from aalpy.automata.Vpa import apply_vpa_context, vpa_configuration_output, vpa_transition_cover, VpaCongruence
+
+    # deciding the congruence dominates the runtime, so it is computed once and shared by the characterizing set
+    # and the transition cover, both of which would otherwise compute one of their own
+    congruence = VpaCongruence(vpa)
 
     if characterizing_set is None:
-        characterizing_set = vpa.compute_characterizing_set()
+        characterizing_set = vpa.compute_characterizing_set(congruence)
 
     data, seen = [], set()
 
-    for word in vpa_transition_cover(vpa):
+    for word in vpa_transition_cover(vpa, congruence):
         for left, right in characterizing_set:
             sequence = tuple(left) + tuple(word) + tuple(right)
             if sequence in seen:
                 continue
             seen.add(sequence)
             reached = apply_vpa_context(vpa, (vpa.initial_state, ()), sequence)
-            data.append((sequence, vpa_configuration_output(reached)))
+            # a context whose right half pops deeper than the left half pushes has no configuration at all,
+            # which is a non-member of the language rather than an error
+            data.append((sequence, reached is not None and vpa_configuration_output(reached)))
 
     return data
 
