@@ -9,7 +9,7 @@ from aalpy.learning_algs.general_passive.GeneralizedStateMerging import run_GSM
 from aalpy.learning_algs.general_passive.DataHandler import CountOnPTADataHandler
 from aalpy.learning_algs.general_passive.Instrumentation import ProgressReport
 from aalpy.learning_algs.general_passive.GsmNode import GsmNode
-from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreCalculation, ScoreWithKTail, ScoreIOAlergiaWithEDSM
+from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import SimpleScoreCalculation, ScoreWithKTail, ScoreIOAlergiaWithEDSM
 from aalpy.utils.HelperFunctions import dfa_from_moore, mc_format_to_mdp, mc_from_mdp
 
 
@@ -45,7 +45,7 @@ def run_EDSM(data: list, automaton_type: str, input_completeness: str | None = N
                     evidence += 1
         return evidence
 
-    score = ScoreCalculation(score_function=EDSM_score)
+    score = SimpleScoreCalculation(score_function=EDSM_score)
 
     internal_automaton_type = 'moore' if automaton_type != 'mealy' else automaton_type
 
@@ -92,7 +92,7 @@ def run_k_tails(data: list, automaton_type: str, k: int, input_completeness: str
 
     internal_automaton_type = 'moore' if automaton_type != 'mealy' else automaton_type
 
-    score = ScoreWithKTail(ScoreCalculation(GsmNode.deterministic_compatible), k)
+    score = ScoreWithKTail(SimpleScoreCalculation(GsmNode.deterministic_compatible), k)
 
     learned_model = run_GSM(data, output_behavior=internal_automaton_type,
                             transition_behavior="nondeterministic",

@@ -1200,7 +1200,7 @@ def gsm_edsm():
     from aalpy import load_automaton_from_file
     from aalpy.utils.Sampling import get_io_traces, sample_with_length_limits
     from aalpy.learning_algs.general_passive.GeneralizedStateMerging import run_GSM
-    from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreCalculation
+    from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import SimpleScoreCalculation
     from aalpy.learning_algs.general_passive.GsmNode import GsmNode
 
     automaton = load_automaton_from_file("DotModels/car_alarm.dot", "moore")
@@ -1212,7 +1212,7 @@ def gsm_edsm():
         nr_merged = len(part)
         return nr_merged - nr_partitions
 
-    score = ScoreCalculation(score_function=EDSM_score)
+    score = SimpleScoreCalculation(score_function=EDSM_score)
     learned_model = run_GSM(traces, output_behavior="moore", transition_behavior="deterministic", score_calc=score)
     learned_model.visualize()
 
@@ -1221,7 +1221,7 @@ def gsm_likelihood_ratio():
     from typing import Dict
     from scipy.stats import chi2
     from aalpy.learning_algs.general_passive.GeneralizedStateMerging import run_GSM
-    from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreFunction, differential_info, ScoreCalculation
+    from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreFunction, differential_info, SimpleScoreCalculation
     from aalpy.learning_algs.general_passive.GsmNode import GsmNode
     from aalpy.utils.Sampling import get_io_traces, sample_with_length_limits
     from aalpy import load_automaton_from_file
@@ -1246,7 +1246,7 @@ def gsm_likelihood_ratio():
 
         return score_fun
 
-    score = ScoreCalculation(score_function=likelihood_ratio_score())
+    score = SimpleScoreCalculation(score_function=likelihood_ratio_score())
     learned_model = run_GSM(traces, output_behavior="moore", transition_behavior="stochastic", score_calc=score)
     learned_model.visualize()
 
@@ -1256,7 +1256,7 @@ def example_Alergia_extension():
     from aalpy.learning_algs.general_passive.DataHandler import CountOnPTADataHandler
     from aalpy.learning_algs.general_passive.GeneralizedStateMerging import run_GSM
     from aalpy.learning_algs.general_passive.GsmNode import GsmNode
-    from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import hoeffding_compatibility, SimpleFutureBasedScore, SpecialScores
+    from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import hoeffding_compatibility, SimpleFutureBasedCompatibility, SpecialScores
     from aalpy.utils.Sampling import get_io_traces, sample_with_length_limits
     from aalpy import load_automaton_from_file
 
@@ -1265,10 +1265,10 @@ def example_Alergia_extension():
     traces = get_io_traces(automaton, input_traces)
 
     # NOTE: a more general version of this is provided in aalpy.learning_algs.general_passive.ScoreFunctionsGSM
-    class ScoreIOAlergiaWithEDSM(SimpleFutureBasedScore):
+    class ScoreIOAlergiaWithEDSM(SimpleFutureBasedCompatibility):
         def __init__(self, eps: float):
             self.compat = hoeffding_compatibility(eps)
-            SimpleFutureBasedScore.__init__(self, None, compatibility_on_pta=True)
+            SimpleFutureBasedCompatibility.__init__(self, compatibility_on_pta=True)
             self.score = None
 
         def initialize_merge(self, red: GsmNode, blue: GsmNode, first_pass: bool) -> Any:
@@ -1284,7 +1284,7 @@ def example_Alergia_extension():
 
     epsilon = 0.05
     scores = {
-        "IOA": SimpleFutureBasedScore(hoeffding_compatibility(epsilon, True), compatibility_on_pta=True),
+        "IOA": SimpleFutureBasedCompatibility(local_compatibility=hoeffding_compatibility(epsilon, True), compatibility_on_pta=True),
         "IOA+EDSM": ScoreIOAlergiaWithEDSM(epsilon),
     }
 
@@ -1296,7 +1296,7 @@ def example_Alergia_extension():
 
 def gsm_IOAlergia_domain_knowldege():
     from aalpy.learning_algs.general_passive.GeneralizedStateMerging import run_GSM
-    from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import hoeffding_compatibility, SimpleFutureBasedScore
+    from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import hoeffding_compatibility, SimpleFutureBasedCompatibility
     from aalpy.learning_algs.general_passive.DataHandler import CountOnPTADataHandler
     from aalpy.learning_algs.general_passive.GsmNode import GsmNode
     from aalpy.utils.Sampling import get_io_traces, sample_with_length_limits
@@ -1323,8 +1323,8 @@ def gsm_IOAlergia_domain_knowldege():
         return parity and ioa
 
     scores = {
-        "IOA": SimpleFutureBasedScore(ioa_compat, compatibility_on_pta=True),
-        "IOA+DK": SimpleFutureBasedScore(ioa_compat_domain_knowledge, compatibility_on_pta=True),
+        "IOA": SimpleFutureBasedCompatibility(local_compatibility=ioa_compat, compatibility_on_pta=True),
+        "IOA+DK": SimpleFutureBasedCompatibility(local_compatibility=ioa_compat_domain_knowledge, compatibility_on_pta=True),
     }
     for name, score in scores.items():
         learned_model = run_GSM(traces, output_behavior="moore", transition_behavior="stochastic", score_calc=score,

@@ -12,7 +12,7 @@ from aalpy.learning_algs.general_passive.GsmNode import GsmNode, OutputBehavior,
     TransitionBehaviorRange, unknown_output, detect_data_format, DataHandler, NoOpDataHandler, DataFormat
 from aalpy.learning_algs.general_passive.DataHandler import CountOnPTADataHandler, CountDataHandler
 from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreCalculation, hoeffding_compatibility, \
-    SimpleFutureBasedScore, SpecialScores
+    SimpleFutureBasedCompatibility, SpecialScores, SimpleScoreCalculation
 
 
 # TODO add option for making checking of futures and partition non mutual exclusive?
@@ -123,11 +123,12 @@ class GeneralizedStateMerging:
 
         if score_calc is None:
             if transition_behavior == "deterministic":
-                score_calc = ScoreCalculation(GsmNode.deterministic_compatible)
+                score_calc = SimpleScoreCalculation(GsmNode.deterministic_compatible)
             elif transition_behavior == "nondeterministic" :
                 raise ValueError("Missing score_calc for nondeterministic transition behavior. No default available.")
             elif transition_behavior == "stochastic" :
-                score_calc = SimpleFutureBasedScore(hoeffding_compatibility(0.005, True), compatibility_on_pta=True)
+                lc = hoeffding_compatibility(0.005, True)
+                score_calc = SimpleFutureBasedCompatibility(local_compatibility=lc, compatibility_on_pta=True)
                 if data_handler is not None:
                     raise ValueError("Using default algorithm for stochastic systems but a data_handler was provided.")
                 data_handler = CountOnPTADataHandler()

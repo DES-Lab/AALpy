@@ -147,11 +147,11 @@ class CountDataHandler(NoAbstractionDataHandler[CountData], CopyOnWriteDataHandl
             new_x.transition_count[in_sym] = trans.copy()
         return x
 
+ShadowPTA = dict[Any, dict[Any, 'GsmNode']]
 class ShadowPTAData:
     def __init__(self):
         self.shadow_pta: ShadowPTA = defaultdict(dict)
 
-ShadowPTA = dict[Any, dict[Any, 'GsmNode']]
 class CountOnPTAData(ShadowPTAData, CountData):
     def __init__(self):
         ShadowPTAData.__init__(self)
