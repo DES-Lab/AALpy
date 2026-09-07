@@ -170,8 +170,11 @@ class SimpleFutureBasedScore(ScoreCalculation):
         while len(q) != 0:
             red, blue = pop()
 
-            if self.local_compatibility(red, blue) is False:
+            local_compatibility = self.local_compatibility(red, blue)
+            if local_compatibility is False:
                 return SpecialScores.ImmediateReject
+            if local_compatibility is None:
+                continue
 
             if self.compatibility_on_pta:
                 red_data: ShadowPTAData = red.data
