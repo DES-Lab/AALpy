@@ -33,6 +33,7 @@ StateFunction = Callable[['GsmNode'], str]
 TransitionFunction = Callable[['GsmNode', Any, Any], str]
 
 unknown_output = object()  # can be set to a special value if required
+no_op_input = object()
 missing = object()
 
 def intersection_iterator(a: dict[Key, Val], b: dict[Key, Val], sort_by_length: bool = False) -> Iterator[tuple[Key, Val, Val]]:
@@ -251,7 +252,7 @@ class GsmNode(Generic[T]):
         """
         node: GsmNode = self
         for in_sym, out_sym in seq:
-            if in_sym is None:  # ignore initial transition of Node.get_prefix()
+            if in_sym is no_op_input:  # ignore noops (e.g. initial transition of Node.get_prefix())
                 continue
             trans = node.transitions.get(in_sym)
             if trans is None:
@@ -551,7 +552,7 @@ class GsmNode(Generic[T]):
                 raise ValueError("nondeterminism encountered for GSM with labeled_sequences. not supported")
 
     @staticmethod
-    def createPTA(data: Any, output_behavior: OutputBehavior, data_format: DataFormat = None, data_handler: DataHandler[T] = None) -> 'GsmNode':
+    def createPTA(data: Any, output_behavior: OutputBehavior, data_format: DataFormat = None, data_handler: DataHandler[T] = None) -> 'GsmNode[T]':
         """
         Build a prefix tree acceptor (PTA) from the given data.
 
@@ -573,21 +574,21 @@ class GsmNode(Generic[T]):
                 raise ValueError("provided automaton is not a tree")
             return data
         # TODO extract method for replaying data on dot model
-        root_node = GsmNode((None, unknown_output), None, data_handler.init_data())
+        root_node = GsmNode((no_op_input, unknown_output), None, data_handler.init_data())
         if data_format == "labeled_sequences":
             for example in data:
                 root_node.add_labeled_sequence(example, data_handler)
         if data_format == "io_traces" or data_format == "traces":
             if output_behavior == "moore":
-                root_node.prefix_access_pair = data_handler.abstract(None, data[0][0])
+                root_node.prefix_access_pair = data_handler.abstract(no_op_input, data[0][0])
                 initial_output_symbol = root_node.prefix_access_pair[1]
 
                 for trace in data:
                     initial_output = trace[0]
-                    _, ios = data_handler.abstract(None, initial_output)
+                    _, ios = data_handler.abstract(no_op_input, initial_output)
                     if ios != initial_output_symbol:
                         raise ValueError("expect unique initial output symbol for Moore behavior")
-                    data_handler.aggregate_data(None, None, initial_output, root_node)
+                    data_handler.aggregate_data(None, no_op_input, initial_output, root_node)
 
                 data = (d[1:] for d in data)
             for trace in data:
