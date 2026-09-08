@@ -510,7 +510,7 @@ class GsmNode(Generic[T]):
             data_handler.aggregate_data(curr_node, in_value, out_value, node)
             curr_node = node
 
-    def add_labeled_sequence(self, example: IOExample, data_handler: DataHandler[T] = None):
+    def add_labeled_sequence(self, example: IOExample, data_handler: DataHandler[T]):
         """
         Add a labeled input sequence (inputs with a single label attached at the end) to the tree.
 
@@ -526,18 +526,17 @@ class GsmNode(Generic[T]):
 
         # step through inputs and add transitions
         for in_value in inputs:
-            in_sym, out_sym = data_handler.abstract(in_value, None)
+            in_sym, out_sym = data_handler.abstract(in_value, unknown_output)
             transitions = curr_node.transitions[in_sym]
-            successors = list(transitions.values())
-            if len(successors) == 0:
+            if len(transitions) == 0:
                 node = GsmNode((in_sym, unknown_output), curr_node)
                 transitions[unknown_output] = node
-            elif len(successors) == 1:
-                node = successors[0]
+            elif len(transitions) == 1:
+                node = next(iter(transitions.values()))
             else:
                 # This should never happen
                 raise ValueError("Nondeterminism encountered for GSM with labeled_sequences. not supported")
-            data_handler.aggregate_data(curr_node, in_value, None, node)
+            data_handler.aggregate_data(curr_node, in_value, unknown_output, node)
             curr_node = node
 
         # set last output
@@ -551,7 +550,7 @@ class GsmNode(Generic[T]):
                 raise ValueError("nondeterminism encountered for GSM with labeled_sequences. not supported")
 
     @staticmethod
-    def createPTA(data: Any, output_behavior: OutputBehavior, data_format: DataFormat = None, data_handler: DataHandler[T] = None) -> 'GsmNode[T]':
+    def createPTA(data: Any, data_handler: DataHandler[T], output_behavior: OutputBehavior, data_format: DataFormat = None) -> 'GsmNode[T]':
         """
         Build a prefix tree acceptor (PTA) from the given data.
 

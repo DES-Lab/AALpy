@@ -171,7 +171,7 @@ class GeneralizedStateMerging:
             raise ValueError("learning from labeled_sequences is not possible for nondeterministic systems")
         if data_format == "traces" and self.transition_behavior == "deterministic":
             print("learning deterministic systems from (output) traces only. this rarely makes sense. is `data_format` set correctly?")
-        root = GsmNode.createPTA(data, self.output_behavior, data_format, self.data_handler)
+        root = GsmNode.createPTA(data, self.data_handler, self.output_behavior, data_format)
 
         root = self.pta_preprocessing(root)
         instrumentation.pta_construction_done(root)
@@ -314,6 +314,7 @@ class GeneralizedStateMerging:
                     # there is no partition yet for the 'red' node -> lazily copy
                     p = copy(red_node)
                     p.data = self.data_handler.copy(red_node.data)
+                    # TODO: do lazier copies. currently we have "copy on access". could have true "copy on write"
                     p.transitions = red_node.transitions.copy()
 
                     # add to partition table
