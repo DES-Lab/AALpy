@@ -463,16 +463,17 @@ class GsmNode(Generic[T]):
             file_ext = 'dot'
         graph.write(path=str(path) + "." + file_ext, prog=engine, format=format)
 
-    def make_input_complete(self, ic_mode: str = "self-loop") -> list[tuple['GsmNode', Any, Any]]:
+    def make_input_complete(self, target: 'GsmNode[T] | str' = "self-loop") -> list[tuple['GsmNode', Any, Any]]:
         """
-        Add self-looping transitions for any input undefined at some node, using the node's prefix output.
+        For all reachable nodes, add transitions for all undefined inputs. The output is set using the targets prefix output.
+        This function DOES NOT touch the `data` field of affected nodes. Updating this is in the responsibility of the caller.
 
-        :param str ic_mode: determines how input completenes is achieved ("self-loop", "sink-state" or "root".
+        :param GsmNode[T] | str target: Target node of missing transitions. The special value "self-loop" adds self transitions.
         :return list[tuple[GsmNode, Any, Any]]: List of (node, input, output) triples for the added transitions.
         """
-        ic_modes = ["self-loop", "sink-state", "root"]
-        if ic_mode not in ic_modes:
-            raise ValueError(f"Invalid ic_mode {ic_mode}. Should be one of {ic_modes}")
+
+        if isinstance(target, str) and target != "self-loop":
+            raise ValueError(f"Invalid target {target}. Should be either 'self-loop' or a GsmNode.")
 
         all_nodes = self.get_all_nodes()
         inputs = {in_sym for node in all_nodes for in_sym in node.transitions}
@@ -481,12 +482,10 @@ class GsmNode(Generic[T]):
             for in_sym in inputs:
                 transitions = node.transitions[in_sym]
                 if len(transitions) == 0:
-                    if ic_mode == "self-loop":
+                    if target == "self-loop":
                         successor = node
-                    elif ic_mode == "sink-state":
-                        raise NotImplementedError()
-                    elif ic_mode == "root":
-                        successor = self
+                    else:
+                        successor = target
                     out_sym = successor.prefix_access_pair[1]
                     missing_trans.append((node, in_sym, out_sym))
                     transitions[out_sym] = successor
