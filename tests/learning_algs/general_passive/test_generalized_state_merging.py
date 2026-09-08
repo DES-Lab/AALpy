@@ -183,8 +183,7 @@ class TestConsiderOnlyMinBlueAndDepthFirst(unittest.TestCase):
         ground_truth = alternating_moore()
         data = labeled_sequence_data(ground_truth, depth=3)
         learned = run_GSM(data, output_behavior='moore', transition_behavior='deterministic',
-                          data_format='labeled_sequences', depth_first=True,
-                          compatibility_on_futures=True)
+                          data_format='labeled_sequences', depth_first=True)
         self.assertTrue(bisimilar(learned, ground_truth))
 
 
