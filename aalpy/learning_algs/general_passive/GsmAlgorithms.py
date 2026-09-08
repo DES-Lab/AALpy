@@ -45,7 +45,7 @@ def run_EDSM(data: list, automaton_type: str, input_completeness: str | None = N
                     evidence += 1
         return evidence
 
-    score = SimpleScoreCalculation(score_function=EDSM_score)
+    score = SimpleScoreCalculation(local_compatibility=GsmNode.deterministic_compatible, score_function=EDSM_score)
 
     internal_automaton_type = 'moore' if automaton_type != 'mealy' else automaton_type
 
