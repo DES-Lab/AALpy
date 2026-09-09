@@ -2,9 +2,7 @@ import unittest
 from itertools import product
 
 from aalpy.automata import Dfa, DfaState, MooreMachine, MooreState, MealyMachine, MealyState
-from aalpy.learning_algs.general_passive.GeneralizedStateMerging import (
-    GeneralizedStateMerging, Instrumentation, run_GSM,
-)
+from aalpy.learning_algs.general_passive.GeneralizedStateMerging import GeneralizedStateMerging, Instrumentation, run_GSM
 from aalpy.learning_algs.general_passive.GsmNode import GsmNode
 from aalpy.utils.HelperFunctions import dfa_from_moore
 from aalpy.utils.ModelChecking import bisimilar

@@ -2,18 +2,10 @@ import unittest
 from typing import TypeVar
 
 from aalpy.learning_algs.general_passive.DataHandler import (
-    CountOnPTADataHandler,
-    NoOpDataHandler,
-    DataHandler,
-    CountDataHandler,
-    detect_data_format,
+    CountOnPTADataHandler, NoOpDataHandler, DataHandler, CountDataHandler, detect_data_format
 )
 from aalpy.learning_algs.general_passive.GsmNode import (
-    GsmNode,
-    intersection_iterator,
-    union_iterator,
-    unknown_output,
-    no_op_input, IOTrace,
+    GsmNode, intersection_iterator, union_iterator, unknown_output, no_op_input, IOTrace
 )
 
 
