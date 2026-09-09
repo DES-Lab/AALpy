@@ -1,16 +1,20 @@
 # Passive automata learning for pushdown automata (PAPNI), by state merging over well-matched words.
 import time
+from collections import defaultdict
 
 from aalpy.automata.Sevpa import Sevpa, SevpaAlphabet, SevpaState, SevpaTransition
 from aalpy.automata.Vpa import Vpa, VpaAlphabet, vpa_from_sevpa
 from aalpy.utils import is_balanced
+
+# marks a transition that was not there before a merge, so that the rollback removes it instead of restoring one
+_MISSING = object()
 
 
 def run_PAPNI(data: list, vpa_alphabet: SevpaAlphabet | VpaAlphabet, automaton_type: str = 'vpa',
               print_info: bool = True) -> Vpa | Sevpa | None:
     """
     Run PAPNI, a deterministic passive model learning algorithm of deterministic pushdown automata.
-    Resulting model conforms to the provided data.
+    By construction, learned model conforms to the provided data.
 
     Learning is state merging over the congruence of the canonical single entry VPA, which is documented on the
     PAPNI class. The stack symbols of that model carry the state a call was read in, so unlike a learner over an
@@ -74,13 +78,27 @@ class PAPNI:
         """
         self.alphabet = alphabet
         self.print_info = print_info
+        self.call_symbols = set(alphabet.call_alphabet)
+        self.return_symbols = set(alphabet.return_alphabet)
 
         # union-find over well-matched words, with a trail of parent assignments so that a merge attempt that turns
         # out to be inconsistent with the data can be undone
         self.parent = dict()
         self.trail = []
 
-        self.extensions = dict()
+        # the quotient automaton: transitions[c][key] is the word reached by extending class c, keyed by
+        # (internal symbol,) or by (call symbol, class of the enclosed word, return symbol). Only the entry of a
+        # class representative is up to date, the entry of an absorbed class is left behind for the rollback.
+        self.transitions = defaultdict(dict)
+        self.transition_trail = []
+
+        # enclosing[c] holds the (word, key) pairs whose key is a block enclosing class c, which is what makes a
+        # merge find the keys it invalidates without going over the whole quotient. It is written wherever a
+        # transition is, but never rolled back, so it may hold a pair whose key is long gone, which _merge skips.
+        # What it must not do is miss one, and it does not: a key that is in the quotient was put there by a write
+        # that registered it here, and a rollback only ever restores a key that such a write had registered.
+        self.enclosing = defaultdict(set)
+
         self.labels = dict()
         self.conflicting_data = False
 
@@ -122,33 +140,24 @@ class PAPNI:
         """
         start_time = time.time()
 
-        # every class is still a singleton, so the block tree is already congruence closed
-        extensions = self.extensions
         # the empty word is the lowest ranked, so it is the first class and the initial state
         red = [self.order[0]]
         for word in self.order[1:]:
-            # already merged into an earlier class by the congruence closure
+            # already merged into an earlier class while the congruence was restored
             if self._find(word) != word:
                 continue
 
             for red_word in red:
-                mark = (len(self.trail), len(self.label_trail))
-                self.label_conflict = False
-                self._union(word, red_word)
-                merge_candidate = self._close(extensions)
-                if self._compatible():
-                    extensions = merge_candidate
-                    # nothing below this point can be rolled back any more, the merge is part of the model
-                    self.trail.clear()
-                    self.label_trail.clear()
+                if self._merge(word, red_word):
+                    self._commit()
                     break
-                self._undo(mark)
+                self._undo()
             else:
                 red.append(word)
                 if self.print_info:
                     print(f'\rCurrent automaton size: {len(red)}', end="")
 
-        learned_model = self._to_sevpa(extensions)
+        learned_model = self._to_sevpa()
 
         if self.print_info:
             print(f'\nPAPNI Learning Time: {round(time.time() - start_time, 2)}')
@@ -156,10 +165,10 @@ class PAPNI:
 
         return learned_model
 
-    def _split_items(self, word: tuple) -> list:
+    def _items(self, word: tuple) -> list:
         """
         Decomposes a well-matched word into its top level items, which are either an internal symbol, encoded as
-        ('int', symbol), or a matched block, encoded as ('blk', call symbol, enclosed word, return symbol).
+        (symbol,), or a matched block, encoded as (call symbol, enclosed word, return symbol).
 
         :param tuple word: Well-matched word to decompose.
         :return list: The top level items of the word, in order.
@@ -167,29 +176,33 @@ class PAPNI:
         items, index = [], 0
         while index < len(word):
             symbol = word[index]
-            if symbol not in self.alphabet.call_alphabet:
-                items.append(('int', symbol))
+            if symbol not in self.call_symbols:
+                items.append((symbol,))
                 index += 1
                 continue
 
             # scan forward to the return symbol matching the call symbol at index
             depth, end = 1, index + 1
             while depth:
-                if word[end] in self.alphabet.call_alphabet:
+                if word[end] in self.call_symbols:
                     depth += 1
-                elif word[end] in self.alphabet.return_alphabet:
+                elif word[end] in self.return_symbols:
                     depth -= 1
                 end += 1
 
-            items.append(('blk', symbol, word[index + 1:end - 1], word[end - 1]))
+            items.append((symbol, word[index + 1:end - 1], word[end - 1]))
             index = end
         return items
 
     def _collect(self, word: tuple) -> None:
         """
         Registers every well-matched prefix of a word, and of every block enclosed in it, together with the
-        extension leading from one prefix to the next. A registered word is always fully decomposed, so a word that
-        is already known needs no further work.
+        transition leading from one prefix to the next. A registered word is always fully decomposed, so a word
+        that is already known needs no further work.
+
+        Every word is still a class of its own, so the item of a transition is already the key it is stored under,
+        and no two transitions of the same class can share a key. The block tree is therefore congruence closed
+        before any merging starts.
 
         The enclosed blocks are worked off through an explicit worklist rather than by recursing, so that deeply
         nested data does not exhaust the interpreter stack.
@@ -204,14 +217,15 @@ class PAPNI:
             self.parent[word] = word
 
             prefix = ()
-            for item in self._split_items(word):
-                if item[0] == 'int':
-                    following = prefix + (item[1],)
+            for item in self._items(word):
+                if len(item) == 1:
+                    following = prefix + item
                 else:
-                    following = prefix + (item[1],) + item[2] + (item[3],)
-                    pending.append(item[2])
+                    following = prefix + (item[0],) + item[1] + (item[2],)
+                    pending.append(item[1])
+                    self.enclosing[item[1]].add((prefix, item))
                 self.parent.setdefault(following, following)
-                self.extensions[(prefix, item)] = following
+                self.transitions[prefix][item] = following
                 prefix = following
 
     def _find(self, word: tuple) -> tuple:
@@ -221,26 +235,28 @@ class PAPNI:
         :param tuple word: Word whose class is looked up.
         :return tuple: Representative of the class, which is its lowest ranked member.
         """
+        parent = self.parent
         root = word
-        while self.parent[root] != root:
-            root = self.parent[root]
-        while self.parent[word] != root:
-            following = self.parent[word]
+        while parent[root] != root:
+            root = parent[root]
+        while parent[word] != root:
+            following = parent[word]
             self._reassign(word, root)
             word = following
         return root
 
-    def _union(self, first: tuple, second: tuple) -> bool:
+    def _union(self, first: tuple, second: tuple) -> tuple | None:
         """
         Merges the classes of two words, keeping the lower ranked representative.
 
         :param tuple first: A word of the first class.
         :param tuple second: A word of the second class.
-        :return bool: True if the two words were in different classes, False if nothing changed.
+        :return tuple | None: The kept and the absorbed representative, or None if both words were already in the
+            same class.
         """
         first, second = self._find(first), self._find(second)
         if first == second:
-            return False
+            return None
         if self.rank[second] < self.rank[first]:
             first, second = second, first
         self._reassign(second, first)
@@ -249,11 +265,11 @@ class PAPNI:
         if second in self.class_label:
             label = self.class_label[second]
             if first not in self.class_label:
-                self.label_trail.append((first, False, None))
+                self.label_trail.append(first)
                 self.class_label[first] = label
             elif self.class_label[first] != label:
                 self.label_conflict = True
-        return True
+        return first, second
 
     def _reassign(self, word: tuple, root: tuple) -> None:
         """
@@ -266,95 +282,120 @@ class PAPNI:
         self.trail.append((word, self.parent[word]))
         self.parent[word] = root
 
-    def _undo(self, mark: tuple) -> None:
+    def _merge(self, first: tuple, second: tuple) -> bool:
         """
-        Rolls the union-find and the class labels back to the state they were in when the trails had the given
-        lengths.
+        Merges the classes of two words and restores the congruence, that is, merges the targets of any two
+        transitions that end up leaving the same class under the same key, until nothing changes.
 
-        :param tuple mark: Lengths of the parent trail and of the label trail to roll back to.
+        A merge can only break the congruence around the classes it touches, so the two classes are repaired
+        directly instead of the whole block tree being scanned for what a merge invalidated: the transitions of
+        the absorbed class move to the kept one, and the keys enclosing the absorbed class are rewritten to
+        enclose the kept one. Both steps can collide with a transition that is already there, and every collision
+        is another merge to perform.
+
+        :param tuple first: A word of the first class.
+        :param tuple second: A word of the second class.
+        :return bool: True if the resulting classes are compatible with the data, that is, no class holds both an
+            accepted and a rejected word. False otherwise, in which case the caller rolls the merge back.
         """
-        parent_mark, label_mark = mark
-        for word, previous in reversed(self.trail[parent_mark:]):
+        self.label_conflict = False
+        pending = [(first, second)]
+        while pending:
+            merged = self._union(*pending.pop())
+            if merged is None:
+                continue
+            # the merge is already known to contradict the data, so restoring the congruence is wasted work
+            if self.label_conflict:
+                return False
+            kept, absorbed = merged
+
+            # what left the absorbed class now leaves the kept one
+            for key, target in self.transitions[absorbed].items():
+                self._extend(kept, key, target, pending)
+
+            # and a key enclosing the absorbed class now encloses the kept one
+            for word, key in self.enclosing[absorbed]:
+                source = self._find(word)
+                transitions = self.transitions[source]
+                # the pair is stale if that class no longer has the key, be it rewritten or merged away
+                if key in transitions:
+                    self.transition_trail.append((source, key, transitions[key]))
+                    self._extend(source, (key[0], kept, key[2]), transitions.pop(key), pending)
+
+        return True
+
+    def _extend(self, source: tuple, key: tuple, target: tuple, pending: list) -> None:
+        """
+        Records that the transition under a key leads from a class to a word. If the class already has a
+        transition under that key, the two targets belong to the same class, so merging them is scheduled instead.
+
+        :param tuple source: Representative of the class the transition leaves.
+        :param tuple key: Key of the transition.
+        :param tuple target: Word the transition leads to.
+        :param list pending: Worklist of class pairs still to be merged, appended to on a collision.
+        """
+        transitions = self.transitions[source]
+        if key in transitions:
+            pending.append((transitions[key], target))
+            return
+
+        self.transition_trail.append((source, key, _MISSING))
+        transitions[key] = target
+        if len(key) == 3:
+            self.enclosing[key[1]].add((source, key))
+
+    def _commit(self) -> None:
+        """
+        Keeps the last merge, which makes it part of the model: nothing recorded up to here can be undone any more.
+        """
+        self.trail.clear()
+        self.transition_trail.clear()
+        self.label_trail.clear()
+
+    def _undo(self) -> None:
+        """
+        Rolls the union-find, the quotient automaton and the class labels back to the state they were in after the
+        last merge that was kept.
+        """
+        for word, previous in reversed(self.trail):
             self.parent[word] = previous
-        del self.trail[parent_mark:]
+        self.trail.clear()
 
-        for root, had_label, previous in reversed(self.label_trail[label_mark:]):
-            if had_label:
-                self.class_label[root] = previous
+        for source, key, previous in reversed(self.transition_trail):
+            if previous is _MISSING:
+                del self.transitions[source][key]
             else:
-                del self.class_label[root]
-        del self.label_trail[label_mark:]
+                self.transitions[source][key] = previous
+        self.transition_trail.clear()
 
-    def _item_key(self, item: tuple) -> tuple:
-        """
-        Computes the extension a block tree item currently stands for. Two blocks are the same extension once the
-        words they enclose are in the same class, so the key of a block item follows the merging.
+        for root in self.label_trail:
+            del self.class_label[root]
+        self.label_trail.clear()
 
-        :param tuple item: Item to compute the key of.
-        :return tuple: Key of the item under the current classes.
-        """
-        return item if item[0] == 'int' else ('blk', item[1], self._find(item[2]), item[3])
-
-    def _close(self, extensions: dict) -> dict:
-        """
-        Computes the congruence closure of the current classes, that is, merges the targets of every two extensions
-        that leave the same class with the same key, until nothing changes. Every pass works on the quotient
-        produced by the previous one, which shrinks as classes are merged.
-
-        :param dict extensions: Map from (source word, item) to the word the extension leads to.
-        :return dict: The same map, quotiented by the closed congruence.
-        """
-        while True:
-            closed, changed = dict(), False
-            for (source, item), target in extensions.items():
-                key = (self._find(source), self._item_key(item))
-                if key in closed:
-                    changed |= self._union(closed[key], target)
-                else:
-                    closed[key] = target
-            extensions = closed
-            # the merge is already known to contradict the data, so closing it up further is wasted work
-            if not changed or self.label_conflict:
-                return closed
-
-    def _compatible(self) -> bool:
-        """
-        Check if current classes are compatible with the data, that is, no class holds both an accepted and a
-        rejected sequence.
-
-        Classes only ever grow, so a class holding two different labels is exactly a class that took in a label
-        differing from the one it already had. _union notices that as it happens, which is why the answer is read
-        off a flag here rather than by going over the data again.
-
-        :return bool: True if the classes are compatible with all labeled sequences, False otherwise.
-        """
-        return not self.label_conflict
-
-    def _to_sevpa(self, extensions: dict) -> Sevpa:
+    def _to_sevpa(self) -> Sevpa:
         """
         Constructs a 1-SEVPA from the learned classes. Call transitions are implicit in a 1-SEVPA, which always
-        pushes the pair (state the call is read in, call symbol) and continues from the initial state. An extension
-        by a block, leading from a class p to a class t through an enclosed word of class s, becomes the transition
-        popping (p, call symbol) in s and leading to t.
+        pushes the pair (state the call is read in, call symbol) and continues from the initial state. A
+        transition keyed by a block, leading from a class p to a class t through an enclosed class s, becomes the
+        transition popping (p, call symbol) in s and leading to t.
 
-        :param dict extensions: Congruence closed map from (source word, item) to the word the extension leads to.
         :return Sevpa: The constructed 1-SEVPA.
         """
         accepting = {self._find(word) for word, label in self.labels.items() if label}
-        roots = sorted({self._find(word) for word in self.parent}, key=lambda word: self.rank[word])
+        roots = sorted({self._find(word) for word in self.parent}, key=self.rank.get)
         states = {root: SevpaState(state_id=f'q{index}', is_accepting=root in accepting)
                   for index, root in enumerate(roots)}
 
-        for (source, item), target in extensions.items():
-            origin_state, reached_state = states[self._find(source)], states[self._find(target)]
-            if item[0] == 'int':
-                origin_state.transitions[item[1]].append(
-                    SevpaTransition(reached_state, item[1], None))
-            else:
-                _, call_symbol, enclosed, return_symbol = item
-                enclosed_state = states[self._find(enclosed)]
-                enclosed_state.transitions[return_symbol].append(
-                    SevpaTransition(reached_state, return_symbol, 'pop', (origin_state.state_id, call_symbol)))
+        for root in roots:
+            origin_state = states[root]
+            for key, target in self.transitions[root].items():
+                reached_state = states[self._find(target)]
+                if len(key) == 1:
+                    origin_state.transitions[key[0]].append(SevpaTransition(reached_state, key[0], None))
+                else:
+                    call_symbol, enclosed, return_symbol = key
+                    states[self._find(enclosed)].transitions[return_symbol].append(
+                        SevpaTransition(reached_state, return_symbol, 'pop', (origin_state.state_id, call_symbol)))
 
         # the alphabet is passed in rather than recovered from the transitions, which would lose the symbols that
         # no transition of the learned model happens to use
