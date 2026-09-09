@@ -18,15 +18,14 @@ def detect_data_format(data: Any, check_consistency: bool = False, guess: bool =
     :param Any data: Input data: a GsmNode (tree), or a sequence of traces/examples.
     :param bool check_consistency: Whether to check all data points instead of returning as soon as a unique format is found.
     :param bool guess: Whether to allow guessing a single format when multiple formats remain ambiguous.
-    :return DataFormat: The detected data format string (see DataFormatRange).
+    :return DataFormat: The detected data format string. The different data formats are:
+      - "tree": a tree-shaped automaton provided as a GsmNode
+      - "io_traces": either
+        - Moore traces [[o, (i,o), (i,o), ...], ...]
+        - Mealy traces [[(i,o), (i,o), ...], ...]
+      - "labeled_sequences": [([i, i, ...], o), ...]
+      - "traces": [[o, o, ...], ...]
     """
-    # The different data formats are
-    # - "tree": a tree-shaped automaton provided as a GsmNode
-    # - "io_traces": either
-    #   - Moore traces [[o, (i,o), (i,o), ...], ...]
-    #   - Mealy traces [[(i,o), (i,o), ...], ...]
-    # - "labeled_sequences": [([i, i, ...], o), ...]
-    # - "traces": [[o, o, ...], ...]
 
     if isinstance(data, GsmNode):
         return "tree"
