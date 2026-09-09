@@ -9,7 +9,7 @@ import pydot
 from aalpy.automata import StochasticMealyMachine, StochasticMealyState, MooreState, MooreMachine, NDMooreState, \
     NDMooreMachine, Mdp, MdpState, MealyMachine, MealyState, Onfsm, OnfsmState
 from aalpy.base import Automaton
-from aalpy.learning_algs.general_passive.DataHandler import DataHandler, NoOpDataHandler, StochasticData, CountData
+from aalpy.learning_algs.general_passive.AssociatedData import StochasticData, CountData
 
 
 Key = TypeVar("Key")
@@ -21,9 +21,6 @@ OutputBehaviorRange = ["moore", "mealy"]
 
 TransitionBehavior = str
 TransitionBehaviorRange = ["deterministic", "nondeterministic", "stochastic"]
-
-DataFormat = str
-DataFormatRange = ["io_traces", "labeled_sequences", "traces", "tree"]
 
 IOPair = tuple[Any, Any]
 IOTrace = Sequence[IOPair]
@@ -77,56 +74,6 @@ def union_iterator(a: dict[Key, Val], b: dict[Key, Val], default: Val = None) ->
         a_val = a.get(key, default)
         yield key, a_val, b_val
 
-# TODO reuse in RPNI
-def detect_data_format(data: Any, check_consistency: bool = False, guess: bool = False) -> DataFormat:
-    """
-    Guess the data format of the provided learning data.
-
-    :param Any data: Input data: a GsmNode (tree), or a sequence of traces/examples.
-    :param bool check_consistency: Whether to check all data points instead of returning as soon as a unique format is found.
-    :param bool guess: Whether to allow guessing a single format when multiple formats remain ambiguous.
-    :return DataFormat: The detected data format string (see DataFormatRange).
-    """
-    # The different data formats are
-    # - "tree": a tree-shaped automaton provided as a GsmNode
-    # - "io_traces": either
-    #   - Moore traces [[o, (i,o), (i,o), ...], ...]
-    #   - Mealy traces [[(i,o), (i,o), ...], ...]
-    # - "labeled_sequences": [([i, i, ...], o), ...]
-    # - "traces": [[o, o, ...], ...]
-
-    if isinstance(data, GsmNode):
-        return "tree"
-
-    accepted_types = (tuple, list)
-
-    # mapping data formats to compatibility criteria
-    check_dict = dict(
-        io_traces=lambda obj: len(obj) <= 1 or all(isinstance(o, accepted_types) and len(o) == 2 for o in obj[1:]),
-        labeled_sequences=lambda obj: len(obj) == 2 and isinstance(obj[0], accepted_types),
-    )
-    accept_dict = {k: True for k in check_dict}
-
-    if not isinstance(data, accepted_types):
-        raise ValueError("wrong input format. expected tuple or list.")
-    if len(data) == 0:
-        return "io_traces"
-
-    accepted_formats = list(accept_dict.keys())
-    for data_point in data:
-        if not isinstance(data_point, accepted_types):
-            raise ValueError("wrong input format. expected tuple or list.")
-        for k, check in check_dict.items():
-            accept_dict[k] &= check(data_point)
-        accepted_formats = [k for k, v in accept_dict.items() if v]
-        if len(accepted_formats) == 1 and not check_consistency:
-            return accepted_formats[0]
-        if len(accepted_formats) == 0:
-            return "traces" # default to traces
-            #raise ValueError("invalid or inconsistent data. no options left")
-    if len(accepted_formats) != 1 and not guess:
-        raise ValueError("ambiguous data format. data format needs to be specified explicitly.")
-    return accepted_formats[0]
 
 # TODO add custom pickling code that flattens the Node structure in order to circumvent running into recursion issues for large models
 class GsmNode(Generic[T]):
@@ -490,110 +437,6 @@ class GsmNode(Generic[T]):
                     missing_trans.append((node, in_sym, out_sym))
                     transitions[out_sym] = successor
         return missing_trans
-
-    def add_trace(self, trace: IOTrace, data_handler: DataHandler[T]):
-        """
-        Add an IO trace to the tree rooted at this node, extending it with new nodes as necessary.
-
-        :param IOTrace trace: Sequence of (input, output) pairs to add.
-        :param DataHandler[T] data_handler: IOHandler used for abstraction and aggregation of trace data
-        """
-        curr_node: GsmNode = self
-        for in_value, out_value in trace:
-            prefix_access_pair = data_handler.abstract(in_value, out_value)
-            in_sym, out_sym = prefix_access_pair
-            transitions = curr_node.transitions[in_sym]
-            node = transitions.get(out_sym)
-            if node is None:
-                node = GsmNode(prefix_access_pair, curr_node, data_handler.init_data())
-                transitions[out_sym] = node
-            data_handler.aggregate_data(curr_node, in_value, out_value, node)
-            curr_node = node
-
-    def add_labeled_sequence(self, example: IOExample, data_handler: DataHandler[T]):
-        """
-        Add a labeled input sequence (inputs with a single label attached at the end) to the tree.
-
-        :param IOExample example: (inputs, output) pair, where output labels the state reached by inputs.
-        :param DataHandler[T] data_handler: IOHandler used for abstraction and aggregation of trace data
-        """
-        inputs, output = example
-        curr_node: GsmNode = self
-        in_sym = None
-
-        if not isinstance(data_handler, NoOpDataHandler):
-            raise NotImplementedError("Data handling is not supported for learning from labeled sequences")
-
-        # step through inputs and add transitions
-        for in_value in inputs:
-            in_sym, out_sym = data_handler.abstract(in_value, unknown_output)
-            transitions = curr_node.transitions[in_sym]
-            if len(transitions) == 0:
-                node = GsmNode((in_sym, unknown_output), curr_node)
-                transitions[unknown_output] = node
-            elif len(transitions) == 1:
-                node = next(iter(transitions.values()))
-            else:
-                # This should never happen
-                raise ValueError("Nondeterminism encountered for GSM with labeled_sequences. not supported")
-            data_handler.aggregate_data(curr_node, in_value, unknown_output, node)
-            curr_node = node
-
-        # set last output
-        curr_node.resolve_unknown_prefix_output(output)
-        pred = curr_node.predecessor
-        if pred:
-            transitions = pred.transitions[in_sym]
-            if unknown_output in transitions:
-                transitions[output] = transitions.pop(unknown_output)
-            if output not in transitions:
-                raise ValueError("nondeterminism encountered for GSM with labeled_sequences. not supported")
-
-    @staticmethod
-    def createPTA(data: Any, data_handler: DataHandler[T], output_behavior: OutputBehavior, data_format: DataFormat = None) -> 'GsmNode[T]':
-        """
-        Build a prefix tree acceptor (PTA) from the given data.
-
-        :param Any data: Learning data, in one of the supported data formats (or already a GsmNode tree).
-        :param OutputBehavior output_behavior: Either "moore" or "mealy".
-        :param DataFormat | None data_format: Explicit data format, or None to auto-detect.
-        :param DataHandler[T] data_handler: IOHandler used for abstraction and aggregation of trace data
-        :return GsmNode: The root node of the constructed (or passed-through) PTA.
-        """
-        if data_format is None:
-            data_format = detect_data_format(data)
-        if data_format not in DataFormatRange:
-            raise ValueError(f"invalid data format {data_format}. should be in {DataFormatRange}")
-
-        data_handler.init(data, output_behavior, data_format)
-
-        if data_format == "tree":
-            if not data.is_tree():
-                raise ValueError("provided automaton is not a tree")
-            return data
-        # TODO extract method for replaying data on dot model
-        root_node = GsmNode((no_op_input, unknown_output), None, data_handler.init_data())
-        if data_format == "labeled_sequences":
-            for example in data:
-                root_node.add_labeled_sequence(example, data_handler)
-        if data_format == "io_traces" or data_format == "traces":
-            if output_behavior == "moore":
-                root_node.prefix_access_pair = data_handler.abstract(no_op_input, data[0][0])
-                initial_output_symbol = root_node.prefix_access_pair[1]
-
-                for trace in data:
-                    initial_output = trace[0]
-                    _, ios = data_handler.abstract(no_op_input, initial_output)
-                    if ios != initial_output_symbol:
-                        raise ValueError("expect unique initial output symbol for Moore behavior")
-                    data_handler.aggregate_data(None, no_op_input, initial_output, root_node)
-
-                data = (d[1:] for d in data)
-            for trace in data:
-                if data_format == "traces":
-                    trace = (("step", t) for t in trace)
-                root_node.add_trace(trace, data_handler)
-        return root_node
 
     def is_locally_deterministic(self) -> bool:
         """

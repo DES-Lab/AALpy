@@ -8,7 +8,7 @@ from math import sqrt, log
 from typing import Any
 
 from aalpy.learning_algs.general_passive.GsmNode import GsmNode, intersection_iterator, union_iterator, CountData
-from aalpy.learning_algs.general_passive.DataHandler import ShadowPTAData
+from aalpy.learning_algs.general_passive.AssociatedData import ShadowPTAData
 
 LocalCompatibilityFunction = Callable[[GsmNode, GsmNode], bool | None]
 ScoreFunction = Callable[[dict[GsmNode, GsmNode]], Any]
@@ -256,7 +256,7 @@ class ScoreWithKTail(WrappingScore):
         """
         Wrap another score calculation, limiting local compatibility checks to depth k.
 
-        :param ScoreCalculation other_score: Score calculation to delegate to within depth k.
+        :param ScoreCalculation wrapped: Score calculation to delegate to within depth k.
         :param int k: Maximum depth (relative to the blue node's initial depth) at which compatibility is checked.
         """
         super().__init__(wrapped)

@@ -60,8 +60,8 @@ class TestMergeViolationDebugger(unittest.TestCase):
         # comparing against it while the actual run does merge them should be flagged as wrong.
         dh = NoOpDataHandler()
         mismatched_ground_truth = GsmNode((None, True), None)
-        mismatched_ground_truth.add_trace([('a', True)], dh)
-        mismatched_ground_truth.add_trace([('b', True)], dh)
+        dh.add_trace(mismatched_ground_truth, [('a', True)])
+        dh.add_trace(mismatched_ground_truth, [('b', True)])
         # sabotage: make root.get_by_prefix for 'b' point to a node distinct from 'a's, but give it a
         # different (non-tree) identity so the debugger's identity check for a real merge fails
         debugger = MergeViolationDebugger(mismatched_ground_truth)

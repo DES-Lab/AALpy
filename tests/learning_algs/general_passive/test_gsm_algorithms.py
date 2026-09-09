@@ -2,10 +2,7 @@ import random
 import unittest
 from itertools import product
 
-from aalpy.automata import (
-    Dfa, DfaState, MooreMachine, MooreState, MealyMachine, MealyState, Mdp, MdpState, StochasticMealyMachine,
-    StochasticMealyState,
-)
+from aalpy.automata import Dfa, DfaState, MooreMachine, MooreState, MealyMachine, MealyState, Mdp, MdpState
 from aalpy.SULs import AutomatonSUL
 from aalpy.learning_algs.general_passive.GsmAlgorithms import run_EDSM, run_Alergia_EDSM, run_k_tails
 from aalpy.utils.ModelChecking import bisimilar

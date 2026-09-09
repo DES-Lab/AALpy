@@ -9,8 +9,9 @@ from typing import Callable, Any
 
 from aalpy import Automaton
 from aalpy.learning_algs.general_passive.GsmNode import GsmNode, OutputBehavior, TransitionBehavior, OutputBehaviorRange, \
-    TransitionBehaviorRange, unknown_output, detect_data_format, DataHandler, NoOpDataHandler, DataFormat
-from aalpy.learning_algs.general_passive.DataHandler import CountOnPTADataHandler, CountDataHandler
+    TransitionBehaviorRange, unknown_output
+from aalpy.learning_algs.general_passive.DataHandler import CountOnPTADataHandler, CountDataHandler, detect_data_format, \
+    DataHandler, NoOpDataHandler, DataFormat
 from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreCalculation, hoeffding_compatibility, \
     SimpleFutureBasedCompatibility, SpecialScores, SimpleScoreCalculation
 
@@ -171,7 +172,7 @@ class GeneralizedStateMerging:
             raise ValueError("learning from labeled_sequences is not possible for nondeterministic systems")
         if data_format == "traces" and self.transition_behavior == "deterministic":
             print("learning deterministic systems from (output) traces only. this rarely makes sense. is `data_format` set correctly?")
-        root = GsmNode.createPTA(data, self.data_handler, self.output_behavior, data_format)
+        root = self.data_handler.createPTA(data, self.output_behavior, data_format)
 
         root = self.pta_preprocessing(root)
         instrumentation.pta_construction_done(root)

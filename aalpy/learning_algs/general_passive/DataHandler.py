@@ -1,28 +1,168 @@
-import math
 from abc import abstractmethod, ABC
-from collections import defaultdict
 from typing import Generic, TypeVar, Any
+
+from aalpy.learning_algs.general_passive.AssociatedData import CountData, CountOnPTAData, int_dict_increment
+from aalpy.learning_algs.general_passive.GsmNode import GsmNode, IOTrace, IOExample, unknown_output, no_op_input, OutputBehavior
+
 
 T = TypeVar("T")
 
-class DataHandler(Generic[T], ABC):
-    # TODO: consider merging `init` with `GsmNode.createPTA`. Could then eliminate PTA post-processing.
-    @abstractmethod
-    def init(self, data: Any, output_behavior: 'OutputBehavior', data_format: 'DataFormat'):
-        """
-        Initializes the data handler on the data from which the PTA is constructed.
+DataFormat = str
+DataFormatRange = ["io_traces", "labeled_sequences", "traces", "tree"]
 
-        :param data: Learning data, in one of the supported data formats (or already a GsmNode tree).
-        :param OutputBehavior output_behavior: Either "moore" or "mealy".
-        :param DataFormat data_format: Indicates the format of the provided data. Options are:
-            - "io_traces": describes prefix-closed data. either
-              - Moore traces [[o, (i,o), (i,o), ...], ...]
-              - Mealy traces [[(i,o), (i,o), ...], ...]
-            - "labeled_sequences": [([i, i, ...], o), ...]
-            - "traces": [[o, o, ...], ...]
-            - "tree": a tree-shaped automaton provided as a GsmNode
+# TODO reuse in RPNI
+def detect_data_format(data: Any, check_consistency: bool = False, guess: bool = False) -> DataFormat:
+    """
+    Guess the data format of the provided learning data.
+
+    :param Any data: Input data: a GsmNode (tree), or a sequence of traces/examples.
+    :param bool check_consistency: Whether to check all data points instead of returning as soon as a unique format is found.
+    :param bool guess: Whether to allow guessing a single format when multiple formats remain ambiguous.
+    :return DataFormat: The detected data format string (see DataFormatRange).
+    """
+    # The different data formats are
+    # - "tree": a tree-shaped automaton provided as a GsmNode
+    # - "io_traces": either
+    #   - Moore traces [[o, (i,o), (i,o), ...], ...]
+    #   - Mealy traces [[(i,o), (i,o), ...], ...]
+    # - "labeled_sequences": [([i, i, ...], o), ...]
+    # - "traces": [[o, o, ...], ...]
+
+    if isinstance(data, GsmNode):
+        return "tree"
+
+    accepted_types = (tuple, list)
+
+    # mapping data formats to compatibility criteria
+    check_dict = dict(
+        io_traces=lambda obj: len(obj) <= 1 or all(isinstance(o, accepted_types) and len(o) == 2 for o in obj[1:]),
+        labeled_sequences=lambda obj: len(obj) == 2 and isinstance(obj[0], accepted_types),
+    )
+    accept_dict = {k: True for k in check_dict}
+
+    if not isinstance(data, accepted_types):
+        raise ValueError("wrong input format. expected tuple or list.")
+    if len(data) == 0:
+        return "io_traces"
+
+    accepted_formats = list(accept_dict.keys())
+    for data_point in data:
+        if not isinstance(data_point, accepted_types):
+            raise ValueError("wrong input format. expected tuple or list.")
+        for k, check in check_dict.items():
+            accept_dict[k] &= check(data_point)
+        accepted_formats = [k for k, v in accept_dict.items() if v]
+        if len(accepted_formats) == 1 and not check_consistency:
+            return accepted_formats[0]
+        if len(accepted_formats) == 0:
+            return "traces" # default to traces
+            #raise ValueError("invalid or inconsistent data. no options left")
+    if len(accepted_formats) != 1 and not guess:
+        raise ValueError("ambiguous data format. data format needs to be specified explicitly.")
+    return accepted_formats[0]
+
+class DataHandler(Generic[T], ABC):
+    def add_trace(self, root_node: GsmNode[T], trace: IOTrace):
         """
-        ...
+        Add an IO trace to a given root node, extending it with new nodes as necessary.
+
+        :param GsmNode root_node: GsmNode to which the trace should be added.
+        :param IOTrace trace: Sequence of (input, output) pairs to add.
+        """
+        curr_node: GsmNode[T] = root_node
+        for in_value, out_value in trace:
+            prefix_access_pair = self.abstract(in_value, out_value)
+            in_sym, out_sym = prefix_access_pair
+            transitions = curr_node.transitions[in_sym]
+            node = transitions.get(out_sym)
+            if node is None:
+                node = GsmNode(prefix_access_pair, curr_node, self.init_data())
+                transitions[out_sym] = node
+            self.aggregate_data(curr_node, in_value, out_value, node)
+            curr_node = node
+
+    def add_labeled_sequence(self, root_node: GsmNode[T], example: IOExample):
+        """
+        Add a labeled input sequence (inputs with a single label attached at the end) to the tree.
+
+        :param IOExample example: (inputs, output) pair, where output labels the state reached by inputs.
+        :param DataHandler[T] self: IOHandler used for abstraction and aggregation of trace data
+        """
+        inputs, output = example
+        curr_node: GsmNode = root_node
+        in_sym = None
+
+        # TODO check implementation and eliminate
+        if not isinstance(self, NoOpDataHandler):
+            raise NotImplementedError("Data handling is not supported for learning from labeled sequences")
+
+        # step through inputs and add transitions
+        for in_value in inputs:
+            in_sym, out_sym = self.abstract(in_value, unknown_output)
+            transitions = curr_node.transitions[in_sym]
+            if len(transitions) == 0:
+                node = GsmNode((in_sym, unknown_output), curr_node)
+                transitions[unknown_output] = node
+            elif len(transitions) == 1:
+                node = next(iter(transitions.values()))
+            else:
+                # This should never happen
+                raise ValueError("Nondeterminism encountered for GSM with labeled_sequences. not supported")
+            self.aggregate_data(curr_node, in_value, unknown_output, node)
+            curr_node = node
+
+        # set last output
+        curr_node.resolve_unknown_prefix_output(output)
+        pred = curr_node.predecessor
+        if pred:
+            transitions = pred.transitions[in_sym]
+            if unknown_output in transitions:
+                transitions[output] = transitions.pop(unknown_output)
+            if output not in transitions:
+                raise ValueError("nondeterminism encountered for GSM with labeled_sequences. not supported")
+
+    def createPTA(self, data: Any, output_behavior: OutputBehavior, data_format: DataFormat = None) -> 'GsmNode[T]':
+        """
+        Build a prefix tree acceptor (PTA) from the given data.
+
+        :param Any data: Learning data, in one of the supported data formats (or already a GsmNode tree).
+        :param OutputBehavior output_behavior: Either "moore" or "mealy".
+        :param DataFormat | None data_format: Explicit data format, or None to auto-detect.
+        :param DataHandler[T] self: IOHandler used for abstraction and aggregation of trace data
+        :return GsmNode: The root node of the constructed (or passed-through) PTA.
+        """
+        if data_format is None:
+            data_format = detect_data_format(data)
+        if data_format not in DataFormatRange:
+            raise ValueError(f"invalid data format {data_format}. should be in {DataFormatRange}")
+
+        if data_format == "tree":
+            if not data.is_tree():
+                raise ValueError("provided automaton is not a tree")
+            return data
+        # TODO extract method for replaying data on dot model
+        root_node = GsmNode((no_op_input, unknown_output), None, self.init_data())
+        if data_format == "labeled_sequences":
+            for example in data:
+                self.add_labeled_sequence(root_node, example)
+        if data_format == "io_traces" or data_format == "traces":
+            if output_behavior == "moore":
+                root_node.prefix_access_pair = self.abstract(no_op_input, data[0][0])
+                initial_output_symbol = root_node.prefix_access_pair[1]
+
+                for trace in data:
+                    initial_output = trace[0]
+                    _, ios = self.abstract(no_op_input, initial_output)
+                    if ios != initial_output_symbol:
+                        raise ValueError("expect unique initial output symbol for Moore behavior")
+                    self.aggregate_data(None, no_op_input, initial_output, root_node)
+
+                data = (d[1:] for d in data)
+            for trace in data:
+                if data_format == "traces":
+                    trace = (("step", t) for t in trace)
+                self.add_trace(root_node, trace)
+        return root_node
 
     @abstractmethod
     def init_merge(self, red: 'GsmNode[T]', blue: 'GsmNode[T]', first_pass: bool):
@@ -36,16 +176,15 @@ class DataHandler(Generic[T], ABC):
         """
         ...
 
-    @abstractmethod
     def abstract(self, in_val: Any, out_val: Any) -> tuple[Any, Any]:
         """
-        Method used during PTA construction to abstract from potentially continuous input data.
+        Method used during PTA construction to abstract from potentially continuous input data. By default, no abstraction is performed.
 
         :param Any in_val: The input value.
         :param Any out_val: The output value.
         :return tuple[Any, Any]: The abstract output value and the input symbols.
         """
-        ...
+        return in_val, out_val
 
     @abstractmethod
     def init_data(self) -> T:
@@ -89,20 +228,9 @@ class DataHandler(Generic[T], ABC):
         """
         ...
 
-class NoAbstractionDataHandler(DataHandler[T], ABC):
+class NoOpDataHandler(DataHandler[None]):
     """
-    DataHandler using input and output symbols "as is". Might still keep track of other information.
-    """
-
-    def init(self, data, output_behavior, data_format):
-        pass
-
-    def abstract(self, in_val, out_val):
-        return in_val, out_val
-
-class NoOpDataHandler(NoAbstractionDataHandler[None]):
-    """
-    DataHandler that does nothing.
+    DataHandler that neither abstracts the traces, nor tracks any other values during PTA construction.
     """
 
     def init_data(self) -> None:
@@ -120,64 +248,8 @@ class NoOpDataHandler(NoAbstractionDataHandler[None]):
     def copy(self, x: None) -> None:
         return None
 
-ProbabilityDict = dict[Any, dict[Any, float]]
 
-class StochasticData(ABC):
-    """
-    Interface class for data used with `transition_behavior` set to "stochastic".
-    """
-    @abstractmethod
-    def get_probabilities(self) -> ProbabilityDict:
-        """
-        Method for extracting transition probabilities when converting to automaton models.
-
-        :return ProbabilityDict: Nested dictionary of transition probabilities.
-        """
-        pass
-
-CountDict = dict[Any, dict[Any, int]]
-
-def int_dict_increment(c_dict, out_sym, cnt):
-    c_dict[out_sym] = c_dict.get(out_sym, 0) + cnt
-
-class CountData(StochasticData):
-    def __init__(self):
-        # TODO get rid of this indirection
-        self.transition_count: CountDict = defaultdict(dict)
-
-    def local_log_likelihood_contribution(self):
-        llc = 0
-        for in_sym, trans in self.transition_count.items():
-            total_count = 0
-            for out_sym, count in trans.items():
-                total_count += count
-                llc += count * math.log(count)
-            if total_count != 0:
-                llc -= total_count * math.log(total_count)
-        return llc
-
-    def count(self):
-        return sum(sum(trans.values()) for trans in self.transition_count.values())
-
-    @staticmethod
-    def merge(x: CountDict, y: CountDict) -> CountDict:
-        for in_sym, y_o_dict in y.items():
-            x_o_dict = x.get(in_sym, None)
-            if x_o_dict is None:
-                x[in_sym] = y_o_dict
-                continue
-            for out_sym, count in y_o_dict.items():
-                int_dict_increment(x_o_dict, out_sym, count)
-        return x
-
-    def get_probabilities(self) -> ProbabilityDict:
-        ret = dict()
-        for in_sym, trans in self.transition_count.items():
-            total_count = sum(trans.values())
-            ret[in_sym] = {out_sym: count / total_count for out_sym, count in trans.items()}
-        return ret
-
-class CountDataHandler(NoAbstractionDataHandler[CountData]):
+class CountDataHandler(DataHandler[CountData]):
     def init_merge(self, red: 'GsmNode[CountData]', blue: 'GsmNode[CountData]', first_pass: bool):
         pass
 
@@ -200,17 +272,6 @@ class CountDataHandler(NoAbstractionDataHandler[CountData]):
         if src_node is not None:
             int_dict_increment(src_node.data.transition_count[in_value], out_value, 1)
 
-
-ShadowPTA = dict[Any, dict[Any, 'GsmNode']]
-class ShadowPTAData:
-    def __init__(self):
-        self.shadow_pta: ShadowPTA = defaultdict(dict)
-
-class CountOnPTAData(ShadowPTAData, CountData):
-    def __init__(self):
-        ShadowPTAData.__init__(self)
-        CountData.__init__(self)
-        self.pta_count: CountDict = defaultdict(dict)
 
 class CountOnPTADataHandler(CountDataHandler, DataHandler[CountOnPTAData]):
     def init_data(self) -> CountOnPTAData:

@@ -6,10 +6,10 @@ from aalpy.learning_algs.general_passive.DataHandler import (
     NoOpDataHandler,
     DataHandler,
     CountDataHandler,
+    detect_data_format,
 )
 from aalpy.learning_algs.general_passive.GsmNode import (
     GsmNode,
-    detect_data_format,
     intersection_iterator,
     union_iterator,
     unknown_output,
@@ -22,7 +22,7 @@ T = TypeVar('T')
 def simple_create_PTA(traces: list[IOTrace], data_handler: DataHandler[T]) -> GsmNode[T]:
     root = GsmNode((no_op_input, unknown_output), None, data_handler.init_data())
     for trace in traces:
-        root.add_trace(trace, data_handler)
+        data_handler.add_trace(root, trace)
     return root
 
 class TestIterators(unittest.TestCase):
@@ -117,10 +117,10 @@ class TestGsmNodeBasics(unittest.TestCase):
     def test_make_input_complete_adds_self_loops_for_missing_inputs(self):
         dh = NoOpDataHandler()
         root = GsmNode((None, 'root_out'), None)
-        root.add_trace([('a', 'x')], dh)
+        dh.add_trace(root, [('a', 'x')])
         # 'b' is used elsewhere in the tree but not from root
         node_a = root.transitions['a']['x']
-        node_a.add_trace([('b', 'y')], dh)
+        dh.add_trace(node_a, [('b', 'y')])
         missing = root.make_input_complete()
         self.assertIn((root, 'b', 'root_out'), missing)
         self.assertIs(root.transitions['b']['root_out'], root)
@@ -144,8 +144,9 @@ class TestGsmNodeOrderingAndOutputs(unittest.TestCase):
         self.assertEqual(node.get_prefix_output(), 'resolved')
 
     def test_add_labeled_sequence_sets_prefix_output_on_final_node(self):
+        dh = NoOpDataHandler()
         root = GsmNode((None, unknown_output), None)
-        root.add_labeled_sequence((('a', 'b'), 'label1'), NoOpDataHandler())
+        dh.add_labeled_sequence(root, (('a', 'b'), 'label1'))
         # only the final step's transition dict key is resolved from unknown_output to the real label;
         # intermediate steps remain keyed by unknown_output.
         node = root.get_by_prefix([('a', unknown_output), ('b', 'label1')])
@@ -153,10 +154,11 @@ class TestGsmNodeOrderingAndOutputs(unittest.TestCase):
         self.assertEqual(node.get_prefix_output(), 'label1')
 
     def test_add_labeled_sequence_raises_on_conflicting_label_for_same_sequence(self):
+        dh= NoOpDataHandler()
         root = GsmNode((None, unknown_output), None)
-        root.add_labeled_sequence((('a',), 'out1'), NoOpDataHandler())
+        dh.add_labeled_sequence(root,(('a',), 'out1'))
         with self.assertRaises(ValueError):
-            root.add_labeled_sequence((('a',), 'out2'), NoOpDataHandler())
+            dh.add_labeled_sequence(root, (('a',), 'out2'))
 
     def test_is_locally_deterministic_true_for_single_output_per_input(self):
         root = simple_create_PTA([[('a', 'x')]], NoOpDataHandler())
@@ -183,8 +185,9 @@ class TestGsmNodeOrderingAndOutputs(unittest.TestCase):
         self.assertTrue(n1.deterministic_compatible(n2))
 
     def test_is_moore_true_when_child_output_matches_transition_output(self):
+        dh = NoOpDataHandler()
         root = GsmNode((None, 'root_out'), None)
-        root.add_trace([('a', 'child_out')], NoOpDataHandler())
+        dh.add_trace(root,[('a', 'child_out')])
         self.assertTrue(root.is_moore())
 
     def test_is_moore_false_when_child_output_mismatches(self):
@@ -223,38 +226,43 @@ class TestGsmNodeOrderingAndOutputs(unittest.TestCase):
 
 class TestGsmNodeCreatePTA(unittest.TestCase):
     def test_labeled_sequences_format(self):
+        dh = NoOpDataHandler()
         data = [(('a', 'b'), 1), (('a', 'c'), 2)]
-        root = GsmNode.createPTA(data, data_handler=NoOpDataHandler(), output_behavior='moore',
-                                 data_format='labeled_sequences')
+        root = dh.createPTA(data, output_behavior='moore', data_format='labeled_sequences')
         node_a = root.transitions['a'][unknown_output]
         self.assertEqual(node_a.get_prefix_length(), 1)
 
     def test_io_traces_moore_uses_first_output_as_root_output(self):
+        dh = NoOpDataHandler()
         data = [[0, ('a', 1)], [0, ('a', 1)]]
-        root = GsmNode.createPTA(data, data_handler=NoOpDataHandler(), output_behavior='moore', data_format='io_traces')
+        root = dh.createPTA(data, output_behavior='moore', data_format='io_traces')
         self.assertEqual(root.get_prefix_output(), 0)
 
     def test_io_traces_mealy_has_no_root_output(self):
+        dh = NoOpDataHandler()
         data = [[('a', 'x')]]
-        root = GsmNode.createPTA(data, data_handler=NoOpDataHandler(), output_behavior='mealy', data_format='io_traces')
+        root = dh.createPTA(data, output_behavior='mealy', data_format='io_traces')
         self.assertEqual(root.get_prefix_output(), unknown_output)
 
     def test_tree_format_passthrough_requires_tree_structure(self):
+        dh = NoOpDataHandler()
         root = simple_create_PTA([[('a', 'x')]], NoOpDataHandler())
-        result = GsmNode.createPTA(root, data_handler=NoOpDataHandler(), output_behavior='mealy', data_format='tree')
+        result = dh.createPTA(root, output_behavior='mealy', data_format='tree')
         self.assertIs(result, root)
 
     def test_tree_format_rejects_non_tree(self):
+        dh = NoOpDataHandler()
         root = simple_create_PTA([[('a', 'x')]], NoOpDataHandler())
         root.transitions['b']['y'] = root.transitions['a']['x']
         with self.assertRaises(ValueError):
-            GsmNode.createPTA(root, data_handler=NoOpDataHandler(), output_behavior='mealy', data_format='tree')
+            dh.createPTA(root, output_behavior='mealy', data_format='tree')
 
 
 class TestGsmNodeToAutomaton(unittest.TestCase):
     def test_to_automaton_deterministic_moore(self):
+        dh = NoOpDataHandler()
         root = GsmNode((None, 0), None)
-        root.add_trace([('a', 1)], NoOpDataHandler())
+        dh.add_trace(root, [('a', 1)])
         automaton = root.to_automaton('moore', 'deterministic')
         self.assertEqual(automaton.initial_state.output, 0)
         self.assertEqual(automaton.initial_state.transitions['a'].output, 1)
@@ -267,8 +275,9 @@ class TestGsmNodeToAutomaton(unittest.TestCase):
             root.to_automaton('moore', 'deterministic')
 
     def test_to_automaton_deterministic_mealy(self):
+        dh = NoOpDataHandler()
         root = GsmNode((None, unknown_output), None)
-        root.add_trace([('a', 'x')], NoOpDataHandler())
+        dh.add_trace(root, [('a', 'x')])
         automaton = root.to_automaton('mealy', 'deterministic')
         self.assertEqual(automaton.initial_state.output_fun['a'], 'x')
 
