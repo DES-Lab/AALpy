@@ -92,33 +92,33 @@ class DataHandler(Generic[T], ABC):
         curr_node: GsmNode = root_node
         in_sym = None
 
-        # TODO check implementation and eliminate
-        if not isinstance(self, NoOpDataHandler):
-            raise NotImplementedError("Data handling is not supported for learning from labeled sequences")
+        if len(inputs) == 0:
+            self.aggregate_data(None, no_op_input, output, root_node)
+            in_sym, out_sym = self.abstract(no_op_input, output)
 
         # step through inputs and add transitions
-        for in_value in inputs:
-            in_sym, out_sym = self.abstract(in_value, unknown_output)
+        for idx, in_value in enumerate(inputs):
+            out_value = output if idx == len(inputs) - 1 else unknown_output
+            in_sym, out_sym = self.abstract(in_value, out_value)
             transitions = curr_node.transitions[in_sym]
             if len(transitions) == 0:
-                node = GsmNode((in_sym, unknown_output), curr_node)
-                transitions[unknown_output] = node
+                node = GsmNode((in_sym, out_sym), curr_node)
+                transitions[out_sym] = node
             elif len(transitions) == 1:
                 node = next(iter(transitions.values()))
             else:
-                # This should never happen
                 raise ValueError("Nondeterminism encountered for GSM with labeled_sequences. not supported")
-            self.aggregate_data(curr_node, in_value, unknown_output, node)
+            self.aggregate_data(curr_node, in_value, out_value, node)
             curr_node = node
 
-        # set last output
-        curr_node.resolve_unknown_prefix_output(output)
+        # fix prefix / predecessor
+        curr_node.resolve_unknown_prefix_output(out_sym)
         pred = curr_node.predecessor
         if pred:
             transitions = pred.transitions[in_sym]
             if unknown_output in transitions:
-                transitions[output] = transitions.pop(unknown_output)
-            if output not in transitions:
+                transitions[out_sym] = transitions.pop(unknown_output)
+            if out_sym not in transitions:
                 raise ValueError("nondeterminism encountered for GSM with labeled_sequences. not supported")
 
     def createPTA(self, data: Any, output_behavior: OutputBehavior, data_format: DataFormat = None) -> 'GsmNode[T]':
