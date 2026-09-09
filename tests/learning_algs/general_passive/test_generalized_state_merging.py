@@ -1,9 +1,11 @@
 import unittest
 from itertools import product
+from typing import Any
 
 from aalpy.automata import Dfa, DfaState, MooreMachine, MooreState, MealyMachine, MealyState
+from aalpy.learning_algs.general_passive.DataHandler import DataHandler, NoOpDataHandler, DataFormat
 from aalpy.learning_algs.general_passive.GeneralizedStateMerging import GeneralizedStateMerging, Instrumentation, run_GSM
-from aalpy.learning_algs.general_passive.GsmNode import GsmNode
+from aalpy.learning_algs.general_passive.GsmNode import GsmNode, OutputBehavior
 from aalpy.utils.HelperFunctions import dfa_from_moore
 from aalpy.utils.ModelChecking import bisimilar
 
@@ -152,9 +154,12 @@ class TestRunGsmPreprocessingPostprocessing(unittest.TestCase):
     def test_preprocessing_and_postprocessing_are_applied(self):
         calls = []
 
-        def pta_preprocessing(root):
-            calls.append('pre')
-            return root
+        class PreProcessingHandler(NoOpDataHandler):
+            def createPTA(self, data: Any, output_behavior: OutputBehavior, data_format: DataFormat = None) -> GsmNode[None]:
+                calls.append('pre')
+                return super().createPTA(data, output_behavior, data_format)
+
+        dh = PreProcessingHandler()
 
         def postprocessing(root):
             calls.append('post')
@@ -162,7 +167,7 @@ class TestRunGsmPreprocessingPostprocessing(unittest.TestCase):
 
         data = [((), True), (('a',), False)]
         run_GSM(data, output_behavior='moore', transition_behavior='deterministic',
-               data_format='labeled_sequences', pta_preprocessing=pta_preprocessing,
+               data_format='labeled_sequences', data_handler=dh,
                postprocessing=postprocessing)
 
         self.assertEqual(calls, ['pre', 'post'])

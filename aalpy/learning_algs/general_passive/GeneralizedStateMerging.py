@@ -94,7 +94,6 @@ class GeneralizedStateMerging:
                  output_behavior: OutputBehavior = "moore",
                  transition_behavior: TransitionBehavior = "deterministic",
                  score_calc: ScoreCalculation = None,
-                 pta_preprocessing: Callable[[GsmNode], GsmNode] = None,
                  postprocessing: Callable[[GsmNode], GsmNode] = None,
                  data_handler: DataHandler = None,
                  node_order: Callable[[GsmNode], Any] = None,
@@ -107,7 +106,6 @@ class GeneralizedStateMerging:
         :param OutputBehavior output_behavior: Either "moore" or "mealy".
         :param TransitionBehavior transition_behavior: Either "deterministic", "nondeterministic" or "stochastic".
         :param ScoreCalculation score_calc: Local compatibility / global score calculation to use.
-        :param Callable[[GsmNode], GsmNode] pta_preprocessing: Pre-processing function applied to the constructed PTA.
         :param Callable[[GsmNode], GsmNode] postprocessing: Post-processing function applied to the learned model.
         :param DataHandler data_handler: IOHandler object governing abstraction and aggregation of data
         :param Callable[[GsmNode], Any] node_order: Comparison key to determine the order in which merge candidates are considered.
@@ -139,7 +137,6 @@ class GeneralizedStateMerging:
             node_order = functools.cmp_to_key(lambda a, b: -1 if GsmNode.short_lex_order(a, b) else 1)
         self.node_order = node_order
 
-        self.pta_preprocessing = pta_preprocessing or (lambda x: x)
         self.postprocessing = postprocessing or (lambda x: x)
 
         if data_handler is None:
@@ -174,7 +171,6 @@ class GeneralizedStateMerging:
             print("learning deterministic systems from (output) traces only. this rarely makes sense. is `data_format` set correctly?")
         root = self.data_handler.createPTA(data, self.output_behavior, data_format)
 
-        root = self.pta_preprocessing(root)
         instrumentation.pta_construction_done(root)
         instrumentation.log_promote(root)
 
@@ -437,7 +433,6 @@ def run_GSM(data: list, *,
             output_behavior: OutputBehavior = "moore",
             transition_behavior: TransitionBehavior = "deterministic",
             score_calc: ScoreCalculation = None,
-            pta_preprocessing: Callable[[GsmNode], GsmNode] = None,
             postprocessing: Callable[[GsmNode], GsmNode] = None,
             data_handler: DataHandler = None,
             node_order: Callable[[GsmNode], Any] = None,
@@ -454,7 +449,6 @@ def run_GSM(data: list, *,
     :param OutputBehavior output_behavior: Specifies whether outputs are emitted by states ("moore") or transitions ("mealy").
     :param TransitionBehavior transition_behavior: Either "deterministic", "nondeterministic" or "stochastic".
     :param ScoreCalculation score_calc: A ScoreCalculation object which determines how compatibility and merge scores are calculated.
-    :param Callable[[GsmNode], GsmNode] pta_preprocessing: A pre-processing function applied to the PTA.
     :param Callable[[GsmNode], GsmNode] postprocessing: A postprocessing function applied to the learned automaton.
     :param DataHandler data_handler: IOHandler object governing abstraction and aggregation of data
     :param Callable[[GsmNode], Any] node_order: Sorting key which determines the order in which merge candidates are considered. Defaults to insertion order
@@ -470,7 +464,6 @@ def run_GSM(data: list, *,
         output_behavior=output_behavior,
         transition_behavior=transition_behavior,
         score_calc=score_calc,
-        pta_preprocessing=pta_preprocessing,
         postprocessing=postprocessing,
         data_handler=data_handler,
         node_order=node_order,
