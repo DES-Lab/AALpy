@@ -110,6 +110,11 @@ class MooreMachine(DeterministicAutomaton[MooreState[InputType, OutputType]]):
 
         return state_setup_dict
 
+    def find_distinguishing_seq(self, state1: MooreState[InputType, OutputType], state2: MooreState[InputType, OutputType], alphabet: list) -> list | None:
+        if state1.output != state2.output:
+            return []
+        return super().find_distinguishing_seq(state1, state2, alphabet)
+
     @staticmethod
     def from_state_setup(state_setup: dict, **kwargs) -> 'MooreMachine':
         """

@@ -338,6 +338,8 @@ class DeterministicAutomaton(Automaton[AutomatonStateType]):
         :param list alphabet: Input alphabet of the automaton.
         :return list | None: An input sequence distinguishing two states, or None if the states are equivalent.
         """
+        if state1 is state2:
+            return None
         visited = set()
         to_explore = [(state1, state2, [])]
         while to_explore:

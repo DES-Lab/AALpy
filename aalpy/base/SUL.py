@@ -133,6 +133,11 @@ class CacheSUL(SUL):
         self.sul = sul
         self.cache = CacheTree() if cache_type == 'tree' else CacheDict()
 
+    def __getattr__(self, name):
+        # Forward attribute/method lookups that CacheSUL does not define to the wrapped SUL,
+        # so wrappers like Wrapper(SUL) stay accessible through the cache (e.g. from an equivalence oracle)
+        return getattr(self.sul, name)
+
     def query(self, word: tuple) -> list:
         """
         Performs a membership query on the SUL if and only if `word` is not a prefix of any trace in the cache.

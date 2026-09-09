@@ -3,7 +3,7 @@ from collections.abc import Hashable
 from typing import Generic
 
 from aalpy.base import AutomatonState, DeterministicAutomaton
-from aalpy.base.Automaton import InputType
+from aalpy.base.Automaton import InputType, AutomatonStateType
 
 
 class DfaState(AutomatonState, Generic[InputType]):
@@ -83,6 +83,11 @@ class Dfa(DeterministicAutomaton[DfaState[InputType]]):
         if not sequence:
             return [state.is_accepting]
         return super(Dfa, self).compute_output_seq(state, sequence)
+
+    def find_distinguishing_seq(self, state1: DfaState[InputType], state2: DfaState[InputType], alphabet: list) -> list | None:
+        if state1.output != state2.output:
+            return []
+        return super().find_distinguishing_seq(state1, state2, alphabet)
 
     def execute_sequence(self, origin_state: DfaState, seq: list[InputType]) -> list[bool] | bool:
         """
