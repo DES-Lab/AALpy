@@ -401,7 +401,9 @@ class GeneralizedStateMerging:
             if first_pass:
                 local_compat = self.score_calc.local_compatibility(partition, blue)
                 moore_check = self.output_behavior == "moore" and self.transition_behavior == "deterministic" and not GsmNode.moore_compatible(partition, blue)
-                if local_compat is False or moore_check:
+                # determinism is a property of the result, not of the scoring: enforce it even if score_calc doesn't
+                det_check = self.transition_behavior == "deterministic" and not GsmNode.deterministic_compatible(partition, blue)
+                if local_compat is False or moore_check or det_check:
                     partitioning.score = SpecialScores.ImmediateReject
                     return
                 if local_compat is None:

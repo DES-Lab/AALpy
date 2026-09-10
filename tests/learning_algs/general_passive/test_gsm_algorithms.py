@@ -51,6 +51,14 @@ def labeled_sequence_data(automaton, depth=3):
     return data
 
 
+class TestPublicApi(unittest.TestCase):
+    def test_passive_algorithms_are_exported_from_learning_algs(self):
+        import aalpy.learning_algs as learning_algs
+
+        for name in ('run_EDSM', 'run_Alergia_GSM', 'run_Alergia_EDSM', 'run_k_tails', 'run_GSM'):
+            self.assertTrue(hasattr(learning_algs, name), f"{name} is not exported")
+
+
 class TestRunEdsm(unittest.TestCase):
     def test_learns_minimal_dfa(self):
         ground_truth = even_a_dfa()

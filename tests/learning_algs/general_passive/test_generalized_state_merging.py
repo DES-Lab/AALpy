@@ -6,6 +6,7 @@ from aalpy.automata import Dfa, DfaState, MooreMachine, MooreState, MealyMachine
 from aalpy.learning_algs.general_passive.DataHandler import DataHandler, NoOpDataHandler, DataFormat
 from aalpy.learning_algs.general_passive.GeneralizedStateMerging import GeneralizedStateMerging, Instrumentation, run_GSM
 from aalpy.learning_algs.general_passive.GsmNode import GsmNode, OutputBehavior
+from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import SimpleScoreCalculation
 from aalpy.utils.HelperFunctions import dfa_from_moore
 from aalpy.utils.ModelChecking import bisimilar
 
@@ -113,6 +114,21 @@ class TestRunGsmDeterministic(unittest.TestCase):
         result = run_GSM(data, output_behavior='moore', transition_behavior='deterministic',
                          data_format='labeled_sequences', convert=False)
         self.assertIsInstance(result, GsmNode)
+
+    def test_custom_score_calc_cannot_produce_nondeterministic_model(self):
+        # a score_calc that does not check determinism itself must not be able to merge away determinism
+        ground_truth = parity_mealy()
+        alphabet = ground_truth.get_input_alphabet()
+        traces = []
+        for level in range(1, 4):
+            for seq in product(alphabet, repeat=level):
+                ground_truth.reset_to_initial()
+                outputs = ground_truth.execute_sequence(ground_truth.initial_state, seq)
+                traces.append(list(zip(seq, outputs)))
+        greedy = SimpleScoreCalculation(score_function=lambda part: len(part) - len(set(part.values())))
+        learned = run_GSM(traces, output_behavior='mealy', transition_behavior='deterministic',
+                          score_calc=greedy, data_format='io_traces', convert=False)
+        self.assertTrue(learned.is_deterministic())
 
     def test_raises_for_invalid_output_behavior(self):
         with self.assertRaises(ValueError):

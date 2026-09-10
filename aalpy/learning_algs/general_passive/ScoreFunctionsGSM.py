@@ -378,18 +378,22 @@ class ScoreCombinator(ScoreCalculation):
         return highest_value
 
     @staticmethod
-    def default_aggregate_score(score_iterable: Iterable) -> list:
+    def default_aggregate_score(score_iterable: Iterable) -> Any:
         """
-        Default score aggregation: collect all scores into a list.
+        Default score aggregation: collect all scores into a list, unless a special value decides the outcome.
+        Rejection wins over anything else and a single undecided score leaves the aggregate undecided, whereas
+        acceptance has to be unanimous, since a list mixing special values is not a meaningful score.
 
         :param Iterable score_iterable: Iterable of score results.
-        :return list: List of the individual scores.
+        :return Any: The deciding special value, or the list of the individual scores.
         """
-        score_iterable = list(score_iterable)
-        for special_val in [SpecialScores.ImmediateReject, SpecialScores.ImmediateAccept, SpecialScores.NoScore]:
-            if all(x is special_val for x in score_iterable):
-                return special_val
-        return score_iterable
+        scores = list(score_iterable)
+        for special in (SpecialScores.ImmediateReject, SpecialScores.NoScore):
+            if any(score is special for score in scores):
+                return special
+        if scores and all(score is SpecialScores.ImmediateAccept for score in scores):
+            return SpecialScores.ImmediateAccept
+        return scores
 
 
 def local_to_global_compatibility(local_fun: LocalCompatibilityFunction) -> ScoreFunction:

@@ -3,6 +3,7 @@ import unittest
 from aalpy.learning_algs.general_passive.DataHandler import CountOnPTADataHandler
 from aalpy.learning_algs.general_passive.GsmNode import GsmNode, unknown_output
 from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import (
+    ScoreCalculation,
     AIC_score, EDSM_frequency_score, EDSM_score, SimpleScoreCalculation, ScoreCombinator, ScoreWithKTail,
     ScoreWithSinks, differential_info, hoeffding_compatibility, local_to_global_compatibility, lower_threshold,
     greedy_score, score_transformation, SpecialScores
@@ -34,6 +35,45 @@ class TestScoreCalculationDefaults(unittest.TestCase):
     def test_custom_functions_are_detected_as_overridden(self):
         sc = SimpleScoreCalculation(local_compatibility=lambda a, b: False, score_function=lambda p: 42)
         self.assertTrue(sc.has_score_function())
+
+
+class TestOverrideDetection(unittest.TestCase):
+    def test_plain_subclass_reports_no_overrides(self):
+        class Plain(ScoreCalculation):
+            pass
+
+        self.assertFalse(Plain().has_local_compatibility())
+        self.assertFalse(Plain().has_score_function())
+
+    def test_subclass_overriding_methods_is_detected(self):
+        class Custom(ScoreCalculation):
+            def local_compatibility(self, a, b):
+                return True
+
+            def score_function(self, part):
+                return 1
+
+        self.assertTrue(Custom().has_local_compatibility())
+        self.assertTrue(Custom().has_score_function())
+
+
+class TestScoreCombinatorAggregation(unittest.TestCase):
+    def test_no_early_verdict_when_no_sub_score_has_one(self):
+        # a combined early verdict must stay NoScore, otherwise the partitioning is never built
+        comb = ScoreCombinator([SimpleScoreCalculation(), SimpleScoreCalculation()])
+        node = node_with_counts({})
+        self.assertIs(comb.initialize_merge(node, node, True), SpecialScores.NoScore)
+
+    def test_single_rejecting_sub_score_rejects(self):
+        aggregate = ScoreCombinator.default_aggregate_score
+        self.assertIs(aggregate([1, SpecialScores.ImmediateReject]), SpecialScores.ImmediateReject)
+
+    def test_single_undecided_sub_score_stays_undecided(self):
+        aggregate = ScoreCombinator.default_aggregate_score
+        self.assertIs(aggregate([SpecialScores.NoScore, SpecialScores.ImmediateAccept]), SpecialScores.NoScore)
+
+    def test_plain_scores_are_collected_into_a_list(self):
+        self.assertEqual(ScoreCombinator.default_aggregate_score([1, 2]), [1, 2])
 
 
 class TestHoeffdingCompatibility(unittest.TestCase):
