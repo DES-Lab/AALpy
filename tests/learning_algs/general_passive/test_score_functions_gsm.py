@@ -24,7 +24,7 @@ def node_with_counts(counts, prefix_access_pair=(None, unknown_output)):
 class TestScoreCalculationDefaults(unittest.TestCase):
     def test_default_local_compatibility_always_true(self):
         sc = SimpleScoreCalculation()
-        self.assertTrue(sc.local_compatibility(GsmNode((None, None), None), GsmNode((None, None), None)))
+        self.assertTrue(sc.local_compatibility(GsmNode((None, None), None, None), GsmNode((None, None), None, None)))
 
     def test_default_score_function_always_true(self):
         sc = SimpleScoreCalculation()
@@ -70,9 +70,9 @@ class TestScoreWithKTail(unittest.TestCase):
         always_false = SimpleScoreCalculation(local_compatibility=lambda a, b: False)
         wrapped = ScoreWithKTail(always_false, k=1)
 
-        root = GsmNode((None, None), None)
-        blue_shallow = GsmNode(('a', None), root)
-        blue_shallow_child = GsmNode(('a', None), blue_shallow)
+        root = GsmNode((None, None), None, None)
+        blue_shallow = GsmNode(('a', None), root, None)
+        blue_shallow_child = GsmNode(('a', None), blue_shallow, None)
 
         wrapped.initialize_merge(root, blue_shallow, True)
         # first call establishes the depth offset at blue_shallow's depth (1)
@@ -83,8 +83,8 @@ class TestScoreWithKTail(unittest.TestCase):
     def test_within_depth_k_delegates_to_wrapped_score(self):
         always_false = SimpleScoreCalculation(local_compatibility=lambda a, b: False)
         wrapped = ScoreWithKTail(always_false, k=5)
-        root = GsmNode((None, None), None)
-        blue = GsmNode(('a', None), root)
+        root = GsmNode((None, None), None, None)
+        blue = GsmNode(('a', None), root, None)
         wrapped.initialize_merge(root, blue, True)
         self.assertFalse(wrapped.local_compatibility(root, blue))
 
@@ -95,8 +95,8 @@ class TestScoreWithSinks(unittest.TestCase):
         is_sink = lambda n: n.get_prefix_output() == 'sink'
         wrapped = ScoreWithSinks(always_true, sink_cond=is_sink)
 
-        sink_node = GsmNode((None, 'sink'), None)
-        normal_node = GsmNode((None, 'normal'), None)
+        sink_node = GsmNode((None, 'sink'), None, None)
+        normal_node = GsmNode((None, 'normal'), None, None)
         # early reject
         self.assertFalse(wrapped.initialize_merge(sink_node, normal_node, True))
         # accept if encountered later
@@ -107,8 +107,8 @@ class TestScoreWithSinks(unittest.TestCase):
         is_sink = lambda n: n.get_prefix_output() == 'sink'
         wrapped = ScoreWithSinks(always_true, sink_cond=is_sink)
 
-        sink_a = GsmNode((None, 'sink'), None)
-        sink_b = GsmNode((None, 'sink'), None)
+        sink_a = GsmNode((None, 'sink'), None, None)
+        sink_b = GsmNode((None, 'sink'), None, None)
         self.assertIsNone(wrapped.initialize_merge(sink_a, sink_b, True))
         self.assertTrue(wrapped.local_compatibility(sink_a, sink_b))
 
@@ -117,8 +117,8 @@ class TestScoreWithSinks(unittest.TestCase):
         is_sink = lambda n: n.get_prefix_output() == 'sink'
         wrapped = ScoreWithSinks(always_true, sink_cond=is_sink, allow_sink_merge=False)
 
-        sink_a = GsmNode((None, 'sink'), None)
-        sink_b = GsmNode((None, 'sink'), None)
+        sink_a = GsmNode((None, 'sink'), None, None)
+        sink_b = GsmNode((None, 'sink'), None, None)
         self.assertFalse(wrapped.initialize_merge(sink_a, sink_b, True))
         self.assertTrue(wrapped.local_compatibility(sink_a, sink_b))
 
@@ -127,8 +127,8 @@ class TestScoreWithSinks(unittest.TestCase):
         is_sink = lambda n: n.get_prefix_output() == 'sink'
         wrapped = ScoreWithSinks(always_true, sink_cond=is_sink, allow_sink_merge=False)
 
-        sink_a = GsmNode((None, 'sink'), None)
-        normal = GsmNode((None, 'normal'), None)
+        sink_a = GsmNode((None, 'sink'), None, None)
+        normal = GsmNode((None, 'normal'), None, None)
         self.assertFalse(wrapped.initialize_merge(normal, normal, True))
         # consume the "first call" check with a compatible (non-sink) pair
         self.assertTrue(wrapped.local_compatibility(normal, normal))

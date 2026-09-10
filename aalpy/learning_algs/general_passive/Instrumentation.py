@@ -124,7 +124,7 @@ class MergeViolationDebugger(Instrumentation):
         :param GsmNode ground_truth: Root node of the ground-truth model.
         """
         super().__init__()
-        self.root = ground_truth
+        self.ground_truth_root = ground_truth
         self.map: dict[GsmNode, GsmNode] = dict()
         self.log = []
         self.gsm: GeneralizedStateMerging | None = None
@@ -146,16 +146,16 @@ class MergeViolationDebugger(Instrumentation):
         :param GsmNode new_red: The promoted node.
         """
         new_red_prefix = new_red.get_prefix()
-        node = self.root.get_by_prefix(new_red_prefix)
-        old_red = self.map.get(node)
-        if old_red is None:
-            self.map[node] = new_red
-            self.log.append(("promote", new_red_prefix))
-        elif node is None:
+        gt_node = self.ground_truth_root.get_by_prefix(new_red_prefix)
+        old_red = self.map.get(gt_node)
+        if gt_node is None:
             self.log.append(("broken promote", new_red_prefix))
+        elif old_red is None:
+            self.map[gt_node] = new_red
+            self.log.append(("promote", new_red_prefix))
         elif old_red is not new_red:
             print(f"Erroneous promotion detected:")
-            print(f"  Ground truth: {node.get_prefix()}")
+            print(f"  Ground truth: {gt_node.get_prefix()}")
             print(f"  Representative (old): {old_red.get_prefix()}")
             print(f"  Representative (new): {new_red_prefix}")
             self.log.append(("wrong promote", new_red_prefix))
@@ -168,8 +168,8 @@ class MergeViolationDebugger(Instrumentation):
         """
         red_prefix = part.red.get_prefix()
         blue_prefix = part.blue.get_prefix()
-        red_node = self.root.get_by_prefix(red_prefix)
-        blue_node = self.root.get_by_prefix(blue_prefix)
+        red_node = self.ground_truth_root.get_by_prefix(red_prefix)
+        blue_node = self.ground_truth_root.get_by_prefix(blue_prefix)
         if red_node is None or blue_node is None:
             self.log.append(("broken merge", red_prefix, blue_prefix))
         elif red_node is blue_node:

@@ -175,7 +175,8 @@ class GeneralizedStateMerging:
         instrumentation.log_promote(root)
 
         if self.transition_behavior == "deterministic":
-            if not root.is_deterministic():
+            deterministic_pta = root.is_deterministic()
+            if not deterministic_pta:
                 warnings.warn("required deterministic automaton but input data is nondeterministic")
 
         # sorted list of states already considered as distinct
@@ -213,9 +214,9 @@ class GeneralizedStateMerging:
                         partitioning = Partitioning(red_state, blue_state)
                         self._partition_from_merge(partitioning, red_states_backing_set, True)
                         partition_candidates[(red_state, blue_state)] = partitioning
-                        if best_candidate is None or best_score < partitioning.score:
-                            best_candidate = partitioning
-                            best_score = partitioning.score
+                    if best_candidate is None or best_score < partitioning.score:
+                        best_candidate = partitioning
+                        best_score = partitioning.score
                     no_viable_merge_for_blue &= partitioning.score is SpecialScores.ImmediateReject
                     if partitioning.score is SpecialScores.ImmediateAccept:
                         break
@@ -246,6 +247,16 @@ class GeneralizedStateMerging:
                 blue_states.remove(best_candidate)
                 blue_states.extend(best_candidate.child_iterator())
                 instrumentation.log_promote(best_candidate)
+
+                # check cached partitions
+                for partitioning in partition_candidates.values():
+                    updated_promoted_node = partitioning.full_mapping.get(best_candidate)
+                    if updated_promoted_node is None:
+                        continue
+                    for in_sym, out_sym, successor in updated_promoted_node.transition_iterator():
+                        trans = best_candidate.transitions.get(in_sym)
+                        if trans is None or out_sym not in trans:
+                            partitioning.new_blue.append(successor)
             elif isinstance(best_candidate, Partitioning):
                 # apply best merge candidate
                 for real_node, partition_node in best_candidate.red_mapping.items():
@@ -268,6 +279,12 @@ class GeneralizedStateMerging:
         instrumentation.learning_done(root)
 
         root = self.postprocessing(root)
+        if self.transition_behavior == "deterministic" and not root.is_deterministic():
+            if deterministic_pta:
+                msg = "PTA is deterministic -> GSM is misconfigured"
+            else:
+                msg = "PTA is nondeterministic -> data is invalid and/or GSM is misconfigured"
+            raise ValueError(f"requested deterministic automaton but result is nondeterministic. {msg}")
         if convert:
             root = root.to_automaton(self.output_behavior, self.transition_behavior)
         return root
@@ -372,6 +389,7 @@ class GeneralizedStateMerging:
         else:
             # work on the remaining merges
             q.extend(partitioning.remaining_merges)
+            partitioning.nr_merged_states -= len(partitioning.remaining_merges)
 
         # loop over implied merges
         pop = q.pop if self.depth_first else q.popleft
@@ -382,7 +400,7 @@ class GeneralizedStateMerging:
 
             if first_pass:
                 local_compat = self.score_calc.local_compatibility(partition, blue)
-                moore_check = self.output_behavior == "moore" and self.transition_behavior == "deterministic" and not GsmNode.moore_compatible(red, blue)
+                moore_check = self.output_behavior == "moore" and self.transition_behavior == "deterministic" and not GsmNode.moore_compatible(partition, blue)
                 if local_compat is False or moore_check:
                     partitioning.score = SpecialScores.ImmediateReject
                     return

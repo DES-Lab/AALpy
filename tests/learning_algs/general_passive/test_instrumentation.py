@@ -36,7 +36,7 @@ class TestMergeViolationDebugger(unittest.TestCase):
         # data [((), True), (('a',), True), (('b',), True)] is only ever consistent with a single-state
         # automaton that self-loops on 'a' and 'b'; the ground truth tree must reflect that so that the
         # actual merges GSM performs (root with 'a', root with 'b') are considered correct.
-        root = GsmNode((None, True), None)
+        root = GsmNode((None, True), None, None)
         root.transitions['a'][True] = root
         root.transitions['b'][True] = root
         return root
@@ -59,7 +59,7 @@ class TestMergeViolationDebugger(unittest.TestCase):
         # a ground truth tree where 'a' and 'b' are distinct states never merges them;
         # comparing against it while the actual run does merge them should be flagged as wrong.
         dh = NoOpDataHandler()
-        mismatched_ground_truth = GsmNode((None, True), None)
+        mismatched_ground_truth = GsmNode((None, True), None, None)
         dh.add_trace(mismatched_ground_truth, [('a', True)])
         dh.add_trace(mismatched_ground_truth, [('b', True)])
         # sabotage: make root.get_by_prefix for 'b' point to a node distinct from 'a's, but give it a

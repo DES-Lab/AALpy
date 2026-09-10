@@ -88,7 +88,7 @@ class ScoreCalculation(ABC):
 
         :return bool: True if local_compatibility was overridden.
         """
-        return self.__class__.local_compatibility is ScoreCalculation.local_compatibility
+        return self.__class__.local_compatibility is not ScoreCalculation.local_compatibility
 
     def has_score_function(self) -> bool:
         """
@@ -96,7 +96,7 @@ class ScoreCalculation(ABC):
 
         :return bool: True if score_function was overridden.
         """
-        return self.__class__.score_function is ScoreCalculation.score_function
+        return self.__class__.score_function is not ScoreCalculation.score_function
 
 
 class SimpleScoreCalculation(ScoreCalculation):
@@ -167,12 +167,15 @@ class SimpleFutureBasedCompatibility(ScoreCalculation):
         """
         if local_compatibility:
             if self.has_local_compatibility():
-                raise ValueError("Exernal local compatibility is provided, but the class already defines a local compatibility criterion.")
+                raise ValueError("External local compatibility is provided, but the class already defines a local compatibility criterion.")
             self.local_compatibility = local_compatibility or self.local_compatibility
         self.compatibility_on_pta = compatibility_on_pta
         self.depth_first = depth_first
 
     def initialize_merge(self, red: GsmNode, blue: GsmNode, first_pass: bool) -> Any:
+        if not first_pass:
+            return
+
         if self.compatibility_on_pta and not isinstance(red.data, ShadowPTAData):
             raise TypeError("compatibility_on_pta is set but no PTA data is available")
 
@@ -382,7 +385,11 @@ class ScoreCombinator(ScoreCalculation):
         :param Iterable score_iterable: Iterable of score results.
         :return list: List of the individual scores.
         """
-        return list(score_iterable)
+        score_iterable = list(score_iterable)
+        for special_val in [SpecialScores.ImmediateReject, SpecialScores.ImmediateAccept, SpecialScores.NoScore]:
+            if all(x is special_val for x in score_iterable):
+                return special_val
+        return score_iterable
 
 
 def local_to_global_compatibility(local_fun: LocalCompatibilityFunction) -> ScoreFunction:

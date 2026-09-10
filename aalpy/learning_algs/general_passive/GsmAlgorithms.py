@@ -8,7 +8,7 @@ from aalpy.base import Automaton
 from aalpy.learning_algs.general_passive.GeneralizedStateMerging import run_GSM
 from aalpy.learning_algs.general_passive.DataHandler import CountOnPTADataHandler
 from aalpy.learning_algs.general_passive.Instrumentation import ProgressReport
-from aalpy.learning_algs.general_passive.GsmNode import GsmNode
+from aalpy.learning_algs.general_passive.GsmNode import GsmNode, unknown_output
 from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import SimpleScoreCalculation, ScoreWithKTail, ScoreIOAlergiaWithEDSM
 from aalpy.utils.HelperFunctions import dfa_from_moore, mc_format_to_mdp, mc_from_mdp
 
@@ -37,11 +37,11 @@ def run_EDSM(data: list, automaton_type: str, input_completeness: str | None = N
             reverse_partition[resulting_node].append(original_node)
         evidence = 0
         for node, contributing_nodes in reverse_partition.items():
-            if node.get_prefix_output() is None:
+            if node.get_prefix_output() is unknown_output:
                 continue  # No evidence whatsoever
             evidence -= 1  # subtract self-comparison
             for contributing_node in contributing_nodes:
-                if contributing_node.get_prefix_output() is not None:
+                if contributing_node.get_prefix_output() is not unknown_output:
                     evidence += 1
         return evidence
 

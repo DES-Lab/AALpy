@@ -101,7 +101,7 @@ class DataHandler(Generic[T], ABC):
             in_sym, out_sym = self.abstract(in_value, out_value)
             transitions = curr_node.transitions[in_sym]
             if len(transitions) == 0:
-                node = GsmNode((in_sym, out_sym), curr_node)
+                node = GsmNode((in_sym, out_sym), curr_node, self.init_data())
                 transitions[out_sym] = node
             elif len(transitions) == 1:
                 node = next(iter(transitions.values()))
@@ -261,7 +261,7 @@ class CountDataHandler(DataHandler[CountData]):
 
     def copy(self, x: CountData) -> CountData:
         ret = CountData()
-        ret.transition_count = {k: v.copy() for k, v in x.transition_count.items()}
+        ret.transition_count.update((k, v.copy()) for k, v in x.transition_count.items())
         return ret
 
     def init_data(self) -> CountData:
@@ -275,6 +275,13 @@ class CountDataHandler(DataHandler[CountData]):
 class CountOnPTADataHandler(CountDataHandler, DataHandler[CountOnPTAData]):
     def init_data(self) -> CountOnPTAData:
         return CountOnPTAData()
+
+    def copy(self, x: CountOnPTAData) -> CountOnPTAData:
+        ret = CountOnPTAData()
+        ret.transition_count.update((k, v.copy()) for k, v in x.transition_count.items())
+        ret.pta_count = x.pta_count
+        ret.shadow_pta = x.shadow_pta
+        return ret
 
     def aggregate_data(self, src_node: 'GsmNode[CountOnPTAData]', in_value, out_value, dst_node: 'GsmNode[CountOnPTAData]'):
         if src_node is None:

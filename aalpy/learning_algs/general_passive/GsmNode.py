@@ -88,12 +88,13 @@ class GsmNode(Generic[T]):
     """
     __slots__ = ['transitions', 'predecessor', 'prefix_access_pair', 'data']
 
-    def __init__(self, prefix_access_pair: IOPair, predecessor: 'GsmNode[T]' = None, data: T = None): # TODO (data-ext) check all invocations
+    def __init__(self, prefix_access_pair: IOPair, predecessor: 'GsmNode[T] | None', data: T):
         """
         Create a node with the given prefix-access pair and predecessor.
 
         :param IOPair prefix_access_pair: (input, output) pair leading from the predecessor to this node.
         :param GsmNode | None predecessor: Predecessor node, or None for the root node.
+        :param T data: Algorithm-specific data.
         """
         # TODO try single dict
         self.transitions: defaultdict[Any, dict[Any, GsmNode[T]]] = defaultdict(dict)
