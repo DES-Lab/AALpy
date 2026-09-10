@@ -48,7 +48,8 @@ class CountData(StochasticData):
         for in_sym, y_o_dict in y.items():
             x_o_dict = x.get(in_sym, None)
             if x_o_dict is None:
-                x[in_sym] = y_o_dict
+                # copy, don't alias: x must not keep changing if y's dict is mutated afterwards
+                x[in_sym] = y_o_dict.copy()
                 continue
             for out_sym, count in y_o_dict.items():
                 int_dict_increment(x_o_dict, out_sym, count)

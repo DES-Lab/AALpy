@@ -248,15 +248,11 @@ class GeneralizedStateMerging:
                 blue_states.extend(best_candidate.child_iterator())
                 instrumentation.log_promote(best_candidate)
 
-                # check cached partitions
-                for partitioning in partition_candidates.values():
-                    updated_promoted_node = partitioning.full_mapping.get(best_candidate)
-                    if updated_promoted_node is None:
-                        continue
-                    for in_sym, out_sym, successor in updated_promoted_node.transition_iterator():
-                        trans = best_candidate.transitions.get(in_sym)
-                        if trans is None or out_sym not in trans:
-                            partitioning.new_blue.append(successor)
+                # any other cached candidate that speculatively touched this node (e.g. while resolving an
+                # unknown output through it) is now unsound to reuse: applying it would silently overwrite
+                # the just-promoted (now real, independently-decided) state with a stale speculative copy.
+                for key in [key for key, p in partition_candidates.items() if best_candidate in p.full_mapping]:
+                    del partition_candidates[key]
             elif isinstance(best_candidate, Partitioning):
                 # apply best merge candidate
                 for real_node, partition_node in best_candidate.red_mapping.items():
