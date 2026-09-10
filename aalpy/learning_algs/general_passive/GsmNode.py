@@ -1,30 +1,26 @@
 # Generic prefix-tree / observation-tree node structure used by the general passive
 # (state-merging) learning algorithms, plus conversion to concrete AALpy automaton types.
-import functools
-import math
 import pathlib
 from collections import defaultdict
 from collections.abc import Callable, Iterable, Iterator, Sequence
-from functools import total_ordering
-from typing import Any, TypeVar
+from typing import Any, TypeVar, Generic
 import pydot
-from copy import copy
 
 from aalpy.automata import StochasticMealyMachine, StochasticMealyState, MooreState, MooreMachine, NDMooreState, \
     NDMooreMachine, Mdp, MdpState, MealyMachine, MealyState, Onfsm, OnfsmState
 from aalpy.base import Automaton
+from aalpy.learning_algs.general_passive.AssociatedData import StochasticData, CountData
+
 
 Key = TypeVar("Key")
 Val = TypeVar("Val")
+T = TypeVar("T")
 
 OutputBehavior = str
 OutputBehaviorRange = ["moore", "mealy"]
 
 TransitionBehavior = str
 TransitionBehaviorRange = ["deterministic", "nondeterministic", "stochastic"]
-
-DataFormat = str
-DataFormatRange = ["io_traces", "labeled_sequences", "traces", "tree"]
 
 IOPair = tuple[Any, Any]
 IOTrace = Sequence[IOPair]
@@ -33,23 +29,31 @@ IOExample = tuple[Sequence[Any], Any]
 StateFunction = Callable[['GsmNode'], str]
 TransitionFunction = Callable[['GsmNode', Any, Any], str]
 
-unknown_output = None  # can be set to a special value if required
+unknown_output = object()  # can be set to a special value if required
+no_op_input = object()
+missing = object()
 
-
-def intersection_iterator(a: dict[Key, Val], b: dict[Key, Val]) -> Iterator[tuple[Key, Val, Val]]:
+def intersection_iterator(a: dict[Key, Val], b: dict[Key, Val], sort_by_length: bool = False) -> Iterator[tuple[Key, Val, Val]]:
     """
     Iterate over the key/value pairs that are present in both dictionaries.
 
     :param dict[Key, Val] a: First dictionary.
     :param dict[Key, Val] b: Second dictionary.
+    :param bool sort_by_length: If set, iterate over the shorter dictionary.
     :return Iterator[tuple[Key, Val, Val]]: Iterator of (key, value in a, value in b) for keys common to both dicts.
     """
-    missing = object()
-    for key, a_val in a.items():
-        b_val = b.get(key, missing)
-        if b_val is missing:
-            continue
-        yield key, a_val, b_val
+    if sort_by_length and len(b) < len(a):
+        for key, b_val in b.items():
+            a_val = a.get(key, missing)
+            if a_val is missing:
+                continue
+            yield key, a_val, b_val
+    else:
+        for key, a_val in a.items():
+            b_val = b.get(key, missing)
+            if b_val is missing:
+                continue
+            yield key, a_val, b_val
 
 
 def union_iterator(a: dict[Key, Val], b: dict[Key, Val], default: Val = None) -> Iterator[tuple[Key, Val, Val]]:
@@ -71,83 +75,8 @@ def union_iterator(a: dict[Key, Val], b: dict[Key, Val], default: Val = None) ->
         yield key, a_val, b_val
 
 
-# TODO reuse in RPNI
-def detect_data_format(data: Any, check_consistency: bool = False, guess: bool = False) -> DataFormat:
-    """
-    Guess the data format of the provided learning data.
-
-    :param Any data: Input data: a GsmNode (tree), or a sequence of traces/examples.
-    :param bool check_consistency: Whether to check all data points instead of returning as soon as a unique format is found.
-    :param bool guess: Whether to allow guessing a single format when multiple formats remain ambiguous.
-    :return DataFormat: The detected data format string (see DataFormatRange).
-    """
-    # The different data formats are
-    # - "tree": a tree-shaped automaton provided as a GsmNode
-    # - "io_traces": either
-    #   - Moore traces [[o, (i,o), (i,o), ...], ...]
-    #   - Mealy traces [[(i,o), (i,o), ...], ...]
-    # - "labeled_sequences": [([i, i, ...], o), ...]
-    # - "traces": [[o, o, ...], ...]
-
-    if isinstance(data, GsmNode):
-        return "tree"
-
-    accepted_types = (tuple, list)
-
-    # mapping data formats to compatibility criteria
-    check_dict = dict(
-        io_traces=lambda obj: len(obj) <= 1 or all(isinstance(o, accepted_types) and len(o) == 2 for o in obj[1:]),
-        labeled_sequences=lambda obj: len(obj) == 2 and isinstance(obj[0], accepted_types),
-    )
-    accept_dict = {k: True for k in check_dict}
-
-    if not isinstance(data, accepted_types):
-        raise ValueError("wrong input format. expected tuple or list.")
-    if len(data) == 0:
-        return "io_traces"
-
-    accepted_formats = list(accept_dict.keys())
-    for data_point in data:
-        if not isinstance(data_point, accepted_types):
-            raise ValueError("wrong input format. expected tuple or list.")
-        for k, check in check_dict.items():
-            accept_dict[k] &= check(data_point)
-        accepted_formats = [k for k, v in accept_dict.items() if v]
-        if len(accepted_formats) == 1 and not check_consistency:
-            return accepted_formats[0]
-        if len(accepted_formats) == 0:
-            return "traces" # default to traces
-            #raise ValueError("invalid or inconsistent data. no options left")
-    if len(accepted_formats) != 1 and not guess:
-        raise ValueError("ambiguous data format. data format needs to be specified explicitly.")
-    return accepted_formats[0]
-
-
-# TODO maybe split this for maintainability (and perfomance?)
-class TransitionInfo:
-    """Stores the current and original (PTA) target node and count for a single transition."""
-
-    __slots__ = ["target", "count", "original_target", "original_count"]
-
-    def __init__(self, target: 'GsmNode', count: int, original_target: 'GsmNode | None',
-                 original_count: int | None) -> None:
-        """
-        Create a transition info record.
-
-        :param GsmNode target: Current target node of the transition.
-        :param int count: Current transition count.
-        :param GsmNode | None original_target: Target node in the original PTA, if any.
-        :param int | None original_count: Transition count in the original PTA, if any.
-        """
-        self.target: 'GsmNode' = target
-        self.count: int = count
-        self.original_target: 'GsmNode' = original_target
-        self.original_count: int = original_count
-
-
 # TODO add custom pickling code that flattens the Node structure in order to circumvent running into recursion issues for large models
-@total_ordering
-class GsmNode:
+class GsmNode(Generic[T]):
     """
     Generic class for observably deterministic automata.
 
@@ -157,39 +86,21 @@ class GsmNode:
 
     Transition count is preferred over state count as it allows to easily count transitions for non-tree-shaped automata
     """
-    __slots__ = ['transitions', 'predecessor', 'prefix_access_pair']
+    __slots__ = ['transitions', 'predecessor', 'prefix_access_pair', 'data']
 
-    def __init__(self, prefix_access_pair: IOPair, predecessor: 'GsmNode | None' = None) -> None:
+    def __init__(self, prefix_access_pair: IOPair, predecessor: 'GsmNode[T] | None', data: T):
         """
         Create a node with the given prefix-access pair and predecessor.
 
         :param IOPair prefix_access_pair: (input, output) pair leading from the predecessor to this node.
         :param GsmNode | None predecessor: Predecessor node, or None for the root node.
+        :param T data: Algorithm-specific data.
         """
         # TODO try single dict
-        self.transitions: defaultdict[Any, dict[Any, TransitionInfo]] = defaultdict(dict)
+        self.transitions: defaultdict[Any, dict[Any, GsmNode[T]]] = defaultdict(dict)
         self.predecessor: GsmNode = predecessor
         self.prefix_access_pair = prefix_access_pair
-
-    def __lt__(self, other: 'GsmNode', compare_length_only: bool = False) -> bool:
-        """
-        Compare nodes in short-lex order: first by prefix length, then lexicographically by prefix.
-
-        :param GsmNode other: Node to compare against.
-        :param bool compare_length_only: Whether to only compare based on prefix length.
-        :return bool: True if self is ordered before other.
-        """
-        own_l, other_l = self.get_prefix_length(), other.get_prefix_length()
-        if own_l != other_l:
-            return own_l < other_l
-        if compare_length_only:
-            return False
-        own_p = self.get_prefix()
-        other_p = other.get_prefix()
-        try:
-            return own_p < other_p
-        except TypeError:
-            return [str(x) for x in own_p] < [str(x) for x in other_p]
+        self.data = data
 
     # TODO implicit prefixes as currently implemented require O(length) time for prefix calculations (e.g. to determine the minimal blue node)
     # other options would be to have more efficient explicit prefixes such as shared list representations
@@ -222,14 +133,15 @@ class GsmNode:
         """
         return self.prefix_access_pair[0]
 
-    def resolve_unknown_prefix_output(self, value: Any) -> None:
+    def resolve_unknown_prefix_output(self, value):
         """
         Set the prefix output to the given value if it is currently unknown.
 
         :param Any value: Output value to assign if the current prefix output is unknown.
         """
-        if self.get_prefix_output() is unknown_output:
-            self.prefix_access_pair = (self.get_prefix_input(), value)
+        p_in, p_out = self.prefix_access_pair
+        if p_out is unknown_output:
+            self.prefix_access_pair = (p_in, value)
 
     def get_prefix(self, include_output: bool = True) -> list[Any]:
         """
@@ -260,42 +172,24 @@ class GsmNode:
             current = current.predecessor
         return current
 
-    def get_or_create_transitions(self, in_sym: Any) -> dict[Any, TransitionInfo]:
-        """
-        Get the transition dictionary for the given input symbol, creating it if necessary.
-
-        :param Any in_sym: Input symbol.
-        :return dict[Any, TransitionInfo]: Mapping of output symbol to transition info for this input.
-        """
-        t = self.transitions.get(in_sym)
-        if t is None:
-            t = dict()
-            self.transitions[in_sym] = t
-        return t
-
-    def transition_iterator(self) -> Iterable[tuple[Any, Any, TransitionInfo]]:
+    def transition_iterator(self) -> Iterable[tuple[Any, Any, 'GsmNode[T]']]:
         """
         Iterate over all outgoing transitions of this node.
 
-        :return Iterable[tuple[Any, Any, TransitionInfo]]: Iterable of (input, output, transition info) triples.
+        :return Iterable[tuple[Any, Any, GsmNode]]: Iterable of (input, output, successor) triples.
         """
         for in_sym, transitions in self.transitions.items():
             for out_sym, node in transitions.items():
                 yield in_sym, out_sym, node
 
-    def shallow_copy(self) -> 'GsmNode':
+    def child_iterator(self) -> Iterable['GsmNode[T]']:
         """
-        Create a shallow copy of this node, duplicating its transition dict but keeping the same targets.
+        Iterate over all possible successors of this node.
 
-        :return GsmNode: The copied node.
+        :return Iterable[GsmNode[T]]: Iterable of successor nodes.
         """
-        node = GsmNode(self.prefix_access_pair, self.predecessor)
-        for in_sym, t in self.transitions.items():
-            d = dict() # appears to be faster than dict comprehension
-            for out_sym, ti in t.items():
-                d[out_sym] = TransitionInfo(ti.target, ti.count, ti.original_target, ti.original_count)
-            node.transitions[in_sym] = d
-        return node
+        for transitions in self.transitions.values():
+            yield from transitions.values()
 
     def get_by_prefix(self, seq: IOTrace) -> 'GsmNode | None':
         """
@@ -306,18 +200,19 @@ class GsmNode:
         """
         node: GsmNode = self
         for in_sym, out_sym in seq:
-            if in_sym is None:  # ignore initial transition of Node.get_prefix()
+            if in_sym is no_op_input:  # ignore noops (e.g. initial transition of Node.get_prefix())
                 continue
             trans = node.transitions.get(in_sym)
             if trans is None:
                 return None
-            t_info = trans.get(out_sym)
-            if t_info is None:
-                return None
-            node = t_info.target
+            node = trans.get(out_sym)
+            if node is None:
+                node = trans.get(unknown_output)
+                if node is None:
+                    return None
         return node
 
-    def get_all_nodes(self) -> list['GsmNode']:
+    def get_all_nodes(self) -> list['GsmNode[T]']:
         """
         Collect all nodes reachable from this node (including itself).
 
@@ -326,8 +221,7 @@ class GsmNode:
         result = [self]
         backing_set = {self}
         for state in result:
-            for _, _, transition in state.transition_iterator():
-                child = transition.target
+            for child in state.child_iterator():
                 if child not in backing_set:
                     backing_set.add(child)
                     result.append(child)
@@ -343,8 +237,7 @@ class GsmNode:
         backing_set = {self}
         while len(q) != 0:
             current = q.pop(0)
-            for _, _, transition in current.transition_iterator():
-                child = transition.target
+            for child in current.child_iterator():
                 if child in backing_set:
                     return False
                 q.append(child)
@@ -379,16 +272,16 @@ class GsmNode:
             ("mealy", "stochastic"): (StochasticMealyMachine, StochasticMealyState),
         }
 
-        AutomatonClass, StateClass = type_dict[(output_behavior, transition_behavior)]
+        automaton_class, state_class = type_dict[(output_behavior, transition_behavior)]
 
         # create states
         state_map = dict()
         for i, node in enumerate(nodes):
             state_id = f's{i}'
             if output_behavior == "mealy":
-                state = StateClass(state_id)
+                state = state_class(state_id)
             elif output_behavior == "moore":
-                state = StateClass(state_id, node.get_prefix_output())
+                state = state_class(state_id, node.get_prefix_output())
             state_map[node] = state
             if set_prefix:
                 if transition_behavior == "deterministic":
@@ -403,26 +296,28 @@ class GsmNode:
         # add transitions
         for node in nodes:
             state = state_map[node]
+            if automaton_class in [Mdp, StochasticMealyMachine]:
+                if not isinstance(node.data, StochasticData):
+                    raise TypeError(f"No probability in information available for {automaton_class.__name__}")
+                prob_info = node.data.get_probabilities()
             for in_sym, transitions in node.transitions.items():
-                total = sum(t.count for t in transitions.values())
                 for out_sym, target_node in transitions.items():
-                    target_state = state_map[target_node.target]
-                    count = target_node.count
-                    if AutomatonClass is MooreMachine:
+                    target_state = state_map[target_node]
+                    if automaton_class is MooreMachine:
                         state.transitions[in_sym] = target_state
-                    elif AutomatonClass is MealyMachine:
+                    elif automaton_class is MealyMachine:
                         state.transitions[in_sym] = target_state
                         state.output_fun[in_sym] = out_sym
-                    elif AutomatonClass is NDMooreMachine:
+                    elif automaton_class is NDMooreMachine:
                         state.transitions[in_sym].append(target_state)
-                    elif AutomatonClass is Onfsm:
+                    elif automaton_class is Onfsm:
                         state.transitions[in_sym].append((out_sym, target_state))
-                    elif AutomatonClass is Mdp:
-                        state.transitions[in_sym].append((target_state, count / total))
-                    elif AutomatonClass is StochasticMealyMachine:
-                        state.transitions[in_sym].append((target_state, out_sym, count / total))
+                    elif automaton_class is Mdp:
+                        state.transitions[in_sym].append((target_state, prob_info[in_sym][out_sym]))
+                    elif automaton_class is StochasticMealyMachine:
+                        state.transitions[in_sym].append((target_state, out_sym, prob_info[in_sym][out_sym]))
 
-        return AutomatonClass(initial_state, list(state_map.values()))
+        return automaton_class(initial_state, list(state_map.values()))
 
     def visualize(self, path: str | pathlib.Path, output_behavior: OutputBehavior = "mealy", format: str = "dot",
                   engine: str = "dot", *,
@@ -455,19 +350,23 @@ class GsmNode:
         if trans_props is None:
             trans_props = dict()
         if state_label is None:
-            if output_behavior == "moore":
-                def state_label(node: GsmNode) -> str:
-                    return f'{node.get_prefix_output()} {node.count()}'
-            else:
-                def state_label(node: GsmNode) -> str:
-                    return f'{sum(t.count for _, _, t in node.transition_iterator())}'
+            def state_label(node: GsmNode) -> str:
+                label_parts = []
+                if output_behavior == "moore":
+                    label_parts.append(str(node.get_prefix_output()))
+                if isinstance(node.data, CountData):
+                    label_parts.append(str(node.data.count()))
+                return " ".join(label_parts)
         if trans_label is None and "label" not in trans_props:
-            if output_behavior == "moore":
-                def trans_label(node: GsmNode, in_sym: Any, out_sym: Any) -> str:
-                    return f'{in_sym} [{node.transitions[in_sym][out_sym].count}]'
-            else:
-                def trans_label(node: GsmNode, in_sym: Any, out_sym: Any) -> str:
-                    return f'{in_sym} / {out_sym} [{node.transitions[in_sym][out_sym].count}]'
+            def trans_label(node: GsmNode, in_sym: Any, out_sym: Any) -> str:
+                label_parts = []
+                if output_behavior == "moore":
+                    label_parts.append(str(in_sym))
+                else:
+                    label_parts.append(f'{in_sym} / {out_sym}')
+                if isinstance(node.data, CountData):
+                    label_parts.append(f'[{node.data.transition_count[in_sym][out_sym]}]')
+                return " ".join(label_parts)
         if state_color is None:
             def state_color(x: 'GsmNode') -> str: return "black"
         if trans_color is None:
@@ -498,7 +397,7 @@ class GsmNode:
             for in_sym, options in node.transitions.items():
                 for out_sym, c in options.items():
                     arg_dict = {key: fun(node, in_sym, out_sym) for key, fun in trans_props.items()}
-                    graph.add_edge(pydot.Edge(node_naming(node), node_naming(c.target), **arg_dict))
+                    graph.add_edge(pydot.Edge(node_naming(node), node_naming(c), **arg_dict))
 
         # add initial state
         # TODO maybe add option to parameterize this
@@ -512,12 +411,18 @@ class GsmNode:
             file_ext = 'dot'
         graph.write(path=str(path) + "." + file_ext, prog=engine, format=format)
 
-    def make_input_complete(self) -> list[tuple['GsmNode', Any, Any]]:
+    def make_input_complete(self, target: 'GsmNode[T] | str' = "self-loop") -> list[tuple['GsmNode', Any, Any]]:
         """
-        Add self-looping transitions for any input undefined at some node, using the node's prefix output.
+        For all reachable nodes, add transitions for all undefined inputs. The output is set using the targets prefix output.
+        This function DOES NOT touch the `data` field of affected nodes. Updating this is in the responsibility of the caller.
 
+        :param GsmNode[T] | str target: Target node of missing transitions. The special value "self-loop" adds self transitions.
         :return list[tuple[GsmNode, Any, Any]]: List of (node, input, output) triples for the added transitions.
         """
+
+        if isinstance(target, str) and target != "self-loop":
+            raise ValueError(f"Invalid target {target}. Should be either 'self-loop' or a GsmNode.")
+
         all_nodes = self.get_all_nodes()
         inputs = {in_sym for node in all_nodes for in_sym in node.transitions}
         missing_trans = []
@@ -525,102 +430,14 @@ class GsmNode:
             for in_sym in inputs:
                 transitions = node.transitions[in_sym]
                 if len(transitions) == 0:
-                    out_sym = node.prefix_access_pair[1]
+                    if target == "self-loop":
+                        successor = node
+                    else:
+                        successor = target
+                    out_sym = successor.prefix_access_pair[1]
                     missing_trans.append((node, in_sym, out_sym))
-                    t_info = TransitionInfo(node, 1, None, None)
-                    transitions[out_sym] = t_info
+                    transitions[out_sym] = successor
         return missing_trans
-
-    def add_trace(self, trace: IOTrace) -> None:
-        """
-        Add an IO trace to the tree rooted at this node, extending it with new nodes as necessary.
-
-        :param IOTrace trace: Sequence of (input, output) pairs to add.
-        """
-        curr_node: GsmNode = self
-        for in_sym, out_sym in trace:
-            transitions = curr_node.transitions[in_sym]
-            info = transitions.get(out_sym)
-            if info is None:
-                node = GsmNode((in_sym, out_sym), curr_node)
-                transitions[out_sym] = TransitionInfo(node, 1, node, 1)
-            else:
-                info.count += 1
-                info.original_count += 1
-                node = info.target
-            curr_node = node
-
-    def add_labeled_sequence(self, example: IOExample) -> None:
-        """
-        Add a labeled input sequence (inputs with a single label attached at the end) to the tree.
-
-        :param IOExample example: (inputs, output) pair, where output labels the state reached by inputs.
-        """
-        inputs, output = example
-        curr_node: GsmNode = self
-        in_sym = None
-
-        # step through inputs and add transitions
-        for in_sym in inputs:
-            transitions = curr_node.transitions[in_sym]
-            t_infos = list(transitions.values())
-            if len(t_infos) == 0:
-                node = GsmNode((in_sym, unknown_output), curr_node)
-                t_info = TransitionInfo(node, 1, node, 1)
-                transitions[unknown_output] = t_info
-            elif len(t_infos) == 1:
-                t_info = t_infos[0]
-                t_info.count += 1
-                t_info.original_count += 1
-                node = t_info.target
-            else:
-                # This should never happen
-                raise ValueError("Nondeterminism encountered for GSM with labeled_sequences. not supported")
-            curr_node = node
-
-        # set last output
-        curr_node.resolve_unknown_prefix_output(output)
-        pred = curr_node.predecessor
-        if pred:
-            transitions = pred.transitions[in_sym]
-            if unknown_output in transitions:
-                transitions[output] = transitions.pop(unknown_output)
-            if output not in transitions:
-                raise ValueError("nondeterminism encountered for GSM with labeled_sequences. not supported")
-
-    @staticmethod
-    def createPTA(data: Any, output_behavior: OutputBehavior, data_format: DataFormat | None = None) -> 'GsmNode':
-        """
-        Build a prefix tree acceptor (PTA) from the given data.
-
-        :param Any data: Learning data, in one of the supported data formats (or already a GsmNode tree).
-        :param OutputBehavior output_behavior: Either "moore" or "mealy".
-        :param DataFormat | None data_format: Explicit data format, or None to auto-detect.
-        :return GsmNode: The root node of the constructed (or passed-through) PTA.
-        """
-        if data_format is None:
-            data_format = detect_data_format(data)
-        if data_format not in DataFormatRange:
-            raise ValueError(f"invalid data format {data_format}. should be in {DataFormatRange}")
-
-        if data_format == "tree":
-            if not data.is_tree():
-                raise ValueError("provided automaton is not a tree")
-            return data
-        root_node = GsmNode((None, unknown_output), None)
-        if data_format == "labeled_sequences":
-            for example in data:
-                root_node.add_labeled_sequence(example)
-        if data_format == "io_traces" or data_format == "traces":
-            if output_behavior == "moore":
-                initial_output = data[0][0]
-                root_node.prefix_access_pair = (None, initial_output)
-                data = (d[1:] for d in data)
-            for trace in data:
-                if data_format == "traces":
-                    trace = (("step", t) for t in trace)
-                root_node.add_trace(trace)
-        return root_node
 
     def is_locally_deterministic(self) -> bool:
         """
@@ -659,8 +476,8 @@ class GsmNode:
         :return bool: True if the structure is Moore-compatible.
         """
         for node in self.get_all_nodes():
-            for in_sym, out_sym, transition in node.transition_iterator():
-                child_output = transition.target.get_prefix_output()
+            for in_sym, out_sym, next_node in node.transition_iterator():
+                child_output = next_node.get_prefix_output()
                 if out_sym is not unknown_output and child_output != out_sym:
                     return False
         return True
@@ -676,28 +493,21 @@ class GsmNode:
         oo = other.get_prefix_output()
         return so == oo or so is unknown_output or oo is unknown_output
 
-    def local_log_likelihood_contribution(self) -> float:
+    def short_lex_order(self, other: 'GsmNode', compare_length_only: bool = False):
         """
-        Compute this node's contribution to the log-likelihood of the data given the model.
+        Compute the short-lex order of the two nodes.
 
-        :return float: The local log-likelihood contribution.
+        :param GsmNode other: Node to compare with.
+        :return bool: whether the prefix of `self` is smaller than the prefix of `other` according to short-lex order
         """
-        llc = 0
-        for in_sym, trans in self.transitions.items():
-            total_count = 0
-            for out_sym, info in trans.items():
-                total_count += info.count
-                llc += info.count * math.log(info.count)
-            if total_count != 0:
-                llc -= total_count * math.log(total_count)
-        return llc
-
-    def count(self) -> int:
-        """
-        Compute the total transition count over all outgoing transitions of this node.
-
-        :return int: Sum of transition counts.
-        """
-        return sum(trans.count for _, _, trans in self.transition_iterator())
-
-    default_order = functools.cmp_to_key(lambda a, b: -1 if a < b else 1)
+        own_l, other_l = self.get_prefix_length(), other.get_prefix_length()
+        if own_l != other_l:
+            return own_l < other_l
+        if compare_length_only:
+            return False
+        own_p = self.get_prefix()
+        other_p = other.get_prefix()
+        try:
+            return own_p < other_p
+        except TypeError:
+            return [str(x) for x in own_p] < [str(x) for x in other_p]

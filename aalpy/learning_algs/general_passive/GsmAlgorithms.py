@@ -1,15 +1,16 @@
 # Convenience wrappers around run_GSM implementing well-known passive learning
 # algorithms: EDSM, k-tails, and Alergia/IoAlergia (with EDSM-style scoring).
 from collections import defaultdict
+from functools import partial
 
 from aalpy import DeterministicAutomaton, Onfsm, NDMooreMachine
 from aalpy.base import Automaton
 from aalpy.learning_algs.general_passive.GeneralizedStateMerging import run_GSM
+from aalpy.learning_algs.general_passive.DataHandler import CountOnPTADataHandler
 from aalpy.learning_algs.general_passive.Instrumentation import ProgressReport
-from aalpy.learning_algs.general_passive.GsmNode import GsmNode
-from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import ScoreCalculation, hoeffding_compatibility, \
-    ScoreWithKTail
-from aalpy.utils.HelperFunctions import dfa_from_moore
+from aalpy.learning_algs.general_passive.GsmNode import GsmNode, unknown_output
+from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import SimpleScoreCalculation, ScoreWithKTail, ScoreIOAlergiaWithEDSM
+from aalpy.utils.HelperFunctions import dfa_from_moore, mc_format_to_mdp, mc_from_mdp
 
 
 def run_EDSM(data: list, automaton_type: str, input_completeness: str | None = None,
@@ -17,7 +18,7 @@ def run_EDSM(data: list, automaton_type: str, input_completeness: str | None = N
     """
     Run Evidence Driven State Merging.
 
-    :param list data: sequence of input sequences and corresponding label. Eg. [[(i1,i2,i3, ...), label], ...]
+    :param list data: sequence of input sequences and corresponding label, e.g. [[(i1,i2,i3, ...), label], ...]
     :param str automaton_type: either 'dfa', 'mealy', 'moore'. Note that for 'mealy' machine learning, data has to be prefix-closed.
     :param str | None input_completeness: either None, 'sink_state', or 'self_loop'. If None, learned model could be input incomplete,
         sink_state will lead all undefined inputs form some state to the sink state, whereas self_loop will simply create
@@ -36,15 +37,15 @@ def run_EDSM(data: list, automaton_type: str, input_completeness: str | None = N
             reverse_partition[resulting_node].append(original_node)
         evidence = 0
         for node, contributing_nodes in reverse_partition.items():
-            if node.get_prefix_output() is None:
+            if node.get_prefix_output() is unknown_output:
                 continue  # No evidence whatsoever
             evidence -= 1  # subtract self-comparison
             for contributing_node in contributing_nodes:
-                if contributing_node.get_prefix_output() is not None:
+                if contributing_node.get_prefix_output() is not unknown_output:
                     evidence += 1
         return evidence
 
-    score = ScoreCalculation(score_function=EDSM_score)
+    score = SimpleScoreCalculation(local_compatibility=GsmNode.deterministic_compatible, score_function=EDSM_score)
 
     internal_automaton_type = 'moore' if automaton_type != 'mealy' else automaton_type
 
@@ -91,7 +92,7 @@ def run_k_tails(data: list, automaton_type: str, k: int, input_completeness: str
 
     internal_automaton_type = 'moore' if automaton_type != 'mealy' else automaton_type
 
-    score = ScoreWithKTail(ScoreCalculation(GsmNode.deterministic_compatible), k)
+    score = ScoreWithKTail(SimpleScoreCalculation(GsmNode.deterministic_compatible), k)
 
     learned_model = run_GSM(data, output_behavior=internal_automaton_type,
                             transition_behavior="nondeterministic",
@@ -109,75 +110,51 @@ def run_k_tails(data: list, automaton_type: str, k: int, input_completeness: str
 
     return learned_model
 
-
-def run_Alergia_EDSM(data: list, automaton_type: str, eps: float = 0.05, print_info: bool = False) -> Automaton:
+def run_Alergia_GSM(data: list, automaton_type: str, eps: float = 0.05, compat_on_pta_trans: bool = True, compat_on_pta_count: bool = True, edsm: bool = False, print_info: bool = False) -> Automaton:
     """
-    Run IoAlergia with EDSM on provided data.
+    Run IOAlergia on provided data. Also supports variants that
+    - use data more extensively than the original
+    - use EDSM based scoring
 
-    :param list data: [[O,(I,O),(I,O)...], [O,(I,O), (I, O)_,...],..,] if learning MDPs,
-        or [[I,O,I,O...], [I,O_,...],..,] if learning SMMs (I represent input, O output), or [[O, O, O], ...] if
+    :param list data: [[O,(I,O),(I,O)...], [O,(I,O), (I, O)_,...],...,] if learning MDPs,
+        or [[I,O,I,O...], [I,O_,...],...,] if learning SMMs (I represent input, O output), or [[O, O, O], ...] if
         learning Markov chains.
         Note that when learning MDPs and MCs the first symbol of each entry should be the same (Initial output).
-    :param float eps: epsilon value if you are using default HoeffdingCompatibility.
     :param str automaton_type: either 'mdp' if you wish to learn an MDP, or 'smm' if you want to learn stochastic Mealy machine
+    :param float eps: epsilon value if you are using default HoeffdingCompatibility.
+    :param compat_on_pta_trans: evaluate compatibility criterion only on transitions present in the respective PTA nodes
+    :param compat_on_pta_count: evaluate compatibility criterion using counts from the respective PTA nodes
+    :param bool edsm: enable EDSM based scoring
     :param bool print_info: default False
     :return Automaton: A Mc, Mdp or SMM
     """
-    from aalpy.utils.HelperFunctions import mc_format_to_mdp, mc_from_mdp
 
-    assert automaton_type in {'mc', 'mdp', 'smm',}
+    at_types = ['mc', 'mdp', 'smm']
+    if automaton_type not in at_types:
+        raise ValueError(f"automaton_type {automaton_type} not in {at_types}")
 
-    print_level = ProgressReport(1) if print_info else None
+    if not compat_on_pta_trans and compat_on_pta_count:
+        raise ValueError("compat_on_pta must be set if compat_on_pta_data is")
 
-    class IOAlergiaWithEDSM(ScoreCalculation):
-        """ScoreCalculation combining IoAlergia's Hoeffding compatibility with an EDSM-style evidence score."""
-
-        def __init__(self, epsilon: float) -> None:
-            """
-            Create an IoAlergia+EDSM score calculation.
-
-            :param float epsilon: Confidence parameter for the Hoeffding compatibility check.
-            """
-            super().__init__()
-            self.ioa_compatibility = hoeffding_compatibility(epsilon)
-            self.evidence = 0
-
-        def reset(self) -> None:
-            """
-            Reset the accumulated evidence counter.
-            """
-            self.evidence = 0
-
-        def local_compatibility(self, a: GsmNode, b: GsmNode) -> bool:
-            """
-            Check local compatibility of two nodes, accumulating evidence for the score function.
-
-            :param GsmNode a: First node.
-            :param GsmNode b: Second node.
-            :return bool: True if the nodes are compatible according to the Hoeffding bound.
-            """
-            self.evidence += 1
-            return self.ioa_compatibility(a, b)
-
-        def score_function(self, part: dict[GsmNode, GsmNode]) -> int:
-            """
-            Compute the score of a merge partition as the accumulated evidence.
-
-            :param dict[GsmNode, GsmNode] part: Mapping of original nodes to their merged partition representative.
-            :return int: The accumulated evidence count.
-            """
-            return self.evidence
+    instrumentation = ProgressReport(1) if print_info else None
 
     output_behaviour = 'moore' if automaton_type != 'smm' else 'mealy'
 
     learning_data = data if automaton_type != 'mc' else mc_format_to_mdp(data)
 
-    learned_model = run_GSM(learning_data, output_behavior=output_behaviour, transition_behavior="stochastic",
-                            score_calc=IOAlergiaWithEDSM(eps),
-                            compatibility_on_pta=True, compatibility_on_futures=True,
-                            instrumentation=print_level, data_format='io_traces')
+    learned_model = run_GSM(
+        learning_data,
+        output_behavior=output_behaviour,
+        transition_behavior="stochastic",
+        data_handler=CountOnPTADataHandler(),
+        score_calc=ScoreIOAlergiaWithEDSM(eps, compat_on_pta_trans, compat_on_pta_count, edsm),
+        instrumentation=instrumentation,
+        data_format='io_traces',
+    )
 
     if automaton_type == 'mc':
         learned_model = mc_from_mdp(learned_model)
 
     return learned_model
+
+run_Alergia_EDSM = partial(run_Alergia_GSM, edsm=True)

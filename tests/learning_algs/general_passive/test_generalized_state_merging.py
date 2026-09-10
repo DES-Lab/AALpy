@@ -1,12 +1,12 @@
-import random
 import unittest
 from itertools import product
+from typing import Any
 
 from aalpy.automata import Dfa, DfaState, MooreMachine, MooreState, MealyMachine, MealyState
-from aalpy.learning_algs.general_passive.GeneralizedStateMerging import (
-    GeneralizedStateMerging, Instrumentation, run_GSM,
-)
-from aalpy.learning_algs.general_passive.GsmNode import GsmNode, unknown_output
+from aalpy.learning_algs.general_passive.DataHandler import DataHandler, NoOpDataHandler, DataFormat
+from aalpy.learning_algs.general_passive.GeneralizedStateMerging import GeneralizedStateMerging, Instrumentation, run_GSM
+from aalpy.learning_algs.general_passive.GsmNode import GsmNode, OutputBehavior
+from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import SimpleScoreCalculation
 from aalpy.utils.HelperFunctions import dfa_from_moore
 from aalpy.utils.ModelChecking import bisimilar
 
@@ -115,6 +115,21 @@ class TestRunGsmDeterministic(unittest.TestCase):
                          data_format='labeled_sequences', convert=False)
         self.assertIsInstance(result, GsmNode)
 
+    def test_custom_score_calc_cannot_produce_nondeterministic_model(self):
+        # a score_calc that does not check determinism itself must not be able to merge away determinism
+        ground_truth = parity_mealy()
+        alphabet = ground_truth.get_input_alphabet()
+        traces = []
+        for level in range(1, 4):
+            for seq in product(alphabet, repeat=level):
+                ground_truth.reset_to_initial()
+                outputs = ground_truth.execute_sequence(ground_truth.initial_state, seq)
+                traces.append(list(zip(seq, outputs)))
+        greedy = SimpleScoreCalculation(score_function=lambda part: len(part) - len(set(part.values())))
+        learned = run_GSM(traces, output_behavior='mealy', transition_behavior='deterministic',
+                          score_calc=greedy, data_format='io_traces', convert=False)
+        self.assertTrue(learned.is_deterministic())
+
     def test_raises_for_invalid_output_behavior(self):
         with self.assertRaises(ValueError):
             GeneralizedStateMerging(output_behavior='invalid')
@@ -155,9 +170,12 @@ class TestRunGsmPreprocessingPostprocessing(unittest.TestCase):
     def test_preprocessing_and_postprocessing_are_applied(self):
         calls = []
 
-        def pta_preprocessing(root):
-            calls.append('pre')
-            return root
+        class PreProcessingHandler(NoOpDataHandler):
+            def createPTA(self, data: Any, output_behavior: OutputBehavior, data_format: DataFormat = None) -> GsmNode[None]:
+                calls.append('pre')
+                return super().createPTA(data, output_behavior, data_format)
+
+        dh = PreProcessingHandler()
 
         def postprocessing(root):
             calls.append('post')
@@ -165,7 +183,7 @@ class TestRunGsmPreprocessingPostprocessing(unittest.TestCase):
 
         data = [((), True), (('a',), False)]
         run_GSM(data, output_behavior='moore', transition_behavior='deterministic',
-               data_format='labeled_sequences', pta_preprocessing=pta_preprocessing,
+               data_format='labeled_sequences', data_handler=dh,
                postprocessing=postprocessing)
 
         self.assertEqual(calls, ['pre', 'post'])
@@ -183,8 +201,7 @@ class TestConsiderOnlyMinBlueAndDepthFirst(unittest.TestCase):
         ground_truth = alternating_moore()
         data = labeled_sequence_data(ground_truth, depth=3)
         learned = run_GSM(data, output_behavior='moore', transition_behavior='deterministic',
-                          data_format='labeled_sequences', depth_first=True,
-                          compatibility_on_futures=True)
+                          data_format='labeled_sequences', depth_first=True)
         self.assertTrue(bisimilar(learned, ground_truth))
 
 

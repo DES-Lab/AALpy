@@ -1,37 +1,79 @@
 import unittest
 
-from aalpy.learning_algs.general_passive.GsmNode import GsmNode, TransitionInfo, unknown_output
+from aalpy.learning_algs.general_passive.DataHandler import CountOnPTADataHandler
+from aalpy.learning_algs.general_passive.GsmNode import GsmNode, unknown_output
 from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import (
-    AIC_score, EDSM_frequency_score, EDSM_score, ScoreCalculation, ScoreCombinator, ScoreWithKTail,
+    ScoreCalculation,
+    AIC_score, EDSM_frequency_score, EDSM_score, SimpleScoreCalculation, ScoreCombinator, ScoreWithKTail,
     ScoreWithSinks, differential_info, hoeffding_compatibility, local_to_global_compatibility, lower_threshold,
-    make_greedy, transform_score,
+    greedy_score, score_transformation, SpecialScores
 )
 
 
 def node_with_counts(counts, prefix_access_pair=(None, unknown_output)):
     """Builds a node whose single input 'i' has the given {output: count} outgoing transitions."""
-    node = GsmNode(prefix_access_pair, None)
+    dh = CountOnPTADataHandler()
+    node = GsmNode(prefix_access_pair, None, dh.init_data())
     for out_sym, count in counts.items():
-        target = GsmNode(('i', out_sym), node)
-        node.transitions['i'][out_sym] = TransitionInfo(target, count, target, count)
+        target = GsmNode(('i', out_sym), node, dh.init_data())
+        node.transitions['i'][out_sym] = target
+    node.data.transition_count['i'] = counts
+    node.data.pta_count['i'] = counts
     return node
 
 
 class TestScoreCalculationDefaults(unittest.TestCase):
     def test_default_local_compatibility_always_true(self):
-        sc = ScoreCalculation()
-        self.assertTrue(sc.local_compatibility(GsmNode((None, None), None), GsmNode((None, None), None)))
-        self.assertFalse(sc.has_local_compatibility())
+        sc = SimpleScoreCalculation()
+        self.assertTrue(sc.local_compatibility(GsmNode((None, None), None, None), GsmNode((None, None), None, None)))
 
     def test_default_score_function_always_true(self):
-        sc = ScoreCalculation()
+        sc = SimpleScoreCalculation()
         self.assertTrue(sc.score_function({}))
         self.assertFalse(sc.has_score_function())
 
     def test_custom_functions_are_detected_as_overridden(self):
-        sc = ScoreCalculation(local_compatibility=lambda a, b: False, score_function=lambda p: 42)
-        self.assertTrue(sc.has_local_compatibility())
+        sc = SimpleScoreCalculation(local_compatibility=lambda a, b: False, score_function=lambda p: 42)
         self.assertTrue(sc.has_score_function())
+
+
+class TestOverrideDetection(unittest.TestCase):
+    def test_plain_subclass_reports_no_overrides(self):
+        class Plain(ScoreCalculation):
+            pass
+
+        self.assertFalse(Plain().has_local_compatibility())
+        self.assertFalse(Plain().has_score_function())
+
+    def test_subclass_overriding_methods_is_detected(self):
+        class Custom(ScoreCalculation):
+            def local_compatibility(self, a, b):
+                return True
+
+            def score_function(self, part):
+                return 1
+
+        self.assertTrue(Custom().has_local_compatibility())
+        self.assertTrue(Custom().has_score_function())
+
+
+class TestScoreCombinatorAggregation(unittest.TestCase):
+    def test_no_early_verdict_when_no_sub_score_has_one(self):
+        # a combined early verdict must stay NoScore, otherwise the partitioning is never built
+        comb = ScoreCombinator([SimpleScoreCalculation(), SimpleScoreCalculation()])
+        node = node_with_counts({})
+        self.assertIs(comb.initialize_merge(node, node, True), SpecialScores.NoScore)
+
+    def test_single_rejecting_sub_score_rejects(self):
+        aggregate = ScoreCombinator.default_aggregate_score
+        self.assertIs(aggregate([1, SpecialScores.ImmediateReject]), SpecialScores.ImmediateReject)
+
+    def test_single_undecided_sub_score_stays_undecided(self):
+        aggregate = ScoreCombinator.default_aggregate_score
+        self.assertIs(aggregate([SpecialScores.NoScore, SpecialScores.ImmediateAccept]), SpecialScores.NoScore)
+
+    def test_plain_scores_are_collected_into_a_list(self):
+        self.assertEqual(ScoreCombinator.default_aggregate_score([1, 2]), [1, 2])
 
 
 class TestHoeffdingCompatibility(unittest.TestCase):
@@ -54,77 +96,80 @@ class TestHoeffdingCompatibility(unittest.TestCase):
         self.assertTrue(compat(a, b))
 
     def test_disjoint_inputs_are_compatible(self):
-        a = GsmNode((None, None), None)
-        a.transitions['i']['x'] = TransitionInfo(GsmNode(('i', 'x'), a), 100, GsmNode(('i', 'x'), a), 100)
-        b = GsmNode((None, None), None)
-        b.transitions['j']['y'] = TransitionInfo(GsmNode(('j', 'y'), b), 100, GsmNode(('j', 'y'), b), 100)
+        dh = CountOnPTADataHandler()
+        a = GsmNode((None, None), None, dh.init_data())
+        a.data.transition_count = a.data.pta_count = {'i': {'x': 100}}
+        b = GsmNode((None, None), None, dh.init_data())
+        b.data.transition_count = b.data.pta_count = {'j': {'y': 100}}
         compat = hoeffding_compatibility(0.05)
         self.assertTrue(compat(a, b))
 
 
 class TestScoreWithKTail(unittest.TestCase):
     def test_beyond_depth_k_is_always_compatible(self):
-        always_false = ScoreCalculation(local_compatibility=lambda a, b: False)
+        always_false = SimpleScoreCalculation(local_compatibility=lambda a, b: False)
         wrapped = ScoreWithKTail(always_false, k=1)
 
-        root = GsmNode((None, None), None)
-        blue_shallow = GsmNode(('a', None), root)
-        blue_shallow_child = GsmNode(('a', None), blue_shallow)
+        root = GsmNode((None, None), None, None)
+        blue_shallow = GsmNode(('a', None), root, None)
+        blue_shallow_child = GsmNode(('a', None), blue_shallow, None)
 
-        wrapped.reset()
+        wrapped.initialize_merge(root, blue_shallow, True)
         # first call establishes the depth offset at blue_shallow's depth (1)
         self.assertFalse(wrapped.local_compatibility(root, blue_shallow))
         # a node one level deeper than the offset (depth 2) is beyond k=1 -> compatible regardless
-        self.assertTrue(wrapped.local_compatibility(root, blue_shallow_child))
+        self.assertIsNone(wrapped.local_compatibility(root, blue_shallow_child))
 
     def test_within_depth_k_delegates_to_wrapped_score(self):
-        always_false = ScoreCalculation(local_compatibility=lambda a, b: False)
+        always_false = SimpleScoreCalculation(local_compatibility=lambda a, b: False)
         wrapped = ScoreWithKTail(always_false, k=5)
-        root = GsmNode((None, None), None)
-        blue = GsmNode(('a', None), root)
-        wrapped.reset()
+        root = GsmNode((None, None), None, None)
+        blue = GsmNode(('a', None), root, None)
+        wrapped.initialize_merge(root, blue, True)
         self.assertFalse(wrapped.local_compatibility(root, blue))
 
 
 class TestScoreWithSinks(unittest.TestCase):
     def test_rejects_merge_between_sink_and_non_sink(self):
-        always_true = ScoreCalculation(local_compatibility=lambda a, b: True)
+        always_true = SimpleScoreCalculation(local_compatibility=lambda a, b: True)
         is_sink = lambda n: n.get_prefix_output() == 'sink'
         wrapped = ScoreWithSinks(always_true, sink_cond=is_sink)
-        wrapped.reset()
 
-        sink_node = GsmNode((None, 'sink'), None)
-        normal_node = GsmNode((None, 'normal'), None)
-        self.assertFalse(wrapped.local_compatibility(sink_node, normal_node))
+        sink_node = GsmNode((None, 'sink'), None, None)
+        normal_node = GsmNode((None, 'normal'), None, None)
+        # early reject
+        self.assertFalse(wrapped.initialize_merge(sink_node, normal_node, True))
+        # accept if encountered later
+        self.assertTrue(wrapped.local_compatibility(sink_node, normal_node))
 
     def test_allows_merge_between_two_sinks_by_default(self):
-        always_true = ScoreCalculation(local_compatibility=lambda a, b: True)
+        always_true = SimpleScoreCalculation(local_compatibility=lambda a, b: True)
         is_sink = lambda n: n.get_prefix_output() == 'sink'
         wrapped = ScoreWithSinks(always_true, sink_cond=is_sink)
-        wrapped.reset()
 
-        sink_a = GsmNode((None, 'sink'), None)
-        sink_b = GsmNode((None, 'sink'), None)
+        sink_a = GsmNode((None, 'sink'), None, None)
+        sink_b = GsmNode((None, 'sink'), None, None)
+        self.assertIsNone(wrapped.initialize_merge(sink_a, sink_b, True))
         self.assertTrue(wrapped.local_compatibility(sink_a, sink_b))
 
     def test_rejects_merge_between_two_sinks_when_disallowed(self):
-        always_true = ScoreCalculation(local_compatibility=lambda a, b: True)
+        always_true = SimpleScoreCalculation(local_compatibility=lambda a, b: True)
         is_sink = lambda n: n.get_prefix_output() == 'sink'
         wrapped = ScoreWithSinks(always_true, sink_cond=is_sink, allow_sink_merge=False)
-        wrapped.reset()
 
-        sink_a = GsmNode((None, 'sink'), None)
-        sink_b = GsmNode((None, 'sink'), None)
-        self.assertFalse(wrapped.local_compatibility(sink_a, sink_b))
+        sink_a = GsmNode((None, 'sink'), None, None)
+        sink_b = GsmNode((None, 'sink'), None, None)
+        self.assertFalse(wrapped.initialize_merge(sink_a, sink_b, True))
+        self.assertTrue(wrapped.local_compatibility(sink_a, sink_b))
 
     def test_sink_check_only_applies_on_first_call(self):
-        always_true = ScoreCalculation(local_compatibility=lambda a, b: True)
+        always_true = SimpleScoreCalculation(local_compatibility=lambda a, b: True)
         is_sink = lambda n: n.get_prefix_output() == 'sink'
         wrapped = ScoreWithSinks(always_true, sink_cond=is_sink, allow_sink_merge=False)
-        wrapped.reset()
 
-        sink_a = GsmNode((None, 'sink'), None)
-        normal = GsmNode((None, 'normal'), None)
+        sink_a = GsmNode((None, 'sink'), None, None)
+        normal = GsmNode((None, 'normal'), None, None)
+        self.assertFalse(wrapped.initialize_merge(normal, normal, True))
         # consume the "first call" check with a compatible (non-sink) pair
         self.assertTrue(wrapped.local_compatibility(normal, normal))
         # subsequent calls skip the sink check entirely, so this doesn't get rejected
@@ -133,32 +178,32 @@ class TestScoreWithSinks(unittest.TestCase):
 
 class TestScoreCombinator(unittest.TestCase):
     def test_default_aggregate_compatibility_commits_to_first_non_none(self):
-        s1 = ScoreCalculation(local_compatibility=lambda a, b: None)
-        s2 = ScoreCalculation(local_compatibility=lambda a, b: False)
+        s1 = SimpleScoreCalculation(local_compatibility=lambda a, b: None)
+        s2 = SimpleScoreCalculation(local_compatibility=lambda a, b: False)
         combined = ScoreCombinator([s1, s2])
         self.assertFalse(combined.local_compatibility(None, None))
 
-    def test_default_aggregate_compatibility_true_when_all_none(self):
-        s1 = ScoreCalculation(local_compatibility=lambda a, b: None)
+    def test_default_aggregate_compatibility_none_when_all_none(self):
+        s1 = SimpleScoreCalculation(local_compatibility=lambda a, b: None)
         combined = ScoreCombinator([s1])
-        self.assertTrue(combined.local_compatibility(None, None))
+        self.assertIsNone(combined.local_compatibility(None, None))
 
     def test_default_aggregate_score_collects_all_scores(self):
-        s1 = ScoreCalculation(score_function=lambda p: 1)
-        s2 = ScoreCalculation(score_function=lambda p: 2)
+        s1 = SimpleScoreCalculation(score_function=lambda p: 1)
+        s2 = SimpleScoreCalculation(score_function=lambda p: 2)
         combined = ScoreCombinator([s1, s2])
         self.assertEqual(combined.score_function({}), [1, 2])
 
     def test_reset_delegates_to_all_scores(self):
         calls = []
 
-        class Tracking(ScoreCalculation):
-            def reset(self):
+        class Tracking(SimpleScoreCalculation):
+            def initialize_merge(self, red, blue, first_pass):
                 calls.append(id(self))
 
         s1, s2 = Tracking(), Tracking()
         combined = ScoreCombinator([s1, s2])
-        combined.reset()
+        combined.initialize_merge(None, None, True)
         self.assertEqual(len(calls), 2)
 
 
@@ -187,34 +232,34 @@ class TestDifferentialInfo(unittest.TestCase):
 
 class TestScoreTransforms(unittest.TestCase):
     def test_transform_score_on_plain_value(self):
-        self.assertEqual(transform_score(5, lambda x: x * 2), 10)
+        self.assertEqual(score_transformation(lambda x: x * 2)(5), 10)
 
     def test_transform_score_on_callable(self):
-        fun = transform_score(lambda part: 5, lambda x: x * 2)
+        fun = score_transformation(lambda x: x * 2)(lambda part: 5)
         self.assertEqual(fun({}), 10)
 
     def test_transform_score_on_score_calculation(self):
         # regression test: transform_score used to reassign score.score_function to a lambda that
         # referenced score.score_function again, causing infinite recursion on the first call.
-        sc = ScoreCalculation(score_function=lambda part: 5)
-        transformed = transform_score(sc, lambda x: x * 2)
+        sc = SimpleScoreCalculation(score_function=lambda part: 5)
+        transformed = score_transformation(lambda x: x * 2)(sc)
         self.assertIs(transformed, sc)
         self.assertEqual(transformed.score_function({}), 10)
 
     def test_transform_score_on_score_calculation_can_be_applied_twice(self):
-        sc = ScoreCalculation(score_function=lambda part: 5)
-        transform_score(sc, lambda x: x * 2)
-        transform_score(sc, lambda x: x + 1)
+        sc = SimpleScoreCalculation(score_function=lambda part: 5)
+        score_transformation(lambda x: x * 2)(sc)
+        score_transformation(lambda x: x + 1)(sc)
         self.assertEqual(sc.score_function({}), 11)
 
     def test_make_greedy_rejects_only_false(self):
-        self.assertTrue(make_greedy(0))
-        self.assertTrue(make_greedy('anything'))
-        self.assertFalse(make_greedy(False))
+        self.assertTrue(greedy_score(0))
+        self.assertTrue(greedy_score('anything') is SpecialScores.ImmediateAccept)
+        self.assertTrue(greedy_score(False) is SpecialScores.ImmediateReject)
 
     def test_lower_threshold_rejects_values_at_or_below_threshold(self):
         self.assertEqual(lower_threshold(5, 3), 5)
-        self.assertFalse(lower_threshold(3, 3))
+        self.assertEqual(lower_threshold(3, 3), 3)
         self.assertFalse(lower_threshold(1, 3))
 
 
