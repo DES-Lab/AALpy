@@ -136,6 +136,8 @@ class CacheSUL(SUL):
     def __getattr__(self, name):
         # Forward attribute/method lookups that CacheSUL does not define to the wrapped SUL,
         # so wrappers like Wrapper(SUL) stay accessible through the cache (e.g. from an equivalence oracle)
+        if name == 'sul':
+            raise AttributeError(name)
         return getattr(self.sul, name)
 
     def query(self, word: tuple) -> list:
