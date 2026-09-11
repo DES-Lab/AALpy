@@ -98,6 +98,12 @@ class ScoreCalculation(ABC):
         """
         return self.__class__.score_function is not ScoreCalculation.score_function
 
+    def override_default_checks(self) -> bool:
+        """
+        Determines whether default compatibility checks for "Moore-ness" and determinism should be performed.
+        """
+        return False
+
 
 class SimpleScoreCalculation(ScoreCalculation):
     def __init__(self, local_compatibility: LocalCompatibilityFunction = None, score_function: ScoreFunction = None) -> None:
