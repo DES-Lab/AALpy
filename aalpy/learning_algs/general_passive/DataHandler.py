@@ -104,9 +104,12 @@ class DataHandler(Generic[T], ABC):
                 node = GsmNode((in_sym, out_sym), curr_node, self.init_data())
                 transitions[out_sym] = node
             elif len(transitions) == 1:
-                node = next(iter(transitions.values()))
+                existing_out_sym, node = next(iter(transitions.keys()))
+                if existing_out_sym != out_sym and unknown_output not in [existing_out_sym, out_sym]:
+                    raise ValueError("Nondeterminism encountered for GSM with labeled_sequences. not supported")
             else:
-                raise ValueError("Nondeterminism encountered for GSM with labeled_sequences. not supported")
+                assert False, "failed to construct deterministic PTA or raise an exception where not possible"
+                
             self.aggregate_data(curr_node, in_value, out_value, node)
             curr_node = node
 
