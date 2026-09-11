@@ -43,18 +43,6 @@ class CountData(StochasticData):
     def count(self):
         return sum(sum(trans.values()) for trans in self.transition_count.values())
 
-    @staticmethod
-    def merge(x: CountDict, y: CountDict) -> CountDict:
-        for in_sym, y_o_dict in y.items():
-            x_o_dict = x.get(in_sym, None)
-            if x_o_dict is None:
-                # copy, don't alias: x must not keep changing if y's dict is mutated afterwards
-                x[in_sym] = y_o_dict.copy()
-                continue
-            for out_sym, count in y_o_dict.items():
-                int_dict_increment(x_o_dict, out_sym, count)
-        return x
-
     def get_probabilities(self) -> ProbabilityDict:
         ret = dict()
         for in_sym, trans in self.transition_count.items():
