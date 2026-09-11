@@ -268,6 +268,8 @@ class CountDataHandler(DataHandler[CountData]):
         return CountData()
 
     def aggregate_data(self, src_node: 'GsmNode[CountData]', in_value, out_value, dst_node: 'GsmNode[CountData]'):
+        if out_value is unknown_output:
+            raise RuntimeError(f"{self.__class__.__name__} does not support non-prefix-closed data")
         if src_node is not None:
             int_dict_increment(src_node.data.transition_count[in_value], out_value, 1)
 
@@ -284,6 +286,8 @@ class CountOnPTADataHandler(CountDataHandler, DataHandler[CountOnPTAData]):
         return ret
 
     def aggregate_data(self, src_node: 'GsmNode[CountOnPTAData]', in_value, out_value, dst_node: 'GsmNode[CountOnPTAData]'):
+        if out_value is unknown_output:
+            raise RuntimeError(f"{self.__class__.__name__} does not support non-prefix-closed data")
         if src_node is None:
             return
         int_dict_increment(src_node.data.transition_count[in_value], out_value, 1)
