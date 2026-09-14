@@ -104,7 +104,7 @@ class DataHandler(Generic[T], ABC):
                 node = GsmNode((in_sym, out_sym), curr_node, self.init_data())
                 transitions[out_sym] = node
             elif len(transitions) == 1:
-                existing_out_sym, node = next(iter(transitions.keys()))
+                existing_out_sym, node = next(iter(transitions.items()))
                 if existing_out_sym != out_sym and unknown_output not in [existing_out_sym, out_sym]:
                     raise ValueError("Nondeterminism encountered for GSM with labeled_sequences. not supported")
             else:

@@ -1,6 +1,7 @@
 # Generic prefix-tree / observation-tree node structure used by the general passive
 # (state-merging) learning algorithms, plus conversion to concrete AALpy automaton types.
 import pathlib
+import warnings
 from collections import defaultdict
 from collections.abc import Callable, Iterable, Iterator, Sequence
 from typing import Any, TypeVar, Generic
@@ -273,6 +274,15 @@ class GsmNode(Generic[T]):
         }
 
         automaton_class, state_class = type_dict[(output_behavior, transition_behavior)]
+
+        maybe_input_alphabet = self.transitions.keys()
+        if any(node.transitions.keys() != maybe_input_alphabet for node in nodes):
+            warnings.warn("Automaton is not input-complete. Consider calling .make_input_complete().")
+
+        for node in nodes:
+            if node.get_prefix_output() is unknown_output and (node.predecessor is not None or output_behavior == "moore"):
+                warnings.warn("Automaton has unknown outputs")
+                break
 
         # create states
         state_map = dict()
