@@ -29,7 +29,7 @@ class TestCountDataHandler(unittest.TestCase):
 class TestCountOnPTADataHandler(unittest.TestCase):
     def test_copy_keeps_pta_data(self):
         dh = CountOnPTADataHandler()
-        pta = counting_pta(dh, 'labeled_sequences', [(('a',), True), (('b',), False)])
+        pta = counting_pta(dh, 'io_traces', [[True, ('a',True), ('b', False)]])
         copy = dh.copy(pta.data)
         self.assertIsInstance(copy, type(pta.data))
         self.assertEqual(copy.pta_count, pta.data.pta_count)
@@ -39,7 +39,7 @@ class TestCountOnPTADataHandler(unittest.TestCase):
 class TestCreatePTA(unittest.TestCase):
     def test_labeled_sequences_initialize_node_data(self):
         dh = CountOnPTADataHandler()
-        pta = counting_pta(dh, 'labeled_sequences', [(('a', 'b'), True), (('a',), False)])
+        pta = counting_pta(dh, 'io_traces', [[True, ('a',True), ('b', False)]])
         for node in pta.get_all_nodes():
             self.assertIsNotNone(node.data)
 
