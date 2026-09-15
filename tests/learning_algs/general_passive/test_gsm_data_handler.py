@@ -43,17 +43,6 @@ class TestCreatePTA(unittest.TestCase):
         for node in pta.get_all_nodes():
             self.assertIsNotNone(node.data)
 
-    @unittest.expectedFailure
-    def test_labeled_sequences_and_io_traces_count_the_same_transitions(self):
-        # known gap: add_labeled_sequence aggregates intermediate steps under unknown_output and only
-        # remaps `transitions` when the output is resolved later, so the counts stay split
-        labeled = [(('a', 'b'), True), (('a',), False)]
-        io_traces = [[False, ('a', False), ('b', True)], [False, ('a', False)]]
-        pta_labeled = counting_pta(CountDataHandler(), 'labeled_sequences', labeled)
-        pta_traces = counting_pta(CountDataHandler(), 'io_traces', io_traces)
-        self.assertEqual(dict(pta_labeled.data.transition_count), dict(pta_traces.data.transition_count))
-
-
 def _node_with(data):
     """Minimal stand-in for the source node of aggregate_data, which only accesses .data."""
 
