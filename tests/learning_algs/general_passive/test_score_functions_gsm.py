@@ -271,10 +271,10 @@ class TestBuiltinScoreFunctions(unittest.TestCase):
         result = score_fun({old1: merged})
         self.assertFalse(result)
 
-    def test_edsm_frequency_score_counts_contradicted_evidence(self):
+    def test_edsm_frequency_score_counts_accumulated_evidence(self):
         score_fun = EDSM_frequency_score(min_evidence=-1)
         old_node = node_with_counts({'x': 5})
-        new_node = node_with_counts({'x': 10})  # count changed by the merge -> contradicted evidence
+        new_node = node_with_counts({'x': 10})  # count changed by the merge -> accumulated evidence
         result = score_fun({old_node: new_node})
         self.assertEqual(result, 5)
 

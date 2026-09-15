@@ -499,10 +499,10 @@ def AIC_score(alpha: float = 0) -> ScoreFunction:
 
 def EDSM_frequency_score(min_evidence: int = 0) -> ScoreFunction:
     """
-    Build a score function counting the total evidence (transition count) contradicted by a merge.
+    Build a score function counting the total evidence (transition count) accumulated by a merge.
 
     :param int min_evidence: Minimum evidence required for the merge to be accepted.
-    :return ScoreFunction: Score function computing the total contradicting evidence of a merge partition.
+    :return ScoreFunction: Score function computing the total accumulated evidence of a merge partition.
     """
     def score(part: dict[GsmNode[CountData], GsmNode[CountData]]) -> Any:
         total_evidence = 0

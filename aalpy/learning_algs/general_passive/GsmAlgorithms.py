@@ -10,7 +10,7 @@ from aalpy.learning_algs.general_passive.DataHandler import CountOnPTADataHandle
 from aalpy.learning_algs.general_passive.Instrumentation import ProgressReport
 from aalpy.learning_algs.general_passive.GsmNode import GsmNode, unknown_output
 from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import SimpleScoreCalculation, ScoreWithKTail, ScoreIOAlergiaWithEDSM
-from aalpy.utils.HelperFunctions import dfa_from_moore, mc_format_to_mdp, mc_from_mdp
+from aalpy.utils.HelperFunctions import dfa_from_moore, mc_format_to_mdp, mc_from_mdp, ensure_input_complete
 
 
 def run_EDSM(data: list, automaton_type: str, input_completeness: str | None = None,
@@ -31,7 +31,7 @@ def run_EDSM(data: list, automaton_type: str, input_completeness: str | None = N
 
     print_level = ProgressReport(1) if print_info else None
 
-    def EDSM_score(part: dict[GsmNode, GsmNode]) -> int:
+    def _edsm_evidence_score(part: dict[GsmNode, GsmNode]) -> int:
         reverse_partition = defaultdict(list)
         for original_node, resulting_node in part.items():
             reverse_partition[resulting_node].append(original_node)
@@ -45,7 +45,7 @@ def run_EDSM(data: list, automaton_type: str, input_completeness: str | None = N
                     evidence += 1
         return evidence
 
-    score = SimpleScoreCalculation(local_compatibility=GsmNode.deterministic_compatible, score_function=EDSM_score)
+    score = SimpleScoreCalculation(local_compatibility=GsmNode.deterministic_compatible, score_function=_edsm_evidence_score)
 
     internal_automaton_type = 'moore' if automaton_type != 'mealy' else automaton_type
 
@@ -56,15 +56,7 @@ def run_EDSM(data: list, automaton_type: str, input_completeness: str | None = N
     if automaton_type == 'dfa':
         learned_model = dfa_from_moore(learned_model)
 
-    if not learned_model.is_input_complete():
-        if not input_completeness:
-            if print_info:
-                print('Warning: Learned Model is not input complete (inputs not defined for all states). '
-                      'Consider calling .make_input_complete()')
-        else:
-            if print_info:
-                print(f'Learned model was not input complete. Adapting it with {input_completeness} transitions.')
-            learned_model.make_input_complete(input_completeness)
+    ensure_input_complete(learned_model, input_completeness, print_info)
 
     return learned_model
 
@@ -98,15 +90,7 @@ def run_k_tails(data: list, automaton_type: str, k: int, input_completeness: str
                             transition_behavior="nondeterministic",
                             score_calc=score, data_format='io_traces', instrumentation=print_level)
 
-    if not learned_model.is_input_complete():
-        if not input_completeness:
-            if print_info:
-                print('Warning: Learned Model is not input complete (inputs not defined for all states). '
-                      'Consider calling .make_input_complete()')
-        else:
-            if print_info:
-                print(f'Learned model was not input complete. Adapting it with {input_completeness} transitions.')
-            learned_model.make_input_complete(input_completeness)
+    ensure_input_complete(learned_model, input_completeness, print_info)
 
     return learned_model
 

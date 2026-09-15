@@ -92,8 +92,11 @@ class DataHandler(Generic[T], ABC):
         in_sym = None
 
         if len(inputs) == 0:
-            self.aggregate_data(None, no_op_input, output, root_node)
             in_sym, out_sym = self.abstract(no_op_input, output)
+            existing_out_sym = root_node.get_prefix_output()
+            if existing_out_sym is not unknown_output and existing_out_sym != out_sym:
+                raise ValueError("Nondeterminism encountered for GSM with labeled_sequences. not supported")
+            self.aggregate_data(None, no_op_input, output, root_node)
 
         # step through inputs and add transitions
         for idx, in_value in enumerate(inputs):
@@ -184,7 +187,7 @@ class DataHandler(Generic[T], ABC):
 
         :param Any in_val: The input value.
         :param Any out_val: The output value.
-        :return tuple[Any, Any]: The abstract output value and the input symbols.
+        :return tuple[Any, Any]: The abstracted input and output symbols.
         """
         return in_val, out_val
 

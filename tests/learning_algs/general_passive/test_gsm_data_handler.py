@@ -43,6 +43,10 @@ class TestCreatePTA(unittest.TestCase):
         for node in pta.get_all_nodes():
             self.assertIsNotNone(node.data)
 
+    def test_conflicting_empty_input_labels_raise(self):
+        with self.assertRaises(ValueError):
+            counting_pta(CountDataHandler(), 'labeled_sequences', [([], 'a'), ([], 'b')])
+
 def _node_with(data):
     """Minimal stand-in for the source node of aggregate_data, which only accesses .data."""
 

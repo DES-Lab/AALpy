@@ -6,7 +6,7 @@ from aalpy.automata import Dfa, DfaState, MooreMachine, MooreState, MealyMachine
 from aalpy.learning_algs.general_passive.DataHandler import DataHandler, NoOpDataHandler, DataFormat
 from aalpy.learning_algs.general_passive.GeneralizedStateMerging import GeneralizedStateMerging, Instrumentation, run_GSM
 from aalpy.learning_algs.general_passive.GsmNode import GsmNode, OutputBehavior
-from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import SimpleScoreCalculation
+from aalpy.learning_algs.general_passive.ScoreFunctionsGSM import SimpleScoreCalculation, ScoreCalculation, SpecialScores
 from aalpy.utils.HelperFunctions import dfa_from_moore
 from aalpy.utils.ModelChecking import bisimilar
 
@@ -94,6 +94,20 @@ class TestRunGsmDeterministic(unittest.TestCase):
                           data_format='io_traces')
         self.assertEqual(len(learned.states), 2)
         self.assertTrue(bisimilar(learned, ground_truth))
+
+    def test_override_default_checks_bypasses_root_moore_check(self):
+        class AlwaysCompatible(ScoreCalculation):
+            def override_default_checks(self):
+                return True
+            def local_compatibility(self, a, b):
+                return True
+            def score_function(self, part):
+                return SpecialScores.ImmediateAccept
+
+        data = [([], True), (('a',), False)]
+        learned = run_GSM(data, output_behavior='moore', transition_behavior='deterministic',
+                          data_format='labeled_sequences', score_calc=AlwaysCompatible(), convert=False)
+        self.assertEqual(len(learned.get_all_nodes()), 1)
 
     def test_dfa_via_moore_and_dfa_from_moore_conversion(self):
         q0 = DfaState('q0', is_accepting=True)

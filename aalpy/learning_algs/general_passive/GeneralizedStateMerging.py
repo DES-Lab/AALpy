@@ -313,7 +313,7 @@ class GeneralizedStateMerging:
         if first_pass:
             # for Moore machines the outputs have to match. for prefix-closed data (io-traces) this check is sufficient
             # since Moore-ness is preserved for implied merges.
-            if self.output_behavior == "moore" and not GsmNode.moore_compatible(red, blue):
+            if not self.score_calc.override_default_checks() and self.output_behavior == "moore" and not GsmNode.moore_compatible(red, blue):
                 partitioning.score = SpecialScores.ImmediateReject
                 return
 
@@ -471,7 +471,7 @@ def run_GSM(data: list, *,
     """
     Performs a state merging algorithm in the red-blue framework on provided data.
 
-    :param list data: Data used for learning. Recorded behavior of the system.
+    :param list data: Data used for learning (recorded behavior of the system), or an already-built GsmNode tree.
     :param OutputBehavior output_behavior: Specifies whether outputs are emitted by states ("moore") or transitions ("mealy").
     :param TransitionBehavior transition_behavior: Either "deterministic", "nondeterministic" or "stochastic".
     :param ScoreCalculation score_calc: A ScoreCalculation object which determines how compatibility and merge scores are calculated.

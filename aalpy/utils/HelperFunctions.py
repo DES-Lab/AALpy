@@ -258,6 +258,25 @@ def make_input_complete(automaton: Any, missing_transition_go_to: str = 'self_lo
     return automaton
 
 
+def ensure_input_complete(learned_model: Any, input_completeness: str | None, print_info: bool) -> None:
+    """
+    Warns about (or fixes) input incompleteness of a learned model, as commonly needed after passive learning.
+
+    :param Any learned_model: Automaton to check.
+    :param str | None input_completeness: None to only warn, else 'self_loop' or 'sink_state' to fix it.
+    :param bool print_info: Whether to print progress/warning information.
+    """
+    if not learned_model.is_input_complete():
+        if not input_completeness:
+            if print_info:
+                print('Warning: Learned Model is not input complete (inputs not defined for all states). '
+                      'Consider calling .make_input_complete()')
+        else:
+            if print_info:
+                print(f'Learned model was not input complete. Adapting it with {input_completeness} transitions.')
+            learned_model.make_input_complete(input_completeness)
+
+
 def convert_i_o_traces_for_RPNI(sequences: list, automaton_type: str = "mealy") -> list[tuple]:
     """
     Converts a list of input-output sequences to RPNI format.
