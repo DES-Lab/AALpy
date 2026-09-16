@@ -421,17 +421,17 @@ class GsmNode(Generic[T]):
             file_ext = 'dot'
         graph.write(path=str(path) + "." + file_ext, prog=engine, format=format)
 
-    def make_input_complete(self, target: 'GsmNode[T] | str' = "self-loop") -> list[tuple['GsmNode', Any, Any]]:
+    def make_input_complete(self, target: 'GsmNode[T] | str' = "self_loop") -> list[tuple['GsmNode', Any, Any]]:
         """
         For all reachable nodes, add transitions for all undefined inputs. The output is set using the targets prefix output.
         This function DOES NOT touch the `data` field of affected nodes. Updating this is in the responsibility of the caller.
 
-        :param GsmNode[T] | str target: Target node of missing transitions. The special value "self-loop" adds self transitions.
+        :param GsmNode[T] | str target: Target node of missing transitions. The special value "self_loop" adds self transitions.
         :return list[tuple[GsmNode, Any, Any]]: List of (node, input, output) triples for the added transitions.
         """
 
-        if isinstance(target, str) and target != "self-loop":
-            raise ValueError(f"Invalid target {target}. Should be either 'self-loop' or a GsmNode.")
+        if isinstance(target, str) and target != "self_loop":
+            raise ValueError(f"Invalid target {target}. Should be either 'self_loop' or a GsmNode.")
 
         all_nodes = self.get_all_nodes()
         inputs = {in_sym for node in all_nodes for in_sym in node.transitions}
@@ -440,7 +440,7 @@ class GsmNode(Generic[T]):
             for in_sym in inputs:
                 transitions = node.transitions[in_sym]
                 if len(transitions) == 0:
-                    if target == "self-loop":
+                    if target == "self_loop":
                         successor = node
                     else:
                         successor = target
