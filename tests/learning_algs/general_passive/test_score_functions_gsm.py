@@ -62,7 +62,7 @@ class TestScoreCombinatorAggregation(unittest.TestCase):
         # a combined early verdict must stay NoScore, otherwise the partitioning is never built
         comb = ScoreCombinator([SimpleScoreCalculation(), SimpleScoreCalculation()])
         node = node_with_counts({})
-        self.assertIs(comb.initialize_merge(node, node, True), SpecialScores.NoScore)
+        self.assertIs(comb.early_score(node, node), SpecialScores.NoScore)
 
     def test_single_rejecting_sub_score_rejects(self):
         aggregate = ScoreCombinator.default_aggregate_score

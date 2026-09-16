@@ -1271,9 +1271,9 @@ def example_Alergia_extension():
             SimpleFutureBasedCompatibility.__init__(self, compatibility_on_pta=True)
             self.score = None
 
-        def initialize_merge(self, red: GsmNode, blue: GsmNode, first_pass: bool) -> Any:
+        def early_score(self, red: GsmNode, blue: GsmNode) -> Any:
             self.score = 0
-            verdict = super().initialize_merge(red, blue, first_pass)
+            verdict = super().early_score(red, blue)
             if verdict is SpecialScores.ImmediateReject:
                 return verdict
             return self.score

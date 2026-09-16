@@ -34,9 +34,20 @@ class SpecialScores:
 class ScoreCalculation(ABC):
     """Bundles a local compatibility check and a global score function used during state merging."""
 
-    def initialize_merge(self, red: GsmNode, blue: GsmNode, first_pass: bool) -> Any:
+    def early_score(self, red: GsmNode, blue: GsmNode) -> Any:
         """
-        Callback at the beginning of the evaluation of a merge candidate.
+        Callback at the beginning of the evaluation of a merge candidate. This function can be used to compute a score
+        of the merge candidate before constructing the partitioning.
+
+        :param GsmNode red: GsmNode representing the red node of the merge candidate.
+        :param GsmNode blue: GsmNode representing the blue node of the merge candidate.
+        :return: Either an early score for the merge candidate or `None`.
+        """
+        return None
+
+    def initialize_merge(self, red: GsmNode, blue: GsmNode, first_pass: bool):
+        """
+        Callback at the beginning of the evaluation of a merge candidate. It is only called when no early score is present.
 
         :param GsmNode red: GsmNode representing the red node of the merge candidate.
         :param GsmNode blue: GsmNode representing the blue node of the merge candidate.
@@ -44,7 +55,7 @@ class ScoreCalculation(ABC):
           or the second pass (in which the partitioning is completed)
         :return: Either an early score for the merge candidate or `None`.
         """
-        return None
+        pass
 
     def local_compatibility(self, a: GsmNode, b: GsmNode) -> bool | None:
         """
@@ -178,10 +189,7 @@ class SimpleFutureBasedCompatibility(ScoreCalculation):
         self.compatibility_on_pta = compatibility_on_pta
         self.depth_first = depth_first
 
-    def initialize_merge(self, red: GsmNode, blue: GsmNode, first_pass: bool) -> Any:
-        if not first_pass:
-            return
-
+    def early_score(self, red: GsmNode, blue: GsmNode) -> Any:
         if self.compatibility_on_pta and not isinstance(red.data, ShadowPTAData):
             raise TypeError("compatibility_on_pta is set but no PTA data is available")
 
@@ -218,9 +226,9 @@ class ScoreIOAlergiaWithEDSM(SimpleFutureBasedCompatibility):
         self.edsm = edsm
         self.score = None
 
-    def initialize_merge(self, red: GsmNode, blue: GsmNode, first_pass: bool) -> Any:
+    def early_score(self, red: GsmNode, blue: GsmNode) -> Any:
         self.score = 0
-        verdict = super().initialize_merge(red, blue, first_pass)
+        verdict = super().early_score(red, blue)
         if self.edsm is False or verdict is SpecialScores.ImmediateReject:
             return verdict
         return self.score
@@ -239,8 +247,11 @@ class WrappingScore(ScoreCalculation, ABC):
         # if not hasattr(self, "initialized_merge"):
         #     self.initialized_merge = wrapped.initialize_merge
 
-    def initialize_merge(self, red: GsmNode, blue: GsmNode, first_pass: bool) -> Any:
-        return self.wrapped.initialize_merge(red, blue, first_pass)
+    def early_score(self, red: GsmNode, blue: GsmNode) -> Any:
+        return self.wrapped.early_score(red, blue)
+
+    def initialize_merge(self, red: GsmNode, blue: GsmNode, first_pass: bool):
+        self.wrapped.initialize_merge(red, blue, first_pass)
 
     def local_compatibility(self, red: GsmNode, blue: GsmNode) -> bool | None:
         return self.wrapped.local_compatibility(red, blue)
@@ -273,9 +284,9 @@ class ScoreWithKTail(WrappingScore):
 
         self.depth_offset = None
 
-    def initialize_merge(self, red: GsmNode, blue: GsmNode, first_pass: bool) -> Any:
+    def initialize_merge(self, red: GsmNode, blue: GsmNode, first_pass: bool):
         self.depth_offset = blue.get_prefix_length()
-        return self.wrapped.initialize_merge(red, blue, first_pass)
+        self.wrapped.initialize_merge(red, blue, first_pass)
 
     def local_compatibility(self, a: GsmNode, b: GsmNode) -> bool | None:
         """
@@ -309,11 +320,11 @@ class ScoreWithSinks(WrappingScore):
         self.sink_cond = sink_cond
         self.allow_sink_merge = allow_sink_merge
 
-    def initialize_merge(self, red: GsmNode, blue: GsmNode, first_pass: bool) -> Any:
+    def early_score(self, red: GsmNode, blue: GsmNode) -> Any:
         a_sink, b_sink = self.sink_cond(red), self.sink_cond(blue)
         if (a_sink or b_sink) and not (a_sink and b_sink and self.allow_sink_merge):
             return SpecialScores.ImmediateReject
-        return self.wrapped.initialize_merge(red, blue, first_pass)
+        return self.wrapped.early_score(red, blue)
 
 
 class ScoreCombinator(ScoreCalculation):
@@ -335,8 +346,12 @@ class ScoreCombinator(ScoreCalculation):
         self.aggregate_compatibility = aggregate_compatibility or self.default_aggregate_compatibility
         self.aggregate_score = aggregate_score or self.default_aggregate_score
 
-    def initialize_merge(self, red: GsmNode, blue: GsmNode, first_pass: bool) -> Any:
-        scores = [score.initialize_merge(red, blue, first_pass) for score in self.scores]
+    def initialize_merge(self, red: GsmNode, blue: GsmNode, first_pass: bool):
+        for score in self.scores:
+            score.initialize_merge(red, blue, first_pass)
+
+    def early_score(self, red: GsmNode, blue: GsmNode) -> Any:
+        scores = [score.early_score(red, blue) for score in self.scores]
         return self.aggregate_score(scores)
 
     def local_compatibility(self, a: GsmNode, b: GsmNode) -> Any:

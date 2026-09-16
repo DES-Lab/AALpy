@@ -169,8 +169,7 @@ class DataHandler(Generic[T], ABC):
                 self.add_trace(root_node, trace)
         return root_node
 
-    @abstractmethod
-    def init_merge(self, red: 'GsmNode[T]', blue: 'GsmNode[T]', first_pass: bool):
+    def initialize_merge(self, red: 'GsmNode[T]', blue: 'GsmNode[T]', first_pass: bool):
         """
         Callback triggered just before the partitioning for a merge candidate is constructed.
 
@@ -179,7 +178,7 @@ class DataHandler(Generic[T], ABC):
         :param bool first_pass: Indicates whether this is the first partitioning pass for score calculation, or the
           second pass for finalizing the partitioning.
         """
-        ...
+        pass
 
     def abstract(self, in_val: Any, out_val: Any) -> tuple[Any, Any]:
         """
@@ -244,9 +243,6 @@ class NoOpDataHandler(DataHandler[None]):
     def aggregate_data(self, src_node: 'GsmNode[None]', in_sym, out_value, dst_node: 'GsmNode[None]'):
         pass
 
-    def init_merge(self, red: 'GsmNode[None]', blue: 'GsmNode[None]', first_pass: bool):
-        return None
-
     def merge(self, x: None, y: None) -> None:
         return None
 
@@ -255,9 +251,6 @@ class NoOpDataHandler(DataHandler[None]):
 
 
 class CountDataHandler(DataHandler[CountData]):
-    def init_merge(self, red: 'GsmNode[CountData]', blue: 'GsmNode[CountData]', first_pass: bool):
-        pass
-
     def merge(self, x: CountData, y: CountData) -> CountData:
         for in_sym, y_count in y.transition_count.items():
             x_count = x.transition_count[in_sym]

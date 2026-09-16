@@ -319,7 +319,7 @@ class GeneralizedStateMerging:
 
             # check whether there is an early verdict and adapt helper functions accordingly
             # TODO maybe split init from early verdict
-            partitioning.score = self.score_calc.initialize_merge(red, blue, first_pass)
+            partitioning.score = self.score_calc.early_score(red, blue)
             if partitioning.score is not SpecialScores.NoScore:
                 return
             partitioning.remaining_merges = []
@@ -356,8 +356,6 @@ class GeneralizedStateMerging:
                     cow_set.add(id(trans))
                 return trans
         elif partitioning.remaining_merges is None or len(partitioning.remaining_merges) != 0:
-            self.score_calc.initialize_merge(red, blue, first_pass)
-
             # best scoring merge candidate -> can manipulate nodes directly
             red_partitions = red_nodes
             def update_partition(red_node: GsmNode, blue_node: GsmNode | None) -> GsmNode:
@@ -369,7 +367,8 @@ class GeneralizedStateMerging:
             # first pass already did all the work
             return
 
-        self.data_handler.init_merge(red, blue, first_pass)
+        self.score_calc.initialize_merge(red, blue, first_pass)
+        self.data_handler.initialize_merge(red, blue, first_pass)
         q: deque[tuple[GsmNode, GsmNode]] = deque()
 
         if first_pass or partitioning.remaining_merges is None:
