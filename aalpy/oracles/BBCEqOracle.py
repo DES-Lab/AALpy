@@ -113,6 +113,12 @@ class BBCEqOracle(Oracle):
                     # The hypothesis and the SUL have distinct outputs for cex
                     prop_cex = cex
 
+                    # Take the minimal distinguishing prefix of the counterexample
+                    for i in range(min(len(hyp_out), len(sul_out))):
+                        if hyp_out[i] != sul_out[i]:
+                            prop_cex = prop_cex[:i + 1]
+                            break
+
                     if not self.check_all_props_when_a_first_prop_cex_was_found:
                         return cex
 
