@@ -3,6 +3,7 @@ import random
 
 import pytest
 
+from aalpy.base import Oracle
 from aalpy.SULs import AutomatonSUL
 from aalpy.learning_algs import run_KV, run_Lsharp, run_Lstar
 from aalpy.model_checking_oracles import IUOBugDfaModelCheckingOracle
@@ -70,7 +71,7 @@ def is_dfa_input(letter: Tuple[str,Any]) -> bool:
 def mealy_letter_from_dfa_letter(letter: Tuple[str,Any]) -> Any:
     return letter[1]
 
-def generate_random_property_oracle(num_states: int, alphabet: list, num_accepting_states: int):
+def generate_random_property_oracle(num_states: int, alphabet: list, num_accepting_states: int) -> Oracle:
     bug_dfa = generate_random_dfa(
         num_states=num_states,
         alphabet=alphabet,
