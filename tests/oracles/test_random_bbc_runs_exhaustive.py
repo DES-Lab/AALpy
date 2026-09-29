@@ -1,3 +1,4 @@
+from itertools import chain
 import random
 
 import pytest
@@ -141,6 +142,17 @@ def test_bbc_on_small_random_automata_with_few_properties_exhaustive(learning_al
         else:
             assert label in prop_labels_to_counterexample_map
             stored_cex = prop_labels_to_counterexample_map[label]
-
             num_rightfully_violated_properties += 1
+
+            io_pairs_trace = sul.io_query(stored_cex)
+            dfa_io_pairs_trace = [(dfa_input_from_mealy_input(i), dfa_output_from_mealy_output(o)) for (i, o) in io_pairs_trace]
+            dfa_io_trace = tuple(chain(*[[i, o] for (i, o) in dfa_io_pairs_trace]))
+
+            prop.bug_dfa.reset_to_initial()
+            encountered_accepting_state = False
+            for dfa_a in dfa_io_trace:
+                if prop.bug_dfa.step(dfa_a):
+                    encountered_accepting_state = True
+                    break
+            assert encountered_accepting_state
     assert num_rightfully_violated_properties == len(prop_labels_to_counterexample_map)
