@@ -543,7 +543,7 @@ def IUO_dfa_from_IXO_dfa(ixo_dfa: Dfa,
                 continue
 
             # obtain the state for defined_os_and_dsts if it has already been created
-            defined_os_and_dsts = tuple(sorted(defined_os_and_dsts))
+            defined_os_and_dsts = frozenset(defined_os_and_dsts)
             if defined_os_and_dsts in defined_os_and_dsts_to_state_id_map:
                 os_dst_state_id = defined_os_and_dsts_to_state_id_map[defined_os_and_dsts]
                 os_dst_state = iuo_state_map[os_dst_state_id]
