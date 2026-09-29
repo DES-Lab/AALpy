@@ -495,8 +495,8 @@ def IUO_dfa_from_IXO_dfa(ixo_dfa: Dfa,
         for ixo_state in ixo_dfa.states
     }
 
-    inputs = list(frozenset( i for (i, o) in ixo_dfa.get_input_alphabet() ))
-    outputs = list(frozenset( o for (i, o) in ixo_dfa.get_input_alphabet() ))
+    inputs = list(frozenset( i for (i, o) in ixo_dfa.get_input_alphabet() )) # Each input can occur in multiple pairs
+    outputs = list(frozenset( o for (i, o) in ixo_dfa.get_input_alphabet() )) # Each output can occur in multiple pairs
 
     def make_state_id_unique(state_id: str) -> str:
         nonlocal iuo_state_map
