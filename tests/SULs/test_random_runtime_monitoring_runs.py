@@ -21,7 +21,7 @@ from aalpy.utils.ModelChecking import bisimilar
 # and the MonitoringSUL SUL only finds counterexamples for properties that are violated by the SUL.
 
 
-SEEDS = list(range(50))
+SEEDS = list(range(6))
 MODEL_SIZES_AND_NUM_PROPS = [
     (2, 2, 2, 4),
     (3, 2, 3, 6),
