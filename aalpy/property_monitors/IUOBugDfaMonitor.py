@@ -56,11 +56,11 @@ class IUOBugDfaMonitor(PropertyMonitor):
     def step(self, input: Any, output: Any) -> bool:
         """
         Perform state transitions on self.bug_dfa for a given input and output and return True
-        if and only if self.bug_dfa accepts these transitions.
+        if and only if self.bug_dfa rejects these transitions.
 
         :param Any input: Input.
         :param Any output: Output.
-        :return bool: Whether the property described by self.bug_dfa accepts the step.
+        :return bool: Whether the property represented by self.bug_dfa accepts the step.
         """
         violation = self._take_bug_dfa_step(self.to_dfa_input(input))
         if violation and self.report_non_final_violations:
