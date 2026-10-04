@@ -1,9 +1,8 @@
 from typing import Any, Tuple
 import unittest
 
-from aalpy.automata import Dfa, DfaState, MealyMachine, MealyState
+from aalpy.automata import Dfa, DfaState
 from aalpy.property_monitors import IUOBugDfaMonitor
-from aalpy.utils.AutomatonGenerators import generate_random_dfa
 from aalpy.utils.ModelChecking import bisimilar
 
 

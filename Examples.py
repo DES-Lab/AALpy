@@ -1384,7 +1384,6 @@ def black_box_checking_example():
     from aalpy.model_checking_oracles import IUOBugDfaModelCheckingOracle
     from aalpy.oracles import BBCEqOracle, WMethodEqOracle
     from aalpy.SULs import AutomatonSUL
-    from aalpy.utils import generate_random_deterministic_automata
 
     # Define a SUL
     # This Mealy machine with alphabet ['a', 'b'] outputs the sequence ('o', 'x', 'o', 'y') for any input sequence
@@ -1478,10 +1477,9 @@ def black_box_checking_example():
 def runtime_monitoring_example():
     from aalpy.automata import Dfa, MealyMachine
     from aalpy.learning_algs import run_KV
-    from aalpy.oracles import BBCEqOracle, WMethodEqOracle
+    from aalpy.oracles import WMethodEqOracle
     from aalpy.property_monitors import IUOBugDfaMonitor
     from aalpy.SULs import AutomatonSUL, MonitoringSUL
-    from aalpy.utils import generate_random_deterministic_automata
 
     # Define a SUL
     # This Mealy machine with alphabet ['a', 'b'] outputs the sequence ('o', 'x', 'o', 'y') for any input sequence
