@@ -497,7 +497,10 @@ class MonitoringSULTests(unittest.TestCase):
         # Perform a second query which finds the property violation before the end is reached
         second_word = ('a', 'b', 'a', 'b', 'a', 'a')
         expected_second_word_outputs = ('o', 'o', 'o', 'x', 'o', 'o')
-        first_word_outputs = sul.query(second_word)
+        second_word_outputs = sul.query(second_word)
+        self.assertIsNotNone(second_word_outputs)
+        self.assertEqual(tuple(second_word_outputs), expected_second_word_outputs)
+
         self.assertEqual(sul.num_queries, 2)
         self.assertEqual(sul.num_steps, len(first_word) + len(second_word))
         self.assertEqual(sul.num_cached_queries, 0)
