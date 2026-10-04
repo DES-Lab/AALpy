@@ -1539,7 +1539,7 @@ def runtime_monitoring_example():
         num_sul_cached_queries_when_counterexample_is_found = base_sul.num_cached_queries
         num_sul_steps_when_counterexample_is_found = base_sul.num_steps
 
-        print(f"BBC confirmed counterexample for property {label} against the SUL:")
+        print(f"Runtime monitoring confirmed counterexample for property {label} against the SUL:")
         print(f" Counterexample")
         print(f"  Counterexample: {cex}")
         print(f" Learning Algorithm")
