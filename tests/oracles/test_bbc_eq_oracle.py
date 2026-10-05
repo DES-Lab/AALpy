@@ -11,7 +11,7 @@ from aalpy.SULs import AutomatonSUL
 from tests.oracles.test_baseOracle import BaseOracleTests
 
 
-def get_accepting_oracle(alphabet: list, sul: SUL) -> Oracle:
+def accepting_oracle(alphabet: list, sul: SUL) -> Oracle:
     """
     Create an Oracle which never returns a counterexample.
     """
@@ -81,7 +81,7 @@ class BBCEqOracleTests(BaseOracleTests):
         )
         sul = AutomatonSUL(mealy)
 
-        base_oracle = get_accepting_oracle(mealy.get_input_alphabet(), sul)
+        base_oracle = accepting_oracle(mealy.get_input_alphabet(), sul)
         oracle = BBCEqOracle(
             eq_oracle=base_oracle,
             property_oracles=dict()
@@ -127,7 +127,7 @@ class BBCEqOracleTests(BaseOracleTests):
         oracle = BBCEqOracle(
             eq_oracle=base_oracle,
             property_oracles={
-                'SatisfiedProperty': get_accepting_oracle(mealy.get_input_alphabet(), sul)
+                'SatisfiedProperty': accepting_oracle(mealy.get_input_alphabet(), sul)
             },
             property_violation_callback=violation_callback
         )
@@ -179,7 +179,7 @@ class BBCEqOracleTests(BaseOracleTests):
         oracle = BBCEqOracle(
             eq_oracle=base_oracle,
             property_oracles={
-                'SatisfiedProperty': get_accepting_oracle(mealy.get_input_alphabet(), sul),
+                'SatisfiedProperty': accepting_oracle(mealy.get_input_alphabet(), sul),
                 'ViolatedProperty': violated_prop_mc_oracle
             },
             property_violation_callback=violation_callback
@@ -231,7 +231,7 @@ class BBCEqOracleTests(BaseOracleTests):
 
         sul = AutomatonSUL(sul_mealy)
         oracle = BBCEqOracle(
-            eq_oracle=get_accepting_oracle(sul_mealy.get_input_alphabet(), sul),
+            eq_oracle=accepting_oracle(sul_mealy.get_input_alphabet(), sul),
             property_oracles={
                 'Property': prop_mc_oracle
             },
@@ -286,7 +286,7 @@ class BBCEqOracleTests(BaseOracleTests):
 
         sul = AutomatonSUL(sul_mealy)
         oracle = BBCEqOracle(
-            eq_oracle=get_accepting_oracle(sul_mealy.get_input_alphabet(), sul),
+            eq_oracle=accepting_oracle(sul_mealy.get_input_alphabet(), sul),
             property_oracles={
                 'Property': prop_mc_oracle
             },
@@ -343,7 +343,7 @@ class BBCEqOracleTests(BaseOracleTests):
         oracle = BBCEqOracle(
             eq_oracle=base_oracle,
             property_oracles={
-                'SatisfiedProperty': get_accepting_oracle(mealy.get_input_alphabet(), learning_sul),
+                'SatisfiedProperty': accepting_oracle(mealy.get_input_alphabet(), learning_sul),
                 'ViolatedProperty': violated_prop_mc_oracle
             },
             property_violation_callback=violation_callback
@@ -482,7 +482,7 @@ class BBCEqOracleTests(BaseOracleTests):
 
         sul = AutomatonSUL(sul_mealy)
         oracle = BBCEqOracle(
-            eq_oracle=get_accepting_oracle(sul_mealy.get_input_alphabet(), sul),
+            eq_oracle=accepting_oracle(sul_mealy.get_input_alphabet(), sul),
             property_oracles={
                 'ViolatedByHypButNotSUTProperty': violated_by_hyp_but_not_sut_prop_mc_oracle,
                 'ViolatedByHypAndSUTProperty': violated_by_hyp_and_sut_prop_mc_oracle
@@ -563,7 +563,7 @@ class BBCEqOracleTests(BaseOracleTests):
 
         sul = AutomatonSUL(sul_mealy)
         oracle = BBCEqOracle(
-            eq_oracle=get_accepting_oracle(sul_mealy.get_input_alphabet(), sul),
+            eq_oracle=accepting_oracle(sul_mealy.get_input_alphabet(), sul),
             property_oracles={
                 'ViolatedByHypButNotSUTProperty': violated_by_hyp_but_not_sut_prop_mc_oracle,
                 'ViolatedByHypAndSUTProperty': violated_by_hyp_and_sut_prop_mc_oracle
@@ -630,7 +630,7 @@ class BBCEqOracleTests(BaseOracleTests):
         oracle = BBCEqOracle(
             eq_oracle=base_oracle,
             property_oracles={
-                'SatisfiedProperty': get_accepting_oracle(mealy.get_input_alphabet(), sul),
+                'SatisfiedProperty': accepting_oracle(mealy.get_input_alphabet(), sul),
                 'ViolatedProperty': violated_prop_mc_oracle
             },
             property_violation_callback=violation_callback

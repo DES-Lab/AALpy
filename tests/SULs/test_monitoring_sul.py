@@ -7,7 +7,7 @@ from aalpy.property_monitors import IUOBugDfaMonitor
 from aalpy.SULs import AutomatonSUL, MonitoringSUL
 
 
-def get_accepting_monitor() -> PropertyMonitor:
+def accepting_monitor() -> PropertyMonitor:
     """
     Create an Oracle which never returns a counterexample.
     """
@@ -65,7 +65,7 @@ def precise_word_dfa(word: Tuple[str], alphabet=('a', 'b')):
     states[length].transitions = {a: sink for a in alphabet}
     return Dfa(states[0], states)
 
-def get_precise_word_adaptive_query(accepted_input_word: tuple, expected_output_word: tuple) -> Any:
+def precise_word_adaptive_query(accepted_input_word: tuple, expected_output_word: tuple) -> Any:
     """
     Create an adaptive query which provides precisely the accepted_input_word and verifies that it
     receives the expected_output_word.
@@ -155,7 +155,7 @@ class MonitoringSULTests(unittest.TestCase):
         sul = MonitoringSUL(
             sul=base_sul,
             property_monitors={
-                'SatisfiedProperty': get_accepting_monitor()
+                'SatisfiedProperty': accepting_monitor()
             },
             property_violation_callback=violation_callback
         )
@@ -206,7 +206,7 @@ class MonitoringSULTests(unittest.TestCase):
         sul = MonitoringSUL(
             sul=base_sul,
             property_monitors={
-                'SatisfiedProperty': get_accepting_monitor(),
+                'SatisfiedProperty': accepting_monitor(),
                 'ViolatedProperty': violated_prop_monitor
             },
             property_violation_callback=violation_callback
@@ -264,7 +264,7 @@ class MonitoringSULTests(unittest.TestCase):
         sul = MonitoringSUL(
             sul=base_sul,
             property_monitors={
-                'SatisfiedProperty': get_accepting_monitor(),
+                'SatisfiedProperty': accepting_monitor(),
                 'ViolatedProperty': violated_prop_monitor
             }
         )
@@ -315,7 +315,7 @@ class MonitoringSULTests(unittest.TestCase):
         sul = MonitoringSUL(
             sul=base_sul,
             property_monitors={
-                'SatisfiedProperty': get_accepting_monitor(),
+                'SatisfiedProperty': accepting_monitor(),
                 'ViolatedProperty': violated_prop_monitor
             },
             property_violation_callback=violation_callback
@@ -374,7 +374,7 @@ class MonitoringSULTests(unittest.TestCase):
             to_dfa_output=dfa_output_from_mealy_output
         )
 
-        satisfied_prop_monitor = get_accepting_monitor()
+        satisfied_prop_monitor = accepting_monitor()
         sul = MonitoringSUL(
             sul=base_sul,
             property_monitors={
@@ -400,7 +400,7 @@ class MonitoringSULTests(unittest.TestCase):
         )
         base_sul = AutomatonSUL(mealy)
 
-        satisfied_prop_monitor = get_accepting_monitor()
+        satisfied_prop_monitor = accepting_monitor()
         sul = MonitoringSUL(
             sul=base_sul,
             property_monitors={
@@ -465,7 +465,7 @@ class MonitoringSULTests(unittest.TestCase):
         sul = MonitoringSUL(
             sul=base_sul,
             property_monitors={
-                'SatisfiedProperty': get_accepting_monitor(),
+                'SatisfiedProperty': accepting_monitor(),
                 'ViolatedProperty': violated_prop_monitor
             },
             property_violation_callback=violation_callback
@@ -552,7 +552,7 @@ class MonitoringSULTests(unittest.TestCase):
         sul = MonitoringSUL(
             sul=base_sul,
             property_monitors={
-                'SatisfiedProperty': get_accepting_monitor(),
+                'SatisfiedProperty': accepting_monitor(),
                 'ViolatedProperty': violated_prop_monitor
             },
             property_violation_callback=violation_callback
@@ -561,7 +561,7 @@ class MonitoringSULTests(unittest.TestCase):
         # Perform a first adaptive query which finds the property violation partway through the standard word
         first_word = ('a', 'b', 'a', 'b', 'a', 'a', 'b')
         expected_first_word_outputs = ('o', 'o', 'o', 'x', 'o', 'o', 'o')
-        first_word_ads = get_precise_word_adaptive_query(first_word[5:], expected_first_word_outputs[5:])
+        first_word_ads = precise_word_adaptive_query(first_word[5:], expected_first_word_outputs[5:])
         (first_word_performed_inputs, first_word_outputs) = sul.adaptive_query(list(first_word[:5]), first_word_ads)
         self.assertEqual(tuple(first_word_performed_inputs), first_word)
         self.assertIsNotNone(first_word_outputs)
@@ -580,7 +580,7 @@ class MonitoringSULTests(unittest.TestCase):
         # Perform a second adaptive query which finds the property violation partway through the adaptive word
         second_word = ('a', 'b', 'a', 'b', 'a', 'a')
         expected_second_word_outputs = ('o', 'o', 'o', 'x', 'o', 'o')
-        second_word_ads = get_precise_word_adaptive_query(second_word[2:], expected_second_word_outputs[2:])
+        second_word_ads = precise_word_adaptive_query(second_word[2:], expected_second_word_outputs[2:])
         (second_word_performed_inputs, second_word_outputs) = sul.adaptive_query(list(second_word[:2]), second_word_ads)
         self.assertEqual(tuple(second_word_performed_inputs), second_word)
         self.assertIsNotNone(second_word_outputs)
