@@ -251,6 +251,10 @@ class BBCEqOracleTests(BaseOracleTests):
         # since initial_hyp_mealy and the SUT disagree on the prop_oracle_cex's very first input
         self.assertEqual(len(cex), 1)
 
+        # check the oracle's counters
+        self.assertEqual(oracle.num_queries, 1)
+        self.assertEqual(oracle.num_steps, 1)
+
     def test_prop_cex_is_not_found_before_this_is_possible_for_the_hyp(self):
         sul_mealy = MealyMachine.from_state_setup({
             'q0': {'a': ('o0', 'q1')},
@@ -295,6 +299,10 @@ class BBCEqOracleTests(BaseOracleTests):
         cex = oracle.find_cex(initial_hyp_mealy)
         # cex should be None, since initial_hyp_mealy satisfies the property
         self.assertIsNone(cex)
+
+        # check the oracle's counters
+        self.assertEqual(oracle.num_queries, 0)
+        self.assertEqual(oracle.num_steps, 0)
 
     def test_valid_oracle_and_correct_values_when_satisfied_and_violated_properties(self):
         mealy = precise_word_mealy(
@@ -499,6 +507,9 @@ class BBCEqOracleTests(BaseOracleTests):
         # the violation_callback should have been called with a violation for the second property
         self.assertTrue(violated_by_hyp_and_sut_prop_cex_was_found)
 
+        self.assertEqual(oracle.num_queries, 2)
+        self.assertEqual(oracle.num_steps, 3)
+
     def test_optionally_dont_check_all_props_when_a_first_prop_cex_was_found(self):
         sul_mealy = MealyMachine.from_state_setup({
             'q0': {'a': ('o0', 'q1')},
@@ -584,6 +595,10 @@ class BBCEqOracleTests(BaseOracleTests):
         # cex should be shorter than prop_oracle_cex, since the first disagreement between initial_hyp_mealy
         # and the SUT occurs after ('a', 'a')
         self.assertEqual(cex, ('a', 'a'))
+
+        # check the oracle's counters
+        self.assertEqual(oracle.num_queries, 1)
+        self.assertEqual(oracle.num_steps, 2)
 
     def test_properties_with_confirmed_sut_counterexamples_are_excluded_until_reenabled(self):
         mealy = precise_word_mealy(

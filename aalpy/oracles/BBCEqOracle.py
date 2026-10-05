@@ -94,35 +94,48 @@ class BBCEqOracle(Oracle):
             if label in self.violated_properties:
                 continue
 
+            # Check the hypothesis against prop
             cex = prop.find_cex(hypothesis)
 
             # If the property oracle rejects the hypothesis for cex
             if cex is not None:
                 cex = tuple(cex)
 
-                hyp_out = tuple(hypothesis.execute_sequence(hypothesis.initial_state, cex))
-                sul_out = tuple(self.sul.query(cex))
+                # Check cex against the SUL
+                self.reset_hyp_and_sul(hypothesis)
+                cex_rejected_by_sul = False
+                for ind, letter in enumerate(cex):
+                    out_h = hypothesis.step(letter)
+                    out_s = self.sul.step(letter)
+                    self.num_steps += 1
+
+                    if out_h != out_s:
+                        # Cex is not a valid counterexample for the SUL
+                        cex_rejected_by_sul = True
+
+                        # Remember the relevant prefix for cex, as it can be used for hypothesis refinement
+                        if prop_cex is None:
+                            prop_cex = tuple(cex[:ind + 1])
+
+                            if not self.check_all_props_when_a_first_prop_cex_was_found:
+                                self.sul.post()
+                                return prop_cex
+
+                        # The SUL rejected cex
+                        break
+
+                # Clean up the SUL after running cex
+                self.sul.post()
 
                 # If the SUL and the hypothesis have the same outputs for cex, then the SUL violates prop as well
-                if hyp_out == sul_out:
+                if not cex_rejected_by_sul:
                     self.violated_properties.add(label)
 
                     if self.property_violation_callback is not None:
                         self.property_violation_callback(label, cex)
-                elif prop_cex is None:
-                    # The hypothesis and the SUL have distinct outputs for cex
-                    prop_cex = cex
 
-                    # Take the minimal distinguishing prefix of the counterexample
-                    for i in range(min(len(hyp_out), len(sul_out))):
-                        if hyp_out[i] != sul_out[i]:
-                            prop_cex = prop_cex[:i + 1]
-                            break
-
-                    if not self.check_all_props_when_a_first_prop_cex_was_found:
-                        return prop_cex
-
-        # Return the property counterexample, if one was found
+        # Return the property counterexample, if one was found. Prop_cex is only set if the hypothesis and the SUL
+        # have distinct outputs for it, so it can be used for hypothesis refinement
         if prop_cex is not None:
             return prop_cex
 
