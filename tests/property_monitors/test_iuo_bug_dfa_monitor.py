@@ -11,7 +11,7 @@ def precise_word_dfa(word: Tuple[str], alphabet=('a', 'b')):
     Dfa which accepts the input sequences that are prefixed by the given word.
     """
     length = len(word)
-    sink = DfaState("sink", False)
+    sink = DfaState('sink', False)
     sink.transitions = {a: sink for a in alphabet}
     states = [DfaState(f's_{word[:i]}', i == length) for i in range(length + 1)] + [sink]
     for i in range(length):
@@ -22,10 +22,10 @@ def precise_word_dfa(word: Tuple[str], alphabet=('a', 'b')):
 
 
 def dfa_input_from_mealy_input(input: Any) -> Tuple[str,Any]:
-    return ("I", input)
+    return ('I', input)
 
 def dfa_output_from_mealy_output(output: Any) -> Tuple[str,Any]:
-    return ("O", output)
+    return ('O', output)
 
 
 class IUOBugDfaMonitorTests(unittest.TestCase):
