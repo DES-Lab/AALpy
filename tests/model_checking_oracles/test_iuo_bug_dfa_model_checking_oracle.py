@@ -13,7 +13,7 @@ def precise_word_mealy(word: Tuple[str], alphabet=('a', 'b')):
     and only `o`s for any other input sequence.
     """
     length = len(word)
-    sink = MealyState("sink")
+    sink = MealyState('sink')
     sink.transitions = {a: sink for a in alphabet}
     sink.output_fun = {a: 'o' for a in alphabet}
     states = [MealyState(f's_{word[:i]}') for i in range(length)] + [sink]
@@ -31,7 +31,7 @@ def precise_word_dfa(word: Tuple[str], alphabet=('a', 'b')):
     Dfa which accepts the input sequences that are prefixed by the given word.
     """
     length = len(word)
-    sink = DfaState("sink", False)
+    sink = DfaState('sink', False)
     sink.transitions = {a: sink for a in alphabet}
     states = [DfaState(f's_{word[:i]}', i == length) for i in range(length + 1)] + [sink]
     for i in range(length):
@@ -42,13 +42,13 @@ def precise_word_dfa(word: Tuple[str], alphabet=('a', 'b')):
 
 
 def dfa_input_from_mealy_input(input: Any) -> Tuple[str,Any]:
-    return ("I", input)
+    return ('I', input)
 
 def dfa_output_from_mealy_output(output: Any) -> Tuple[str,Any]:
-    return ("O", output)
+    return ('O', output)
 
 def is_dfa_input(letter: Tuple[str,Any]) -> bool:
-    return letter[0] == "I"
+    return letter[0] == 'I'
 
 def mealy_letter_from_dfa_letter(letter: Tuple[str,Any]) -> Any:
     return letter[1]
@@ -95,12 +95,12 @@ class IUOBugDfaModelCheckingOracleTests(unittest.TestCase):
 
     def test_no_counterexample_is_found_when_absent(self):
         mealy = MealyMachine.from_state_setup({
-            "q": {"i": ("o", "q")}
+            'q': {'a': ('o', 'q')}
         })
         prop_bug_dfa = Dfa.from_state_setup({
-            "p": (False, {
-                dfa_input_from_mealy_input("i"): "p",
-                dfa_output_from_mealy_output("o"): "p"
+            'p': (False, {
+                dfa_input_from_mealy_input('a'): 'p',
+                dfa_output_from_mealy_output('o'): 'p'
             }),
         })
 
@@ -195,12 +195,12 @@ class IUOBugDfaModelCheckingOracleTests(unittest.TestCase):
 
     def test_counterexample_always_has_nonzero_length(self):
         mealy = MealyMachine.from_state_setup({
-            "q": {"i": ("o", "q")}
+            'q': {'a': ('o', 'q')}
         })
         prop_bug_dfa = Dfa.from_state_setup({
-            "p": (True, {
-                dfa_input_from_mealy_input("i"): "p",
-                dfa_output_from_mealy_output("o"): "p"
+            'p': (True, {
+                dfa_input_from_mealy_input('a'): 'p',
+                dfa_output_from_mealy_output('o'): 'p'
             }),
         })
 
@@ -213,55 +213,55 @@ class IUOBugDfaModelCheckingOracleTests(unittest.TestCase):
         )
 
         cex = oracle.find_cex(mealy)
-        self.assertEqual(cex, ("i",))
+        self.assertEqual(cex, ('a',))
         self.assertEqual(oracle.num_checks_performed, 1)
         self.assertEqual(oracle.num_counterexamples_found, 1)
 
     def test_default_mealy_to_dfa(self):
         mealy = MealyMachine.from_state_setup({
-            "q0": {
-                "a": ("o1", "q0"),
-                "b": ("o2", "q1")
+            'q0': {
+                'a': ('o0', 'q0'),
+                'b': ('o1', 'q1')
             },
-            "q1": {
-                "a": ("o3", "q1"),
-                "b": ("o4", "q1")
+            'q1': {
+                'a': ('o2', 'q1'),
+                'b': ('o3', 'q1')
             }
         })
 
-        dfa_a = dfa_input_from_mealy_input("a")
-        dfa_b = dfa_input_from_mealy_input("b")
-        dfa_o1 = dfa_output_from_mealy_output("o1")
-        dfa_o2 = dfa_output_from_mealy_output("o2")
-        dfa_o3 = dfa_output_from_mealy_output("o3")
-        dfa_o4 = dfa_output_from_mealy_output("o4")
+        dfa_a = dfa_input_from_mealy_input('a')
+        dfa_b = dfa_input_from_mealy_input('b')
+        dfa_o0 = dfa_output_from_mealy_output('o0')
+        dfa_o1 = dfa_output_from_mealy_output('o1')
+        dfa_o2 = dfa_output_from_mealy_output('o2')
+        dfa_o3 = dfa_output_from_mealy_output('o3')
         mealy_dfa = Dfa.from_state_setup({
-            "q0": (True, {
-                dfa_a: "aux_o1_q0",
-                dfa_b: "aux_o2_q1"
+            'q0': (True, {
+                dfa_a: 'aux_o0_q0',
+                dfa_b: 'aux_o1_q1'
             }),
-            "q1": (True, {
-                dfa_a: "aux_o3_q1",
-                dfa_b: "aux_o4_q1"
+            'q1': (True, {
+                dfa_a: 'aux_o2_q1',
+                dfa_b: 'aux_o3_q1'
             }),
-            "aux_o1_q0": (True, {
-                dfa_o1: "q0"
+            'aux_o0_q0': (True, {
+                dfa_o0: 'q0'
             }),
-            "aux_o2_q1": (True, {
-                dfa_o2: "q1"
+            'aux_o1_q1': (True, {
+                dfa_o1: 'q1'
             }),
-            "aux_o3_q1": (True, {
-                dfa_o3: "q1"
+            'aux_o2_q1': (True, {
+                dfa_o2: 'q1'
             }),
-            "aux_o4_q1": (True, {
-                dfa_o4: "q1"
+            'aux_o3_q1': (True, {
+                dfa_o3: 'q1'
             })
         })
 
         prop_bug_dfa = Dfa.from_state_setup({
-            "p": (True, {
-                dfa_input_from_mealy_input("i"): "p",
-                dfa_output_from_mealy_output("o"): "p"
+            'p': (True, {
+                dfa_input_from_mealy_input('a'): 'p',
+                dfa_output_from_mealy_output('o'): 'p'
             }),
         })
 
@@ -280,26 +280,26 @@ class IUOBugDfaModelCheckingOracleTests(unittest.TestCase):
 
     def test_custom_mealy_to_dfa(self):
         mealy = MealyMachine.from_state_setup({
-            "q0": {
-                "a": ("o1", "q0"),
-                "b": ("o2", "q1")
+            'q0': {
+                'a': ('o0', 'q0'),
+                'b': ('o1', 'q1')
             },
-            "q1": {
-                "a": ("o3", "q1"),
-                "b": ("o4", "q1")
+            'q1': {
+                'a': ('o2', 'q1'),
+                'b': ('o3', 'q1')
             }
         })
 
-        dfa_a = dfa_input_from_mealy_input("A")
-        dfa_b = dfa_input_from_mealy_input("B")
+        dfa_a = dfa_input_from_mealy_input('a')
+        dfa_b = dfa_input_from_mealy_input('b')
         dfa = Dfa.from_state_setup({
-            "q0": (True, {
-                dfa_a: "q0",
-                dfa_b: "q1"
+            'q0': (True, {
+                dfa_a: 'q0',
+                dfa_b: 'q1'
             }),
-            "q1": (False, {
-                dfa_a: "q1",
-                dfa_b: "q0"
+            'q1': (False, {
+                dfa_a: 'q1',
+                dfa_b: 'q0'
             })
         })
 
@@ -307,9 +307,9 @@ class IUOBugDfaModelCheckingOracleTests(unittest.TestCase):
             return dfa
 
         prop_bug_dfa = Dfa.from_state_setup({
-            "p": (True, {
-                dfa_input_from_mealy_input("i"): "p",
-                dfa_output_from_mealy_output("o"): "p"
+            'p': (True, {
+                dfa_input_from_mealy_input('a'): 'p',
+                dfa_output_from_mealy_output('o'): 'p'
             }),
         })
 
@@ -329,13 +329,13 @@ class IUOBugDfaModelCheckingOracleTests(unittest.TestCase):
 
     def test_hyp_is_reset(self):
         mealy = MealyMachine.from_state_setup({
-            "q0": {"i": ("o1", "q1")},
-            "q1": {"i": ("o2", "q1")}
+            'q0': {'a': ('o0', 'q1')},
+            'q1': {'a': ('o1', 'q1')}
         })
-        mealy.step("i")
+        mealy.step('a')
         self.assertNotEqual(mealy.current_state, mealy.initial_state)
 
-        dfa_alphabet = [dfa_input_from_mealy_input("i")] + [dfa_output_from_mealy_output(o) for o in ["o1", "o2"]]
+        dfa_alphabet = [dfa_input_from_mealy_input('a')] + [dfa_output_from_mealy_output(o) for o in ['o0', 'o1']]
         random_bug_dfa = generate_random_dfa(
             num_states=10,
             alphabet=dfa_alphabet,
