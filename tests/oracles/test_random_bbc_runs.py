@@ -96,7 +96,6 @@ def test_bbc_on_small_random_automata_with_few_properties_exhaustive(learning_al
 
     prop_labels_to_counterexample_map = dict()
     def violation_callback(label: str, cex: tuple) -> None:
-        nonlocal prop_labels_to_counterexample_map
 
         assert label not in prop_labels_to_counterexample_map
         prop_labels_to_counterexample_map[label] = cex
