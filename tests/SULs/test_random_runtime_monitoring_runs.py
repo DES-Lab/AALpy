@@ -38,7 +38,7 @@ TEST_CASES = [
         input_size,
         output_size,
         num_props,
-        id=f"{learning_alg.__name__}-states={num_states}-inputs={input_size}-outputs={output_size}-props={num_props}-seed={seed_val}",
+        id=f'{learning_alg.__name__}-states={num_states}-inputs={input_size}-outputs={output_size}-props={num_props}-seed={seed_val}',
     )
     for num_states, input_size, output_size, num_props in MODEL_SIZES_AND_NUM_PROPS
     for seed_val in SEEDS
@@ -47,13 +47,13 @@ TEST_CASES = [
 
 
 def dfa_input_from_mealy_input(input: Any) -> Tuple[str,Any]:
-    return ("I", input)
+    return ('I', input)
 
 def dfa_output_from_mealy_output(output: Any) -> Tuple[str,Any]:
-    return ("O", output)
+    return ('O', output)
 
 def is_dfa_input(letter: Tuple[str,Any]) -> bool:
-    return letter[0] == "I"
+    return letter[0] == 'I'
 
 def mealy_letter_from_dfa_letter(letter: Tuple[str,Any]) -> Any:
     return letter[1]
@@ -82,8 +82,8 @@ def test_runtime_monitoring_on_small_random_automata_with_few_properties_exhaust
                                                                                     input_size, output_size, num_props):
     random.seed(seed_val)
 
-    input_alphabet = [f"I{i}" for i in range(input_size)]
-    output_alphabet = [f"O{i}" for i in range(output_size)]
+    input_alphabet = [f'I{i}' for i in range(input_size)]
+    output_alphabet = [f'O{i}' for i in range(output_size)]
 
     mealy = generate_random_mealy_machine(
         num_states=num_states,
@@ -102,7 +102,7 @@ def test_runtime_monitoring_on_small_random_automata_with_few_properties_exhaust
         prop_labels_to_counterexample_map[label] = cex
 
     properties = {
-        f"prop_{i}": generate_random_IUO_bug_dfa_property_monitor(
+        f'prop_{i}': generate_random_IUO_bug_dfa_property_monitor(
             num_states=num_states,
             alphabet=[dfa_input_from_mealy_input(input) for input in input_alphabet] + \
                      [dfa_output_from_mealy_output(output) for output in output_alphabet],
@@ -116,7 +116,7 @@ def test_runtime_monitoring_on_small_random_automata_with_few_properties_exhaust
         property_violation_callback=violation_callback
     )
 
-    learned_mealy = learning_alg(input_alphabet, mon_sul, eq_oracle, automaton_type="mealy", print_level=0)
+    learned_mealy = learning_alg(input_alphabet, mon_sul, eq_oracle, automaton_type='mealy', print_level=0)
 
     assert learned_mealy.is_minimal()
     assert bisimilar(mealy, learned_mealy)
