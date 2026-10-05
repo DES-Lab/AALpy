@@ -98,12 +98,6 @@ def dfa_input_from_mealy_input(input: Any) -> Tuple[str,Any]:
 def dfa_output_from_mealy_output(output: Any) -> Tuple[str,Any]:
     return ('O', output)
 
-def is_dfa_input(letter: Tuple[str,Any]) -> bool:
-    return letter[0] == 'I'
-
-def mealy_letter_from_dfa_letter(letter: Tuple[str,Any]) -> Any:
-    return letter[1]
-
 
 class MonitoringSULTests(unittest.TestCase):
 
