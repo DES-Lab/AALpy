@@ -9,7 +9,7 @@ from aalpy.SULs import AutomatonSUL, MonitoringSUL
 
 def get_accepting_monitor() -> PropertyMonitor:
     """
-    Create an Oracle which never returns a counterexample
+    Create an Oracle which never returns a counterexample.
     """
     class AcceptingMonitor(PropertyMonitor):
         def __init__(self):
@@ -38,7 +38,7 @@ def precise_word_mealy(word: Tuple[str], alphabet=('a', 'b')):
     and only `o`s for any other input sequence.
     """
     length = len(word)
-    sink = MealyState("sink")
+    sink = MealyState('sink')
     sink.transitions = {a: sink for a in alphabet}
     sink.output_fun = {a: 'o' for a in alphabet}
     states = [MealyState(f's_{word[:i]}') for i in range(length)] + [sink]
@@ -56,7 +56,7 @@ def precise_word_dfa(word: Tuple[str], alphabet=('a', 'b')):
     Dfa which accepts the input sequences that are prefixed by the given word.
     """
     length = len(word)
-    sink = DfaState("sink", False)
+    sink = DfaState('sink', False)
     sink.transitions = {a: sink for a in alphabet}
     states = [DfaState(f's_{word[:i]}', i == length) for i in range(length + 1)] + [sink]
     for i in range(length):
@@ -68,7 +68,7 @@ def precise_word_dfa(word: Tuple[str], alphabet=('a', 'b')):
 def get_precise_word_adaptive_query(accepted_input_word: tuple, expected_output_word: tuple) -> Any:
     """
     Create an adaptive query which provides precisely the accepted_input_word and verifies that it
-    receives the expected_output_word
+    receives the expected_output_word.
     """
     class PreciseWordADS:
         def __init__(self, accepted_input_word: tuple, expected_output_word: tuple):
@@ -93,13 +93,13 @@ def get_precise_word_adaptive_query(accepted_input_word: tuple, expected_output_
 
 
 def dfa_input_from_mealy_input(input: Any) -> Tuple[str,Any]:
-    return ("I", input)
+    return ('I', input)
 
 def dfa_output_from_mealy_output(output: Any) -> Tuple[str,Any]:
-    return ("O", output)
+    return ('O', output)
 
 def is_dfa_input(letter: Tuple[str,Any]) -> bool:
-    return letter[0] == "I"
+    return letter[0] == 'I'
 
 def mealy_letter_from_dfa_letter(letter: Tuple[str,Any]) -> Any:
     return letter[1]
@@ -161,7 +161,7 @@ class MonitoringSULTests(unittest.TestCase):
         sul = MonitoringSUL(
             sul=base_sul,
             property_monitors={
-                "SatisfiedProperty": get_accepting_monitor()
+                'SatisfiedProperty': get_accepting_monitor()
             },
             property_violation_callback=violation_callback
         )
@@ -182,7 +182,7 @@ class MonitoringSULTests(unittest.TestCase):
         def violation_callback(label: str, cex: tuple) -> None:
             nonlocal violation_cex
 
-            assert label == "ViolatedProperty"
+            self.assertEqual(label, 'ViolatedProperty')
             violation_cex = cex
 
         prop_bug_dfa = precise_word_dfa(
@@ -212,8 +212,8 @@ class MonitoringSULTests(unittest.TestCase):
         sul = MonitoringSUL(
             sul=base_sul,
             property_monitors={
-                "SatisfiedProperty": get_accepting_monitor(),
-                "ViolatedProperty": violated_prop_monitor
+                'SatisfiedProperty': get_accepting_monitor(),
+                'ViolatedProperty': violated_prop_monitor
             },
             property_violation_callback=violation_callback
         )
@@ -270,8 +270,8 @@ class MonitoringSULTests(unittest.TestCase):
         sul = MonitoringSUL(
             sul=base_sul,
             property_monitors={
-                "SatisfiedProperty": get_accepting_monitor(),
-                "ViolatedProperty": violated_prop_monitor
+                'SatisfiedProperty': get_accepting_monitor(),
+                'ViolatedProperty': violated_prop_monitor
             }
         )
 
@@ -291,7 +291,7 @@ class MonitoringSULTests(unittest.TestCase):
         def violation_callback(label: str, cex: tuple) -> None:
             nonlocal violation_cex
 
-            assert label == "ViolatedProperty"
+            self.assertEqual(label, 'ViolatedProperty')
             violation_cex = cex
 
         prop_bug_dfa = precise_word_dfa(
@@ -321,8 +321,8 @@ class MonitoringSULTests(unittest.TestCase):
         sul = MonitoringSUL(
             sul=base_sul,
             property_monitors={
-                "SatisfiedProperty": get_accepting_monitor(),
-                "ViolatedProperty": violated_prop_monitor
+                'SatisfiedProperty': get_accepting_monitor(),
+                'ViolatedProperty': violated_prop_monitor
             },
             property_violation_callback=violation_callback
         )
@@ -384,8 +384,8 @@ class MonitoringSULTests(unittest.TestCase):
         sul = MonitoringSUL(
             sul=base_sul,
             property_monitors={
-                "SatisfiedProperty": satisfied_prop_monitor,
-                "ViolatedProperty": violated_prop_monitor
+                'SatisfiedProperty': satisfied_prop_monitor,
+                'ViolatedProperty': violated_prop_monitor
             }
         )
 
@@ -410,7 +410,7 @@ class MonitoringSULTests(unittest.TestCase):
         sul = MonitoringSUL(
             sul=base_sul,
             property_monitors={
-                "SatisfiedProperty": satisfied_prop_monitor
+                'SatisfiedProperty': satisfied_prop_monitor
             }
         )
 
@@ -437,7 +437,7 @@ class MonitoringSULTests(unittest.TestCase):
             nonlocal violation_cex_num_steps
             nonlocal violation_cex_num_cached_queries
 
-            assert label == "ViolatedProperty"
+            self.assertEqual(label, 'ViolatedProperty')
             violation_cex = cex
 
             violation_cex_num_queries = base_sul.num_queries
@@ -471,8 +471,8 @@ class MonitoringSULTests(unittest.TestCase):
         sul = MonitoringSUL(
             sul=base_sul,
             property_monitors={
-                "SatisfiedProperty": get_accepting_monitor(),
-                "ViolatedProperty": violated_prop_monitor
+                'SatisfiedProperty': get_accepting_monitor(),
+                'ViolatedProperty': violated_prop_monitor
             },
             property_violation_callback=violation_callback
         )
@@ -524,7 +524,7 @@ class MonitoringSULTests(unittest.TestCase):
             nonlocal violation_cex_num_steps
             nonlocal violation_cex_num_cached_queries
 
-            assert label == "ViolatedProperty"
+            self.assertEqual(label, 'ViolatedProperty')
             violation_cex = cex
 
             violation_cex_num_queries = base_sul.num_queries
@@ -558,8 +558,8 @@ class MonitoringSULTests(unittest.TestCase):
         sul = MonitoringSUL(
             sul=base_sul,
             property_monitors={
-                "SatisfiedProperty": get_accepting_monitor(),
-                "ViolatedProperty": violated_prop_monitor
+                'SatisfiedProperty': get_accepting_monitor(),
+                'ViolatedProperty': violated_prop_monitor
             },
             property_violation_callback=violation_callback
         )
