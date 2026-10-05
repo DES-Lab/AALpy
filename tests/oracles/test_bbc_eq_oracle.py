@@ -404,6 +404,163 @@ class BBCEqOracleTests(BaseOracleTests):
         hyp_mealy = MealyMachine.from_state_setup(mealy.to_state_setup())
         oracle.find_cex(hyp_mealy)
 
+    def test_check_all_props_when_a_first_prop_cex_was_found(self):
+        sul_mealy = MealyMachine.from_state_setup({
+            "q0": {"a": ("o0", "q1")},
+            "q1": {"a": ("o1", "q1")}
+        })
+        initial_hyp_mealy = MealyMachine.from_state_setup({
+            "h0": {"a": ("o0", "h0")}
+        })
+
+        violated_by_hyp_but_not_sut_prop_bug_dfa = Dfa.from_state_setup({
+            "p0": (False, {
+                dfa_input_from_mealy_input("a"): "p0",
+                dfa_output_from_mealy_output("o0"): "p1"
+            }),
+            "p1": (False, {
+                dfa_input_from_mealy_input("a"): "p1",
+                dfa_output_from_mealy_output("o0"): "b"
+            }),
+            "b": (True, {
+                dfa_input_from_mealy_input("a"): "p0",
+                dfa_output_from_mealy_output("o0"): "p0"
+            })
+        })
+        violated_by_hyp_but_not_sut_prop_mc_oracle = IUOBugDfaModelCheckingOracle(
+            bug_dfa=violated_by_hyp_but_not_sut_prop_bug_dfa,
+            mealy_input_to_dfa_input=dfa_input_from_mealy_input,
+            mealy_output_to_dfa_output=dfa_output_from_mealy_output,
+            is_dfa_input=is_dfa_input,
+            dfa_letter_to_mealy_letter=mealy_letter_from_dfa_letter
+        )
+
+        violated_by_hyp_and_sut_prop_bug_dfa = Dfa.from_state_setup({
+            "p": (False, {
+                dfa_input_from_mealy_input("a"): "p",
+                dfa_output_from_mealy_output("o0"): "b",
+                dfa_output_from_mealy_output("o1"): "p"
+            }),
+            "b": (True, {
+                dfa_input_from_mealy_input("a"): "p",
+                dfa_output_from_mealy_output("o0"): "p",
+                dfa_output_from_mealy_output("o1"): "p"
+            })
+        })
+        violated_by_hyp_and_sut_prop_mc_oracle = IUOBugDfaModelCheckingOracle(
+            bug_dfa=violated_by_hyp_and_sut_prop_bug_dfa,
+            mealy_input_to_dfa_input=dfa_input_from_mealy_input,
+            mealy_output_to_dfa_output=dfa_output_from_mealy_output,
+            is_dfa_input=is_dfa_input,
+            dfa_letter_to_mealy_letter=mealy_letter_from_dfa_letter
+        )
+
+        violated_by_hyp_and_sut_prop_cex_was_found = False
+        def violation_callback(label: str, cex: tuple) -> None:
+            nonlocal violated_by_hyp_and_sut_prop_cex_was_found
+
+            # Only counterexamples for the second property should be confirmed against the SUT
+            self.assertEqual(label, "ViolatedByHypAndSUTProperty")
+            self.assertEqual(cex, ("a",))
+
+            # A counterexample for the second property should not be reported to the callback more than once
+            self.assertFalse(violated_by_hyp_and_sut_prop_cex_was_found)
+            violated_by_hyp_and_sut_prop_cex_was_found = True
+
+        sul = AutomatonSUL(sul_mealy)
+        oracle = BBCEqOracle(
+            eq_oracle=get_accepting_oracle(sul_mealy.get_input_alphabet(), sul),
+            property_oracles={
+                "ViolatedByHypButNotSUTProperty": violated_by_hyp_but_not_sut_prop_mc_oracle,
+                "ViolatedByHypAndSUTProperty": violated_by_hyp_and_sut_prop_mc_oracle
+            },
+            property_violation_callback=violation_callback,
+            check_all_props_when_a_first_prop_cex_was_found=True
+        )
+
+        cex = oracle.find_cex(initial_hyp_mealy)
+        # cex should not be None, since the hypothesis violates the first property with a counterexample that
+        # won't be confirmed against the SUT
+        self.assertIsNotNone(cex)
+        self.assertEqual(cex, ("a", "a"))
+
+        # The violation_callback should have been called with a violation for the second property
+        self.assertTrue(violated_by_hyp_and_sut_prop_cex_was_found)
+
+    def test_optionally_dont_check_all_props_when_a_first_prop_cex_was_found(self):
+        sul_mealy = MealyMachine.from_state_setup({
+            "q0": {"a": ("o0", "q1")},
+            "q1": {"a": ("o1", "q1")}
+        })
+        initial_hyp_mealy = MealyMachine.from_state_setup({
+            "h0": {"a": ("o0", "h0")}
+        })
+
+        violated_by_hyp_but_not_sut_prop_bug_dfa = Dfa.from_state_setup({
+            "p0": (False, {
+                dfa_input_from_mealy_input("a"): "p0",
+                dfa_output_from_mealy_output("o0"): "p1"
+            }),
+            "p1": (False, {
+                dfa_input_from_mealy_input("a"): "p1",
+                dfa_output_from_mealy_output("o0"): "b"
+            }),
+            "b": (True, {
+                dfa_input_from_mealy_input("a"): "p0",
+                dfa_output_from_mealy_output("o0"): "p0"
+            })
+        })
+        violated_by_hyp_but_not_sut_prop_mc_oracle = IUOBugDfaModelCheckingOracle(
+            bug_dfa=violated_by_hyp_but_not_sut_prop_bug_dfa,
+            mealy_input_to_dfa_input=dfa_input_from_mealy_input,
+            mealy_output_to_dfa_output=dfa_output_from_mealy_output,
+            is_dfa_input=is_dfa_input,
+            dfa_letter_to_mealy_letter=mealy_letter_from_dfa_letter
+        )
+
+        violated_by_hyp_and_sut_prop_bug_dfa = Dfa.from_state_setup({
+            "p": (False, {
+                dfa_input_from_mealy_input("a"): "p",
+                dfa_output_from_mealy_output("o0"): "b",
+                dfa_output_from_mealy_output("o1"): "p"
+            }),
+            "b": (True, {
+                dfa_input_from_mealy_input("a"): "p",
+                dfa_output_from_mealy_output("o0"): "p",
+                dfa_output_from_mealy_output("o1"): "p"
+            })
+        })
+        violated_by_hyp_and_sut_prop_mc_oracle = IUOBugDfaModelCheckingOracle(
+            bug_dfa=violated_by_hyp_and_sut_prop_bug_dfa,
+            mealy_input_to_dfa_input=dfa_input_from_mealy_input,
+            mealy_output_to_dfa_output=dfa_output_from_mealy_output,
+            is_dfa_input=is_dfa_input,
+            dfa_letter_to_mealy_letter=mealy_letter_from_dfa_letter
+        )
+
+        violated_by_hyp_and_sut_prop_cex_was_found = False
+        def violation_callback(label: str, cex: tuple) -> None:
+            # The counterexample for the violated_by_hyp_and_sut_prop won't be found, because the
+            # counterexample for the violated_by_hyp_but_not_sut_prop will be returned right away
+            assert False
+
+        sul = AutomatonSUL(sul_mealy)
+        oracle = BBCEqOracle(
+            eq_oracle=get_accepting_oracle(sul_mealy.get_input_alphabet(), sul),
+            property_oracles={
+                "ViolatedByHypButNotSUTProperty": violated_by_hyp_but_not_sut_prop_mc_oracle,
+                "ViolatedByHypAndSUTProperty": violated_by_hyp_and_sut_prop_mc_oracle
+            },
+            property_violation_callback=violation_callback,
+            check_all_props_when_a_first_prop_cex_was_found=False
+        )
+
+        cex = oracle.find_cex(initial_hyp_mealy)
+        # cex should not be None, since the hypothesis violates the first property with a counterexample
+        # that won't be confirmed against the SUT
+        self.assertIsNotNone(cex)
+        self.assertEqual(cex, ("a", "a"))
+
     def test_properties_with_confirmed_sut_counterexamples_are_excluded_until_reenabled(self):
         mealy = precise_word_mealy(
             word=('a', 'b', 'a', 'b'),
