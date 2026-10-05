@@ -24,7 +24,6 @@ def accepting_oracle(alphabet: list, sul: SUL) -> Oracle:
 
     return AcceptingOracle(alphabet, sul)
 
-
 def precise_word_mealy(word: Tuple[str], alphabet=('a', 'b')):
     """
     Mealy machine that outputs len(word) - 1 `o`s followed by an `x` and then only 'o's for the word
