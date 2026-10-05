@@ -13,7 +13,7 @@ from tests.oracles.test_baseOracle import BaseOracleTests
 
 def get_accepting_oracle(alphabet: list, sul: SUL) -> Oracle:
     """
-    Create an Oracle which never returns a counterexample
+    Create an Oracle which never returns a counterexample.
     """
     class AcceptingOracle(Oracle):
         def __init__(self, alphabet: list, sul: SUL):
@@ -31,7 +31,7 @@ def precise_word_mealy(word: Tuple[str], alphabet=('a', 'b')):
     and only `o`s for any other input sequence.
     """
     length = len(word)
-    sink = MealyState("sink")
+    sink = MealyState('sink')
     sink.transitions = {a: sink for a in alphabet}
     sink.output_fun = {a: 'o' for a in alphabet}
     states = [MealyState(f's_{word[:i]}') for i in range(length)] + [sink]
@@ -49,7 +49,7 @@ def precise_word_dfa(word: Tuple[str], alphabet=('a', 'b')):
     Dfa which accepts the input sequences that are prefixed by the given word.
     """
     length = len(word)
-    sink = DfaState("sink", False)
+    sink = DfaState('sink', False)
     sink.transitions = {a: sink for a in alphabet}
     states = [DfaState(f's_{word[:i]}', i == length) for i in range(length + 1)] + [sink]
     for i in range(length):
@@ -60,13 +60,13 @@ def precise_word_dfa(word: Tuple[str], alphabet=('a', 'b')):
 
 
 def dfa_input_from_mealy_input(input: Any) -> Tuple[str,Any]:
-    return ("I", input)
+    return ('I', input)
 
 def dfa_output_from_mealy_output(output: Any) -> Tuple[str,Any]:
-    return ("O", output)
+    return ('O', output)
 
 def is_dfa_input(letter: Tuple[str,Any]) -> bool:
-    return letter[0] == "I"
+    return letter[0] == 'I'
 
 def mealy_letter_from_dfa_letter(letter: Tuple[str,Any]) -> Any:
     return letter[1]
@@ -92,7 +92,7 @@ class BBCEqOracleTests(BaseOracleTests):
         self.assertEqual(oracle.num_queries, base_oracle.num_queries)
         self.assertEqual(oracle.num_steps, base_oracle.num_steps)
 
-        oracle.alphabet = ["h", "e", "l", "l", "o"]
+        oracle.alphabet = ['c', 'd']
         oracle.sul = AutomatonSUL(mealy)
         oracle.num_queries = 12345
         oracle.num_steps = 54321
@@ -127,7 +127,7 @@ class BBCEqOracleTests(BaseOracleTests):
         oracle = BBCEqOracle(
             eq_oracle=base_oracle,
             property_oracles={
-                "SatisfiedProperty": get_accepting_oracle(mealy.get_input_alphabet(), sul)
+                'SatisfiedProperty': get_accepting_oracle(mealy.get_input_alphabet(), sul)
             },
             property_violation_callback=violation_callback
         )
@@ -146,7 +146,7 @@ class BBCEqOracleTests(BaseOracleTests):
         def violation_callback(label: str, cex: tuple) -> None:
             nonlocal violation_cex
 
-            assert label == "ViolatedProperty"
+            self.assertEqual(label, 'ViolatedProperty')
             violation_cex = cex
         base_oracle = WMethodEqOracle(mealy.get_input_alphabet(), sul, len(mealy.states) + 1)
 
@@ -179,8 +179,8 @@ class BBCEqOracleTests(BaseOracleTests):
         oracle = BBCEqOracle(
             eq_oracle=base_oracle,
             property_oracles={
-                "SatisfiedProperty": get_accepting_oracle(mealy.get_input_alphabet(), sul),
-                "ViolatedProperty": violated_prop_mc_oracle
+                'SatisfiedProperty': get_accepting_oracle(mealy.get_input_alphabet(), sul),
+                'ViolatedProperty': violated_prop_mc_oracle
             },
             property_violation_callback=violation_callback
         )
@@ -189,32 +189,32 @@ class BBCEqOracleTests(BaseOracleTests):
         self.assertIsNone(oracle.find_cex(hyp_mealy))
         self.assertEqual(violation_cex, violated_prop_mc_oracle.find_cex(hyp_mealy))
 
-        # The violation_cex passed to the callback should yield the same outputs in the SUL as in the Mealy machine
+        # the violation_cex passed to the callback should yield the same outputs in the SUL as in the Mealy machine
         self.assertEqual(sul.query(violation_cex), mealy.execute_sequence(mealy.initial_state, violation_cex))
 
     def test_find_prop_cex_to_be_used_for_refinement(self):
         sul_mealy = MealyMachine.from_state_setup({
-            "q0": {"i": ("o0", "q1")},
-            "q1": {"i": ("o1", "q1")}
+            'q0': {'a': ('o0', 'q1')},
+            'q1': {'a': ('o1', 'q1')}
         })
         initial_hyp_mealy = MealyMachine.from_state_setup({
-            "h0": {"i": ("o1", "h0")}
+            'h0': {'a': ('o1', 'h0')}
         })
         prop_bug_dfa = Dfa.from_state_setup({
-            "p0": (False, {
-                dfa_input_from_mealy_input("i"): "p0",
-                dfa_output_from_mealy_output("o0"): "p0",
-                dfa_output_from_mealy_output("o1"): "p1"
+            'p0': (False, {
+                dfa_input_from_mealy_input('a'): 'p0',
+                dfa_output_from_mealy_output('o0'): 'p0',
+                dfa_output_from_mealy_output('o1'): 'p1'
             }),
-            "p1": (False, {
-                dfa_input_from_mealy_input("i"): "p1",
-                dfa_output_from_mealy_output("o0"): "p1",
-                dfa_output_from_mealy_output("o1"): "b"
+            'p1': (False, {
+                dfa_input_from_mealy_input('a'): 'p1',
+                dfa_output_from_mealy_output('o0'): 'p1',
+                dfa_output_from_mealy_output('o1'): 'b'
             }),
-            "b": (True, {
-                dfa_input_from_mealy_input("i"): "p0",
-                dfa_output_from_mealy_output("o0"): "p0",
-                dfa_output_from_mealy_output("o1"): "p0"}),
+            'b': (True, {
+                dfa_input_from_mealy_input('a'): 'p0',
+                dfa_output_from_mealy_output('o0'): 'p0',
+                dfa_output_from_mealy_output('o1'): 'p0'}),
         })
 
         prop_mc_oracle = IUOBugDfaModelCheckingOracle(
@@ -226,14 +226,14 @@ class BBCEqOracleTests(BaseOracleTests):
         )
 
         def violation_callback(label: str, cex: tuple) -> None:
-            # The property has no counterexample that could have been confirmed against the SUT, so the callback may not have been called with a counterexample
+            # the property has no counterexample that could have been confirmed against the SUT, so the callback may not have been called with a counterexample
             assert False
 
         sul = AutomatonSUL(sul_mealy)
         oracle = BBCEqOracle(
             eq_oracle=get_accepting_oracle(sul_mealy.get_input_alphabet(), sul),
             property_oracles={
-                "Property": prop_mc_oracle
+                'Property': prop_mc_oracle
             },
             property_violation_callback=violation_callback
         )
@@ -241,7 +241,7 @@ class BBCEqOracleTests(BaseOracleTests):
         cex = oracle.find_cex(initial_hyp_mealy)
         # cex should be None, since initial_hyp_mealy satisfies the property
         self.assertIsNotNone(cex)
-        # The SUL and the hypothesis should have distinct outputs for cex, since cex should be a valid counterexample for hypothesis refinement
+        # the SUL and the hypothesis should have distinct outputs for cex, since cex should be a valid counterexample for hypothesis refinement
         self.assertNotEqual(sul.query(cex), initial_hyp_mealy.execute_sequence(initial_hyp_mealy.initial_state, cex))
 
         # the counterexample prop_mc_oracle returns for initial_hyp_mealy should be two inputs long
@@ -254,22 +254,22 @@ class BBCEqOracleTests(BaseOracleTests):
 
     def test_prop_cex_is_not_found_before_this_is_possible_for_the_hyp(self):
         sul_mealy = MealyMachine.from_state_setup({
-            "q0": {"i": ("o0", "q1")},
-            "q1": {"i": ("o1", "q1")}
+            'q0': {'a': ('o0', 'q1')},
+            'q1': {'a': ('o1', 'q1')}
         })
         initial_hyp_mealy = MealyMachine.from_state_setup({
-            "h0": {"i": ("o0", "h0")}
+            'h0': {'a': ('o0', 'h0')}
         })
         prop_bug_dfa = Dfa.from_state_setup({
-            "p": (False, {
-                dfa_input_from_mealy_input("i"): "p",
-                dfa_output_from_mealy_output("o0"): "p",
-                dfa_output_from_mealy_output("o1"): "b"
+            'p': (False, {
+                dfa_input_from_mealy_input('a'): 'p',
+                dfa_output_from_mealy_output('o0'): 'p',
+                dfa_output_from_mealy_output('o1'): 'b'
             }),
-            "b": (True, {
-                dfa_input_from_mealy_input("i"): "p",
-                dfa_output_from_mealy_output("o0"): "p",
-                dfa_output_from_mealy_output("o1"): "p"}),
+            'b': (True, {
+                dfa_input_from_mealy_input('a'): 'p',
+                dfa_output_from_mealy_output('o0'): 'p',
+                dfa_output_from_mealy_output('o1'): 'p'}),
         })
 
         prop_mc_oracle = IUOBugDfaModelCheckingOracle(
@@ -281,20 +281,20 @@ class BBCEqOracleTests(BaseOracleTests):
         )
 
         def violation_callback(label: str, cex: tuple) -> None:
-            # The property has no counterexample that could have been confirmed against the SUT, so the callback may not have been called with a counterexample
+            # the property has no counterexample that could have been confirmed against the SUT, so the callback may not have been called with a counterexample
             assert False
 
         sul = AutomatonSUL(sul_mealy)
         oracle = BBCEqOracle(
             eq_oracle=get_accepting_oracle(sul_mealy.get_input_alphabet(), sul),
             property_oracles={
-                "Property": prop_mc_oracle
+                'Property': prop_mc_oracle
             },
             property_violation_callback=violation_callback
         )
 
         cex = oracle.find_cex(initial_hyp_mealy)
-        # Cex should be None, since initial_hyp_mealy satisfies the property
+        # cex should be None, since initial_hyp_mealy satisfies the property
         self.assertIsNone(cex)
 
     def test_valid_oracle_and_correct_values_when_satisfied_and_violated_properties(self):
@@ -310,7 +310,7 @@ class BBCEqOracleTests(BaseOracleTests):
         def violation_callback(label: str, cex: tuple) -> None:
             nonlocal violation_cex
 
-            assert label == "ViolatedProperty"
+            self.assertEqual(label, 'ViolatedProperty')
             violation_cex = cex
         base_oracle = WMethodEqOracle(mealy.get_input_alphabet(), learning_sul, len(mealy.states) + 1)
 
@@ -343,8 +343,8 @@ class BBCEqOracleTests(BaseOracleTests):
         oracle = BBCEqOracle(
             eq_oracle=base_oracle,
             property_oracles={
-                "SatisfiedProperty": get_accepting_oracle(mealy.get_input_alphabet(), learning_sul),
-                "ViolatedProperty": violated_prop_mc_oracle
+                'SatisfiedProperty': get_accepting_oracle(mealy.get_input_alphabet(), learning_sul),
+                'ViolatedProperty': violated_prop_mc_oracle
             },
             property_violation_callback=violation_callback
         )
@@ -360,7 +360,7 @@ class BBCEqOracleTests(BaseOracleTests):
         self.assertIsNone(validation_eq_oracle.find_cex(
             learned_model), "Counterexample found by WMethodEqOracle")
 
-        # The violation_cex passed to the callback should yield the same outputs in the SUL as in the Mealy machine
+        # the violation_cex passed to the callback should yield the same outputs in the SUL as in the Mealy machine
         self.assertIsNotNone(violation_cex)
         self.assertEqual(learning_sul.query(violation_cex), mealy.execute_sequence(mealy.initial_state, violation_cex))
         self.assertEqual(violation_cex, violated_prop_mc_oracle.find_cex(mealy))
@@ -410,7 +410,7 @@ class BBCEqOracleTests(BaseOracleTests):
         oracle = BBCEqOracle(
             eq_oracle=base_oracle,
             property_oracles={
-                "ViolatedProperty": violated_prop_mc_oracle
+                'ViolatedProperty': violated_prop_mc_oracle
             }
         )
 
@@ -419,25 +419,25 @@ class BBCEqOracleTests(BaseOracleTests):
 
     def test_check_all_props_when_a_first_prop_cex_was_found(self):
         sul_mealy = MealyMachine.from_state_setup({
-            "q0": {"a": ("o0", "q1")},
-            "q1": {"a": ("o1", "q1")}
+            'q0': {'a': ('o0', 'q1')},
+            'q1': {'a': ('o1', 'q1')}
         })
         initial_hyp_mealy = MealyMachine.from_state_setup({
-            "h0": {"a": ("o0", "h0")}
+            'h0': {'a': ('o0', 'h0')}
         })
 
         violated_by_hyp_but_not_sut_prop_bug_dfa = Dfa.from_state_setup({
-            "p0": (False, {
-                dfa_input_from_mealy_input("a"): "p0",
-                dfa_output_from_mealy_output("o0"): "p1"
+            'p0': (False, {
+                dfa_input_from_mealy_input('a'): 'p0',
+                dfa_output_from_mealy_output('o0'): 'p1'
             }),
-            "p1": (False, {
-                dfa_input_from_mealy_input("a"): "p1",
-                dfa_output_from_mealy_output("o0"): "b"
+            'p1': (False, {
+                dfa_input_from_mealy_input('a'): 'p1',
+                dfa_output_from_mealy_output('o0'): 'b'
             }),
-            "b": (True, {
-                dfa_input_from_mealy_input("a"): "p0",
-                dfa_output_from_mealy_output("o0"): "p0"
+            'b': (True, {
+                dfa_input_from_mealy_input('a'): 'p0',
+                dfa_output_from_mealy_output('o0'): 'p0'
             })
         })
         violated_by_hyp_but_not_sut_prop_mc_oracle = IUOBugDfaModelCheckingOracle(
@@ -449,15 +449,15 @@ class BBCEqOracleTests(BaseOracleTests):
         )
 
         violated_by_hyp_and_sut_prop_bug_dfa = Dfa.from_state_setup({
-            "p": (False, {
-                dfa_input_from_mealy_input("a"): "p",
-                dfa_output_from_mealy_output("o0"): "b",
-                dfa_output_from_mealy_output("o1"): "p"
+            'p': (False, {
+                dfa_input_from_mealy_input('a'): 'p',
+                dfa_output_from_mealy_output('o0'): 'b',
+                dfa_output_from_mealy_output('o1'): 'p'
             }),
-            "b": (True, {
-                dfa_input_from_mealy_input("a"): "p",
-                dfa_output_from_mealy_output("o0"): "p",
-                dfa_output_from_mealy_output("o1"): "p"
+            'b': (True, {
+                dfa_input_from_mealy_input('a'): 'p',
+                dfa_output_from_mealy_output('o0'): 'p',
+                dfa_output_from_mealy_output('o1'): 'p'
             })
         })
         violated_by_hyp_and_sut_prop_mc_oracle = IUOBugDfaModelCheckingOracle(
@@ -472,11 +472,11 @@ class BBCEqOracleTests(BaseOracleTests):
         def violation_callback(label: str, cex: tuple) -> None:
             nonlocal violated_by_hyp_and_sut_prop_cex_was_found
 
-            # Only counterexamples for the second property should be confirmed against the SUT
-            self.assertEqual(label, "ViolatedByHypAndSUTProperty")
-            self.assertEqual(cex, ("a",))
+            # only counterexamples for the second property should be confirmed against the SUT
+            self.assertEqual(label, 'ViolatedByHypAndSUTProperty')
+            self.assertEqual(cex, ('a',))
 
-            # A counterexample for the second property should not be reported to the callback more than once
+            # a counterexample for the second property should not be reported to the callback more than once
             self.assertFalse(violated_by_hyp_and_sut_prop_cex_was_found)
             violated_by_hyp_and_sut_prop_cex_was_found = True
 
@@ -484,8 +484,8 @@ class BBCEqOracleTests(BaseOracleTests):
         oracle = BBCEqOracle(
             eq_oracle=get_accepting_oracle(sul_mealy.get_input_alphabet(), sul),
             property_oracles={
-                "ViolatedByHypButNotSUTProperty": violated_by_hyp_but_not_sut_prop_mc_oracle,
-                "ViolatedByHypAndSUTProperty": violated_by_hyp_and_sut_prop_mc_oracle
+                'ViolatedByHypButNotSUTProperty': violated_by_hyp_but_not_sut_prop_mc_oracle,
+                'ViolatedByHypAndSUTProperty': violated_by_hyp_and_sut_prop_mc_oracle
             },
             property_violation_callback=violation_callback,
             check_all_props_when_a_first_prop_cex_was_found=True
@@ -495,36 +495,36 @@ class BBCEqOracleTests(BaseOracleTests):
         # cex should not be None, since the hypothesis violates the first property with a counterexample that
         # won't be confirmed against the SUT
         self.assertIsNotNone(cex)
-        self.assertEqual(cex, ("a", "a"))
+        self.assertEqual(cex, ('a', 'a'))
 
-        # The violation_callback should have been called with a violation for the second property
+        # the violation_callback should have been called with a violation for the second property
         self.assertTrue(violated_by_hyp_and_sut_prop_cex_was_found)
 
     def test_optionally_dont_check_all_props_when_a_first_prop_cex_was_found(self):
         sul_mealy = MealyMachine.from_state_setup({
-            "q0": {"a": ("o0", "q1")},
-            "q1": {"a": ("o1", "q1")}
+            'q0': {'a': ('o0', 'q1')},
+            'q1': {'a': ('o1', 'q1')}
         })
         initial_hyp_mealy = MealyMachine.from_state_setup({
-            "h0": {"a": ("o0", "h0")}
+            'h0': {'a': ('o0', 'h0')}
         })
 
         violated_by_hyp_but_not_sut_prop_bug_dfa = Dfa.from_state_setup({
-            "p0": (False, {
-                dfa_input_from_mealy_input("a"): "p0",
-                dfa_output_from_mealy_output("o0"): "p1"
+            'p0': (False, {
+                dfa_input_from_mealy_input('a'): 'p0',
+                dfa_output_from_mealy_output('o0'): 'p1'
             }),
-            "p1": (False, {
-                dfa_input_from_mealy_input("a"): "p1",
-                dfa_output_from_mealy_output("o0"): "p2"
+            'p1': (False, {
+                dfa_input_from_mealy_input('a'): 'p1',
+                dfa_output_from_mealy_output('o0'): 'p2'
             }),
-            "p2": (False, {
-                dfa_input_from_mealy_input("a"): "p2",
-                dfa_output_from_mealy_output("o0"): "b"
+            'p2': (False, {
+                dfa_input_from_mealy_input('a'): 'p2',
+                dfa_output_from_mealy_output('o0'): 'b'
             }),
-            "b": (True, {
-                dfa_input_from_mealy_input("a"): "p0",
-                dfa_output_from_mealy_output("o0"): "p0"
+            'b': (True, {
+                dfa_input_from_mealy_input('a'): 'p0',
+                dfa_output_from_mealy_output('o0'): 'p0'
             })
         })
         violated_by_hyp_but_not_sut_prop_mc_oracle = IUOBugDfaModelCheckingOracle(
@@ -536,15 +536,15 @@ class BBCEqOracleTests(BaseOracleTests):
         )
 
         violated_by_hyp_and_sut_prop_bug_dfa = Dfa.from_state_setup({
-            "p": (False, {
-                dfa_input_from_mealy_input("a"): "p",
-                dfa_output_from_mealy_output("o0"): "b",
-                dfa_output_from_mealy_output("o1"): "p"
+            'p': (False, {
+                dfa_input_from_mealy_input('a'): 'p',
+                dfa_output_from_mealy_output('o0'): 'b',
+                dfa_output_from_mealy_output('o1'): 'p'
             }),
-            "b": (True, {
-                dfa_input_from_mealy_input("a"): "p",
-                dfa_output_from_mealy_output("o0"): "p",
-                dfa_output_from_mealy_output("o1"): "p"
+            'b': (True, {
+                dfa_input_from_mealy_input('a'): 'p',
+                dfa_output_from_mealy_output('o0'): 'p',
+                dfa_output_from_mealy_output('o1'): 'p'
             })
         })
         violated_by_hyp_and_sut_prop_mc_oracle = IUOBugDfaModelCheckingOracle(
@@ -557,7 +557,7 @@ class BBCEqOracleTests(BaseOracleTests):
 
         violated_by_hyp_and_sut_prop_cex_was_found = False
         def violation_callback(label: str, cex: tuple) -> None:
-            # The counterexample for the violated_by_hyp_and_sut_prop won't be found, because the
+            # the counterexample for the violated_by_hyp_and_sut_prop won't be found, because the
             # counterexample for the violated_by_hyp_but_not_sut_prop will be returned right away
             assert False
 
@@ -565,8 +565,8 @@ class BBCEqOracleTests(BaseOracleTests):
         oracle = BBCEqOracle(
             eq_oracle=get_accepting_oracle(sul_mealy.get_input_alphabet(), sul),
             property_oracles={
-                "ViolatedByHypButNotSUTProperty": violated_by_hyp_but_not_sut_prop_mc_oracle,
-                "ViolatedByHypAndSUTProperty": violated_by_hyp_and_sut_prop_mc_oracle
+                'ViolatedByHypButNotSUTProperty': violated_by_hyp_but_not_sut_prop_mc_oracle,
+                'ViolatedByHypAndSUTProperty': violated_by_hyp_and_sut_prop_mc_oracle
             },
             property_violation_callback=violation_callback,
             check_all_props_when_a_first_prop_cex_was_found=False
@@ -581,10 +581,10 @@ class BBCEqOracleTests(BaseOracleTests):
         # should be three inputs long
         prop_oracle_cex = violated_by_hyp_but_not_sut_prop_mc_oracle.find_cex(initial_hyp_mealy)
         self.assertIsNotNone(prop_oracle_cex)
-        self.assertEqual(prop_oracle_cex, ("a", "a", "a"))
+        self.assertEqual(prop_oracle_cex, ('a', 'a', 'a'))
         # cex should be shorter than prop_oracle_cex, since the first disagreement between initial_hyp_mealy
-        # and the SUT occurs after ("a", "a")
-        self.assertEqual(cex, ("a", "a"))
+        # and the SUT occurs after ('a', 'a')
+        self.assertEqual(cex, ('a', 'a'))
 
     def test_properties_with_confirmed_sut_counterexamples_are_excluded_until_reenabled(self):
         mealy = precise_word_mealy(
@@ -597,7 +597,7 @@ class BBCEqOracleTests(BaseOracleTests):
         def violation_callback(label: str, cex: tuple) -> None:
             nonlocal violation_cex
 
-            assert label == "ViolatedProperty"
+            self.assertEqual(label, 'ViolatedProperty')
             violation_cex = cex
         base_oracle = WMethodEqOracle(mealy.get_input_alphabet(), sul, len(mealy.states) + 1)
 
@@ -630,8 +630,8 @@ class BBCEqOracleTests(BaseOracleTests):
         oracle = BBCEqOracle(
             eq_oracle=base_oracle,
             property_oracles={
-                "SatisfiedProperty": get_accepting_oracle(mealy.get_input_alphabet(), sul),
-                "ViolatedProperty": violated_prop_mc_oracle
+                'SatisfiedProperty': get_accepting_oracle(mealy.get_input_alphabet(), sul),
+                'ViolatedProperty': violated_prop_mc_oracle
             },
             property_violation_callback=violation_callback
         )
