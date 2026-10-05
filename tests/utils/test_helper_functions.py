@@ -304,6 +304,36 @@ class TestIUODfaFromIXODfa(unittest.TestCase):
         self.assertIsInstance(iuo_dfa, Dfa)
         self.assertEqual(iuo_dfa, expected_iuo_dfa)
 
+    def test_distinct_outputs_for_same_input_prevents_aux_state_name_clashing(self):
+        def tag_input(input: Any) -> Tuple[str,Any]:
+            return ('I', input)
+
+        def tag_output(output: Any) -> Tuple[str,Any]:
+            return ('O', output)
+
+        ixo_dfa = Dfa.from_state_setup({
+            'q0': (False, {('a', 'o0'): 'q0', ('a', 'o1'): 'q1'}),
+            'q1': (True, {('a', 'o2'): 'q1', ('b', 'o2'): 'Oo2Dq1'}),
+            'Oo2Dq1': (False, {('a', 'o2'): 'q1', ('b', 'o2'): 'Oo2Dq1'})
+        })
+        expected_iuo_dfa = Dfa.from_state_setup({
+            'q0': (False, {tag_input('a'): 'Oo0Dq0_Oo1Dq1'}),
+            'q1': (True, {tag_input('a'): 'Oo2Dq1_', tag_input('b'): 'Oo2_DOo2Dq1'}),
+            'Oo2Dq1': (False, {tag_input('a'): 'Oo2Dq1_', tag_input('b'): 'Oo2_DOo2Dq1'}),
+            'Oo0Dq0_Oo1Dq1': (False, {tag_output('o0'): 'q0', tag_output('o1'): 'q1'}),
+            'Oo2Dq1_': (False, {tag_output('o2'): 'q1'}),
+            'Oo2_DOo2Dq1': (False, {tag_output('o2'): 'Oo2Dq1'})
+        })
+
+        iuo_dfa = IUO_dfa_from_IXO_dfa(
+            ixo_dfa=ixo_dfa,
+            tag_input=tag_input,
+            tag_output=tag_output,
+            make_input_complete=False
+        )
+        self.assertIsInstance(iuo_dfa, Dfa)
+        self.assertEqual(iuo_dfa, expected_iuo_dfa)
+
     def test_make_input_complete(self):
         def tag_input(input: Any) -> Tuple[str,Any]:
             return ('I', input)
@@ -320,9 +350,43 @@ class TestIUODfaFromIXODfa(unittest.TestCase):
             'q1': (True, {tag_input('a'): 'Oo2Dq1', tag_input('b'): 'Oo2Dq1'}),
             'Oo0Dq0_Oo1Dq1': (False, {tag_output('o0'): 'q0', tag_output('o1'): 'q1'}),
             'Oo2Dq1': (False, {tag_output('o2'): 'q1'}),
-            'sink': (False, dict())
+            'sink_state': (False, dict())
         })
-        expected_sink = expected_iuo_dfa.get_state_by_id('sink')
+        expected_sink = expected_iuo_dfa.get_state_by_id('sink_state')
+        dfa_alphabet = [tag_input(i) for i in ['a', 'b']] + [tag_output(o) for o in ['o0', 'o1', 'o2']]
+        for state in expected_iuo_dfa.states:
+            for a in dfa_alphabet:
+                if a not in state.transitions:
+                    state.transitions[a] = expected_sink
+
+        iuo_dfa = IUO_dfa_from_IXO_dfa(
+            ixo_dfa=ixo_dfa,
+            tag_input=tag_input,
+            tag_output=tag_output,
+            make_input_complete=True
+        )
+        self.assertIsInstance(iuo_dfa, Dfa)
+        self.assertEqual(iuo_dfa, expected_iuo_dfa)
+
+    def test_make_input_complete_prevents_aux_state_name_clashing(self):
+        def tag_input(input: Any) -> Tuple[str,Any]:
+            return ('I', input)
+
+        def tag_output(output: Any) -> Tuple[str,Any]:
+            return ('O', output)
+
+        ixo_dfa = Dfa.from_state_setup({
+            'sink_state': (False, {('a', 'o0'): 'sink_state', ('a', 'o1'): 'q1'}),
+            'q1': (True, {('a', 'o2'): 'q1', ('b', 'o2'): 'q1'})
+        })
+        expected_iuo_dfa = Dfa.from_state_setup({
+            'sink_state': (False, {tag_input('a'): 'Oo0Dsink_state_Oo1Dq1'}),
+            'q1': (True, {tag_input('a'): 'Oo2Dq1', tag_input('b'): 'Oo2Dq1'}),
+            'Oo0Dsink_state_Oo1Dq1': (False, {tag_output('o0'): 'sink_state', tag_output('o1'): 'q1'}),
+            'Oo2Dq1': (False, {tag_output('o2'): 'q1'}),
+            'sink_state_': (False, dict())
+        })
+        expected_sink = expected_iuo_dfa.get_state_by_id('sink_state_')
         dfa_alphabet = [tag_input(i) for i in ['a', 'b']] + [tag_output(o) for o in ['o0', 'o1', 'o2']]
         for state in expected_iuo_dfa.states:
             for a in dfa_alphabet:
