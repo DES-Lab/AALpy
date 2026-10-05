@@ -120,7 +120,7 @@ class BBCEqOracle(Oracle):
                             break
 
                     if not self.check_all_props_when_a_first_prop_cex_was_found:
-                        return cex
+                        return prop_cex
 
         # Return the property counterexample, if one was found
         if prop_cex is not None:
