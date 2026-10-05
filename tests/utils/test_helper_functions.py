@@ -232,10 +232,10 @@ class TestIUODfaFromIXODfa(unittest.TestCase):
 
     def test_single_state_no_transitions(self):
         def tag_input(input: Any) -> Tuple[str,Any]:
-            return ("I", input)
+            return ('I', input)
 
         def tag_output(output: Any) -> Tuple[str,Any]:
-            return ("O", output)
+            return ('O', output)
 
         ixo_dfa = Dfa.from_state_setup({
             'q0': (False, dict())
@@ -255,10 +255,10 @@ class TestIUODfaFromIXODfa(unittest.TestCase):
 
     def test_single_transition(self):
         def tag_input(input: Any) -> Tuple[str,Any]:
-            return ("I", input)
+            return ('I', input)
 
         def tag_output(output: Any) -> Tuple[str,Any]:
-            return ("O", output)
+            return ('O', output)
 
         ixo_dfa = Dfa.from_state_setup({
             'q0': (False, {('a', 'o'): 'q0'})
@@ -279,10 +279,10 @@ class TestIUODfaFromIXODfa(unittest.TestCase):
 
     def test_distinct_outputs_for_same_input(self):
         def tag_input(input: Any) -> Tuple[str,Any]:
-            return f"I{input}"#("I", input)
+            return ('I', input)
 
         def tag_output(output: Any) -> Tuple[str,Any]:
-            return f"O{output}"#("O", output)
+            return ('O', output)
 
         ixo_dfa = Dfa.from_state_setup({
             'q0': (False, {('a', 'o0'): 'q0', ('a', 'o1'): 'q1'}),
@@ -306,10 +306,10 @@ class TestIUODfaFromIXODfa(unittest.TestCase):
 
     def test_make_input_complete(self):
         def tag_input(input: Any) -> Tuple[str,Any]:
-            return ("I", input)
+            return ('I', input)
 
         def tag_output(output: Any) -> Tuple[str,Any]:
-            return ("O", output)
+            return ('O', output)
 
         ixo_dfa = Dfa.from_state_setup({
             'q0': (False, {('a', 'o0'): 'q0', ('a', 'o1'): 'q1'}),
@@ -340,10 +340,10 @@ class TestIUODfaFromIXODfa(unittest.TestCase):
 
     def test_specify_sink_state(self):
         def tag_input(input: Any) -> Tuple[str,Any]:
-            return ("I", input)
+            return ('I', input)
 
         def tag_output(output: Any) -> Tuple[str,Any]:
-            return ("O", output)
+            return ('O', output)
 
         ixo_dfa = Dfa.from_state_setup({
             'q0': (False, {('a', 'o0'): 'q0', ('a', 'o1'): 'q1'}),
@@ -376,10 +376,10 @@ class TestIUODfaFromIXODfa(unittest.TestCase):
 
     def test_make_new_states_accepting(self):
         def tag_input(input: Any) -> Tuple[str,Any]:
-            return ("I", input)
+            return ('I', input)
 
         def tag_output(output: Any) -> Tuple[str,Any]:
-            return ("O", output)
+            return ('O', output)
 
         ixo_dfa = Dfa.from_state_setup({
             'q0': (False, {('a', 'o0'): 'q0', ('a', 'o1'): 'q1'}),
