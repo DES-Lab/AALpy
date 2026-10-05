@@ -201,15 +201,20 @@ class BBCEqOracleTests(BaseOracleTests):
             "h0": {"i": ("o1", "h0")}
         })
         prop_bug_dfa = Dfa.from_state_setup({
-            "p": (False, {
-                dfa_input_from_mealy_input("i"): "p",
-                dfa_output_from_mealy_output("o0"): "p",
+            "p0": (False, {
+                dfa_input_from_mealy_input("i"): "p0",
+                dfa_output_from_mealy_output("o0"): "p0",
+                dfa_output_from_mealy_output("o1"): "p1"
+            }),
+            "p1": (False, {
+                dfa_input_from_mealy_input("i"): "p1",
+                dfa_output_from_mealy_output("o0"): "p1",
                 dfa_output_from_mealy_output("o1"): "b"
             }),
             "b": (True, {
-                dfa_input_from_mealy_input("i"): "p",
-                dfa_output_from_mealy_output("o0"): "p",
-                dfa_output_from_mealy_output("o1"): "p"}),
+                dfa_input_from_mealy_input("i"): "p0",
+                dfa_output_from_mealy_output("o0"): "p0",
+                dfa_output_from_mealy_output("o1"): "p0"}),
         })
 
         prop_mc_oracle = IUOBugDfaModelCheckingOracle(
@@ -238,6 +243,14 @@ class BBCEqOracleTests(BaseOracleTests):
         self.assertIsNotNone(cex)
         # The SUL and the hypothesis should have distinct outputs for cex, since cex should be a valid counterexample for hypothesis refinement
         self.assertNotEqual(sul.query(cex), initial_hyp_mealy.execute_sequence(initial_hyp_mealy.initial_state, cex))
+
+        # the counterexample prop_mc_oracle returns for initial_hyp_mealy should be two inputs long
+        prop_oracle_cex = prop_mc_oracle.find_cex(initial_hyp_mealy)
+        self.assertIsNotNone(prop_oracle_cex)
+        self.assertEqual(len(prop_oracle_cex), 2)
+        # while the counterexample returned by oracle should be one input long (and therefore minimal),
+        # since initial_hyp_mealy and the SUT disagree on the prop_oracle_cex's very first input
+        self.assertEqual(len(cex), 1)
 
     def test_prop_cex_is_not_found_before_this_is_possible_for_the_hyp(self):
         sul_mealy = MealyMachine.from_state_setup({
@@ -503,6 +516,10 @@ class BBCEqOracleTests(BaseOracleTests):
             }),
             "p1": (False, {
                 dfa_input_from_mealy_input("a"): "p1",
+                dfa_output_from_mealy_output("o0"): "p2"
+            }),
+            "p2": (False, {
+                dfa_input_from_mealy_input("a"): "p2",
                 dfa_output_from_mealy_output("o0"): "b"
             }),
             "b": (True, {
@@ -559,6 +576,14 @@ class BBCEqOracleTests(BaseOracleTests):
         # cex should not be None, since the hypothesis violates the first property with a counterexample
         # that won't be confirmed against the SUT
         self.assertIsNotNone(cex)
+
+        # the counterexample that violated_by_hyp_but_not_sut_prop_mc_oracle returns for initial_hyp_mealy
+        # should be three inputs long
+        prop_oracle_cex = violated_by_hyp_but_not_sut_prop_mc_oracle.find_cex(initial_hyp_mealy)
+        self.assertIsNotNone(prop_oracle_cex)
+        self.assertEqual(prop_oracle_cex, ("a", "a", "a"))
+        # cex should be shorter than prop_oracle_cex, since the first disagreement between initial_hyp_mealy
+        # and the SUT occurs after ("a", "a")
         self.assertEqual(cex, ("a", "a"))
 
     def test_properties_with_confirmed_sut_counterexamples_are_excluded_until_reenabled(self):
