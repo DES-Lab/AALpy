@@ -1,4 +1,5 @@
 # Exposes all built-in equivalence oracle implementations.
+from .BBCEqOracle import BBCEqOracle
 from .BreadthFirstExplorationEqOracle import BreadthFirstExplorationEqOracle
 from .CacheBasedEqOracle import CacheBasedEqOracle
 from .KWayStateCoverageEqOracle import KWayStateCoverageEqOracle

@@ -30,14 +30,16 @@ class SUL(ABC):
             i-th input.
         """
         self.pre()
+        self.num_queries += 1
         # Empty string for DFA
         if len(word) == 0:
             out = [self.step(None)]
         else:
-            out = [self.step(letter) for letter in word]
+            out = []
+            for letter in word:
+                self.num_steps += 1
+                out.append(self.step(letter))
         self.post()
-        self.num_queries += 1
-        self.num_steps += len(word)
         return out
 
     def io_query(self, word: tuple) -> list[tuple]:
@@ -60,15 +62,15 @@ class SUL(ABC):
             output corresponds to the output of the system after the i-th input.
         """
         self.pre()
+        self.num_queries += 1
 
         outputs_received = []
         last_output = None
 
         for inp in word:
+            self.num_steps += 1
             output = self.step(inp)
             outputs_received.append(output)
-
-        self.num_steps += len(word)
 
         while True:
             next_input = ads.next_input(last_output)
@@ -81,12 +83,11 @@ class SUL(ABC):
                     last_output = self.step(None)
             else:
                 word.append(next_input)
+                self.num_steps += 1
                 output = self.step(next_input)
                 outputs_received.append(output)
                 last_output = output
-                self.num_steps += 1
 
-        self.num_queries += 1
         self.post()
 
         return word, outputs_received

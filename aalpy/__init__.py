@@ -27,6 +27,7 @@ from .base import (
     CacheTree,
     DeterministicAutomaton,
     Oracle,
+    PropertyMonitor
 )
 from .learning_algs import (
     run_abstracted_ONFSM_Lstar,
@@ -46,7 +47,11 @@ from .learning_algs import (
     RandomhWOracle,
     RandomWphWOracle
 )
+from .model_checking_oracles import (
+    IUOBugDfaModelCheckingOracle
+)
 from .oracles import (
+    BBCEqOracle,
     BreadthFirstExplorationEqOracle,
     CacheBasedEqOracle,
     KWayStateCoverageEqOracle,
@@ -64,8 +69,12 @@ from .oracles import (
     KWayStateCoverageEqOracle,
     KWayTransitionCoverageEqOracle,
 )
+from .property_monitors import (
+    IUOBugDfaMonitor
+)
 from .SULs import (
     AutomatonSUL, 
+    MonitoringSUL, 
     FunctionDecorator, 
     PyClassSUL, 
     RegexSUL, 

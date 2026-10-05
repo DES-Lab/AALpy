@@ -3,9 +3,9 @@ import random
 import string
 from itertools import product
 from collections import defaultdict
-from typing import Any
+from typing import Any, Callable, List
 
-from aalpy import Mdp, MarkovChain, McState, MooreMachine, Dfa, DfaState
+from aalpy import Mdp, MarkovChain, McState, MealyMachine, MooreMachine, Dfa, DfaState
 
 
 def extend_set(list_to_extend: list, new_elements: list) -> list:
@@ -457,6 +457,156 @@ def product_with_possible_empty_iterable(*iterables: Any, repeat: int = 1) -> pr
     non_empty_iterables = [it for it in iterables if it]
     return product(*non_empty_iterables, repeat=repeat)
 
+
+def IUO_dfa_from_IXO_dfa(ixo_dfa: Dfa,
+                         tag_input: Callable[[Any],Any],
+                         tag_output: Callable[[Any],Any],
+                         sink_state_ids: List[str] | None = None,
+                         make_input_complete = True,
+                         make_new_states_accepting = False) -> Dfa:
+    """
+    Produce for a given Dfa with transition labels formed by the Cartesian product of input
+    alphabet I and output alphabet O a Dfa in which every transition has a letter from either
+    I or O by "splitting" the transitions into two. The produced Dfa represents a transition
+    q1 -(i,o) -> q2 from the original Dfa as q1 -i-> Oo_Dq2 -o-> q2. The original Dfa remains
+    unchanged. The inputs and outputs of the produced Dfa are tagged so that they can still be
+    recognized as either inputs or outputs in case there is overlap between I and O. All states
+    in the produced Dfa are accepting if and only if their corresponding states in the original
+    Dfa are accepting. The states that have no counterpart in the original Dfa are made either
+    accepting or unaccepting depending on the value of the make_new_states_accepting argument.
+
+    :param Dfa ixo_dfa: Dfa with transition labels formed by the Cartesian product of I and O.
+    :param Callable[[Any],Any] tag_input: Function that tags inputs.
+    :param Callable[[Any],Any] tag_output: Function that tags outputs.
+    :param List[str] | None sink_state_ids: Optional list of states from ixo_dfa that should be
+        treated as sink states with self-loops for all letters from both I and O.
+    :param bool make_input_complete: If the constructed Dfa isn't naturally input-complete, then
+        make it input-complete by adding a new state and adding for each state transitions to
+        this new state for each letter from I and O for which a transition is missing. The new
+        state is then a sink state with self-loops for all letters from I and O.
+    :param bool make_new_states_accepting: Whether the states in the produced Dfa that have no
+        counterparts in the original Dfa should be accepting.
+    :return Dfa: Dfa in which each transition is labelled by either an input from I or an output
+        from O.
+    """
+    # define states directly derived from those of the ixo_dfa
+    iuo_state_map: dict = {
+        ixo_state.state_id: DfaState(ixo_state.state_id, ixo_state.is_accepting)
+        for ixo_state in ixo_dfa.states
+    }
+
+    inputs = list(frozenset( i for (i, o) in ixo_dfa.get_input_alphabet() )) # Each input can occur in multiple pairs
+    outputs = list(frozenset( o for (i, o) in ixo_dfa.get_input_alphabet() )) # Each output can occur in multiple pairs
+
+    def make_state_id_unique(state_id: str) -> str:
+        nonlocal iuo_state_map
+
+        existing_state_ids = set(iuo_state_map.keys())
+
+        unique_state_id = state_id # Don't change the given state_id
+        while unique_state_id in existing_state_ids:
+            unique_state_id += '_'
+
+        return unique_state_id
+
+    # define transitions and auxiliary states
+    defined_os_and_dsts_to_state_id_map = dict()
+    for ixo_state in ixo_dfa.states:
+
+        if sink_state_ids is not None and ixo_state.state_id in sink_state_ids:
+            sink_state = iuo_state_map[ixo_state.state_id]
+            for i in inputs:
+                sink_state.transitions[tag_input(i)] = sink_state
+            for o in outputs:
+                sink_state.transitions[tag_output(o)] = sink_state
+            continue
+
+        for i in inputs:
+            # identify all of the defined outputs and subsequent destination states and use these to
+            # create a state ID that describes precisely that transition behavior
+            defined_os_and_dsts = []
+            candidate_os_dst_state_id = ""
+            for o in outputs:
+                if (i, o) not in ixo_state.transitions:
+                    continue
+
+                o_dst_state_id = ixo_state.transitions[(i, o)].state_id
+
+                if (o, o_dst_state_id) not in defined_os_and_dsts:
+                    defined_os_and_dsts.append( (o, o_dst_state_id) )
+
+                    if candidate_os_dst_state_id != "":
+                        candidate_os_dst_state_id += '_'
+                    candidate_os_dst_state_id += f'O{o}D{o_dst_state_id}'
+            # ixo_state has no transitions for i if defined_os_and_dsts remains empty
+            if len(defined_os_and_dsts) == 0:
+                continue
+
+            # obtain the state for defined_os_and_dsts if it has already been created
+            defined_os_and_dsts = frozenset(defined_os_and_dsts)
+            if defined_os_and_dsts in defined_os_and_dsts_to_state_id_map:
+                os_dst_state_id = defined_os_and_dsts_to_state_id_map[defined_os_and_dsts]
+                os_dst_state = iuo_state_map[os_dst_state_id]
+            else:
+                # create a new state for defined_os_and_dsts if this has yet to be created
+                os_dst_state_id = make_state_id_unique(candidate_os_dst_state_id)
+                defined_os_and_dsts_to_state_id_map[defined_os_and_dsts] = os_dst_state_id
+
+                os_dst_state = DfaState(os_dst_state_id, make_new_states_accepting)
+                iuo_state_map[os_dst_state_id] = os_dst_state
+
+                # add the state's transitions
+                for o, dst_id in defined_os_and_dsts:
+                    tagged_o = tag_output(o)
+                    os_dst_state.transitions[tagged_o] = iuo_state_map[dst_id]
+
+            # add a transition from the source state to os_dst_state if this has yet to be done
+            tagged_i = tag_input(i)
+            if tagged_i not in iuo_state_map[ixo_state.state_id].transitions:
+                iuo_state_map[ixo_state.state_id].transitions[tagged_i] = os_dst_state
+
+    # create the Dfa
+    initial_state = iuo_state_map[ixo_dfa.initial_state.state_id]
+    dfa = Dfa(initial_state, list(iuo_state_map.values()))
+
+    # make the Dfa input complete, if required and requested
+    if make_input_complete and not dfa.is_input_complete():
+        sink_state_id = make_state_id_unique('sink_state')
+        sink_state = DfaState(sink_state_id, is_accepting=make_new_states_accepting)
+        dfa.states.append(sink_state)
+
+        iuo_alphabet = dfa.get_input_alphabet()
+        for state in dfa.states:
+            for a in iuo_alphabet:
+                if a not in state.transitions:
+                    state.transitions[a] = sink_state
+
+    return dfa
+
+def IXO_dfa_from_mealy(mealy_model: MealyMachine) -> Dfa:
+    """
+    Produce for a given Mealy machine with inputs from alphabet I and outputs from alphabet O a Dfa
+    with transitions labelled by pairs of inputs and outputs from their corresponding transitions in
+    the Mealy machine. The produced Dfa represent a transition q1 -i/o-> q2 from the Mealy machine
+    as q1 -(i,o)-> q2. All states of the produced Dfa are accepting.
+
+    :param MealyMachine mealy_model: Mealy machine to convert.
+    :return Dfa: The equivalent Dfa.
+    """
+    # define states
+    dfa_state_map: dict = {
+        mealy_state.state_id: DfaState(mealy_state.state_id, True)
+        for mealy_state in mealy_model.states
+    }
+
+    # define transitions
+    for mealy_state in mealy_model.states:
+        for i, reached_state in mealy_state.transitions.items():
+            o = mealy_state.output_fun[i]
+            dfa_state_map[mealy_state.state_id].transitions[(i, o)] = dfa_state_map[reached_state.state_id]
+
+    initial_state = dfa_state_map[mealy_model.initial_state.state_id]
+    return Dfa(initial_state, list(dfa_state_map.values()))
 
 def dfa_from_moore(moore_model: MooreMachine) -> Dfa:
     """
