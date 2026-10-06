@@ -1,6 +1,7 @@
 import unittest
 
 from aalpy.learning_algs.general_passive.DataHandler import CountDataHandler, CountOnPTADataHandler
+from aalpy.learning_algs.general_passive.GsmNode import GsmNode
 
 
 def counting_pta(handler, data_format, data):
@@ -11,8 +12,8 @@ class TestCountDataHandler(unittest.TestCase):
     def test_copy_can_be_merged_into(self):
         dh = CountDataHandler()
         x, y = dh.init_data(), dh.init_data()
-        dh.aggregate_data(_node_with(x), 'a', 'x', None)
-        dh.aggregate_data(_node_with(y), 'b', 'y', None)
+        dh.aggregate_data(_node_with(x), 'a', 'x', GsmNode(('a', 'x'), None, None))
+        dh.aggregate_data(_node_with(y), 'b', 'y', GsmNode(('b', 'y'), None, None))
         # merging into a copy must work for inputs the copy has never seen
         merged = dh.merge(dh.copy(x), y)
         self.assertEqual(dict(merged.transition_count), {'a': {'x': 1}, 'b': {'y': 1}})
@@ -20,10 +21,21 @@ class TestCountDataHandler(unittest.TestCase):
     def test_copy_is_independent_of_original(self):
         dh = CountDataHandler()
         x = dh.init_data()
-        dh.aggregate_data(_node_with(x), 'a', 'x', None)
+        dh.aggregate_data(_node_with(x), 'a', 'x', GsmNode(('a', 'x'), None, None))
         copy = dh.copy(x)
-        dh.aggregate_data(_node_with(x), 'a', 'x', None)
+        dh.aggregate_data(_node_with(x), 'a', 'x', GsmNode(('a', 'x'), None, None))
         self.assertEqual(copy.transition_count['a'], {'x': 1})
+
+    def test_counts_use_abstracted_symbols(self):
+        for base in (CountDataHandler, CountOnPTADataHandler):
+            class Rounding(base):
+                def abstract(self, in_val, out_val):
+                    return in_val, round(out_val)
+
+            root = Rounding().createPTA([[('a', 1.2)], [('a', 0.9)]], 'mealy', 'io_traces')
+            self.assertEqual(dict(root.data.transition_count), {'a': {1: 2}})
+            smm = root.to_automaton('mealy', 'stochastic')
+            self.assertEqual([(out, prob) for _, out, prob in smm.initial_state.transitions['a']], [(1, 1.0)])
 
 
 class TestCountOnPTADataHandler(unittest.TestCase):

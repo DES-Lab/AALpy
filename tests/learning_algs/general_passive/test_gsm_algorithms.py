@@ -69,6 +69,12 @@ class TestRunEdsm(unittest.TestCase):
         self.assertEqual(len(learned.states), 2)
         self.assertTrue(bisimilar(learned, ground_truth))
 
+    def test_unknown_outputs_do_not_break_dfa_conversion(self):
+        # the states reached by () and ('a', 'a') are never labeled
+        data = [(('a',), True), (('a', 'a', 'a'), False)]
+        learned = run_EDSM(data, automaton_type='dfa', print_info=False)
+        self.assertEqual([learned.execute_sequence(learned.initial_state, seq)[-1] for seq, _ in data], [True, False])
+
     def test_learns_minimal_moore_machine(self):
         ground_truth = alternating_moore()
         data = labeled_sequence_data(ground_truth, depth=3)

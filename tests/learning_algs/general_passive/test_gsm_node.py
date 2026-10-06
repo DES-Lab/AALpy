@@ -117,6 +117,12 @@ class TestGsmNodeBasics(unittest.TestCase):
         self.assertIn((root, 'b', 'root_out'), missing)
         self.assertIs(root.transitions['b']['root_out'], root)
 
+    def test_make_input_complete_completes_external_target(self):
+        root = simple_create_PTA([[('a', 'x')]], NoOpDataHandler())
+        sink = GsmNode((None, 'sink_out'), None, None)
+        root.make_input_complete(sink)
+        self.assertIs(sink.transitions['a']['sink_out'], sink)
+
 
 class TestGsmNodeOrderingAndOutputs(unittest.TestCase):
     def test_lt_orders_by_prefix_length_then_lexicographically(self):
@@ -265,6 +271,18 @@ class TestGsmNodeToAutomaton(unittest.TestCase):
         root.transitions['a']['transition_out'] = child
         with self.assertRaises(ValueError):
             root.to_automaton('moore', 'deterministic')
+
+    def test_to_automaton_maps_unknown_outputs_to_none(self):
+        dh = NoOpDataHandler()
+        root = dh.createPTA([(('a', 'a'), 1)], 'moore', 'labeled_sequences')
+        with self.assertWarns(UserWarning):
+            moore = root.to_automaton('moore', 'deterministic')
+        self.assertEqual([state.output for state in moore.states], [None, None, 1])
+
+        root = dh.createPTA([(('a', 'a'), 1)], 'mealy', 'labeled_sequences')
+        with self.assertWarns(UserWarning):
+            mealy = root.to_automaton('mealy', 'deterministic')
+        self.assertIsNone(mealy.initial_state.output_fun['a'])
 
     def test_to_automaton_deterministic_mealy(self):
         dh = NoOpDataHandler()

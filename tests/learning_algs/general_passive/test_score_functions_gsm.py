@@ -56,6 +56,16 @@ class TestOverrideDetection(unittest.TestCase):
         self.assertTrue(Custom().has_local_compatibility())
         self.assertTrue(Custom().has_score_function())
 
+    def test_override_default_checks_is_forwarded_by_wrappers(self):
+        class NoDefaultChecks(ScoreCalculation):
+            def override_default_checks(self):
+                return True
+
+        self.assertTrue(ScoreWithKTail(NoDefaultChecks(), 1).override_default_checks())
+        self.assertTrue(ScoreCombinator([NoDefaultChecks()]).override_default_checks())
+        self.assertFalse(ScoreWithKTail(ScoreCalculation(), 1).override_default_checks())
+        self.assertFalse(ScoreCombinator([ScoreCalculation()]).override_default_checks())
+
 
 class TestScoreCombinatorAggregation(unittest.TestCase):
     def test_no_early_verdict_when_no_sub_score_has_one(self):

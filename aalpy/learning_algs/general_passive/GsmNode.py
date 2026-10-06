@@ -284,6 +284,10 @@ class GsmNode(Generic[T]):
                 warnings.warn("Automaton has unknown outputs")
                 break
 
+        # unknown outputs are represented as None in the resulting automaton
+        def known_or_none(out_sym):
+            return None if out_sym is unknown_output else out_sym
+
         # create states
         state_map = dict()
         for i, node in enumerate(nodes):
@@ -291,7 +295,7 @@ class GsmNode(Generic[T]):
             if output_behavior == "mealy":
                 state = state_class(state_id)
             elif output_behavior == "moore":
-                state = state_class(state_id, node.get_prefix_output())
+                state = state_class(state_id, known_or_none(node.get_prefix_output()))
             state_map[node] = state
             if set_prefix:
                 if transition_behavior == "deterministic":
@@ -317,11 +321,11 @@ class GsmNode(Generic[T]):
                         state.transitions[in_sym] = target_state
                     elif automaton_class is MealyMachine:
                         state.transitions[in_sym] = target_state
-                        state.output_fun[in_sym] = out_sym
+                        state.output_fun[in_sym] = known_or_none(out_sym)
                     elif automaton_class is NDMooreMachine:
                         state.transitions[in_sym].append(target_state)
                     elif automaton_class is Onfsm:
-                        state.transitions[in_sym].append((out_sym, target_state))
+                        state.transitions[in_sym].append((known_or_none(out_sym), target_state))
                     elif automaton_class is Mdp:
                         state.transitions[in_sym].append((target_state, prob_info[in_sym][out_sym]))
                     elif automaton_class is StochasticMealyMachine:
@@ -434,6 +438,10 @@ class GsmNode(Generic[T]):
             raise ValueError(f"Invalid target {target}. Should be either 'self_loop' or a GsmNode.")
 
         all_nodes = self.get_all_nodes()
+        if target != "self_loop":
+            # the target becomes reachable and has to be completed as well
+            known_nodes = set(all_nodes)
+            all_nodes.extend(node for node in target.get_all_nodes() if node not in known_nodes)
         inputs = {in_sym for node in all_nodes for in_sym in node.transitions}
         missing_trans = []
         for node in all_nodes:

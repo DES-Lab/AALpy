@@ -270,7 +270,9 @@ class CountDataHandler(DataHandler[CountData]):
         if out_value is unknown_output:
             raise RuntimeError(f"{self.__class__.__name__} does not support non-prefix-closed data")
         if src_node is not None:
-            int_dict_increment(src_node.data.transition_count[in_value], out_value, 1)
+            # the access pair of the destination holds the abstracted symbols of the transition
+            in_sym, out_sym = dst_node.prefix_access_pair
+            int_dict_increment(src_node.data.transition_count[in_sym], out_sym, 1)
 
 
 class CountOnPTADataHandler(CountDataHandler, DataHandler[CountOnPTAData]):
@@ -289,6 +291,7 @@ class CountOnPTADataHandler(CountDataHandler, DataHandler[CountOnPTAData]):
             raise RuntimeError(f"{self.__class__.__name__} does not support non-prefix-closed data")
         if src_node is None:
             return
-        int_dict_increment(src_node.data.transition_count[in_value], out_value, 1)
-        int_dict_increment(src_node.data.pta_count[in_value], out_value, 1)
-        src_node.data.shadow_pta[in_value][out_value] = dst_node
+        in_sym, out_sym = dst_node.prefix_access_pair
+        int_dict_increment(src_node.data.transition_count[in_sym], out_sym, 1)
+        int_dict_increment(src_node.data.pta_count[in_sym], out_sym, 1)
+        src_node.data.shadow_pta[in_sym][out_sym] = dst_node
