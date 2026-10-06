@@ -42,6 +42,8 @@ AALpy also features a Generalized State Merging (GSM) framework based on the [Re
 | Pushdown          |          VPA/SEVPA                                                            | KV<sub>VPA</sub>                         |    PAPNI      |    
 </div>
 
+Extension of AALpy that are early-research prototypes, support non-conventional formalisms and algorithms, or carry heavy dependencies can be found in [AALpy-extra](https://github.com/zwergziege/AALpy-extra). 
+
 ## Installation
 
 Use the package manager [pip](https://pip.pypa.io/en/stable/) to install the latest release of AALpy:
