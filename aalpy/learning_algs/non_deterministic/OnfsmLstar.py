@@ -71,8 +71,9 @@ def run_non_det_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, n_sampling: i
         row_to_close = ot.get_row_to_close()
         while row_to_close is not None:
             ot.query_missing_observations()
-            row_to_close = ot.get_row_to_close()
+            # cleaning can remove rows from S, so closedness has to be checked after it
             ot.clean_obs_table()
+            row_to_close = ot.get_row_to_close()
 
         hypothesis = ot.gen_hypothesis()
 

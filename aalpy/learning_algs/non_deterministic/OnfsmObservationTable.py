@@ -56,15 +56,18 @@ class NonDetObservationTable:
         for s in self.S.copy():
             s_rows.add(self.row_to_hashable(s))
 
-        for t in update_S_dot_A:
-            row_t = self.row_to_hashable(t)
-            if row_t not in s_rows:
-                self.closing_counter += 1
-                self.S.append(t)
-                return t
+        unclosed_rows = [t for t in update_S_dot_A if self.row_to_hashable(t) not in s_rows]
+        if not unclosed_rows:
+            self.closing_counter = 0
+            return None
 
-        self.closing_counter = 0
-        return None
+        # Out of all rows that are not closed, move the one that was reached most often to S. Every extension of
+        # a row in S has to be reached in order to be sampled, so rarely reached access sequences are expensive.
+        # Frequencies are only used to order the candidates, they are not treated as actual probabilities.
+        row_to_close = max(unclosed_rows, key=self.sul.cache.get_reach_frequency)
+        self.closing_counter += 1
+        self.S.append(row_to_close)
+        return row_to_close
 
     def get_extended_S(self, row_prefix: tuple[tuple, tuple] | None = None) -> list[tuple[tuple, tuple]]:
         """

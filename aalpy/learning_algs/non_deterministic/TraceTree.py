@@ -219,6 +219,25 @@ class TraceTree:
 
         return sampling_frequency
 
+    def get_reach_frequency(self, prefix: tuple[tuple, tuple]) -> float:
+        """
+        Estimates how often the path described by `prefix` is followed when its inputs are executed. Computed as the
+        product of relative frequencies of observed outputs along the path.
+
+        :param tuple[tuple, tuple] prefix: (inputs, outputs) pair identifying the path.
+        :return float: Relative frequency of the path, 0 if the path was never observed.
+        """
+        reach_frequency = 1.0
+        curr_node = self.root_node
+        for i, o in zip(prefix[0], prefix[1]):
+            children = curr_node.children[i]
+            curr_node = curr_node.get_child(i, o)
+            if curr_node is None:
+                return 0.0
+            reach_frequency *= curr_node.frequency_counter / sum(c.frequency_counter for c in children)
+
+        return reach_frequency
+
     def get_sampling_distributions(self, prefix: tuple[tuple, tuple], input_from_alphabet: Any) -> dict:
         """
         Computes the empirical output probability distribution observed after `prefix` on a given input.
