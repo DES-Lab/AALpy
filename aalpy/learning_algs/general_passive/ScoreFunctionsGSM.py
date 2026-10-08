@@ -268,6 +268,9 @@ class WrappingScore(ScoreCalculation, ABC):
     def has_score_function(self) -> bool:
         return self.wrapped.has_score_function()
 
+    def override_default_checks(self) -> bool:
+        return self.wrapped.override_default_checks()
+
 
 class ScoreWithKTail(WrappingScore):
     """Applies k-Tails to a compatibility function: Compatibility is only evaluated up to a certain depth k."""
@@ -381,6 +384,9 @@ class ScoreCombinator(ScoreCalculation):
         :return Any: Aggregated score result.
         """
         return self.aggregate_score(score.promotion_score(promotion_candidate) for score in self.scores)
+
+    def override_default_checks(self) -> bool:
+        return any(score.override_default_checks() for score in self.scores)
 
     @staticmethod
     def default_aggregate_compatibility(compatibility_iterable: Iterable) -> Any:
