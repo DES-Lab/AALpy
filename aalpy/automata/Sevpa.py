@@ -122,7 +122,7 @@ class Sevpa(Automaton):
         super().__init__(initial_state, states)
         self.initial_state = initial_state
         self.states = states
-        self.input_alphabet = input_alphabet if input_alphabet else self.get_input_alphabet()
+        self.input_alphabet = input_alphabet or self.get_input_alphabet()
         self.current_state = None
         self.stack = []
         self.error_state_reached = False
@@ -144,6 +144,19 @@ class Sevpa(Automaton):
         self.error_state_reached = False
         return self.current_state.is_accepting and self.stack[-1] == self.empty
 
+    def accepts(self, seq: list[str]) -> bool:
+        """
+        Checks whether the 1-SEVPA accepts an input sequence, that is, whether executing it from the initial state
+        ends in an accepting state with an empty stack.
+
+        :param list[str] seq: Input sequence.
+        :return bool: True if the sequence is accepted, False otherwise.
+        """
+        self.reset_to_initial()
+        for letter in seq:
+            self.step(letter)
+        return self.step(None)
+
     def step(self, letter: str | None) -> bool:
         """
         Perform a single step on the 1-SEVPA by transitioning with the given input letter.
@@ -162,8 +175,7 @@ class Sevpa(Automaton):
             self.current_state = self.initial_state
             return self.current_state.is_accepting and self.stack[-1] == self.empty
 
-        # get possible transitions; read without inserting, as transitions is a defaultdict and a
-        # lookup for an undefined letter would otherwise permanently alter the model
+        # get possible transitions; transitions is a defaultdict, so .get keeps the lookup from inserting
         transitions = self.current_state.transitions.get(letter, ())
         taken_transition = None
         for t in transitions:
@@ -255,8 +267,7 @@ class Sevpa(Automaton):
 
         :param dict state_setup: Map from state_id to tuple(is_accepting, transitions_dict).
         :param init_state_id: State id of the initial state, passed via kwargs.
-        :param input_alphabet: Input alphabet of the 1-SEVPA, passed via kwargs (Default value = None, meaning that
-            it is recovered from the transitions, which loses the symbols that no transition happens to use).
+        :param input_alphabet: Input alphabet of the 1-SEVPA, passed via kwargs (Default value = None).
         :return Sevpa: The constructed 1-SEVPA.
         """
 
@@ -284,8 +295,6 @@ class Sevpa(Automaton):
                     state.transitions[_input].append(trans)
 
         init_state = states[init_state_id]
-        # the alphabet is forwarded rather than recovered from the transitions, which would lose the symbols
-        # that no transition of the model happens to use
         return Sevpa(init_state, [state for state in states.values()], kwargs.get('input_alphabet'))
 
     def transform_access_string(self, state: SevpaState | None = None, stack_content: list | None = None) -> list[str]:
@@ -403,6 +412,10 @@ class Sevpa(Automaton):
                 if not is_error_state:
                     break
 
+            # a state without internal and return transitions only leads to itself
+            if state_target is None:
+                state_target = state
+
             # check return transitions from the initial state
             if is_error_state:
                 for return_letter in self.input_alphabet.return_alphabet:
@@ -438,8 +451,6 @@ class Sevpa(Automaton):
             ret_int_al.extend(self.input_alphabet.internal_alphabet)
             ret_int_al.extend(self.input_alphabet.return_alphabet)
             for letter in ret_int_al:
-                # letters the state has no transition for are skipped rather than looked up, as transitions is a
-                # defaultdict and the lookup would add an entry for a transition the state does not have
                 if letter not in state.transitions:
                     continue
 
@@ -577,8 +588,6 @@ class Sevpa(Automaton):
             # the new word will be: letter_prefix + word + letter
             if is_return_letter:
                 # randomly select one of the return transitions with the respective return symbol
-                # read without inserting, as transitions is a defaultdict and looking up a letter the state has
-                # no transition for would otherwise permanently alter the model
                 return_transitions = self.current_state.transitions.get(letter_for_word, ())
                 if len(return_transitions) == 0:
                     continue

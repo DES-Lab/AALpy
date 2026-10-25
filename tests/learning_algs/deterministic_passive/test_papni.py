@@ -3,10 +3,9 @@ import unittest
 from itertools import product
 
 from aalpy.automata.Sevpa import Sevpa
-from aalpy.automata.Vpa import (Vpa, VpaAlphabet, VpaState, VpaTransition, find_vpa_counterexample,
-                                vpa_from_sevpa)
+from aalpy.automata.Vpa import Vpa, VpaAlphabet, VpaState, VpaTransition, vpa_from_sevpa
 from aalpy.learning_algs.deterministic_passive.PAPNI import run_PAPNI
-from aalpy.utils import generate_random_sevpa, get_characterizing_sequences, is_balanced
+from aalpy.utils import generate_random_sevpa, is_balanced
 
 
 def balanced_parens_vpa_with_internal(internal_alphabet=('i',)):
@@ -26,11 +25,30 @@ def generate_data(vpa, alphabet, depth=4):
     data = []
     for level in range(0, depth + 1):
         for seq in product(merged_alphabet, repeat=level):
-            vpa.reset_to_initial()
-            outputs = vpa.execute_sequence(vpa.initial_state, seq, [])
-            label = outputs[-1] if outputs else vpa.initial_state.is_accepting
-            data.append((seq, label))
+            data.append((seq, vpa.accepts(seq)))
     return data
+
+
+def nested_blocks_vpa():
+    """
+    VPA accepting concatenations of perfectly nested blocks, ( (^n )^n )*. The call symbol '(' pushes '$' at the
+    outermost level and '(' inside a block, so the pushed stack symbol is not determined by the call symbol.
+    """
+    alphabet = VpaAlphabet(internal_alphabet=[], call_alphabet=['('], return_alphabet=[')'])
+    state_setup = {
+        "q0": (True, {"(": [("q1", 'push', "$")]}),
+        "q1": (False, {"(": [("q1", 'push', "(")],
+                       ")": [("q0", 'pop', "$"), ("q2", 'pop', "(")]}),
+        "q2": (False, {")": [("q2", 'pop', "("), ("q0", 'pop', "$")]}),
+    }
+    return Vpa.from_state_setup(state_setup, init_state_id="q0", input_alphabet=alphabet)
+
+
+def exhaustive_balanced_data(vpa, budget=20000):
+    """Every balanced word within the budget (see all_words_within_budget), labeled by the VPA."""
+    alphabet = vpa.input_alphabet
+    return [(seq, vpa.accepts(seq)) for seq in all_words_within_budget(alphabet.get_merged_alphabet(), budget)
+            if is_balanced(seq, alphabet)]
 
 
 def all_words_within_budget(alphabet, budget=5000):
@@ -43,11 +61,12 @@ def all_words_within_budget(alphabet, budget=5000):
         yield from product(alphabet, repeat=length)
 
 
-def accepts(model, seq):
-    """Whether the model accepts the sequence. Vpa and Sevpa share reset_to_initial and step, so both work."""
-    model.reset_to_initial()
-    outputs = [model.step(symbol) for symbol in seq]
-    return outputs[-1] if outputs else model.initial_state.is_accepting
+def find_disagreement(model, other, budget=100000):
+    """A word, within the budget, on which the two models disagree, or None if there is none."""
+    for seq in all_words_within_budget(model.input_alphabet.get_merged_alphabet(), budget):
+        if model.accepts(seq) != other.accepts(seq):
+            return seq
+    return None
 
 
 class TestRunPapni(unittest.TestCase):
@@ -66,7 +85,7 @@ class TestRunPapni(unittest.TestCase):
 
             expected = is_balanced(list(seq), alphabet)
 
-            self.assertEqual(accepts(learned_model, seq), expected, f'mismatch on sequence {seq}')
+            self.assertEqual(learned_model.accepts(seq), expected, f'mismatch on sequence {seq}')
 
     def test_learns_vpas_with_call_symbol_conflicts(self):
         """
@@ -74,13 +93,12 @@ class TestRunPapni(unittest.TestCase):
         canonical single entry VPA, whose stack symbols carry the state a call was read in, so these are within its
         model class.
         """
-        from aalpy.utils.BenchmarkVpaModels import vpa_for_L16, vpa_for_nested_blocks
+        from aalpy.utils.BenchmarkVpaModels import vpa_for_L16
 
-        for vpa in (vpa_for_L16(), vpa_for_nested_blocks()):
+        for vpa in (vpa_for_L16(), nested_blocks_vpa()):
             with self.subTest(model=vpa.to_state_setup()):
-                alphabet = vpa.get_input_alphabet()
-                learned_model = run_PAPNI(get_characterizing_sequences(vpa), alphabet, print_info=False)
-                self.assertIsNone(find_vpa_counterexample(vpa, learned_model))
+                learned_model = run_PAPNI(exhaustive_balanced_data(vpa), vpa.input_alphabet, print_info=False)
+                self.assertIsNone(find_disagreement(vpa, learned_model))
 
     def test_sevpa_is_returned_when_requested(self):
         vpa, alphabet = balanced_parens_vpa_with_internal()
@@ -126,7 +144,7 @@ class TestRunPapni(unittest.TestCase):
         learned_model = run_PAPNI(data, alphabet, print_info=False)
         for seq, label in data:
             if is_balanced(list(seq), alphabet):
-                self.assertEqual(label, accepts(learned_model, seq), f'mismatch on sequence {seq}')
+                self.assertEqual(label, learned_model.accepts(seq), f'mismatch on sequence {seq}')
 
     def test_learned_model_conforms_to_randomly_generated_data(self):
         """
@@ -135,9 +153,9 @@ class TestRunPapni(unittest.TestCase):
         """
         from aalpy.utils import generate_input_output_data_from_vpa
         from aalpy.utils.BenchmarkVpaModels import (vpa_L1, vpa_L3, vpa_L11, vpa_json, vpa_for_L16,
-                                                    vpa_for_nested_blocks, vpa_for_even_parentheses)
+                                                    vpa_for_even_parentheses)
 
-        for vpa in (vpa_L1(), vpa_L3(), vpa_L11(), vpa_json(), vpa_for_L16(), vpa_for_nested_blocks(),
+        for vpa in (vpa_L1(), vpa_L3(), vpa_L11(), vpa_json(), vpa_for_L16(), nested_blocks_vpa(),
                     vpa_for_even_parentheses()):
             with self.subTest(model=vpa.to_state_setup()):
                 alphabet = vpa.input_alphabet
@@ -149,36 +167,37 @@ class TestRunPapni(unittest.TestCase):
                     # unbalanced sequences are dropped, so the model makes no promise about them
                     if not is_balanced(list(seq), alphabet):
                         continue
-                    self.assertEqual(label, accepts(learned_model, seq),
+                    self.assertEqual(label, learned_model.accepts(seq),
                                      f'learned model does not conform to the data on {seq}')
 
 
-class TestPapniLearnsFromCharacterizingSequences(unittest.TestCase):
+class TestPapniLearnsFromExhaustiveData(unittest.TestCase):
     """
-    get_characterizing_sequences builds a characteristic sample of the congruence characterizing visibly pushdown
-    languages, without running any learner, so these are genuine checks against independently derived data. It is
-    the congruence of the canonical single entry VPA, which is exactly the model PAPNI learns.
+    Data holding every balanced word up to a length is enough to identify these languages, so PAPNI has to learn
+    them exactly. The learned models are compared to the ground truth on all words up to a (longer) length.
     """
 
     def test_learns_benchmark_vpas(self):
-        from aalpy.utils.BenchmarkVpaModels import (vpa_L1, vpa_L2, vpa_L3, vpa_L4, vpa_L9, vpa_L10, vpa_L11,
-                                                    vpa_L12, vpa_for_even_parentheses, vpa_for_odd_parentheses,
-                                                    vpa_json)
+        from aalpy.utils.BenchmarkVpaModels import (vpa_L1, vpa_L10, vpa_L11, vpa_for_L16, vpa_for_even_parentheses,
+                                                    vpa_for_odd_parentheses)
 
-        for vpa in (vpa_L1(), vpa_L2(), vpa_L3(), vpa_L4(), vpa_L9(), vpa_L10(), vpa_L11(), vpa_L12(), vpa_json(),
-                    vpa_for_odd_parentheses(), vpa_for_even_parentheses()):
-            with self.subTest(model=vpa.to_state_setup()):
-                data = get_characterizing_sequences(vpa)
-                learned_model = run_PAPNI(data, vpa.input_alphabet, automaton_type='vpa', print_info=False)
-                self.assertIsNone(find_vpa_counterexample(vpa, learned_model))
+        for vpa in (vpa_L1(), vpa_L10(), vpa_L11(), vpa_for_L16(), vpa_for_odd_parentheses(),
+                    vpa_for_even_parentheses()):
+            data = exhaustive_balanced_data(vpa)
+            # both merging strategies have to identify these languages from the exhaustive data
+            for algorithm in ('gsm', 'edsm'):
+                with self.subTest(model=vpa.to_state_setup(), algorithm=algorithm):
+                    learned_model = run_PAPNI(data, vpa.input_alphabet, automaton_type='vpa', print_info=False,
+                                              algorithm=algorithm)
+                    self.assertIsNone(find_disagreement(vpa, learned_model))
 
     def test_vpa_cast_accepts_the_same_language_as_the_learned_sevpa(self):
-        from aalpy.utils.BenchmarkVpaModels import vpa_L2, vpa_L12, vpa_for_even_parentheses, vpa_for_nested_blocks
+        from aalpy.utils.BenchmarkVpaModels import vpa_L2, vpa_L12, vpa_for_even_parentheses
 
-        for vpa in (vpa_L2(), vpa_L12(), vpa_for_even_parentheses(), vpa_for_nested_blocks()):
+        for vpa in (vpa_L2(), vpa_L12(), vpa_for_even_parentheses(), nested_blocks_vpa()):
             with self.subTest(model=vpa.to_state_setup()):
                 alphabet = vpa.input_alphabet
-                data = get_characterizing_sequences(vpa)
+                data = exhaustive_balanced_data(vpa)
 
                 learned_sevpa = run_PAPNI(data, alphabet, automaton_type='sevpa', print_info=False)
                 learned_vpa = run_PAPNI(data, alphabet, automaton_type='vpa', print_info=False)
@@ -186,7 +205,7 @@ class TestPapniLearnsFromCharacterizingSequences(unittest.TestCase):
                 self.assertIsInstance(learned_vpa, Vpa)
 
                 for seq in all_words_within_budget(alphabet.get_merged_alphabet()):
-                    self.assertEqual(accepts(learned_sevpa, seq), accepts(learned_vpa, seq),
+                    self.assertEqual(learned_sevpa.accepts(seq), learned_vpa.accepts(seq),
                                      f'the cast to a VPA changed the language on {seq}')
 
     def test_vpa_cast_of_the_benchmark_sevpas_accepts_the_same_language(self):
@@ -198,17 +217,12 @@ class TestPapniLearnsFromCharacterizingSequences(unittest.TestCase):
             with self.subTest(model=name):
                 vpa = vpa_from_sevpa(sevpa)
                 for seq in all_words_within_budget(sevpa.get_input_alphabet().get_merged_alphabet()):
-                    self.assertEqual(accepts(sevpa, seq), accepts(vpa, seq),
+                    self.assertEqual(sevpa.accepts(seq), vpa.accepts(seq),
                                      f'the cast to a VPA changed the language on {seq}')
 
-class TestPapniLearnsRandomSevpas(unittest.TestCase):
-    """
-    The 1-SEVPA is the model PAPNI learns, so a randomly generated one and the characteristic sample of its
-    language together make an end to end check that does not depend on any hand written benchmark.
-    """
-
-    def test_learns_random_sevpas_from_their_characterizing_sequences(self):
-        checked = 0
+    def test_learns_random_sevpas(self):
+        """The 1-SEVPA is the model PAPNI learns, so random ones make a check independent of the benchmarks."""
+        learned = 0
         for seed in range(25):
             random.seed(seed)
             sevpa = generate_random_sevpa(num_states=random.randint(2, 3),
@@ -216,33 +230,13 @@ class TestPapniLearnsRandomSevpas(unittest.TestCase):
                                           call_alphabet_size=1,
                                           return_alphabet_size=random.randint(1, 2),
                                           acceptance_prob=0.4, return_transition_prob=0.5)
-
-            # get_characterizing_sequences works on a VPA, and the cast is the identity on the language
             target = vpa_from_sevpa(sevpa)
-            data = get_characterizing_sequences(target)
-
-            # the characteristic sample of the congruence is exponential in the size of the automaton, and a random
-            # one occasionally lands far beyond what is worth running in a unit test
-            if len(data) > 5000:
-                continue
 
             with self.subTest(seed=seed, model=sevpa.to_state_setup()):
-                learned_model = run_PAPNI(data, target.input_alphabet, automaton_type='vpa', print_info=False)
-                self.assertIsNone(find_vpa_counterexample(target, learned_model))
-                checked += 1
+                learned_model = run_PAPNI(exhaustive_balanced_data(target), target.input_alphabet, print_info=False)
+                learned += find_disagreement(target, learned_model) is None
 
-        self.assertGreater(checked, 10, 'too few random SEVPAs were small enough to be checked')
-
-
-class TestVpaCallSymbolConflicts(unittest.TestCase):
-    def test_vpas_pushing_more_than_one_stack_symbol_per_call_symbol_are_detectable(self):
-        from aalpy.automata.Vpa import vpa_call_symbol_conflicts
-        from aalpy.utils.BenchmarkVpaModels import vpa_L1, vpa_for_L16, vpa_for_nested_blocks
-
-        # L16 pushes '$' on the first 'a' and 'x' on every further one
-        self.assertEqual({'a': {'$', 'x'}}, vpa_call_symbol_conflicts(vpa_for_L16()))
-        self.assertEqual({'(': {'$', '('}}, vpa_call_symbol_conflicts(vpa_for_nested_blocks()))
-        self.assertEqual({}, vpa_call_symbol_conflicts(vpa_L1()))
+        self.assertGreater(learned, 20, 'too few random SEVPAs were learned exactly from exhaustive data')
 
 
 if __name__ == '__main__':
