@@ -446,6 +446,107 @@ def generate_input_output_data_from_vpa(vpa: Any, num_sequences: int = 1000, max
     return data_set
 
 
+def generate_well_matched_data_from_vpa(vpa: Any, num_sequences: int = 1000, max_seq_len: int = 16,
+                                        positive_ratio: float = 0.5, max_attempts: int | None = None) -> list[tuple]:
+    """
+    Generates a labeled data set of distinct well-matched sequences of a VPA, with a given share of positive ones,
+    in the format expected by run_PAPNI.
+
+    Positive sequences are found by random walks along the transitions of the VPA. Negative sequences are near
+    misses of positive ones, in which a symbol is replaced by another of the same kind, and random well-matched
+    sequences.
+
+    :param Any vpa: Visibly pushdown automaton from which the data is generated. A 1-SEVPA can be converted with
+        vpa_from_sevpa.
+    :param int num_sequences: Number of sequences to generate.
+    :param int max_seq_len: Maximum sequence length.
+    :param float positive_ratio: Share of positive sequences in the data set (Default value = 0.5).
+    :param int | None max_attempts: Maximum number of generation attempts before giving up (Default value = None,
+        meaning num_sequences * 50). Fewer sequences are returned if the VPA does not have enough distinct
+        positive or negative sequences within max_seq_len.
+    :return list[tuple]: List of (input_sequence, label) pairs.
+    """
+    alphabet = vpa.input_alphabet
+    internal, calls, returns = (list(alphabet.internal_alphabet), list(alphabet.call_alphabet),
+                                list(alphabet.return_alphabet))
+    max_attempts = max_attempts if max_attempts is not None else num_sequences * 50
+
+    num_positive = round(num_sequences * positive_ratio)
+    positive, negative, seen = [], [], set()
+
+    def add(seq, label=None):
+        if seq in seen:
+            return
+        label = vpa.accepts(seq) if label is None else label
+        target, limit = (positive, num_positive) if label else (negative, num_sequences - num_positive)
+        if len(target) < limit:
+            target.append(seq)
+            seen.add(seq)
+
+    def random_positive_walk():
+        # a walk along the defined transitions, where a call is only taken if its return still fits into the
+        # remaining length, recording every prefix that is accepted with an empty stack
+        length, seq, accepted = random.randint(0, max_seq_len), (), []
+        vpa.reset_to_initial()
+        for remaining in range(length, 0, -1):
+            if vpa.current_state.is_accepting and not vpa.stack:
+                accepted.append(seq)
+            depth = len(vpa.stack)
+            enabled = [t for transitions in vpa.current_state.transitions.values() for t in transitions
+                       if (t.action is None and depth < remaining)
+                       or (t.action == 'push' and depth + 1 < remaining)
+                       or (t.action == 'pop' and depth and t.stack_guard == vpa.top())]
+            if not enabled:
+                break
+            transition = random.choice(enabled)
+            vpa.step(transition.letter)
+            seq += (transition.letter,)
+        if vpa.current_state.is_accepting and not vpa.stack:
+            accepted.append(seq)
+        return random.choice(accepted) if accepted else None
+
+    def random_well_matched_sequence():
+        length, seq, depth = random.randint(0, max_seq_len), [], 0
+        for remaining in range(length, 0, -1):
+            choices = []
+            if depth:
+                choices.extend(returns)
+            if depth < remaining:
+                choices.extend(internal)
+            if depth + 1 < remaining:
+                choices.extend(calls)
+            if not choices:
+                return None
+            symbol = random.choice(choices)
+            depth += 1 if symbol in calls else -1 if symbol in returns else 0
+            seq.append(symbol)
+        return tuple(seq) if depth == 0 else None
+
+    def near_miss(seq):
+        if not seq:
+            return None
+        index = random.randrange(len(seq))
+        kind = internal if seq[index] in internal else calls if seq[index] in calls else returns
+        replacement = random.choice(kind)
+        return seq[:index] + (replacement,) + seq[index + 1:]
+
+    for _ in range(max_attempts):
+        if len(positive) + len(negative) >= num_sequences:
+            break
+        seq = random_positive_walk()
+        if seq is not None:
+            add(seq, label=True)
+            if positive:
+                mutated = near_miss(random.choice(positive))
+                if mutated is not None:
+                    add(mutated)
+        seq = random_well_matched_sequence()
+        if seq is not None:
+            add(seq)
+
+    return [(seq, True) for seq in positive] + [(seq, False) for seq in negative]
+
+
 def product_with_possible_empty_iterable(*iterables: Any, repeat: int = 1) -> product:
     """
     Words like regular product, but if one of the iterables is empty it will just ignore it, instead of returning [].

@@ -1120,42 +1120,72 @@ def random_sevpa_learning():
 
 
 def passive_vpa_learning_on_lists():
-    from aalpy.learning_algs import run_PAPNI
-    from aalpy.automata import VpaAlphabet
+    from itertools import product
 
+    from aalpy.automata import VpaAlphabet
+    from aalpy.automata.Vpa import vpa_from_sevpa
+    from aalpy.learning_algs import run_PAPNI
+    from aalpy.utils import is_balanced
+    from aalpy.utils.BenchmarkSULs import is_balanced as brackets_match
+
+    # target language: every '(' is closed by ')' and every '[' by ']', and list items '1' may appear anywhere.
+    # No DFA can recognize it, as it has to remember which brackets are still open.
     vpa_alphabet = VpaAlphabet(internal_alphabet=['1'], call_alphabet=['(', '['], return_alphabet=[')', ']'])
 
     list_data = [
-        (tuple(), False),
-        (('[', '[', ']', ']'), True),
-        (('(', '(', ')', ')'), True),
-
-        (('[', '[', ']', ')'), False),
-        (('[', '[', ')', ']'), False),
-        (('[', ')'), False),
-        (('(', ']'), False),
-        (('[', '[', ']', '1', ']'), True),
-        (('[', '1', '[', ']', '1', ']'), True),
-        (('(', '1', '[', ']', '1', ')'), True),
+        # positive examples
+        ((), True),
+        (('1',), True),
         (('(', ')'), True),
         (('[', ']'), True),
-        (('[', '1', '(', ']', '1', ')'), False),
+        (('[', '1', ']'), True),
+        (('(', '1', ')'), True),
+        (('[', '(', ')', ']'), True),
+        (('(', '[', ']', ')'), True),
+        (('[', '1', ']', '(', '1', ')'), True),
+        (('(', '[', '1', ']', '1', ')'), True),
+        # negative examples, in which a bracket is closed by the wrong kind of bracket
+        (('(', ']'), False),
+        (('[', ')'), False),
+        (('(', '[', ')', ']'), False),
+        (('[', '(', ']', ')'), False),
+        (('(', '1', ']'), False),
+        (('[', '1', ')'), False),
     ]
 
-    papni = run_PAPNI(list_data, vpa_alphabet, algorithm='gsm', print_info=True)
-    papni.visualize()
+    # PAPNI learns a 1-SEVPA, which can be returned as is ...
+    learned_sevpa = run_PAPNI(list_data, vpa_alphabet, automaton_type='sevpa', print_info=True)
+    # ... or converted to a general VPA, in which the call transitions are explicit
+    # (run_PAPNI does this by default, with automaton_type='vpa')
+    learned_vpa = vpa_from_sevpa(learned_sevpa)
+
+    # check the learned model on all well-matched sequences up to length 8, which are far more than it was given
+    test_sequences = [seq for length in range(9) for seq in product(vpa_alphabet.get_merged_alphabet(), repeat=length)
+                      if is_balanced(seq, vpa_alphabet)]
+    for seq in test_sequences:
+        expected = brackets_match(seq, {'(': ')', '[': ']'}, allow_empty_string=True)
+        assert learned_sevpa.accepts(seq) == learned_vpa.accepts(seq) == expected, seq
+    print(f'Learned model is correct on all {len(test_sequences)} well-matched sequences up to length 8.')
+
+    learned_vpa.visualize()
 
 
 def passive_vpa_learning_arithmetics():
     from aalpy.learning_algs import run_PAPNI
+    from aalpy.utils import is_balanced
     from aalpy.utils.BenchmarkVpaModels import gen_arithmetic_data
-    arithmetic_data, vpa_alphabet = gen_arithmetic_data(num_sequences=4000, min_seq_len=2, max_seq_len=10)
+    arithmetic_data, vpa_alphabet = gen_arithmetic_data(num_sequences=20000, min_seq_len=2, max_seq_len=10)
 
     print(f"Alphabet: {vpa_alphabet}")
 
-    print('Data:')
-    for i in range(10):
-        print(arithmetic_data[i])
+    # PAPNI only learns from well-matched sequences, the others are dropped
+    well_matched = [(seq, label) for seq, label in arithmetic_data if is_balanced(seq, vpa_alphabet)]
+    positive = [seq for seq, label in well_matched if label]
+    negative = [seq for seq, label in well_matched if not label]
+    print(f'Data: {len(well_matched)} well-matched sequences, of which {len(positive)} are valid arithmetic '
+          f'expressions. Examples:')
+    for seq, label in [(seq, True) for seq in positive[:5]] + [(seq, False) for seq in negative[:5]]:
+        print(' '.join(seq), label)
 
     learned_model = run_PAPNI(arithmetic_data, vpa_alphabet)
     learned_model.visualize()
@@ -1164,22 +1194,25 @@ def passive_vpa_learning_arithmetics():
 def passive_vpa_learning_on_all_benchmark_models():
     from aalpy.learning_algs import run_PAPNI
     from aalpy.utils.BenchmarkVpaModels import vpa_L1, vpa_L12, vpa_for_odd_parentheses
-    from aalpy.utils import generate_input_output_data_from_vpa
+    from aalpy.utils import generate_well_matched_data_from_vpa
 
     for gt in [vpa_L1(), vpa_L12(), vpa_for_odd_parentheses()]:
         vpa_alphabet = gt.input_alphabet
-        data = generate_input_output_data_from_vpa(gt, num_sequences=2000, max_seq_len=16)
+        # random sequences are mostly not well-matched and mostly rejected, so the data is generated as a set of
+        # well-matched sequences, half of which are accepted (if the language has enough of them)
+        data = generate_well_matched_data_from_vpa(gt, num_sequences=2000, max_seq_len=16)
 
-        papni = run_PAPNI(data, vpa_alphabet, algorithm='gsm', print_info=True)
+        papni = run_PAPNI(data, vpa_alphabet, print_info=True)
 
-        for seq, o in data:
-            papni.reset_to_initial()
-            learned_output = papni.execute_sequence(papni.initial_state, seq)[-1]
-            if o != learned_output:
-                print(seq, o, learned_output)
-                assert False, 'Papni Learned Model not consistent with data.'
-
-        print('PAPNI model conforms to data.')
+        # the learned model conforms to the data by construction, so it is evaluated on unseen data instead
+        training_sequences = {seq for seq, _ in data}
+        test_data = [(seq, label) for seq, label in
+                     generate_well_matched_data_from_vpa(gt, num_sequences=2000, max_seq_len=24)
+                     if seq not in training_sequences]
+        if not test_data:
+            continue
+        accuracy = sum(papni.accepts(seq) == label for seq, label in test_data) / len(test_data)
+        print(f'Accuracy on {len(test_data)} unseen sequences: {accuracy:.4f}')
 
 
 def gsm_rpni():

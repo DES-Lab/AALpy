@@ -3,7 +3,7 @@ import random
 from collections import defaultdict
 from collections.abc import Hashable
 
-from aalpy.automata import Dfa
+from aalpy.automata.Sevpa import Sevpa, SevpaAlphabet
 from aalpy.base import Automaton, AutomatonState
 
 
@@ -112,17 +112,20 @@ class Vpa(Automaton):
     """
     error_state = VpaState("ErrorSinkState", False)
 
-    def __init__(self, initial_state: VpaState, states: list[VpaState]) -> None:
+    def __init__(self, initial_state: VpaState, states: list[VpaState],
+                 input_alphabet: VpaAlphabet | None = None) -> None:
         """
         Creates a VPA.
 
         :param VpaState initial_state: Initial state of the VPA.
         :param list[VpaState] states: All states of the VPA.
+        :param VpaAlphabet | None input_alphabet: Input alphabet of the VPA (Default value = None, meaning that it
+            is recovered from the transitions, which loses the symbols that no transition happens to use).
         """
         super().__init__(initial_state, states)
         self.initial_state = initial_state
         self.states = states
-        self.input_alphabet = self.get_input_alphabet()
+        self.input_alphabet = input_alphabet or self.get_input_alphabet()
         self.current_state = None
         self.stack = []
 
@@ -157,7 +160,7 @@ class Vpa(Automaton):
         if letter is None:
             return self.current_state.is_accepting and self.stack == []
 
-        transitions = self.current_state.transitions[letter]
+        transitions = self.current_state.transitions.get(letter, ())
 
         taken_transition = None
 
@@ -280,6 +283,7 @@ class Vpa(Automaton):
             (is_accepting: bool, transitions_dict: dict), where transitions_dict maps input symbols to
             lists of tuples (target_state_id, action, stack_guard).
         :param init_state_id: The state ID for the initial state of the VPA, passed via kwargs.
+        :param input_alphabet: Input alphabet of the VPA, passed via kwargs (Default value = None).
         :return Vpa: The constructed Visibly Pushdown Automaton.
         """
         # state_setup should map from state_id to tuple(is_accepting and transitions_dict)
@@ -303,8 +307,20 @@ class Vpa(Automaton):
         # states to list
         states = [state for state in states.values()]
 
-        vpa = Vpa(init_state, states)
-        return vpa
+        return Vpa(init_state, states, kwargs.get('input_alphabet'))
+
+    def accepts(self, seq: list[str]) -> bool:
+        """
+        Checks whether the VPA accepts an input sequence, that is, whether executing it from the initial state
+        ends in an accepting state with an empty stack.
+
+        :param list[str] seq: Input sequence.
+        :return bool: True if the sequence is accepted, False otherwise.
+        """
+        self.reset_to_initial()
+        for letter in seq:
+            self.step(letter)
+        return self.step(None)
 
     def is_balanced(self, seq: list[str]) -> bool:
         """
@@ -362,41 +378,40 @@ class Vpa(Automaton):
         return None
 
 
-def vpa_from_dfa_representation(dfa_repr: Dfa, vpa_alphabet: VpaAlphabet) -> Vpa:
+def vpa_from_sevpa(sevpa: Sevpa, vpa_alphabet: SevpaAlphabet | VpaAlphabet | None = None) -> Vpa:
     """
-    Converts a DFA representation of a VPA (where call/return symbols may be encoded as tuples with the top of
-    stack) into an equivalent Vpa.
+    Converts a 1-SEVPA into an equivalent Vpa.
 
-    :param Dfa dfa_repr: The DFA representation to convert.
-    :param VpaAlphabet vpa_alphabet: The alphabet of the resulting VPA.
+    A 1-SEVPA is a VPA in which the call transitions are implicit: every call symbol pushes the pair (state the
+    call is read in, call symbol) and continues from the initial state. Those transitions are made explicit here,
+    while the internal and pop transitions are carried over unchanged.
+
+    :param Sevpa sevpa: The 1-SEVPA to convert.
+    :param SevpaAlphabet | VpaAlphabet | None vpa_alphabet: Alphabet of the resulting VPA (Default value = None,
+        meaning that the alphabet of the 1-SEVPA is used).
     :return Vpa: The constructed VPA.
     """
-    vpa_states = dict()
-    for dfa_state in dfa_repr.states:
-        vpa_state = VpaState(state_id=dfa_state.state_id, is_accepting=dfa_state.is_accepting)
-        vpa_states[dfa_state.state_id] = vpa_state
+    vpa_alphabet = vpa_alphabet or sevpa.input_alphabet
 
-    for dfa_state in dfa_repr.states:
+    vpa_states = {state.state_id: VpaState(state_id=state.state_id, is_accepting=state.is_accepting)
+                  for state in sevpa.states}
+    initial_state = vpa_states[sevpa.initial_state.state_id]
 
-        for input_symbol, reached_dfa_state in dfa_state.transitions.items():
-            origin_state = vpa_states[dfa_state.state_id]
-            reached_state = vpa_states[reached_dfa_state.state_id]
+    for state in sevpa.states:
+        origin_state = vpa_states[state.state_id]
 
-            top_of_stack = None
-            if isinstance(input_symbol, tuple):
-                input_symbol, top_of_stack = input_symbol[0], input_symbol[1]
+        # the call transitions of a 1-SEVPA are not stored, as they are the same for every state
+        for call_symbol in vpa_alphabet.call_alphabet:
+            origin_state.transitions[call_symbol].append(
+                VpaTransition(origin_state, initial_state, call_symbol, 'push', (state.state_id, call_symbol)))
 
-            if input_symbol in vpa_alphabet.return_alphabet:
-                transition = VpaTransition(origin_state, reached_state, input_symbol, 'pop', top_of_stack)
-            else:
-                action = 'push' if input_symbol in vpa_alphabet.call_alphabet else None
-                stack_guard = input_symbol if action == 'push' else None
-                transition = VpaTransition(origin_state, reached_state, input_symbol,
-                                           action, stack_guard)
+        for transitions in state.transitions.values():
+            for transition in transitions:
+                reached_state = vpa_states[transition.target_state.state_id]
+                origin_state.transitions[transition.letter].append(
+                    VpaTransition(origin_state, reached_state, transition.letter,
+                                  transition.action, transition.stack_guard))
 
-            origin_state.transitions[input_symbol].append(transition)
-
-    initial_state = vpa_states[dfa_repr.initial_state.state_id]
-    learned_model = Vpa(initial_state, list(vpa_states.values()))
-
-    return learned_model
+    return Vpa(initial_state, list(vpa_states.values()),
+               VpaAlphabet(list(vpa_alphabet.internal_alphabet), list(vpa_alphabet.call_alphabet),
+                           list(vpa_alphabet.return_alphabet)))
