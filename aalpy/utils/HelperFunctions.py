@@ -446,58 +446,105 @@ def generate_input_output_data_from_vpa(vpa: Any, num_sequences: int = 1000, max
     return data_set
 
 
-def get_characterizing_sequences(vpa: Any, characterizing_set: list | None = None) -> list[tuple]:
+def generate_well_matched_data_from_vpa(vpa: Any, num_sequences: int = 1000, max_seq_len: int = 16,
+                                        positive_ratio: float = 0.5, max_attempts: int | None = None) -> list[tuple]:
     """
-    Computes a labeled data set that characterizes a VPA, in the format expected by run_PAPNI.
+    Generates a labeled data set of distinct well-matched sequences of a VPA, with a given share of positive ones,
+    in the format expected by run_PAPNI.
 
-    The data set is the characteristic sample of the congruence characterizing visibly pushdown languages (Alur,
-    Kumar, Madhusudan and Viswanathan, "Congruences for Visibly Pushdown Languages", ICALP 2005). Every well-matched
-    word of the transition cover of the minimal single-entry VPA is plugged into every context of the characterizing
-    set. The transition cover covers every state and every transition of the canonical model, and the characterizing
-    set gives, for every two of its words that belong to different congruence classes, a context in which exactly
-    one of the two is accepted, so no state merging algorithm can merge them without contradicting the data. All
-    resulting sequences are well-matched by construction, which is what a passive learner of visibly pushdown
-    languages needs, as such a learner only takes well-matched sequences into account.
+    Positive sequences are found by random walks along the transitions of the VPA. Negative sequences are near
+    misses of positive ones, in which a symbol is replaced by another of the same kind, and random well-matched
+    sequences.
 
-    The data set is derived from the VPA and from the congruence alone. No learning algorithm is involved, so the
-    data set is a property of the VPA rather than of any particular learner.
-
-    Note that this characterizes the canonical single-entry VPA, which is the model PAPNI learns, but not the model
-    class of every learner. A learner working on a stack-aware alphabet learns a deterministic automaton whose
-    states are the classes of the right congruence on *arbitrary* prefixes (the congruence ~ of the same paper,
-    Section 3.2). Two prefixes reaching different stack heights are separated by that congruence only by a word that
-    is well-matched after one of them and not after the other, and such a word is not well-matched overall, so it is
-    exactly what those learners discard. No sample of well-matched sequences can supply that evidence, which is why
-    the data set characterizes the language rather than any one learner's model of it.
-
-    :param Any vpa: VPA for which the data is generated.
-    :param list | None characterizing_set: Characterizing set to use (Default value = None, meaning that
-        Vpa.compute_characterizing_set is called).
+    :param Any vpa: Visibly pushdown automaton from which the data is generated. A 1-SEVPA can be converted with
+        vpa_from_sevpa.
+    :param int num_sequences: Number of sequences to generate.
+    :param int max_seq_len: Maximum sequence length.
+    :param float positive_ratio: Share of positive sequences in the data set (Default value = 0.5).
+    :param int | None max_attempts: Maximum number of generation attempts before giving up (Default value = None,
+        meaning num_sequences * 50). Fewer sequences are returned if the VPA does not have enough distinct
+        positive or negative sequences within max_seq_len.
     :return list[tuple]: List of (input_sequence, label) pairs.
     """
-    from aalpy.automata.Vpa import apply_vpa_context, vpa_configuration_output, vpa_transition_cover, VpaCongruence
+    alphabet = vpa.input_alphabet
+    internal, calls, returns = (list(alphabet.internal_alphabet), list(alphabet.call_alphabet),
+                                list(alphabet.return_alphabet))
+    max_attempts = max_attempts if max_attempts is not None else num_sequences * 50
 
-    # deciding the congruence dominates the runtime, so it is computed once and shared by the characterizing set
-    # and the transition cover, both of which would otherwise compute one of their own
-    congruence = VpaCongruence(vpa)
+    num_positive = round(num_sequences * positive_ratio)
+    positive, negative, seen = [], [], set()
 
-    if characterizing_set is None:
-        characterizing_set = vpa.compute_characterizing_set(congruence)
+    def add(seq, label=None):
+        if seq in seen:
+            return
+        label = vpa.accepts(seq) if label is None else label
+        target, limit = (positive, num_positive) if label else (negative, num_sequences - num_positive)
+        if len(target) < limit:
+            target.append(seq)
+            seen.add(seq)
 
-    data, seen = [], set()
+    def random_positive_walk():
+        # a walk along the defined transitions, where a call is only taken if its return still fits into the
+        # remaining length, recording every prefix that is accepted with an empty stack
+        length, seq, accepted = random.randint(0, max_seq_len), (), []
+        vpa.reset_to_initial()
+        for remaining in range(length, 0, -1):
+            if vpa.current_state.is_accepting and not vpa.stack:
+                accepted.append(seq)
+            depth = len(vpa.stack)
+            enabled = [t for transitions in vpa.current_state.transitions.values() for t in transitions
+                       if (t.action is None and depth < remaining)
+                       or (t.action == 'push' and depth + 1 < remaining)
+                       or (t.action == 'pop' and depth and t.stack_guard == vpa.top())]
+            if not enabled:
+                break
+            transition = random.choice(enabled)
+            vpa.step(transition.letter)
+            seq += (transition.letter,)
+        if vpa.current_state.is_accepting and not vpa.stack:
+            accepted.append(seq)
+        return random.choice(accepted) if accepted else None
 
-    for word in vpa_transition_cover(vpa, congruence):
-        for left, right in characterizing_set:
-            sequence = tuple(left) + tuple(word) + tuple(right)
-            if sequence in seen:
-                continue
-            seen.add(sequence)
-            reached = apply_vpa_context(vpa, (vpa.initial_state, ()), sequence)
-            # a context whose right half pops deeper than the left half pushes has no configuration at all,
-            # which is a non-member of the language rather than an error
-            data.append((sequence, reached is not None and vpa_configuration_output(reached)))
+    def random_well_matched_sequence():
+        length, seq, depth = random.randint(0, max_seq_len), [], 0
+        for remaining in range(length, 0, -1):
+            choices = []
+            if depth:
+                choices.extend(returns)
+            if depth < remaining:
+                choices.extend(internal)
+            if depth + 1 < remaining:
+                choices.extend(calls)
+            if not choices:
+                return None
+            symbol = random.choice(choices)
+            depth += 1 if symbol in calls else -1 if symbol in returns else 0
+            seq.append(symbol)
+        return tuple(seq) if depth == 0 else None
 
-    return data
+    def near_miss(seq):
+        if not seq:
+            return None
+        index = random.randrange(len(seq))
+        kind = internal if seq[index] in internal else calls if seq[index] in calls else returns
+        replacement = random.choice(kind)
+        return seq[:index] + (replacement,) + seq[index + 1:]
+
+    for _ in range(max_attempts):
+        if len(positive) + len(negative) >= num_sequences:
+            break
+        seq = random_positive_walk()
+        if seq is not None:
+            add(seq, label=True)
+            if positive:
+                mutated = near_miss(random.choice(positive))
+                if mutated is not None:
+                    add(mutated)
+        seq = random_well_matched_sequence()
+        if seq is not None:
+            add(seq)
+
+    return [(seq, True) for seq in positive] + [(seq, False) for seq in negative]
 
 
 def product_with_possible_empty_iterable(*iterables: Any, repeat: int = 1) -> product:

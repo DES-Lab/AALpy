@@ -22,6 +22,7 @@ from aalpy.utils.HelperFunctions import (
     mc_format_to_mdp,
     generate_input_output_data_from_automata,
     generate_input_output_data_from_vpa,
+    generate_well_matched_data_from_vpa,
 )
 
 
@@ -620,6 +621,43 @@ class TestGenerateInputOutputDataFromVpa(unittest.TestCase):
         vpa = self.make_simple_vpa()
         data = generate_input_output_data_from_vpa(vpa, num_sequences=1000, max_seq_len=2, max_attempts=5)
         self.assertLessEqual(len(data), 1000)
+
+
+class TestGenerateWellMatchedDataFromVpa(unittest.TestCase):
+    def test_sequences_are_distinct_well_matched_and_correctly_labeled(self):
+        from aalpy.utils.BenchmarkVpaModels import vpa_json, vpa_L12, vpa_for_L16
+
+        for vpa in (vpa_json(), vpa_L12(), vpa_for_L16()):
+            with self.subTest(model=vpa.to_state_setup()):
+                random.seed(0)
+                data = generate_well_matched_data_from_vpa(vpa, num_sequences=500, max_seq_len=12)
+                self.assertEqual(len(data), len({seq for seq, _ in data}))
+                for seq, label in data:
+                    self.assertLessEqual(len(seq), 12)
+                    self.assertTrue(is_balanced(seq, vpa.input_alphabet), seq)
+                    self.assertEqual(label, vpa.accepts(seq), seq)
+
+    def test_positive_ratio_is_respected(self):
+        from aalpy.utils.BenchmarkVpaModels import vpa_json
+
+        for ratio in (0.5, 0.2):
+            with self.subTest(ratio=ratio):
+                random.seed(1)
+                data = generate_well_matched_data_from_vpa(vpa_json(), num_sequences=500, max_seq_len=16,
+                                                           positive_ratio=ratio)
+                self.assertEqual(500, len(data))
+                self.assertEqual(round(500 * ratio), sum(label for _, label in data))
+
+    def test_stops_when_the_language_has_too_few_positive_sequences(self):
+        from aalpy.utils.BenchmarkVpaModels import vpa_L1
+
+        # a^n b^n (n >= 1) has only 4 sequences of length at most 8, and there are only 23 well-matched sequences
+        # over {a, b} of that length, so far fewer than the requested 100 sequences can be generated
+        random.seed(2)
+        data = generate_well_matched_data_from_vpa(vpa_L1(), num_sequences=100, max_seq_len=8, max_attempts=500)
+        self.assertEqual({('a', 'b'), ('a', 'a', 'b', 'b'), ('a', 'a', 'a', 'b', 'b', 'b'),
+                          ('a', 'a', 'a', 'a', 'b', 'b', 'b', 'b')}, {seq for seq, label in data if label})
+        self.assertLessEqual(len(data), 23)
 
 
 if __name__ == '__main__':

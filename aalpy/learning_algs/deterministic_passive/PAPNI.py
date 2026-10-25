@@ -11,15 +11,11 @@ _MISSING = object()
 
 
 def run_PAPNI(data: list, vpa_alphabet: SevpaAlphabet | VpaAlphabet, automaton_type: str = 'vpa',
-              print_info: bool = True) -> Vpa | Sevpa | None:
+              print_info: bool = True, algorithm: str = 'edsm') -> Vpa | Sevpa | None:
     """
     Run PAPNI, a deterministic passive model learning algorithm of deterministic pushdown automata.
-    By construction, learned model conforms to the provided data.
-
-    Learning is state merging over the congruence of the canonical single entry VPA, which is documented on the
-    PAPNI class. The stack symbols of that model carry the state a call was read in, so unlike a learner over an
-    alphabet that identifies a stack symbol with the call symbol that pushed it, PAPNI is not restricted to VPAs
-    whose pushed stack symbol is determined by the call symbol (see vpa_call_symbol_conflicts).
+    By construction, learned model conforms to the provided data. The learned model is a 1-SEVPA, see the PAPNI
+    class for details.
 
     :param list data: sequence of input sequences and corresponding label. Eg. [[(i1,i2,i3, ...), label], ...]
     :param SevpaAlphabet | VpaAlphabet vpa_alphabet: grouping of alphabet elements to call symbols, return symbols,
@@ -27,9 +23,13 @@ def run_PAPNI(data: list, vpa_alphabet: SevpaAlphabet | VpaAlphabet, automaton_t
         affect the stack.
     :param str automaton_type: either 'vpa' for a VPA, or 'sevpa' for the learned 1-SEVPA itself
     :param bool print_info: print learning progress and runtime information
+    :param str algorithm: either 'gsm' (or its alias 'classic') for classic RPNI-style greedy merging, which merges a
+        class with the first compatible state, or 'edsm' for evidence driven state merging, which performs the merge
+        supported by the most evidence in the data
     :return Vpa | Sevpa | None: Model conforming to the data, or None if data is non-deterministic.
     """
     assert automaton_type in {'vpa', 'sevpa'}
+    assert algorithm in {'gsm', 'classic', 'edsm'}
 
     papni = PAPNI(data, vpa_alphabet, print_info)
 
@@ -39,11 +39,11 @@ def run_PAPNI(data: list, vpa_alphabet: SevpaAlphabet | VpaAlphabet, automaton_t
                   'or consider using Alergia.')
         return None
 
-    learned_model = papni.run_papni()
+    learned_model = papni.run_papni() if algorithm != 'edsm' else papni.run_edsm()
 
     # cast the learned 1-SEVPA to the more general VPA model, in which the call transitions are explicit
     if automaton_type == 'vpa':
-        learned_model = vpa_from_sevpa(learned_model, vpa_alphabet)
+        learned_model = vpa_from_sevpa(learned_model)
 
     return learned_model
 
@@ -51,8 +51,7 @@ def run_PAPNI(data: list, vpa_alphabet: SevpaAlphabet | VpaAlphabet, automaton_t
 class PAPNI:
     """
     State merging over the congruence of the canonical single-entry VPA (Alur, Kumar, Madhusudan and Viswanathan,
-    "Congruences for Visibly Pushdown Languages", ICALP 2005), which is the congruence that
-    get_characterizing_sequences generates a characteristic sample for.
+    "Congruences for Visibly Pushdown Languages", ICALP 2005).
 
     A single-entry VPA reads every nesting level starting from the initial state: on a call it pushes the pair
     (current state, call symbol) and resets, and on the matching return it pops that pair and resumes. The state
@@ -60,10 +59,9 @@ class PAPNI:
     well-matched word v, and by r. What is learned is thus the right congruence on well-matched words whose
     extensions are internal symbols and whole matched blocks, rather than a DFA over a stack-annotated alphabet.
 
-    Two consequences distinguish this from learning a DFA over a stack-annotated alphabet. The stack symbol carries
-    the state at the call, so VPAs with call symbol conflicts are expressible. And the nesting depth is held in the
-    stack rather than in the state, so there are no states at different stack heights that the merging would have to
-    keep apart, which a sample of well-matched sequences could never provide evidence for.
+    As the stack symbol carries the state at the call, PAPNI is not restricted to VPAs whose pushed stack symbol is
+    determined by the call symbol. And as the nesting depth is held in the stack rather than in the state, there are
+    no states at different stack heights to keep apart, which well-matched data could never provide evidence for.
     """
 
     def __init__(self, data: list, alphabet: SevpaAlphabet | VpaAlphabet, print_info: bool = True) -> None:
@@ -92,14 +90,10 @@ class PAPNI:
         self.transitions = defaultdict(dict)
         self.transition_trail = []
 
-        # enclosing[c] holds the (word, key) pairs whose key is a block enclosing class c, which is what makes a
-        # merge find the keys it invalidates without going over the whole quotient. It is written wherever a
-        # transition is, but never rolled back, so it may hold a pair whose key is long gone, which _merge skips.
-        # What it must not do is miss one, and it does not: a key that is in the quotient was put there by a write
-        # that registered it here, and a rollback only ever restores a key that such a write had registered.
+        # enclosing[c] holds the (word, key) pairs whose key is a block enclosing class c, so that a merge finds the
+        # keys it invalidates. It is never rolled back, so it may hold stale pairs, which _merge skips.
         self.enclosing = defaultdict(set)
 
-        self.labels = dict()
         self.conflicting_data = False
 
         # the label of every class that holds a labeled word, maintained as the classes are merged, with its own
@@ -108,6 +102,10 @@ class PAPNI:
         self.class_label = dict()
         self.label_trail = []
         self.label_conflict = False
+        # the evidence of the current merge, that is, the number of times two labeled classes were merged into one
+        self.merge_score = 0
+        # representatives of the red classes of run_edsm, which a merge keeps as representatives
+        self.red = set()
 
         block_tree_construction_start = time.time()
         # the empty word is the initial state of the learned model, so it is a class even if the data is empty
@@ -118,11 +116,9 @@ class PAPNI:
             if not is_balanced(input_seq, alphabet):
                 continue
             self._collect(input_seq)
-            if self.labels.setdefault(input_seq, label) != label:
+            # every word is still a class of its own, so it carries its own label
+            if self.class_label.setdefault(input_seq, label) != label:
                 self.conflicting_data = True
-
-        # every word is still a class of its own, so it carries its own label
-        self.class_label.update(self.labels)
 
         # length-lexicographic order over the words, with the symbols compared by repr so that an alphabet mixing
         # types stays totally ordered. The rank is what the merging compares, so it is looked up rather than rebuilt
@@ -157,6 +153,78 @@ class PAPNI:
                 if self.print_info:
                     print(f'\rCurrent automaton size: {len(red)}', end="")
 
+        return self._finish(start_time)
+
+    def run_edsm(self) -> Sevpa:
+        """
+        Runs evidence driven state merging over the block tree and constructs the resulting 1-SEVPA.
+
+        The blue classes are the ones reached by a single transition from a red class, whose key encloses a red class
+        if it is a block. Every blue class is tried against every red one, and a merge is scored by the number of
+        times it puts two labeled classes together, as run_EDSM does. A blue class that merges with no red one is
+        promoted, otherwise the best scoring merge over all blue and red classes is performed.
+
+        :return Sevpa: The learned 1-SEVPA.
+        """
+        start_time = time.time()
+
+        self.red = {self.order[0]}
+        while True:
+            # a merge may have put two red classes together, which leaves one representative of them
+            self.red = {self._find(word) for word in self.red}
+            red = sorted(self.red, key=self.rank.get)
+            blue = self._blue()
+            if not blue:
+                break
+
+            best_merge, promoted = None, False
+            for blue_word in blue:
+                best_for_blue = None
+                for red_word in red:
+                    if self._merge(blue_word, red_word) and \
+                            (best_for_blue is None or self.merge_score > best_for_blue[0]):
+                        best_for_blue = (self.merge_score, blue_word, red_word)
+                    self._undo()
+
+                if best_for_blue is None:
+                    self.red.add(blue_word)
+                    promoted = True
+                    if self.print_info:
+                        print(f'\rCurrent automaton size: {len(self.red)}', end="")
+                    break
+                if best_merge is None or best_for_blue[0] > best_merge[0]:
+                    best_merge = best_for_blue
+
+            if not promoted:
+                self._merge(best_merge[1], best_merge[2])
+                self._commit()
+
+        return self._finish(start_time)
+
+    def _blue(self) -> list:
+        """
+        Computes the blue classes, that is, the classes that are not red and are reached by a single transition from a
+        red class, where a block key must enclose a red class too.
+
+        :return list: Representatives of the blue classes, in length-lexicographic order.
+        """
+        blue = set()
+        for root in self.red:
+            for key, target in self.transitions[root].items():
+                if len(key) == 3 and key[1] not in self.red:
+                    continue
+                target = self._find(target)
+                if target not in self.red:
+                    blue.add(target)
+        return sorted(blue, key=self.rank.get)
+
+    def _finish(self, start_time: float) -> Sevpa:
+        """
+        Constructs the learned 1-SEVPA and reports the runtime.
+
+        :param float start_time: Time at which the merging started.
+        :return Sevpa: The learned 1-SEVPA.
+        """
         learned_model = self._to_sevpa()
 
         if self.print_info:
@@ -197,14 +265,7 @@ class PAPNI:
     def _collect(self, word: tuple) -> None:
         """
         Registers every well-matched prefix of a word, and of every block enclosed in it, together with the
-        transition leading from one prefix to the next. A registered word is always fully decomposed, so a word
-        that is already known needs no further work.
-
-        Every word is still a class of its own, so the item of a transition is already the key it is stored under,
-        and no two transitions of the same class can share a key. The block tree is therefore congruence closed
-        before any merging starts.
-
-        The enclosed blocks are worked off through an explicit worklist rather than by recursing, so that deeply
+        transition leading from one prefix to the next. A worklist is used instead of recursion, so that deeply
         nested data does not exhaust the interpreter stack.
 
         :param tuple word: Well-matched word to register.
@@ -233,7 +294,8 @@ class PAPNI:
         Looks up the representative of the class a word currently belongs to, compressing the path to it.
 
         :param tuple word: Word whose class is looked up.
-        :return tuple: Representative of the class, which is its lowest ranked member.
+        :return tuple: Representative of the class, which is its lowest ranked member, unless run_edsm keeps the
+            representative of a red class instead.
         """
         parent = self.parent
         root = word
@@ -247,7 +309,7 @@ class PAPNI:
 
     def _union(self, first: tuple, second: tuple) -> tuple | None:
         """
-        Merges the classes of two words, keeping the lower ranked representative.
+        Merges the classes of two words, keeping the representative of a red class, or else the lower ranked one.
 
         :param tuple first: A word of the first class.
         :param tuple second: A word of the second class.
@@ -257,7 +319,7 @@ class PAPNI:
         first, second = self._find(first), self._find(second)
         if first == second:
             return None
-        if self.rank[second] < self.rank[first]:
+        if (second in self.red, self.rank[first]) > (first in self.red, self.rank[second]):
             first, second = second, first
         self._reassign(second, first)
 
@@ -269,6 +331,8 @@ class PAPNI:
                 self.class_label[first] = label
             elif self.class_label[first] != label:
                 self.label_conflict = True
+            else:
+                self.merge_score += 1
         return first, second
 
     def _reassign(self, word: tuple, root: tuple) -> None:
@@ -285,13 +349,9 @@ class PAPNI:
     def _merge(self, first: tuple, second: tuple) -> bool:
         """
         Merges the classes of two words and restores the congruence, that is, merges the targets of any two
-        transitions that end up leaving the same class under the same key, until nothing changes.
-
-        A merge can only break the congruence around the classes it touches, so the two classes are repaired
-        directly instead of the whole block tree being scanned for what a merge invalidated: the transitions of
-        the absorbed class move to the kept one, and the keys enclosing the absorbed class are rewritten to
-        enclose the kept one. Both steps can collide with a transition that is already there, and every collision
-        is another merge to perform.
+        transitions that end up leaving the same class under the same key, until nothing changes. The transitions
+        of the absorbed class move to the kept one, and the keys enclosing the absorbed class are rewritten to
+        enclose the kept one; every collision with an existing transition is another merge to perform.
 
         :param tuple first: A word of the first class.
         :param tuple second: A word of the second class.
@@ -299,6 +359,7 @@ class PAPNI:
             accepted and a rejected word. False otherwise, in which case the caller rolls the merge back.
         """
         self.label_conflict = False
+        self.merge_score = 0
         pending = [(first, second)]
         while pending:
             merged = self._union(*pending.pop())
@@ -314,7 +375,7 @@ class PAPNI:
                 self._extend(kept, key, target, pending)
 
             # and a key enclosing the absorbed class now encloses the kept one
-            for word, key in self.enclosing[absorbed]:
+            for word, key in self.enclosing.get(absorbed, ()):
                 source = self._find(word)
                 transitions = self.transitions[source]
                 # the pair is stale if that class no longer has the key, be it rewritten or merged away
@@ -381,7 +442,7 @@ class PAPNI:
 
         :return Sevpa: The constructed 1-SEVPA.
         """
-        accepting = {self._find(word) for word, label in self.labels.items() if label}
+        accepting = {self._find(word) for word, label in self.class_label.items() if label}
         roots = sorted({self._find(word) for word in self.parent}, key=self.rank.get)
         states = {root: SevpaState(state_id=f'q{index}', is_accepting=root in accepting)
                   for index, root in enumerate(roots)}
@@ -397,8 +458,6 @@ class PAPNI:
                     states[self._find(enclosed)].transitions[return_symbol].append(
                         SevpaTransition(reached_state, return_symbol, 'pop', (origin_state.state_id, call_symbol)))
 
-        # the alphabet is passed in rather than recovered from the transitions, which would lose the symbols that
-        # no transition of the learned model happens to use
         return Sevpa(states[self._find(())], list(states.values()),
                      SevpaAlphabet(list(self.alphabet.internal_alphabet), list(self.alphabet.call_alphabet),
                                    list(self.alphabet.return_alphabet)))

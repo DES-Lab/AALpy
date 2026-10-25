@@ -358,33 +358,6 @@ def vpa_for_L16() -> Vpa:
     return vpa
 
 
-def vpa_for_nested_blocks() -> Vpa:
-    """
-    Builds a VPA accepting concatenations of perfectly nested blocks, ( (^n )^n )*, so ()(()) is accepted while
-    (()()) is not.
-
-    The call symbol '(' pushes '$' at the outermost level and '(' inside a block, because closing the outermost
-    parenthesis returns to a state where a new block may start while closing an inner one does not. The pushed
-    stack symbol is therefore not determined by the call symbol, see vpa_call_symbol_conflicts.
-
-    :return Vpa: The constructed VPA.
-    """
-    call_set = ['(']
-    return_set = [')']
-    internal_set = []
-
-    input_alphabet = VpaAlphabet(internal_alphabet=internal_set, call_alphabet=call_set, return_alphabet=return_set)
-
-    state_setup = {
-        "q0": (True, {"(": [("q1", 'push', "$")]}),
-        "q1": (False, {"(": [("q1", 'push', "(")],
-                       ")": [("q0", 'pop', "$"), ("q2", 'pop', "(")]}),
-        "q2": (False, {")": [("q2", 'pop', "("), ("q0", 'pop', "$")]}),
-    }
-    vpa = Vpa.from_state_setup(state_setup, init_state_id="q0", input_alphabet=input_alphabet)
-    return vpa
-
-
 def vpa_for_odd_parentheses() -> Vpa:
     """
     Builds a VPA accepting only an odd number of fully balanced parentheses, e.g. () and ((()))), but
@@ -503,7 +476,7 @@ def gen_arithmetic_data(num_sequences: int = 3000, min_seq_len: int = 2, max_seq
                 # Parse the expression using ast
                 parsed_expr = ast.parse(self.string_under_test, mode='eval')
                 # Check if the parsed expression is a valid arithmetic expression
-                is_valid = all(isinstance(node, (ast.Expression, ast.BinOp, ast.UnaryOp, ast.Num, ast.Name, ast.Load))
+                is_valid = all(isinstance(node, (ast.Expression, ast.BinOp, ast.UnaryOp, ast.Constant, ast.Name, ast.Load))
                                or isinstance(node, ast.operator) or isinstance(node, ast.expr_context)
                                or (isinstance(node, ast.BinOp) and isinstance(node.op, ast.operator))
                                for node in ast.walk(parsed_expr))
