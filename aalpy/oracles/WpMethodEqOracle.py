@@ -27,12 +27,12 @@ def state_characterization_set(hypothesis: Automaton, alphabet: list, state: Aut
     return result
 
 
-def first_phase_it(alphabet: list, state_cover: set, depth: int, char_set: list) -> Iterator[tuple]:
+def first_phase_it(alphabet: list, state_cover: list, depth: int, char_set: list) -> Iterator[tuple]:
     """
     Returns an iterator that generates all possible sequences for the first phase of the Wp-method.
 
     :param list alphabet: Input alphabet.
-    :param set state_cover: Set of state prefixes to cover.
+    :param list state_cover: List of state prefixes to cover.
     :param int depth: Maximum length of middle part.
     :param list char_set: Characterization set.
     :return Iterator[tuple]: Iterator of generated test sequences.
@@ -46,13 +46,13 @@ def first_phase_it(alphabet: list, state_cover: set, depth: int, char_set: list)
                     yield s + m + c
 
 
-def second_phase_it(hyp: Automaton, alphabet: list, difference: set, depth: int) -> Iterator[tuple]:
+def second_phase_it(hyp: Automaton, alphabet: list, difference: list, depth: int) -> Iterator[tuple]:
     """
     Returns an iterator that generates all possible sequences for the second phase of the Wp-method.
 
     :param Automaton hyp: Hypothesis automaton.
     :param list alphabet: Input alphabet.
-    :param set difference: Set of sequences that are in the transition cover but not in the state cover.
+    :param list difference: List of sequences that are in the transition cover but not in the state cover.
     :param int depth: Maximum length of middle part.
     :return Iterator[tuple]: Iterator of generated test sequences.
     """
@@ -64,7 +64,7 @@ def second_phase_it(hyp: Automaton, alphabet: list, difference: set, depth: int)
                 _ = hyp.execute_sequence(hyp.initial_state, t + mid)
                 state = hyp.current_state
                 if state not in state_mapping:
-                    state_mapping[state] = state_characterization_set(hyp, alphabet, state)
+                    state_mapping[state] = state_characterization_set(hyp, alphabet, state) or [()]
 
                 for sm in state_mapping[state]:
                     yield t + mid + sm
@@ -97,14 +97,15 @@ class WpMethodEqOracle(Oracle):
         if not hypothesis.characterization_set:
             hypothesis.characterization_set = hypothesis.compute_characterization_set()
 
-        transition_cover = set(
+        transition_cover = list(dict.fromkeys(
             state.prefix + (letter,)
             for state in hypothesis.states
             for letter in self.alphabet
-        )
+        ))
 
-        state_cover = set(state.prefix for state in hypothesis.states)
-        difference = transition_cover.difference(state_cover)
+        state_cover = list(dict.fromkeys(state.prefix for state in hypothesis.states))
+        state_cover_set = set(state_cover)
+        difference = [prefix for prefix in transition_cover if prefix not in state_cover_set]
         depth = self.m + 1 - len(hypothesis.states)
         # first phase State Cover * Middle * Characterization Set
         first_phase = first_phase_it(self.alphabet, state_cover, depth, hypothesis.characterization_set)
