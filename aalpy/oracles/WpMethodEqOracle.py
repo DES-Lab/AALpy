@@ -64,7 +64,7 @@ def second_phase_it(hyp: Automaton, alphabet: list, difference: set, depth: int)
                 _ = hyp.execute_sequence(hyp.initial_state, t + mid)
                 state = hyp.current_state
                 if state not in state_mapping:
-                    state_mapping[state] = state_characterization_set(hyp, alphabet, state)
+                    state_mapping[state] = state_characterization_set(hyp, alphabet, state) or [()]
 
                 for sm in state_mapping[state]:
                     yield t + mid + sm
