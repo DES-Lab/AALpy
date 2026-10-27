@@ -186,8 +186,10 @@ class ObservationTree:
         self.separation_rule = separation_rule
 
         if self.automaton_type == 'mealy':
+            MealyNode._id_counter = 0
             self.root = MealyNode()
         else:
+            MooreNode._id_counter = 0
             self.root = MooreNode()
             # initialize MooreNode with empty word output
             self.root.output = self.sul.query([])[0]
