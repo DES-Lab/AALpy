@@ -50,12 +50,8 @@ class WMethodEqOracle(Oracle):
             hypothesis.characterization_set = hypothesis.compute_characterization_set()
 
         # covers every transition of the specification at least once.
-        transition_cover = [
-            state.prefix + (letter,)
-            for state in hypothesis.states
-            for letter in self.alphabet
-        ]
-
+        transition_cover = hypothesis.compute_transition_cover()
+        
         depth = self.m + 1 - len(hypothesis.states)
         for seq in self.test_suite(transition_cover, depth, hypothesis.characterization_set):
             if seq not in self.cache:

@@ -477,6 +477,16 @@ class DeterministicAutomaton(Automaton[AutomatonStateType]):
 
         self.compute_prefixes()
 
+    def compute_transition_cover(self):
+        """
+        Computes and returns the transition cover needed, for instance, for the W method. 
+        """
+        return [
+            state.prefix + (letter,)
+            for state in self.states
+            for letter in self.get_input_alphabet()
+        ]
+
     def __eq__(self, other):
         from aalpy.utils import bisimilar
         return bisimilar(self, other)
