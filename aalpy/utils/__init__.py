@@ -1,3 +1,4 @@
+# Public API re-exports for aalpy.utils.
 from .AutomatonGenerators import (
     generate_random_dfa,
     generate_random_mealy_machine,
@@ -40,4 +41,5 @@ from .HelperFunctions import (
     is_balanced,
     generate_input_output_data_from_automata,
     generate_input_output_data_from_vpa,
+    generate_well_matched_data_from_vpa,
 )

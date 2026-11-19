@@ -1,11 +1,25 @@
+# Generalized state merging (GSM) variant of RPNI, using partition-based compatibility checks for faster merging.
 import time
 from collections import deque
+from typing import Any
 
 from aalpy.learning_algs.deterministic_passive.rpni_helper_functions import to_automaton, RpniNode, createPTA
 
 
 class GsmRPNI:
-    def __init__(self, data, automaton_type, print_info=True):
+    """
+    RPNI implementation based on generalized state merging (GSM), which computes merge compatibility via
+    partitions instead of copying and folding the whole PTA for every merge attempt.
+    """
+
+    def __init__(self, data: list, automaton_type: str, print_info: bool = True) -> None:
+        """
+        Creates a GsmRPNI instance and constructs the prefix tree acceptor (PTA) from the data.
+
+        :param list data: Sequence of (input sequence, label) pairs.
+        :param str automaton_type: Either 'dfa', 'mealy', or 'moore'.
+        :param bool print_info: Whether to print learning progress and runtime information.
+        """
         self.data = data
         self.final_automaton_type = automaton_type
         self.automaton_type = automaton_type if automaton_type != 'dfa' else 'moore'
@@ -18,7 +32,12 @@ class GsmRPNI:
         if self.print_info:
             print(f'PTA Construction Time: {round(time.time() - pta_construction_start, 2)}')
 
-    def run_rpni(self):
+    def run_rpni(self) -> Any:
+        """
+        Runs the GSM state-merging procedure and constructs the resulting automaton.
+
+        :return Any: The learned Dfa, MooreMachine, or MealyMachine.
+        """
         start_time = time.time()
 
         # sorted list of states already considered
@@ -66,9 +85,14 @@ class GsmRPNI:
 
         return to_automaton(red_states, self.final_automaton_type)
 
-    def _partition_from_merge(self, red: RpniNode, blue: RpniNode):
+    def _partition_from_merge(self, red: RpniNode, blue: RpniNode) -> dict[RpniNode, RpniNode] | None:
         """
-        Compatibility check based on partitions
+        Compatibility check based on partitions.
+
+        :param RpniNode red: Red state to attempt merging with.
+        :param RpniNode blue: Blue state to attempt merging.
+        :return dict[RpniNode, RpniNode] | None: Map from original node to its merged partition block, or None if
+            the merge is not compatible with the data.
         """
 
         partitions = dict()
@@ -78,7 +102,13 @@ class GsmRPNI:
         while len(q) != 0:
             red, blue = q.popleft()
 
-            def get_partition(node: RpniNode):
+            def get_partition(node: RpniNode) -> RpniNode:
+                """
+                Retrieves the existing partition block for a node, creating one via a shallow copy if absent.
+
+                :param RpniNode node: Node whose partition block shall be retrieved.
+                :return RpniNode: The partition block associated with the node.
+                """
                 if node not in partitions:
                     p = node.shallow_copy()
                     partitions[node] = p

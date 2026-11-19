@@ -1,9 +1,9 @@
+# KV active learning algorithm based on a classification tree.
 import time
-from typing import Union
 
 from aalpy.automata import Dfa, DfaState, MealyState, MealyMachine, MooreState, MooreMachine, \
     Sevpa, SevpaState, SevpaAlphabet
-from aalpy.base import Oracle, SUL
+from aalpy.base import Automaton, Oracle, SUL
 from aalpy.utils.HelperFunctions import print_learning_info, visualize_classification_tree
 from .ClassificationTree import ClassificationTree
 from .CounterExampleProcessing import counterexample_successfully_processed
@@ -14,39 +14,27 @@ counterexample_processing_strategy = ['rs', 'linear_fwd', 'linear_bwd', 'exponen
 automaton_class = {'dfa': Dfa, 'mealy': MealyMachine, 'moore': MooreMachine, 'vpa': Sevpa}
 
 
-def run_KV(alphabet: Union[list, SevpaAlphabet], sul: SUL, eq_oracle: Oracle, automaton_type, cex_processing='rs',
-           max_learning_rounds=None, cache_and_non_det_check=True, return_data=False, print_level=2):
+def run_KV(alphabet: list | SevpaAlphabet, sul: SUL, eq_oracle: Oracle, automaton_type: str,
+           cex_processing: str = 'rs', max_learning_rounds: int | None = None, cache_and_non_det_check: bool = True,
+           return_data: bool = False, print_level: int = 2) -> Automaton | tuple[Automaton, dict]:
     """
     Executes the KV algorithm.
 
-    Args:
-
-        alphabet: input alphabet
-
-        sul: system under learning
-
-        eq_oracle: equivalence oracle
-
-        automaton_type: type of automaton to be learned. One of 'dfa', 'mealy', 'moore', 'vpa'
-
-        cex_processing: Counterexample processing strategy. Either 'rs' (Rivest-Schapire), 'longest_prefix'.
-            (Default value = 'rs'), 'longest_prefix', 'linear_fwd', 'linear_bwd', 'exponential_fwd', 'exponential_bwd'
-
-        max_learning_rounds: number of learning rounds after which learning will terminate (Default value = None)
-
-        cache_and_non_det_check: Use caching and non-determinism checks (Default value = True)
-
-        return_data: if True, a map containing all information(runtime/#queries/#steps) will be returned
-            (Default value = False)
-
-        print_level: 0 - None, 1 - just results, 2 - current round and hypothesis size, 3 - educational/debug
-            (Default value = 2)
-
-
-    Returns:
-
-        automaton of type automaton_type (dict containing all information about learning if 'return_data' is True)
-
+    :param list | SevpaAlphabet alphabet: Input alphabet.
+    :param SUL sul: System under learning.
+    :param Oracle eq_oracle: Equivalence oracle.
+    :param str automaton_type: Type of automaton to be learned. One of 'dfa', 'mealy', 'moore', 'vpa'.
+    :param str cex_processing: Counterexample processing strategy. Either 'rs' (Rivest-Schapire), 'longest_prefix'.
+        (Default value = 'rs'), 'longest_prefix', 'linear_fwd', 'linear_bwd', 'exponential_fwd', 'exponential_bwd'.
+    :param int | None max_learning_rounds: Number of learning rounds after which learning will terminate
+        (Default value = None).
+    :param bool cache_and_non_det_check: Use caching and non-determinism checks (Default value = True).
+    :param bool return_data: If True, a map containing all information (runtime/#queries/#steps) will be returned
+        (Default value = False).
+    :param int print_level: 0 - None, 1 - just results, 2 - current round and hypothesis size, 3 -
+        educational/debug (Default value = 2).
+    :return Automaton | tuple[Automaton, dict]: Automaton of type automaton_type (or a tuple of the automaton and
+        a dict containing all information about learning if 'return_data' is True).
     """
 
     assert print_level in print_options

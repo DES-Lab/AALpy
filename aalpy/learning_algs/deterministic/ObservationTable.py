@@ -1,3 +1,4 @@
+# Angluin-style observation table (S, E, T) used by the L* learning algorithm.
 from collections import defaultdict
 
 from aalpy.base import Automaton, SUL
@@ -8,18 +9,20 @@ closing_options = ['shortest_first', 'longest_first', 'single', 'single_longest'
 
 
 class ObservationTable:
-    def __init__(self, alphabet: list, sul: SUL, automaton_type, prefixes_in_cell=False):
+    """
+    Angluin-style observation table over an S set of prefixes, an E set of suffixes, and a T function mapping
+    prefixes to rows of observed outputs.
+    """
+
+    def __init__(self, alphabet: list, sul: SUL, automaton_type: str, prefixes_in_cell: bool = False) -> None:
         """
         Constructor of the observation table. Initial queries are asked in the constructor.
 
-        Args:
-
-            alphabet: input alphabet
-            sul: system under learning
-            automaton_type: automaton type, one of ['dfa', 'mealy', 'moore']
-
-        Returns:
-
+        :param list alphabet: Input alphabet.
+        :param SUL sul: System under learning.
+        :param str automaton_type: Automaton type, one of ['dfa', 'mealy', 'moore'].
+        :param bool prefixes_in_cell: If True add prefixes of each element of E set to a cell, else only add the
+            output (Default value = False).
         """
         assert automaton_type in aut_type
         assert alphabet is not None and sul is not None
@@ -46,7 +49,7 @@ class ObservationTable:
         if self.automaton_type == 'dfa' or self.automaton_type == 'moore':
             self.E.insert(0, empty_word)
 
-    def get_rows_to_close(self, closing_strategy='longest_first'):
+    def get_rows_to_close(self, closing_strategy: str = 'longest_first') -> list | None:
         """
         Get rows for that need to be closed. Row selection is done according to closing_strategy.
         The length of the row is defined by the length of the prefix corresponding to the row in the S set.
@@ -55,14 +58,9 @@ class ObservationTable:
         single -> find and ask membership query for the single row
         single_longest -> returns single longest row to close
 
-        Args:
-
-            closing_strategy: one of ['shortest_first', 'longest_first', 'single'] (Default value = 'longest_first')
-
-        Returns:
-
-            list if non-closed exist, None otherwise: rows that will be moved to S set and closed
-
+        :param str closing_strategy: One of ['shortest_first', 'longest_first', 'single'] (Default value =
+            'longest_first').
+        :return list | None: Rows that will be moved to S set and closed, or None if all rows are already closed.
         """
         assert closing_strategy in closing_options
         rows_to_close = []
@@ -91,16 +89,13 @@ class ObservationTable:
 
         return rows_to_close
 
-    def get_causes_of_inconsistency(self):
+    def get_causes_of_inconsistency(self) -> list | None:
         """
-        If the two rows in the S set are the same, but their one letter extensions are not, this method founds
+        If the two rows in the S set are the same, but their one letter extensions are not, this method finds
         the cause of inconsistency and returns it.
-        :return:
 
-        Returns:
-
-            a+e values that are the causes of inconsistency
-
+        :return list | None: A single-element list containing the a+e value that is the cause of inconsistency,
+            or None if the table is consistent.
         """
         for i, s1 in enumerate(self.S):
             for s2 in self.S[i + 1:]:
@@ -116,6 +111,8 @@ class ObservationTable:
     def s_dot_a(self):
         """
         Helper generator function that returns extended S, or S.A set.
+
+        :return: Generator over elements of S.A that are not already in S.
         """
         s_set = set(self.S)
         for s in self.S:
@@ -123,18 +120,14 @@ class ObservationTable:
                 if s + a not in s_set:
                     yield s + a
 
-    def update_obs_table(self, s_set: list = None, e_set: list = None):
+    def update_obs_table(self, s_set: list = None, e_set: list = None) -> None:
         """
         Perform the membership queries.
 
-        Args:
-
-            s_set: Prefixes of S set on which to preform membership queries. If None, then whole S set will be used.
-
-            e_set: Suffixes of E set on which to perform membership queries. If None, then whole E set will be used.
-
-        Returns:
-
+        :param list s_set: Prefixes of S set on which to perform membership queries. If None, then whole S set
+            (plus S.A) will be used.
+        :param list e_set: Suffixes of E set on which to perform membership queries. If None, then whole E set
+            will be used.
         """
 
         update_S = s_set if s_set else list(self.S) + list(self.s_dot_a())
@@ -153,19 +146,13 @@ class ObservationTable:
                         obs_table_entry = (output[-1],)
                     self.T[s] += obs_table_entry
 
-    def gen_hypothesis(self, no_cex_processing_used=False) -> Automaton:
+    def gen_hypothesis(self, no_cex_processing_used: bool = False) -> Automaton:
         """
         Generate automaton based on the values found in the observation table.
-        :return:
 
-        Args:
-
-            check_for_duplicate_rows:  (Default value = False)
-
-        Returns:
-
-            Automaton of type `automaton_type`
-
+        :param bool no_cex_processing_used: If True, row representatives (deduplicated by row value) are used
+            instead of the full S set, since no counterexample processing has narrowed it (Default value = False).
+        :return Automaton: Automaton of type `automaton_type`.
         """
         state_distinguish = dict()
         states_dict = dict()
@@ -210,7 +197,12 @@ class ObservationTable:
 
         return automaton
 
-    def _get_row_representatives(self):
+    def _get_row_representatives(self) -> list:
+        """
+        Selects a single representative prefix per distinct row value, preferring the shortest prefix.
+
+        :return list: List of representative prefixes, one per distinct row value.
+        """
         self.S.sort(key=len)
         representatives = defaultdict(list)
         for prefix in self.S:

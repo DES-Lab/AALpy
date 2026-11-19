@@ -1,3 +1,4 @@
+# Statistical checkers used to decide whether two output-frequency distributions differ.
 from abc import ABC, abstractmethod
 from math import sqrt, log
 
@@ -25,24 +26,64 @@ chi2_table[0.999] = \
 
 
 class DifferenceChecker(ABC):
+    """
+    Abstract class implemented by all checkers that decide whether two observed output-frequency
+    distributions (cells) are statistically different.
+    """
 
     @abstractmethod
     def are_cells_different(self, c1: dict, c2: dict, **kwargs) -> bool:
+        """
+        Determine whether two cells (output frequency dictionaries) are different.
+
+        :param dict c1: Output frequencies of the first cell.
+        :param dict c2: Output frequencies of the second cell.
+        :param kwargs: Additional checker-specific arguments.
+        :return bool: True if the cells are considered different, False otherwise.
+        """
         pass
 
-    def difference_value(self, c1: dict, c2: dict):
+    def difference_value(self, c1: dict, c2: dict) -> float | None:
+        """
+        Compute a numeric difference value between two cells, if supported by the checker.
+
+        :param dict c1: Output frequencies of the first cell.
+        :param dict c2: Output frequencies of the second cell.
+        :return float | None: Difference value, or None if not supported.
+        """
         return None
 
-    def use_diff_value(self):
+    def use_diff_value(self) -> bool:
+        """
+        Whether this checker supports computing a numeric difference value.
+
+        :return bool: True if difference_value can be used, False otherwise.
+        """
         return False
 
 
 class HoeffdingChecker(DifferenceChecker):
+    """
+    Difference checker based on the Hoeffding bound.
+    """
 
-    def __init__(self, alpha=0.05):
+    def __init__(self, alpha: float = 0.05) -> None:
+        """
+        Create a Hoeffding-bound based difference checker.
+
+        :param float alpha: Significance level used in the Hoeffding bound.
+        """
         self.alpha = alpha
 
     def are_cells_different(self, c1: dict, c2: dict, **kwargs) -> bool:
+        """
+        Determine whether two cells are different using the Hoeffding bound.
+
+        :param dict c1: Output frequencies of the first cell.
+        :param dict c2: Output frequencies of the second cell.
+        :param kwargs: Unused, present for interface compatibility.
+        :return bool: True if the cells are considered different, False otherwise.
+        """
         if c1.keys() != c2.keys():
             return True
 
@@ -57,17 +98,43 @@ class HoeffdingChecker(DifferenceChecker):
         return False
 
 
-def compute_epsilon(alpha1, n1):
+def compute_epsilon(alpha1: float, n1: int) -> float:
+    """
+    Compute the Hoeffding-bound epsilon value for a given significance level and sample size.
+
+    :param float alpha1: Significance level.
+    :param int n1: Sample size.
+    :return float: Computed epsilon value.
+    """
     epsilon1 = sqrt((1. / (2 * n1)) * log(2. / alpha1))
     return epsilon1
 
 
 class AdvancedHoeffdingChecker(DifferenceChecker):
-    def __init__(self, alpha=0.05, use_diff=False):
+    """
+    Difference checker based on per-output Hoeffding bounds, optionally exposing a numeric
+    difference value.
+    """
+
+    def __init__(self, alpha: float = 0.05, use_diff: bool = False) -> None:
+        """
+        Create an advanced Hoeffding-bound based difference checker.
+
+        :param float alpha: Significance level used in the Hoeffding bound.
+        :param bool use_diff: Whether difference_value should be usable.
+        """
         self.alpha = alpha
         self.use_diff = use_diff
 
     def are_cells_different(self, c1: dict, c2: dict, **kwargs) -> bool:
+        """
+        Determine whether two cells are different using per-output Hoeffding bounds.
+
+        :param dict c1: Output frequencies of the first cell.
+        :param dict c2: Output frequencies of the second cell.
+        :param kwargs: Unused, present for interface compatibility.
+        :return bool: True if the cells are considered different, False otherwise.
+        """
         n1 = sum(c1.values())
         n2 = sum(c2.values())
 
@@ -84,10 +151,23 @@ class AdvancedHoeffdingChecker(DifferenceChecker):
                     return True
         return False
 
-    def use_diff_value(self):
+    def use_diff_value(self) -> bool:
+        """
+        Whether this checker supports computing a numeric difference value.
+
+        :return bool: True if use_diff was set on construction, False otherwise.
+        """
         return self.use_diff
 
-    def difference_value(self, c1_out_freq: dict, c2_out_freq: dict):
+    def difference_value(self, c1_out_freq: dict, c2_out_freq: dict) -> float:
+        """
+        Compute a numeric difference value between two cells.
+
+        :param dict c1_out_freq: Output frequencies of the first cell.
+        :param dict c2_out_freq: Output frequencies of the second cell.
+        :return float: Sum of absolute output frequency differences, a combined epsilon bound if
+            only one cell has observations, or 0 if neither has observations.
+        """
         n1 = 0 if not c1_out_freq else sum(c1_out_freq.values())
         n2 = 0 if not c2_out_freq else sum(c2_out_freq.values())
 
@@ -109,8 +189,17 @@ class AdvancedHoeffdingChecker(DifferenceChecker):
 
 
 class ChiSquareChecker(DifferenceChecker):
+    """
+    Difference checker based on the chi-square test for homogeneity.
+    """
 
-    def __init__(self, alpha=0.001, use_diff_value=False):
+    def __init__(self, alpha: float = 0.001, use_diff_value: bool = False) -> None:
+        """
+        Create a chi-square test based difference checker.
+
+        :param float alpha: Significance level, must have a precomputed chi2 table entry.
+        :param bool use_diff_value: Whether difference_value should be usable.
+        """
         self.alpha = alpha
         self.chi2_cache = dict()
         if 1 - self.alpha not in chi2_table.keys():
@@ -119,7 +208,15 @@ class ChiSquareChecker(DifferenceChecker):
         self.use_diff = use_diff_value
 
     def are_cells_different(self, c1_out_freq: dict, c2_out_freq: dict, **kwargs) -> bool:
-        # chi square test for homogeneity (see, for instance: https://online.stat.psu.edu/stat415/lesson/17/17.1)
+        """
+        Determine whether two cells are different using a chi-square test for homogeneity
+        (see, for instance: https://online.stat.psu.edu/stat415/lesson/17/17.1).
+
+        :param dict c1_out_freq: Output frequencies of the first cell.
+        :param dict c2_out_freq: Output frequencies of the second cell.
+        :param kwargs: Unused, present for interface compatibility.
+        :return bool: True if the cells are considered different, False otherwise.
+        """
         if not c1_out_freq or not c2_out_freq:
             return False
         keys = list(set(c1_out_freq.keys()).union(c2_out_freq.keys()))
@@ -141,10 +238,23 @@ class ChiSquareChecker(DifferenceChecker):
 
         return Q >= chi2_val
 
-    def use_diff_value(self):
+    def use_diff_value(self) -> bool:
+        """
+        Whether this checker supports computing a numeric difference value.
+
+        :return bool: True if use_diff_value was set on construction, False otherwise.
+        """
         return self.use_diff
 
-    def difference_value(self, c1_out_freq: dict, c2_out_freq: dict):
+    def difference_value(self, c1_out_freq: dict, c2_out_freq: dict) -> float:
+        """
+        Compute a numeric difference value between two cells based on the chi-square statistic.
+
+        :param dict c1_out_freq: Output frequencies of the first cell.
+        :param dict c2_out_freq: Output frequencies of the second cell.
+        :return float: Chi-square statistic Q, a threshold value if one cell has no observations,
+            or 0 if there is a single degree of freedom.
+        """
         if not c1_out_freq or not c2_out_freq:
             # return a value on the threshold if we don't have information
             c1_outs = set(c1_out_freq.keys()) if c1_out_freq else set()
@@ -159,7 +269,15 @@ class ChiSquareChecker(DifferenceChecker):
         Q = self.compute_Q(c1_out_freq, c2_out_freq, keys)
         return Q
 
-    def compute_Q(self, c1_out_freq, c2_out_freq, keys):
+    def compute_Q(self, c1_out_freq: dict, c2_out_freq: dict, keys: list) -> float:
+        """
+        Compute the chi-square test statistic Q for two output-frequency distributions.
+
+        :param dict c1_out_freq: Output frequencies of the first cell.
+        :param dict c2_out_freq: Output frequencies of the second cell.
+        :param list keys: Union of the output keys present in both cells.
+        :return float: Chi-square test statistic Q.
+        """
         n_1 = sum(c1_out_freq.values())
         n_2 = sum(c2_out_freq.values())
 

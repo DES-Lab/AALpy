@@ -1,32 +1,34 @@
+# Counterexample processing strategies (Rivest-Schapire, longest-prefix, linear, exponential) for L*/KV.
 from aalpy.base import SUL
 from aalpy.utils.HelperFunctions import all_suffixes, all_prefixes
 
 
-def counterexample_successfully_processed(sul, cex, hypothesis):
+def counterexample_successfully_processed(sul: SUL, cex: tuple, hypothesis) -> bool:
+    """
+    Checks whether a counterexample is still a counterexample for the given hypothesis, i.e. whether the last
+    output of the SUL and the hypothesis differ.
+
+    :param SUL sul: System under learning.
+    :param tuple cex: Counterexample to check.
+    :param hypothesis: Hypothesis on which the counterexample was found.
+    :return bool: True if the last outputs agree (counterexample successfully processed), False otherwise.
+    """
     cex_outputs = sul.query(cex)
     hyp_outputs = hypothesis.execute_sequence(hypothesis.initial_state, cex)
     return cex_outputs[-1] == hyp_outputs[-1]
 
 
-def longest_prefix_cex_processing(s_union_s_dot_a: list, cex: tuple, closedness='suffix'):
+def longest_prefix_cex_processing(s_union_s_dot_a: list, cex: tuple, closedness: str = 'suffix') -> list:
     """
     Suffix processing strategy found in Shahbaz-Groz paper 'Inferring Mealy Machines'.
     It splits the counterexample into prefix and suffix. The prefix is the longest element of the S union S.A that
     matches the beginning of the counterexample. By removing such prefixes from counterexample, no consistency check
     is needed.
 
-    Args:
-
-        s_union_s_dot_a: list of all prefixes found in observation table sorted from shortest to longest
-        cex: counterexample
-        closedness: either 'suffix' or 'prefix'. (Default value = 'suffix')
-        s_union_s_dot_a: list:
-        cex: tuple: counterexample
-
-    Returns:
-
-        suffixes to add to the E set
-
+    :param list s_union_s_dot_a: List of all prefixes found in observation table sorted from shortest to longest.
+    :param tuple cex: Counterexample.
+    :param str closedness: Either 'suffix' or 'prefix' (Default value = 'suffix').
+    :return list: Suffixes to add to the E set.
     """
     prefixes = s_union_s_dot_a
     prefixes.reverse()
@@ -43,28 +45,20 @@ def longest_prefix_cex_processing(s_union_s_dot_a: list, cex: tuple, closedness=
     return suffixes
 
 
-def rs_cex_processing(sul: SUL, cex: tuple, hypothesis, suffix_closedness=True, closedness='suffix',
-                      is_vpa=False, lower=None, upper=None):
+def rs_cex_processing(sul: SUL, cex: tuple, hypothesis, suffix_closedness: bool = True, closedness: str = 'suffix',
+                      is_vpa: bool = False, lower: int | None = None, upper: int | None = None) -> list:
     """
     Rivest-Schapire counter example processing.
 
-    Args:
-
-        sul: system under learning
-        cex: found counterexample
-        hypothesis: hypothesis on which counterexample was found
-        suffix_closedness: If true all suffixes will be added, else just one (Default value = True)
-        closedness: either 'suffix' or 'prefix'. (Default value = 'suffix')
-        sul: SUL: system under learning
-        cex: tuple: counterexample
-        is_vpa: system under learning behaves as a context free language
-        upper: upper boarder for cex (from preprocessing), None will set it to 1
-        lower: lower boarder for cex (from preprocessing), None will set it to  len(cex_input) - 2
-
-    Returns:
-
-        suffixes to be added to the E set
-
+    :param SUL sul: System under learning.
+    :param tuple cex: Found counterexample.
+    :param hypothesis: Hypothesis on which counterexample was found.
+    :param bool suffix_closedness: If true all suffixes will be added, else just one (Default value = True).
+    :param str closedness: Either 'suffix' or 'prefix' (Default value = 'suffix').
+    :param bool is_vpa: System under learning behaves as a context free language.
+    :param int | None lower: Lower border for cex (from preprocessing), None will set it to 1.
+    :param int | None upper: Upper border for cex (from preprocessing), None will set it to len(cex_input) - 2.
+    :return list: Suffixes to be added to the E set.
     """
     cex_out = sul.query(cex)
     cex_input = list(cex)
@@ -110,11 +104,22 @@ def rs_cex_processing(sul: SUL, cex: tuple, hypothesis, suffix_closedness=True, 
     return suffix_to_query
 
 
-def linear_cex_processing(sul: SUL, cex: tuple, hypothesis, suffix_closedness=True, closedness='suffix',
-                          direction='fwd', is_vpa=False):
-    assert direction in {'fwd', 'bwd'}
+def linear_cex_processing(sul: SUL, cex: tuple, hypothesis, suffix_closedness: bool = True, closedness: str = 'suffix',
+                          direction: str = 'fwd', is_vpa: bool = False) -> list:
+    """
+    Linear counterexample processing, scanning the counterexample from the front (or back) until the SUL and
+    hypothesis outputs diverge.
 
-    direction = 'fwd'
+    :param SUL sul: System under learning.
+    :param tuple cex: Found counterexample.
+    :param hypothesis: Hypothesis on which counterexample was found.
+    :param bool suffix_closedness: If true all suffixes will be added, else just one (Default value = True).
+    :param str closedness: Either 'suffix' or 'prefix' (Default value = 'suffix').
+    :param str direction: Direction of scanning, either 'fwd' or 'bwd'.
+    :param bool is_vpa: System under learning behaves as a context free language.
+    :return list: Suffixes to be added to the E set.
+    """
+    assert direction in {'fwd', 'bwd'}
 
     distinguishing_suffix = None
     previous_output = None
@@ -157,8 +162,21 @@ def linear_cex_processing(sul: SUL, cex: tuple, hypothesis, suffix_closedness=Tr
     return suffix_to_query
 
 
-def exponential_cex_processing(sul: SUL, cex: tuple, hypothesis, suffix_closedness=True, closedness='suffix',
-                               direction='fwd', is_vpa=False):
+def exponential_cex_processing(sul: SUL, cex: tuple, hypothesis, suffix_closedness: bool = True, closedness: str = 'suffix',
+                               direction: str = 'fwd', is_vpa: bool = False) -> list:
+    """
+    Exponential (doubling) counterexample processing that searches for the divergence point using exponentially
+    growing steps before falling back to Rivest-Schapire binary search.
+
+    :param SUL sul: System under learning.
+    :param tuple cex: Found counterexample.
+    :param hypothesis: Hypothesis on which counterexample was found.
+    :param bool suffix_closedness: If true all suffixes will be added, else just one (Default value = True).
+    :param str closedness: Either 'suffix' or 'prefix' (Default value = 'suffix').
+    :param str direction: Direction of scanning, either 'fwd' or 'bwd'.
+    :param bool is_vpa: System under learning behaves as a context free language.
+    :return list: Suffixes to be added to the E set.
+    """
     assert direction in {'fwd', 'bwd'}
 
     cex_out = sul.query(cex)
@@ -215,5 +233,3 @@ def exponential_cex_processing(sul: SUL, cex: tuple, hypothesis, suffix_closedne
             return rs_cex_processing(sul, cex, hypothesis, suffix_closedness, closedness, is_vpa, lower=bp_recent)
         else:
             return rs_cex_processing(sul, cex, hypothesis, suffix_closedness, closedness, is_vpa, upper=bp_recent)
-
-

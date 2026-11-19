@@ -1,7 +1,9 @@
+# Equivalence oracle that biases random walks towards same-state or different-state transitions.
 import random
 
 from aalpy.base.Oracle import Oracle
 from aalpy.base.SUL import SUL
+from aalpy.base.Automaton import Automaton
 
 
 class TransitionFocusOracle(Oracle):
@@ -11,14 +13,16 @@ class TransitionFocusOracle(Oracle):
     all interesting behavior occurs on the transitions between states and potential bugs can be found only by
     focusing on transitions.
     """
-    def __init__(self, alphabet, sul: SUL, num_random_walks=500, walk_len=20, same_state_prob=0.2):
+    def __init__(self, alphabet: list, sul: SUL, num_random_walks: int = 500, walk_len: int = 20,
+                 same_state_prob: float = 0.2) -> None:
         """
-        Args:
-            alphabet: input alphabet
-            sul: system under learning
-            num_random_walks: number of walks
-            walk_len: length of each walk
-            same_state_prob: probability that the next input will lead to same state transition
+        Constructs the oracle.
+
+        :param list alphabet: Input alphabet.
+        :param SUL sul: System under learning.
+        :param int num_random_walks: Number of walks.
+        :param int walk_len: Length of each walk.
+        :param float same_state_prob: Probability that the next input will lead to a same-state transition.
         """
 
         super().__init__(alphabet, sul)
@@ -26,8 +30,14 @@ class TransitionFocusOracle(Oracle):
         self.steps_per_walk = walk_len
         self.same_state_prob = same_state_prob
 
-    def find_cex(self, hypothesis):
+    def find_cex(self, hypothesis: Automaton) -> list | None:
+        """
+        Performs random walks biased towards same-state or different-state transitions until a counterexample is
+        found.
 
+        :param Automaton hypothesis: Current hypothesis.
+        :return list | None: Counterexample inputs, None if no counterexample is found.
+        """
         for _ in range(self.num_walks):
             self.reset_hyp_and_sul(hypothesis)
 

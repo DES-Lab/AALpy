@@ -1,17 +1,36 @@
+# Implementation of the Alergia/IOAlergia passive learning algorithm for Markov chains, MDPs, and stochastic Mealy
+# machines, plus helper entry points for running it on in-memory data or via the external JAlergia implementation.
 import time
 from bisect import insort
 
 from aalpy.automata import MarkovChain, MdpState, Mdp, McState, StochasticMealyState, \
     StochasticMealyMachine
-from aalpy.learning_algs.stochastic_passive.CompatibilityChecker import HoeffdingCompatibility
-from aalpy.learning_algs.stochastic_passive.FPTA import create_fpta
+from aalpy.learning_algs.stochastic_passive.CompatibilityChecker import CompatibilityChecker, HoeffdingCompatibility
+from aalpy.learning_algs.stochastic_passive.FPTA import AlergiaPtaNode, create_fpta
 
 state_automaton_map = {'mc': (McState, MarkovChain), 'mdp': (MdpState, Mdp),
                        'smm': (StochasticMealyState, StochasticMealyMachine)}
 
 
 class Alergia:
-    def __init__(self, data, automaton_type, eps=0.05, compatibility_checker=None, print_info=False):
+    """
+    Implementation of the Alergia/IOAlergia state-merging algorithm, building an FPTA from data and merging
+    statistically compatible states to obtain a Markov chain, MDP, or stochastic Mealy machine.
+    """
+
+    def __init__(self, data: list, automaton_type: str, eps: float | str = 0.05,
+                 compatibility_checker: CompatibilityChecker | None = None, print_info: bool = False) -> None:
+        """
+        Creates an Alergia instance and constructs the FPTA from the provided data.
+
+        :param list data: Learning data, format depends on automaton_type (see run_Alergia for details).
+        :param str automaton_type: Either 'mdp', 'mc', or 'smm'.
+        :param float | str eps: Epsilon value for the default HoeffdingCompatibility, or 'auto' to compute it from
+            the data.
+        :param CompatibilityChecker | None compatibility_checker: Custom compatibility checker, HoeffdingCompatibility
+            with eps value by default.
+        :param bool print_info: If True, print timing/statistics information.
+        """
         assert eps == 'auto' or 0 < eps <= 2
 
         self.automaton_type = automaton_type
@@ -30,7 +49,14 @@ class Alergia:
         if self.print_info:
             print(f'PTA Construction Time:  {pta_time}')
 
-    def compatibility_test(self, a, b):
+    def compatibility_test(self, a: AlergiaPtaNode, b: AlergiaPtaNode) -> bool:
+        """
+        Recursively checks whether two FPTA nodes (and all their reachable descendants) are compatible for merging.
+
+        :param AlergiaPtaNode a: First node.
+        :param AlergiaPtaNode b: Second node.
+        :return bool: True if the nodes are compatible, False otherwise.
+        """
 
         # for MDPs and MC output of the state needs to be the same
         if self.automaton_type != 'smm' and a.output != b.output:
@@ -51,7 +77,13 @@ class Alergia:
 
         return True
 
-    def merge(self, red_state, blue_state):
+    def merge(self, red_state: AlergiaPtaNode, blue_state: AlergiaPtaNode) -> None:
+        """
+        Merges a blue node into a red (representative) node by rewiring its parent's transition and folding it in.
+
+        :param AlergiaPtaNode red_state: Representative state that will absorb the blue state.
+        :param AlergiaPtaNode blue_state: State to be merged into the red state.
+        """
         b_prefix = blue_state.prefix
         to_update = self.fpta
         for p in b_prefix[:-1]:
@@ -61,7 +93,13 @@ class Alergia:
 
         self.fold(red_state, blue_state)
 
-    def fold(self, red, blue):
+    def fold(self, red: AlergiaPtaNode, blue: AlergiaPtaNode) -> None:
+        """
+        Recursively folds the subtree rooted at blue into the subtree rooted at red, merging input frequencies.
+
+        :param AlergiaPtaNode red: Node into which blue is folded.
+        :param AlergiaPtaNode blue: Node being folded into red.
+        """
         for i, blue_child in blue.children.items():
             if i in red.children:
                 red.input_frequency[i] += blue.input_frequency[i]
@@ -70,7 +108,12 @@ class Alergia:
                 red.children[i] = blue.children[i]
                 red.input_frequency[i] = blue.input_frequency[i]
 
-    def run(self):
+    def run(self) -> MarkovChain | Mdp | StochasticMealyMachine:
+        """
+        Runs the Alergia state-merging loop on the FPTA and converts the resulting red states into an automaton.
+
+        :return MarkovChain | Mdp | StochasticMealyMachine: The learned automaton.
+        """
         start_time = time.time()
 
         # representative nodes that will be included in the final output model
@@ -112,7 +155,12 @@ class Alergia:
 
         return self.to_automaton(red)
 
-    def normalize(self, red):
+    def normalize(self, red: list) -> None:
+        """
+        Normalizes input/output frequencies of all red states into probabilities.
+
+        :param list red: List of representative (red) AlergiaPtaNode states.
+        """
         red_sorted = sorted(list(red), key=lambda x: len(x.prefix))
         for r in red_sorted:
             # Initializing in here saves many unnecessary initializations
@@ -125,7 +173,13 @@ class Alergia:
                 for i, o in r.input_frequency.keys():
                     r.children_prob[(i, o)] = r.input_frequency[(i, o)] / r.get_input_frequency(i)
 
-    def to_automaton(self, red):
+    def to_automaton(self, red: list) -> MarkovChain | Mdp | StochasticMealyMachine:
+        """
+        Converts the list of red FPTA nodes into an automaton of the configured type.
+
+        :param list red: List of representative (red) AlergiaPtaNode states.
+        :return MarkovChain | Mdp | StochasticMealyMachine: The constructed automaton.
+        """
         s_c = state_automaton_map[self.automaton_type][0]
         a_c = state_automaton_map[self.automaton_type][1]
 
@@ -162,31 +216,24 @@ class Alergia:
         return a_c(initial_state, states)
 
 
-def run_Alergia(data, automaton_type, eps=0.05, compatibility_checker=None, print_info=False):
+def run_Alergia(data: list, automaton_type: str, eps: float | str = 0.05,
+                compatibility_checker: CompatibilityChecker | None = None,
+                print_info: bool = False) -> MarkovChain | Mdp | StochasticMealyMachine:
     """
     Run Alergia or IOAlergia on provided data.
 
-    Args:
-
-        data: data either in a form [[I,I,I],[I,I,I],...] if learning Markov Chains or [[O,(I,O),(I,O)...],
-        [O,(I,O), (I, O)_,...],..,] if learning MDPs, or [[I,O,I,O...], [I,O_,...],..,] if learning SMMs
-         (I represents input, O output).
-        Note that in whole data first symbol of each entry should be the same (Initial output of the MDP/MC).
-
-        eps: epsilon value if you are using default HoeffdingCompatibility. If it is set to 'auto' it will be computed
-        as 10/(all steps in the data)
-
-        automaton_type: either 'mdp' if you wish to learn an MDP, 'mc' if you want to learn Markov Chain, or 'smm' if
-        you want to learn stochastic Mealy machine
-
-        compatibility_checker: impl. of class CompatibilityChecker, HoeffdingCompatibility with eps value by default
-
-        (note: not interchangeable, depends on data)
-        print_info:
-
-    Returns:
-
-        mdp, smm, or markov chain
+    :param list data: Data either in a form [[I,I,I],[I,I,I],...] if learning Markov Chains or
+        [[O,(I,O),(I,O)...], [O,(I,O), (I, O)_,...],..,] if learning MDPs, or [[I,O,I,O...], [I,O_,...],..,] if
+        learning SMMs (I represents input, O output). Note that in whole data first symbol of each entry should be
+        the same (Initial output of the MDP/MC).
+    :param str automaton_type: Either 'mdp' if you wish to learn an MDP, 'mc' if you want to learn Markov Chain, or
+        'smm' if you want to learn stochastic Mealy machine.
+    :param float | str eps: Epsilon value if you are using default HoeffdingCompatibility. If it is set to 'auto' it
+        will be computed as 10/(all steps in the data).
+    :param CompatibilityChecker | None compatibility_checker: Impl. of class CompatibilityChecker,
+        HoeffdingCompatibility with eps value by default (note: not interchangeable, depends on data).
+    :param bool print_info: Print learning statistics.
+    :return MarkovChain | Mdp | StochasticMealyMachine: Learned MDP, SMM, or Markov chain.
     """
     assert automaton_type in {'mdp', 'mc', 'smm'}
     alergia = Alergia(data, eps=eps, automaton_type=automaton_type,
@@ -196,30 +243,21 @@ def run_Alergia(data, automaton_type, eps=0.05, compatibility_checker=None, prin
     return model
 
 
-def run_JAlergia(path_to_data_file, automaton_type, path_to_jAlergia_jar, eps=0.05, heap_memory='-Xmx2048M'):
+def run_JAlergia(path_to_data_file: str | list, automaton_type: str, path_to_jAlergia_jar: str,
+                  eps: float = 0.05, heap_memory: str = '-Xmx2048M') -> MarkovChain | Mdp | StochasticMealyMachine | None:
     """
-    Run Alergia or IOAlergia on provided data.
+    Run Alergia or IOAlergia on provided data using the external JAlergia Java implementation.
 
-    Args:
-
-        path_to_data_file: either a data in a list of lists or a path to file containing data.
-        Form [[I,I,I],[I,I,I],...] if learning Markov Chains or
-        [[O,I,O,I,O...], [O,I,O_,...],..,] if learning MDPs (I represents input, O output), or
-        [[I,O,I,O...], [I,O_,...],..,] if learning SMMs.
-        Note that in whole data first symbol of each entry should be the same (Initial output of the MDP/MC).
-
-        eps: epsilon value
-
-        heap_memory: java heap memory flag, increase if heap is full
-
-        automaton_type: either 'mdp' if you wish to learn an MDP, 'mc' if you want to learn Markov Chain,
-         or 'smm' if you
-                        want to learn stochastic Mealy machine
-
-
-    Returns:
-
-        learnedModel
+    :param str | list path_to_data_file: Either a data in a list of lists or a path to file containing data. Form
+        [[I,I,I],[I,I,I],...] if learning Markov Chains or [[O,I,O,I,O...], [O,I,O_,...],..,] if learning MDPs
+        (I represents input, O output), or [[I,O,I,O...], [I,O_,...],..,] if learning SMMs. Note that in whole data
+        first symbol of each entry should be the same (Initial output of the MDP/MC).
+    :param str automaton_type: Either 'mdp' if you wish to learn an MDP, 'mc' if you want to learn Markov Chain, or
+        'smm' if you want to learn stochastic Mealy machine.
+    :param str path_to_jAlergia_jar: Path to the JAlergia jar file.
+    :param float eps: Epsilon value.
+    :param str heap_memory: Java heap memory flag, increase if heap is full.
+    :return MarkovChain | Mdp | StochasticMealyMachine | None: Learned model, or None if an error occurred.
     """
     assert automaton_type in {'mdp', 'smm', 'mc'}
 

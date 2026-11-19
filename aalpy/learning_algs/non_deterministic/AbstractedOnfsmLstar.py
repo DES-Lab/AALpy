@@ -1,5 +1,7 @@
+# L*-based active learning algorithm for abstracted observable non-deterministic finite state machines (ONFSMs).
 import time
 
+from aalpy.automata import Onfsm
 from aalpy.base import SUL, Oracle
 from aalpy.learning_algs.non_deterministic.AbstractedOnfsmObservationTable import AbstractedNonDetObservationTable
 from aalpy.learning_algs.non_deterministic.NonDeterministicSULWrapper import NonDeterministicSULWrapper
@@ -8,8 +10,9 @@ from aalpy.utils.HelperFunctions import print_learning_info, print_observation_t
 print_options = [0, 1, 2, 3]
 
 
-def run_abstracted_ONFSM_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, abstraction_mapping: dict, n_sampling=100,
-                               max_learning_rounds=None, return_data=False, print_level=2):
+def run_abstracted_ONFSM_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, abstraction_mapping: dict,
+                                n_sampling: int = 100, max_learning_rounds: int | None = None,
+                                return_data: bool = False, print_level: int = 2) -> Onfsm | tuple[Onfsm, dict]:
     """
     Based on ''Learning Abstracted Non-deterministic Finite State Machines'' from Pferscher and Aichernig.
     The algorithm learns an abstracted onfsm of a non-deterministic system. For the additional abstraction,
@@ -19,30 +22,21 @@ def run_abstracted_ONFSM_Lstar(alphabet: list, sul: SUL, eq_oracle: Oracle, abst
     Note that this is the inherent flaw of the all-weather assumption. (All outputs will be seen)
     AALpy v.2.0 will try to solve that problem with a novel approach.
 
-    Args:
-
-        alphabet: input alphabet
-
-        sul: system under learning
-
-        eq_oracle: equivalence oracle
-
-        abstraction_mapping: dictionary containing mappings from abstracted to concrete values (equivalence classes)
-
-        n_sampling: number of times that membership/input queries will be asked for each cell in the observation
-            (Default value = 100)
-
-        max_learning_rounds: if max_learning_rounds is reached, learning will stop (Default value = None)
-
-        return_data: if True, map containing all information like number of queries... will be returned
-            (Default value = False)
-
-        print_level: 0 - None, 1 - just results, 2 - current round and hypothesis size, 3 - educational/debug
-            (Default value = 2)
-
-    Returns:
-        learned abstracted ONFSM
-
+    :param list alphabet: Input alphabet.
+    :param SUL sul: System under learning.
+    :param Oracle eq_oracle: Equivalence oracle.
+    :param dict abstraction_mapping: Dictionary containing mappings from abstracted to concrete values
+        (equivalence classes).
+    :param int n_sampling: Number of times that membership/input queries will be asked for each cell in the
+        observation table (Default value = 100).
+    :param int | None max_learning_rounds: If max_learning_rounds is reached, learning will stop (Default value =
+        None).
+    :param bool return_data: If True, map containing all information like number of queries... will be returned
+        (Default value = False).
+    :param int print_level: 0 - None, 1 - just results, 2 - current round and hypothesis size, 3 -
+        educational/debug (Default value = 2).
+    :return Onfsm | tuple[Onfsm, dict]: Learned abstracted ONFSM, or a (learned abstracted ONFSM, learning info)
+        pair if return_data is True.
     """
     start_time = time.time()
     eq_query_time = 0

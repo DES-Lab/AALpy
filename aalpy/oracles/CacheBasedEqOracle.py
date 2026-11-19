@@ -1,5 +1,9 @@
+# Equivalence oracle that reuses the trace cache built during learning to guide test case selection.
+from typing import Any
+
 from aalpy.base import Oracle, SUL
 from aalpy.base.SUL import CacheSUL
+from aalpy.base.Automaton import Automaton
 
 from random import choice
 
@@ -11,21 +15,17 @@ class CacheBasedEqOracle(Oracle):
     of length (max_tree_depth + 'depth_increase') - len(prefix), where prefix is a path to the leaf.
     """
 
-    def __init__(self, alphabet: list, sul: SUL, num_walks=100, depth_increase=5, reset_after_cex=True):
+    def __init__(self, alphabet: list, sul: SUL, num_walks: int = 100, depth_increase: int = 5,
+                 reset_after_cex: bool = True) -> None:
         """
+        Constructs the oracle.
 
-        Args:
-
-            alphabet: input alphabet
-
-            sul: system under learning
-
-            num_walks: number of random walks to perform
-
-            depth_increase: length of random walk that exceeds the maximum depth of the tree
-
-            reset_after_cex: if False, total number of queries will equal num_walks, if True, in each execution of
-                find_cex method at most num_walks will be executed
+        :param list alphabet: Input alphabet.
+        :param SUL sul: System under learning. Must wrap or be a CacheSUL.
+        :param int num_walks: Number of random walks to perform.
+        :param int depth_increase: Length of random walk that exceeds the maximum depth of the tree.
+        :param bool reset_after_cex: If False, total number of queries will equal num_walks, if True, in each
+            execution of find_cex method at most num_walks will be executed.
         """
 
         super().__init__(alphabet, sul)
@@ -35,8 +35,13 @@ class CacheBasedEqOracle(Oracle):
         self.reset_after_cex = reset_after_cex
         self.num_walks_done = 0
 
-    def find_cex(self, hypothesis):
+    def find_cex(self, hypothesis: Automaton) -> list | None:
+        """
+        Performs random walks starting from cached prefixes until a counterexample is found.
 
+        :param Automaton hypothesis: Current hypothesis.
+        :return list | None: Counterexample inputs, None if no counterexample is found.
+        """
         assert isinstance(self.sul, CacheSUL)
         self.cache_tree = self.sul.cache
 
@@ -75,16 +80,14 @@ class CacheBasedEqOracle(Oracle):
 
         return None
 
-    def get_paths(self, t, paths=None, current_path=None):
+    def get_paths(self, t: Any, paths: list | None = None, current_path: list | None = None) -> list:
         """
+        Recursively collects the paths (sequences of inputs) from the root of a cache tree node to all its leaves.
 
-        Args:
-          t: 
-          paths:  (Default value = None)
-          current_path:  (Default value = None)
-
-        Returns:
-
+        :param Any t: Cache tree node to collect paths from.
+        :param list | None paths: Accumulator of completed paths, created if None.
+        :param list | None current_path: Path accumulated so far to reach node t, created if None.
+        :return list: List of paths (each a list of inputs) from t to its leaves.
         """
         if paths is None:
             paths = []

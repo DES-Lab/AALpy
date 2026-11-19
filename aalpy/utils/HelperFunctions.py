@@ -1,21 +1,21 @@
+# Miscellaneous helper functions used across learning algorithms, oracles and utilities.
 import random
 import string
 from itertools import product
 from collections import defaultdict
+from typing import Any, Callable, List
 
-from aalpy import Mdp, MarkovChain, McState, MooreMachine, Dfa, DfaState
+from aalpy import Mdp, MarkovChain, McState, MealyMachine, MooreMachine, Dfa, DfaState
 
 
 def extend_set(list_to_extend: list, new_elements: list) -> list:
     """
     Helper function to extend a list while maintaining set property.
     They are stored as lists, so with this function set property is maintained.
-    :return
 
-    Returns:
-
-        list of elements that were added to the set
-
+    :param list list_to_extend: List that is extended in place.
+    :param list new_elements: Elements to add if not already present.
+    :return list: List of elements that were added to the set.
     """
     set_repr = set(list_to_extend)
     added_elements = [s for s in new_elements if s not in set_repr]
@@ -23,43 +23,32 @@ def extend_set(list_to_extend: list, new_elements: list) -> list:
     return added_elements
 
 
-def all_prefixes(li):
+def all_prefixes(li: list) -> list[tuple]:
     """
     Returns all prefixes of a list.
 
-    Args:
-      li: list from which to compute all prefixes
-
-    Returns:
-      list of all prefixes
-
+    :param list li: List from which to compute all prefixes.
+    :return list[tuple]: List of all prefixes.
     """
     return [tuple(li[:i + 1]) for i in range(len(li))]
 
 
-def all_suffixes(li):
+def all_suffixes(li: list) -> list[tuple]:
     """
     Returns all suffixes of a list.
 
-    Args:
-      li: list from which to compute all suffixes
-
-    Returns:
-      list of all suffixes
-
+    :param list li: List from which to compute all suffixes.
+    :return list[tuple]: List of all suffixes.
     """
     return [tuple(li[len(li) - i - 1:]) for i in range(len(li))]
 
 
-def profile_function(function: callable, sort_key='cumtime'):
+def profile_function(function: callable, sort_key: str = 'cumtime') -> None:
     """
+    Profiles a callable and prints the profiling results.
 
-    Args:
-      function: callable: 
-      sort_key:  (Default value = 'cumtime')
-
-    Returns:
-        prints the profiling results
+    :param callable function: Callable to profile.
+    :param str sort_key: Key used to sort the profiling statistics (Default value = 'cumtime').
     """
     import cProfile
     pr = cProfile.Profile()
@@ -69,25 +58,23 @@ def profile_function(function: callable, sort_key='cumtime'):
     pr.print_stats(sort=sort_key)
 
 
-def random_string_generator(size=10, chars=string.ascii_lowercase + string.digits):
+def random_string_generator(size: int = 10, chars: str = string.ascii_lowercase + string.digits) -> str:
     """
+    Generates a random string.
 
-    Args:
-
-      size:  (Default value = 10)
-      chars:  (Default value = string.ascii_lowercase + string.digits)
-
-    Returns:
-
-        a random string of length size
+    :param int size: Length of the generated string (Default value = 10).
+    :param str chars: Pool of characters to choose from (Default value = string.ascii_lowercase + string.digits).
+    :return str: A random string of length size.
     """
     import random
     return ''.join(random.choice(chars) for _ in range(size))
 
 
-def print_learning_info(info: dict):
+def print_learning_info(info: dict[str, Any]) -> None:
     """
     Print learning statistics.
+
+    :param dict[str, Any] info: Dictionary of learning statistics as produced by a learning algorithm's info dict.
     """
     print('-----------------------------------')
     print('Learning Finished.')
@@ -112,15 +99,12 @@ def print_learning_info(info: dict):
     print('-----------------------------------')
 
 
-def print_observation_table(ot, table_type):
+def print_observation_table(ot: Any, table_type: str) -> None:
     """
     Prints the whole observation table.
 
-    Args:
-
-        ot: observation table
-        table_type: 'det', 'non-det', or 'stoc'
-
+    :param Any ot: Observation table.
+    :param str table_type: 'det', 'non-det', 'abstracted-non-det', or 'stoc'.
     """
     if table_type == 'det':
         s_set, extended_s, e_set, table = ot.S, ot.s_dot_a(), ot.E, ot.T
@@ -171,41 +155,41 @@ def print_observation_table(ot, table_type):
     print('-' * row_len)
 
 
-def is_suffix_of(suffix, trace) -> bool:
+def is_suffix_of(suffix: tuple, trace: tuple) -> bool:
     """
+    Checks whether a sequence is a suffix of another sequence.
 
-    Args:
-      suffix: target suffix
-      trace: trace in question
-
-    Returns:
-
-        True if suffix is the suffix of trace.
+    :param tuple suffix: Target suffix.
+    :param tuple trace: Trace in question.
+    :return bool: True if suffix is the suffix of trace.
     """
+    if len(suffix) == 0:
+        return True
     if len(trace) < len(suffix):
         return False
     else:
         return trace[-len(suffix):] == suffix
 
 
-def get_cex_prefixes(cex, automaton_type):
+def get_cex_prefixes(cex: tuple, automaton_type: str) -> list[tuple]:
     """
     Returns all prefixes of the stochastic automaton.
 
-    Args:
-        cex: counterexample
-        automaton_type: `mdp` or `smm`
-
-    Returns:
-
-        all prefixes of the counterexample based on the `automaton_type`
+    :param tuple cex: Counterexample.
+    :param str automaton_type: `mdp` or `smm`.
+    :return list[tuple]: All prefixes of the counterexample based on the `automaton_type`.
     """
     if automaton_type == 'mdp':
         return [tuple(cex[:i + 1]) for i in range(0, len(cex), 2)]
     return [tuple(cex[:i]) for i in range(0, len(cex) + 1, 2)]
 
 
-def get_available_oracles_and_err_msg():
+def get_available_oracles_and_err_msg() -> tuple[set, str]:
+    """
+    Looks up the equivalence oracles that are supported for non-deterministic and stochastic learning.
+
+    :return tuple[set, str]: Set of available oracle classes and a warning message describing the restriction.
+    """
     from aalpy.oracles import RandomWalkEqOracle
     from aalpy.oracles import RandomWordEqOracle
     available_oracles = {RandomWalkEqOracle, RandomWordEqOracle}
@@ -217,7 +201,7 @@ def get_available_oracles_and_err_msg():
     return available_oracles, available_oracles_msg
 
 
-def make_input_complete(automaton, missing_transition_go_to='self_loop'):
+def make_input_complete(automaton: Any, missing_transition_go_to: str = 'self_loop') -> Any:
     """
     Makes the automaton input complete/enabled. If a input is not defined in a state, it will lead to the self loop.
     In case of Mealy Machines, Stochastic Mealy machines and ONFSM 'epsilon' is used as output.
@@ -226,14 +210,9 @@ def make_input_complete(automaton, missing_transition_go_to='self_loop'):
     (Mealy machines and their derivatives), 'epsilon' is used as an output value. If a state has an output value,
     it is either False (in case of DFA) or 'sink_state' in case of Moore machines and its derivatives.
 
-    Args:
-
-        automaton: automaton that is potentially not input complete
-        missing_transition_go_to: either 'self_loop' or 'sink_state'.
-
-    Returns:
-
-        an input complete automaton
+    :param Any automaton: Automaton that is potentially not input complete.
+    :param str missing_transition_go_to: Either 'self_loop' or 'sink_state'.
+    :return Any: An input complete automaton.
     """
     from aalpy.base import DeterministicAutomaton
     from aalpy.automata import Dfa, MooreState, MealyMachine, Mdp, StochasticMealyMachine, Onfsm, \
@@ -279,11 +258,34 @@ def make_input_complete(automaton, missing_transition_go_to='self_loop'):
     return automaton
 
 
-def convert_i_o_traces_for_RPNI(sequences, automaton_type="mealy"):
+def ensure_input_complete(learned_model: Any, input_completeness: str | None, print_info: bool) -> None:
+    """
+    Warns about (or fixes) input incompleteness of a learned model, as commonly needed after passive learning.
+
+    :param Any learned_model: Automaton to check.
+    :param str | None input_completeness: None to only warn, else 'self_loop' or 'sink_state' to fix it.
+    :param bool print_info: Whether to print progress/warning information.
+    """
+    if not learned_model.is_input_complete():
+        if not input_completeness:
+            if print_info:
+                print('Warning: Learned Model is not input complete (inputs not defined for all states). '
+                      'Consider calling .make_input_complete()')
+        else:
+            if print_info:
+                print(f'Learned model was not input complete. Adapting it with {input_completeness} transitions.')
+            learned_model.make_input_complete(input_completeness)
+
+
+def convert_i_o_traces_for_RPNI(sequences: list, automaton_type: str = "mealy") -> list[tuple]:
     """
     Converts a list of input-output sequences to RPNI format.
     Eg. [[(1,'a'), (2,'b'), (3,'c')], [(6,'7'), (4,'e'), (3,'c')]] to
     [((1,), 'a'), ((1, 2), 'b'), ((1, 2, 3), 'c'), ((6,), '7'), ((6, 4), 'e'), ((6, 4, 3), 'c')]
+
+    :param list sequences: List of input-output traces.
+    :param str automaton_type: Either "mealy", "moore" or "dfa".
+    :return list[tuple]: List of (input_sequence, output) pairs in RPNI format.
     """
     rpni_sequences = []
     seen = set()
@@ -309,7 +311,12 @@ def convert_i_o_traces_for_RPNI(sequences, automaton_type="mealy"):
     return rpni_sequences
 
 
-def visualize_classification_tree(root_node):
+def visualize_classification_tree(root_node: Any) -> None:
+    """
+    Visualizes a classification tree and writes it to a PDF file.
+
+    :param Any root_node: Root node of the classification tree.
+    """
     from pydot import Dot, Node, Edge
 
     graph = Dot('classification_tree', graph_type='digraph')
@@ -336,7 +343,14 @@ def visualize_classification_tree(root_node):
     graph.write(path='classification_tree.pdf', format='pdf')
 
 
-def is_balanced(input_seq, vpa_alphabet):
+def is_balanced(input_seq: list, vpa_alphabet: Any) -> bool:
+    """
+    Checks whether an input sequence is balanced with respect to a VPA alphabet's call/return symbols.
+
+    :param list input_seq: Input sequence to check.
+    :param Any vpa_alphabet: VPA alphabet, exposing call_alphabet and return_alphabet.
+    :return bool: True if the sequence is balanced, False otherwise.
+    """
     counter = 0
     for i in input_seq:
         if i in vpa_alphabet.call_alphabet:
@@ -348,8 +362,18 @@ def is_balanced(input_seq, vpa_alphabet):
     return counter == 0
 
 
-def generate_input_output_data_from_automata(model, num_sequences=4000, min_seq_len=1, max_seq_len=16,
-                                             sequance_type='io_traces'):
+def generate_input_output_data_from_automata(model: Any, num_sequences: int = 4000, min_seq_len: int = 1,
+                                             max_seq_len: int = 16, sequance_type: str = 'io_traces') -> list:
+    """
+    Generates random input-output data by executing random input sequences on an automaton.
+
+    :param Any model: Automaton from which the data is generated.
+    :param int num_sequences: Number of sequences to generate.
+    :param int min_seq_len: Minimum sequence length.
+    :param int max_seq_len: Maximum sequence length.
+    :param str sequance_type: Either 'io_traces' or 'labeled_sequences'.
+    :return list: The generated dataset.
+    """
     assert sequance_type in {'io_traces', 'labeled_sequences'}
 
     alphabet = model.get_input_alphabet()
@@ -371,7 +395,18 @@ def generate_input_output_data_from_automata(model, num_sequences=4000, min_seq_
     return dataset
 
 
-def generate_input_output_data_from_vpa(vpa, num_sequences=1000, max_seq_len=16, max_attempts=None):
+def generate_input_output_data_from_vpa(vpa: Any, num_sequences: int = 1000, max_seq_len: int = 16,
+                                        max_attempts: int | None = None) -> list[tuple]:
+    """
+    Generates random input-output data by executing random (mostly balanced) input sequences on a VPA.
+
+    :param Any vpa: Visibly pushdown automaton from which the data is generated.
+    :param int num_sequences: Number of sequences to generate.
+    :param int max_seq_len: Maximum sequence length.
+    :param int | None max_attempts: Maximum number of generation attempts before giving up (Default value = None,
+        meaning num_sequences * 50).
+    :return list[tuple]: List of (input_sequence, output) pairs.
+    """
     alphabet = vpa.input_alphabet.get_merged_alphabet()
     data_set, in_set = [], set()
 
@@ -411,15 +446,275 @@ def generate_input_output_data_from_vpa(vpa, num_sequences=1000, max_seq_len=16,
     return data_set
 
 
-def product_with_possible_empty_iterable(*iterables, repeat=1):
+def generate_well_matched_data_from_vpa(vpa: Any, num_sequences: int = 1000, max_seq_len: int = 16,
+                                        positive_ratio: float = 0.5, max_attempts: int | None = None) -> list[tuple]:
+    """
+    Generates a labeled data set of distinct well-matched sequences of a VPA, with a given share of positive ones,
+    in the format expected by run_PAPNI.
+
+    Positive sequences are found by random walks along the transitions of the VPA. Negative sequences are near
+    misses of positive ones, in which a symbol is replaced by another of the same kind, and random well-matched
+    sequences.
+
+    :param Any vpa: Visibly pushdown automaton from which the data is generated. A 1-SEVPA can be converted with
+        vpa_from_sevpa.
+    :param int num_sequences: Number of sequences to generate.
+    :param int max_seq_len: Maximum sequence length.
+    :param float positive_ratio: Share of positive sequences in the data set (Default value = 0.5).
+    :param int | None max_attempts: Maximum number of generation attempts before giving up (Default value = None,
+        meaning num_sequences * 50). Fewer sequences are returned if the VPA does not have enough distinct
+        positive or negative sequences within max_seq_len.
+    :return list[tuple]: List of (input_sequence, label) pairs.
+    """
+    alphabet = vpa.input_alphabet
+    internal, calls, returns = (list(alphabet.internal_alphabet), list(alphabet.call_alphabet),
+                                list(alphabet.return_alphabet))
+    max_attempts = max_attempts if max_attempts is not None else num_sequences * 50
+
+    num_positive = round(num_sequences * positive_ratio)
+    positive, negative, seen = [], [], set()
+
+    def add(seq, label=None):
+        if seq in seen:
+            return
+        label = vpa.accepts(seq) if label is None else label
+        target, limit = (positive, num_positive) if label else (negative, num_sequences - num_positive)
+        if len(target) < limit:
+            target.append(seq)
+            seen.add(seq)
+
+    def random_positive_walk():
+        # a walk along the defined transitions, where a call is only taken if its return still fits into the
+        # remaining length, recording every prefix that is accepted with an empty stack
+        length, seq, accepted = random.randint(0, max_seq_len), (), []
+        vpa.reset_to_initial()
+        for remaining in range(length, 0, -1):
+            if vpa.current_state.is_accepting and not vpa.stack:
+                accepted.append(seq)
+            depth = len(vpa.stack)
+            enabled = [t for transitions in vpa.current_state.transitions.values() for t in transitions
+                       if (t.action is None and depth < remaining)
+                       or (t.action == 'push' and depth + 1 < remaining)
+                       or (t.action == 'pop' and depth and t.stack_guard == vpa.top())]
+            if not enabled:
+                break
+            transition = random.choice(enabled)
+            vpa.step(transition.letter)
+            seq += (transition.letter,)
+        if vpa.current_state.is_accepting and not vpa.stack:
+            accepted.append(seq)
+        return random.choice(accepted) if accepted else None
+
+    def random_well_matched_sequence():
+        length, seq, depth = random.randint(0, max_seq_len), [], 0
+        for remaining in range(length, 0, -1):
+            choices = []
+            if depth:
+                choices.extend(returns)
+            if depth < remaining:
+                choices.extend(internal)
+            if depth + 1 < remaining:
+                choices.extend(calls)
+            if not choices:
+                return None
+            symbol = random.choice(choices)
+            depth += 1 if symbol in calls else -1 if symbol in returns else 0
+            seq.append(symbol)
+        return tuple(seq) if depth == 0 else None
+
+    def near_miss(seq):
+        if not seq:
+            return None
+        index = random.randrange(len(seq))
+        kind = internal if seq[index] in internal else calls if seq[index] in calls else returns
+        replacement = random.choice(kind)
+        return seq[:index] + (replacement,) + seq[index + 1:]
+
+    for _ in range(max_attempts):
+        if len(positive) + len(negative) >= num_sequences:
+            break
+        seq = random_positive_walk()
+        if seq is not None:
+            add(seq, label=True)
+            if positive:
+                mutated = near_miss(random.choice(positive))
+                if mutated is not None:
+                    add(mutated)
+        seq = random_well_matched_sequence()
+        if seq is not None:
+            add(seq)
+
+    return [(seq, True) for seq in positive] + [(seq, False) for seq in negative]
+
+
+def product_with_possible_empty_iterable(*iterables: Any, repeat: int = 1) -> product:
     """
     Words like regular product, but if one of the iterables is empty it will just ignore it, instead of returning [].
+
+    :param Any iterables: Iterables to compute the product of.
+    :param int repeat: Number of times to repeat the product computation.
+    :return product: Cartesian product of the non-empty iterables.
     """
     non_empty_iterables = [it for it in iterables if it]
     return product(*non_empty_iterables, repeat=repeat)
 
 
+def IUO_dfa_from_IXO_dfa(ixo_dfa: Dfa,
+                         tag_input: Callable[[Any],Any],
+                         tag_output: Callable[[Any],Any],
+                         sink_state_ids: List[str] | None = None,
+                         make_input_complete = True,
+                         make_new_states_accepting = False) -> Dfa:
+    """
+    Produce for a given Dfa with transition labels formed by the Cartesian product of input
+    alphabet I and output alphabet O a Dfa in which every transition has a letter from either
+    I or O by "splitting" the transitions into two. The produced Dfa represents a transition
+    q1 -(i,o) -> q2 from the original Dfa as q1 -i-> Oo_Dq2 -o-> q2. The original Dfa remains
+    unchanged. The inputs and outputs of the produced Dfa are tagged so that they can still be
+    recognized as either inputs or outputs in case there is overlap between I and O. All states
+    in the produced Dfa are accepting if and only if their corresponding states in the original
+    Dfa are accepting. The states that have no counterpart in the original Dfa are made either
+    accepting or unaccepting depending on the value of the make_new_states_accepting argument.
+
+    :param Dfa ixo_dfa: Dfa with transition labels formed by the Cartesian product of I and O.
+    :param Callable[[Any],Any] tag_input: Function that tags inputs.
+    :param Callable[[Any],Any] tag_output: Function that tags outputs.
+    :param List[str] | None sink_state_ids: Optional list of states from ixo_dfa that should be
+        treated as sink states with self-loops for all letters from both I and O.
+    :param bool make_input_complete: If the constructed Dfa isn't naturally input-complete, then
+        make it input-complete by adding a new state and adding for each state transitions to
+        this new state for each letter from I and O for which a transition is missing. The new
+        state is then a sink state with self-loops for all letters from I and O.
+    :param bool make_new_states_accepting: Whether the states in the produced Dfa that have no
+        counterparts in the original Dfa should be accepting.
+    :return Dfa: Dfa in which each transition is labelled by either an input from I or an output
+        from O.
+    """
+    # define states directly derived from those of the ixo_dfa
+    iuo_state_map: dict = {
+        ixo_state.state_id: DfaState(ixo_state.state_id, ixo_state.is_accepting)
+        for ixo_state in ixo_dfa.states
+    }
+
+    inputs = list(frozenset( i for (i, o) in ixo_dfa.get_input_alphabet() )) # Each input can occur in multiple pairs
+    outputs = list(frozenset( o for (i, o) in ixo_dfa.get_input_alphabet() )) # Each output can occur in multiple pairs
+
+    def make_state_id_unique(state_id: str) -> str:
+
+        existing_state_ids = set(iuo_state_map.keys())
+
+        unique_state_id = state_id # Don't change the given state_id
+        while unique_state_id in existing_state_ids:
+            unique_state_id += '_'
+
+        return unique_state_id
+
+    # define transitions and auxiliary states
+    defined_os_and_dsts_to_state_id_map = dict()
+    for ixo_state in ixo_dfa.states:
+
+        if sink_state_ids is not None and ixo_state.state_id in sink_state_ids:
+            sink_state = iuo_state_map[ixo_state.state_id]
+            for i in inputs:
+                sink_state.transitions[tag_input(i)] = sink_state
+            for o in outputs:
+                sink_state.transitions[tag_output(o)] = sink_state
+            continue
+
+        for i in inputs:
+            # identify all of the defined outputs and subsequent destination states and use these to
+            # create a state ID that describes precisely that transition behavior
+            defined_os_and_dsts = []
+            candidate_os_dst_state_id = ""
+            for o in outputs:
+                if (i, o) not in ixo_state.transitions:
+                    continue
+
+                o_dst_state_id = ixo_state.transitions[(i, o)].state_id
+
+                if (o, o_dst_state_id) not in defined_os_and_dsts:
+                    defined_os_and_dsts.append( (o, o_dst_state_id) )
+
+                    if candidate_os_dst_state_id != "":
+                        candidate_os_dst_state_id += '_'
+                    candidate_os_dst_state_id += f'O{o}D{o_dst_state_id}'
+            # ixo_state has no transitions for i if defined_os_and_dsts remains empty
+            if len(defined_os_and_dsts) == 0:
+                continue
+
+            # obtain the state for defined_os_and_dsts if it has already been created
+            defined_os_and_dsts = frozenset(defined_os_and_dsts)
+            if defined_os_and_dsts in defined_os_and_dsts_to_state_id_map:
+                os_dst_state_id = defined_os_and_dsts_to_state_id_map[defined_os_and_dsts]
+                os_dst_state = iuo_state_map[os_dst_state_id]
+            else:
+                # create a new state for defined_os_and_dsts if this has yet to be created
+                os_dst_state_id = make_state_id_unique(candidate_os_dst_state_id)
+                defined_os_and_dsts_to_state_id_map[defined_os_and_dsts] = os_dst_state_id
+
+                os_dst_state = DfaState(os_dst_state_id, make_new_states_accepting)
+                iuo_state_map[os_dst_state_id] = os_dst_state
+
+                # add the state's transitions
+                for o, dst_id in defined_os_and_dsts:
+                    tagged_o = tag_output(o)
+                    os_dst_state.transitions[tagged_o] = iuo_state_map[dst_id]
+
+            # add a transition from the source state to os_dst_state if this has yet to be done
+            tagged_i = tag_input(i)
+            if tagged_i not in iuo_state_map[ixo_state.state_id].transitions:
+                iuo_state_map[ixo_state.state_id].transitions[tagged_i] = os_dst_state
+
+    # create the Dfa
+    initial_state = iuo_state_map[ixo_dfa.initial_state.state_id]
+    dfa = Dfa(initial_state, list(iuo_state_map.values()))
+
+    # make the Dfa input complete, if required and requested
+    if make_input_complete and not dfa.is_input_complete():
+        sink_state_id = make_state_id_unique('sink_state')
+        sink_state = DfaState(sink_state_id, is_accepting=make_new_states_accepting)
+        dfa.states.append(sink_state)
+
+        iuo_alphabet = dfa.get_input_alphabet()
+        for state in dfa.states:
+            for a in iuo_alphabet:
+                if a not in state.transitions:
+                    state.transitions[a] = sink_state
+
+    return dfa
+
+def IXO_dfa_from_mealy(mealy_model: MealyMachine) -> Dfa:
+    """
+    Produce for a given Mealy machine with inputs from alphabet I and outputs from alphabet O a Dfa
+    with transitions labelled by pairs of inputs and outputs from their corresponding transitions in
+    the Mealy machine. The produced Dfa represent a transition q1 -i/o-> q2 from the Mealy machine
+    as q1 -(i,o)-> q2. All states of the produced Dfa are accepting.
+
+    :param MealyMachine mealy_model: Mealy machine to convert.
+    :return Dfa: The equivalent Dfa.
+    """
+    # define states
+    dfa_state_map: dict = {
+        mealy_state.state_id: DfaState(mealy_state.state_id, True)
+        for mealy_state in mealy_model.states
+    }
+
+    # define transitions
+    for mealy_state in mealy_model.states:
+        for i, reached_state in mealy_state.transitions.items():
+            o = mealy_state.output_fun[i]
+            dfa_state_map[mealy_state.state_id].transitions[(i, o)] = dfa_state_map[reached_state.state_id]
+
+    initial_state = dfa_state_map[mealy_model.initial_state.state_id]
+    return Dfa(initial_state, list(dfa_state_map.values()))
+
 def dfa_from_moore(moore_model: MooreMachine) -> Dfa:
+    """
+    Converts a Moore machine with a Boolean (or None) output domain to a DFA.
+
+    :param MooreMachine moore_model: Moore machine to convert.
+    :return Dfa: The equivalent DFA.
+    """
     dfa_state_map = dict()
     # define states
     for moore_state in moore_model.states:
@@ -439,7 +734,15 @@ def dfa_from_moore(moore_model: MooreMachine) -> Dfa:
     initial_state = dfa_state_map[moore_model.initial_state.state_id]
     return Dfa(initial_state, list(dfa_state_map.values()))
 
-def mc_from_mdp(mdp: Mdp, input_symbol=None) -> MarkovChain:
+def mc_from_mdp(mdp: Mdp, input_symbol: Any = None) -> MarkovChain:
+    """
+    Converts an MDP with a single (or explicitly chosen) input symbol to a Markov chain.
+
+    :param Mdp mdp: MDP to convert.
+    :param Any input_symbol: Input symbol to use for the conversion (Default value = None, meaning the MDP's only
+        input symbol is used).
+    :return MarkovChain: The equivalent Markov chain.
+    """
     alphabet = mdp.get_input_alphabet()
     if len(alphabet) != 1 and input_symbol is None:
         raise ValueError('Cannot convert MDP with several inputs to Markov chain.')
@@ -456,8 +759,14 @@ def mc_from_mdp(mdp: Mdp, input_symbol=None) -> MarkovChain:
     initial_state = state_map[mdp.initial_state.state_id]
     return MarkovChain(initial_state, list(state_map.values()))
 
-def mc_format_to_mdp(data):
-    # a hack to learn MC's with GSM -> treat them as MDP with a single input
+def mc_format_to_mdp(data: list) -> list:
+    """
+    Converts Markov chain formatted data to MDP format by treating it as an MDP with a single input.
+    a hack to learn MC's with GSM -> treat them as MDP with a single input
+
+    :param list data: List of Markov chain sequences.
+    :return list: List of sequences reformatted as MDP input-output sequences.
+    """
     augmented_data = []
     for sequence in data:
         new_sequence = [sequence[0]]

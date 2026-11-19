@@ -1,51 +1,41 @@
+# L# active learning algorithm based on apartness and an observation tree.
 import time
 
-from aalpy.base import Oracle, SUL
+from aalpy.base import Automaton, Oracle, SUL
 from aalpy.utils.HelperFunctions import print_learning_info
 from .ObservationTree import ObservationTree
 from ...base.SUL import CacheSUL
 
 
-def run_Lsharp(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type,
-               extension_rule='SepSeq', separation_rule="ADS", samples=None,
-               max_learning_rounds=None, cache_and_non_det_check=True, return_data=False, print_level=2):
+def run_Lsharp(alphabet: list, sul: SUL, eq_oracle: Oracle, automaton_type: str,
+               extension_rule: str | None = 'SepSeq', separation_rule: str = "ADS", samples: list | None = None,
+               max_learning_rounds: int | None = None, cache_and_non_det_check: bool = True,
+               return_data: bool = False, print_level: int = 2) -> Automaton | tuple[Automaton, dict]:
     """
-    Based on ''A New Approach for Active Automata Learning Based on Apartness'' from Vaandrager, Garhewal, Rot and Wissmann. 
+    Based on ''A New Approach for Active Automata Learning Based on Apartness'' from Vaandrager, Garhewal, Rot and Wissmann.
     and ''L# for DFAs'' from Vaandrager, Sanders.
 
-    The algorithm learns a DFA/Moore machine/Mealy machine using apartness and an observation tree. 
+    The algorithm learns a DFA/Moore machine/Mealy machine using apartness and an observation tree.
 
-    Args:
-
-        alphabet: input alphabet
-
-        sul: system under learning
-
-        eq_oracle: equivalence oracle
-
-        automaton_type: type of automaton to be learned. Either 'dfa', 'mealy' or 'moore'
-
-        extension_rule: strategy used during the extension rule. Options: None, "SepSeq" (default) and "ADS".
-
-        separation_rule: strategy used during the extension rule. Options: "SepSeq" (default) and "ADS".
-
-        samples: input output traces provided to the learning algorithm. They are added to cache and could reduce
-        total interaction with the system. Syntax: list of [(input_sequence, output_sequence)] or None
-
-        max_learning_rounds: number of learning rounds after which learning will terminate (Default value = None)
-
-        cache_and_non_det_check: Use caching and non-determinism checks (Default value = True)
-
-        return_data: if True, a map containing all information(runtime/#queries/#steps) will be returned
-            (Default value = False)
-
-        print_level: 0 - None, 1 - just results, 2 - current round and hypothesis size, 3 - educational/debug
-            (Default value = 2)
-
-    Returns:
-
-        automaton of type automaton_type (dict containing all information about learning if 'return_data' is True)
-
+    :param list alphabet: Input alphabet.
+    :param SUL sul: System under learning.
+    :param Oracle eq_oracle: Equivalence oracle.
+    :param str automaton_type: Type of automaton to be learned. Either 'dfa', 'mealy' or 'moore'.
+    :param str | None extension_rule: Strategy used during the extension rule. Options: None, "SepSeq"
+        (default) and "ADS".
+    :param str separation_rule: Strategy used during the extension rule. Options: "SepSeq" (default) and "ADS".
+    :param list | None samples: Input output traces provided to the learning algorithm. They are added to cache
+        and could reduce total interaction with the system. Syntax: list of [(input_sequence, output_sequence)]
+        or None.
+    :param int | None max_learning_rounds: Number of learning rounds after which learning will terminate
+        (Default value = None).
+    :param bool cache_and_non_det_check: Use caching and non-determinism checks (Default value = True).
+    :param bool return_data: If True, a map containing all information (runtime/#queries/#steps) will be returned
+        (Default value = False).
+    :param int print_level: 0 - None, 1 - just results, 2 - current round and hypothesis size, 3 -
+        educational/debug (Default value = 2).
+    :return Automaton | tuple[Automaton, dict]: Automaton of type automaton_type (or a tuple of the automaton and
+        a dict containing all information about learning if 'return_data' is True).
     """
     assert extension_rule in {None, "SepSeq", "ADS"}
     assert separation_rule in {"SepSeq", "ADS"}

@@ -1,19 +1,19 @@
+# Abstract base class for all equivalence oracles.
 from abc import ABC, abstractmethod
 
 from aalpy.base import SUL
+from aalpy.base.Automaton import Automaton, InputType
 
 
 class Oracle(ABC):
     """Abstract class implemented by all equivalence oracles."""
 
-    def __init__(self, alphabet: list, sul: SUL):
+    def __init__(self, alphabet: list, sul: SUL) -> None:
         """
         Default constructor for all equivalence oracles.
 
-        Args:
-
-            alphabet: input alphabet
-            sul: system under learning
+        :param list alphabet: Input alphabet.
+        :param SUL sul: System under learning.
         """
 
         self.alphabet = alphabet
@@ -22,29 +22,21 @@ class Oracle(ABC):
         self.num_steps = 0
 
     @abstractmethod
-    def find_cex(self, hypothesis):
+    def find_cex(self, hypothesis: Automaton) -> tuple[InputType, ...] | None:
         """
         Return a counterexample (inputs) that displays different behavior on system under learning and
         current hypothesis.
 
-        Args:
-
-          hypothesis: current hypothesis
-
-        Returns:
-
-            tuple or list containing counterexample inputs, None if no counterexample is found
+        :param Automaton hypothesis: Current hypothesis.
+        :return tuple[InputType, ...] | None: Counterexample inputs, None if no counterexample is found.
         """
         pass
 
-    def reset_hyp_and_sul(self, hypothesis):
+    def reset_hyp_and_sul(self, hypothesis: Automaton) -> None:
         """
         Reset SUL and hypothesis to initial state.
 
-        Args:
-
-            hypothesis: current hypothesis
-
+        :param Automaton hypothesis: Current hypothesis.
         """
         hypothesis.reset_to_initial()
         self.sul.pre()

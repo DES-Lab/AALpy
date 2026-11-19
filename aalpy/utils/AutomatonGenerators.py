@@ -1,36 +1,34 @@
+# Random generators for deterministic, stochastic, non-deterministic and visibly pushdown automata.
 import random
 import warnings
+from typing import Any
 
 from aalpy.automata import Dfa, DfaState, MdpState, Mdp, MealyMachine, MealyState, \
     MooreMachine, MooreState, OnfsmState, Onfsm, MarkovChain, McState, StochasticMealyState, StochasticMealyMachine, \
     Sevpa, SevpaState, SevpaAlphabet, SevpaTransition
 
 
-def generate_random_deterministic_automata(automaton_type,
-                                           num_states,
-                                           input_alphabet_size,
-                                           output_alphabet_size=None,
-                                           ensure_minimality=True,
-                                           **kwargs
-                                           ):
+def generate_random_deterministic_automata(automaton_type: str,
+                                           num_states: int,
+                                           input_alphabet_size: int,
+                                           output_alphabet_size: int | None = None,
+                                           ensure_minimality: bool = True,
+                                           **kwargs: Any
+                                           ) -> Dfa | MealyMachine | MooreMachine:
     """
     Generates a random deterministic automata of 'automaton_type'.
 
-    Args:
-        automaton_type: type of automaton, either 'dfa', 'mealy', or 'moore'
-        num_states: number of states
-        input_alphabet_size: size of input alphabet
-        output_alphabet_size: size of output alphabet. (ignored for DFAs)
-        ensure_minimality: ensure that the automaton is minimal
-        **kwargs:
-            : 'num_accepting_states' number of accepting states for DFA generation. If not defined, half of states will
-            be accepting
-
-    Returns:
-
-        Random deterministic automaton of user defined type, size. If ensure_minimality is set to False returned
-        automaton is not necessarily minimal. If minimality is reacquired and random automaton cannot be produced in
-        multiple interactions, non-minimal automaton will be returned and a warning message printed.
+    :param str automaton_type: type of automaton, either 'dfa', 'mealy', or 'moore'
+    :param int num_states: number of states
+    :param int input_alphabet_size: size of input alphabet
+    :param int | None output_alphabet_size: size of output alphabet (ignored for DFAs)
+    :param bool ensure_minimality: ensure that the automaton is minimal
+    :param Any kwargs: 'num_accepting_states' number of accepting states for DFA generation (if not defined, half
+        of states will be accepting), 'custom_input_alphabet', 'custom_output_alphabet'
+    :return Dfa | MealyMachine | MooreMachine: Random deterministic automaton of user defined type, size. If
+        ensure_minimality is set to False returned automaton is not necessarily minimal. If minimality is reacquired
+        and random automaton cannot be produced in multiple interactions, non-minimal automaton will be returned and
+        a warning message printed.
     """
 
     assert automaton_type in {'dfa', 'mealy', 'moore'}
@@ -143,22 +141,17 @@ def generate_random_deterministic_automata(automaton_type,
     return random_automaton
 
 
-def generate_random_mealy_machine(num_states, input_alphabet, output_alphabet,
-                                  compute_prefixes=False, ensure_minimality=True) -> MealyMachine:
+def generate_random_mealy_machine(num_states: int, input_alphabet: list, output_alphabet: list,
+                                  compute_prefixes: bool = False, ensure_minimality: bool = True) -> MealyMachine:
     """
     Generates a random Mealy machine. Kept for backwards compatibility.
 
-    Args:
-
-        num_states: number of states
-        input_alphabet: input alphabet
-        output_alphabet: output alphabet
-        compute_prefixes: if true, shortest path to reach each state will be computed (Default value = False)
-        ensure_minimality: returned automaton will be minimal
-
-    Returns:
-
-        Mealy machine with num_states states
+    :param int num_states: number of states
+    :param list input_alphabet: input alphabet
+    :param list output_alphabet: output alphabet
+    :param bool compute_prefixes: if true, shortest path to reach each state will be computed
+    :param bool ensure_minimality: returned automaton will be minimal
+    :return MealyMachine: Mealy machine with num_states states
     """
 
     random_mealy_machine = generate_random_deterministic_automata('mealy', num_states,
@@ -172,23 +165,17 @@ def generate_random_mealy_machine(num_states, input_alphabet, output_alphabet,
     return random_mealy_machine
 
 
-def generate_random_moore_machine(num_states, input_alphabet, output_alphabet,
-                                  compute_prefixes=False, ensure_minimality=True) -> MooreMachine:
+def generate_random_moore_machine(num_states: int, input_alphabet: list, output_alphabet: list,
+                                  compute_prefixes: bool = False, ensure_minimality: bool = True) -> MooreMachine:
     """
     Generates a random Moore machine.
 
-    Args:
-
-        num_states: number of states
-        input_alphabet: input alphabet
-        output_alphabet: output alphabet
-        compute_prefixes: if true, shortest path to reach each state will be computed (Default value = False)
-        ensure_minimality: returned automaton will be minimal
-
-    Returns:
-
-        Random Moore machine with num_states states
-
+    :param int num_states: number of states
+    :param list input_alphabet: input alphabet
+    :param list output_alphabet: output alphabet
+    :param bool compute_prefixes: if true, shortest path to reach each state will be computed
+    :param bool ensure_minimality: returned automaton will be minimal
+    :return MooreMachine: Random Moore machine with num_states states
     """
     random_moore_machine = generate_random_deterministic_automata('moore', num_states,
                                                                   input_alphabet_size=len(input_alphabet),
@@ -201,23 +188,17 @@ def generate_random_moore_machine(num_states, input_alphabet, output_alphabet,
     return random_moore_machine
 
 
-def generate_random_dfa(num_states, alphabet, num_accepting_states=1,
-                        compute_prefixes=False, ensure_minimality=True) -> Dfa:
+def generate_random_dfa(num_states: int, alphabet: list, num_accepting_states: int = 1,
+                        compute_prefixes: bool = False, ensure_minimality: bool = True) -> Dfa:
     """
     Generates a random DFA.
 
-    Args:
-
-        num_states: number of states
-        alphabet: input alphabet
-        num_accepting_states: number of accepting states (Default value = 1)
-        compute_prefixes: if true, shortest path to reach each state will be computed (Default value = False)
-        ensure_minimality: returned automaton will be minimal
-
-    Returns:
-
-        Randomly generated DFA
-
+    :param int num_states: number of states
+    :param list alphabet: input alphabet
+    :param int num_accepting_states: number of accepting states
+    :param bool compute_prefixes: if true, shortest path to reach each state will be computed
+    :param bool ensure_minimality: returned automaton will be minimal
+    :return Dfa: Randomly generated DFA
     """
     if num_states <= num_accepting_states:
         num_accepting_states = num_states // 2
@@ -233,21 +214,16 @@ def generate_random_dfa(num_states, alphabet, num_accepting_states=1,
     return random_dfa
 
 
-def generate_random_mdp(num_states, input_size, output_size, possible_probabilities=None):
+def generate_random_mdp(num_states: int, input_size: int, output_size: int,
+                        possible_probabilities: list[tuple] | None = None) -> Mdp:
     """
     Generates random MDP.
 
-    Args:
-
-        num_states: number of states
-        input_size: number of inputs
-        output_size: user predefined outputs
-        possible_probabilities: list of possible probability pairs to choose from
-
-    Returns:
-
-        random MDP
-
+    :param int num_states: number of states
+    :param int input_size: number of inputs
+    :param int output_size: user predefined outputs
+    :param list[tuple] | None possible_probabilities: list of possible probability pairs to choose from
+    :return Mdp: random MDP
     """
 
     deterministic_model = generate_random_deterministic_automata('moore', num_states, input_size, output_size)
@@ -296,21 +272,16 @@ def generate_random_mdp(num_states, input_size, output_size, possible_probabilit
     return Mdp(mdp_states[0], mdp_states)
 
 
-def generate_random_smm(num_states, input_size, output_size, possible_probabilities=None):
+def generate_random_smm(num_states: int, input_size: int, output_size: int,
+                        possible_probabilities: list[tuple] | None = None) -> StochasticMealyMachine:
     """
     Generates random SMM.
 
-    Args:
-
-        num_states: number of states
-        input_size: number of inputs
-        output_size: number of outputs
-        possible_probabilities: list of possible probability pairs to choose from
-
-    Returns:
-
-        random SMM
-
+    :param int num_states: number of states
+    :param int input_size: number of inputs
+    :param int output_size: number of outputs
+    :param list[tuple] | None possible_probabilities: list of possible probability pairs to choose from
+    :return StochasticMealyMachine: random SMM
     """
 
     deterministic_model = generate_random_deterministic_automata('mealy', num_states, input_size, output_size)
@@ -357,21 +328,16 @@ def generate_random_smm(num_states, input_size, output_size, possible_probabilit
     return StochasticMealyMachine(smm_states[0], smm_states)
 
 
-def generate_random_ONFSM(num_states, num_inputs, num_outputs, multiple_out_prob=0.33):
+def generate_random_ONFSM(num_states: int, num_inputs: int, num_outputs: int,
+                          multiple_out_prob: float = 0.33) -> Onfsm:
     """
     Randomly generate an observable non-deterministic finite-state machine.
 
-    Args:
-
-      num_states: number of states
-      num_inputs: number of inputs
-      num_outputs: number of outputs
-      multiple_out_prob: probability that state will have multiple outputs (Default value = 0.5)
-
-    Returns:
-
-        randomly generated ONFSM
-
+    :param int num_states: number of states
+    :param int num_inputs: number of inputs
+    :param int num_outputs: number of outputs
+    :param float multiple_out_prob: probability that state will have multiple outputs
+    :return Onfsm: randomly generated ONFSM
     """
     inputs = [f'i{i + 1}' for i in range(num_inputs)]
     outputs = [f'o{i + 1}' for i in range(num_outputs)]
@@ -401,7 +367,13 @@ def generate_random_ONFSM(num_states, num_inputs, num_outputs, multiple_out_prob
     return Onfsm(states[0], states)
 
 
-def generate_random_markov_chain(num_states):
+def generate_random_markov_chain(num_states: int) -> MarkovChain:
+    """
+    Generates a random Markov chain.
+
+    :param int num_states: number of states
+    :return MarkovChain: randomly generated Markov chain
+    """
     assert num_states >= 3
     possible_probabilities = [1.0, 1.0, 0.8, 0.5, 0.9]
     states = []
@@ -426,7 +398,15 @@ def generate_random_markov_chain(num_states):
     return MarkovChain(states[0], states)
 
 
-def _has_transition(state: SevpaState, transition_letter, stack_guard) -> bool:
+def _has_transition(state: SevpaState, transition_letter: Any, stack_guard: tuple | None) -> bool:
+    """
+    Checks whether a SEVPA state already has a transition matching the given letter (and stack guard).
+
+    :param SevpaState state: state to check
+    :param Any transition_letter: input letter of the transition
+    :param tuple | None stack_guard: stack guard of the transition, None for internal transitions
+    :return bool: True if a matching transition already exists, False otherwise
+    """
     transitions = state.transitions[transition_letter]
     if transitions is not None:
         if stack_guard is None:  # internal transition
@@ -441,21 +421,19 @@ def _has_transition(state: SevpaState, transition_letter, stack_guard) -> bool:
     return False
 
 
-def generate_random_sevpa(num_states, internal_alphabet_size, call_alphabet_size, return_alphabet_size
-                          , acceptance_prob, return_transition_prob):
+def generate_random_sevpa(num_states: int, internal_alphabet_size: int, call_alphabet_size: int,
+                          return_alphabet_size: int, acceptance_prob: float,
+                          return_transition_prob: float) -> Sevpa:
     """
     Generate a random Single Entry Visibly Pushdown Automaton (SEVPA).
 
-    Args:
-        num_states (int): The number of states in the SEVPA.
-        internal_alphabet_size (int): The size of the internal alphabet.
-        call_alphabet_size (int): The size of the call alphabet.
-        return_alphabet_size (int): The size of the return alphabet.
-        acceptance_prob (float): The probability of a state being an accepting state.
-        return_transition_prob (float): The probability of generating a return transition.
-
-    Returns:
-        Sevpa: A randomly generated SEVPA.
+    :param int num_states: The number of states in the SEVPA.
+    :param int internal_alphabet_size: The size of the internal alphabet.
+    :param int call_alphabet_size: The size of the call alphabet.
+    :param int return_alphabet_size: The size of the return alphabet.
+    :param float acceptance_prob: The probability of a state being an accepting state.
+    :param float return_transition_prob: The probability of generating a return transition.
+    :return Sevpa: A randomly generated SEVPA.
     """
 
     internal_alphabet = [f'i{i}' for i in range(internal_alphabet_size)]
@@ -503,7 +481,7 @@ def generate_random_sevpa(num_states, internal_alphabet_size, call_alphabet_size
 
     for state in states:
         for internal_letter in internal_alphabet:
-            if state.transitions[internal_letter] is None:
+            if not state.transitions[internal_letter]:
                 target_state = random.choice(states)
                 state.transitions[internal_letter].append(
                     SevpaTransition(target_state, internal_letter, None, None))

@@ -1,0 +1,664 @@
+import random
+from typing import Any, Tuple
+import unittest
+
+from aalpy.automata import (Dfa, DfaState, MooreMachine, MooreState, MealyMachine, MealyState, Mdp, MdpState,
+                            MarkovChain, Vpa, VpaState, VpaAlphabet, VpaTransition)
+from aalpy.utils.HelperFunctions import (
+    extend_set,
+    all_prefixes,
+    all_suffixes,
+    random_string_generator,
+    is_suffix_of,
+    get_cex_prefixes,
+    make_input_complete,
+    convert_i_o_traces_for_RPNI,
+    is_balanced,
+    product_with_possible_empty_iterable,
+    IUO_dfa_from_IXO_dfa,
+    IXO_dfa_from_mealy,
+    dfa_from_moore,
+    mc_from_mdp,
+    mc_format_to_mdp,
+    generate_input_output_data_from_automata,
+    generate_input_output_data_from_vpa,
+    generate_well_matched_data_from_vpa,
+)
+
+
+def parity_dfa():
+    q0 = DfaState('q0', is_accepting=True)
+    q1 = DfaState('q1', is_accepting=False)
+    q0.transitions = {'a': q1, 'b': q0}
+    q1.transitions = {'a': q0, 'b': q1}
+    return Dfa(q0, [q0, q1])
+
+
+def incomplete_dfa():
+    q0 = DfaState('q0', is_accepting=True)
+    q1 = DfaState('q1', is_accepting=False)
+    q0.transitions = {'a': q1, 'b': q0}
+    q1.transitions = {'a': q0}
+    return Dfa(q0, [q0, q1])
+
+
+def incomplete_moore():
+    q0 = MooreState('q0', output='x')
+    q1 = MooreState('q1', output='y')
+    q0.transitions = {'a': q1, 'b': q0}
+    q1.transitions = {'a': q0}
+    return MooreMachine(q0, [q0, q1])
+
+
+def incomplete_mealy():
+    q0 = MealyState('q0')
+    q1 = MealyState('q1')
+    q0.transitions = {'a': q1, 'b': q0}
+    q0.output_fun = {'a': 'o1', 'b': 'o2'}
+    q1.transitions = {'a': q0}
+    q1.output_fun = {'a': 'o2'}
+    return MealyMachine(q0, [q0, q1])
+
+
+class TestExtendSet(unittest.TestCase):
+    def test_adds_only_new_elements(self):
+        base = [1, 2, 3]
+        added = extend_set(base, [2, 3, 4, 5])
+        self.assertEqual(added, [4, 5])
+        self.assertEqual(base, [1, 2, 3, 4, 5])
+
+    def test_no_new_elements(self):
+        base = [1, 2]
+        added = extend_set(base, [1, 2])
+        self.assertEqual(added, [])
+        self.assertEqual(base, [1, 2])
+
+
+class TestAllPrefixesSuffixes(unittest.TestCase):
+    def test_all_prefixes(self):
+        self.assertEqual(all_prefixes(['a', 'b', 'c']), [('a',), ('a', 'b'), ('a', 'b', 'c')])
+
+    def test_all_prefixes_empty(self):
+        self.assertEqual(all_prefixes([]), [])
+
+    def test_all_suffixes(self):
+        self.assertEqual(all_suffixes(['a', 'b', 'c']), [('c',), ('b', 'c'), ('a', 'b', 'c')])
+
+    def test_all_suffixes_empty(self):
+        self.assertEqual(all_suffixes([]), [])
+
+
+class TestRandomStringGenerator(unittest.TestCase):
+    def test_default_length(self):
+        s = random_string_generator()
+        self.assertEqual(len(s), 10)
+
+    def test_custom_length_and_chars(self):
+        s = random_string_generator(size=5, chars='x')
+        self.assertEqual(s, 'xxxxx')
+
+    def test_zero_length(self):
+        self.assertEqual(random_string_generator(size=0), '')
+
+
+class TestIsSuffixOf(unittest.TestCase):
+    def test_true_case(self):
+        self.assertTrue(is_suffix_of(('b', 'c'), ('a', 'b', 'c')))
+
+    def test_false_case(self):
+        self.assertFalse(is_suffix_of(('a', 'c'), ('a', 'b', 'c')))
+
+    def test_suffix_longer_than_trace(self):
+        self.assertFalse(is_suffix_of(('a', 'b', 'c'), ('b', 'c')))
+
+    def test_empty_suffix_always_matches(self):
+        # regression test: trace[-len(suffix):] with len(suffix) == 0 slices with `-0`, which Python
+        # treats the same as `0` (the whole trace) rather than an empty slice - so an empty suffix
+        # used to compare the entire trace against () instead of always matching.
+        self.assertTrue(is_suffix_of((), ('a', 'b')))
+
+    def test_empty_suffix_of_empty_trace(self):
+        self.assertTrue(is_suffix_of((), ()))
+
+
+class TestGetCexPrefixes(unittest.TestCase):
+    def test_mdp_prefixes(self):
+        cex = ('i1', 'o1', 'i2', 'o2')
+        prefixes = get_cex_prefixes(cex, 'mdp')
+        self.assertEqual(prefixes, [('i1',), ('i1', 'o1', 'i2')])
+
+    def test_smm_prefixes(self):
+        cex = ('i1', 'o1', 'i2', 'o2')
+        prefixes = get_cex_prefixes(cex, 'smm')
+        self.assertEqual(prefixes, [(), ('i1', 'o1'), ('i1', 'o1', 'i2', 'o2')])
+
+
+class TestMakeInputComplete(unittest.TestCase):
+    def test_already_complete_dfa_returned_unchanged(self):
+        dfa = parity_dfa()
+        result = make_input_complete(dfa)
+        self.assertIs(result, dfa)
+
+    def test_dfa_self_loop(self):
+        dfa = incomplete_dfa()
+        make_input_complete(dfa, missing_transition_go_to='self_loop')
+        for state in dfa.states:
+            self.assertEqual(set(state.transitions.keys()), {'a', 'b'})
+        self.assertIs(dfa.states[1].transitions['b'], dfa.states[1])
+
+    def test_dfa_sink_state(self):
+        dfa = incomplete_dfa()
+        make_input_complete(dfa, missing_transition_go_to='sink_state')
+        sink_states = [s for s in dfa.states if s.state_id == 'sink']
+        self.assertEqual(len(sink_states), 1)
+        sink = sink_states[0]
+        self.assertFalse(sink.is_accepting)
+        q1 = next(s for s in dfa.states if s.state_id == 'q1')
+        self.assertIs(q1.transitions['b'], sink)
+
+    def test_moore_self_loop(self):
+        moore = incomplete_moore()
+        make_input_complete(moore, missing_transition_go_to='self_loop')
+        for state in moore.states:
+            self.assertEqual(set(state.transitions.keys()), {'a', 'b'})
+
+    def test_mealy_self_loop_epsilon_output(self):
+        mealy = incomplete_mealy()
+        make_input_complete(mealy, missing_transition_go_to='self_loop')
+        self.assertIs(mealy.states[1].transitions['b'], mealy.states[1])
+        self.assertEqual(mealy.states[1].output_fun['b'], 'epsilon')
+
+    def test_invalid_missing_transition_strategy_raises(self):
+        dfa = incomplete_dfa()
+        with self.assertRaises(AssertionError):
+            make_input_complete(dfa, missing_transition_go_to='not_a_strategy')
+
+
+class TestConvertIOTracesForRPNI(unittest.TestCase):
+    def test_mealy_conversion(self):
+        sequences = [[(1, 'a'), (2, 'b'), (3, 'c')], [(6, 'e'), (4, 'e'), (3, 'c')]]
+        result = convert_i_o_traces_for_RPNI(sequences, automaton_type='mealy')
+        self.assertEqual(result, [
+            ((1,), 'a'), ((1, 2), 'b'), ((1, 2, 3), 'c'),
+            ((6,), 'e'), ((6, 4), 'e'), ((6, 4, 3), 'c'),
+        ])
+
+    def test_dfa_conversion_includes_initial_output(self):
+        sequences = [[True, (1, False)]]
+        result = convert_i_o_traces_for_RPNI(sequences, automaton_type='dfa')
+        self.assertEqual(result, [((), True), ((1,), False)])
+
+    def test_invalid_automaton_type_raises(self):
+        with self.assertRaises(ValueError):
+            convert_i_o_traces_for_RPNI([[(1, 'a')]], automaton_type='bogus')
+
+    def test_deduplicates_repeated_prefixes(self):
+        sequences = [[(1, 'a')], [(1, 'a')]]
+        result = convert_i_o_traces_for_RPNI(sequences, automaton_type='mealy')
+        self.assertEqual(result, [((1,), 'a')])
+
+
+class TestIsBalanced(unittest.TestCase):
+    def alphabet(self):
+        return VpaAlphabet(internal_alphabet=['i'], call_alphabet=['c'], return_alphabet=['r'])
+
+    def test_balanced_sequence(self):
+        self.assertTrue(is_balanced(['c', 'i', 'r'], self.alphabet()))
+
+    def test_empty_sequence_is_balanced(self):
+        self.assertTrue(is_balanced([], self.alphabet()))
+
+    def test_unbalanced_more_returns_than_calls(self):
+        self.assertFalse(is_balanced(['r'], self.alphabet()))
+
+    def test_unbalanced_unclosed_call(self):
+        self.assertFalse(is_balanced(['c', 'c', 'r'], self.alphabet()))
+
+
+class TestProductWithPossibleEmptyIterable(unittest.TestCase):
+    def test_all_nonempty_behaves_like_normal_product(self):
+        result = list(product_with_possible_empty_iterable([1, 2], ['a']))
+        self.assertEqual(result, [(1, 'a'), (2, 'a')])
+
+    def test_one_empty_iterable_ignored(self):
+        result = list(product_with_possible_empty_iterable([1, 2], []))
+        self.assertEqual(result, [(1,), (2,)])
+
+    def test_all_empty_iterables_gives_empty_tuple(self):
+        result = list(product_with_possible_empty_iterable([], []))
+        self.assertEqual(result, [()])
+
+
+class TestIUODfaFromIXODfa(unittest.TestCase):
+
+    def test_single_state_no_transitions(self):
+        def tag_input(input: Any) -> Tuple[str,Any]:
+            return ('I', input)
+
+        def tag_output(output: Any) -> Tuple[str,Any]:
+            return ('O', output)
+
+        ixo_dfa = Dfa.from_state_setup({
+            'q0': (False, dict())
+        })
+        expected_iuo_dfa = Dfa.from_state_setup({
+            'q0': (False, dict())
+        })
+
+        iuo_dfa = IUO_dfa_from_IXO_dfa(
+            ixo_dfa=ixo_dfa,
+            tag_input=tag_input,
+            tag_output=tag_output,
+            make_input_complete=False
+        )
+        self.assertIsInstance(iuo_dfa, Dfa)
+        self.assertEqual(iuo_dfa, expected_iuo_dfa)
+
+    def test_single_transition(self):
+        def tag_input(input: Any) -> Tuple[str,Any]:
+            return ('I', input)
+
+        def tag_output(output: Any) -> Tuple[str,Any]:
+            return ('O', output)
+
+        ixo_dfa = Dfa.from_state_setup({
+            'q0': (False, {('a', 'o'): 'q0'})
+        })
+        expected_iuo_dfa = Dfa.from_state_setup({
+            'q0': (False, {tag_input('a'): 'Oo_Dq0'}),
+            'Oo_Dq0': (False, {tag_output('o'): 'q0'})
+        })
+
+        iuo_dfa = IUO_dfa_from_IXO_dfa(
+            ixo_dfa=ixo_dfa,
+            tag_input=tag_input,
+            tag_output=tag_output,
+            make_input_complete=False
+        )
+        self.assertIsInstance(iuo_dfa, Dfa)
+        self.assertEqual(iuo_dfa, expected_iuo_dfa)
+
+    def test_distinct_outputs_for_same_input(self):
+        def tag_input(input: Any) -> Tuple[str,Any]:
+            return ('I', input)
+
+        def tag_output(output: Any) -> Tuple[str,Any]:
+            return ('O', output)
+
+        ixo_dfa = Dfa.from_state_setup({
+            'q0': (False, {('a', 'o0'): 'q0', ('a', 'o1'): 'q1'}),
+            'q1': (True, {('a', 'o2'): 'q1', ('b', 'o2'): 'q1'})
+        })
+        expected_iuo_dfa = Dfa.from_state_setup({
+            'q0': (False, {tag_input('a'): 'Oo0Dq0_Oo1Dq1'}),
+            'q1': (True, {tag_input('a'): 'Oo2Dq1', tag_input('b'): 'Oo2Dq1'}),
+            'Oo0Dq0_Oo1Dq1': (False, {tag_output('o0'): 'q0', tag_output('o1'): 'q1'}),
+            'Oo2Dq1': (False, {tag_output('o2'): 'q1'})
+        })
+
+        iuo_dfa = IUO_dfa_from_IXO_dfa(
+            ixo_dfa=ixo_dfa,
+            tag_input=tag_input,
+            tag_output=tag_output,
+            make_input_complete=False
+        )
+        self.assertIsInstance(iuo_dfa, Dfa)
+        self.assertEqual(iuo_dfa, expected_iuo_dfa)
+
+    def test_distinct_outputs_for_same_input_prevents_aux_state_name_clashing(self):
+        def tag_input(input: Any) -> Tuple[str,Any]:
+            return ('I', input)
+
+        def tag_output(output: Any) -> Tuple[str,Any]:
+            return ('O', output)
+
+        ixo_dfa = Dfa.from_state_setup({
+            'q0': (False, {('a', 'o0'): 'q0', ('a', 'o1'): 'q1'}),
+            'q1': (True, {('a', 'o2'): 'q1', ('b', 'o2'): 'Oo2Dq1'}),
+            'Oo2Dq1': (False, {('a', 'o2'): 'q1', ('b', 'o2'): 'Oo2Dq1'})
+        })
+        expected_iuo_dfa = Dfa.from_state_setup({
+            'q0': (False, {tag_input('a'): 'Oo0Dq0_Oo1Dq1'}),
+            'q1': (True, {tag_input('a'): 'Oo2Dq1_', tag_input('b'): 'Oo2_DOo2Dq1'}),
+            'Oo2Dq1': (False, {tag_input('a'): 'Oo2Dq1_', tag_input('b'): 'Oo2_DOo2Dq1'}),
+            'Oo0Dq0_Oo1Dq1': (False, {tag_output('o0'): 'q0', tag_output('o1'): 'q1'}),
+            'Oo2Dq1_': (False, {tag_output('o2'): 'q1'}),
+            'Oo2_DOo2Dq1': (False, {tag_output('o2'): 'Oo2Dq1'})
+        })
+
+        iuo_dfa = IUO_dfa_from_IXO_dfa(
+            ixo_dfa=ixo_dfa,
+            tag_input=tag_input,
+            tag_output=tag_output,
+            make_input_complete=False
+        )
+        self.assertIsInstance(iuo_dfa, Dfa)
+        self.assertEqual(iuo_dfa, expected_iuo_dfa)
+
+    def test_make_input_complete(self):
+        def tag_input(input: Any) -> Tuple[str,Any]:
+            return ('I', input)
+
+        def tag_output(output: Any) -> Tuple[str,Any]:
+            return ('O', output)
+
+        ixo_dfa = Dfa.from_state_setup({
+            'q0': (False, {('a', 'o0'): 'q0', ('a', 'o1'): 'q1'}),
+            'q1': (True, {('a', 'o2'): 'q1', ('b', 'o2'): 'q1'})
+        })
+        expected_iuo_dfa = Dfa.from_state_setup({
+            'q0': (False, {tag_input('a'): 'Oo0Dq0_Oo1Dq1'}),
+            'q1': (True, {tag_input('a'): 'Oo2Dq1', tag_input('b'): 'Oo2Dq1'}),
+            'Oo0Dq0_Oo1Dq1': (False, {tag_output('o0'): 'q0', tag_output('o1'): 'q1'}),
+            'Oo2Dq1': (False, {tag_output('o2'): 'q1'}),
+            'sink_state': (False, dict())
+        })
+        expected_sink = expected_iuo_dfa.get_state_by_id('sink_state')
+        dfa_alphabet = [tag_input(i) for i in ['a', 'b']] + [tag_output(o) for o in ['o0', 'o1', 'o2']]
+        for state in expected_iuo_dfa.states:
+            for a in dfa_alphabet:
+                if a not in state.transitions:
+                    state.transitions[a] = expected_sink
+
+        iuo_dfa = IUO_dfa_from_IXO_dfa(
+            ixo_dfa=ixo_dfa,
+            tag_input=tag_input,
+            tag_output=tag_output,
+            make_input_complete=True
+        )
+        self.assertIsInstance(iuo_dfa, Dfa)
+        self.assertEqual(iuo_dfa, expected_iuo_dfa)
+
+    def test_make_input_complete_prevents_aux_state_name_clashing(self):
+        def tag_input(input: Any) -> Tuple[str,Any]:
+            return ('I', input)
+
+        def tag_output(output: Any) -> Tuple[str,Any]:
+            return ('O', output)
+
+        ixo_dfa = Dfa.from_state_setup({
+            'sink_state': (False, {('a', 'o0'): 'sink_state', ('a', 'o1'): 'q1'}),
+            'q1': (True, {('a', 'o2'): 'q1', ('b', 'o2'): 'q1'})
+        })
+        expected_iuo_dfa = Dfa.from_state_setup({
+            'sink_state': (False, {tag_input('a'): 'Oo0Dsink_state_Oo1Dq1'}),
+            'q1': (True, {tag_input('a'): 'Oo2Dq1', tag_input('b'): 'Oo2Dq1'}),
+            'Oo0Dsink_state_Oo1Dq1': (False, {tag_output('o0'): 'sink_state', tag_output('o1'): 'q1'}),
+            'Oo2Dq1': (False, {tag_output('o2'): 'q1'}),
+            'sink_state_': (False, dict())
+        })
+        expected_sink = expected_iuo_dfa.get_state_by_id('sink_state_')
+        dfa_alphabet = [tag_input(i) for i in ['a', 'b']] + [tag_output(o) for o in ['o0', 'o1', 'o2']]
+        for state in expected_iuo_dfa.states:
+            for a in dfa_alphabet:
+                if a not in state.transitions:
+                    state.transitions[a] = expected_sink
+
+        iuo_dfa = IUO_dfa_from_IXO_dfa(
+            ixo_dfa=ixo_dfa,
+            tag_input=tag_input,
+            tag_output=tag_output,
+            make_input_complete=True
+        )
+        self.assertIsInstance(iuo_dfa, Dfa)
+        self.assertEqual(iuo_dfa, expected_iuo_dfa)
+
+    def test_specify_sink_state(self):
+        def tag_input(input: Any) -> Tuple[str,Any]:
+            return ('I', input)
+
+        def tag_output(output: Any) -> Tuple[str,Any]:
+            return ('O', output)
+
+        ixo_dfa = Dfa.from_state_setup({
+            'q0': (False, {('a', 'o0'): 'q0', ('a', 'o1'): 'q1'}),
+            'q1': (True, {('a', 'o2'): 'q1', ('b', 'o2'): 'q1'})
+        })
+        expected_iuo_dfa = Dfa.from_state_setup({
+            'q0': (False, {tag_input('a'): 'Oo0Dq0_Oo1Dq1'}),
+            'q1': (True, {a: 'q1' for a in \
+                [tag_input('a'), tag_input('b'), tag_output('o0'), tag_output('o1'), tag_output('o2')]
+            }),
+            'Oo0Dq0_Oo1Dq1': (False, {tag_output('o0'): 'q0', tag_output('o1'): 'q1'}),
+            'sink': (False, dict())
+        })
+        expected_sink = expected_iuo_dfa.get_state_by_id('sink')
+        dfa_alphabet = [tag_input(i) for i in ['a', 'b']] + [tag_output(o) for o in ['o0', 'o1', 'o2']]
+        for state in expected_iuo_dfa.states:
+            for a in dfa_alphabet:
+                if a not in state.transitions:
+                    state.transitions[a] = expected_sink
+
+        iuo_dfa = IUO_dfa_from_IXO_dfa(
+            ixo_dfa=ixo_dfa,
+            tag_input=tag_input,
+            tag_output=tag_output,
+            sink_state_ids=['q1'],
+            make_input_complete=True
+        )
+        self.assertIsInstance(iuo_dfa, Dfa)
+        self.assertEqual(iuo_dfa, expected_iuo_dfa)
+
+    def test_make_new_states_accepting(self):
+        def tag_input(input: Any) -> Tuple[str,Any]:
+            return ('I', input)
+
+        def tag_output(output: Any) -> Tuple[str,Any]:
+            return ('O', output)
+
+        ixo_dfa = Dfa.from_state_setup({
+            'q0': (False, {('a', 'o0'): 'q0', ('a', 'o1'): 'q1'}),
+            'q1': (True, {('a', 'o2'): 'q1', ('b', 'o2'): 'q1'})
+        })
+        expected_iuo_dfa = Dfa.from_state_setup({
+            'q0': (False, {tag_input('a'): 'Oo0Dq0_Oo1Dq1'}),
+            'q1': (True, {a: 'q1' for a in \
+                [tag_input('a'), tag_input('b'), tag_output('o0'), tag_output('o1'), tag_output('o2')]
+            }),
+            'Oo0Dq0_Oo1Dq1': (True, {tag_output('o0'): 'q0', tag_output('o1'): 'q1'}),
+            'sink': (True, dict())
+        })
+        expected_sink = expected_iuo_dfa.get_state_by_id('sink')
+        dfa_alphabet = [tag_input(i) for i in ['a', 'b']] + [tag_output(o) for o in ['o0', 'o1', 'o2']]
+        for state in expected_iuo_dfa.states:
+            for a in dfa_alphabet:
+                if a not in state.transitions:
+                    state.transitions[a] = expected_sink
+
+        iuo_dfa = IUO_dfa_from_IXO_dfa(
+            ixo_dfa=ixo_dfa,
+            tag_input=tag_input,
+            tag_output=tag_output,
+            sink_state_ids=['q1'],
+            make_input_complete=True,
+            make_new_states_accepting=True
+        )
+        self.assertIsInstance(iuo_dfa, Dfa)
+        self.assertEqual(iuo_dfa, expected_iuo_dfa)
+
+
+class TestIXODfaFromMealy(unittest.TestCase):
+    def test_conversion(self):
+        mealy = MealyMachine.from_state_setup({
+            'q0': {
+                'a': ('o0', 'q0'),
+                'b': ('o1', 'q1')
+            },
+            'q1': {
+                'a': ('o2', 'q1'),
+                'b': ('o3', 'q1')
+            }
+        })
+        expected_dfa = Dfa.from_state_setup({
+            'q0': (True, {('a', 'o0'): 'q0', ('b', 'o1'): 'q1'}),
+            'q1': (True, {('a', 'o2'): 'q1', ('b', 'o3'): 'q1'})
+        })
+
+        dfa = IXO_dfa_from_mealy(mealy)
+        self.assertIsInstance(dfa, Dfa)
+        self.assertEqual(dfa, expected_dfa)
+
+
+class TestDfaFromMoore(unittest.TestCase):
+    def test_boolean_output_moore_converts(self):
+        q0 = MooreState('q0', output=True)
+        q1 = MooreState('q1', output=False)
+        q0.transitions = {'a': q1}
+        q1.transitions = {'a': q0}
+        moore = MooreMachine(q0, [q0, q1])
+
+        dfa = dfa_from_moore(moore)
+        self.assertIsInstance(dfa, Dfa)
+        self.assertTrue(dfa.initial_state.is_accepting)
+        self.assertFalse(dfa.initial_state.transitions['a'].is_accepting)
+
+    def test_none_output_treated_as_non_accepting(self):
+        q0 = MooreState('q0', output=None)
+        q0.transitions = {'a': q0}
+        moore = MooreMachine(q0, [q0])
+        dfa = dfa_from_moore(moore)
+        self.assertFalse(dfa.initial_state.is_accepting)
+
+    def test_non_boolean_output_raises(self):
+        q0 = MooreState('q0', output='not_boolean')
+        q0.transitions = {'a': q0}
+        moore = MooreMachine(q0, [q0])
+        with self.assertRaises(ValueError):
+            dfa_from_moore(moore)
+
+
+class TestMcFromMdp(unittest.TestCase):
+    def make_mdp(self):
+        s0 = MdpState('s0', output='o0')
+        s1 = MdpState('s1', output='o1')
+        s0.transitions['i'].append((s1, 1.0))
+        s1.transitions['i'].append((s0, 1.0))
+        return Mdp(s0, [s0, s1])
+
+    def test_single_input_conversion(self):
+        mdp = self.make_mdp()
+        mc = mc_from_mdp(mdp)
+        self.assertIsInstance(mc, MarkovChain)
+        self.assertEqual(mc.initial_state.state_id, 's0')
+        self.assertEqual(mc.initial_state.transitions, [(mc.states[1] if mc.states[1].state_id == 's1' else mc.states[0], 1.0)])
+
+    def test_explicit_input_symbol(self):
+        mdp = self.make_mdp()
+        mc = mc_from_mdp(mdp, input_symbol='i')
+        self.assertIsInstance(mc, MarkovChain)
+
+    def test_multiple_inputs_without_symbol_raises(self):
+        s0 = MdpState('s0', output='o0')
+        s1 = MdpState('s1', output='o1')
+        s0.transitions['i1'].append((s1, 1.0))
+        s0.transitions['i2'].append((s1, 1.0))
+        s1.transitions['i1'].append((s0, 1.0))
+        s1.transitions['i2'].append((s0, 1.0))
+        mdp = Mdp(s0, [s0, s1])
+        with self.assertRaises(ValueError):
+            mc_from_mdp(mdp)
+
+
+class TestMcFormatToMdp(unittest.TestCase):
+    def test_wraps_non_initial_elements_with_input_label(self):
+        data = [['out0', 'a', 'b']]
+        result = mc_format_to_mdp(data)
+        self.assertEqual(result, [['out0', ('Input', 'a'), ('Input', 'b')]])
+
+    def test_empty_data(self):
+        self.assertEqual(mc_format_to_mdp([]), [])
+
+
+class TestGenerateInputOutputDataFromAutomata(unittest.TestCase):
+    def test_io_traces_format(self):
+        random.seed(1)
+        dfa = parity_dfa()
+        data = generate_input_output_data_from_automata(dfa, num_sequences=5, min_seq_len=1, max_seq_len=3)
+        self.assertEqual(len(data), 5)
+        for trace in data:
+            for i, o in trace:
+                self.assertIn(i, {'a', 'b'})
+                self.assertIn(o, {True, False})
+
+    def test_labeled_sequences_format(self):
+        random.seed(2)
+        dfa = parity_dfa()
+        data = generate_input_output_data_from_automata(dfa, num_sequences=5, min_seq_len=1, max_seq_len=3,
+                                                        sequance_type='labeled_sequences')
+        self.assertEqual(len(data), 5)
+        for seq, label in data:
+            self.assertIsInstance(seq, list)
+            self.assertIn(label, {True, False})
+
+    def test_invalid_sequence_type_raises(self):
+        dfa = parity_dfa()
+        with self.assertRaises(AssertionError):
+            generate_input_output_data_from_automata(dfa, num_sequences=1, sequance_type='bogus')
+
+
+class TestGenerateInputOutputDataFromVpa(unittest.TestCase):
+    def make_simple_vpa(self):
+        q0 = VpaState('q0', is_accepting=True)
+        q1 = VpaState('q1', is_accepting=False)
+        q0.transitions['i'].append(VpaTransition(q0, q0, 'i', None, None))
+        q0.transitions['c'].append(VpaTransition(q0, q1, 'c', 'push', 'c'))
+        q1.transitions['r'].append(VpaTransition(q1, q0, 'r', 'pop', 'c'))
+        return Vpa(q0, [q0, q1])
+
+    def test_generates_at_least_requested_number_of_sequences(self):
+        # the generation loop only re-checks its stopping condition after a full inner sequence of
+        # length max_seq_len is generated, so it can slightly overshoot num_sequences.
+        random.seed(3)
+        vpa = self.make_simple_vpa()
+        data = generate_input_output_data_from_vpa(vpa, num_sequences=10, max_seq_len=4)
+        self.assertGreaterEqual(len(data), 10)
+        self.assertLessEqual(len(data), 10 + 4)
+        for seq, output in data:
+            self.assertIsInstance(seq, tuple)
+
+    def test_respects_max_attempts(self):
+        random.seed(4)
+        vpa = self.make_simple_vpa()
+        data = generate_input_output_data_from_vpa(vpa, num_sequences=1000, max_seq_len=2, max_attempts=5)
+        self.assertLessEqual(len(data), 1000)
+
+
+class TestGenerateWellMatchedDataFromVpa(unittest.TestCase):
+    def test_sequences_are_distinct_well_matched_and_correctly_labeled(self):
+        from aalpy.utils.BenchmarkVpaModels import vpa_json, vpa_L12, vpa_for_L16
+
+        for vpa in (vpa_json(), vpa_L12(), vpa_for_L16()):
+            with self.subTest(model=vpa.to_state_setup()):
+                random.seed(0)
+                data = generate_well_matched_data_from_vpa(vpa, num_sequences=500, max_seq_len=12)
+                self.assertEqual(len(data), len({seq for seq, _ in data}))
+                for seq, label in data:
+                    self.assertLessEqual(len(seq), 12)
+                    self.assertTrue(is_balanced(seq, vpa.input_alphabet), seq)
+                    self.assertEqual(label, vpa.accepts(seq), seq)
+
+    def test_positive_ratio_is_respected(self):
+        from aalpy.utils.BenchmarkVpaModels import vpa_json
+
+        for ratio in (0.5, 0.2):
+            with self.subTest(ratio=ratio):
+                random.seed(1)
+                data = generate_well_matched_data_from_vpa(vpa_json(), num_sequences=500, max_seq_len=16,
+                                                           positive_ratio=ratio)
+                self.assertEqual(500, len(data))
+                self.assertEqual(round(500 * ratio), sum(label for _, label in data))
+
+    def test_stops_when_the_language_has_too_few_positive_sequences(self):
+        from aalpy.utils.BenchmarkVpaModels import vpa_L1
+
+        # a^n b^n (n >= 1) has only 4 sequences of length at most 8, and there are only 23 well-matched sequences
+        # over {a, b} of that length, so far fewer than the requested 100 sequences can be generated
+        random.seed(2)
+        data = generate_well_matched_data_from_vpa(vpa_L1(), num_sequences=100, max_seq_len=8, max_attempts=500)
+        self.assertEqual({('a', 'b'), ('a', 'a', 'b', 'b'), ('a', 'a', 'a', 'b', 'b', 'b'),
+                          ('a', 'a', 'a', 'a', 'b', 'b', 'b', 'b')}, {seq for seq, label in data if label})
+        self.assertLessEqual(len(data), 23)
+
+
+if __name__ == '__main__':
+    unittest.main()

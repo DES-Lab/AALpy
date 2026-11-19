@@ -1,4 +1,6 @@
+# Interactive equivalence oracle driven by user input at the command line.
 from aalpy.base import Oracle, SUL
+from aalpy.base.Automaton import Automaton
 from aalpy.utils.FileHandler import visualize_automaton
 
 
@@ -22,12 +24,24 @@ class UserInputEqOracle(Oracle):
 
         reset - resets the current state of the hypothesis and clears inputs
     """
-    def __init__(self, alphabet: list, sul: SUL):
+    def __init__(self, alphabet: list, sul: SUL) -> None:
+        """
+        Constructs the oracle.
+
+        :param list alphabet: Input alphabet.
+        :param SUL sul: System under learning.
+        """
         super().__init__(alphabet, sul)
         self.curr_hypothesis = 0
 
-    def find_cex(self, hypothesis):
+    def find_cex(self, hypothesis: Automaton) -> list | None:
+        """
+        Visualizes the current hypothesis and lets the user interactively step through it to build or reject a
+        counterexample.
 
+        :param Automaton hypothesis: Current hypothesis.
+        :return list | None: Counterexample inputs, None if the user indicates no counterexample exists.
+        """
         self.reset_hyp_and_sul(hypothesis)
 
         self.curr_hypothesis += 1

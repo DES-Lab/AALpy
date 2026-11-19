@@ -1,65 +1,52 @@
+# Top-level entry point for the Adaptive L# active automata learning algorithm.
 import time
 
-from aalpy.base import Oracle, SUL
+from aalpy.base import Automaton, Oracle, SUL
 from aalpy.utils.HelperFunctions import print_learning_info
 from .AdaptiveObservationTree import AdaptiveObservationTree
 from ...base.SUL import CacheSUL
 
 
-def run_adaptive_Lsharp(alphabet: list, sul: SUL, references: list, eq_oracle: Oracle, automaton_type,
-                        extension_rule=None, separation_rule="SepSeq",
-                        rebuilding=True, state_matching="Approximate",
-                        samples=None, max_learning_rounds=None,
-                        cache_and_non_det_check=True, return_data=False, print_level=2):
+def run_adaptive_Lsharp(alphabet: list, sul: SUL, references: list, eq_oracle: Oracle, automaton_type: str,
+                        extension_rule: str | None = None, separation_rule: str = "SepSeq",
+                        rebuilding: bool = True, state_matching: str | None = "Approximate",
+                        samples: list | None = None, max_learning_rounds: int | None = None,
+                        cache_and_non_det_check: bool = True, return_data: bool = False,
+                        print_level: int = 2) -> Automaton | tuple[Automaton, dict]:
     """
     Based on ''State Matching and Multiple References in Adaptive Active Automata Learning'' from Kruger, Junges and Rot.
-    The algorithm learns a Mealy machine using a set of references. These references are used by two procedures 
+    The algorithm learns a Mealy machine using a set of references. These references are used by two procedures
     1) Rebuilding which kickstarts the learning process using the references and 2) State Matching which matches the
     basis states and references states to find new basis states faster.
 
-    Args:
-
-        alphabet: input alphabet
-
-        sul: system under learning
-
-        references: a list of references
-
-        eq_oracle: equivalence oracle
-
-        automaton_type: type of automaton to be learned. Either 'dfa', 'mealy' or 'moore'
-
-        extension_rule: strategy used during the extension rule. Options: "Nothing" (default), "SepSeq" and "ADS".
-
-        separation_rule: strategy used during the extension rule. Options: "SepSeq" (default) and "ADS".
-
-        rebuilding: procedure that poses output queries to rebuild the observation tree based on prefixes and separating sequences from the reference(s).
-        Only executes at the start of adaptive L#. default value: True. 
-
-        state_matching: if not None, the learner maintains a matching relation between basis states (in the observation tree) and reference model states.
-        This matching relation is used in three rules added on top of L# to either identify a frontier state faster or isolate it when the matching indicates
-        that the frontier state corresponds to a reference model state not yet present in the basis. default value: "Approximate". 
-        - Two states match according to "total matching" if all output over the defined and shared alphabet are exactly the same.
-        - Two states match according to "approximate matching" if they have the highest ratio of equivalent outputs to defined outputs over the shared alphabet. 
+    :param list alphabet: input alphabet
+    :param SUL sul: system under learning
+    :param list references: a list of references
+    :param Oracle eq_oracle: equivalence oracle
+    :param str automaton_type: type of automaton to be learned. Either 'dfa', 'mealy' or 'moore'
+    :param str | None extension_rule: strategy used during the extension rule. Options: "Nothing" (default), "SepSeq" and "ADS".
+    :param str separation_rule: strategy used during the extension rule. Options: "SepSeq" (default) and "ADS".
+    :param bool rebuilding: procedure that poses output queries to rebuild the observation tree based on prefixes and
+        separating sequences from the reference(s). Only executes at the start of adaptive L#. default value: True.
+    :param str | None state_matching: if not None, the learner maintains a matching relation between basis states (in
+        the observation tree) and reference model states. This matching relation is used in three rules added on top
+        of L# to either identify a frontier state faster or isolate it when the matching indicates that the frontier
+        state corresponds to a reference model state not yet present in the basis. default value: "Approximate".
+        - Two states match according to "total matching" if all output over the defined and shared alphabet are
+        exactly the same.
+        - Two states match according to "approximate matching" if they have the highest ratio of equivalent outputs
+        to defined outputs over the shared alphabet.
         - None can be used if only the rebuilding procedure is needed.
-
-        samples: input output traces provided to the learning algorithm. They are added to cache and could reduce
-        total interaction with the system. Syntax: list of [(input_sequence, output_sequence)] or None
-
-        max_learning_rounds: number of learning rounds after which learning will terminate (Default value = None)
-
-        cache_and_non_det_check: Use caching and non-determinism checks (Default value = True)
-
-        return_data: if True, a map containing all information(runtime/#queries/#steps) will be returned
-            (Default value = False)
-
-        print_level: 0 - None, 1 - just results, 2 - current round and hypothesis size, 3 - educational/debug
-            (Default value = 2)
-
-    Returns:
-
-        automaton of type automaton_type (dict containing all information about learning if 'return_data' is True)
-
+    :param list | None samples: input output traces provided to the learning algorithm. They are added to cache and
+        could reduce total interaction with the system. Syntax: list of [(input_sequence, output_sequence)] or None
+    :param int | None max_learning_rounds: number of learning rounds after which learning will terminate
+        (Default value = None)
+    :param bool cache_and_non_det_check: Use caching and non-determinism checks (Default value = True)
+    :param bool return_data: if True, a map containing all information(runtime/#queries/#steps) will be returned
+        (Default value = False)
+    :param int print_level: 0 - None, 1 - just results, 2 - current round and hypothesis size, 3 - educational/debug
+        (Default value = 2)
+    :return: automaton of type automaton_type (dict containing all information about learning if 'return_data' is True)
     """
     assert extension_rule in {None, "SepSeq", "ADS"}
     assert separation_rule in {"SepSeq", "ADS"}

@@ -1,7 +1,9 @@
+# Serialization, deserialization and Graphviz-based visualization of automata to/from .dot/.png/.svg/.pdf files.
 import re
 import sys
 import traceback
 from pathlib import Path
+from typing import Any
 
 from pydot import Dot, Node, Edge
 
@@ -15,16 +17,26 @@ automaton_types = {Dfa: 'dfa', MealyMachine: 'mealy', MooreMachine: 'moore', Mdp
                    Sevpa: 'sevpa', Vpa: 'vpa'}
 
 
-def _wrap_label(label):
+def _wrap_label(label: str) -> str:
     """
     Adds a " " around a label if not already present on both ends.
+
+    :param str label: label to wrap.
+    :return str: the wrapped label.
     """
     if label[0] == '\"' and label[-1] == '\"':
         return label
     return f'\"{label}\"'
 
 
-def _get_node(state, automaton_type):
+def _get_node(state: Any, automaton_type: str) -> Node | None:
+    """
+    Creates a pydot Node for a given automaton state, styled according to the automaton type.
+
+    :param Any state: automaton state for which the node is created.
+    :param str automaton_type: type tag of the automaton (e.g. 'dfa', 'mealy', 'moore').
+    :return Node | None: the created node, or None if automaton_type is not recognized.
+    """
     if automaton_type == 'dfa':
         if state.is_accepting:
             return Node(state.state_id, label=_wrap_label(state.state_id), shape='doublecircle')
@@ -48,7 +60,17 @@ def _get_node(state, automaton_type):
         return Node(state.state_id, label=_wrap_label(state.state_id))
 
 
-def _add_transition_to_graph(graph, state, automaton_type, display_same_state_trans, round_floats):
+def _add_transition_to_graph(graph: Dot, state: Any, automaton_type: str, display_same_state_trans: bool,
+                             round_floats: int | None) -> None:
+    """
+    Adds all outgoing transitions of a state as edges to the graph.
+
+    :param Dot graph: pydot graph to which edges are added.
+    :param Any state: automaton state whose transitions are added.
+    :param str automaton_type: type tag of the automaton.
+    :param bool display_same_state_trans: if False, self-loops are skipped.
+    :param int | None round_floats: number of decimal places to round probabilities to, or None to not round.
+    """
     if automaton_type == 'dfa' or automaton_type == 'moore':
         for i in state.transitions.keys():
             new_state = state.transitions[i]
@@ -126,22 +148,17 @@ def _add_transition_to_graph(graph, state, automaton_type, display_same_state_tr
                 graph.add_edge(edge)
 
 
-def visualize_automaton(automaton, path="LearnedModel", file_type="pdf", display_same_state_trans=True):
+def visualize_automaton(automaton: Any, path: str | Path = "LearnedModel", file_type: str = "pdf",
+                        display_same_state_trans: bool = True) -> None:
     """
     Create a graphical representation of the automaton.
     Function is round in the separate thread in the background.
     If possible, it will be opened by systems default program.
 
-    Args:
-
-        automaton: automaton to be visualized
-
-        path: pathlike or str, file in which visualization will be saved (Default value = "LearnedModel.pdf")
-
-        file_type: type of file/visualization. Can be ['png', 'svg', 'pdf'] (Default value = "pdf")
-
-        display_same_state_trans: if True, same state transitions will be displayed (Default value = True)
-
+    :param Any automaton: automaton to be visualized
+    :param str | Path path: file in which visualization will be saved
+    :param str file_type: type of file/visualization. Can be ['png', 'svg', 'pdf']
+    :param bool display_same_state_trans: if True, same state transitions will be displayed
     """
     print('Visualization started in the background thread.')
 
@@ -154,29 +171,21 @@ def visualize_automaton(automaton, path="LearnedModel", file_type="pdf", display
     visualization_thread.start()
 
 
-def save_automaton_to_file(automaton, path="LearnedModel", file_type="dot",
-                           display_same_state_trans=True, visualize=False, round_floats=None):
+def save_automaton_to_file(automaton: Any, path: str | Path = "LearnedModel", file_type: str = "dot",
+                           display_same_state_trans: bool = True, visualize: bool = False,
+                           round_floats: int | None = None) -> str | None:
     """
     The Standard of the automata strictly follows the syntax found at: https://automata.cs.ru.nl/Syntax/Overview.
     For non-deterministic and stochastic systems syntax can be found on AALpy's Wiki.
 
-    Args:
-
-        automaton: automaton to be saved to file
-
-        path: pathlike or str, file in which visualization will be saved (Default value = "LearnedModel")
-
-        file_type: type of file/visualization. Can be ['dot', 'png', 'svg', 'pdf'] (Default value = "dot)
-
-        display_same_state_trans: True, should not be set to false except from the visualization method
-            (Default value = True)
-
-        visualize: visualize the automaton
-
-        round_floats: for stochastic automata, round the floating point numbers to defined number of decimal places
-
-    Returns:
-
+    :param Any automaton: automaton to be saved to file
+    :param str | Path path: file in which visualization will be saved
+    :param str file_type: type of file/visualization. Can be ['dot', 'png', 'svg', 'pdf']
+    :param bool display_same_state_trans: True, should not be set to false except from the visualization method
+    :param bool visualize: visualize the automaton
+    :param int | None round_floats: for stochastic automata, round the floating point numbers to defined number of
+        decimal places
+    :return str | None: the dot representation as a string if file_type is 'string', otherwise None
     """
     path = Path(path)
     file_type = file_type.lower()
@@ -224,7 +233,16 @@ vpa_push_pattern = r"(\S+)\s*/\s*push\(\s*(.*?)\s*\)"
 vpa_pop_pattern = r"(\S+)\s*/\s*pop\(\s*(.*?)\s*\)"
 
 
-def _process_label(label, source, destination, automaton_type):
+def _process_label(label: str, source: Any, destination: Any, automaton_type: str) -> None:
+    """
+    Parses a single transition label from a loaded dot file and adds the corresponding transition to the source
+    state.
+
+    :param str label: the (already unwrapped) transition label.
+    :param Any source: the source state of the transition.
+    :param Any destination: the destination state of the transition.
+    :param str automaton_type: type tag of the automaton.
+    """
     if automaton_type == 'dfa' or automaton_type == 'moore':
         source.transitions[int(label) if label.isdigit() else label] = destination
     if automaton_type == 'mealy':
@@ -288,7 +306,16 @@ def _process_label(label, source, destination, automaton_type):
         source.transitions[input_symbol].append(transition)
 
 
-def _process_node_label(node, label, node_label_dict, node_type, automaton_type):
+def _process_node_label(node: Node, label: str, node_label_dict: dict, node_type: type, automaton_type: str) -> None:
+    """
+    Parses a node's label from a loaded dot file and creates the corresponding automaton state.
+
+    :param Node node: pydot node being processed.
+    :param str label: the (already unwrapped) node label.
+    :param dict node_label_dict: map from node name to created state, updated in place.
+    :param type node_type: state class to instantiate (e.g. DfaState).
+    :param str automaton_type: type tag of the automaton.
+    """
     node_name = node.get_name()
     if automaton_type == 'mdp' or automaton_type == 'mc':
         node_label_dict[node_name] = node_type(node_name, label)
@@ -315,7 +342,18 @@ def _strip_label(label: str) -> str:
     return label
 
 
-def _process_node_label_prime(node_name, label, line, node_label_dict, node_type, automaton_type):
+def _process_node_label_prime(node_name: str, label: str, line: str, node_label_dict: dict, node_type: type,
+                              automaton_type: str) -> None:
+    """
+    Parses a node's label and its source dot line to create the corresponding automaton state.
+
+    :param str node_name: name of the node/state.
+    :param str label: the (already unwrapped) node label.
+    :param str line: the raw dot file line the node was parsed from.
+    :param dict node_label_dict: map from node name to created state, updated in place.
+    :param type node_type: state class to instantiate (e.g. DfaState).
+    :param str automaton_type: type tag of the automaton.
+    """
     if automaton_type == 'mdp' or automaton_type == 'mc':
         node_label_dict[node_name] = node_type(node_name, label)
     else:
@@ -341,26 +379,18 @@ starting_state_pattern = r'__start0\s*->\s*(\w+)\s*(?:\[label=""\])?;?'
 transition_pattern = r'(\w+)\s*->\s*(\w+)\s*(.*)?;?'
 
 
-def load_automaton_from_file(path, automaton_type, compute_prefixes=False):
+def load_automaton_from_file(path: str | Path, automaton_type: str, compute_prefixes: bool = False) -> Any:
     """
     Loads the automaton from the file.
     Standard of the automatas strictly follows syntax found at: https://automata.cs.ru.nl/Syntax/Overview.
     For non-deterministic and stochastic systems syntax can be found on AALpy's Wiki.
 
-    Args:
-
-        path: pathlike or str to the file
-
-        automaton_type: type of the automaton, one of ['dfa', 'mealy', 'moore', 'mdp', 'smm',
-                        'onfsm', 'ndmoore', 'mc', 'sevpa', 'vpa']
-
-        compute_prefixes: it True, shortest path to reach every state will be computed and saved in the prefix of
-            the state. Useful when loading the model to use them as a equivalence oracle. (Default value = False)
-
-    Returns:
-
-      loaded automaton
-
+    :param str | Path path: path to the file
+    :param str automaton_type: type of the automaton, one of ['dfa', 'mealy', 'moore', 'mdp', 'smm',
+        'onfsm', 'ndmoore', 'mc', 'sevpa', 'vpa']
+    :param bool compute_prefixes: it True, shortest path to reach every state will be computed and saved in the
+        prefix of the state. Useful when loading the model to use them as a equivalence oracle.
+    :return Any: loaded automaton
     """
     assert automaton_type in automaton_types.values()
 

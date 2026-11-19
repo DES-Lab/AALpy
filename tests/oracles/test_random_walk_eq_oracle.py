@@ -1,0 +1,92 @@
+import random
+import unittest
+
+from aalpy.automata import MealyMachine, MealyState
+from aalpy.oracles import RandomWalkEqOracle
+from aalpy.SULs import AutomatonSUL
+
+
+def chain_mealy(length, alphabet=('a',)):
+    """Chain of states, s0 -> s1 -> ... -> s_length, driven by repeating the first letter of `alphabet`."""
+    states = [MealyState(f's{i}') for i in range(length + 1)]
+    first = alphabet[0]
+    for i in range(length):
+        states[i].transitions = {a: states[i] for a in alphabet}
+        states[i].transitions[first] = states[i + 1]
+        states[i].output_fun = {a: 'o' for a in alphabet}
+    states[length].transitions = {a: states[length] for a in alphabet}
+    states[length].output_fun = {a: 'o' for a in alphabet}
+    mm = MealyMachine(states[0], states)
+    mm.compute_prefixes()
+    return mm
+
+
+def with_diverging_transition(mm, diverge_at, alphabet=('a',)):
+    mm.states[diverge_at - 1].output_fun[alphabet[0]] = 'x'
+    return mm
+
+
+class RandomWalkEqOracleTests(unittest.TestCase):
+
+    def test_finds_cex_over_several_seeds(self):
+        successes = 0
+        for seed in range(10):
+            random.seed(seed)
+            reference = chain_mealy(6, alphabet=('a', 'b'))
+            hypothesis = chain_mealy(6, alphabet=('a', 'b'))
+            with_diverging_transition(hypothesis, 6, alphabet=('a', 'b'))
+
+            oracle = RandomWalkEqOracle(['a', 'b'], AutomatonSUL(reference), num_steps=2000, reset_prob=0.05)
+            cex = oracle.find_cex(hypothesis)
+            if cex is not None:
+                successes += 1
+                reference.reset_to_initial()
+                hypothesis.reset_to_initial()
+                sul_out = [reference.step(i) for i in cex]
+                hyp_out = [hypothesis.step(i) for i in cex]
+                self.assertNotEqual(sul_out[-1], hyp_out[-1])
+                self.assertEqual(sul_out[:-1], hyp_out[:-1])
+
+        self.assertGreaterEqual(successes, 9)
+
+    def test_no_cex_for_equivalent_hypothesis(self):
+        random.seed(0)
+        reference = chain_mealy(4, alphabet=('a', 'b'))
+        hypothesis = chain_mealy(4, alphabet=('a', 'b'))
+
+        oracle = RandomWalkEqOracle(['a', 'b'], AutomatonSUL(reference), num_steps=2000)
+        self.assertIsNone(oracle.find_cex(hypothesis))
+
+    def test_reset_after_cex_false_does_not_replenish_step_budget(self):
+        reference = chain_mealy(5)
+        hypothesis = chain_mealy(5)
+        with_diverging_transition(hypothesis, 5)
+
+        oracle = RandomWalkEqOracle(['a'], AutomatonSUL(reference), num_steps=5, reset_prob=0.0,
+                                     reset_after_cex=False)
+
+        first_cex = oracle.find_cex(hypothesis)
+        self.assertIsNotNone(first_cex)
+        self.assertEqual(oracle.random_steps_done, oracle.step_limit)
+
+        second_cex = oracle.find_cex(hypothesis)
+        self.assertIsNone(second_cex)
+
+    def test_reset_after_cex_true_replenishes_step_budget(self):
+        reference = chain_mealy(5)
+        hypothesis = chain_mealy(5)
+        with_diverging_transition(hypothesis, 5)
+
+        oracle = RandomWalkEqOracle(['a'], AutomatonSUL(reference), num_steps=5, reset_prob=0.0,
+                                     reset_after_cex=True)
+
+        first_cex = oracle.find_cex(hypothesis)
+        self.assertIsNotNone(first_cex)
+        self.assertEqual(oracle.random_steps_done, 0)
+
+        second_cex = oracle.find_cex(hypothesis)
+        self.assertIsNotNone(second_cex)
+
+
+if __name__ == '__main__':
+    unittest.main()

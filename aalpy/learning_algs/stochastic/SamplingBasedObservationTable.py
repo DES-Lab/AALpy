@@ -1,3 +1,4 @@
+# Observation table used by the sampling-based stochastic L* algorithm to learn MDPs and stochastic Mealy machines.
 from collections import defaultdict
 
 from aalpy.automata import Mdp, MdpState, StochasticMealyState, StochasticMealyMachine
@@ -7,18 +8,26 @@ from ...utils.HelperFunctions import is_suffix_of
 
 
 class SamplingBasedObservationTable:
-    def __init__(self, input_alphabet: list, automaton_type, teacher: StochasticTeacher,
+    """
+    Observation table for the sampling-based stochastic L* algorithm. Rows are prefixes (traces) and columns are
+    suffixes; cells store observed output frequencies. Because exact row equivalence cannot be established from
+    finitely many samples, rows are grouped into compatibility classes instead.
+    """
+
+    def __init__(self, input_alphabet: list, automaton_type: str, teacher: StochasticTeacher,
                  compatibility_checker: DifferenceChecker,
-                 alpha=0.05, strategy='normal',
-                 cex_processing=None):
-        """Constructor of the observation table. Initial queries are asked in the constructor.
+                 alpha: float = 0.05, strategy: str = 'normal',
+                 cex_processing: str | None = None) -> None:
+        """
+        Constructor of the observation table. Initial queries are asked in the constructor.
 
-        Args:
-
-          input_alphabet: input alphabet
-          teacher: stochastic teacher
-          alpha: constant used in Hoeffding bound
-
+        :param list input_alphabet: Input alphabet.
+        :param str automaton_type: Either 'mdp' or 'smm'.
+        :param StochasticTeacher teacher: Stochastic teacher used for frequency queries.
+        :param DifferenceChecker compatibility_checker: Checker used to decide whether cells/rows differ.
+        :param float alpha: Constant used in the Hoeffding bound.
+        :param str strategy: One of 'classic', 'normal' or 'chi2'.
+        :param str | None cex_processing: Counterexample processing strategy, or None.
         """
         self.compatibility_checker = compatibility_checker
         assert input_alphabet is not None and teacher is not None
@@ -51,19 +60,14 @@ class SamplingBasedObservationTable:
 
         self.unambiguity_values = []
 
-    def refine_not_completed_cells(self, n_resample, uniform=False):
+    def refine_not_completed_cells(self, n_resample: int, uniform: bool = False) -> bool:
         """
         Firstly a prefix-tree acceptor is constructed for all non-completed cells and then that tree is used
         for online testing/sampling.
 
-        Args:
-
-          uniform: if true, all cells will be uniformly sampled (Default value = False)
-          n_resample: Number of resamples
-
-        Returns:
-
-            False if no cells are to be refined, True if refining happened
+        :param int n_resample: Number of resamples.
+        :param bool uniform: If true, all cells will be uniformly sampled.
+        :return bool: False if no cells are to be refined, True if refining happened.
         """
         if self.automaton_type == 'mdp':
             pta_root = Node(self.initial_output[0])
@@ -112,16 +116,12 @@ class SamplingBasedObservationTable:
             self.teacher.tree_query(pta_root)
         return True
 
-    def update_obs_table_with_freq_obs(self, element_of_s=None):
+    def update_obs_table_with_freq_obs(self, element_of_s: list | None = None) -> None:
         """
         Updates cells in the observation table with frequency data. If the row in S has no extension yet, it is
         generated and its cells populated.
 
-        Args:
-          element_of_s: if not None, selected row and its extensions will be updated (Default value = None)
-
-        Returns:
-
+        :param list | None element_of_s: If not None, selected row and its extensions will be updated.
         """
         if element_of_s:
             s_set = element_of_s + list(self.get_extended_s(element_of_s=element_of_s))
@@ -135,14 +135,12 @@ class SamplingBasedObservationTable:
                 self.freq_query_cache[s + e] = self.T[s][e]
         self._row_compatibility_cache.clear()
 
-    def get_extended_s(self, element_of_s=None):
-        """Generator returning all elements of the extended S set.
+    def get_extended_s(self, element_of_s: list | None = None):
+        """
+        Generator returning all elements of the extended S set.
 
-        Args:
-          element_of_s:  (Default value = None)
-
-        Returns:
-
+        :param list | None element_of_s: Rows to extend, defaults to self.S when None.
+        :return: Generator of new prefixes (rows) extending element_of_s (or self.S).
         """
         s_set = element_of_s if element_of_s else self.S
         for s in s_set:
@@ -156,7 +154,7 @@ class SamplingBasedObservationTable:
                     if freq > 0 and new_pref not in self.S:
                         yield new_pref
 
-    def make_closed_and_consistent(self):
+    def make_closed_and_consistent(self) -> None:
         """
         Observation table is updated until it is closed and consistent. Note that due the updated notion of row
         equivalence no sampling is needed.
@@ -185,13 +183,11 @@ class SamplingBasedObservationTable:
             if closed and consistent:
                 break
 
-    def get_row_to_close(self):
+    def get_row_to_close(self) -> tuple | None:
         """
         Returns a row that is not closed.
 
-        Returns:
-
-            row that needs to be closed
+        :return tuple | None: Row that needs to be closed, or None if the table is closed.
         """
         for lt in self.get_extended_s():
             row_is_closed = False
@@ -203,16 +199,13 @@ class SamplingBasedObservationTable:
                 return lt
         return None
 
-    def get_consistency_violation(self, ignore=None):
-        """Find and return cause of consistency violation. Only computed on the compatibility class representatives.
-        :return: element of input + element of output + element of e that lead to the inconsistency
+    def get_consistency_violation(self, ignore: tuple | None = None) -> tuple | None:
+        """
+        Find and return cause of consistency violation. Only computed on the compatibility class representatives.
 
-        Args:
-          ignore:  (Default value = None)
-
-        Returns:
-
-            i + o + e that violate consistency
+        :param tuple | None ignore: Element of E to ignore during the computation.
+        :return tuple | None: Element of input + element of output + element of e that lead to the inconsistency,
+            or None if consistent.
         """
         if self.cex_processing is not None:
             return None
@@ -234,15 +227,12 @@ class SamplingBasedObservationTable:
                                 return i + o + e
         return None
 
-    def get_representative(self, target):
+    def get_representative(self, target: tuple) -> tuple | None:
         """
+        Returns the compatibility class representative for the given row.
 
-        Args:
-          target: row in the observation table
-
-        Returns:
-          a representative compatible with the target
-
+        :param tuple target: Row in the observation table.
+        :return tuple | None: A representative compatible with the target.
         """
         if self.compatibility_checker.use_diff_value():
             smallest_diff_value = 2 ** 32
@@ -277,8 +267,10 @@ class SamplingBasedObservationTable:
                         return r
         assert False
 
-    def trim_columns(self):
-        """ """
+    def trim_columns(self) -> None:
+        """
+        Removes redundant columns (suffixes in E) that do not contribute distinguishing information.
+        """
         reverse_sorted_E = list(self.E)
         reverse_sorted_E.sort(key=len, reverse=True)
         to_remove = []
@@ -306,13 +298,11 @@ class SamplingBasedObservationTable:
                 if e in self.T[s]:
                     self.T[s].pop(e)
 
-    def trim(self, hypothesis):
+    def trim(self, hypothesis: 'Mdp | StochasticMealyMachine') -> None:
         """
         Removes unnecessary rows from the observation table.
 
-        Args:
-          hypothesis: 
-
+        :param Mdp | StochasticMealyMachine hypothesis: Current hypothesis, used to look up representative states.
         """
 
         prefix_to_state_dict = {state.prefix: state for state in hypothesis.states}
@@ -360,26 +350,22 @@ class SamplingBasedObservationTable:
         else:
             self.update_obs_table_with_freq_obs()
 
-    def stop(self, learning_round, chaos_cex_present, cex, stopping_range_dict, min_rounds=10, max_rounds=None,
-             target_unambiguity=0.99, print_unambiguity=False):
+    def stop(self, learning_round: int, chaos_cex_present: bool, cex: tuple | None, stopping_range_dict: dict,
+             min_rounds: int = 10, max_rounds: int | None = None,
+             target_unambiguity: float = 0.99, print_unambiguity: bool = False) -> bool:
         """
         Decide if learning should terminate.
 
-        Args:
-
-          learning_round: current learning round
-          chaos_cex_present: is chaos counterexample present in the hypothesis
-          cex: counterexample found by the eq oracle
-          stopping_range_dict: dictionary where keys are number of last unambiguity values and value is
-          maximum differance allowed between them
-          min_rounds: minimum number of learning rounds (Default value = 5)
-          max_rounds: maximum number of learning rounds (Default value = None)
-          target_unambiguity: percentage of rows with unambiguous representatives (Default value = 0.99)
-          print_unambiguity: if true, current unambiguity rate will be printed (Default value = False)
-
-        Returns:
-
-          True if stopping condition satisfied, false otherwise
+        :param int learning_round: Current learning round.
+        :param bool chaos_cex_present: Is chaos counterexample present in the hypothesis.
+        :param tuple | None cex: Counterexample found by the eq oracle.
+        :param dict stopping_range_dict: Dictionary where keys encode number of last unambiguity values and value
+            is maximum difference allowed between them.
+        :param int min_rounds: Minimum number of learning rounds.
+        :param int | None max_rounds: Maximum number of learning rounds.
+        :param float target_unambiguity: Percentage of rows with unambiguous representatives.
+        :param bool print_unambiguity: If true, current unambiguity rate will be printed.
+        :return bool: True if stopping condition satisfied, false otherwise.
         """
         if max_rounds:
             assert min_rounds <= max_rounds
@@ -419,7 +405,12 @@ class SamplingBasedObservationTable:
 
         return False
 
-    def get_unamb_percentage(self):
+    def get_unamb_percentage(self) -> float:
+        """
+        Computes the percentage of rows that have exactly one compatible representative.
+
+        :return float: Unambiguous rows percentage, rounded to two decimals (0-100 scale).
+        """
         extended_s = list(self.get_extended_s())
         self.update_compatibility_classes()
         numerator = 0
@@ -433,20 +424,14 @@ class SamplingBasedObservationTable:
         unambiguous_rows_percentage = numerator / len(self.S + extended_s)
         return round(unambiguous_rows_percentage * 100, 2)
 
-    def are_cells_incompatible(self, s1, s2, e):
+    def are_cells_incompatible(self, s1: tuple, s2: tuple, e: tuple) -> bool:
         """
         Checks if 2 cells are considered different.
 
-        Args:
-
-          s1: prefix of row s1
-          s2: prefix of row s2
-          e: element of E
-
-        Returns:
-
-          True if cells are different, false otherwise
-
+        :param tuple s1: Prefix of row s1.
+        :param tuple s2: Prefix of row s2.
+        :param tuple e: Element of E.
+        :return bool: True if cells are different, false otherwise.
         """
         if self.strategy == 'classic':
             if self.teacher.complete_query(s1, e) and self.teacher.complete_query(s2, e):
@@ -459,20 +444,16 @@ class SamplingBasedObservationTable:
                 return self.compatibility_checker.are_cells_different(self.T[s1][e], self.T[s2][e], s1=s1, s2=s2, e=e)
         return False
 
-    def are_rows_compatible(self, s1, s2, e_ignore=None):
+    def are_rows_compatible(self, s1: tuple, s2: tuple, e_ignore: tuple | None = None) -> bool:
         """
         Check if the rows are compatible.
         Rows are compatible if all cells are compatible(not different) and their prefixes
         end in the same output element.
 
-        Args:
-          s1: prefix of row s1
-          s2: prefix of row s2
-          e_ignore: e not considered for the computation of row compatibility (Default value = None)
-
-        Returns:
-          True if rows are compatible, False otherwise
-
+        :param tuple s1: Prefix of row s1.
+        :param tuple s2: Prefix of row s2.
+        :param tuple | None e_ignore: e not considered for the computation of row compatibility.
+        :return bool: True if rows are compatible, False otherwise.
         """
         cache_key = (frozenset((s1, s2)), e_ignore, len(self.E))
         if cache_key in self._row_compatibility_cache:
@@ -491,8 +472,10 @@ class SamplingBasedObservationTable:
         self._row_compatibility_cache[cache_key] = True
         return True
 
-    def update_compatibility_classes(self):
-        """Updates the compatibility classes and stores their representatives."""
+    def update_compatibility_classes(self) -> None:
+        """
+        Updates the compatibility classes and stores their representatives.
+        """
         self.compatibility_class.clear()
         self._row_compatibility_cache.clear()
 
@@ -531,7 +514,7 @@ class SamplingBasedObservationTable:
         self.compatibility_classes_representatives = representatives
         self._ensure_access_closed_representatives()
 
-    def _ensure_access_closed_representatives(self):
+    def _ensure_access_closed_representatives(self) -> None:
         """
         Representatives are used as hypothesis access rows. If a long row becomes a representative while one of its
         access prefixes is still only a member of another compatibility class, the generated hypothesis can contain an
@@ -553,20 +536,23 @@ class SamplingBasedObservationTable:
                 self.compatibility_classes_representatives.append(prefix)
                 representative_set.add(prefix)
 
-    def _proper_access_prefixes(self, row):
+    def _proper_access_prefixes(self, row: tuple):
+        """
+        Generator yielding the proper access prefixes (even-length steps) of a row.
+
+        :param tuple row: Row to compute proper access prefixes for.
+        :return: Generator of prefixes of row.
+        """
         first_prefix_len = 3 if self.automaton_type == 'mdp' else 2
         for prefix_len in range(first_prefix_len, len(row), 2):
             yield row[:prefix_len]
 
-    def chaos_counterexample(self, hypothesis):
-        """ Check whether the chaos state is reachable.
+    def chaos_counterexample(self, hypothesis: 'Mdp | StochasticMealyMachine') -> bool:
+        """
+        Check whether the chaos state is reachable.
 
-        Args:
-          hypothesis: current hypothesis
-
-        Returns:
-          True if chaos state is reachable, False otherwise
-
+        :param Mdp | StochasticMealyMachine hypothesis: Current hypothesis.
+        :return bool: True if chaos state is reachable, False otherwise.
         """
         for state in hypothesis.states:
             if self.automaton_type == "mdp" and state.output == "chaos" \
@@ -588,17 +574,14 @@ class SamplingBasedObservationTable:
         return False
         # return None
 
-    def add_to_PTA(self, pta_root, trace, uncertainty_value=None):
-        """Adds a trace to the PTA. PTA is later used for online sampling. The uncertainty value is added to inputs as
+    def add_to_PTA(self, pta_root: Node, trace: tuple, uncertainty_value: float | None = None) -> None:
+        """
+        Adds a trace to the PTA. PTA is later used for online sampling. The uncertainty value is added to inputs as
         frequencies, which specify how often a particular input should be sampled.
 
-        Args:
-          pta_root: root of the prefix tree acceptor
-          trace: trace to add to the PTA
-          uncertainty_value: uncertainty value (Default value = None)
-
-        Returns:
-
+        :param Node pta_root: Root of the prefix tree acceptor.
+        :param tuple trace: Trace to add to the PTA.
+        :param float | None uncertainty_value: Uncertainty value.
         """
         curr_node = pta_root
         start = 1 if self.automaton_type == 'mdp' else 0
@@ -617,14 +600,11 @@ class SamplingBasedObservationTable:
                 curr_node.children[inp][output] = new_node
                 curr_node = new_node
 
-    def generate_hypothesis(self):
-        """Generates the hypothesis from the observation table.
-        :return: current hypothesis
+    def generate_hypothesis(self) -> 'Mdp | StochasticMealyMachine':
+        """
+        Generates the hypothesis from the observation table.
 
-        Args:
-
-        Returns:
-
+        :return Mdp | StochasticMealyMachine: Current hypothesis.
         """
         r_state_map = dict()
         state_counter = 0

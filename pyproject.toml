@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aalpy"
-version = "1.6.1"
+version = "2.0.0"
 description = "An active automata learning library"
 readme = "README.md"
-requires-python = ">=3.6"
+requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [
 { name = "Edi Muskardin" }
@@ -22,6 +22,12 @@ classifiers = [
 "Operating System :: OS Independent"
 ]
 
+[project.optional-dependencies]
+test = [
+"pytest",
+"pytest-timeout"
+]
+
 [project.urls]
 Homepage = "https://github.com/DES-Lab/AALpy"
 
@@ -30,3 +36,16 @@ license-files = ["LICENSE.txt"]
 
 [tool.setuptools.packages.find]
 include = ["aalpy*"]
+
+[tool.pytest.ini_options]
+# a few test files cross-import from one another as `tests.oracles.test_x` (e.g. to reuse a shared
+# BaseOracleTests helper); that only resolves if the repo root is on sys.path, which happens
+# incidentally under `python -m pytest` (cwd is auto-added) but not for the plain `pytest` entry point
+pythonpath = ["."]
+markers = [
+    "exhaustive: large parametrized sweeps (many seeds/sizes), skipped by default; run with `pytest --exhaustive`",
+]
+
+# pip install build twine
+# python -m build
+# python -m twine upload dist/*

@@ -1,12 +1,25 @@
+# Helper data structures and functions shared by the RPNI-family passive learning algorithms.
 import pickle
 from functools import total_ordering
+from typing import Any
 
 
 @total_ordering
 class RpniNode:
+    """
+    Single node of the prefix tree acceptor (PTA) used during RPNI-style state merging.
+    """
+
     __slots__ = ['output', 'children', 'prefix', "type"]
 
-    def __init__(self, output=None, children=None, automaton_type='moore'):
+    def __init__(self, output: Any = None, children: dict | None = None, automaton_type: str = 'moore') -> None:
+        """
+        Creates a PTA node.
+
+        :param Any output: Output of the node. For 'mealy' automata this is a dict mapping input to output.
+        :param dict | None children: Map from input symbol to child RpniNode.
+        :param str automaton_type: Either 'dfa', 'moore', or 'mealy'.
+        """
         if output is None and automaton_type == 'mealy':
             output = dict()
         if children is None:
@@ -16,26 +29,54 @@ class RpniNode:
         self.prefix = ()
         self.type = automaton_type
 
-    def shallow_copy(self):
+    def shallow_copy(self) -> 'RpniNode':
+        """
+        Creates a shallow copy of this node, copying the children map (and output dict for 'mealy').
+
+        :return RpniNode: The shallow copy.
+        """
         output = self.output if self.type != 'mealy' else dict(self.output)
         return RpniNode(output, dict(self.children), self.type)
 
-    def copy(self):
+    def copy(self) -> 'RpniNode':
+        """
+        Creates a deep copy of this node and its whole subtree.
+
+        :return RpniNode: The deep copy.
+        """
         return pickle.loads(pickle.dumps(self, -1))
 
-    def __lt__(self, other):
+    def __lt__(self, other: 'RpniNode') -> bool:
+        """
+        Compares nodes by prefix length, used to keep the blue/red state lists sorted.
+
+        :param RpniNode other: Node to compare against.
+        :return bool: True if this node's prefix is shorter than other's.
+        """
         return len(self.prefix) < len(other.prefix)
         # return (len(self.prefix), self.prefix) < (len(other.prefix), other.prefix)
 
-    def __eq__(self, other):
+    def __eq__(self, other: 'RpniNode') -> bool:
+        """
+        Compares nodes by prefix.
+
+        :param RpniNode other: Node to compare against.
+        :return bool: True if both nodes have the same prefix.
+        """
         return self.prefix == other.prefix
 
-    def __hash__(self):
+    def __hash__(self) -> int:
+        """
+        :return int: Identity-based hash of the node.
+        """
         return id(self)  # TODO This is a hack
 
-    def compatible_outputs(self, other):
+    def compatible_outputs(self, other: 'RpniNode') -> bool:
         """
         Only allow merging of states that have same output(s).
+
+        :param RpniNode other: Node to check compatibility against.
+        :return bool: True if the outputs of both nodes are compatible.
         """
         # None is compatible with everything
         if self.type != 'mealy':
@@ -48,16 +89,28 @@ class RpniNode:
                     return False
         return True
 
-    def get_child_by_prefix(self, prefix):
+    def get_child_by_prefix(self, prefix: tuple) -> 'RpniNode':
+        """
+        Follows a sequence of input symbols from this node and returns the reached node.
+
+        :param tuple prefix: Sequence of input symbols to follow.
+        :return RpniNode: The node reached after following the prefix.
+        """
         node = self
         for symbol in prefix:
             node = node.children[symbol]
         return node
 
 
-def check_sequence(root_node, seq, automaton_type):
+def check_sequence(root_node: RpniNode, seq: list, automaton_type: str) -> bool:
     """
     Checks whether each sequence in the dataset is valid in the current automaton.
+
+    :param RpniNode root_node: Root node of the (partial) automaton represented as a PTA.
+    :param list seq: Sequence of (input, output) pairs (optionally preceded by an initial output for non-mealy
+        automata) to validate.
+    :param str automaton_type: Either 'dfa', 'moore', or 'mealy'.
+    :return bool: True if the sequence is consistent with the automaton, False otherwise.
     """
     curr_node = root_node
     # Check initial output for Moore machines and the like
@@ -78,7 +131,14 @@ def check_sequence(root_node, seq, automaton_type):
     return True
 
 
-def createPTA(data, automaton_type):
+def createPTA(data: list, automaton_type: str) -> RpniNode | None:
+    """
+    Constructs a prefix tree acceptor (PTA) from the provided data.
+
+    :param list data: Sequence of (input sequence, label) pairs.
+    :param str automaton_type: Either 'dfa', 'moore', or 'mealy'.
+    :return RpniNode | None: The root node of the constructed PTA, or None if the data is non-deterministic.
+    """
     data.sort(key=lambda x: len(x[0]))
 
     root_node = RpniNode(automaton_type=automaton_type)
@@ -105,11 +165,18 @@ def createPTA(data, automaton_type):
     return root_node
 
 
-def extract_unique_sequences(root_node, automaton_type):
-    def get_leaf_nodes(root):
+def extract_unique_sequences(root_node: RpniNode, automaton_type: str) -> list[list]:
+    """
+    Extracts, for every leaf of the PTA, the unique sequence of (input, output) pairs leading to it.
+
+    :param RpniNode root_node: Root node of the PTA.
+    :param str automaton_type: Either 'dfa', 'moore', or 'mealy'.
+    :return list[list]: List of sequences, one per leaf node of the PTA.
+    """
+    def get_leaf_nodes(root: RpniNode) -> list[RpniNode]:
         leaves = []
 
-        def _get_leaf_nodes(node):
+        def _get_leaf_nodes(node: RpniNode) -> None:
             if node is not None:
                 if len(node.children.keys()) == 0:
                     leaves.append(node)
@@ -125,17 +192,26 @@ def extract_unique_sequences(root_node, automaton_type):
         seq = [] if automaton_type == 'mealy' else [root_node.output]
         curr_node = root_node
         for i in node.prefix:
-            curr_node = curr_node.children[i]
             if automaton_type == 'mealy':
                 seq.append((i, curr_node.output.get(i)))
+                curr_node = curr_node.children[i]
             else:
+                curr_node = curr_node.children[i]
                 seq.append((i, curr_node.output))
         paths.append(seq)
 
     return paths
 
 
-def to_automaton(red, automaton_type):
+def to_automaton(red: list[RpniNode], automaton_type: str) -> Any:
+    """
+    Converts a list of merged (red) PTA nodes into the corresponding automaton.
+
+    :param list[RpniNode] red: List of red (final) states of the PTA, in prefix-length order (the first entry is
+        the initial state).
+    :param str automaton_type: Either 'dfa', 'moore', or 'mealy'.
+    :return Any: The constructed Dfa, MooreMachine, or MealyMachine.
+    """
     from aalpy.automata import DfaState, Dfa, MooreMachine, MooreState, MealyMachine, MealyState
 
     if automaton_type == 'dfa':
@@ -169,7 +245,13 @@ def to_automaton(red, automaton_type):
     return automaton(initial_state, list(prefix_state_map.values()))
 
 
-def visualize_pta(root_node, path='pta.pdf'):
+def visualize_pta(root_node: RpniNode, path: str = 'pta.pdf') -> None:
+    """
+    Visualizes the PTA and writes the resulting graph to a PDF file.
+
+    :param RpniNode root_node: Root node of the PTA to visualize.
+    :param str path: Output file path for the generated PDF.
+    """
     from pydot import Dot, Node, Edge
     graph = Dot('fpta', graph_type='digraph')
 

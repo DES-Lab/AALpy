@@ -1,4 +1,7 @@
+# Resetless equivalence oracles used with the hW learner, plus a free counterexample-in-trace backstop.
 from random import choice
+
+from aalpy.base.Automaton import Automaton, InputType
 
 
 class hWOracle:
@@ -15,22 +18,33 @@ class hWOracle:
     so a single oracle instance must not be shared between concurrent runs.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """
+        Creates an oracle with no bound learner and a zeroed step counter.
+        """
         self.learner = None
         self.num_steps = 0  # total SUL steps executed by this oracle across all checks
 
-    def find_counterexample(self, hypothesis):
+    def find_cex(self, hypothesis: Automaton) -> tuple[InputType, ...] | None:
         """
         Return the executed inputs up to and including the first output mismatch
         with the hypothesis, or None if no mismatch was observed.
+
+        :param Automaton hypothesis: current hypothesis.
+        :return tuple[InputType, ...] | None: counterexample inputs, or None if no counterexample is found.
         """
         raise NotImplementedError
 
-    def _execute_and_compare(self, hypothesis, inputs, cex):
+    def _execute_and_compare(self, hypothesis: Automaton, inputs: tuple, cex: list) -> bool:
         """
         Run inputs on the SUL and the hypothesis in lock-step, appending each to
         cex. Returns True on the first output mismatch (cex then ends at the
         diverging input).
+
+        :param Automaton hypothesis: current hypothesis.
+        :param tuple inputs: inputs to execute in lock-step on the SUL and the hypothesis.
+        :param list cex: counterexample accumulator, extended in place.
+        :return bool: True on the first output mismatch, False otherwise.
         """
         learner = self.learner
         for i in inputs:
@@ -46,19 +60,32 @@ class RandomhWOracle(hWOracle):
     Random-walk equivalence check: take random inputs until the SUL and the
     hypothesis disagree or the per-round step budget is exhausted.
 
-    Args:
-        num_testing_steps: number of random steps used per equivalence check
-        reset_testing_counter: if True, the step budget is reset for every
-            equivalence check; otherwise num_testing_steps bounds the total number
-            of testing steps across the whole run
+    :param int num_testing_steps: number of random steps used per equivalence check
+    :param bool reset_testing_counter: if True, the step budget is reset for every
+        equivalence check; otherwise num_testing_steps bounds the total number
+        of testing steps across the whole run
     """
 
-    def __init__(self, num_testing_steps=200, reset_testing_counter=True):
+    def __init__(self, num_testing_steps: int = 200, reset_testing_counter: bool = True) -> None:
+        """
+        Creates a random-walk resetless equivalence oracle.
+
+        :param int num_testing_steps: number of random steps used per equivalence check.
+        :param bool reset_testing_counter: if True, the step budget is reset for every equivalence check;
+            otherwise num_testing_steps bounds the total number of testing steps across the whole run.
+        """
         super().__init__()
         self.num_testing_steps = num_testing_steps
         self.reset_testing_counter = reset_testing_counter
 
-    def find_counterexample(self, hypothesis):
+    def find_cex(self, hypothesis: Automaton) -> tuple[InputType, ...] | None:
+        """
+        Return the executed inputs up to and including the first output mismatch
+        with the hypothesis, or None if no mismatch was observed within the step budget.
+
+        :param Automaton hypothesis: current hypothesis.
+        :return tuple[InputType, ...] | None: counterexample inputs, or None if no counterexample is found.
+        """
         learner = self.learner
         if self.reset_testing_counter:
             current_test_steps = self.num_testing_steps
@@ -69,7 +96,7 @@ class RandomhWOracle(hWOracle):
         for _ in range(current_test_steps):
             random_input = choice(learner.input_alphabet)
             if self._execute_and_compare(hypothesis, (random_input,), cex):
-                return cex
+                return tuple(cex)
 
         return None
 
@@ -83,12 +110,25 @@ class RandomWphWOracle(hWOracle):
     The first such probe that diverges from the hypothesis is returned.
     """
 
-    def __init__(self, random_walk_length=20, num_test_origin_states=10):
+    def __init__(self, random_walk_length: int = 20, num_test_origin_states: int = 10) -> None:
+        """
+        Creates a resetless Wp-method style equivalence oracle.
+
+        :param int random_walk_length: length of the random walk executed after each probe.
+        :param int num_test_origin_states: number of random origin states probed per equivalence check.
+        """
         super().__init__()
         self.random_walk_length = random_walk_length
         self.num_test_origin_states = num_test_origin_states
 
-    def find_counterexample(self, hypothesis):
+    def find_cex(self, hypothesis: Automaton) -> tuple[InputType, ...] | None:
+        """
+        Return the executed inputs up to and including the first output mismatch
+        with the hypothesis, or None if no mismatch was observed within the testing budget.
+
+        :param Automaton hypothesis: current hypothesis.
+        :return tuple[InputType, ...] | None: counterexample inputs, or None if no counterexample is found.
+        """
         learner = self.learner
 
         for _ in range(self.num_test_origin_states):
@@ -100,18 +140,18 @@ class RandomWphWOracle(hWOracle):
             if path is None:
                 path = ()
             if self._execute_and_compare(hypothesis, path, cex):
-                return cex
+                return tuple(cex)
 
             # distinguish the reached state with a random element of W
             if learner.W:
                 w = choice(learner.W)
                 if self._execute_and_compare(hypothesis, w, cex):
-                    return cex
+                    return tuple(cex)
 
             # explore further with a random walk from the reached state
             walk = [choice(learner.input_alphabet) for _ in range(self.random_walk_length)]
             if self._execute_and_compare(hypothesis, walk, cex):
-                return cex
+                return tuple(cex)
 
         return None
 
